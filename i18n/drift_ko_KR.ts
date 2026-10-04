@@ -8334,12 +8334,20 @@
         <translation>에셋 검색</translation>
     </message>
     <message>
+        <source>Search sound effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search, or paste a link</source>
         <translation>검색 또는 링크 붙여넣기</translation>
     </message>
     <message>
         <source>Assets</source>
         <translation>에셋</translation>
+    </message>
+    <message>
+        <source>SFX</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stock footage</source>
@@ -11299,6 +11307,76 @@ If playback stutters, try another.</source>
     <message>
         <source>Unlink the marketplace account from this device</source>
         <translation>이 장치에서 마켓플레이스 계정 연결 해제</translation>
+    </message>
+</context>
+<context>
+    <name>SfxBrowser</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">미디어 라이브러리에 추가됨</translation>
+    </message>
+    <message>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">모두</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">일시정지</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">미리보기 재생</translation>
+    </message>
+    <message>
+        <source>Add to the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to the timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SfxLibrary</name>
+    <message>
+        <source>Could not load sound effects. Check your connection and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write to the app data folder.</source>
+        <translation type="unfinished">앱 데이터 폴더에 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Could not download that sound. Check your connection and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That download was damaged. Try again.</source>
+        <translation type="unfinished">다운로드한 파일이 손상되었습니다. 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Could not add that sound to the media bin.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -8364,12 +8364,20 @@
         <translation>වත්කම් සොයන්න</translation>
     </message>
     <message>
+        <source>Search sound effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search, or paste a link</source>
         <translation>සොයන්න, නැතහොත් සබැඳියක් අලවන්න</translation>
     </message>
     <message>
         <source>Assets</source>
         <translation>වත්කම්</translation>
+    </message>
+    <message>
+        <source>SFX</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stock footage</source>
@@ -11350,6 +11358,76 @@ If playback stutters, try another.</source>
     <message>
         <source>Unlink the marketplace account from this device</source>
         <translation>මෙම උපාංගයෙන් marketplace ගිණුම විසන්ධි කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>SfxBrowser</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">Media bin වෙත එක් කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">සියල්ල</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">විරාමය</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">පෙරදසුන ධාවනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Add to the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to the timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SfxLibrary</name>
+    <message>
+        <source>Could not load sound effects. Check your connection and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write to the app data folder.</source>
+        <translation type="unfinished">යෙදුම් දත්ත ෆෝල්ඩරයට ලිවීමට නොහැකි විය.</translation>
+    </message>
+    <message>
+        <source>Could not download that sound. Check your connection and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That download was damaged. Try again.</source>
+        <translation type="unfinished">එම බාගැනීම හානි වී ඇත. නැවත උත්සාහ කරන්න.</translation>
+    </message>
+    <message>
+        <source>Could not add that sound to the media bin.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

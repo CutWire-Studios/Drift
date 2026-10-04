@@ -74,9 +74,35 @@ Rectangle {
         return asset.license === "CC-BY-NC-SA-4.0" ? "https://creativecommons.org/licenses/by-nc-sa/4.0/" : ""
     }
 
+    // Fixed above the scrolling body so Back is always in reach. The phone sheet has none.
+    Row {
+        id: header
+        x: Theme.pagePadding
+        spacing: Theme.spacingSm
+        topPadding: Theme.spacingSm
+        bottomPadding: Theme.spacingSm
+        visible: !root.compact
+
+        IconButton {
+            glyph: Theme.icons.chevronLeft
+            tooltip: qsTr("Back")
+            onClicked: root.backRequested()
+        }
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: root.categoryLabel
+            color: Theme.mutedForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSm
+        }
+    }
+
     Flickable {
         id: flick
-        anchors.fill: parent
+        anchors.top: header.visible ? header.bottom : parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
         contentHeight: body.implicitHeight + Theme.spacing3xl
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -87,25 +113,7 @@ Rectangle {
             x: root.compact ? Theme.androidPagePadding : Theme.pagePadding
             width: flick.width - x * 2
             spacing: Theme.spacingXl
-
-            Row {
-                spacing: Theme.spacingSm
-                topPadding: Theme.spacingSm
-                visible: !root.compact
-
-                IconButton {
-                    glyph: Theme.icons.chevronLeft
-                    tooltip: qsTr("Back")
-                    onClicked: root.backRequested()
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.categoryLabel
-                    color: Theme.mutedForeground
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeSm
-                }
-            }
+            topPadding: root.compact ? 0 : Theme.spacingSm
 
             Rectangle {
                 width: parent.width

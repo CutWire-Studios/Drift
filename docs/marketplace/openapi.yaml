@@ -41,6 +41,56 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
 
+  /assets:
+    get:
+      tags: [Catalog]
+      operationId: getAssets
+      summary: The Drift Assets pack this client may show
+      description: |
+        CutWire's own Lottie animations, face props and 3D objects, grouped in
+        categories in shelf order. Categories hidden for the caller's
+        X-Cutwire-Distribution are left out, with their assets. File URLs are
+        unsigned, versioned and immutable. Before the first sync both lists are empty.
+
+        An asset may ship several designs. Drift 0.7.0, anything older, a
+        0.7.0 nightly, and a client whose X-Cutwire-App version cannot be read
+        each receive one asset per design: the default keeps the asset id, and
+        every other design is a separate asset whose id is `<id>--<variant>`.
+        A face-prop design's meta file is a prop.json for that design alone.
+        Drift after 0.7.0 receives the asset once, with a `variants` array, and
+        the asset's own fields stay the default design. The version picks the
+        shape; it is not an access check.
+      responses:
+        "200":
+          description: Asset pack
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetPack"
+        default:
+          $ref: "#/components/responses/Problem"
+
+  /sfx:
+    get:
+      tags: [Catalog]
+      operationId: getSfx
+      summary: The sound-effects library this client may show
+      description: |
+        CutWire's own sound effects, grouped in categories and subcategories.
+        Categories that are disabled, or hidden for the caller's
+        X-Cutwire-Distribution, are left out with their sounds. Preview and
+        download URLs are absolute and unsigned. Before the first sync both
+        lists are empty.
+      responses:
+        "200":
+          description: Sound-effects library
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SfxLibrary"
+        default:
+          $ref: "#/components/responses/Problem"
+
   /search:
     get:
       tags: [Search]
@@ -397,6 +447,158 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaType"
+
+    AssetPack:
+      type: object
+      required: [categories, assets]
+      properties:
+        version: { type: string, description: Drift-Assets release tag }
+        categories:
+          type: array
+          items:
+            type: object
+            required: [id, label, kind]
+            properties:
+              id: { type: string }
+              label: { type: string }
+              kind: { type: string, enum: [lottie, face-prop, object] }
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/PackAsset"
+
+    SfxLibrary:
+      type: object
+      required: [categories, sounds]
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+            required: [id, label, count, subcategories]
+            properties:
+              id: { type: string }
+              label: { type: string }
+              count: { type: integer }
+              subcategories:
+                type: array
+                items:
+                  type: object
+                  required: [id, label, count]
+                  properties:
+                    id: { type: string }
+                    label: { type: string }
+                    count: { type: integer }
+        sounds:
+          type: array
+          items:
+            type: object
+            required: [id, name, file, category, subcategory, duration, channels, size, sha256, peaks, preview_url, download_url]
+            properties:
+              id: { type: string }
+              name: { type: string }
+              file: { type: string, description: Original file name }
+              category: { type: string }
+              subcategory: { type: string }
+              duration: { type: number, description: Seconds }
+              channels: { type: integer }
+              size: { type: integer, description: Bytes of the original FLAC }
+              sha256: { type: string, description: Hex digest of the original FLAC }
+              peaks: { type: string, description: "Base64 of 64 bytes, each a 0-255 level on a log scale" }
+              preview_url: { type: string, description: Opus in WebM }
+              download_url: { type: string, description: The original FLAC }
+
+    PackAsset:
+      type: object
+      required: [id, name, kind, category, thumb_url, preview_url, preview_width, preview_height, files]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [lottie, face-prop, object] }
+        category: { type: string }
+        description: { type: string }
+        tags: { type: array, items: { type: string } }
+        license: { type: string }
+        thumb_url: { type: string, description: 512 px square PNG }
+        preview_url: { type: string, description: Looping animated WebP at the asset's own aspect (1:1 to 4:1) }
+        preview_width: { type: integer }
+        preview_height: { type: integer }
+        poster_url: { type: string, description: "Lottie only: a still at the preview's size" }
+        files:
+          type: array
+          description: What Drift installs. The main file is the .json (Lottie) or .glb.
+          items:
+            type: object
+            required: [role, name, size, sha256, url]
+            properties:
+              role: { type: string, enum: [meta, main, thumbnail] }
+              name: { type: string }
+              size: { type: integer }
+              sha256: { type: string }
+              url: { type: string }
+        width: { type: integer, description: "Lottie canvas width" }
+        height: { type: integer }
+        duration: { type: number, description: seconds }
+        playback: { type: string, enum: [loop, intro-hold, intro-hold-outro] }
+        slots: { type: object, additionalProperties: { type: string }, description: "Lottie colour slot id to default #RRGGBB" }
+        text_area: { type: array, items: { type: number }, description: "[x, y, w, h] in canvas pixels" }
+        text_areas: { type: object, additionalProperties: { type: array, items: { type: number } } }
+        anchor: { type: string, description: "Face props: tracking anchor" }
+        params: { type: object, description: "Face props: fitted face_props effect params" }
+        animation:
+          type: object
+          description: "3D objects: the looping glTF animation"
+          properties:
+            name: { type: string }
+            duration: { type: number }
+            loop: { type: boolean }
+        variants:
+          type: array
+          description: |
+            Designs of this asset, the default first. Present only for Drift
+            after 0.7.0. Each entry repeats the fields a client needs to preview
+            and install that design, including its own files.
+          items:
+            $ref: "#/components/schemas/PackVariant"
+
+    PackVariant:
+      type: object
+      required: [id, name, thumb_url, preview_url, preview_width, preview_height, files]
+      properties:
+        id: { type: string, description: "Design id, not the asset id" }
+        name: { type: string }
+        description: { type: string }
+        tags: { type: array, items: { type: string } }
+        thumb_url: { type: string }
+        preview_url: { type: string }
+        preview_width: { type: integer }
+        preview_height: { type: integer }
+        poster_url: { type: string }
+        files:
+          type: array
+          items:
+            type: object
+            required: [role, name, size, sha256, url]
+            properties:
+              role: { type: string, enum: [meta, main, thumbnail] }
+              name: { type: string }
+              size: { type: integer }
+              sha256: { type: string }
+              url: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        duration: { type: number }
+        playback: { type: string, enum: [loop, intro-hold, intro-hold-outro] }
+        slots: { type: object, additionalProperties: { type: string } }
+        text_area: { type: array, items: { type: number } }
+        text_areas: { type: object, additionalProperties: { type: array, items: { type: number } } }
+        params: { type: object }
+        animation:
+          type: object
+          properties:
+            name: { type: string }
+            duration: { type: number }
+            loop: { type: boolean }
 
     MediaType:
       type: object

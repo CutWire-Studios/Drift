@@ -18,6 +18,7 @@
 #include "models/LayoutStore.h"
 #include "models/MarketClient.h"
 #include "models/DriftAssetStore.h"
+#include "models/SfxLibrary.h"
 #include "models/UpdateChecker.h"
 #include "engine/VaapiZeroCopy.h"
 #include "ClipPreviewImageProvider.h"
@@ -674,6 +675,7 @@ int main(int argc, char *argv[])
     marketClient.setAssetLibrary(&assetLibrary);
     editorState.setMarketClient(&marketClient);
     static DriftAssetStore driftAssets(&marketClient, &assetLibrary, &editorState);
+    static SfxLibrary sfxLibrary(&marketClient, &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.binFolderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
@@ -682,6 +684,7 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Market", &marketClient);
     qmlRegisterSingletonInstance("Drift", 1, 0, "DriftAssets", &driftAssets);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Sfx", &sfxLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Updates", &updateChecker);
     qmlRegisterSingletonInstance("Drift", 1, 0, "LayoutMemory", &layoutStore);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);

@@ -51,9 +51,24 @@ Rectangle {
             player.stop()
     }
 
+    // Fixed above the scrolling body so Back is always in reach. The phone sheet has none.
+    IconButton {
+        id: backButton
+        x: Theme.pagePadding
+        y: Theme.spacingSm
+        visible: !root.compact
+        glyph: Theme.icons.chevronLeft
+        tooltip: qsTr("Back to results")
+        onClicked: root.backRequested()
+    }
+
     Flickable {
         id: flick
-        anchors.fill: parent
+        anchors.top: backButton.visible ? backButton.bottom : parent.top
+        anchors.topMargin: backButton.visible ? Theme.spacingSm : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
         contentHeight: body.implicitHeight + Theme.spacing3xl
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -64,13 +79,6 @@ Rectangle {
             x: root.compact ? Theme.androidPagePadding : Theme.pagePadding
             width: flick.width - x * 2
             spacing: Theme.spacingXl
-
-            IconButton {
-                visible: !root.compact
-                glyph: Theme.icons.chevronLeft
-                tooltip: qsTr("Back to results")
-                onClicked: root.backRequested()
-            }
 
             Rectangle {
                 width: parent.width

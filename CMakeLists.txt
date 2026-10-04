@@ -836,6 +836,8 @@ qt_add_executable(drift
     src/models/MarketClient.cpp
     src/models/DriftAssetStore.h
     src/models/DriftAssetStore.cpp
+    src/models/SfxLibrary.h
+    src/models/SfxLibrary.cpp
     src/models/VersionCompare.h
     src/models/UpdateChecker.h
     src/models/UpdateChecker.cpp
@@ -1097,6 +1099,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/DriftAssetCard.qml
         src/qml/components/assets/DriftAssetDetail.qml
         src/qml/components/assets/StockBrowser.qml
+        src/qml/components/assets/SfxBrowser.qml
         src/qml/components/assets/StockThumb.qml
         src/qml/components/assets/StockItemDetail.qml
         src/qml/components/assets/BinBreadcrumb.qml

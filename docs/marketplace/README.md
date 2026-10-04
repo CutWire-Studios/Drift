@@ -63,6 +63,7 @@ Every call to `/api/v1` carries:
 | `X-Cutwire-Nonce` | 32 lowercase hex chars (16 random bytes) |
 | `X-Cutwire-Signature` | lowercase hex HMAC-SHA256 of the canonical string |
 | `X-Cutwire-App` | `Drift/<version> (<os>)` |
+| `X-Cutwire-Distribution` | package type: `windows`, `windows-store`, `macos`, `appimage`, `flatpak`, `flathub`, `arch`, `android-github`, `android-play` or `source`. Optional (older builds omit it and count as `unknown`); not signed |
 | `Authorization` | `Bearer <access_token>` when the device is linked; omit otherwise |
 
 Canonical string, UTF-8, `\n` separators, no trailing newline:
@@ -212,4 +213,4 @@ HMAC + stable fingerprint stops casual identity spinning. It does not stop a mod
 - Cap requests per IP as well as per `client_id`.
 - Bound concurrent download jobs per client.
 - Expire file URLs quickly.
-- Log `X-Cutwire-App` for crash/version correlation, not as an access control.
+- Log `X-Cutwire-App` for crash/version correlation, not as an access control. `GET /assets` does read the version out of it, only to choose a response shape: Drift 0.7.0 (and anything that does not identify as newer) is sent one asset per design, and later releases are sent a `variants` array.

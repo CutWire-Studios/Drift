@@ -20,6 +20,14 @@ Required headers: `X-Cutwire-Client`, `X-Cutwire-Timestamp`, `X-Cutwire-Nonce`, 
 
 Optional: `Authorization: Bearer <access_token>` after the user links a device from the website.
 
+Optional: `X-Cutwire-Distribution` (see the README). A `provider_settings` row's `hidden_for` list, edited in the PocketBase admin UI, removes that source from catalog, search, item, resolve and download for the listed distributions. Hiding is for store moderation, not access control: the header is unsigned.
+
+Drift Assets (`GET /api/v1/assets`, files under `/drift-assets/{version}/…`) are mirrored from the Drift-Assets GitHub release (`DRIFT_ASSETS_SOURCE`, re-checked every `DRIFT_ASSETS_SYNC_INTERVAL`), sha256-verified against its `index.json`. Per-category `enabled` / `hidden_for` live in `asset_categories`, seeded on each sync. The caller's `X-Cutwire-App` version chooses the pack shape: 0.7.0 receives each design as its own asset, and later releases receive a `variants` array. The website reads the same pack at `GET /api/web/v1/assets`, always in the variants shape, and with no distribution of its own so every enabled category is listed.
+
+Sound effects (`GET /api/v1/sfx`, files under `/sfx-files/{previews,library}/…`) come from `sfx.json` in `MARKET_SFX_DIR`, synced by the ansible repo's sfx playbook and re-read when it changes. Per-category `enabled` / `label` / `sort` / `hidden_for` live in `sfx_categories`. A category gets its row the first time the index lists it, enabled but hidden from `android-play` and `unknown` until someone reviews it. The website reads the same library at `GET /api/web/v1/sfx` with relative URLs, and every enabled category is listed.
+
+Sound effects are website-only for now: `GET /api/web/v1/sfx` lists them and `/sfx-files/previews/…` (Opus, immutable) and `/sfx-files/library/…` (original FLAC, sent as an attachment) serve the files. Nothing is mirrored: `MARKET_SFX_DIR` (default `$MARKET_DATA_DIR/sfx`) holds `sfx.json`, `library/` and `previews/`, built by `scripts/build-sfx.py` and synced by `playbooks/sfx.yml` in the ansible repo. A changed `sfx.json` is picked up on the next request.
+
 Do **not** require HMAC on the CDN file URL you return when a download job is ready.
 
 ## Endpoints to implement

@@ -273,41 +273,49 @@ Item {
 
     // --- One category, all of it --------------------------------------------------------------
 
-    Flickable {
+    // The back row stays put above the grid rather than scrolling away with it.
+    Item {
         id: categoryPage
         anchors.fill: parent
         visible: root.query.length === 0 && root.openCategory.length > 0
-        contentHeight: categoryColumn.implicitHeight + Theme.spacing3xl
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        ScrollBar.vertical: AppScrollBar { }
 
-        Column {
-            id: categoryColumn
+        Row {
+            id: categoryHeader
             x: root.sidePadding
-            width: categoryPage.width - root.sidePadding * 2
-            spacing: Theme.spacingXl
             topPadding: Theme.spacingSm
-
-            Row {
-                spacing: Theme.spacingSm
-                IconButton {
-                    glyph: Theme.icons.chevronLeft
-                    tooltip: qsTr("All assets")
-                    onClicked: root.openCategory = ""
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: root.categoryLabel(root.openCategory)
-                    color: Theme.panelForeground
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeBase
-                    font.weight: Font.DemiBold
-                }
+            bottomPadding: Theme.spacingSm
+            spacing: Theme.spacingSm
+            IconButton {
+                glyph: Theme.icons.chevronLeft
+                tooltip: qsTr("All assets")
+                onClicked: root.openCategory = ""
             }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.categoryLabel(root.openCategory)
+                color: Theme.panelForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeBase
+                font.weight: Font.DemiBold
+            }
+        }
+
+        Flickable {
+            id: categoryFlick
+            anchors.top: categoryHeader.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            contentHeight: categoryFlow.implicitHeight + Theme.spacingSm + Theme.spacing3xl
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            ScrollBar.vertical: AppScrollBar { }
 
             Flow {
-                width: parent.width
+                id: categoryFlow
+                x: root.sidePadding
+                y: Theme.spacingSm
+                width: categoryFlick.width - root.sidePadding * 2
                 spacing: Theme.spacingXl
 
                 Repeater {
