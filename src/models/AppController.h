@@ -955,6 +955,9 @@ public:
     // Writes an image asset (a freeze frame, typically) out to `url`. The format follows the
     // destination's extension, so the picker's name filter never has to be reported back.
     Q_INVOKABLE bool exportAssetImage(int assetIndex, const QUrl &url);
+    // Copies the asset's file to `url` byte for byte. Asynchronous: true only means the copy
+    // started, and the outcome arrives as assetSaveFinished.
+    Q_INVOKABLE bool saveAssetAs(int assetIndex, const QUrl &url);
     // Rewrites the bin row: trim [inSeconds, outSeconds] and crop in display-normalized 0..1.
     // outSeconds < 0 means through the end. The original name is kept. Asynchronous; the
     // outcome arrives as assetEditFinished, and the row is then rebound via replace.
@@ -1944,6 +1947,8 @@ public:
     // the model still has it at its old position, so those two targets sit right under the
     // pointer at the start of every move.
     Q_INVOKABLE double snapTime(double seconds, const QString &excludeClipId = {}) const;
+    // Snapping pulls within a fixed on-screen distance, so the timeline reports its zoom here.
+    Q_INVOKABLE void setSnapRadius(double pixels, double pxPerSecond);
     Q_INVOKABLE QVariantList waveformPeaks(const QString &path) const;
     // Whole-file peaks sliced to a source window, for a dialog whose x axis is a clip's trimmed
     // range rather than the whole file. Shares the dense cache and the waveformReady signal with
@@ -2310,6 +2315,7 @@ signals:
     void assetEditChanged();
     void assetEditFinished(bool ok, const QString &message);
     void assetCopyRendered(const QString &assetId);
+    void assetSaveFinished(bool ok, const QString &name);
     // File actions from the shortcut layer — QML owns dialogs and unsaved prompts.
     void newProjectRequested();
     void openRequested();
@@ -2331,11 +2337,15 @@ protected:
         bool changed = false;
         int outcome = 0;
         drift::Clip clip;
+        // With ripple on, everything at or after rippleFrom on the clip's tracks moves by
+        // rippleDelta when the trim is applied.
+        drift::TimeUs rippleFrom = 0;
+        drift::TimeUs rippleDelta = 0;
     };
     TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart) const;
     TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd) const;
     int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed);
-    static QVariantMap trimPreviewToMap(const TrimComputation &computed);
+    QVariantMap trimPreviewToMap(int trackIndex, int clipIndex, const TrimComputation &computed) const;
 
     void notifyTracksChanged();
 
@@ -2765,6 +2775,7 @@ protected:
     bool m_scrubbing = false;
     bool m_snapEnabled = true;
     bool m_rippleEnabled = false;
+    drift::TimeUs m_snapThresholdUs = drift::kSnapThresholdUs;
     bool m_allowClipOverlap = false;
     bool m_loopWorkAreaEnabled = false;
     bool m_darkModeOverridden = false;

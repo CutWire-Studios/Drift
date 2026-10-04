@@ -2,7 +2,9 @@
 
 #include <QColor>
 #include <QObject>
+#include <QSet>
 #include <QString>
+#include <QStringList>
 #include <QVariantMap>
 
 // Per-panel state every track's clip renderer reads: the viewport, the zoom, the theme, and the
@@ -38,6 +40,9 @@ class TimelineViewState : public QObject
     Q_PROPERTY(double trimFollowDuration MEMBER m_trimFollowDuration NOTIFY trimFollowChanged)
     Q_PROPERTY(double trimFollowIn MEMBER m_trimFollowIn NOTIFY trimFollowChanged)
     Q_PROPERTY(double trimFollowOut MEMBER m_trimFollowOut NOTIFY trimFollowChanged)
+    // The clips a rippling trim will push along, and by how much, while the drag is live.
+    Q_PROPERTY(QStringList rippleShiftIds READ rippleShiftIdList WRITE setRippleShiftIds NOTIFY trimFollowChanged)
+    Q_PROPERTY(double rippleShiftDelta MEMBER m_rippleShiftDelta NOTIFY trimFollowChanged)
 
     Q_PROPERTY(int effectDropTrack MEMBER m_effectDropTrack NOTIFY gestureChanged)
     Q_PROPERTY(int effectDropClip MEMBER m_effectDropClip NOTIFY gestureChanged)
@@ -125,6 +130,17 @@ public:
     double trimFollowDuration() const { return m_trimFollowDuration; }
     double trimFollowIn() const { return m_trimFollowIn; }
     double trimFollowOut() const { return m_trimFollowOut; }
+    QStringList rippleShiftIdList() const { return QStringList(m_rippleShiftIds.cbegin(), m_rippleShiftIds.cend()); }
+    void setRippleShiftIds(const QStringList &ids)
+    {
+        QSet<QString> next(ids.cbegin(), ids.cend());
+        if (next == m_rippleShiftIds)
+            return;
+        m_rippleShiftIds = std::move(next);
+        emit trimFollowChanged();
+    }
+    const QSet<QString> &rippleShiftIds() const { return m_rippleShiftIds; }
+    double rippleShiftDelta() const { return m_rippleShiftDelta; }
     int effectDropTrack() const { return m_effectDropTrack; }
     int effectDropClip() const { return m_effectDropClip; }
 
@@ -154,6 +170,8 @@ private:
     double m_trimFollowDuration = 0.0;
     double m_trimFollowIn = 0.0;
     double m_trimFollowOut = 0.0;
+    QSet<QString> m_rippleShiftIds;
+    double m_rippleShiftDelta = 0.0;
     int m_effectDropTrack = -1;
     int m_effectDropClip = -1;
     QVariantMap m_styleMap;

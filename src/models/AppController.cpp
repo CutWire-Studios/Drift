@@ -5253,32 +5253,112 @@ bool AppController::exportAssetImage(int assetIndex, const QUrl &url)
 
     // The path the picker returned is written to exactly as given — see FileDialogs::saveFile for
     // why appending a suffix to it would write somewhere the document portal never registered.
+    // On Android it is a content:// URI, whose path carries no extension: the format comes from
+    // the document's display name instead.
+    const bool contentUri = AndroidUri::isContentUri(url);
     const QString destPath = url.isLocalFile() ? url.toLocalFile() : QString();
-    if (destPath.isEmpty())
+    if (!contentUri && destPath.isEmpty())
         return false;
 
-    const QString suffix = QFileInfo(destPath).suffix().toLower();
+    const QString destName = contentUri ? AndroidUri::displayName(url) : destPath;
+    const QString suffix = QFileInfo(destName).suffix().toLower();
     const bool jpeg = suffix == QLatin1String("jpg") || suffix == QLatin1String("jpeg");
 
     // Same format in and out: copy the bytes rather than decode and re-encode, so a freeze frame
     // saved as PNG comes out pixel-for-pixel what the compositor produced.
-    if (!jpeg && suffix == QFileInfo(sourcePath).suffix().toLower()) {
+    const bool copyBytes = !jpeg && suffix == QFileInfo(sourcePath).suffix().toLower();
+    if (copyBytes && !contentUri) {
         QFile::remove(destPath); // The picker already confirmed the overwrite; copy() won't clobber.
         return QFile::copy(sourcePath, destPath);
     }
 
-    QImage image(sourcePath);
-    if (image.isNull())
-        return false;
-
-    if (jpeg) {
+    QImage image;
+    if (!copyBytes) {
+        image.load(sourcePath);
+        if (image.isNull())
+            return false;
         // JPEG has no alpha, and Qt writes transparent pixels as black without this.
-        if (image.hasAlphaChannel())
+        if (jpeg && image.hasAlphaChannel())
             image = image.convertToFormat(QImage::Format_RGB32);
-        return image.save(destPath, "JPG", 95);
     }
 
-    return image.save(destPath, "PNG");
+    if (!contentUri)
+        return jpeg ? image.save(destPath, "JPG", 95) : image.save(destPath, "PNG");
+
+    const bool disposable = writeTargetIsDisposable(url);
+    std::unique_ptr<QFile> dst = AndroidUri::openForWrite(url);
+    bool ok = false;
+    if (dst) {
+        if (copyBytes) {
+            QFile src(sourcePath);
+            if (src.open(QIODevice::ReadOnly)) {
+                const QByteArray bytes = src.readAll();
+                ok = src.error() == QFile::NoError && dst->write(bytes) == bytes.size();
+            }
+        } else {
+            ok = jpeg ? image.save(dst.get(), "JPG", 95) : image.save(dst.get(), "PNG");
+        }
+        // See commitWriteTarget: a cloud provider only commits when the descriptor closes.
+        ok = ok && dst->flush();
+        dst->close();
+        ok = ok && dst->error() == QFile::NoError;
+    }
+    if (!ok && disposable)
+        AndroidUri::deleteDocument(url);
+    return ok;
+}
+
+bool AppController::saveAssetAs(int assetIndex, const QUrl &url)
+{
+    if (!m_assetLibrary)
+        return false;
+
+    const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
+    const QString name = asset.value(QStringLiteral("name")).toString();
+    const QString sourcePath = asset.value(QStringLiteral("path")).toString();
+    if (sourcePath.isEmpty() || !QFileInfo(sourcePath).isFile())
+        return false;
+
+    const bool contentUri = AndroidUri::isContentUri(url);
+    const QString destPath = url.isLocalFile() ? url.toLocalFile() : QString();
+    if (!contentUri && destPath.isEmpty())
+        return false;
+    const bool disposable = writeTargetIsDisposable(url);
+
+    (void)QtConcurrent::run([this, sourcePath, destPath, url, contentUri, disposable, name]() {
+        bool ok = false;
+        if (contentUri) {
+            constexpr qint64 kChunk = 1024 * 1024;
+            QFile src(sourcePath);
+            std::unique_ptr<QFile> dst = AndroidUri::openForWrite(url);
+            if (dst && src.open(QIODevice::ReadOnly)) {
+                ok = true;
+                for (QByteArray chunk = src.read(kChunk); !chunk.isEmpty(); chunk = src.read(kChunk)) {
+                    if (dst->write(chunk) != chunk.size()) {
+                        ok = false;
+                        break;
+                    }
+                }
+                // See commitWriteTarget: the tail is only flushed, and a cloud provider only
+                // commits, when the descriptor closes.
+                ok = ok && src.error() == QFile::NoError && dst->flush();
+                dst->close();
+                ok = ok && dst->error() == QFile::NoError;
+            }
+            if (!ok && disposable)
+                AndroidUri::deleteDocument(url);
+        } else if (QFileInfo(destPath).canonicalFilePath() == QFileInfo(sourcePath).canonicalFilePath()) {
+            // Saving a file over itself: the remove below would delete the only copy.
+            ok = true;
+        } else {
+            QFile::remove(destPath); // The picker already confirmed the overwrite; copy() won't clobber.
+            ok = QFile::copy(sourcePath, destPath);
+        }
+
+        QMetaObject::invokeMethod(
+            this, [this, ok, name]() { emit assetSaveFinished(ok, name); }, Qt::QueuedConnection);
+    });
+    return true;
 }
 
 void AppController::cancelAssetEdit()
@@ -7221,7 +7301,15 @@ QString AppController::filmstripTileUrl(const QString &path, int level, double i
 double AppController::snapTime(double seconds, const QString &excludeClipId) const
 {
     return drift::usToSeconds(drift::snapTime(m_project, drift::secondsToUs(seconds), m_snapEnabled,
-                                              m_playheadUs, extraSnapTargetsCached(), excludeClipId));
+                                              m_playheadUs, extraSnapTargetsCached(), excludeClipId,
+                                              m_snapThresholdUs));
+}
+
+void AppController::setSnapRadius(double pixels, double pxPerSecond)
+{
+    if (pixels <= 0.0 || pxPerSecond <= 0.0)
+        return;
+    m_snapThresholdUs = qMax<drift::TimeUs>(1, drift::secondsToUs(pixels / pxPerSecond));
 }
 
 drift::TimeUs AppController::clipDurationForAssetIndex(int assetIndex) const
@@ -8341,9 +8429,9 @@ const QList<drift::TimeUs> &AppController::extraSnapTargetsCached() const
 drift::TimeUs AppController::snapTimeForGesture(drift::TimeUs rawUs) const
 {
     if (m_trimGestureActive)
-        return drift::snapTimeTo(m_gestureSnapTargets, rawUs, m_snapEnabled);
+        return drift::snapTimeTo(m_gestureSnapTargets, rawUs, m_snapEnabled, m_snapThresholdUs);
     return drift::snapTime(m_project, rawUs, m_snapEnabled, m_playheadUs,
-                           extraSnapTargetsCached());
+                           extraSnapTargetsCached(), {}, m_snapThresholdUs);
 }
 
 void AppController::beginTrimGesture(int trackIndex, int clipIndex, int side)
@@ -8388,8 +8476,20 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
     // Whether the edge landed where the pointer asked or was pulled onto a snap target is the
     // difference between the two feelings Haptics offers.
     const int movedOutcome = (snappedStart != rawUs) ? TrimSnapped : TrimMoved;
+    // With ripple on the left edge stays put and everything after the clip moves instead, the
+    // way trimClipGroupAt closes the leading gap -- so extending cannot run into a neighbour.
+    const drift::TimeUs oldStart = clip.timelineStart;
+    const drift::TimeUs oldEnd = clip.timelineEnd();
+    const drift::TimeUs oldDuration = clip.timelineDuration;
+    const auto finishRipple = [&](drift::Clip &trimmed) {
+        if (!m_rippleEnabled)
+            return;
+        trimmed.timelineStart = oldStart;
+        out.rippleFrom = oldEnd;
+        out.rippleDelta = trimmed.timelineDuration - oldDuration;
+    };
     // Extending left can create a new overlap; clamp against neighbors when overlap is off.
-    if (!m_allowClipOverlap && snappedStart < clip.timelineStart) {
+    if (!m_allowClipOverlap && !m_rippleEnabled && snappedStart < clip.timelineStart) {
         const QSet<QString> exclude{clip.id};
         snappedStart = drift::clampClipStartAgainstLeftNeighbors(track, exclude, clip.timelineStart,
                                                                  snappedStart);
@@ -8423,6 +8523,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
             cue.endUs -= delta;
         }
         syncSyntheticSourceRange(clip);
+        finishRipple(clip);
         out.clip = clip;
         out.changed = true;
         out.outcome = movedOutcome;
@@ -8479,6 +8580,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
     }
 
     clip.syncDurationFromSpeedCurve();
+    finishRipple(clip);
     out.clip = clip;
     out.changed = true;
     out.outcome = movedOutcome;
@@ -8502,10 +8604,13 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
 
     const drift::TimeUs rawUs = drift::secondsToUs(newEnd);
     drift::TimeUs snappedEnd = snapTimeForGesture(rawUs);
-    if (!m_allowClipOverlap && snappedEnd > clip.timelineEnd()) {
+    // With ripple on, extending pushes the followers along rather than stopping at them.
+    if (!m_allowClipOverlap && !m_rippleEnabled && snappedEnd > clip.timelineEnd()) {
         const QSet<QString> exclude{clip.id};
         snappedEnd = drift::clampClipEndNoOverlap(track, exclude, clip.timelineEnd(), snappedEnd);
     }
+    const drift::TimeUs oldEnd = clip.timelineEnd();
+    const drift::TimeUs oldDuration = clip.timelineDuration;
     drift::TimeUs newDuration = snappedEnd - clip.timelineStart;
 
     const bool syntheticVisual = isSyntheticTimelineClip(clip.type);
@@ -8539,17 +8644,53 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
         clip.srcOut = qMin(clip.srcIn + span, maxSrcOut);
     }
     clip.syncDurationFromSpeedCurve();
+    if (m_rippleEnabled) {
+        out.rippleFrom = oldEnd;
+        out.rippleDelta = clip.timelineDuration - oldDuration;
+    }
     out.clip = clip;
     out.changed = true;
     out.outcome = movedOutcome;
     return out;
 }
 
-QVariantMap AppController::trimPreviewToMap(const TrimComputation &c)
+// The clips a trim's ripple would move, for the live preview. Mirrors what applyTrim hands to
+// rippleTracksFrom: followers on the clip's and its partners' tracks, plus their own partners.
+static QStringList rippleFollowerIds(const drift::Project &project, int trackIndex, int clipIndex,
+                                     drift::TimeUs fromUs)
+{
+    const drift::Clip &clip = project.tracks().at(trackIndex).clips.at(clipIndex);
+    QSet<int> tracks{trackIndex};
+    QSet<QString> exclude{clip.id};
+    for (const drift::ClipRef &ref : drift::linkedPartners(project, clip)) {
+        tracks.insert(ref.trackIndex);
+        exclude.insert(project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
+    }
+    QSet<QString> moved;
+    for (const int t : std::as_const(tracks)) {
+        for (const drift::Clip &follower : project.tracks().at(t).clips) {
+            if (exclude.contains(follower.id) || follower.timelineStart < fromUs)
+                continue;
+            moved.insert(follower.id);
+            for (const drift::ClipRef &ref : drift::linkedPartners(project, follower))
+                moved.insert(project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
+        }
+    }
+    moved.subtract(exclude);
+    return QStringList(moved.cbegin(), moved.cend());
+}
+
+QVariantMap AppController::trimPreviewToMap(int trackIndex, int clipIndex,
+                                            const TrimComputation &c) const
 {
     if (!c.ok)
         return QVariantMap{{QStringLiteral("ok"), false}};
+    const QStringList rippleIds = c.changed && c.rippleDelta != 0
+                                      ? rippleFollowerIds(m_project, trackIndex, clipIndex, c.rippleFrom)
+                                      : QStringList();
     return QVariantMap{
+        {QStringLiteral("rippleIds"), rippleIds},
+        {QStringLiteral("rippleDelta"), drift::usToSeconds(c.rippleDelta)},
         {QStringLiteral("ok"), true},
         {QStringLiteral("changed"), c.changed},
         {QStringLiteral("outcome"), c.outcome},
@@ -8562,12 +8703,12 @@ QVariantMap AppController::trimPreviewToMap(const TrimComputation &c)
 
 QVariantMap AppController::previewTrimLeft(int trackIndex, int clipIndex, double newStart) const
 {
-    return trimPreviewToMap(computeTrimLeft(trackIndex, clipIndex, newStart));
+    return trimPreviewToMap(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart));
 }
 
 QVariantMap AppController::previewTrimRight(int trackIndex, int clipIndex, double newEnd) const
 {
-    return trimPreviewToMap(computeTrimRight(trackIndex, clipIndex, newEnd));
+    return trimPreviewToMap(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd));
 }
 
 // Writes a computed trim back to the project and brings everything that hangs off the clip with
@@ -8588,6 +8729,19 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
     // guarding on it here skipped the partner sync for every linked audio clip.
     if (!clip.linkId.isEmpty())
         syncLinkedPartnersFrom(m_project, clip);
+    if (computed.rippleDelta != 0) {
+        QSet<int> tracks{trackIndex};
+        QSet<QString> ids{clip.id};
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
+            tracks.insert(ref.trackIndex);
+            ids.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
+        }
+        rippleTracksFrom(m_project, tracks, computed.rippleFrom, computed.rippleDelta, ids);
+        for (const int t : std::as_const(tracks)) {
+            if (t != trackIndex)
+                syncOverlapTransitionsOnTrack(m_project.tracks()[t]);
+        }
+    }
     syncOverlapTransitionsOnTrack(track);
     // A pinned adjustment takes its extent from its clip, so it has to be brought along here --
     // this path does not always reach finishEdit.

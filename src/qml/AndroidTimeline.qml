@@ -245,6 +245,7 @@ Item {
     readonly property real minZoom: 0.0001
     readonly property real maxZoom: 40.0
     readonly property real pxPerSecond: Theme.pixelsPerSecondBase * zoom
+    onPxPerSecondChanged: EditorState.setSnapRadius(14, pxPerSecond)
     // Trailing runway after the last clip: a constant strip of viewport, not a fixed
     // number of seconds, so it does not become 10000px of dead scroll when zoomed in.
     readonly property real timelineEndPadPx: Math.max(
@@ -429,6 +430,8 @@ Item {
         trimFollowDuration: root.trimFollowDuration
         trimFollowIn: root.trimFollowIn
         trimFollowOut: root.trimFollowOut
+        rippleShiftIds: root.rippleShiftIds
+        rippleShiftDelta: root.rippleShiftDelta
         effectDropTrack: root.effectDropTrackIndex
         effectDropClip: root.effectDropClipIndex
         style: ({
@@ -517,8 +520,13 @@ Item {
     property real trimFollowDuration: 0
     property real trimFollowIn: 0
     property real trimFollowOut: 0
+    // With ripple on, the clips the trim will push along and by how much. The map is for
+    // per-clip lookups in QML; the list feeds the scene-graph renderer.
+    property var rippleShiftIds: []
+    property var rippleShiftMap: ({})
+    property real rippleShiftDelta: 0
 
-    function setTrimFollow(linkId, clipId, start, duration, inPoint, outPoint) {
+    function setTrimFollow(linkId, clipId, start, duration, inPoint, outPoint, rippleIds, rippleDelta) {
         trimFollowLinkId = linkId || ""
         trimFollowClipId = clipId || ""
         trimFollowStart = start
@@ -526,12 +534,24 @@ Item {
         trimFollowIn = inPoint
         trimFollowOut = outPoint
         trimFollowActive = trimFollowLinkId !== ""
+        const ids = rippleIds || []
+        if (ids.join("\n") !== rippleShiftIds.join("\n")) {
+            const map = {}
+            for (let i = 0; i < ids.length; ++i)
+                map[ids[i]] = true
+            rippleShiftMap = map
+            rippleShiftIds = ids
+        }
+        rippleShiftDelta = ids.length > 0 ? (rippleDelta || 0) : 0
     }
 
     function clearTrimFollow() {
         trimFollowActive = false
         trimFollowLinkId = ""
         trimFollowClipId = ""
+        rippleShiftIds = []
+        rippleShiftMap = {}
+        rippleShiftDelta = 0
     }
 
     property bool moveFollowActive: false
@@ -780,7 +800,10 @@ Item {
 
     // --- TouchDrag drop target ------------------------------------------------
 
-    Component.onCompleted: TouchDrag.registerTarget(root)
+    Component.onCompleted: {
+        TouchDrag.registerTarget(root)
+        EditorState.setSnapRadius(14, pxPerSecond)
+    }
     Component.onDestruction: TouchDrag.unregisterTarget(root)
 
     function touchDropContains(sceneX, sceneY) {

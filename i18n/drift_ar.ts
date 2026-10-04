@@ -4781,6 +4781,30 @@
         <translation>“%1” مُستخدم في %2 من المقاطع على المخطط الزمني. ستؤدي إزالة هذه الوسائط أيضًا إلى إزالة تلك المقاطع وأي انتقالات متصلة بها. لن تُحذف الملفات من القرص.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>تعذر استيراد ذلك المجلد.</translation>
     </message>
@@ -8824,6 +8848,10 @@
     <message>
         <source>Export image…</source>
         <translation>تصدير صورة…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

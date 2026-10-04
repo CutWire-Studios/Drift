@@ -4695,6 +4695,30 @@
         <translation>“%1”은(는) 타임라인의 클립 %2개에서 사용 중입니다. 이 미디어를 제거하면 해당 클립들과 연결된 모든 전환도 제거됩니다. 디스크의 파일은 삭제되지 않습니다.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">모든 파일(*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>해당 폴더를 가져올 수 없습니다.</translation>
     </message>
@@ -8660,6 +8684,10 @@
     <message>
         <source>Export image…</source>
         <translation>이미지 내보내기…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

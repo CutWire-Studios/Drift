@@ -4695,6 +4695,30 @@
         <translation>“%1” được sử dụng bởi %2 clip trên dòng thời gian. Việc xóa phương tiện này cũng sẽ xóa các clip đó và mọi hiệu ứng chuyển cảnh được kết nối với chúng. Các tệp trên đĩa không bị xóa.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">Tất cả tệp (*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>Không thể nhập thư mục đó.</translation>
     </message>
@@ -8660,6 +8684,10 @@
     <message>
         <source>Export image…</source>
         <translation>Xuất hình ảnh…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

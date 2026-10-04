@@ -79,6 +79,8 @@ Item {
     signal renameRequested(int assetIndex)
     // Emitted from the card/row context menu, image rows only. The parent owns the save dialog.
     signal exportRequested(int assetIndex)
+    // Emitted from the card/row context menu. The parent owns the save dialog.
+    signal saveAsRequested(int assetIndex)
     // Emitted when the empty-state action asks to import media.
     signal importRequested()
     // Emitted when the empty-state action asks to import a whole folder. The parent owns the
@@ -919,6 +921,12 @@ Item {
                         onTriggered: root.exportRequested(assetIndex)
                     }
                     ThemedMenuItem {
+                        text: qsTr("Save As…")
+                        icon.name: Theme.icons.save
+                        visible: kind !== "composite" && root.selectedAssetIds.length <= 1
+                        onTriggered: root.saveAsRequested(assetIndex)
+                    }
+                    ThemedMenuItem {
                         text: root.selectedAssetIds.length > 1
                               ? qsTr("Remove %n items from project", "", root.selectedAssetIds.length)
                               : qsTr("Remove from project")
@@ -1388,6 +1396,12 @@ Item {
                     icon.name: Theme.icons.save
                     visible: kind === "image"
                     onTriggered: root.exportRequested(assetIndex)
+                }
+                ThemedMenuItem {
+                    text: qsTr("Save As…")
+                    icon.name: Theme.icons.save
+                    visible: kind !== "composite" && root.selectedAssetIds.length <= 1
+                    onTriggered: root.saveAsRequested(assetIndex)
                 }
                 ThemedMenuItem {
                     text: root.selectedAssetIds.length > 1

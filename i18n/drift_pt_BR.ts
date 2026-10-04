@@ -4713,6 +4713,30 @@
         <translation>Há %2 clipes na linha do tempo usando “%1”. Ao remover esta mídia, esses clipes e as transições associadas também serão removidos. O arquivo original no disco não será apagado.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">Todos os arquivos (*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>Não foi possível importar essa pasta.</translation>
     </message>
@@ -8692,6 +8716,10 @@
     <message>
         <source>Export image…</source>
         <translation>Exportar imagem…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

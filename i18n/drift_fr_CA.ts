@@ -4715,6 +4715,30 @@
         <translation>« %1 » est utilisé par %2 clips sur la ligne du temps. Supprimer ce média supprimera également ces clips et toutes les transitions qui leur sont associées. Les fichiers sur le disque ne sont pas supprimés.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">Tous les fichiers (*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>Impossible d&apos;importer ce fichier.</translation>
     </message>
@@ -8695,6 +8719,10 @@
     <message>
         <source>Export image…</source>
         <translation>Exporter l&apos;image…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

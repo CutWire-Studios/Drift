@@ -133,6 +133,8 @@ private slots:
     void splitLeftRightUndoRestoresTheDiscardedHalf();
     void splitLeftKeepsLinkedAudioInSync();
     void splitRightKeepsLinkedAudioInSync();
+    void edgeTrimRipplesFollowers();
+    void snapRadiusFollowsZoom();
     void splitLeftRightKeepOuterFades();
     void audioTrackTakesTransitions();
     void videoTransitionMirrorsToLinkedAudio();
@@ -9221,6 +9223,72 @@ void EditorStateTest::splitRightKeepsLinkedAudioInSync()
         QCOMPARE(state.project()->tracks().at(t).clips.at(0).timelineDuration, drift::secondsToUs(3.0));
         QCOMPARE(state.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(4.0));
     }
+}
+
+// #249: dragging a clip edge with "Close gaps when trimming" on used to leave the gap behind.
+void EditorStateTest::edgeTrimRipplesFollowers()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+    appendFollowerPair(*state.project());
+    state.setRippleEnabled(true);
+
+    const QVariantMap preview = state.previewTrimRight(0, 0, 3.0);
+    QCOMPARE(preview.value(QStringLiteral("rippleDelta")).toDouble(), -1.0);
+    QStringList previewIds = preview.value(QStringLiteral("rippleIds")).toStringList();
+    previewIds.sort();
+    QCOMPARE(previewIds, (QStringList{QStringLiteral("follow-audio"), QStringLiteral("follow-video")}));
+
+    state.trimClipRight(0, 0, 3.0);
+    for (int t = 0; t < 2; ++t) {
+        QCOMPARE(state.project()->tracks().at(t).clips.at(0).timelineDuration, drift::secondsToUs(3.0));
+        QCOMPARE(state.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(3.0));
+    }
+
+    // Extending pushes the followers back out instead of stopping at them.
+    state.trimClipRight(0, 0, 4.0);
+    for (int t = 0; t < 2; ++t) {
+        QCOMPARE(state.project()->tracks().at(t).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+        QCOMPARE(state.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    }
+
+    // The left edge stays put and the clip's content slides under it.
+    state.trimClipLeft(1, 0, 1.0);
+    for (int t = 0; t < 2; ++t) {
+        const drift::Clip &kept = state.project()->tracks().at(t).clips.at(0);
+        QCOMPARE(kept.timelineStart, 0);
+        QCOMPARE(kept.timelineDuration, drift::secondsToUs(3.0));
+        QCOMPARE(kept.srcIn, drift::secondsToUs(1.0));
+        QCOMPARE(state.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(3.0));
+    }
+
+    // Without ripple the trim leaves the gap, as before.
+    AppController plain(&library);
+    appendLinkedVideoAudioPair(*plain.project());
+    appendFollowerPair(*plain.project());
+    plain.setRippleEnabled(false);
+    QVERIFY(plain.previewTrimRight(0, 0, 3.0).value(QStringLiteral("rippleIds")).toStringList().isEmpty());
+    plain.trimClipRight(0, 0, 3.0);
+    plain.trimClipLeft(0, 0, 1.0);
+    for (int t = 0; t < 2; ++t) {
+        QCOMPARE(plain.project()->tracks().at(t).clips.at(0).timelineStart, drift::secondsToUs(1.0));
+        QCOMPARE(plain.project()->tracks().at(t).clips.at(1).timelineStart, drift::secondsToUs(4.0));
+    }
+}
+
+// #249: a fixed 150 ms pull was under a pixel when zoomed out, so snapping looked switched off.
+void EditorStateTest::snapRadiusFollowsZoom()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+
+    QCOMPARE(state.snapTime(4.125), 4.0);
+    state.setSnapRadius(8.0, 1000.0); // 8 ms
+    QCOMPARE(state.snapTime(4.125), 4.125);
+    state.setSnapRadius(8.0, 10.0); // 800 ms
+    QCOMPARE(state.snapTime(4.5), 4.0);
 }
 
 void EditorStateTest::splitLeftRightKeepOuterFades()

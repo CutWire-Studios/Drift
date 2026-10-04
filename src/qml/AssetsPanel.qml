@@ -484,8 +484,37 @@ PanelFrame {
             Toasts.error(qsTr("Couldn’t export that image."))
     }
 
+    // Copies the file behind a bin row out to disk as is, no transcode.
+    function requestSaveAssetAs(assetIndex) {
+        const asset = AssetLibrary.assetAt(assetIndex)
+        if (!asset || !asset.path)
+            return
+        const fileName = asset.path.substring(asset.path.lastIndexOf("/") + 1)
+        const dot = fileName.lastIndexOf(".")
+        const suffix = dot > 0 ? fileName.substring(dot + 1) : ""
+        let baseName = asset.name || (dot > 0 ? fileName.substring(0, dot) : fileName)
+        if (suffix && baseName.toLowerCase().endsWith("." + suffix.toLowerCase()))
+            baseName = baseName.substring(0, baseName.length - suffix.length - 1)
+        const filters = suffix ? [qsTr("%1 file (*.%2)").arg(suffix.toUpperCase()).arg(suffix)]
+                               : [qsTr("All files (*)")]
+        var url = FileDialogs.saveFile(qsTr("Save As"), filters, baseName, suffix)
+        if (!url || url.toString() === "")
+            return
+        if (EditorState.saveAssetAs(assetIndex, url))
+            Toasts.info(qsTr("Saving “%1”…").arg(asset.name))
+        else
+            Toasts.error(qsTr("Couldn’t save “%1”.").arg(asset.name))
+    }
+
     Connections {
         target: EditorState
+
+        function onAssetSaveFinished(ok, name) {
+            if (ok)
+                Toasts.success(qsTr("Saved “%1”.").arg(name))
+            else
+                Toasts.error(qsTr("Couldn’t save “%1”.").arg(name))
+        }
 
         // Hitting the limit outranks the skipped count: the walk stopped early, so what it passed
         // over is only part of the story and saying both would suggest otherwise.
@@ -1190,6 +1219,7 @@ PanelFrame {
                         onReplaceRequested: (assetIndex) => root.requestReplaceAsset(assetIndex)
                         onRenameRequested: (assetIndex) => root.requestRenameAsset(assetIndex)
                         onExportRequested: (assetIndex) => root.requestExportAsset(assetIndex)
+                        onSaveAsRequested: (assetIndex) => root.requestSaveAssetAs(assetIndex)
                         onImportRequested: root.importMedia()
                         onImportFolderRequested: root.importFolder()
                         onMoveToFolderRequested: (assetIds) => root.requestMoveAssetToFolder(assetIds)

@@ -4713,6 +4713,30 @@
         <translation>“%1” කාලරේඛාවේ ක්ලිප් %2ක් මඟින් භාවිත වේ. මෙම මාධ්‍යය ඉවත් කිරීමෙන් එම ක්ලිප් සහ ඒවාට සම්බන්ධ සංක්‍රාන්ති ද ඉවත් වනු ඇත. තැටියේ ඇති ගොනු මකා නොදැමේ.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">සියලු ගොනු (*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>එම ෆෝල්ඩරය ආයාත කිරීමට නොහැකි විය.</translation>
     </message>
@@ -8692,6 +8716,10 @@
     <message>
         <source>Export image…</source>
         <translation>පින්තූරය නිර්යාත කරන්න…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

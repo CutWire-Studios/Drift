@@ -4731,6 +4731,30 @@
         <translation>„%1” jest używane przez %2 klipów na osi czasu. Usunięcie tych mediów usunie też te klipy i wszelkie powiązane przejścia. Pliki na dysku nie zostaną usunięte.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>Nie udało się zaimportować tego folderu.</translation>
     </message>
@@ -8724,6 +8748,10 @@
     <message>
         <source>Export image…</source>
         <translation>Eksportuj obraz…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

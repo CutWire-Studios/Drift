@@ -29,8 +29,9 @@ struct SnapTargets {
     bool isEmpty() const { return sorted.empty(); }
 };
 
-// Nearest target within kSnapThresholdUs, else `time` unchanged. O(log n).
-TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled);
+// Nearest target within thresholdUs, else `time` unchanged. O(log n).
+TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled,
+                  TimeUs thresholdUs = kSnapThresholdUs);
 
 // `extraTargets` are additional snap positions supplied by the caller — currently the
 // detected beat grid, which is analysis state rather than something the project stores.
@@ -39,7 +40,8 @@ TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled);
 // Convenience form for the callers that snap exactly once; a drag should build a SnapTargets
 // up front and call snapTimeTo() instead.
 TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
-                const QList<TimeUs> &extraTargets = {}, const QString &excludeClipId = {});
+                const QList<TimeUs> &extraTargets = {}, const QString &excludeClipId = {},
+                TimeUs thresholdUs = kSnapThresholdUs);
 
 TimeUs resolveClipStart(const Project &project, const Track &track, int excludeClipIndex,
                         TimeUs desiredStart, TimeUs duration, bool snapEnabled, TimeUs playheadUs,

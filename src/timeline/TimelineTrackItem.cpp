@@ -592,15 +592,27 @@ void TimelineTrackItem::onMoveFollowChanged()
 
 void TimelineTrackItem::onTrimFollowChanged()
 {
-    if (!m_viewState || !m_clips || !m_viewState->trimFollowActive())
+    if (!m_viewState || !m_clips)
         return;
+    const QSet<QString> &rippleIds = m_viewState->rippleShiftIds();
+    // A track that held ripple followers has to redraw when the set empties, to put them back.
+    const bool hadRipple = m_rippleShiftDrawn;
+    m_rippleShiftDrawn = false;
+    const bool follow = m_viewState->trimFollowActive();
     const QString &linkId = m_viewState->trimFollowLinkId();
+    bool rebuild = hadRipple;
     for (const TimelineClipsModel::Row &row : m_clips->rows()) {
-        if (!row.linkId.isEmpty() && row.linkId == linkId && row.id != m_viewState->trimFollowClipId()) {
-            scheduleRebuild();
-            return;
+        if (rippleIds.contains(row.id)) {
+            m_rippleShiftDrawn = true;
+            rebuild = true;
+            break;
         }
+        if (follow && !row.linkId.isEmpty() && row.linkId == linkId
+            && row.id != m_viewState->trimFollowClipId())
+            rebuild = true;
     }
+    if (rebuild)
+        scheduleRebuild();
 }
 
 void TimelineTrackItem::onViewChanged()
@@ -684,6 +696,8 @@ QRectF TimelineTrackItem::effectiveRect(int index, double *inPoint, double *outP
         duration = m_viewState->trimFollowDuration();
         in = m_viewState->trimFollowIn();
         out = m_viewState->trimFollowOut();
+    } else if (m_viewState->rippleShiftIds().contains(row.id)) {
+        start += m_viewState->rippleShiftDelta();
     }
     if (inPoint)
         *inPoint = in;

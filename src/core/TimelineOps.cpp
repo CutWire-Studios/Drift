@@ -28,7 +28,7 @@ void SnapTargets::build(const Project &project, TimeUs playheadUs,
     sorted.erase(std::unique(sorted.begin(), sorted.end()), sorted.end());
 }
 
-TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled)
+TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled, TimeUs thresholdUs)
 {
     if (!snapEnabled || targets.sorted.empty())
         return qMax<TimeUs>(0, time);
@@ -38,7 +38,7 @@ TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled)
     // was no more meaningful and only reachable at exact microsecond equidistance.
     const auto it = std::lower_bound(targets.sorted.begin(), targets.sorted.end(), time);
     TimeUs best = time;
-    TimeUs bestDistance = kSnapThresholdUs;
+    TimeUs bestDistance = thresholdUs;
     if (it != targets.sorted.begin()) {
         const TimeUs candidate = *(it - 1);
         const TimeUs distance = qAbs(candidate - time);
@@ -60,14 +60,14 @@ TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled)
 }
 
 TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
-                const QList<TimeUs> &extraTargets, const QString &excludeClipId)
+                const QList<TimeUs> &extraTargets, const QString &excludeClipId, TimeUs thresholdUs)
 {
     if (!snapEnabled)
         return qMax<TimeUs>(0, time);
 
     SnapTargets targets;
     targets.build(project, playheadUs, extraTargets, excludeClipId);
-    return snapTimeTo(targets, time, snapEnabled);
+    return snapTimeTo(targets, time, snapEnabled, thresholdUs);
 }
 
 TimeUs resolveClipStart(const Project &project, const Track &track, int excludeClipIndex,

@@ -4713,6 +4713,30 @@
         <translation>“%1” è utilizzato da %2 clip sulla timeline. La rimozione di questo elemento multimediale rimuoverà anche quelle clip e le eventuali transizioni a esse collegate. I file sul disco non vengono eliminati.</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">Tutti i file (*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>Impossibile importare quella cartella.</translation>
     </message>
@@ -8692,6 +8716,10 @@
     <message>
         <source>Export image…</source>
         <translation>Esporta immagine…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>

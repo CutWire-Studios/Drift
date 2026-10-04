@@ -256,6 +256,7 @@ private:
     timelinelayout::Window m_window;
     double m_builtPxPerSecond = 0.0;
     QHash<QString, LivePreview> m_livePreviews;
+    bool m_rippleShiftDrawn = false;
     QHash<QString, WaveCacheEntry> m_waveCache;
     QString m_hoverId;
     bool m_hoverBody = false;

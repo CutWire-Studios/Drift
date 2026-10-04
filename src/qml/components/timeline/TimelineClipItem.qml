@@ -83,6 +83,9 @@ Item {
                                                && !!clipData.linkId
                                                && clipData.linkId === panel.trimFollowLinkId
                                                && clipData.id !== panel.trimFollowClipId
+    // A clip after the one being trimmed, pushed along by ripple.
+    readonly property bool rippleShifted: panel.rippleShiftIds.length > 0
+                                          && panel.rippleShiftMap[clipData.id] === true
 
     function syncLivePreview() {
         if (trackClips)
@@ -97,6 +100,7 @@ Item {
 
     readonly property real effectiveStart: trimPreviewActive ? trimPreviewStart
                                            : trimFollowFollower ? panel.trimFollowStart
+                                           : rippleShifted ? (clipData.start || 0) + panel.rippleShiftDelta
                                            : (clipData.start || 0)
     readonly property real effectiveDuration: trimPreviewActive ? trimPreviewDuration
                                               : trimFollowFollower ? panel.trimFollowDuration
@@ -821,7 +825,8 @@ Item {
                     clipItem.trimPreviewOut = p.outPoint
                     clipItem.trimPreviewActive = true
                     panel.setTrimFollow(clipItem.clipData.linkId, clipItem.clipData.id,
-                                        p.start, p.duration, p.inPoint, p.outPoint)
+                                        p.start, p.duration, p.inPoint, p.outPoint,
+                                        p.rippleIds, p.rippleDelta)
                 }
                 Haptics.trimStep(p.ok ? p.outcome : 0)
             }
@@ -971,7 +976,8 @@ Item {
                     clipItem.trimPreviewOut = p.outPoint
                     clipItem.trimPreviewActive = true
                     panel.setTrimFollow(clipItem.clipData.linkId, clipItem.clipData.id,
-                                        p.start, p.duration, p.inPoint, p.outPoint)
+                                        p.start, p.duration, p.inPoint, p.outPoint,
+                                        p.rippleIds, p.rippleDelta)
                 }
                 Haptics.trimStep(p.ok ? p.outcome : 0)
             }

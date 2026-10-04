@@ -4695,6 +4695,30 @@
         <translation>「%1」はタイムライン上の %2 個のクリップで使用されています。このメディアを削除すると、それらのクリップおよびそれらに接続されているトランジションも削除されます。ディスク上のファイルは削除されません。</translation>
     </message>
     <message>
+        <source>%1 file (*.%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished">すべてのファイル (*)</translation>
+    </message>
+    <message>
+        <source>Save As</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving “%1”…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t import that folder.</source>
         <translation>フォルダーをインポートできませんでした。</translation>
     </message>
@@ -8660,6 +8684,10 @@
     <message>
         <source>Export image…</source>
         <translation>画像をエクスポート…</translation>
+    </message>
+    <message>
+        <source>Save As…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove from project</source>
