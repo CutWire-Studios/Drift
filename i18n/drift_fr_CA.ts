@@ -31,6 +31,18 @@
         <source>This is not a Drift effect file (%1).</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Another addon is still installing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is not a Drift addon file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not use this addon (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AddonManagerDialog</name>
@@ -55,14 +67,6 @@
         <translation>&quot;%1&quot; et ses données téléchargées seront supprimées. Vous pourrez le réinstaller plus tard.</translation>
     </message>
     <message>
-        <source>Import Effect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drift effect (*.driftfx)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Install this transition?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -79,7 +83,35 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Install Addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>“%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -125,10 +157,6 @@
     <message>
         <source>AI engine</source>
         <translation>Moteur IA</translation>
-    </message>
-    <message>
-        <source>Import effect file…</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Checking for extras…</source>
@@ -187,6 +215,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Unofficial</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 download</source>
         <translation>téléchargement de %1</translation>
     </message>
@@ -205,6 +241,22 @@
     <message>
         <source>Install</source>
         <translation>Installer</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Personnalisé</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>

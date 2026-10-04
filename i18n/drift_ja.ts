@@ -31,6 +31,18 @@
         <source>This is not a Drift effect file (%1).</source>
         <translation>これは Drift エフェクトファイルではありません (%1)。</translation>
     </message>
+    <message>
+        <source>Another addon is still installing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is not a Drift addon file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not use this addon (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>AddonManagerDialog</name>
@@ -55,14 +67,6 @@
         <translation>「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
     </message>
     <message>
-        <source>Import Effect</source>
-        <translation>エフェクトをインポート</translation>
-    </message>
-    <message>
-        <source>Drift effect (*.driftfx)</source>
-        <translation>Drift エフェクト (*.driftfx)</translation>
-    </message>
-    <message>
         <source>Install this transition?</source>
         <translation>このトランジションをインストールしますか?</translation>
     </message>
@@ -79,8 +83,36 @@
         <translation>「%1」(%2 作)</translation>
     </message>
     <message>
+        <source>Install Addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>“%1”</source>
         <translation>「%1」</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
@@ -125,10 +157,6 @@
     <message>
         <source>AI engine</source>
         <translation>AI エンジン</translation>
-    </message>
-    <message>
-        <source>Import effect file…</source>
-        <translation>エフェクトファイルをインポート…</translation>
     </message>
     <message>
         <source>Checking for extras…</source>
@@ -187,6 +215,14 @@
         <translation>Drift %1 以降が必要です</translation>
     </message>
     <message>
+        <source>Unofficial</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 download</source>
         <translation>%1 ダウンロード</translation>
     </message>
@@ -205,6 +241,22 @@
     <message>
         <source>Install</source>
         <translation>インストール</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">カスタム</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>
