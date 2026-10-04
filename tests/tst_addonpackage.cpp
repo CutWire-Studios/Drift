@@ -35,6 +35,9 @@ private slots:
     void installedAddonOutranksBundledContent();
     void installsForgeAudioEffectPackage();
     void writesUserPackageThatInstalls();
+    void classifiesSignatures();
+    void installsUnverifiedWhenAllowed();
+    void parsesFolderManifest();
 
 private:
     // Copy the fixture and flip one byte at `offset` (negative counts back from the end).
@@ -145,6 +148,49 @@ void TestAddonPackage::writesUserPackageThatInstalls()
     QFile installed(dest + QStringLiteral("/effects/tint/sub/main.frag"));
     QVERIFY(installed.open(QIODevice::ReadOnly));
     QCOMPARE(installed.readAll(), frag);
+}
+
+void TestAddonPackage::classifiesSignatures()
+{
+    QString error;
+    QCOMPARE(checkSignature(m_fixture, &error), SignatureCheck::Official);
+
+    const QString sig = corruptedCopy(QStringLiteral("classify-sig.driftpkg"), -8);
+    QCOMPARE(checkSignature(sig, &error), SignatureCheck::Unverified);
+
+    const QString payload = corruptedCopy(QStringLiteral("classify-payload.driftpkg"), -160);
+    QCOMPARE(checkSignature(payload, &error), SignatureCheck::Corrupt);
+    QVERIFY(!error.isEmpty());
+}
+
+void TestAddonPackage::installsUnverifiedWhenAllowed()
+{
+    const QString sig = corruptedCopy(QStringLiteral("allowed-sig.driftpkg"), -8);
+    const QString dest = m_tmp.filePath(QStringLiteral("allowed-sig"));
+    QString error;
+    QVERIFY2(install(sig, dest, {}, nullptr, &error, Container::Signed, false), qPrintable(error));
+    QVERIFY(QFile::exists(dest + QStringLiteral("/fonts/testfamily/family.json")));
+
+    // Lifting the signature requirement must not lift the content checks.
+    const QString payload = corruptedCopy(QStringLiteral("allowed-payload.driftpkg"), -160);
+    QVERIFY(!install(payload, m_tmp.filePath(QStringLiteral("allowed-payload")), {}, nullptr, &error,
+                     Container::Signed, false));
+}
+
+void TestAddonPackage::parsesFolderManifest()
+{
+    QString error;
+    const auto info = parseFolderManifest(
+        R"({"schema":1,"id":"my.fonts","version":"1.0.0","provides":[{"kind":"fonts","root":"fonts"}]})", &error);
+    QVERIFY2(info.has_value(), qPrintable(error));
+    QCOMPARE(info->id, QStringLiteral("my.fonts"));
+    QVERIFY(info->files.isEmpty());
+    QVERIFY(!hasNativeCode(*info));
+
+    QVERIFY(!parseFolderManifest(
+        R"({"schema":1,"id":"../escape","version":"1.0.0","provides":[{"kind":"fonts","root":"fonts"}]})", &error));
+    QVERIFY(!parseFolderManifest(
+        R"({"schema":1,"id":"a/b","version":"1.0.0","provides":[{"kind":"fonts","root":"fonts"}]})", &error));
 }
 
 void TestAddonPackage::installsAndVerifies()

@@ -1,5 +1,6 @@
 #include "AddonRegistry.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -33,8 +34,10 @@ InstalledAddon parseEntry(const QJsonObject &object)
     addon.installedAt =
         QDateTime::fromString(object.value(QStringLiteral("installedAt")).toString(), Qt::ISODate);
     addon.sizeBytes = quint64(object.value(QStringLiteral("sizeBytes")).toDouble());
+    addon.unofficial = object.value(QStringLiteral("unofficial")).toBool();
+    addon.dir = addonInstallDir(addon.id);
 
-    const QDir installDir(addonInstallDir(addon.id));
+    const QDir installDir(addon.dir);
     const QJsonArray provides = object.value(QStringLiteral("provides")).toArray();
     for (const QJsonValue &value : provides) {
         const QJsonObject entry = value.toObject();
@@ -58,7 +61,7 @@ QJsonObject serializeEntry(const InstalledAddon &addon)
             {QStringLiteral("root"), installDir.relativeFilePath(provide.root)},
         });
     }
-    return QJsonObject{
+    QJsonObject entry{
         {QStringLiteral("id"), addon.id},
         {QStringLiteral("version"), addon.version},
         {QStringLiteral("name"), addon.name},
@@ -66,13 +69,55 @@ QJsonObject serializeEntry(const InstalledAddon &addon)
         {QStringLiteral("sizeBytes"), double(addon.sizeBytes)},
         {QStringLiteral("provides"), provides},
     };
+    if (addon.unofficial)
+        entry.insert(QStringLiteral("unofficial"), true);
+    return entry;
 }
 
-void rebuildLocked()
+void scanCustomLocked()
 {
-    g_addons.clear();
-    g_initialized = true;
+    const QDir root(customAddonsDir());
+    const QStringList folders = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QString &folder : folders) {
+        // A zip install in progress, or one a crash left behind.
+        if (folder.endsWith(QLatin1String(".partial")))
+            continue;
+        const QDir dir(root.filePath(folder));
+        QFile file(dir.filePath(QStringLiteral("manifest.json")));
+        if (!file.open(QIODevice::ReadOnly))
+            continue;
 
+        QString error;
+        const auto info = parseFolderManifest(file.readAll(), &error);
+        if (!info || !checkCompatible(*info, &error)) {
+            qWarning() << "AddonRegistry: skipping custom addon" << dir.path() << "—" << error;
+            continue;
+        }
+        const bool taken = std::any_of(g_addons.cbegin(), g_addons.cend(),
+                                       [&](const InstalledAddon &a) { return a.id == info->id; });
+        if (taken) {
+            qWarning() << "AddonRegistry: skipping custom addon" << dir.path() << "— id" << info->id
+                       << "is already installed";
+            continue;
+        }
+
+        InstalledAddon addon;
+        addon.id = info->id;
+        addon.version = info->version;
+        addon.name = info->name.isEmpty() ? info->id : info->name;
+        addon.installedAt = QFileInfo(file).lastModified();
+        addon.sizeBytes = info->installedSize;
+        addon.dir = dir.absolutePath();
+        addon.unofficial = true;
+        addon.custom = true;
+        for (const PackageProvide &provide : info->provides)
+            addon.provides.append({provide.kind, dir.filePath(provide.root)});
+        g_addons.append(addon);
+    }
+}
+
+void readRegistryLocked()
+{
     QFile file(registryFilePath());
     if (!file.open(QIODevice::ReadOnly))
         return; // no addons installed yet — a normal state
@@ -90,6 +135,14 @@ void rebuildLocked()
     }
 }
 
+void rebuildLocked()
+{
+    g_addons.clear();
+    g_initialized = true;
+    readRegistryLocked();
+    scanCustomLocked();
+}
+
 void ensureLoadedLocked()
 {
     if (!g_initialized)
@@ -105,8 +158,10 @@ bool writeRegistryLocked(QString *error)
     }
 
     QJsonArray addons;
-    for (const InstalledAddon &addon : std::as_const(g_addons))
-        addons.append(serializeEntry(addon));
+    for (const InstalledAddon &addon : std::as_const(g_addons)) {
+        if (!addon.custom)
+            addons.append(serializeEntry(addon));
+    }
 
     const QJsonDocument doc(QJsonObject{
         {QStringLiteral("schema"), kRegistrySchema},
@@ -139,6 +194,11 @@ QString addonInstallDir(const QString &id)
 QString addonDownloadCacheDir()
 {
     return QDir(addonsDir()).filePath(QStringLiteral("cache"));
+}
+
+QString customAddonsDir()
+{
+    return QDir(addonsDir()).filePath(QStringLiteral("custom"));
 }
 
 const QList<InstalledAddon> &installedAddons()
@@ -184,7 +244,7 @@ const InstalledAddon *addonForPath(const QString &path)
     QMutexLocker lock(&g_mutex);
     ensureLoadedLocked();
     for (const InstalledAddon &addon : std::as_const(g_addons)) {
-        const QString root = QDir::cleanPath(addonInstallDir(addon.id));
+        const QString root = QDir::cleanPath(addon.dir);
         if (clean == root || clean.startsWith(root + QLatin1Char('/')))
             return &addon;
     }
@@ -197,7 +257,7 @@ void reloadAddonRegistry()
     rebuildLocked();
 }
 
-bool recordInstalledAddon(const PackageInfo &info, QString *error)
+bool recordInstalledAddon(const PackageInfo &info, QString *error, bool unofficial)
 {
     QMutexLocker lock(&g_mutex);
     ensureLoadedLocked();
@@ -208,10 +268,14 @@ bool recordInstalledAddon(const PackageInfo &info, QString *error)
     addon.name = info.name;
     addon.installedAt = QDateTime::currentDateTimeUtc();
     addon.sizeBytes = info.installedSize;
-    const QDir installDir(addonInstallDir(info.id));
+    addon.dir = addonInstallDir(info.id);
+    addon.unofficial = unofficial;
+    const QDir installDir(addon.dir);
     for (const PackageProvide &provide : info.provides)
         addon.provides.append({provide.kind, installDir.filePath(provide.root)});
 
+    // A custom folder of the same id would otherwise shadow nothing yet still list twice.
+    g_addons.removeIf([&](const InstalledAddon &a) { return a.custom && a.id == info.id; });
     const auto existing = std::find_if(g_addons.begin(), g_addons.end(),
                                        [&](const InstalledAddon &a) { return a.id == info.id; });
     if (existing != g_addons.end())

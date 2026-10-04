@@ -82,6 +82,27 @@ enum class Container { Signed, User };
 std::optional<PackageInfo> readManifest(const QString &packagePath, QString *error,
                                         Container container = Container::Signed);
 
+// Refuses a package built for another platform or needing a newer Drift. install() applies it too;
+// it is separate so a side-loaded file or a hand-made addon folder can be refused before anything
+// is extracted.
+bool checkCompatible(const PackageInfo &info, QString *error);
+
+// A hand-made addon (a dropped-in folder or a .zip) carries a manifest.json in the same schema as
+// .driftpkg metadata, minus the file table: its files are simply whatever is in the folder.
+std::optional<PackageInfo> parseFolderManifest(const QByteArray &json, QString *error);
+
+// True when the package provides an ONNX Runtime or execution provider, i.e. a library Drift loads.
+bool hasNativeCode(const PackageInfo &info);
+
+// Official: the digest and the Ed25519 signature against AddonSigningKey.h both check out.
+// Unverified: the digest is intact but the signature is not ours. The format names no signer, so a
+// third party's pack and one whose signature was altered look the same.
+// Corrupt: not a readable .driftpkg, or its bytes do not match its digest.
+enum class SignatureCheck { Official, Unverified, Corrupt };
+
+// Hashes the file without decompressing it, so a large model costs one read and no disk space.
+SignatureCheck checkSignature(const QString &packagePath, QString *error);
+
 // Return false to abort the install.
 using ProgressFn = std::function<bool(qint64 done, qint64 total)>;
 
@@ -92,8 +113,11 @@ using ProgressFn = std::function<bool(qint64 done, qint64 total)>;
 // disk under .partial, which is why nothing outside this function ever looks there.
 //
 // destDir must not exist, or must be replaceable; any existing .partial sibling is discarded.
+// requireSignature = false installs a Signed container whose signature is not ours; the digest and
+// per-file hashes are still enforced. Only for a file the user chose to trust.
 bool install(const QString &packagePath, const QString &destDir, const ProgressFn &progress,
-             PackageInfo *installed, QString *error, Container container = Container::Signed);
+             PackageInfo *installed, QString *error, Container container = Container::Signed,
+             bool requireSignature = true);
 
 // Pack <packageDir>'s files into a .driftfx at outPath, as <kind>/<folder name>/... where kind is
 // "effects", "transitions" or "audio-effects". `meta` supplies id, name, version and the other

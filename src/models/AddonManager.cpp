@@ -14,6 +14,7 @@
 #include "engine/OrtRuntime.h"
 #include "engine/StickerCatalog.h"
 #include "engine/TransitionCatalog.h"
+#include "core/ZipArchive.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -186,6 +187,7 @@ QVariantList AddonManager::catalog() const
 
         rows.append(QVariantMap{
             {QStringLiteral("id"), id},
+            {QStringLiteral("unofficial"), installed && installed->unofficial},
             {QStringLiteral("name"), addon.value(QStringLiteral("name")).toString()},
             {QStringLiteral("description"), addon.value(QStringLiteral("description")).toString()},
             {QStringLiteral("details"), addon.value(QStringLiteral("details")).toString()},
@@ -204,6 +206,39 @@ QVariantList AddonManager::catalog() const
             {QStringLiteral("error"), m_failures.value(id)},
             {QStringLiteral("platform"), platform},
             {QStringLiteral("minAppVersion"), minAppVersion},
+        });
+    }
+
+    // Installed from a file or the custom folder, and unknown to the store.
+    for (const InstalledAddon &installed : installedAddons()) {
+        const bool inIndex = std::any_of(m_remote.cbegin(), m_remote.cend(), [&](const QJsonObject &addon) {
+            return addon.value(QStringLiteral("id")).toString() == installed.id;
+        });
+        if (inIndex)
+            continue;
+        QStringList kinds;
+        for (const InstalledProvide &provide : installed.provides)
+            kinds.append(provide.kind);
+        rows.append(QVariantMap{
+            {QStringLiteral("id"), installed.id},
+            {QStringLiteral("custom"), true},
+            {QStringLiteral("unofficial"), installed.unofficial},
+            {QStringLiteral("name"), installed.name},
+            {QStringLiteral("description"), QString()},
+            {QStringLiteral("details"), QString()},
+            {QStringLiteral("author"), QString()},
+            {QStringLiteral("license"), QString()},
+            {QStringLiteral("kind"), kinds.value(0)},
+            {QStringLiteral("kinds"), kinds},
+            {QStringLiteral("version"), installed.version},
+            {QStringLiteral("installedVersion"), installed.version},
+            {QStringLiteral("downloadSize"), 0.0},
+            {QStringLiteral("installedSize"), double(installed.sizeBytes)},
+            {QStringLiteral("items"), 0},
+            {QStringLiteral("state"), QStringLiteral("installed")},
+            {QStringLiteral("error"), QString()},
+            {QStringLiteral("platform"), QString()},
+            {QStringLiteral("minAppVersion"), QString()},
         });
     }
     return rows;
@@ -642,10 +677,12 @@ void AddonManager::uninstall(const QString &id)
     QStringList kinds;
     for (const InstalledProvide &provide : installed->provides)
         kinds.append(provide.kind);
+    const bool custom = installed->custom;
 
     QString error;
-    QDir(addonInstallDir(id)).removeRecursively();
-    forgetInstalledAddon(id, &error);
+    QDir(installed->dir).removeRecursively();
+    if (!custom)
+        forgetInstalledAddon(id, &error);
     reloadAddonRegistry();
     reloadForKinds(kinds);
     m_failures.remove(id);
@@ -770,12 +807,296 @@ void AddonManager::installUserPackage()
     }));
 }
 
+QVariantMap AddonManager::inspectAddonFile(const QUrl &url)
+{
+    if (m_addonFileBusy)
+        return {{QStringLiteral("error"), tr("Another addon is still installing.")}};
+    discardAddonFile();
+
+    QString path;
+    {
+        const auto source = AndroidUri::openForRead(url);
+        if (!source)
+            return {{QStringLiteral("error"), tr("Could not open that file.")}};
+        const QByteArray head = source->peek(8);
+        if (head == QByteArrayLiteral("DRIFTFX\0")) {
+            QVariantMap info = inspectUserPackage(url);
+            info.insert(QStringLiteral("type"), QStringLiteral("driftfx"));
+            return info;
+        }
+        if (head == QByteArrayLiteral("DRIFTPKG"))
+            m_addonFileType = QStringLiteral("driftpkg");
+        else if (drift::zip::looksLikeZip(head))
+            m_addonFileType = QStringLiteral("zip");
+        else
+            return {{QStringLiteral("error"), tr("This is not a Drift addon file.")}};
+
+        if (url.isLocalFile()) {
+            path = url.toLocalFile();
+        } else {
+            // Staged locally: both readers seek, which a content:// URI does not reliably support.
+            path = QDir(addonDownloadCacheDir()).filePath(QStringLiteral("addon-import.") + m_addonFileType);
+            QFile out(path);
+            if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                return {{QStringLiteral("error"), tr("Could not read that file.")}};
+            while (!source->atEnd()) {
+                const QByteArray chunk = source->read(1 << 20);
+                if (chunk.isEmpty() || out.write(chunk) != chunk.size()) {
+                    out.close();
+                    QFile::remove(path);
+                    return {{QStringLiteral("error"), tr("Could not read that file.")}};
+                }
+            }
+            m_addonFileOwned = true;
+        }
+    }
+    m_addonFilePath = path;
+
+    QString error;
+    std::optional<PackageInfo> info;
+    if (m_addonFileType == QLatin1String("driftpkg")) {
+        info = readManifest(path, &error);
+    } else {
+        QFile zip(path);
+        const QList<drift::zip::Entry> entries =
+            zip.open(QIODevice::ReadOnly) ? drift::zip::readEntries(zip, &error) : QList<drift::zip::Entry>();
+        // manifest.json at the top, or inside the single folder a zipped folder unpacks to.
+        const drift::zip::Entry *manifest = nullptr;
+        for (const drift::zip::Entry &entry : entries) {
+            if (entry.isDir || !entry.path.endsWith(QLatin1String("manifest.json")))
+                continue;
+            if (entry.path == QLatin1String("manifest.json")) {
+                manifest = &entry;
+                break;
+            }
+            if (!manifest && entry.path.count(QLatin1Char('/')) == 1
+                && entry.path.section(QLatin1Char('/'), 1) == QLatin1String("manifest.json")) {
+                manifest = &entry;
+            }
+        }
+        if (manifest) {
+            m_addonFileZipPrefix = manifest->path.left(manifest->path.size() - int(qstrlen("manifest.json")));
+            QByteArray json;
+            if (drift::zip::extractEntry(zip, *manifest, json))
+                info = parseFolderManifest(json, &error);
+            else
+                error = QStringLiteral("cannot read manifest.json");
+        } else if (error.isEmpty()) {
+            error = QStringLiteral("no manifest.json");
+        }
+    }
+
+    if (!info || !checkCompatible(*info, &error)) {
+        discardAddonFile();
+        return {{QStringLiteral("error"), tr("Could not use this addon (%1).").arg(error)}};
+    }
+
+    m_addonFileId = info->id;
+    m_addonFileName = info->name.isEmpty() ? info->id : info->name;
+
+    QString replaces;
+    if (const InstalledAddon *existing = installedAddon(info->id)) {
+        replaces = existing->name;
+    } else {
+        for (const QJsonObject &addon : m_remote) {
+            if (addon.value(QStringLiteral("id")).toString() == info->id)
+                replaces = addon.value(QStringLiteral("name")).toString();
+        }
+    }
+
+    return {
+        {QStringLiteral("type"), m_addonFileType},
+        {QStringLiteral("name"), m_addonFileName},
+        {QStringLiteral("version"), info->version},
+        {QStringLiteral("author"), info->author},
+        {QStringLiteral("description"), info->description},
+        {QStringLiteral("nativeCode"), hasNativeCode(*info)},
+        {QStringLiteral("replaces"), replaces},
+    };
+}
+
+void AddonManager::installAddonFile(bool acceptUnverified)
+{
+    if (m_addonFilePath.isEmpty() || m_addonFileBusy)
+        return;
+    // A zip is never signed, so there is nothing to check before asking.
+    if (m_addonFileType == QLatin1String("zip") && !acceptUnverified) {
+        emit addonFileNeedsConfirmation();
+        return;
+    }
+
+    m_addonFileBusy = true;
+    const QString path = m_addonFilePath;
+    const QString type = m_addonFileType;
+    const QString prefix = m_addonFileZipPrefix;
+    const QString id = m_addonFileId;
+    const QString name = m_addonFileName;
+
+    // An addon of the same id elsewhere would shadow the new one or be shadowed by it: the
+    // registry lists installed.json first and skips a custom folder whose id is taken.
+    QString previousDir;
+    bool previousCustom = false;
+    QStringList kinds;
+    if (const InstalledAddon *existing = installedAddon(id)) {
+        previousDir = existing->dir;
+        previousCustom = existing->custom;
+        for (const InstalledProvide &provide : existing->provides)
+            kinds.append(provide.kind);
+    }
+
+    enum class Outcome { Installed, NeedsConfirmation, Failed };
+    using Result = std::tuple<Outcome, QStringList, QString>; // outcome, kinds, error
+    auto *watcher = new QFutureWatcher<Result>(this);
+    connect(watcher, &QFutureWatcher<Result>::finished, this, [this, watcher, name, kinds] {
+        watcher->deleteLater();
+        m_addonFileBusy = false;
+        const auto [outcome, installedKinds, error] = watcher->result();
+        if (outcome == Outcome::NeedsConfirmation) {
+            emit addonFileNeedsConfirmation();
+            return;
+        }
+        discardAddonFile();
+        reloadAddonRegistry();
+        if (outcome == Outcome::Installed) {
+            QStringList all = kinds + installedKinds;
+            all.removeDuplicates();
+            reloadForKinds(all);
+        }
+        emit catalogChanged();
+        emit userPackageInstalled(name, error);
+    });
+
+    watcher->setFuture(QtConcurrent::run([=]() -> Result {
+        QString error;
+        if (type == QLatin1String("driftpkg")) {
+            bool official = false;
+            if (!acceptUnverified) {
+                const SignatureCheck check = checkSignature(path, &error);
+                if (check == SignatureCheck::Corrupt)
+                    return {Outcome::Failed, {}, error};
+                if (check == SignatureCheck::Unverified)
+                    return {Outcome::NeedsConfirmation, {}, {}};
+                official = true;
+            }
+            PackageInfo info;
+            if (!drift::addon::install(path, addonInstallDir(id), {}, &info, &error, Container::Signed, official))
+                return {Outcome::Failed, {}, error};
+            if (!recordInstalledAddon(info, &error, !official))
+                return {Outcome::Failed, {}, error};
+            if (previousCustom)
+                QDir(previousDir).removeRecursively();
+            QStringList installed;
+            for (const PackageProvide &provide : info.provides)
+                installed.append(provide.kind);
+            return {Outcome::Installed, installed, {}};
+        }
+
+        QFile zip(path);
+        if (!zip.open(QIODevice::ReadOnly))
+            return {Outcome::Failed, {}, zip.errorString()};
+        const QList<drift::zip::Entry> entries = drift::zip::readEntries(zip, &error);
+        if (entries.isEmpty())
+            return {Outcome::Failed, {}, error.isEmpty() ? QStringLiteral("the zip is empty") : error};
+
+        const QString dest = QDir(customAddonsDir()).filePath(id);
+        const QString staging = dest + QStringLiteral(".partial");
+        QDir(staging).removeRecursively();
+        const auto failZip = [&](const QString &message) -> Result {
+            QDir(staging).removeRecursively();
+            return {Outcome::Failed, {}, message};
+        };
+        for (const drift::zip::Entry &entry : entries) {
+            if (entry.isDir || !entry.path.startsWith(prefix))
+                continue;
+            const QString rel = entry.path.mid(prefix.size());
+            QByteArray bytes;
+            if (!drift::zip::extractEntry(zip, entry, bytes))
+                return failZip(QStringLiteral("cannot extract %1").arg(entry.path));
+            const QString target = QDir(staging).filePath(rel);
+            if (!QDir().mkpath(QFileInfo(target).absolutePath()))
+                return failZip(QStringLiteral("cannot create %1").arg(QFileInfo(target).absolutePath()));
+            QFile out(target);
+            if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate) || out.write(bytes) != bytes.size())
+                return failZip(QStringLiteral("cannot write %1").arg(target));
+        }
+
+        QFile manifestFile(QDir(staging).filePath(QStringLiteral("manifest.json")));
+        if (!manifestFile.open(QIODevice::ReadOnly))
+            return failZip(QStringLiteral("no manifest.json"));
+        const auto info = parseFolderManifest(manifestFile.readAll(), &error);
+        manifestFile.close();
+        if (!info)
+            return failZip(error);
+
+        if (!previousDir.isEmpty()) {
+            QDir(previousDir).removeRecursively();
+            if (!previousCustom)
+                forgetInstalledAddon(id, &error);
+        }
+        QDir(dest).removeRecursively();
+        if (!QDir().rename(staging, dest))
+            return failZip(QStringLiteral("cannot move %1 into place").arg(id));
+
+        QStringList installed;
+        for (const PackageProvide &provide : info->provides)
+            installed.append(provide.kind);
+        return {Outcome::Installed, installed, {}};
+    }));
+}
+
+void AddonManager::discardAddonFile()
+{
+    if (m_addonFileOwned)
+        QFile::remove(m_addonFilePath);
+    m_addonFilePath.clear();
+    m_addonFileType.clear();
+    m_addonFileZipPrefix.clear();
+    m_addonFileId.clear();
+    m_addonFileName.clear();
+    m_addonFileOwned = false;
+}
+
+QUrl AddonManager::customAddonsFolderUrl() const
+{
+    QDir().mkpath(customAddonsDir());
+    return QUrl::fromLocalFile(customAddonsDir());
+}
+
+void AddonManager::rescanCustomAddons()
+{
+    const auto snapshot = [] {
+        QStringList entries;
+        QStringList kinds;
+        for (const InstalledAddon &addon : installedAddons()) {
+            if (!addon.custom)
+                continue;
+            entries.append(addon.id + QLatin1Char('@') + addon.version);
+            for (const InstalledProvide &provide : addon.provides)
+                kinds.append(provide.kind);
+        }
+        return std::pair{entries, kinds};
+    };
+
+    const auto [before, beforeKinds] = snapshot();
+    reloadAddonRegistry();
+    const auto [after, afterKinds] = snapshot();
+    if (before == after)
+        return;
+
+    QStringList kinds = beforeKinds + afterKinds;
+    kinds.removeDuplicates();
+    reloadForKinds(kinds);
+    emit catalogChanged();
+}
+
 void AddonManager::sweepDownloadCache()
 {
     // Completed .driftpkg files are removed after a successful install, so anything left here is
     // from a crash. Half-finished .part files are kept — the next install resumes them.
     QDir cache(addonDownloadCacheDir());
-    const QStringList stale = cache.entryList({QStringLiteral("*.driftpkg"), QStringLiteral("*.driftfx")}, QDir::Files);
+    const QStringList stale = cache.entryList({QStringLiteral("*.driftpkg"), QStringLiteral("*.driftfx"),
+                                               QStringLiteral("*.zip")},
+                                              QDir::Files);
     for (const QString &name : stale)
         QFile::remove(cache.filePath(name));
 }

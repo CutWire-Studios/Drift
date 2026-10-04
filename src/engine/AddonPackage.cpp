@@ -81,7 +81,7 @@ bool safeRelativePath(const QString &path)
     return true;
 }
 
-bool parseMetadata(const QByteArray &json, PackageInfo *info, QString *error)
+bool parseMetadata(const QByteArray &json, PackageInfo *info, QString *error, bool requireFiles = true)
 {
     QJsonParseError parseError;
     const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
@@ -141,7 +141,7 @@ bool parseMetadata(const QByteArray &json, PackageInfo *info, QString *error)
         expectedOffset += file.size;
         info->files.append(file);
     }
-    if (info->files.isEmpty())
+    if (requireFiles && info->files.isEmpty())
         return fail(error, QStringLiteral("metadata lists no files"));
 
     return true;
@@ -364,8 +364,92 @@ std::optional<PackageInfo> readManifest(const QString &packagePath, QString *err
     return info;
 }
 
+bool checkCompatible(const PackageInfo &info, QString *error)
+{
+    // A native-code package built for another platform installs perfectly and then fails to load,
+    // which is a much harder thing to explain than a refusal.
+    if (!info.platform.isEmpty() && info.platform != currentPlatform()) {
+        return fail(error, QStringLiteral("%1 is built for %2, but this is %3")
+                               .arg(info.id, info.platform, currentPlatform()));
+    }
+    if (!info.minAppVersion.isEmpty() && drift::compareVersions(QStringLiteral(DRIFT_VERSION), info.minAppVersion) < 0) {
+        return fail(error, QStringLiteral("%1 requires Drift %2 or newer, but this is %3")
+                               .arg(info.id, info.minAppVersion, QStringLiteral(DRIFT_VERSION)));
+    }
+    return true;
+}
+
+std::optional<PackageInfo> parseFolderManifest(const QByteArray &json, QString *error)
+{
+    PackageInfo info;
+    if (!parseMetadata(json, &info, error, false))
+        return std::nullopt;
+    // The id names the folder it is installed into, so it must stay one path component.
+    if (!safeRelativePath(info.id) || info.id.contains(QLatin1Char('/'))) {
+        fail(error, QStringLiteral("invalid addon id: %1").arg(info.id));
+        return std::nullopt;
+    }
+    return info;
+}
+
+bool hasNativeCode(const PackageInfo &info)
+{
+    for (const PackageProvide &provide : info.provides) {
+        if (provide.kind == QLatin1String("onnxruntime") || provide.kind == QLatin1String("onnxruntime-ep"))
+            return true;
+    }
+    return false;
+}
+
+SignatureCheck checkSignature(const QString &packagePath, QString *error)
+{
+    QFile file(packagePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        fail(error, QStringLiteral("cannot open %1: %2").arg(packagePath, file.errorString()));
+        return SignatureCheck::Corrupt;
+    }
+
+    QCryptographicHash digest(QCryptographicHash::Sha256);
+    PackageInfo info;
+    if (!readHeader(file, &info, &digest, error, Container::Signed))
+        return SignatureCheck::Corrupt;
+
+    const QByteArray sizes = file.read(kSizesSize);
+    if (sizes.size() != kSizesSize) {
+        fail(error, QStringLiteral("truncated payload header"));
+        return SignatureCheck::Corrupt;
+    }
+    digest.addData(sizes);
+
+    const quint64 payloadCompressed = readU64(sizes.constData());
+    if (file.pos() + qint64(payloadCompressed) + kDigestSize + kSignatureSize != file.size()) {
+        fail(error, QStringLiteral("package is truncated or has trailing garbage"));
+        return SignatureCheck::Corrupt;
+    }
+
+    QByteArray buffer(kChunkSize, Qt::Uninitialized);
+    quint64 remaining = payloadCompressed;
+    while (remaining > 0) {
+        const qint64 got = file.read(buffer.data(), qMin<qint64>(buffer.size(), qint64(remaining)));
+        if (got <= 0) {
+            fail(error, QStringLiteral("truncated payload"));
+            return SignatureCheck::Corrupt;
+        }
+        digest.addData(QByteArrayView(buffer.constData(), got));
+        remaining -= quint64(got);
+    }
+
+    const QByteArray actualDigest = file.read(kDigestSize);
+    if (actualDigest != digest.result()) {
+        fail(error, QStringLiteral("package contents do not match its digest"));
+        return SignatureCheck::Corrupt;
+    }
+    return verifySignature(actualDigest, file.read(kSignatureSize)) ? SignatureCheck::Official
+                                                                      : SignatureCheck::Unverified;
+}
+
 bool install(const QString &packagePath, const QString &destDir, const ProgressFn &progress,
-             PackageInfo *installed, QString *error, Container container)
+             PackageInfo *installed, QString *error, Container container, bool requireSignature)
 {
     const bool user = container == Container::User;
     QFile file(packagePath);
@@ -378,17 +462,9 @@ bool install(const QString &packagePath, const QString &destDir, const ProgressF
         return false;
 
     // Refused here rather than in the manager, because this is also the path a side-loaded file
-    // takes. A native-code package built for another platform installs perfectly and then fails to
-    // load, which is a much harder thing to explain than a refusal.
-    if (!info.platform.isEmpty() && info.platform != currentPlatform()) {
-        return fail(error, QStringLiteral("%1 is built for %2, but this is %3")
-                               .arg(info.id, info.platform, currentPlatform()));
-    }
-
-    if (!info.minAppVersion.isEmpty() && drift::compareVersions(QStringLiteral(DRIFT_VERSION), info.minAppVersion) < 0) {
-        return fail(error, QStringLiteral("%1 requires Drift %2 or newer, but this is %3")
-                               .arg(info.id, info.minAppVersion, QStringLiteral(DRIFT_VERSION)));
-    }
+    // takes.
+    if (!checkCompatible(info, error))
+        return false;
 
     const QByteArray sizes = file.read(kSizesSize);
     if (sizes.size() != kSizesSize)
@@ -471,7 +547,7 @@ bool install(const QString &packagePath, const QString &destDir, const ProgressF
     const QByteArray actualDigest = file.read(kDigestSize);
     if (actualDigest != expectedDigest)
         return fail(error, QStringLiteral("package contents do not match its digest"));
-    if (!user && !verifySignature(actualDigest, file.read(kSignatureSize)))
+    if (!user && requireSignature && !verifySignature(actualDigest, file.read(kSignatureSize)))
         return fail(error, QStringLiteral("package signature is not valid for this build of Drift"));
 
     QDir existing(destDir);

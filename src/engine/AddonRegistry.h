@@ -30,11 +30,19 @@ struct InstalledAddon
     QDateTime installedAt;
     quint64 sizeBytes{};
     QList<InstalledProvide> provides;
+    QString dir; // absolute install directory
+    // Installed from a file whose signature is not the Drift team's.
+    bool unofficial = false;
+    // Found in customAddonsDir() rather than recorded in installed.json. Always unofficial.
+    bool custom = false;
 };
 
 QString addonsDir();                              // <AppDataLocation>/addons
 QString addonInstallDir(const QString &id);       // <addonsDir>/<id>
 QString addonDownloadCacheDir();                  // <addonsDir>/cache
+// <addonsDir>/custom: one folder per addon, each with a manifest.json (see parseFolderManifest).
+// Scanned on every registry rebuild, so dropping a folder in and rebuilding is the whole install.
+QString customAddonsDir();
 
 const QList<InstalledAddon> &installedAddons();
 const InstalledAddon *installedAddon(const QString &id);
@@ -50,7 +58,7 @@ void reloadAddonRegistry();
 
 // Record or drop an entry and rewrite installed.json atomically. Both refresh the in-memory
 // registry on success; callers still need to reload the affected catalog.
-bool recordInstalledAddon(const PackageInfo &info, QString *error);
+bool recordInstalledAddon(const PackageInfo &info, QString *error, bool unofficial = false);
 bool forgetInstalledAddon(const QString &id, QString *error);
 
 } // namespace drift::addon
