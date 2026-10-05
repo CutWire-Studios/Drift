@@ -18,6 +18,16 @@ constexpr int kSubBlock = 1024;
 
 } // namespace
 
+// Keyframed parameters are pushed at this cadence, which is also the graph's control slice: a
+// value set right before a slice starts is what that slice uses.
+constexpr int kAutomationFrames = audiofx::GraphProcessor::kSliceFrames;
+
+struct Automation
+{
+    int index = -1;
+    KeyframeTrack<double> track;
+};
+
 // A built chain and the spec it came from. Parameter ids resolve to binding indices on first use
 // and stay cached, so applying values per block is a hash hit rather than a string conversion.
 struct RackChain
@@ -25,6 +35,8 @@ struct RackChain
     std::unique_ptr<audiofx::GraphProcessor> processor;
     int specIndex = 0;
     QHash<QString, int> indices;
+    std::vector<Automation> automation;
+    drift::TimeUs ownerStartUs = 0;
 
     int indexOf(const QString &paramId)
     {
@@ -45,18 +57,33 @@ struct AudioEffectRack::Impl
     drift::TimeUs lastTimelineEndUs = -1;
     std::vector<RackChain> chains;
     juce::AudioBuffer<float> scratch;
+    bool automated = false;
+    int64_t framesSinceReset = 0;
 
-    void run(const float *in, float *out, int frames);
+    void run(const float *in, float *out, int frames, drift::TimeUs timelineStartUs);
 };
 
-void AudioEffectRack::Impl::run(const float *in, float *out, int frames)
+void AudioEffectRack::Impl::run(const float *in, float *out, int frames, drift::TimeUs timelineStartUs)
 {
     float *left = scratch.getWritePointer(0);
     float *right = scratch.getWritePointer(1);
     float *channels[2] = {left, right};
 
     for (int offset = 0; offset < frames;) {
-        const int count = std::min(kSubBlock, frames - offset);
+        int count = std::min(kSubBlock, frames - offset);
+        // With automation, stop at every control slice boundary so each slice gets its own values.
+        if (automated) {
+            const int intoSlice = static_cast<int>(framesSinceReset % kAutomationFrames);
+            if (intoSlice == 0) {
+                const drift::TimeUs nowUs =
+                    timelineStartUs + static_cast<drift::TimeUs>((static_cast<int64_t>(offset) * drift::kUsPerSecond) / sampleRate);
+                for (RackChain &chain : chains) {
+                    for (const Automation &a : chain.automation)
+                        chain.processor->setParameter(a.index, static_cast<float>(a.track.evaluateAt(nowUs - chain.ownerStartUs)));
+                }
+            }
+            count = std::min(count, kAutomationFrames - intoSlice);
+        }
 
         for (int i = 0; i < count; ++i) {
             left[i] = in[(offset + i) * 2];
@@ -75,6 +102,7 @@ void AudioEffectRack::Impl::run(const float *in, float *out, int frames)
         }
 
         offset += count;
+        framesSinceReset += count;
     }
 }
 
@@ -92,8 +120,8 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
     if (rebuilt)
         *rebuilt = false;
     if (specs.isEmpty() || sampleRate <= 0) {
-        reset();
         m_impl->chains.clear();
+        m_impl->lastTimelineEndUs = -1;
         m_impl->signature.clear();
         return false;
     }
@@ -145,10 +173,19 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
         return false;
 
     // An unchanged signature means the same specs in the same order, so specIndex still holds.
+    m_impl->automated = false;
     for (RackChain &chain : m_impl->chains) {
         const AudioEffectSpec &spec = specs[chain.specIndex];
         for (auto it = spec.parameters.constBegin(); it != spec.parameters.constEnd(); ++it)
             chain.processor->setParameter(chain.indexOf(it.key()), it.value());
+        chain.ownerStartUs = spec.ownerStartUs;
+        chain.automation.clear();
+        for (auto it = spec.keyframes.constBegin(); it != spec.keyframes.constEnd(); ++it) {
+            const int index = chain.indexOf(it.key());
+            if (index >= 0 && !it.value().isEmpty())
+                chain.automation.push_back({index, it.value()});
+        }
+        m_impl->automated = m_impl->automated || !chain.automation.empty();
     }
 
     // Stages were prepared before their values arrived, so a new chain would otherwise open by
@@ -156,6 +193,7 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
     if (didRebuild) {
         for (auto &chain : m_impl->chains)
             chain.processor->reset();
+        m_impl->framesSinceReset = 0;
     }
 
     return true;
@@ -166,24 +204,31 @@ int AudioEffectRack::primeFrames() const
     return m_impl->chains.empty() ? 0 : m_impl->primeFrames;
 }
 
-void AudioEffectRack::warmUp(const float *interleavedStereo, int frames)
+void AudioEffectRack::warmUp(const float *interleavedStereo, int frames, drift::TimeUs timelineStartUs)
 {
     if (!interleavedStereo || frames <= 0 || m_impl->chains.empty())
         return;
-    m_impl->run(interleavedStereo, nullptr, frames);
+    m_impl->run(interleavedStereo, nullptr, frames, timelineStartUs);
 }
 
-void AudioEffectRack::process(float *interleavedStereo, int frames)
+void AudioEffectRack::process(float *interleavedStereo, int frames, drift::TimeUs timelineStartUs)
 {
     if (!interleavedStereo || frames <= 0 || m_impl->chains.empty())
         return;
-    m_impl->run(interleavedStereo, interleavedStereo, frames);
+    m_impl->run(interleavedStereo, interleavedStereo, frames, timelineStartUs);
 }
 
-void AudioEffectRack::reset()
+void AudioEffectRack::reset(drift::TimeUs timelineUs)
 {
-    for (auto &chain : m_impl->chains)
+    for (auto &chain : m_impl->chains) {
+        // Keyed values first: the reset snaps every stage to its current target, and that target
+        // has to be the curve's value here, not the static one it would otherwise glide from.
+        for (const Automation &a : chain.automation)
+            chain.processor->setParameter(a.index, static_cast<float>(a.track.evaluateAt(timelineUs - chain.ownerStartUs)));
+        chain.processor->setClipTime(static_cast<double>(timelineUs - chain.ownerStartUs) / drift::kUsPerSecond);
         chain.processor->reset();
+    }
+    m_impl->framesSinceReset = 0;
     m_impl->lastTimelineEndUs = -1;
 }
 

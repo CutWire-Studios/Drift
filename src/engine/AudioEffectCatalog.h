@@ -57,8 +57,10 @@ QMap<QString, QVariant> resolvedAudioEffectParameters(const drift::Effect &effec
 
 // Reduce a clip's effect list to what AudioEffectRack needs. Effects whose catalogId is not in the
 // catalog are dropped, which is what makes an uninstalled addon a clean passthrough rather than a
-// dropout.
-QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &effects);
+// dropout. `ownerStartUs` is where the clip carrying the effects starts on the timeline: keyframe
+// times are relative to it.
+QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &effects,
+                                                    drift::TimeUs ownerStartUs = 0);
 
 QStringList audioEffectPresetIds();
 

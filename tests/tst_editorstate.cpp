@@ -99,6 +99,7 @@ private slots:
     void pastedEffectsKeepTheKeyframeGraphSelection();
     void copiedSingleEffectRoutesToTheRightList();
     void pastedAudioEffectsAreDroppedOnClipsWithNoAudio();
+    void audioEffectParamsKeyframeThroughTheGenericApi();
     void pastedUnknownEffectIsKeptAndReported();
     void clipboardHasEffectsIgnoresOrdinaryText();
     void savedEffectPresetAppliesToAnotherClip();
@@ -7092,6 +7093,42 @@ void EditorStateTest::copiedSingleEffectRoutesToTheRightList()
     QCOMPARE(audioEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 1);
     QCOMPARE(audioEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).at(0).catalogId,
              QStringLiteral("space.autopan"));
+}
+
+// "afx.<i>.<key>" reaches the audio stack on the linked adjustment through the same keyframe
+// invokables the video inspector uses, and the inspector map reports the track back.
+void EditorStateTest::audioEffectParamsKeyframeThroughTheGenericApi()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.selectClip(0, 0);
+    state.addAudioEffect(0, 0, QStringLiteral("space.autopan"));
+    const int track = mediaTrackIndex(*state.project(), 0);
+    state.selectClip(track, 0);
+    const QString prop = QStringLiteral("afx.0.rate");
+    state.setClipKeyframe(track, 0, prop, 0.0, 0.5);
+    state.setClipKeyframe(track, 0, prop, 2.0, 4.0);
+
+    const drift::Effect effect = audioEffectsOf(*state.project(), mediaClip(*state.project(), 0, 0)).at(0);
+    QCOMPARE(effect.paramKeyframes.value(QStringLiteral("rate")).keyframes().size(), 2);
+    const double mid = state.propertyValueAt(track, 0, prop, 1.0, 0.0);
+    QVERIFY2(mid > 0.5 && mid < 4.0, qPrintable(QString::number(mid)));
+    QVERIFY(state.clipAnimatedProperties(track, 0).contains(prop));
+
+    const QVariantMap first = state.selectedClipAudioEffects().value(0).toMap();
+    const QVariantList params = first.value(QStringLiteral("params")).toList();
+    bool found = false;
+    for (const QVariant &p : params) {
+        const QVariantMap param = p.toMap();
+        if (param.value(QStringLiteral("key")).toString() != QLatin1String("rate"))
+            continue;
+        found = true;
+        QCOMPARE(param.value(QStringLiteral("prop")).toString(), prop);
+        QCOMPARE(param.value(QStringLiteral("keyframes")).toMap().value(QStringLiteral("points")).toList().size(), 2);
+    }
+    QVERIFY(found);
 }
 
 // Audio effects run in the mixer and the audio inspector is hidden for clips with no audio, so

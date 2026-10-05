@@ -5121,6 +5121,14 @@
         <translation>ශ්‍රව්‍ය ප්‍රයෝග ගවේෂණය කරන්න</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">වේලාවකට ගොස් අගයක් සකසා කීෆ්‍රේමයක් එක් කිරීමට දියමන්ති ලකුණ ක්ලික් කරන්න. ස්වයංක්‍රීය කීෆ්‍රේම ක්‍රියාත්මක විට, ස්ලයිඩරයක් ඇදීමෙන් ද ඒවා නිර්මාණය වේ.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">ස්වයංක්‍රීය කීෆ්‍රේම</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (ස්ථාපනය කර නැත)</translation>
     </message>
@@ -5147,18 +5155,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>ශ්‍රව්‍ය ප්‍රයෝගය ඉවත් කරන්න</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>ක්‍රියාත්මකයි</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>අක්‍රියයි</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>ශ්‍රව්‍ය ප්‍රයෝගය සංස්කරණය කරන්න</translation>
     </message>
 </context>
 <context>

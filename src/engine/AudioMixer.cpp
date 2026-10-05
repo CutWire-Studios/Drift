@@ -335,10 +335,11 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
         drift::AudioEffectRack &rack = state.rack;
         if (snapshotSerial == 0 || state.effectSpecsSerial != snapshotSerial
             || state.effectSpecsKey != laneKey) {
-            QList<drift::Effect> effectChain = clip.audioEffects;
+            // Specs are built per owner: keyframe times count from the start of the clip that
+            // carries the effect, which for a lane's effects is the adjustment, not this clip.
+            state.effectSpecs = audioEffectSpecsFor(clip.audioEffects, clip.timelineStart);
             for (const drift::Clip *adjustment : laneClips)
-                effectChain.append(adjustment->audioEffects);
-            state.effectSpecs = audioEffectSpecsFor(effectChain);
+                state.effectSpecs += audioEffectSpecsFor(adjustment->audioEffects, adjustment->timelineStart);
             state.effectSpecsSerial = snapshotSerial;
             state.effectSpecsKey = laneKey;
         }
@@ -353,29 +354,29 @@ void accumulateClipAudio(const drift::Project &project, const drift::Clip &clip,
         const bool active =
             rack.configure(state.effectSpecs, sampleRate, &rebuilt);
         if (active && (!continuous || rebuilt)) {
-            rack.reset();
             // Warm the stages on the audio immediately before this block. That is what makes an
             // echo tail already present after a seek instead of fading in from silence, and what
             // lines up a latent stage instead of leaving it permanently late.
             const int primeFrames = rack.primeFrames();
+            const drift::TimeUs primeStartUs =
+                timelineStartUs
+                - static_cast<drift::TimeUs>((static_cast<int64_t>(primeFrames) * drift::kUsPerSecond)
+                                             / sampleRate);
+            rack.reset(primeStartUs);
             if (primeFrames > 0) {
-                const drift::TimeUs primeStartUs =
-                    timelineStartUs
-                    - static_cast<drift::TimeUs>((static_cast<int64_t>(primeFrames) * drift::kUsPerSecond)
-                                                 / sampleRate);
                 // The preroll window ends exactly where this block starts, so the retimer sees one
                 // continuous stream across the two reads and does not restart between them.
                 AudioMixer::readClipAudio(state.preroll, clip, streamId, primeStartUs, primeFrames,
                                           sampleRate, &state.retimer, source, audibleStartUs,
                                           audibleEndUs);
-                rack.warmUp(state.preroll.constData(), primeFrames);
+                rack.warmUp(state.preroll.constData(), primeFrames, primeStartUs);
             }
         }
 
         AudioMixer::readClipAudio(chunk, clip, streamId, timelineStartUs, sampleCount, sampleRate,
                                   &state.retimer, source, audibleStartUs, audibleEndUs);
         if (active)
-            rack.process(chunk.data(), sampleCount);
+            rack.process(chunk.data(), sampleCount, timelineStartUs);
         rack.setLastTimelineEndUs(timelineStartUs + blockDurUs);
     } else {
         AudioMixer::readClipAudio(chunk, clip, streamId, timelineStartUs, sampleCount, sampleRate,
@@ -644,10 +645,9 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
 
         ClipAudioState &state = *statePtr;
         if (serial == 0 || state.effectSpecsSerial != serial || state.effectSpecsKey != busKey) {
-            QList<drift::Effect> busEffects;
+            state.effectSpecs.clear();
             for (const drift::Clip *adjustment : std::as_const(live))
-                busEffects.append(adjustment->audioEffects);
-            state.effectSpecs = audioEffectSpecsFor(busEffects);
+                state.effectSpecs += audioEffectSpecsFor(adjustment->audioEffects, adjustment->timelineStart);
             state.effectSpecsSerial = serial;
             state.effectSpecsKey = busKey;
         }
@@ -657,9 +657,9 @@ void AudioMixer::mix(drift::TimeUs timelineStartUs, int sampleCount, int sampleR
         // re-read for the window before this block without re-running every clip. A tail on the
         // master therefore opens cold after a seek.
         if (active && (!continuous || rebuilt))
-            rack.reset();
+            rack.reset(timelineStartUs);
         if (active)
-            rack.process(interleavedStereoOut, sampleCount);
+            rack.process(interleavedStereoOut, sampleCount, timelineStartUs);
     }
 
     if (m_masterMuted) {

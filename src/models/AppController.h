@@ -2408,9 +2408,9 @@ protected:
     // source range that no longer fitted and had to be pulled back to it.
     int rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset, int oldBinCorrection);
     // Keeps the keyframe strip's index-addressed hidden series in sync after an effect is removed.
-    void dropKeyframeGraphPropertiesForEffect(int removedIndex);
+    void dropKeyframeGraphPropertiesForEffect(int removedIndex, bool audio = false);
     // Same idea after a reorder: fx.N.* indices move with the effect.
-    void remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int toIndex);
+    void remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int toIndex, bool audio = false);
     // Publishes a finished beat analysis into m_beatAnalysis / m_beatSnapTargets.
     void applyBeatAnalysis(const AudioBeatAnalysis &analysis, double startSeconds, double durSeconds,
                            const QByteArray &fingerprint);

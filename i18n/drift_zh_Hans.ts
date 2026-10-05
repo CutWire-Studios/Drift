@@ -5098,6 +5098,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5123,18 +5131,6 @@
     </message>
     <message>
         <source>Remove audio effect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

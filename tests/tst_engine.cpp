@@ -400,6 +400,8 @@ private slots:
     void audioGraphConvolvesStagedImpulse();
     void audioGraphPackageLoadsImpulseFromPackage();
     void audioEffectRackRebuildsWhenGraphChanges();
+    void audioEffectRackFollowsKeyframes();
+    void audioEffectRackSeedsModulatorsFromOwnerTime();
     void audioEffectChainAltersSignal();
     void limiterHoldsTheCeilingInsteadOfAddingGain();
     void audioEffectChainBypassesUnknownEffect();
@@ -11333,7 +11335,7 @@ QVector<float> runRack(const QList<drift::Effect> &effects, const float *interle
 
     drift::AudioEffectRack rack;
     if (rack.configure(audioEffectSpecsFor(effects), sampleRate))
-        rack.process(out.data(), frames);
+        rack.process(out.data(), frames, 0);
     return out;
 }
 
@@ -12181,7 +12183,7 @@ void EngineTest::audioEffectFactoryBuildsEveryCatalogEntry()
 
             drift::AudioEffectRack rack;
             QVERIFY2(rack.configure(specs, rate), qPrintable(entry.id));
-            rack.process(buffer.data(), kFrames);
+            rack.process(buffer.data(), kFrames, 0);
 
             QCOMPARE(buffer.size(), kFrames * 2);
             for (int i = 0; i < buffer.size(); ++i) {
@@ -12534,6 +12536,101 @@ void EngineTest::audioEffectRackRebuildsWhenGraphChanges()
     QVERIFY(rebuilt);
 }
 
+namespace {
+
+// A one-parameter graph spec: "g" drives a gain pedal's gain in dB.
+drift::AudioEffectSpec gainSpec(const char *graph)
+{
+    drift::AudioEffectSpec spec;
+    spec.key = QStringLiteral("gain");
+    std::string error;
+    spec.graph = drift::audiofx::parseAudioGraph(graph, {"g"}, {0.0f}, {}, &error);
+    spec.parameters.insert(QStringLiteral("g"), 0.0f);
+    return spec;
+}
+
+// Runs a rack over `in` in `block`-frame calls, telling it where each block sits on the timeline.
+QVector<float> runTimedRack(drift::AudioEffectRack &rack, const QVector<float> &in, drift::TimeUs startUs,
+                            int rate, int block = 1000)
+{
+    QVector<float> out = in;
+    const int frames = static_cast<int>(in.size() / 2);
+    for (int offset = 0; offset < frames; offset += block) {
+        const int count = std::min(block, frames - offset);
+        rack.process(out.data() + offset * 2, count,
+                     startUs + static_cast<drift::TimeUs>(int64_t(offset) * drift::kUsPerSecond / rate));
+    }
+    return out;
+}
+
+} // namespace
+
+void EngineTest::audioEffectRackFollowsKeyframes()
+{
+    // A gain keyed from -60 dB to 0 dB over the first second of a clip that starts at 5 s: the
+    // output has to fade in with it, on the clip's clock rather than the timeline's.
+    drift::AudioEffectSpec spec =
+        gainSpec(R"({"chain":[{"id":"p","type":"gain","knobs":{"gain":{"param":"g"}}}]})");
+    QVERIFY(spec.graph);
+    drift::KeyframeTrack<double> fade;
+    fade.setKeyframe(0, -60.0);
+    fade.setKeyframe(drift::kUsPerSecond, 0.0);
+    spec.keyframes.insert(QStringLiteral("g"), fade);
+    spec.ownerStartUs = 5 * drift::kUsPerSecond;
+
+    constexpr int kRate = 48000;
+    drift::AudioEffectRack rack;
+    QVERIFY(rack.configure({spec}, kRate));
+    rack.reset(spec.ownerStartUs);
+    const QVector<float> tone = stereoTone(kRate * 2, 440.0, kRate, 0.5f);
+    const QVector<float> out = runTimedRack(rack, tone, spec.ownerStartUs, kRate);
+
+    const int window = kRate / 20; // 50 ms, stereo-interleaved below
+    const double inRms = rms(tone.constData(), window * 2);
+    const double early = rms(out.constData(), window * 2);
+    const double middle = rms(out.constData() + kRate, window * 2);       // ~0.5 s in
+    const double late = rms(out.constData() + kRate * 3, window * 2);     // ~1.5 s in
+    QVERIFY2(early < inRms * 0.01, qPrintable(QString::number(early / inRms)));
+    QVERIFY2(middle > early * 10 && middle < late, qPrintable(QStringLiteral("%1 %2").arg(middle).arg(late)));
+    QVERIFY2(std::abs(20.0 * std::log10(late / inRms)) < 0.1, qPrintable(QString::number(late / inRms)));
+}
+
+void EngineTest::audioEffectRackSeedsModulatorsFromOwnerTime()
+{
+    // An LFO on the gain, owned by a clip at 3 s. Playing from the clip's start and seeking
+    // straight to 4.5 s have to arrive at the same wobble.
+    const char *graph = R"({"modulators":[{"id":"m","type":"lfo","knobs":{"rate":0.5}}],
+        "chain":[{"id":"p","type":"gain","knobs":{"gain":-12},"mod":{"gain":[{"from":"m","depth":0.1}]}}]})";
+    drift::AudioEffectSpec spec = gainSpec(graph);
+    QVERIFY(spec.graph);
+    spec.ownerStartUs = 3 * drift::kUsPerSecond;
+
+    constexpr int kRate = 48000;
+    const QVector<float> dc(kRate * 2 * 2, 0.5f); // 2 s of constant input
+    const drift::TimeUs seekUs = spec.ownerStartUs + drift::kUsPerSecond * 3 / 2;
+    const int seekFrame = kRate * 3 / 2;
+
+    drift::AudioEffectRack continuous;
+    QVERIFY(continuous.configure({spec}, kRate));
+    continuous.reset(spec.ownerStartUs);
+    const QVector<float> played = runTimedRack(continuous, dc, spec.ownerStartUs, kRate);
+
+    drift::AudioEffectRack seeked;
+    QVERIFY(seeked.configure({spec}, kRate));
+    seeked.reset(seekUs);
+    const QVector<float> tail(dc.constBegin() + seekFrame * 2, dc.constEnd());
+    const QVector<float> jumped = runTimedRack(seeked, tail, seekUs, kRate);
+
+    // The gain glides over 20 ms, so compare a little after the jump.
+    for (const int at : {kRate / 20, kRate / 4}) {
+        const float a = played[(seekFrame + at) * 2];
+        const float b = jumped[at * 2];
+        QVERIFY2(std::abs(a - b) < 0.002f, qPrintable(QStringLiteral("+%1: %2 vs %3").arg(at).arg(a).arg(b)));
+    }
+    // And the LFO is actually moving the level, or the comparison proves nothing.
+    QVERIFY(std::abs(played[kRate / 2 * 2] - played[kRate * 3 / 2 * 2]) > 0.01f);
+}
+
 void EngineTest::audioEffectChainAltersSignal()
 {
     // A 4 kHz tone pushed through the telephone band-limit (300-3400 Hz) must come back quieter,
@@ -12639,7 +12736,7 @@ void EngineTest::audioEffectStreamIsContinuousAcrossBlocks()
     QVector<float> streamed(kTotal * 2);
     std::memcpy(streamed.data(), tone.constData(), static_cast<size_t>(kTotal) * 2 * sizeof(float));
     for (int block = 0; block < kBlocks; ++block)
-        rack.process(streamed.data() + block * kBlock * 2, kBlock);
+        rack.process(streamed.data() + block * kBlock * 2, kBlock, 0);
 
     const QVector<float> reference = runRack({tremolo}, tone.constData(), kTotal, kRate);
     QCOMPARE(reference.size(), streamed.size());
@@ -12710,18 +12807,18 @@ void EngineTest::audioEffectRackPrimingAlignsLatentStages()
 
     const QVector<float> continuous = stereoTone(primeFrames + kBlock, 440.0, kRate);
 
-    primed.warmUp(continuous.constData(), primeFrames);
+    primed.warmUp(continuous.constData(), primeFrames, 0);
     QVector<float> primedOut(kBlock * 2);
     std::memcpy(primedOut.data(), continuous.constData() + primeFrames * 2,
                 static_cast<size_t>(kBlock) * 2 * sizeof(float));
-    primed.process(primedOut.data(), kBlock);
+    primed.process(primedOut.data(), kBlock, 0);
 
     drift::AudioEffectRack cold;
     QVERIFY(cold.configure(specs, kRate));
     QVector<float> coldOut(kBlock * 2);
     std::memcpy(coldOut.data(), continuous.constData() + primeFrames * 2,
                 static_cast<size_t>(kBlock) * 2 * sizeof(float));
-    cold.process(coldOut.data(), kBlock);
+    cold.process(coldOut.data(), kBlock, 0);
 
     // The opening of the block is the part latency eats. Primed, it carries signal; cold, it is
     // the silence users heard at the head of every pitch-shifted clip.
@@ -12768,12 +12865,12 @@ void EngineTest::pitchShiftMovesPitchInTheRightDirection()
 
         const int prime = rack.primeFrames();
         const QVector<float> tone = stereoTone(prime + kMeasure, kToneHz, kRate);
-        rack.warmUp(tone.constData(), prime);
+        rack.warmUp(tone.constData(), prime, 0);
 
         QVector<float> out(kMeasure * 2);
         std::memcpy(out.data(), tone.constData() + prime * 2,
                     static_cast<size_t>(kMeasure) * 2 * sizeof(float));
-        rack.process(out.data(), kMeasure);
+        rack.process(out.data(), kMeasure, 0);
 
         const double shifted = kToneHz * testCase.ratio;
         const double atShifted = toneEnergy(out.constData(), kMeasure, shifted, kRate);
@@ -12816,11 +12913,11 @@ void EngineTest::audioEffectRackParameterChangeIsContinuous()
 
     drift::AudioEffectRack rack;
     QVERIFY(rack.configure(audioEffectSpecsFor({muffled}), kRate));
-    rack.process(first.data(), kBlock);
+    rack.process(first.data(), kBlock, 0);
 
     muffled.parameters.insert(QStringLiteral("gain"), 2.0);
     QVERIFY(rack.configure(audioEffectSpecsFor({muffled}), kRate));
-    rack.process(second.data(), kBlock);
+    rack.process(second.data(), kBlock, 0);
 
     const float boundaryStep = std::abs(second[0] - first[(kBlock - 1) * 2]);
     // An unsmoothed 0.5 -> 2.0 gain change on a 0.5 input steps by 0.75 in one sample.

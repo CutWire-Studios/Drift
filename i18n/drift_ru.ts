@@ -5144,6 +5144,14 @@
         <translation>Просмотр аудиоэффектов</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">Выберите момент времени, задайте значение и нажмите на ромб, чтобы добавить ключевой кадр. Если включены автоматические ключевые кадры, они также создаются при перетаскивании ползунка.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">Автоматические ключевые кадры</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (не установлено)</translation>
     </message>
@@ -5170,18 +5178,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>Удалить аудиоэффект</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>Вкл.</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>Выкл.</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>Изменить аудиоэффект</translation>
     </message>
 </context>
 <context>

@@ -295,7 +295,8 @@ QMap<QString, QVariant> resolvedAudioEffectParameters(const drift::Effect &effec
     return values;
 }
 
-QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &effects)
+QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &effects,
+                                                    drift::TimeUs ownerStartUs)
 {
     QVector<drift::AudioEffectSpec> specs;
     specs.reserve(effects.size());
@@ -315,6 +316,11 @@ QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &
         const QMap<QString, QVariant> values = resolvedAudioEffectParameters(effect, *def);
         for (auto it = values.constBegin(); it != values.constEnd(); ++it)
             spec.parameters.insert(it.key(), static_cast<float>(it.value().toDouble()));
+        for (auto it = effect.paramKeyframes.constBegin(); it != effect.paramKeyframes.constEnd(); ++it) {
+            if (!it.value().isEmpty() && values.contains(it.key()))
+                spec.keyframes.insert(it.key(), it.value());
+        }
+        spec.ownerStartUs = ownerStartUs;
 
         specs.append(spec);
     }

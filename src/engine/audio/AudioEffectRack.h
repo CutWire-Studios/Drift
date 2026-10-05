@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/Keyframe.h"
 #include "core/Time.h"
 #include "engine/audio/AudioGraph.h"
 
@@ -20,6 +21,11 @@ struct AudioEffectSpec
     std::shared_ptr<const audiofx::AudioGraphDesc> graph;
     int prerollMs = 0;
     QMap<QString, float> parameters;
+    // Animated parameters, keyed like `parameters`, in the owning clip's time: the rack evaluates
+    // them at (timeline time - ownerStartUs) every 128 frames and they win over the static value.
+    // The owner is the clip itself, or the adjustment clip the effect came from.
+    QMap<QString, KeyframeTrack<double>> keyframes;
+    drift::TimeUs ownerStartUs = 0;
 };
 
 // A clip's audio effect chain. Replaces the libavfilter graph that used to live in
@@ -56,12 +62,15 @@ public:
     // reset, so latent stages line up and stateful tails start warm instead of cold.
     int primeFrames() const;
 
+    // Every call says where on the timeline its first frame sits: keyframed parameters are
+    // evaluated there, and reset() seeds LFO and step phases from it.
+
     // Process and discard: fills stage state without emitting anything.
-    void warmUp(const float *interleavedStereo, int frames);
+    void warmUp(const float *interleavedStereo, int frames, drift::TimeUs timelineStartUs);
 
-    void process(float *interleavedStereo, int frames);
+    void process(float *interleavedStereo, int frames, drift::TimeUs timelineStartUs);
 
-    void reset();
+    void reset(drift::TimeUs timelineUs);
 
     drift::TimeUs lastTimelineEndUs() const;
     void setLastTimelineEndUs(drift::TimeUs us);

@@ -5098,6 +5098,14 @@
         <translation>オーディオエフェクトを参照</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">時間を移動し、値を設定して、ダイヤモンドをクリックしてキーフレームを追加します。自動キーフレームがオンの場合、スライダーをドラッグしてもキーフレームが作成されます。</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">自動キーフレーム</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (インストールされていません)</translation>
     </message>
@@ -5124,18 +5132,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>オーディオエフェクトを削除</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>オン</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>オフ</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>オーディオエフェクトを編集</translation>
     </message>
 </context>
 <context>

@@ -5213,6 +5213,14 @@
         <translation>تصفح التأثيرات الصوتية</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">انتقل إلى وقت محدد، وعيّن قيمة، ثم انقر على رمز المعين لإضافة إطار مفتاحي. عند تفعيل الإطارات المفتاحية التلقائية، يؤدي سحب شريط التمرير إلى إنشائها أيضًا.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">إطارات مفتاحية تلقائية</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (غير مثبت)</translation>
     </message>
@@ -5239,18 +5247,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>إزالة التأثير الصوتي</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>تشغيل</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>إيقاف</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>تعديل التأثير الصوتي</translation>
     </message>
 </context>
 <context>
