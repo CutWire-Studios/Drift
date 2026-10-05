@@ -275,32 +275,15 @@ bool isFixedFunctionBlend(drift::BlendMode mode)
 QMatrix4x4 modelMatrixFor(const GpuLayer &layer, const QSize &canvas)
 {
     if (layer.cameraActive) {
+        // One shared rule, so the preview's grips are drawn from the same placement as the pixels.
         const QSizeF canvasF(canvas);
         QMatrix4x4 ndc;
         ndc.translate(-1.f, -1.f);
         ndc.scale(2.f / canvas.width(), 2.f / canvas.height());
-        const QMatrix4x4 view = drift::cameraViewProjection(layer.camera, canvasF);
-        if (!layer.hasParent) {
-            // The whole point of the feature: the clip is placed in world space and one eye looks
-            // at it, so two clips at different depths move by different amounts when it moves.
-            return ndc * view
-                   * drift::clipQuadToWorld(layer.rect, layer.rotation, layer.flipH, layer.flipV,
-                                            layer.pose3d, canvasF);
-        }
-        if (layer.parent.isAffine()) {
-            return ndc * view * drift::worldParentFromAffine(layer.parent, canvasF)
-                   * drift::clipQuadToWorld(layer.rect, layer.rotation, layer.flipH, layer.flipV,
-                                            layer.pose3d, canvasF);
-        }
-        // Tilted transform layer: see cameraCanvasPlaneToCanvas for why this one goes through the
-        // card's own eye first and is then viewed as a flat picture.
-        const QMatrix4x4 quad =
-            layer.pose3d.isActive()
-                ? drift::clipQuadToCanvas(layer.rect, layer.rotation, layer.flipH, layer.flipV,
-                                          layer.pose3d, canvasF)
-                : drift::flatQuadToCanvas(layer.rect, layer.rotation, layer.flipH, layer.flipV);
-        return ndc * drift::cameraCanvasPlaneToCanvas(layer.camera, canvasF)
-               * drift::parentedQuadToCanvas(layer.parent, quad);
+        return ndc
+               * drift::cameraQuadToCanvas(layer.camera, layer.rect, layer.rotation, layer.flipH,
+                                           layer.flipV, layer.pose3d, layer.parent,
+                                           layer.hasParent, canvasF);
     }
     if (layer.hasParent) {
         QMatrix4x4 m;

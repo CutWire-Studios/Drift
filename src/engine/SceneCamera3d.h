@@ -2,6 +2,8 @@
 
 #include "engine/ClipTransform3d.h"
 
+#include "core/Time.h"
+
 #include <QMatrix4x4>
 #include <QSizeF>
 #include <QTransform>
@@ -52,6 +54,18 @@ struct SceneCamera3d
     }
 };
 
+struct Clip;
+
+// The viewpoint a Camera clip describes at `timelineUs`, reading the clip's ordinary transform
+// tracks with camera meanings: pan from transformX/Y, dolly from positionZ, pitch/yaw from
+// rotationX/Y, roll from rotation and the lens from perspective.
+//
+// Lengths are multiplied by `renderScale` so they track the canvas the way every other layout
+// value does; the angles are not, which is what keeps a preview at renderScale 0.5 framed exactly
+// like the export at 1.0. The compositor and the preview overlay both resolve the camera through
+// this, so the grips cannot be computed from different numbers than the pixels.
+SceneCamera3d sceneCameraFromClip(const Clip &clip, TimeUs timelineUs, double renderScale);
+
 // World (canvas px about the canvas centre) → homogeneous canvas pixels, top-left origin: divide
 // x, y by w to get the pixel. This is the projection half of clipQuadToCanvas lifted out so one
 // eye can serve every clip, with the camera's inverse transform in front of it.
@@ -75,5 +89,23 @@ QMatrix4x4 worldParentFromAffine(const QTransform &parent, const QSizeF &canvas)
 // moves and turns the card correctly as a flat picture; what the clip does not get is parallax from
 // the card's own tilt. An identity camera leaves the pixels exactly where they were.
 QMatrix4x4 cameraCanvasPlaneToCanvas(const SceneCamera3d &camera, const QSizeF &canvas);
+
+// Where a clip's unit quad lands, in homogeneous canvas pixels, once the camera is looking at it —
+// through its transform-layer parent, if it has one.
+//
+// This is the one placement rule for a camera-lit scene, and it has two callers on purpose: the
+// compositor's model matrix and the preview overlay's box and handles. Splitting them was what let
+// the grips drift away from the picture, so they share this instead. Only for an active camera;
+// both callers keep their own untouched path for a scene without one.
+QMatrix4x4 cameraQuadToCanvas(const SceneCamera3d &camera, const QRectF &rect, double rotation,
+                              bool flipH, bool flipV, const ClipPose3d &pose,
+                              const QTransform &parent, bool hasParent, const QSizeF &canvas);
+
+// The same placement for an item of the rect's size laid out from (0, 0), with z passed through so
+// the matrix inverts: what a QtQuick Matrix4x4 needs to lay the overlay over a clip, and what the
+// pointer is mapped back through. The camera counterpart of clipLocalToCanvas.
+QMatrix4x4 cameraClipLocalToCanvas(const SceneCamera3d &camera, const QRectF &rect, double rotation,
+                                   const ClipPose3d &pose, const QTransform &parent, bool hasParent,
+                                   const QSizeF &canvas);
 
 } // namespace drift

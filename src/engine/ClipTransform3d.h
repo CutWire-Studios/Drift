@@ -53,6 +53,11 @@ QMatrix4x4 clipQuadToWorld(const QRectF &rect, double rotation, bool flipH, bool
 QMatrix4x4 clipLocalToCanvas(const QRectF &rect, double rotation, const ClipPose3d &pose,
                              const QSizeF &canvas);
 
+// clipLocalToCanvas in world space: an item of the rect's size laid out from (0, 0), placed about
+// the canvas centre with no projection. What the preview overlay needs before the camera is applied.
+QMatrix4x4 clipLocalToWorld(const QRectF &rect, double rotation, const ClipPose3d &pose,
+                            const QSizeF &canvas);
+
 // The flat placement of the unit quad: rect, in-plane rotation and flips, z = 0 and w = 1.
 QMatrix4x4 flatQuadToCanvas(const QRectF &rect, double rotation, bool flipH, bool flipV);
 

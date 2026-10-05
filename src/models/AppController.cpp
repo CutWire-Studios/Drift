@@ -15246,6 +15246,26 @@ QVariantMap AppController::previewApplyGizmoDrag(const QVariantMap &start, const
     return out;
 }
 
+drift::SceneCamera3d AppController::previewCamera(bool *active) const
+{
+    // renderScale 1: the overlay measures in canvas pixels, and so does every box it is handed.
+    if (const drift::Clip *clip = drift::cameraClipAt(m_project.tracks(), m_playheadUs)) {
+        if (active)
+            *active = true;
+        return drift::sceneCameraFromClip(*clip, m_playheadUs, 1.0);
+    }
+    if (active)
+        *active = false;
+    return {};
+}
+
+bool AppController::previewCameraActive() const
+{
+    bool active = false;
+    previewCamera(&active);
+    return active;
+}
+
 QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x, double y,
                                                 double w, double h, double rotation,
                                                 double scaleX, double scaleY) const
@@ -15257,9 +15277,20 @@ QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x
     QMatrix4x4 m;
     m.scale(float(scaleX), float(scaleY));
     m.translate(float(-x), float(-y));
-    // A parented box, flat or not, is placed through its transform layers too.
-    m *= liftHomography(previewBoxParent(box));
-    m *= drift::clipLocalToCanvas(QRectF(x, y, w, h), rotation, previewBoxPose(box), canvas);
+    bool cameraActive = false;
+    const drift::SceneCamera3d camera = previewCamera(&cameraActive);
+    if (cameraActive) {
+        // Through the camera, using the same placement the compositor draws with, so the overlay
+        // sits exactly on the picture.
+        const QTransform parent = previewBoxParent(box);
+        m *= drift::cameraClipLocalToCanvas(camera, QRectF(x, y, w, h), rotation,
+                                            previewBoxPose(box), parent, !parent.isIdentity(),
+                                            canvas);
+    } else {
+        // A parented box, flat or not, is placed through its transform layers too.
+        m *= liftHomography(previewBoxParent(box));
+        m *= drift::clipLocalToCanvas(QRectF(x, y, w, h), rotation, previewBoxPose(box), canvas);
+    }
     m.scale(float(1.0 / scaleX), float(1.0 / scaleY));
     return m;
 }
@@ -15273,6 +15304,17 @@ QVariantMap AppController::previewClipAtCanvasPoint(double canvasX, double canva
         // reaches the clips it moves.
         if (box.value(QStringLiteral("kind")).toString() == QLatin1String("transform"))
             continue;
+        // With a camera the box is already projected into canvas space by previewClipsAtPlayhead,
+        // parents and all, so the pointer is tested against those corners directly rather than
+        // being mapped back into the clip's own frame — there is no flat frame left to map into.
+        if (box.value(QStringLiteral("cameraActive")).toBool()) {
+            QPolygonF quad;
+            for (const QVariant &corner : box.value(QStringLiteral("quad")).toList())
+                quad << corner.toPointF();
+            if (quad.size() == 4 && quad.containsPoint(QPointF(canvasX, canvasY), Qt::OddEvenFill))
+                return box;
+            continue;
+        }
         const QPointF local = previewMapToClipSpace(box, canvasX, canvasY);
         const double x = box.value(QStringLiteral("x")).toDouble();
         const double y = box.value(QStringLiteral("y")).toDouble();
@@ -15405,6 +15447,8 @@ QVariantList AppController::previewClipsAtPlayhead() const
     const QList<drift::Track> &tracks = m_project.tracks();
     const QList<drift::TransformParent> parents =
         drift::transformParentsAt(m_project, m_playheadUs, 1.0);
+    bool cameraActive = false;
+    const drift::SceneCamera3d camera = previewCamera(&cameraActive);
     for (int trackIndex = 0; trackIndex < tracks.size(); ++trackIndex) {
         const drift::Track &track = tracks.at(trackIndex);
         if (track.hidden)
@@ -15510,7 +15554,7 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 entry.insert(QStringLiteral("rotationY"), 0.0);
                 entry.insert(QStringLiteral("z"), 0.0);
             }
-            // Where the box lands on screen, through its own pose and every parent.
+            // Where the box lands on screen, through its own pose, every parent and the camera.
             {
                 const QRectF rect(entry.value(QStringLiteral("x")).toDouble(),
                                   entry.value(QStringLiteral("y")).toDouble(),
@@ -15518,17 +15562,28 @@ QVariantList AppController::previewClipsAtPlayhead() const
                                   entry.value(QStringLiteral("height")).toDouble());
                 const double spin = entry.value(QStringLiteral("rotation")).toDouble();
                 const drift::ClipPose3d pose = previewBoxPose(entry);
-                const QMatrix4x4 quadMatrix =
-                    pose.isActive() ? drift::clipQuadToCanvas(rect, spin, false, false, pose,
-                                                              QSizeF(canvasWidth, canvasHeight))
-                                    : drift::flatQuadToCanvas(rect, spin, false, false);
+                QMatrix4x4 placed;
+                if (cameraActive) {
+                    placed = drift::cameraQuadToCanvas(camera, rect, spin, false, false, pose,
+                                                       parent.matrix, parent.hasParent,
+                                                       QSizeF(canvasWidth, canvasHeight));
+                } else {
+                    const QMatrix4x4 quadMatrix =
+                        pose.isActive() ? drift::clipQuadToCanvas(rect, spin, false, false, pose,
+                                                                  QSizeF(canvasWidth, canvasHeight))
+                                        : drift::flatQuadToCanvas(rect, spin, false, false);
+                    placed = parent.hasParent
+                                 ? drift::parentedQuadToCanvas(parent.matrix, quadMatrix)
+                                 : quadMatrix;
+                }
                 QVariantList quad;
-                for (const QPointF &p : drift::projectedQuad(
-                         parent.hasParent ? drift::parentedQuadToCanvas(parent.matrix, quadMatrix)
-                                          : quadMatrix))
+                for (const QPointF &p : drift::projectedQuad(placed))
                     quad.append(p);
                 entry.insert(QStringLiteral("quad"), quad);
             }
+            // The overlay reads this to turn snapping off and to take its 3D drawing path: a
+            // camera leaves the box with no axis-aligned edges, exactly as a tilt does.
+            entry.insert(QStringLiteral("cameraActive"), cameraActive);
             out.append(entry);
         }
     }

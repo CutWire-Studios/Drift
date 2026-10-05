@@ -1,5 +1,8 @@
 #include "engine/SceneCamera3d.h"
 
+#include "core/Clip.h"
+#include "engine/TransformLayer.h"
+
 #include <QVector4D>
 
 #include <algorithm>
@@ -63,6 +66,89 @@ QMatrix4x4 cameraCanvasPlaneToCanvas(const SceneCamera3d &camera, const QSizeF &
                              0.f, 0.f, 0.f, 0.f,
                              0.f, 0.f, 0.f, 1.f);
     return cameraViewProjection(camera, canvas) * flatten;
+}
+
+namespace {
+
+double trackValue(const KeyframeTrack<double> &track, TimeUs relative, double fallback)
+{
+    return track.isEmpty() ? fallback : track.evaluateAt(relative);
+}
+
+} // namespace
+
+SceneCamera3d sceneCameraFromClip(const Clip &clip, TimeUs timelineUs, double renderScale)
+{
+    const TimeUs relative = timelineUs - clip.timelineStart;
+    SceneCamera3d camera;
+    camera.positionX = trackValue(clip.transformX, relative, 0.0) * renderScale;
+    camera.positionY = trackValue(clip.transformY, relative, 0.0) * renderScale;
+    camera.positionZ = trackValue(clip.positionZ, relative, 0.0) * renderScale;
+    camera.rotationX = trackValue(clip.rotationX, relative, 0.0);
+    camera.rotationY = trackValue(clip.rotationY, relative, 0.0);
+    camera.rotationZ = trackValue(clip.rotation, relative, 0.0);
+    camera.perspective =
+        trackValue(clip.perspective, relative, kDefaultClipPerspective) * renderScale;
+    return camera;
+}
+
+namespace {
+
+// A canvas->canvas parent homography as a 4x4 acting on x, y and w with z passed through. The same
+// lift the preview overlay has always used for a flat parent chain; only the local (invertible)
+// path needs it, because the quad path hands its near-plane work to parentedQuadToCanvas.
+QMatrix4x4 liftParent(const QTransform &t)
+{
+    return QMatrix4x4(float(t.m11()), float(t.m21()), 0.f, float(t.m31()),
+                      float(t.m12()), float(t.m22()), 0.f, float(t.m32()),
+                      0.f, 0.f, 1.f, 0.f,
+                      float(t.m13()), float(t.m23()), 0.f, float(t.m33()));
+}
+
+} // namespace
+
+QMatrix4x4 cameraQuadToCanvas(const SceneCamera3d &camera, const QRectF &rect, double rotation,
+                              bool flipH, bool flipV, const ClipPose3d &pose,
+                              const QTransform &parent, bool hasParent, const QSizeF &canvas)
+{
+    const QMatrix4x4 view = cameraViewProjection(camera, canvas);
+    if (!hasParent) {
+        // The ordinary case, and the whole point of the feature: the clip sits in world space and
+        // one eye looks at it, so clips at different depths move by different amounts.
+        return view * clipQuadToWorld(rect, rotation, flipH, flipV, pose, canvas);
+    }
+    if (parent.isAffine()) {
+        return view * worldParentFromAffine(parent, canvas)
+               * clipQuadToWorld(rect, rotation, flipH, flipV, pose, canvas);
+    }
+    // Tilted transform layer: see cameraCanvasPlaneToCanvas for why this goes through the card's
+    // own eye first and is then viewed as a flat picture.
+    const QMatrix4x4 quad = pose.isActive()
+                                ? clipQuadToCanvas(rect, rotation, flipH, flipV, pose, canvas)
+                                : flatQuadToCanvas(rect, rotation, flipH, flipV);
+    return cameraCanvasPlaneToCanvas(camera, canvas) * parentedQuadToCanvas(parent, quad);
+}
+
+QMatrix4x4 cameraClipLocalToCanvas(const SceneCamera3d &camera, const QRectF &rect, double rotation,
+                                   const ClipPose3d &pose, const QTransform &parent, bool hasParent,
+                                   const QSizeF &canvas)
+{
+    QMatrix4x4 m;
+    if (!hasParent) {
+        m = cameraViewProjection(camera, canvas) * clipLocalToWorld(rect, rotation, pose, canvas);
+    } else if (parent.isAffine()) {
+        m = cameraViewProjection(camera, canvas) * worldParentFromAffine(parent, canvas)
+            * clipLocalToWorld(rect, rotation, pose, canvas);
+    } else {
+        // The projective-parent fallback, matching cameraQuadToCanvas: the card is placed through
+        // its own eye and then viewed flat.
+        m = cameraCanvasPlaneToCanvas(camera, canvas) * liftParent(parent)
+            * clipLocalToCanvas(rect, rotation, pose, canvas);
+    }
+    // A z = 0 point stays at z = 0 and the matrix stays invertible, exactly as clipLocalToCanvas
+    // arranges — the overlay maps the pointer back through the inverse of this.
+    m.setRow(2, QVector4D(0.f, 0.f, 1.f, 0.f));
+    return m;
 }
 
 } // namespace drift

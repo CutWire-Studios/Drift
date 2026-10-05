@@ -76,6 +76,23 @@ QMatrix4x4 clipLocalToCanvas(const QRectF &rect, double rotation, const ClipPose
     return m;
 }
 
+QMatrix4x4 clipLocalToWorld(const QRectF &rect, double rotation, const ClipPose3d &pose,
+                            const QSizeF &canvas)
+{
+    // clipQuadToWorld stops at the unit quad; this lays the item out from its top-left instead, so
+    // a QtQuick item of the clip's size lands on it. z is left alone here — the caller flattens it
+    // once the camera has been applied, which is what keeps the whole chain invertible.
+    const QPointF centre = rect.center();
+    QMatrix4x4 m;
+    m.translate(float(centre.x() - canvas.width() * 0.5), float(centre.y() - canvas.height() * 0.5),
+                float(pose.positionZ));
+    m.rotate(float(pose.rotationX), 1.f, 0.f, 0.f);
+    m.rotate(float(pose.rotationY), 0.f, 1.f, 0.f);
+    m.rotate(float(rotation), 0.f, 0.f, 1.f);
+    m.translate(float(-rect.width() * 0.5), float(-rect.height() * 0.5));
+    return m;
+}
+
 QMatrix4x4 flatQuadToCanvas(const QRectF &rect, double rotation, bool flipH, bool flipV)
 {
     QMatrix4x4 m;

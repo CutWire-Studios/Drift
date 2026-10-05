@@ -63,6 +63,7 @@ struct MediaEditSpec;
 }
 
 #include "engine/AudioRecorder.h"
+#include "engine/SceneCamera3d.h"
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 
@@ -1281,6 +1282,10 @@ public:
     Q_INVOKABLE QMatrix4x4 previewClipPoseMatrix(const QVariantMap &box, double x, double y,
                                                  double w, double h, double rotation,
                                                  double scaleX, double scaleY) const;
+    // True while a camera clip covers the playhead. The overlay needs it for the same reasons a
+    // tilt matters: the box is no longer axis-aligned, so snapping is off, and the grips have to be
+    // drawn through the camera rather than straight onto the canvas.
+    Q_INVOKABLE bool previewCameraActive() const;
 
     // Asset drag-and-drop. One resolver for every kind a browser can lift (AssetDrag.qml has
     // the list; media keeps its own asset-index path), shared by the desktop and phone
@@ -2603,6 +2608,11 @@ protected:
     // on a media clip, and every lane is adjacent to and directly above its parent. Both passes
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and
     // cheap when nothing is out of place, which is why it can run on every edit.
+    // The scene camera at the playhead in canvas pixels (renderScale 1, which is the space the
+    // preview overlay measures in). `active` reports whether a camera clip covers the playhead at
+    // all; when it does not, the camera comes back at rest and every caller keeps its old path.
+    drift::SceneCamera3d previewCamera(bool *active = nullptr) const;
+
     void normalizeProjectStructure(const drift::Project *before = nullptr);
     // What the transform layers over `trackIndex` do at the playhead; identity when none.
     drift::TransformParent transformParentFor(int trackIndex) const;

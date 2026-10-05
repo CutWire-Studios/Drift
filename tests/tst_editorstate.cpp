@@ -32,6 +32,7 @@
 #include "playback/CompositorService.h"
 #include "engine/HwAccel.h"
 #include "engine/FrameCompositor.h"
+#include "engine/GpuCompositor.h"
 #include "engine/ClipReaderPool.h"
 #include "models/AppController.h"
 #include "models/TimelineClipsModel.h"
@@ -82,6 +83,7 @@ private slots:
     void snapTimeEnabled();
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
+    void cameraMovesThePreviewOverlayWithThePicture();
     void compositeClipSpeedRetimesToFit();
     void importedMediaIsCentredAndResetsToItsFit();
     void transformTogetherWrapsTheSelection();
@@ -720,6 +722,141 @@ void EditorStateTest::compositeFromSelectionUndoRedo()
     state.redo();
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).type, drift::ClipType::Composite);
     QCOMPARE(library.count(), 2);
+}
+
+// The bug this guards: the overlay used to place a clip's outline and grips with the eye fixed at
+// the canvas centre, so turning the camera left the handles sitting away from the picture. The box
+// the overlay reports has to agree with where the compositor actually draws the pixels.
+void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QImage white(40, 40, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    const QString path = dir.filePath(QStringLiteral("white.png"));
+    QVERIFY(white.save(path));
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->setResolution(400, 400);
+
+    drift::MediaAsset asset;
+    asset.name = QStringLiteral("white.png");
+    asset.kind = drift::MediaKind::Image;
+    asset.path = path;
+    asset.durationUs = drift::secondsToUs(5.0);
+    asset.width = white.width();
+    asset.height = white.height();
+    state.project()->addAsset(asset);
+    library.syncToProject();
+    state.setSnapEnabled(false);
+    // An image belongs on a graphic track, so let the controller make the right one.
+    state.addClipFromAsset(0);
+    // Where it landed, since the kind decides the track.
+    int imageTrack = -1;
+    for (int t = 0; t < state.project()->tracks().size() && imageTrack < 0; ++t) {
+        for (const drift::Clip &clip : state.project()->tracks().at(t).clips) {
+            if (clip.type == drift::ClipType::Image)
+                imageTrack = t;
+        }
+    }
+    QVERIFY(imageTrack >= 0);
+
+    // A small card dead centre, with room to move before it reaches an edge.
+    state.previewSetClipRect(imageTrack, 0, 180, 180, 40, 40);
+    state.setPlayheadSeconds(0.0);
+
+    // The white pixels' centre of mass in a composited frame.
+    FrameCompositor compositor;
+    compositor.setProject(state.project());
+    const auto renderedCentre = [&]() {
+        const QImage out = compositor.compositeAt(state.playheadUs())
+                                   .convertToFormat(QImage::Format_RGBA8888);
+        double sx = 0.0, sy = 0.0;
+        int n = 0;
+        for (int y = 0; y < out.height(); ++y) {
+            for (int x = 0; x < out.width(); ++x) {
+                if (out.pixelColor(x, y).red() > 128) {
+                    sx += x;
+                    sy += y;
+                    ++n;
+                }
+            }
+        }
+        return n > 0 ? QPointF(sx / n, sy / n) : QPointF(-1, -1);
+    };
+    // The centre of the quad the overlay reports for the clip.
+    const auto overlayBox = [&]() {
+        for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+            const QVariantMap box = entry.toMap();
+            if (box.value(QStringLiteral("kind")).toString() == QStringLiteral("image"))
+                return box;
+        }
+        return QVariantMap{};
+    };
+    const auto overlayCentre = [](const QVariantMap &box) {
+        const QVariantList quad = box.value(QStringLiteral("quad")).toList();
+        if (quad.size() != 4)
+            return QPointF(-1, -1);
+        QPointF sum;
+        for (const QVariant &corner : quad)
+            sum += corner.toPointF();
+        return sum / 4.0;
+    };
+
+    // Before any camera exists the two already agree, which is the baseline.
+    QVariantMap box = overlayBox();
+    QVERIFY(!box.isEmpty());
+    QVERIFY(!box.value(QStringLiteral("cameraActive")).toBool());
+    const QPointF restRendered = renderedCentre();
+    QVERIFY(restRendered.x() > 0.0);
+    QVERIFY2((overlayCentre(box) - restRendered).manhattanLength() < 2.0,
+             qPrintable(QStringLiteral("overlay %1,%2 vs rendered %3,%4")
+                                .arg(overlayCentre(box).x()).arg(overlayCentre(box).y())
+                                .arg(restRendered.x()).arg(restRendered.y())));
+
+    // Add a camera and pan it, which moves every track index down by one.
+    state.addCameraTrack();
+    QVERIFY(state.hasCameraTrack());
+    const int cameraTrack = 0;
+    QVERIFY(state.project()->tracks().at(cameraTrack).isCameraLayer());
+    QCOMPARE(state.project()->tracks().at(cameraTrack).clips.size(), 1);
+    QVERIFY(state.previewCameraActive());
+
+    // Pan the camera 60 px right; the picture must go left, and the overlay with it.
+    state.previewSetClipPosition(cameraTrack, 0, 60, 0);
+    state.setPlayheadSeconds(0.0);
+
+    const QPointF movedRendered = renderedCentre();
+    QVERIFY2(movedRendered.x() < restRendered.x() - 20.0,
+             qPrintable(QStringLiteral("rendered moved to %1 from %2")
+                                .arg(movedRendered.x()).arg(restRendered.x())));
+
+    // The clip is now on track 1, below the camera.
+    QVariantMap moved;
+    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+        const QVariantMap candidate = entry.toMap();
+        if (candidate.value(QStringLiteral("kind")).toString() == QStringLiteral("image"))
+            moved = candidate;
+    }
+    QVERIFY(!moved.isEmpty());
+    QVERIFY(moved.value(QStringLiteral("cameraActive")).toBool());
+
+    // The whole point: the overlay follows the picture through the camera.
+    QVERIFY2((overlayCentre(moved) - movedRendered).manhattanLength() < 2.0,
+             qPrintable(QStringLiteral("overlay %1,%2 vs rendered %3,%4")
+                                .arg(overlayCentre(moved).x()).arg(overlayCentre(moved).y())
+                                .arg(movedRendered.x()).arg(movedRendered.y())));
+
+    // Picking by canvas point has to follow it too, or clicking the clip would miss.
+    const QVariantMap hit = state.previewClipAtCanvasPoint(movedRendered.x(), movedRendered.y());
+    QVERIFY(!hit.isEmpty());
+    QCOMPARE(hit.value(QStringLiteral("kind")).toString(), QStringLiteral("image"));
+    // And where it used to be is now empty canvas.
+    QVERIFY(state.previewClipAtCanvasPoint(restRendered.x(), restRendered.y()).isEmpty());
 }
 
 void EditorStateTest::compositeClipGetsAPreviewBox()

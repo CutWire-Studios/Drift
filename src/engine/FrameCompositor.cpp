@@ -1337,19 +1337,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
     drift::SceneCamera3d sceneCamera;
     bool sceneCameraActive = false;
     if (const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), timelineUs)) {
-        const drift::TimeUs relative = timelineUs - cameraClip->timelineStart;
-        // Lengths are canvas pixels, so they scale with the render like every other layout value;
-        // the angles and the eye distance ratio do not, which is what keeps a preview at
-        // renderScale 0.5 framed exactly like the export at 1.0.
-        sceneCamera.positionX = transformValue(cameraClip->transformX, relative, 0.0) * renderScale;
-        sceneCamera.positionY = transformValue(cameraClip->transformY, relative, 0.0) * renderScale;
-        sceneCamera.positionZ = transformValue(cameraClip->positionZ, relative, 0.0) * renderScale;
-        sceneCamera.rotationX = transformValue(cameraClip->rotationX, relative, 0.0);
-        sceneCamera.rotationY = transformValue(cameraClip->rotationY, relative, 0.0);
-        sceneCamera.rotationZ = transformValue(cameraClip->rotation, relative, 0.0);
-        sceneCamera.perspective =
-            transformValue(cameraClip->perspective, relative, drift::kDefaultClipPerspective)
-            * renderScale;
+        sceneCamera = drift::sceneCameraFromClip(*cameraClip, timelineUs, renderScale);
         sceneCameraActive = true;
     }
     const auto applyCamera = [&sceneCamera, sceneCameraActive](GpuLayer &layer) {
