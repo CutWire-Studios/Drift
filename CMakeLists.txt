@@ -680,6 +680,8 @@ add_library(driftengine STATIC
     src/engine/ModelAnimation.cpp
     src/engine/ClipTransform3d.h
     src/engine/ClipTransform3d.cpp
+    src/engine/SceneCamera3d.h
+    src/engine/SceneCamera3d.cpp
     src/engine/TransformLayer.h
     src/engine/TransformLayer.cpp
     src/engine/ClipGizmo.h

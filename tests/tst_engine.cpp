@@ -48,6 +48,7 @@
 #include "engine/Exporter.h"
 #include "engine/PreviewProxyRenderer.h"
 #include "engine/ClipGizmo.h"
+#include "engine/SceneCamera3d.h"
 #include "engine/TransformLayer.h"
 #include "engine/GpuCompositor.h"
 #include "engine/MediaWaveform.h"
@@ -149,6 +150,8 @@ private slots:
     void depthOfFieldKeepsFocusSharpAndBlursTheRest();
     void depthOcclusionHidesLayerBehindNearerPixels();
     void clipPose3dRendersInPerspective();
+    void sceneCameraIdentityMatchesPerClipEye();
+    void sceneCameraMovesTheViewpoint();
     void clipGizmoSolvesDrags();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
@@ -1078,6 +1081,157 @@ void EngineTest::clipPose3dRendersInPerspective()
     QVERIFY(far.pixelColor(76, 64).red() > 200);
     QCOMPARE(far.pixelColor(84, 64).red(), 0);
     QCOMPARE(far.pixelColor(40, 64).red(), 0);
+}
+
+void EngineTest::sceneCameraIdentityMatchesPerClipEye()
+{
+    // The whole backwards-compatibility story rests on this: splitting clipQuadToCanvas into a
+    // world placement plus a shared camera must not move anything while the camera is at rest.
+    // Not bit-identical by construction — the camera path composes two matrices where the per-clip
+    // path accumulates in place — so this pins the agreement to well under a thousandth of a pixel
+    // across the awkward cases: tilts, flips, depth, off-centre rects and odd canvases.
+    const auto maxCornerError = [](const QRectF &rect, double rotation, bool flipH, bool flipV,
+                                   const drift::ClipPose3d &pose, const QSizeF &canvas) {
+        drift::SceneCamera3d camera;
+        camera.perspective = pose.perspective; // a camera is the clip's own eye, moved nowhere
+        const QMatrix4x4 direct =
+            drift::clipQuadToCanvas(rect, rotation, flipH, flipV, pose, canvas);
+        const QMatrix4x4 viaCamera = drift::cameraViewProjection(camera, canvas)
+                                     * drift::clipQuadToWorld(rect, rotation, flipH, flipV, pose,
+                                                              canvas);
+        double worst = 0.0;
+        for (const QPointF corner : {QPointF(-1, -1), QPointF(1, -1), QPointF(1, 1), QPointF(-1, 1),
+                                     QPointF(0, 0)}) {
+            const QVector4D v(float(corner.x()), float(corner.y()), 0.f, 1.f);
+            const QVector4D a = direct.map(v);
+            const QVector4D b = viaCamera.map(v);
+            QPointF pa(double(a.x()) / double(a.w()), double(a.y()) / double(a.w()));
+            QPointF pb(double(b.x()) / double(b.w()), double(b.y()) / double(b.w()));
+            worst = std::max(worst, std::hypot(pa.x() - pb.x(), pa.y() - pb.y()));
+        }
+        return worst;
+    };
+
+    const QSizeF canvas(1920, 1080);
+    drift::ClipPose3d flat;
+    QVERIFY(maxCornerError(QRectF(760, 340, 400, 400), 0.0, false, false, flat, canvas) < 1e-3);
+    QVERIFY(maxCornerError(QRectF(0, 0, 1920, 1080), 0.0, false, false, flat, canvas) < 1e-3);
+
+    // An in-plane spin, and the flips, which are applied after the placement.
+    QVERIFY(maxCornerError(QRectF(100, 50, 300, 200), 37.5, true, false, flat, canvas) < 1e-3);
+    QVERIFY(maxCornerError(QRectF(100, 50, 300, 200), -12.0, false, true, flat, canvas) < 1e-3);
+
+    // Tilts and depth, where the perspective divide actually does something.
+    drift::ClipPose3d tilted;
+    tilted.rotationX = 34.0;
+    tilted.rotationY = -58.0;
+    tilted.positionZ = 220.0;
+    QVERIFY(maxCornerError(QRectF(200, 120, 500, 280), 21.0, false, false, tilted, canvas) < 1e-3);
+
+    // A short eye distance exaggerates everything, so it is the strictest case.
+    drift::ClipPose3d shortEye;
+    shortEye.rotationY = 70.0;
+    shortEye.positionZ = -140.0;
+    shortEye.perspective = 200.0;
+    QVERIFY(maxCornerError(QRectF(32, 32, 64, 64), 0.0, false, false, shortEye, QSizeF(128, 128))
+            < 1e-3);
+    QVERIFY(maxCornerError(QRectF(5, 7, 61, 29), 9.0, true, true, shortEye, QSizeF(133, 71))
+            < 1e-3);
+
+    // An identity camera really is identity: it reports so, and a lens change does not, because a
+    // changed lens still has to take over from the clips' own eyes.
+    QVERIFY(drift::SceneCamera3d{}.isIdentity());
+    drift::SceneCamera3d lens;
+    lens.perspective = 800.0;
+    QVERIFY(lens.isIdentity());
+    drift::SceneCamera3d moved;
+    moved.positionX = 1.0;
+    QVERIFY(!moved.isIdentity());
+}
+
+void EngineTest::sceneCameraMovesTheViewpoint()
+{
+    const QSizeF canvas(1000, 1000);
+    drift::SceneCamera3d camera;
+    camera.perspective = 1000.0;
+
+    // Where the centre of a clip lands, as a canvas pixel.
+    const auto centreOf = [&](const drift::SceneCamera3d &cam, const QRectF &rect,
+                              const drift::ClipPose3d &pose) {
+        const QMatrix4x4 m = drift::cameraViewProjection(cam, canvas)
+                             * drift::clipQuadToWorld(rect, 0.0, false, false, pose, canvas);
+        const QVector4D p = m.map(QVector4D(0.f, 0.f, 0.f, 1.f));
+        return QPointF(double(p.x()) / double(p.w()), double(p.y()) / double(p.w()));
+    };
+
+    // A clip filling the canvas, at the canvas plane and well in front of it.
+    const QRectF rect(400, 400, 200, 200); // centred, so it sits on the view axis
+    drift::ClipPose3d atPlane;
+    drift::ClipPose3d nearer;
+    nearer.positionZ = 500.0; // half way to the eye
+
+    // At rest both are dead centre: depth alone does not shift something on the axis.
+    QVERIFY(std::hypot(centreOf(camera, rect, atPlane).x() - 500.0,
+                       centreOf(camera, rect, atPlane).y() - 500.0) < 1e-3);
+    QVERIFY(std::hypot(centreOf(camera, rect, nearer).x() - 500.0,
+                       centreOf(camera, rect, nearer).y() - 500.0) < 1e-3);
+
+    // Panning the camera right moves the image left...
+    drift::SceneCamera3d panned = camera;
+    panned.positionX = 100.0;
+    const double farShift = 500.0 - centreOf(panned, rect, atPlane).x();
+    const double nearShift = 500.0 - centreOf(panned, rect, nearer).x();
+    QVERIFY2(farShift > 0.0, qPrintable(QStringLiteral("far shift %1").arg(farShift)));
+
+    // ...and moves the nearer clip further, which is parallax. This is the test that distinguishes
+    // a real camera from re-projecting the finished 2D canvas, where both would shift alike.
+    QVERIFY2(nearShift > farShift * 1.5,
+             qPrintable(QStringLiteral("near %1 vs far %2").arg(nearShift).arg(farShift)));
+
+    // Pulling the camera back shrinks what is on the canvas plane towards the centre.
+    drift::SceneCamera3d back = camera;
+    back.positionZ = 1000.0;
+    const QRectF offCentre(600, 400, 200, 200);
+    const double restX = centreOf(camera, offCentre, atPlane).x();
+    const double backX = centreOf(back, offCentre, atPlane).x();
+    QVERIFY(restX > 500.0);
+    QVERIFY2(backX < restX && backX > 500.0,
+             qPrintable(QStringLiteral("rest %1 back %2").arg(restX).arg(backX)));
+
+    // A yaw with no translation orbits about the world origin rather than spinning in place. The
+    // pivot is the giveaway: whatever sits on the canvas plane at the centre is what the camera
+    // swings around, so it stays dead centre however far the camera is turned.
+    drift::SceneCamera3d yawed = camera;
+    yawed.rotationY = 45.0;
+    const QPointF pivot = centreOf(yawed, rect, atPlane);
+    QVERIFY2(std::hypot(pivot.x() - 500.0, pivot.y() - 500.0) < 1e-3,
+             qPrintable(QStringLiteral("pivot %1,%2").arg(pivot.x()).arg(pivot.y())));
+
+    // What the orbit does to the rest of the canvas plane is tilt it, which is foreshortening, not
+    // a sideways slide: one half swings towards the eye and spreads, the other swings away and
+    // bunches up. A point near the pivot barely moves at all, so the asymmetry is what to measure.
+    // Two clips placed symmetrically about the centre stop being symmetric.
+    const QRectF leftOfCentre(200, 400, 200, 200); // centre 200 px left, mirroring offCentre
+    QVERIFY(std::abs((restX - 500.0) - (500.0 - centreOf(camera, leftOfCentre, atPlane).x()))
+            < 1e-3); // symmetric at rest
+    const double rightSpread = centreOf(yawed, offCentre, atPlane).x() - 500.0;
+    const double leftSpread = 500.0 - centreOf(yawed, leftOfCentre, atPlane).x();
+    QVERIFY(rightSpread > 0.0 && leftSpread > 0.0);
+    QVERIFY2(rightSpread > leftSpread * 1.2,
+             qPrintable(QStringLiteral("right %1 vs left %2").arg(rightSpread).arg(leftSpread)));
+
+    // The tilt is about a vertical axis, so nothing leaves its row.
+    QVERIFY(std::abs(centreOf(yawed, offCentre, atPlane).y() - 500.0) < 1e-3);
+    QVERIFY(std::abs(centreOf(yawed, leftOfCentre, atPlane).y() - 500.0) < 1e-3);
+
+    // Rolling the camera clockwise rolls the image the other way, so a clip 200 px to the right of
+    // the centre ends up 200 px above it.
+    drift::SceneCamera3d rolled = camera;
+    rolled.rotationZ = 90.0;
+    const QPointF spun = centreOf(rolled, offCentre, atPlane);
+    QVERIFY2(std::abs(spun.x() - 500.0) < 1e-3, qPrintable(QStringLiteral("x %1").arg(spun.x())));
+    QVERIFY2(std::abs(spun.y() - (1000.0 - restX)) < 1e-3,
+             qPrintable(QStringLiteral("y %1, expected %2").arg(spun.y()).arg(1000.0 - restX)));
 }
 
 void EngineTest::clipGizmoSolvesDrags()

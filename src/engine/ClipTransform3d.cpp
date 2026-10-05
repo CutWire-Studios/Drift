@@ -49,6 +49,24 @@ QMatrix4x4 clipQuadToCanvas(const QRectF &rect, double rotation, bool flipH, boo
     return m;
 }
 
+QMatrix4x4 clipQuadToWorld(const QRectF &rect, double rotation, bool flipH, bool flipV,
+                           const ClipPose3d &pose, const QSizeF &canvas)
+{
+    // placeCentre without its projection prefix, then the same two scales clipQuadToCanvas applies.
+    // Kept as its own function rather than factored out of placeCentre so the per-clip path that
+    // every existing project still renders through is not touched at all.
+    const QPointF centre = rect.center();
+    QMatrix4x4 m;
+    m.translate(float(centre.x() - canvas.width() * 0.5), float(centre.y() - canvas.height() * 0.5),
+                float(pose.positionZ));
+    m.rotate(float(pose.rotationX), 1.f, 0.f, 0.f);
+    m.rotate(float(pose.rotationY), 0.f, 1.f, 0.f);
+    m.rotate(float(rotation), 0.f, 0.f, 1.f);
+    m.scale(float(rect.width() * 0.5), float(rect.height() * 0.5));
+    m.scale(flipH ? -1.f : 1.f, flipV ? -1.f : 1.f);
+    return m;
+}
+
 QMatrix4x4 clipLocalToCanvas(const QRectF &rect, double rotation, const ClipPose3d &pose,
                              const QSizeF &canvas)
 {
