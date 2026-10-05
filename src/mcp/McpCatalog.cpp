@@ -520,6 +520,20 @@ const QList<Op> &ops()
                         {QStringLiteral("dur"), numberProp(QStringLiteral("Duration in seconds (default: to the clips' latest end)"))},
                         {QStringLiteral("name"), stringProp(QStringLiteral("Name for the transform clip"))}},
                        {QStringLiteral("clips")}) },
+        { "add_camera", "timeline", "Add the scene camera, or cut to a new framing",
+          "One viewpoint the whole timeline is seen through: pan, dolly, orbit, roll and lens, all "
+          "animatable. Adds the camera lane if it is missing. Without `at` the clip covers the "
+          "whole sequence (what a first camera wants); with `at` it is one clip starting there, so "
+          "two in a row read as a camera cut. A camera at rest looks exactly like no camera, so "
+          "adding one changes nothing until you move it. Frame it with set_keyframe on the returned "
+          "clip using x/y (pan), z (dolly), rotationX/rotationY (pitch/yaw), rotation (roll) and "
+          "perspective (lens); with no keys, set_transform moves it too. While a camera runs it "
+          "replaces each clip's own perspective, because a scene has one viewer. "
+          "Returns {clip, track, index}.",
+          objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Start in seconds (default: the whole sequence)"))},
+                        {QStringLiteral("dur"), numberProp(QStringLiteral("Duration in seconds; only with `at`"))},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("Name for the camera clip"))}},
+                       {}) },
         { "set_transform_span", "timeline", "Change which tracks a transform layer covers",
           "Set the last track the transform layer at `track` covers, by track index (`end`) or by a "
           "clip on it (`end_clip`). The end must be a visual track below the layer and may not cut "

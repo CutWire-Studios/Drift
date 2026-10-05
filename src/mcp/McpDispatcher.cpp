@@ -724,6 +724,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opAddTrack(args);
     if (tool == QLatin1String("make_transform_layer"))
         return opMakeTransformLayer(args);
+    if (tool == QLatin1String("add_camera"))
+        return opAddCamera(args);
     if (tool == QLatin1String("set_transform_span"))
         return opSetTransformSpan(args);
     if (tool == QLatin1String("remove_track"))
@@ -1056,6 +1058,35 @@ QJsonObject McpDispatcher::opMakeTransformLayer(const QJsonObject &args)
                {QStringLiteral("track"), ref.track},
                {QStringLiteral("index"), ref.clip},
                {QStringLiteral("span"), transformSpanJson(ref.track)}});
+}
+
+QJsonObject McpDispatcher::opAddCamera(const QJsonObject &args)
+{
+    const bool timed = args.contains(QStringLiteral("at"));
+    const double at = timed ? jsonNumber(args.value(QStringLiteral("at")), 0) : -1.0;
+    const double dur = args.contains(QStringLiteral("dur"))
+                           ? jsonNumber(args.value(QStringLiteral("dur")), -1)
+                           : -1.0;
+    // Without `at` the camera covers the whole sequence, which is what a first camera wants; with
+    // it, one clip at that time, which is how a cut to a second framing is made.
+    if (timed)
+        m_controller->addCameraClip(at, dur);
+    else
+        m_controller->addCameraTrack();
+
+    // Both paths select the clip they made, which is how its id is reported back.
+    const QVariantMap made = m_controller->selectedClipData();
+    const QString id = made.value(QStringLiteral("id")).toString();
+    if (id.isEmpty())
+        return err("failed", QStringLiteral("Could not add the camera"));
+    ClipRef ref = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
+    if (args.contains(QStringLiteral("name")) && ref.valid()) {
+        m_controller->setClipName(ref.track, ref.clip, args.value(QStringLiteral("name")).toString());
+        ref = resolveClip(QJsonObject{{QStringLiteral("clip"), id}});
+    }
+    return ok({{QStringLiteral("clip"), id},
+               {QStringLiteral("track"), ref.track},
+               {QStringLiteral("index"), ref.clip}});
 }
 
 QJsonObject McpDispatcher::opSetTransformSpan(const QJsonObject &args)

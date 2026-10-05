@@ -50,6 +50,7 @@ private:
     QJsonObject opRenameAsset(const QJsonObject &args);
     QJsonObject opAddTrack(const QJsonObject &args);
     QJsonObject opMakeTransformLayer(const QJsonObject &args);
+    QJsonObject opAddCamera(const QJsonObject &args);
     QJsonObject opSetTransformSpan(const QJsonObject &args);
     // {end, covers} for the transform layer at `track`.
     QJsonObject transformSpanJson(int track) const;
