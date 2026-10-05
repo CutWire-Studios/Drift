@@ -173,6 +173,7 @@ private slots:
     void transformLayerRoundTrips();
     void transformSpanFollowsTrackEdits();
     void transformNormalizerLiftsStrays();
+    void cameraLayerRoundTripsAndNormalizes();
     void retargetClipToSourceKeepsPlacementAndSyncsSource();
     void retargetClipToSourceClearsPerSourceState();
     void retargetClipToSourceKeepsAGeometricMask();
@@ -1545,7 +1546,8 @@ void CoreTest::shapeStyleSerialization()
     QVERIFY(mid.layers[1].width > 4.0 && mid.layers[1].width < 10.0);
     QCOMPARE(loadedClip.transformX.evaluateAt(0), 100.0);
     QCOMPARE(loadedClip.transformY.evaluateAt(0), 200.0);
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 11);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(),
+             drift::Project::kCurrentVersion);
 }
 
 // A project saved before format 8 carries the flat fill/stroke keys — possibly only the original
@@ -3844,7 +3846,8 @@ void CoreTest::transformLayerRoundTrips()
     QVERIFY(!effects.acceptsClip(transform));
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 11);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(),
+             drift::Project::kCurrentVersion);
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
     QVERIFY(error.isEmpty());
@@ -3925,6 +3928,130 @@ void CoreTest::transformSpanFollowsTrackEdits()
     // Nested layers compose outermost first.
     drift::insertTransformTrack(tracks, 2, QStringLiteral("v2"));
     QCOMPARE(drift::transformLayersCovering(tracks, 5), (QList<int>{0, 2}));
+}
+
+void CoreTest::cameraLayerRoundTripsAndNormalizes()
+{
+    drift::Project project;
+    project.tracks().clear();
+    const int track = drift::insertCameraTrack(project.tracks());
+    QCOMPARE(track, 0);
+    QVERIFY(project.tracks().at(0).isCameraLayer());
+    // A camera is not a transform layer, and must not be mistaken for one — they share the
+    // Adjustment track type and would otherwise both answer to the span machinery.
+    QVERIFY(!project.tracks().at(0).isTransformLayer());
+    QCOMPARE(drift::transformSpanEndIndex(project.tracks(), 0), -1);
+
+    drift::Clip camera = drift::makeCameraClip(0, drift::secondsToUs(5.0));
+    QVERIFY(drift::isCameraClip(camera));
+    camera.transformX.setKeyframe(0, 0.0);
+    camera.transformX.setKeyframe(drift::secondsToUs(2.0), 120.0);
+    camera.rotationY.setKeyframe(0, 15.0);
+    camera.perspective.setKeyframe(0, 900.0);
+    QVERIFY(project.tracks().at(0).acceptsClip(camera));
+    project.tracks()[0].clips.append(camera);
+
+    drift::Track v1{.type = drift::TrackType::Video};
+    v1.id = QStringLiteral("v1");
+    project.tracks().append(v1);
+    project.ensureTrackIds();
+
+    // A camera clip belongs on a camera track and nowhere else.
+    drift::Track effects{.type = drift::TrackType::Adjustment};
+    QVERIFY(!effects.acceptsClip(camera));
+    drift::Track range{.type = drift::TrackType::Adjustment};
+    range.adjustmentScope = drift::AdjustmentScope::Range;
+    QVERIFY(!range.acceptsClip(camera));
+
+    // Round-trip, including the keyframes the camera animates through.
+    const QJsonObject json = project.toJson();
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const int loadedTrack = drift::cameraTrackIndex(loaded.tracks());
+    QCOMPARE(loadedTrack, 0);
+    QCOMPARE(loaded.tracks().at(loadedTrack).clips.size(), 1);
+    const drift::Clip &back = loaded.tracks().at(loadedTrack).clips.constFirst();
+    QVERIFY(drift::isCameraClip(back));
+    QCOMPARE(back.transformX.evaluateAt(drift::secondsToUs(2.0)), 120.0);
+    QCOMPARE(back.rotationY.evaluateAt(0), 15.0);
+    QCOMPARE(back.perspective.evaluateAt(0), 900.0);
+
+    // cameraClipAt is what the compositor asks, so it has to agree about the clip's extent.
+    QVERIFY(drift::cameraClipAt(loaded.tracks(), 0) != nullptr);
+    QVERIFY(drift::cameraClipAt(loaded.tracks(), drift::secondsToUs(4.9)) != nullptr);
+    QVERIFY(drift::cameraClipAt(loaded.tracks(), drift::secondsToUs(5.5)) == nullptr);
+
+    // A hidden camera track is bypassed, as a hidden transform layer is.
+    drift::Project hidden = loaded;
+    hidden.tracks()[0].hidden = true;
+    QVERIFY(drift::cameraClipAt(hidden.tracks(), 0) == nullptr);
+
+    // Two camera tracks collapse to one, keeping every clip.
+    drift::Project doubled = loaded;
+    const int second = drift::insertCameraTrack(doubled.tracks());
+    doubled.tracks()[second].clips.append(
+        drift::makeCameraClip(drift::secondsToUs(6.0), drift::secondsToUs(2.0)));
+    drift::normalizeCameraLayers(doubled.tracks());
+    int cameraTracks = 0;
+    for (const drift::Track &t : doubled.tracks())
+        cameraTracks += t.isCameraLayer() ? 1 : 0;
+    QCOMPARE(cameraTracks, 1);
+    QCOMPARE(doubled.tracks().at(drift::cameraTrackIndex(doubled.tracks())).clips.size(), 2);
+
+    // A camera clip left on an ordinary track is moved onto the camera track, not dropped.
+    drift::Project stray = loaded;
+    stray.tracks()[1].clips.append(
+        drift::makeCameraClip(drift::secondsToUs(8.0), drift::secondsToUs(1.0)));
+    drift::normalizeCameraLayers(stray.tracks());
+    QCOMPARE(stray.tracks().at(1).clips.size(), 0);
+    QCOMPARE(stray.tracks().at(drift::cameraTrackIndex(stray.tracks())).clips.size(), 2);
+
+    // ...and with no camera track at all, one is made for it.
+    drift::Project orphan;
+    orphan.tracks().clear();
+    orphan.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    orphan.tracks()[0].clips.append(drift::makeCameraClip(0, drift::secondsToUs(1.0)));
+    orphan.ensureTrackIds();
+    drift::normalizeCameraLayers(orphan.tracks());
+    QVERIFY(drift::cameraTrackIndex(orphan.tracks()) >= 0);
+    QCOMPARE(orphan.tracks().at(drift::cameraTrackIndex(orphan.tracks())).clips.size(), 1);
+
+    // Overlapping cameras would make "the camera now" ambiguous, so the earlier one is trimmed
+    // back to where the next begins.
+    drift::Project overlapping = loaded;
+    overlapping.tracks()[0].clips.append(
+        drift::makeCameraClip(drift::secondsToUs(2.0), drift::secondsToUs(5.0)));
+    drift::normalizeCameraLayers(overlapping.tracks());
+    const drift::Track &lane = overlapping.tracks().at(drift::cameraTrackIndex(overlapping.tracks()));
+    QCOMPARE(lane.clips.size(), 2);
+    QCOMPARE(lane.clips.at(0).timelineEnd(), lane.clips.at(1).timelineStart);
+    QCOMPARE(lane.clips.at(0).timelineEnd(), drift::secondsToUs(2.0));
+
+    // A non-camera clip on the camera track is lifted off onto a track of its own.
+    drift::Project mixed = loaded;
+    drift::Clip image;
+    image.id = QStringLiteral("img");
+    image.type = drift::ClipType::Image;
+    image.timelineDuration = drift::secondsToUs(1.0);
+    mixed.tracks()[0].clips.append(image);
+    drift::normalizeCameraLayers(mixed.tracks());
+    const int lane2 = drift::cameraTrackIndex(mixed.tracks());
+    for (const drift::Clip &clip : mixed.tracks().at(lane2).clips)
+        QVERIFY(drift::isCameraClip(clip));
+    bool imageSurvived = false;
+    for (const drift::Track &t : mixed.tracks()) {
+        for (const drift::Clip &clip : t.clips)
+            imageSurvived = imageSurvived || clip.id == QStringLiteral("img");
+    }
+    QVERIFY(imageSurvived);
+
+    // A project with no camera at all must not be touched by the pass.
+    drift::Project untouched;
+    const QString beforeHash = untouched.contentHash();
+    drift::normalizeCameraLayers(untouched.tracks());
+    QCOMPARE(untouched.contentHash(), beforeHash);
 }
 
 void CoreTest::transformNormalizerLiftsStrays()

@@ -3724,6 +3724,18 @@
         <translation>Escalar clipe</translation>
     </message>
     <message>
+        <source>Orbit camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio effects go on the timeline.</source>
         <translation>Efeitos de áudio vão na linha do tempo.</translation>
     </message>
@@ -3756,6 +3768,22 @@
         <translation>O clipe é plano</translation>
     </message>
     <message>
+        <source>Enable depth occlusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable depth occlusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip is occluded by depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip uses track order</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles converted to text</source>
         <translation>Legendas convertidas em texto</translation>
     </message>
@@ -3785,6 +3813,22 @@
     <message>
         <source>Transform clip added</source>
         <translation>Clipe de transformação adicionado</translation>
+    </message>
+    <message>
+        <source>Add camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add camera clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera clip added</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transform together</source>
@@ -5482,6 +5526,64 @@
     <message>
         <source>Reset to Normal</source>
         <translation>Redefinir para Normal</translation>
+    </message>
+</context>
+<context>
+    <name>CameraInspector</name>
+    <message>
+        <source>Pan X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lens</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a camera clip to frame the shot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CameraOverlay</name>
+    <message>
+        <source>Drag to orbit the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag up and down to dolly the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to pan the camera</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9548,6 +9650,10 @@
         <translation>Transformação</translation>
     </message>
     <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New track</source>
         <translation>Nova faixa</translation>
     </message>
@@ -10294,6 +10400,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Transform</source>
         <translation>Transformação</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization</source>
@@ -14092,6 +14202,14 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Adicionar camada de transformação — move as faixas dos clipes selecionados como uma só</translation>
     </message>
     <message>
+        <source>Add camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add camera — one viewpoint the whole timeline is seen through</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Main</source>
         <translation>Principal</translation>
     </message>
@@ -14287,6 +14405,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Vídeo + forma de onda</translation>
     </message>
     <message>
+        <source>CAM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>TF</source>
         <translation>TF</translation>
     </message>
@@ -14313,6 +14435,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>V</source>
         <translation>V</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transform</source>
@@ -14588,6 +14714,18 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
         <translation>Incline o clipe e empurre-o em profundidade, com alças 3D na pré-visualização. Desativar deixa o clipe plano novamente.</translation>
+    </message>
+    <message>
+        <source>Occlude by depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>

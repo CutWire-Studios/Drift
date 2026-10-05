@@ -32,7 +32,10 @@ ClipType clipTypeFromString(const QString &type);
 // the same `effects` / `audioEffects` / `mask` members every clip has; the kind says which one
 // it is for, and drives the inspector tab and timeline tint. Transform is the odd one out: its
 // payload is the clip's own transform, applied as a parent to every track its Range track covers.
-enum class AdjustmentKind { VideoEffects, AudioEffects, Mask, Transform };
+// Camera is the other odd one: its payload is the clip's transform read as the sequence's shared
+// viewpoint (see engine/SceneCamera3d.h), so it has no pixels of its own and covers no range —
+// one camera serves the whole sequence for as long as the clip lasts.
+enum class AdjustmentKind { VideoEffects, AudioEffects, Mask, Transform, Camera };
 
 QString adjustmentKindToString(AdjustmentKind kind);
 AdjustmentKind adjustmentKindFromString(const QString &kind);
@@ -177,6 +180,12 @@ struct Clip
     KeyframeTrack<double> rotationY;
     KeyframeTrack<double> positionZ;
     KeyframeTrack<double> perspective;
+    // Let depth decide what covers what, for this clip, instead of the track order that normally
+    // does. Off by default, and ignored unless layer3d is on: without a 3D pose there is no depth
+    // to sort by. Only clips that opt in take part — one at a depth behind an opted-in clip still
+    // draws over it if its track is higher, which is what keeps the usual compositing rules
+    // intact for everything else on the timeline.
+    bool depthOcclude = false;
     // Discrete pixel-orientation correction (0/90/180/270), applied losslessly at decode time —
     // distinct from `rotation` above, which is a free decorative spin effect. Relative, not
     // absolute: added on top of whatever display-matrix rotation the file actually being decoded

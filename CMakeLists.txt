@@ -680,6 +680,8 @@ add_library(driftengine STATIC
     src/engine/ModelAnimation.cpp
     src/engine/ClipTransform3d.h
     src/engine/ClipTransform3d.cpp
+    src/engine/SceneCamera3d.h
+    src/engine/SceneCamera3d.cpp
     src/engine/TransformLayer.h
     src/engine/TransformLayer.cpp
     src/engine/ClipGizmo.h
@@ -1040,6 +1042,7 @@ qt_add_qml_module(drift
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/TransformOverlay.qml
+        src/qml/components/preview/CameraOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
@@ -1069,6 +1072,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TextAnimPresetTile.qml
         src/qml/components/properties/TextLookPicker.qml
         src/qml/components/properties/TransformInspector.qml
+        src/qml/components/properties/CameraInspector.qml
         src/qml/components/properties/TransformLayerCard.qml
         src/qml/components/properties/StabilizeInspector.qml
         src/qml/components/properties/AudioInspector.qml

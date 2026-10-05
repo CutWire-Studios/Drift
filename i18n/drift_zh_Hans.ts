@@ -3717,6 +3717,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Orbit camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio effects go on the timeline.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3749,6 +3761,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Enable depth occlusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable depth occlusion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip is occluded by depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip uses track order</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitles converted to text</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3776,6 +3804,22 @@
     </message>
     <message>
         <source>Transform clip added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add camera clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera clip added</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5458,6 +5502,64 @@
     </message>
     <message>
         <source>Reset to Normal</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CameraInspector</name>
+    <message>
+        <source>Pan X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lens</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a camera clip to frame the shot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CameraOverlay</name>
+    <message>
+        <source>Drag to orbit the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag up and down to dolly the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to pan the camera</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9507,6 +9609,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New track</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10242,6 +10348,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14036,6 +14146,14 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Add camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add camera — one viewpoint the whole timeline is seen through</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14230,6 +14348,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>CAM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>TF</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14255,6 +14377,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>V</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14530,6 +14656,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Occlude by depth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

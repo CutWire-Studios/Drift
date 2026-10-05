@@ -73,6 +73,10 @@ float occlusion() {
     float cover = o.a * mix(1.0, o.b, u_occCutout);
     return 1.0 - cover * nearer;
 }
+// Depth occlusion by geometry rather than by a depth map: while this is 1 the layer writes the
+// depth buffer, and a fragment the layer does not really cover must not write it or it would hide
+// whatever is behind it. Transparent corners of a tilted card are exactly that case.
+uniform float u_depthWrite;
 void main() {
     vec4 c = texture(u_layer, v_texCoord);
     float s = u_opacity;
@@ -82,6 +86,8 @@ void main() {
     }
     s *= occlusion();
     float a = c.a * s;
+    if (u_depthWrite > 0.5 && a < 0.5)
+        discard;
     fragColor = vec4(u_layerPremul > 0.5 ? c.rgb * s : c.rgb * a, a);
 }
 )";
@@ -260,6 +266,17 @@ bool isFixedFunctionBlend(drift::BlendMode mode)
 // the top of the readback image (see promoteImageToTarget), so y is not flipped.
 QMatrix4x4 modelMatrixFor(const GpuLayer &layer, const QSize &canvas)
 {
+    if (layer.cameraActive) {
+        // One shared rule, so the preview's grips are drawn from the same placement as the pixels.
+        const QSizeF canvasF(canvas);
+        QMatrix4x4 ndc;
+        ndc.translate(-1.f, -1.f);
+        ndc.scale(2.f / canvas.width(), 2.f / canvas.height());
+        return ndc
+               * drift::cameraQuadToCanvas(layer.camera, layer.rect, layer.rotation, layer.flipH,
+                                           layer.flipV, layer.pose3d, layer.parent,
+                                           layer.hasParent, canvasF);
+    }
     if (layer.hasParent) {
         QMatrix4x4 m;
         m.translate(-1.f, -1.f);
@@ -1055,6 +1072,20 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         else
             gl->glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied source-over
 
+        // Per-clip depth occlusion. Only for a layer that asked for it, only on a canvas that has
+        // a depth buffer (composeOnGlThread arranges one when any layer does), and only for a
+        // plain source-over draw — the erase/add passes of a see-through adjustment are not a
+        // picture's depth. Layers that did not opt in never enable the test and never write depth,
+        // so they keep drawing in track order exactly as before.
+        const bool depthWrite = layer.depthOcclude && canvas.hasDepth
+                                && write == CanvasWrite::Over
+                                && blend == drift::BlendMode::Normal;
+        if (depthWrite) {
+            gl->glEnable(GL_DEPTH_TEST);
+            gl->glDepthFunc(GL_LESS);
+            gl->glDepthMask(GL_TRUE);
+        }
+
         program->bind();
         program->setUniformValue("u_model", model);
         program->setUniformValue("u_opacity", float(layer.opacity));
@@ -1063,6 +1094,9 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         program->setUniformValue("u_layer", 0);
         program->setUniformValue("u_mask", 1);
         program->setUniformValue("u_layerPremul", layerPremul);
+        // Set either way: the program is cached and reused, so a 1 left over from the last
+        // depth-writing layer would make the next one discard its soft edges.
+        program->setUniformValue("u_depthWrite", depthWrite ? 1.f : 0.f);
         setOcclusionUniforms(program, gl, occlusion, canvas);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, layerTex);
@@ -1071,6 +1105,12 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         bindQuad(rt, gl);
         program->release();
         gl->glDisable(GL_BLEND);
+        if (depthWrite) {
+            gl->glDisable(GL_DEPTH_TEST);
+            // Back to GL's default rather than closed: a closed mask would make the next
+            // glClear(GL_DEPTH_BUFFER_BIT) anywhere in the process do nothing at all.
+            gl->glDepthMask(GL_TRUE);
+        }
         canvas.fbo->release();
         return;
     }
@@ -1294,13 +1334,44 @@ void fillBackground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas, 
 // to publish nothing rather than a canvas with that layer missing from it, which is a black
 // flash on screen. Only video reports: a still or a vector that cannot be built fails the
 // same way on every frame, and holding the preview for that would freeze it for good.
-void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas, bool *lostVideo)
+void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas, bool *lostVideo)
 {
     auto *gl = rt.functions();
     if (!gl)
         return;
 
     const QSize canvasSize = scene.canvasSize;
+
+    // Per-clip depth occlusion needs a depth buffer, and the canvas the caller owns has none — a
+    // presentation-ring target is colour only. When some layer has opted in, the scene is composed
+    // into a depth-attached target of the same size and copied onto the caller's canvas at the
+    // end. That costs one extra full-canvas blit, and only for a scene that uses the feature;
+    // everything else composes straight into the caller's canvas as it always has.
+    bool wantsDepth = false;
+    for (const GpuItem &item : scene.items) {
+        wantsDepth = wantsDepth || item.layer.depthOcclude || item.from.depthOcclude
+                     || item.to.depthOcclude;
+    }
+    GlTarget depthScratch;
+    if (wantsDepth) {
+        depthScratch = rt.acquireTarget(canvasSize.width(), canvasSize.height(), /*wantDepth=*/true);
+        if (depthScratch.isValid()) {
+            depthScratch.fbo->bind();
+            // Farthest, so the first depth-writing layer always passes GL_LESS. The mask has to be
+            // open for this: glClear honours it, so clearing under a closed depth mask silently
+            // does nothing and the target — which comes from a pool and may have been used for
+            // this before — would keep the previous frame's depth and reject everything.
+            gl->glDepthMask(GL_TRUE);
+            gl->glClearDepthf(1.f);
+            gl->glClear(GL_DEPTH_BUFFER_BIT);
+            depthScratch.fbo->release();
+        }
+    }
+    const auto releaseScratch = qScopeGuard([&] {
+        if (depthScratch.isValid())
+            rt.releaseTarget(std::move(depthScratch));
+    });
+    GlTarget &canvas = depthScratch.isValid() ? depthScratch : outCanvas;
 
     fillBackground(rt, gl, canvas, scene);
 
@@ -1468,6 +1539,9 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas, b
         rt.releaseTarget(std::move(toTarget));
     }
 
+    // Hand the depth-sorted composite back on the canvas the caller is waiting for.
+    if (depthScratch.isValid())
+        blitTextureToTarget(rt, gl, depthScratch.texture(), outCanvas);
 }
 
 } // namespace

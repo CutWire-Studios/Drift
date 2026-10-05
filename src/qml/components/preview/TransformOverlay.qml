@@ -24,7 +24,11 @@ Item {
     // The selected clip's gizmo, when it is a 3D layer, and its pose while a handle is dragged.
     readonly property var gizmoBox: {
         for (const b of overlayClips) {
-            if (b.layer3d && b.kind !== "model3d" && b.track === EditorState.selectedTrack
+            // Not while a camera is active: the gizmo's maths puts the eye at the canvas centre,
+            // and a camera moves it, so its handles would sit in the wrong place and solve drags
+            // against the wrong viewpoint. The Transform inspector still edits the pose.
+            if (b.layer3d && b.kind !== "model3d" && !b.cameraActive
+                    && b.track === EditorState.selectedTrack
                     && b.clip === EditorState.selectedClip)
                 return b
         }
@@ -270,9 +274,12 @@ Item {
             // Tilted or pushed in depth: the box is drawn through the clip's perspective
             // transform, so its outline and grips land on the rendered quad.
             readonly property bool is3d: !isModel3d && (poseRotX !== 0 || poseRotY !== 0 || poseZ !== 0)
+            // A camera reframes every box, flat ones included, so the outline and grips have to go
+            // through the pose matrix and the straight-edge assumptions stop holding.
+            readonly property bool viaCamera: box.cameraActive === true
             // How much the perspective magnifies the clip's plane at its depth, so a body drag
             // keeps the clip under the pointer.
-            readonly property real depthScale: is3d
+            readonly property real depthScale: is3d && !viaCamera
                 ? posePerspective / Math.max(1, posePerspective - poseZ)
                 : 1
             readonly property real anchorOffsetX: box.anchorX !== undefined ? box.anchorX - box.x : 0
@@ -388,10 +395,10 @@ Item {
             transformOrigin: Item.Center
             readonly property real layoutRotation: gizmoPose ? gizmoPose.rotation
                                                    : liveRotation < 1e8 ? liveRotation : box.rotation
-            rotation: is3d || hasParent ? 0 : layoutRotation
+            rotation: is3d || hasParent || viaCamera ? 0 : layoutRotation
             transform: Matrix4x4 {
                 id: poseTransform
-                matrix: handle.is3d || handle.hasParent
+                matrix: handle.is3d || handle.hasParent || handle.viaCamera
                         ? EditorState.previewClipPoseMatrix({
                                                                 "canvasWidth": handle.box.canvasWidth,
                                                                 "canvasHeight": handle.box.canvasHeight,
@@ -441,7 +448,7 @@ Item {
             readonly property real snapTolY: root.snapTolPx / handle.sy
             // A rotated box has no axis-aligned edges to stick with, so it does
             // not snap — pulling its bounding box would move it sideways.
-            readonly property bool canSnap: !handle.is3d && !handle.hasParent
+            readonly property bool canSnap: !handle.is3d && !handle.hasParent && !handle.viaCamera
                                             && Math.abs(handle.layoutRotation) < 0.01
 
             // Guides are published in overlay px so they can be drawn once, at

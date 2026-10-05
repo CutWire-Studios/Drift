@@ -1542,6 +1542,8 @@ QVariantList AppController::tracks() const
         QString trackAdjustmentKind;
         if (track.isTransformLayer())
             trackAdjustmentKind = QStringLiteral("transform");
+        else if (track.isCameraLayer())
+            trackAdjustmentKind = QStringLiteral("camera");
         else if (track.isAdjustment() && !track.clips.isEmpty())
             trackAdjustmentKind = drift::adjustmentKindToString(track.clips.constFirst().adjustmentKind);
         QVariantList coveredBy;
@@ -1565,6 +1567,9 @@ QVariantList AppController::tracks() const
             // Transform layers: the span a Range track covers, how deeply it nests, and for any
             // track the layers over it, outermost first.
             {QStringLiteral("isTransformLayer"), track.isTransformLayer()},
+            // The camera track: no span and no pixels, so the timeline gives it a row and a label
+            // but none of the coverage drawing a Range track gets.
+            {QStringLiteral("isCameraLayer"), track.isCameraLayer()},
             {QStringLiteral("spanEndTrackId"), track.spanEndTrackId},
             {QStringLiteral("spanEndIndex"), drift::transformSpanEndIndex(m_project.tracks(), ti)},
             {QStringLiteral("spanDepth"), track.isTransformLayer() ? coveredBy.size() : 0},
@@ -2918,6 +2923,8 @@ void clearClipPose3d(drift::Clip &clip)
     clip.positionZ = {};
     clip.perspective = {};
     clip.layer3d = false;
+    // Depth sorting only means anything with a pose, so switching 3D off takes it with it.
+    clip.depthOcclude = false;
 }
 
 drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop)
@@ -4412,6 +4419,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("layer3d"), clip.layer3d},
+        {QStringLiteral("depthOcclude"), clip.depthOcclude},
         {QStringLiteral("flipV"), clip.flipV},
         // Discrete lossless orientation fix, distinct from the free "rotation" keyframe track
         // below. "orientation" is the absolute result (what the inspector shows), the correction
@@ -14462,6 +14470,7 @@ void AppController::normalizeProjectStructure(const drift::Project *before)
     drift::hoistClipEffectsToAdjustmentLanes(m_project);
     normalizeAdjustmentLanes(m_project);
     drift::normalizeTransformLayers(m_project.tracks(), before ? &before->tracks() : nullptr);
+    drift::normalizeCameraLayers(m_project.tracks());
     m_project.ensureTrackIds();
     clampStoredTransitionDurations(m_project);
     restoreSelectionByTrackId(selection);
@@ -15427,6 +15436,141 @@ QVariantMap AppController::previewApplyGizmoDrag(const QVariantMap &start, const
     return out;
 }
 
+drift::SceneCamera3d AppController::previewCamera(bool *active) const
+{
+    // renderScale 1: the overlay measures in canvas pixels, and so does every box it is handed.
+    if (const drift::Clip *clip = drift::cameraClipAt(m_project.tracks(), m_playheadUs)) {
+        if (active)
+            *active = true;
+        return drift::sceneCameraFromClip(*clip, m_playheadUs, 1.0);
+    }
+    if (active)
+        *active = false;
+    return {};
+}
+
+bool AppController::previewCameraActive() const
+{
+    bool active = false;
+    previewCamera(&active);
+    return active;
+}
+
+QVariantMap AppController::cameraStateAtPlayhead() const
+{
+    const QList<drift::Track> &tracks = m_project.tracks();
+    const int trackIndex = drift::cameraTrackIndex(tracks);
+    if (trackIndex >= 0 && !tracks.at(trackIndex).hidden) {
+        for (int c = 0; c < tracks.at(trackIndex).clips.size(); ++c) {
+            const drift::Clip &clip = tracks.at(trackIndex).clips.at(c);
+            if (!drift::isCameraClip(clip) || !clip.containsTime(m_playheadUs))
+                continue;
+            const drift::SceneCamera3d camera = drift::sceneCameraFromClip(clip, m_playheadUs, 1.0);
+            return QVariantMap{
+                {QStringLiteral("active"), true},
+                {QStringLiteral("track"), trackIndex},
+                {QStringLiteral("clip"), c},
+                {QStringLiteral("x"), camera.positionX},
+                {QStringLiteral("y"), camera.positionY},
+                {QStringLiteral("z"), camera.positionZ},
+                {QStringLiteral("rotationX"), camera.rotationX},
+                {QStringLiteral("rotationY"), camera.rotationY},
+                {QStringLiteral("rotation"), camera.rotationZ},
+                {QStringLiteral("perspective"), camera.perspective},
+            };
+        }
+    }
+    return QVariantMap{{QStringLiteral("active"), false}};
+}
+
+QVariantMap AppController::previewApplyCameraDrag(const QVariantMap &start, const QString &tool,
+                                                  double dx, double dy, double scale, bool snap)
+{
+    if (scale <= 0.0)
+        return start;
+    const int trackIndex = start.value(QStringLiteral("track")).toInt();
+    const int clipIndex = start.value(QStringLiteral("clip")).toInt();
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return start;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (!drift::isCameraClip(clip))
+        return start;
+
+    // The overlay measures in its own pixels; the camera is stored in canvas pixels.
+    const double cdx = dx / scale;
+    const double cdy = dy / scale;
+    const double startX = start.value(QStringLiteral("x")).toDouble();
+    const double startY = start.value(QStringLiteral("y")).toDouble();
+    const double startZ = start.value(QStringLiteral("z")).toDouble();
+    const double startPitch = start.value(QStringLiteral("rotationX")).toDouble();
+    const double startYaw = start.value(QStringLiteral("rotationY")).toDouble();
+    const double lens =
+        start.value(QStringLiteral("perspective"), drift::kDefaultClipPerspective).toDouble();
+
+    double x = startX;
+    double y = startY;
+    double z = startZ;
+    double pitch = startPitch;
+    double yaw = startYaw;
+
+    if (tool == QLatin1String("rotate")) {
+        // Turntable orbit: dragging right swings the camera to its right, so the scene appears to
+        // turn the other way — the convention every 3D viewport uses. 0.3 degrees per canvas px
+        // puts a half-turn within a comfortable drag.
+        constexpr double kDegPerPx = 0.3;
+        yaw = startYaw + cdx * kDegPerPx;
+        pitch = startPitch - cdy * kDegPerPx;
+        if (snap) {
+            yaw = qRound(yaw / 15.0) * 15.0;
+            pitch = qRound(pitch / 15.0) * 15.0;
+        }
+    } else if (tool == QLatin1String("scale")) {
+        // Dolly. Dragging down pulls the camera back, so the scene shrinks away; 300 px of drag
+        // moves it one eye distance, matching the clip gizmo's dolly feel.
+        z = startZ + cdy * (qMax(1.0, lens) / 300.0);
+    } else {
+        // Pan, and the camera goes the other way so the picture follows the pointer: dragging
+        // right should carry the scene right, which means moving the viewer left.
+        x = startX - cdx;
+        y = startY - cdy;
+    }
+
+    beginImplicitPreviewDrag(tool == QLatin1String("rotate") ? tr("Orbit camera")
+                             : tool == QLatin1String("scale") ? tr("Dolly camera")
+                                                              : tr("Pan camera"));
+    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
+    bool wrote = false;
+    QStringList keys;
+    const auto write = [&](drift::KeyframeTrack<double> &track, double value, const QString &key) {
+        if (writeKeyframeValue(track, relative, value, m_autoKeyEnabled, false)) {
+            wrote = true;
+            keys << key;
+        }
+    };
+    if (tool == QLatin1String("rotate")) {
+        write(clip.rotationX, pitch, QStringLiteral("rotationX"));
+        write(clip.rotationY, yaw, QStringLiteral("rotationY"));
+    } else if (tool == QLatin1String("scale")) {
+        write(clip.positionZ, z, QStringLiteral("z"));
+    } else {
+        write(clip.transformX, x, QStringLiteral("x"));
+        write(clip.transformY, y, QStringLiteral("y"));
+    }
+    if (!wrote) {
+        emit transformBlocked(tr("Turn on Auto keyframes to change this"));
+        return start;
+    }
+    emitPreviewEdit(trackIndex, clipIndex, keys);
+
+    QVariantMap out = start;
+    out.insert(QStringLiteral("x"), x);
+    out.insert(QStringLiteral("y"), y);
+    out.insert(QStringLiteral("z"), z);
+    out.insert(QStringLiteral("rotationX"), pitch);
+    out.insert(QStringLiteral("rotationY"), yaw);
+    return out;
+}
+
 QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x, double y,
                                                 double w, double h, double rotation,
                                                 double scaleX, double scaleY) const
@@ -15438,9 +15582,20 @@ QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x
     QMatrix4x4 m;
     m.scale(float(scaleX), float(scaleY));
     m.translate(float(-x), float(-y));
-    // A parented box, flat or not, is placed through its transform layers too.
-    m *= liftHomography(previewBoxParent(box));
-    m *= drift::clipLocalToCanvas(QRectF(x, y, w, h), rotation, previewBoxPose(box), canvas);
+    bool cameraActive = false;
+    const drift::SceneCamera3d camera = previewCamera(&cameraActive);
+    if (cameraActive) {
+        // Through the camera, using the same placement the compositor draws with, so the overlay
+        // sits exactly on the picture.
+        const QTransform parent = previewBoxParent(box);
+        m *= drift::cameraClipLocalToCanvas(camera, QRectF(x, y, w, h), rotation,
+                                            previewBoxPose(box), parent, !parent.isIdentity(),
+                                            canvas);
+    } else {
+        // A parented box, flat or not, is placed through its transform layers too.
+        m *= liftHomography(previewBoxParent(box));
+        m *= drift::clipLocalToCanvas(QRectF(x, y, w, h), rotation, previewBoxPose(box), canvas);
+    }
     m.scale(float(1.0 / scaleX), float(1.0 / scaleY));
     return m;
 }
@@ -15454,6 +15609,17 @@ QVariantMap AppController::previewClipAtCanvasPoint(double canvasX, double canva
         // reaches the clips it moves.
         if (box.value(QStringLiteral("kind")).toString() == QLatin1String("transform"))
             continue;
+        // With a camera the box is already projected into canvas space by previewClipsAtPlayhead,
+        // parents and all, so the pointer is tested against those corners directly rather than
+        // being mapped back into the clip's own frame — there is no flat frame left to map into.
+        if (box.value(QStringLiteral("cameraActive")).toBool()) {
+            QPolygonF quad;
+            for (const QVariant &corner : box.value(QStringLiteral("quad")).toList())
+                quad << corner.toPointF();
+            if (quad.size() == 4 && quad.containsPoint(QPointF(canvasX, canvasY), Qt::OddEvenFill))
+                return box;
+            continue;
+        }
         const QPointF local = previewMapToClipSpace(box, canvasX, canvasY);
         const double x = box.value(QStringLiteral("x")).toDouble();
         const double y = box.value(QStringLiteral("y")).toDouble();
@@ -15586,6 +15752,8 @@ QVariantList AppController::previewClipsAtPlayhead() const
     const QList<drift::Track> &tracks = m_project.tracks();
     const QList<drift::TransformParent> parents =
         drift::transformParentsAt(m_project, m_playheadUs, 1.0);
+    bool cameraActive = false;
+    const drift::SceneCamera3d camera = previewCamera(&cameraActive);
     for (int trackIndex = 0; trackIndex < tracks.size(); ++trackIndex) {
         const drift::Track &track = tracks.at(trackIndex);
         if (track.hidden)
@@ -15691,7 +15859,7 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 entry.insert(QStringLiteral("rotationY"), 0.0);
                 entry.insert(QStringLiteral("z"), 0.0);
             }
-            // Where the box lands on screen, through its own pose and every parent.
+            // Where the box lands on screen, through its own pose, every parent and the camera.
             {
                 const QRectF rect(entry.value(QStringLiteral("x")).toDouble(),
                                   entry.value(QStringLiteral("y")).toDouble(),
@@ -15699,17 +15867,28 @@ QVariantList AppController::previewClipsAtPlayhead() const
                                   entry.value(QStringLiteral("height")).toDouble());
                 const double spin = entry.value(QStringLiteral("rotation")).toDouble();
                 const drift::ClipPose3d pose = previewBoxPose(entry);
-                const QMatrix4x4 quadMatrix =
-                    pose.isActive() ? drift::clipQuadToCanvas(rect, spin, false, false, pose,
-                                                              QSizeF(canvasWidth, canvasHeight))
-                                    : drift::flatQuadToCanvas(rect, spin, false, false);
+                QMatrix4x4 placed;
+                if (cameraActive) {
+                    placed = drift::cameraQuadToCanvas(camera, rect, spin, false, false, pose,
+                                                       parent.matrix, parent.hasParent,
+                                                       QSizeF(canvasWidth, canvasHeight));
+                } else {
+                    const QMatrix4x4 quadMatrix =
+                        pose.isActive() ? drift::clipQuadToCanvas(rect, spin, false, false, pose,
+                                                                  QSizeF(canvasWidth, canvasHeight))
+                                        : drift::flatQuadToCanvas(rect, spin, false, false);
+                    placed = parent.hasParent
+                                 ? drift::parentedQuadToCanvas(parent.matrix, quadMatrix)
+                                 : quadMatrix;
+                }
                 QVariantList quad;
-                for (const QPointF &p : drift::projectedQuad(
-                         parent.hasParent ? drift::parentedQuadToCanvas(parent.matrix, quadMatrix)
-                                          : quadMatrix))
+                for (const QPointF &p : drift::projectedQuad(placed))
                     quad.append(p);
                 entry.insert(QStringLiteral("quad"), quad);
             }
+            // The overlay reads this to turn snapping off and to take its 3D drawing path: a
+            // camera leaves the box with no axis-aligned edges, exactly as a tilt does.
+            entry.insert(QStringLiteral("cameraActive"), cameraActive);
             out.append(entry);
         }
     }
@@ -17317,6 +17496,22 @@ void AppController::setClipLayer3d(int trackIndex, int clipIndex, bool enabled)
     finishEdit(enabled ? tr("Clip is a 3D layer") : tr("Clip is flat"));
 }
 
+void AppController::setClipDepthOcclude(int trackIndex, int clipIndex, bool enabled)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    // Needs a pose to sort by, and the dest-reading blend modes copy the canvas aside before they
+    // draw, which a depth test cannot see through — so those are refused rather than silently
+    // ignored. The inspector greys the control for the same two reasons.
+    if (!clip.layer3d || clip.blendMode != drift::BlendMode::Normal || clip.depthOcclude == enabled)
+        return;
+    const drift::Project before = m_project;
+    clip.depthOcclude = enabled;
+    pushProjectEdit(before, enabled ? tr("Enable depth occlusion") : tr("Disable depth occlusion"));
+    finishEdit(enabled ? tr("Clip is occluded by depth") : tr("Clip uses track order"));
+}
+
 void AppController::setClipFlip(int trackIndex, int clipIndex, bool flipH, bool flipV)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -18199,6 +18394,59 @@ void AppController::addTransformLayerForSelection()
         ++m_selectedTransitionTrack;
     pushProjectEdit(before, tr("Add transform layer"));
     finishEdit(tr("Transform layer added"));
+    selectClipById(clip.id);
+}
+
+bool AppController::hasCameraTrack() const
+{
+    return drift::cameraTrackIndex(m_project.tracks()) >= 0;
+}
+
+void AppController::addCameraTrack()
+{
+    const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+    int index = drift::cameraTrackIndex(m_project.tracks());
+    const bool fresh = index < 0;
+    if (fresh) {
+        index = drift::insertCameraTrack(m_project.tracks());
+        // The camera goes in above everything, so every stored track index below it shifts by one.
+        if (m_selectedTransitionTrack >= 0)
+            ++m_selectedTransitionTrack;
+    }
+    // Long enough to cover the whole sequence, so the first camera frames every shot rather than
+    // snapping back to the default viewpoint partway through. An empty timeline still gets a
+    // usable clip to drag keys onto.
+    const drift::TimeUs span = qMax(m_project.durationUs(), drift::kImageClipDurationUs);
+    const drift::Clip clip = drift::makeCameraClip(0, span);
+    m_project.tracks()[index].clips.append(clip);
+    pushProjectEdit(before, fresh ? tr("Add camera") : tr("Add camera clip"));
+    finishEdit(fresh ? tr("Camera added") : tr("Camera clip added"));
+    selectClipById(clip.id);
+}
+
+void AppController::addCameraClip(double atSeconds, double durationSeconds)
+{
+    const drift::TimeUs durUs = durationSeconds > 0.0 ? drift::secondsToUs(durationSeconds)
+                                                      : drift::kImageClipDurationUs;
+    const drift::TimeUs wanted = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+    int index = drift::cameraTrackIndex(m_project.tracks());
+    if (index < 0) {
+        // Make the lane here rather than delegating to addCameraTrack, which spans the whole
+        // sequence: a clip asked for at a particular time has to land there.
+        index = drift::insertCameraTrack(m_project.tracks());
+        if (m_selectedTransitionTrack >= 0)
+            ++m_selectedTransitionTrack;
+    }
+    drift::Track &track = m_project.tracks()[index];
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, wanted, durUs,
+                                                        m_snapEnabled, m_playheadUs);
+    const drift::Clip clip = drift::makeCameraClip(start, durUs);
+    track.clips.append(clip);
+    pushProjectEdit(before, tr("Add camera clip"));
+    finishEdit(tr("Camera clip added"));
     selectClipById(clip.id);
 }
 

@@ -189,6 +189,34 @@ Clip makeTransformClip(TimeUs startUs, TimeUs durationUs);
 // span and still exists, or is cleared when there is none or no `before` to ask. Ids must exist.
 void normalizeTransformLayers(QList<Track> &tracks, const QList<Track> *before = nullptr);
 
+// The scene camera. A Camera track holds Camera clips, and those clips drive the one viewpoint the
+// whole sequence is seen through (engine/SceneCamera3d.h) — it covers no span and flattens nothing,
+// so unlike a transform layer its position among the tracks does not matter.
+
+// Index of the sequence's camera track, or -1. normalizeCameraLayers keeps there being at most one.
+int cameraTrackIndex(const QList<Track> &tracks);
+
+// True for a Camera adjustment clip.
+bool isCameraClip(const Clip &clip);
+
+// Inserts an empty Camera track at the top and returns its index. Top because the camera belongs to
+// the scene rather than to the tracks around it, so the usual "what is above me" reading does not
+// apply, and the top is where it stays out of the way of the stack it is filming.
+int insertCameraTrack(QList<Track> &tracks);
+
+// A camera clip at rest — the default viewpoint — over [startUs, startUs + durationUs).
+Clip makeCameraClip(TimeUs startUs, TimeUs durationUs);
+
+// The camera at `timelineUs`, or nothing when no camera clip covers it. Several clips on the track
+// cannot overlap, so the first match wins; this is what gives camera cuts.
+const Clip *cameraClipAt(const QList<Track> &tracks, TimeUs timelineUs);
+
+// Keeps the camera track well formed after any edit: at most one per sequence (the clips of any
+// extras move onto the first, and the emptied tracks go), only Camera clips on it (strays are
+// lifted onto a track of their own, never dropped), no Camera clip anywhere else (strays move onto
+// the camera track, creating it when the sequence has none), and no span or parent on the track.
+void normalizeCameraLayers(QList<Track> &tracks);
+
 int ensureTrackForClipType(Project &project, ClipType type, bool insertAtTop = false);
 
 // Picks a track of the right type whose span at [startUs, startUs+durationUs) is free, creating one

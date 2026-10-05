@@ -109,6 +109,7 @@ PanelFrame {
         "model3d": qsTr("3D Model"),
         "subtitles": qsTr("Subtitles"),
         "transform": qsTr("Transform"),
+        "camera": qsTr("Camera"),
         "stabilize": qsTr("Stabilization"),
         "animation": qsTr("Animation"),
         "audio": qsTr("Audio"),
@@ -133,6 +134,7 @@ PanelFrame {
         ListElement { tabId: "model3d"; icon: 15; group: 0 }
         ListElement { tabId: "subtitles"; icon: 3; group: 0 }
         ListElement { tabId: "transform"; icon: 4; group: 1 }
+        ListElement { tabId: "camera"; icon: 16; group: 1 }
         ListElement { tabId: "stabilize"; icon: 5; group: 1 }
         ListElement { tabId: "animation"; icon: 6; group: 1 }
         ListElement { tabId: "audio"; icon: 7; group: 1 }
@@ -159,7 +161,8 @@ PanelFrame {
         Theme.icons.audioLines,
         Theme.icons.chevronsRight,
         Theme.icons.layers,
-        Theme.icons.box
+        Theme.icons.box,
+        Theme.icons.video
     ]
 
     function tabVisible(tabId) {
@@ -171,6 +174,10 @@ PanelFrame {
             // A transform layer is its transform: the box, plus Animation for group slide-ins.
             if (kind === "transform")
                 return tabId === "general" || tabId === "transform" || tabId === "animation"
+            // A camera clip is its viewpoint and nothing else. No Animation: a camera has no box
+            // to slide in, and no Blending, because it never draws a pixel.
+            if (kind === "camera")
+                return tabId === "general" || tabId === "camera"
             if (tabId === "general" || tabId === "blending")
                 return true
             if (tabId === "effects")
@@ -242,6 +249,8 @@ PanelFrame {
             return "audioEffects"
         if (kind === "transform")
             return "transform"
+        if (kind === "camera")
+            return "camera"
         return "effects"
     }
 
@@ -719,6 +728,12 @@ PanelFrame {
                             onSizeLinkedChanged: inspectorUi.sizeLinked = sizeLinked
                         }
                     }
+                }
+
+                Loader {
+                    active: root.currentTabId === "camera"
+                    visible: active
+                    sourceComponent: Component { CameraInspector { width: tabColumn.width } }
                 }
 
                 Loader {

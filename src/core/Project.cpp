@@ -307,6 +307,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame));
     if (clip.layer3d)
         json.insert(QStringLiteral("layer3d"), true);
+    if (clip.depthOcclude)
+        json.insert(QStringLiteral("depthOcclude"), true);
     if (!clip.rotationX.isEmpty())
         json.insert(QStringLiteral("rotationX"), keyframesToJson(clip.rotationX));
     if (!clip.rotationY.isEmpty())
@@ -437,6 +439,10 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.layer3d = object.value(QStringLiteral("layer3d")).toBool(false) || !clip.rotationX.isEmpty()
                    || !clip.rotationY.isEmpty() || !clip.positionZ.isEmpty()
                    || !clip.perspective.isEmpty();
+    // Only meaningful with a 3D pose, so a file that somehow carries it without one is read as
+    // off rather than trusted — the compositor enforces the same rule.
+    clip.depthOcclude =
+        clip.layer3d && object.value(QStringLiteral("depthOcclude")).toBool(false);
     clip.rotationCorrection = object.value(QStringLiteral("rotationCorrection")).toInt(0);
     clip.effects = effectsFromJson(object.value(QStringLiteral("effects")).toArray());
     clip.audioEffects = effectsFromJson(object.value(QStringLiteral("audioEffects")).toArray());
@@ -1031,6 +1037,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // A dangling span end has no earlier state to recover from here, so it is cleared.
     project.forEachTrackList([](QList<Track> &tracks) {
         normalizeTransformLayers(tracks);
+        normalizeCameraLayers(tracks);
         drift::ensureTrackIds(tracks);
     });
     // Version 6 added ClipType::Vector. Nothing to migrate; the bump exists so an older build
@@ -1044,6 +1051,10 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 10 added composite clips and the nested sequences they play. Nothing to migrate.
     // Version 11 added transform layers (Range adjustment tracks holding Transform clips). Nothing
     // to migrate; an older build would load them as effect adjustments with no effects.
+    // Version 12 added the scene camera (a Camera adjustment track holding Camera clips). Nothing
+    // to migrate; the bump is a gate, as for versions 6 and 9. An older build would load the
+    // camera as an effect adjustment with no effects and render the whole sequence from the
+    // default viewpoint — every shot framed wrongly, with nothing on screen to say why.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

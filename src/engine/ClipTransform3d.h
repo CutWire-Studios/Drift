@@ -35,11 +35,28 @@ inline constexpr double kClipNearFraction = 0.02;
 QMatrix4x4 clipQuadToCanvas(const QRectF &rect, double rotation, bool flipH, bool flipV,
                             const ClipPose3d &pose, const QSizeF &canvas);
 
+// The placement half of clipQuadToCanvas on its own: the unit quad [-1, 1]^2 into world space —
+// canvas pixels about the canvas *centre*, y down, +z toward the viewer, with no projection and no
+// perspective divide (w stays 1). This is the space a shared camera views, so
+//
+//     cameraViewProjection(camera, canvas) * clipQuadToWorld(...)
+//
+// is clipQuadToCanvas with one eye for the whole scene instead of the clip's own. `pose.perspective`
+// is ignored here on purpose: the eye belongs to the camera, not to the clip. `canvas` is still
+// needed, to put the world origin at the canvas centre.
+QMatrix4x4 clipQuadToWorld(const QRectF &rect, double rotation, bool flipH, bool flipV,
+                           const ClipPose3d &pose, const QSizeF &canvas);
+
 // The same placement for an item of the rect's size laid out from (0, 0), without the flips and
 // with z passed through untouched (a z = 0 point stays at z = 0, and the matrix stays invertible):
 // what a QtQuick Matrix4x4 transform needs to overlay the clip.
 QMatrix4x4 clipLocalToCanvas(const QRectF &rect, double rotation, const ClipPose3d &pose,
                              const QSizeF &canvas);
+
+// clipLocalToCanvas in world space: an item of the rect's size laid out from (0, 0), placed about
+// the canvas centre with no projection. What the preview overlay needs before the camera is applied.
+QMatrix4x4 clipLocalToWorld(const QRectF &rect, double rotation, const ClipPose3d &pose,
+                            const QSizeF &canvas);
 
 // The flat placement of the unit quad: rect, in-plane rotation and flips, z = 0 and w = 1.
 QMatrix4x4 flatQuadToCanvas(const QRectF &rect, double rotation, bool flipH, bool flipV);

@@ -48,6 +48,7 @@
 #include "engine/Exporter.h"
 #include "engine/PreviewProxyRenderer.h"
 #include "engine/ClipGizmo.h"
+#include "engine/SceneCamera3d.h"
 #include "engine/TransformLayer.h"
 #include "engine/GpuCompositor.h"
 #include "engine/MediaWaveform.h"
@@ -149,6 +150,11 @@ private slots:
     void depthOfFieldKeepsFocusSharpAndBlursTheRest();
     void depthOcclusionHidesLayerBehindNearerPixels();
     void clipPose3dRendersInPerspective();
+    void sceneCameraIdentityMatchesPerClipEye();
+    void sceneCameraMovesTheViewpoint();
+    void sceneCameraRendersThroughTheCompositor();
+    void sceneCameraClipDrivesTheWholeTimeline();
+    void depthOcclusionOverridesTrackOrderWhenOptedIn();
     void clipGizmoSolvesDrags();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
@@ -1087,6 +1093,553 @@ void EngineTest::clipPose3dRendersInPerspective()
     QVERIFY(far.pixelColor(76, 64).red() > 200);
     QCOMPARE(far.pixelColor(84, 64).red(), 0);
     QCOMPARE(far.pixelColor(40, 64).red(), 0);
+}
+
+void EngineTest::sceneCameraIdentityMatchesPerClipEye()
+{
+    // The whole backwards-compatibility story rests on this: splitting clipQuadToCanvas into a
+    // world placement plus a shared camera must not move anything while the camera is at rest.
+    // Not bit-identical by construction — the camera path composes two matrices where the per-clip
+    // path accumulates in place — so this pins the agreement to well under a thousandth of a pixel
+    // across the awkward cases: tilts, flips, depth, off-centre rects and odd canvases.
+    const auto maxCornerError = [](const QRectF &rect, double rotation, bool flipH, bool flipV,
+                                   const drift::ClipPose3d &pose, const QSizeF &canvas) {
+        drift::SceneCamera3d camera;
+        camera.perspective = pose.perspective; // a camera is the clip's own eye, moved nowhere
+        const QMatrix4x4 direct =
+            drift::clipQuadToCanvas(rect, rotation, flipH, flipV, pose, canvas);
+        const QMatrix4x4 viaCamera = drift::cameraViewProjection(camera, canvas)
+                                     * drift::clipQuadToWorld(rect, rotation, flipH, flipV, pose,
+                                                              canvas);
+        double worst = 0.0;
+        for (const QPointF corner : {QPointF(-1, -1), QPointF(1, -1), QPointF(1, 1), QPointF(-1, 1),
+                                     QPointF(0, 0)}) {
+            const QVector4D v(float(corner.x()), float(corner.y()), 0.f, 1.f);
+            const QVector4D a = direct.map(v);
+            const QVector4D b = viaCamera.map(v);
+            QPointF pa(double(a.x()) / double(a.w()), double(a.y()) / double(a.w()));
+            QPointF pb(double(b.x()) / double(b.w()), double(b.y()) / double(b.w()));
+            worst = std::max(worst, std::hypot(pa.x() - pb.x(), pa.y() - pb.y()));
+        }
+        return worst;
+    };
+
+    const QSizeF canvas(1920, 1080);
+    drift::ClipPose3d flat;
+    QVERIFY(maxCornerError(QRectF(760, 340, 400, 400), 0.0, false, false, flat, canvas) < 1e-3);
+    QVERIFY(maxCornerError(QRectF(0, 0, 1920, 1080), 0.0, false, false, flat, canvas) < 1e-3);
+
+    // An in-plane spin, and the flips, which are applied after the placement.
+    QVERIFY(maxCornerError(QRectF(100, 50, 300, 200), 37.5, true, false, flat, canvas) < 1e-3);
+    QVERIFY(maxCornerError(QRectF(100, 50, 300, 200), -12.0, false, true, flat, canvas) < 1e-3);
+
+    // Tilts and depth, where the perspective divide actually does something.
+    drift::ClipPose3d tilted;
+    tilted.rotationX = 34.0;
+    tilted.rotationY = -58.0;
+    tilted.positionZ = 220.0;
+    QVERIFY(maxCornerError(QRectF(200, 120, 500, 280), 21.0, false, false, tilted, canvas) < 1e-3);
+
+    // A short eye distance exaggerates everything, so it is the strictest case.
+    drift::ClipPose3d shortEye;
+    shortEye.rotationY = 70.0;
+    shortEye.positionZ = -140.0;
+    shortEye.perspective = 200.0;
+    QVERIFY(maxCornerError(QRectF(32, 32, 64, 64), 0.0, false, false, shortEye, QSizeF(128, 128))
+            < 1e-3);
+    QVERIFY(maxCornerError(QRectF(5, 7, 61, 29), 9.0, true, true, shortEye, QSizeF(133, 71))
+            < 1e-3);
+
+    // An identity camera really is identity: it reports so, and a lens change does not, because a
+    // changed lens still has to take over from the clips' own eyes.
+    QVERIFY(drift::SceneCamera3d{}.isIdentity());
+    drift::SceneCamera3d lens;
+    lens.perspective = 800.0;
+    QVERIFY(lens.isIdentity());
+    drift::SceneCamera3d moved;
+    moved.positionX = 1.0;
+    QVERIFY(!moved.isIdentity());
+}
+
+void EngineTest::sceneCameraMovesTheViewpoint()
+{
+    const QSizeF canvas(1000, 1000);
+    drift::SceneCamera3d camera;
+    camera.perspective = 1000.0;
+
+    // Where the centre of a clip lands, as a canvas pixel.
+    const auto centreOf = [&](const drift::SceneCamera3d &cam, const QRectF &rect,
+                              const drift::ClipPose3d &pose) {
+        const QMatrix4x4 m = drift::cameraViewProjection(cam, canvas)
+                             * drift::clipQuadToWorld(rect, 0.0, false, false, pose, canvas);
+        const QVector4D p = m.map(QVector4D(0.f, 0.f, 0.f, 1.f));
+        return QPointF(double(p.x()) / double(p.w()), double(p.y()) / double(p.w()));
+    };
+
+    // A clip filling the canvas, at the canvas plane and well in front of it.
+    const QRectF rect(400, 400, 200, 200); // centred, so it sits on the view axis
+    drift::ClipPose3d atPlane;
+    drift::ClipPose3d nearer;
+    nearer.positionZ = 500.0; // half way to the eye
+
+    // At rest both are dead centre: depth alone does not shift something on the axis.
+    QVERIFY(std::hypot(centreOf(camera, rect, atPlane).x() - 500.0,
+                       centreOf(camera, rect, atPlane).y() - 500.0) < 1e-3);
+    QVERIFY(std::hypot(centreOf(camera, rect, nearer).x() - 500.0,
+                       centreOf(camera, rect, nearer).y() - 500.0) < 1e-3);
+
+    // Panning the camera right moves the image left...
+    drift::SceneCamera3d panned = camera;
+    panned.positionX = 100.0;
+    const double farShift = 500.0 - centreOf(panned, rect, atPlane).x();
+    const double nearShift = 500.0 - centreOf(panned, rect, nearer).x();
+    QVERIFY2(farShift > 0.0, qPrintable(QStringLiteral("far shift %1").arg(farShift)));
+
+    // ...and moves the nearer clip further, which is parallax. This is the test that distinguishes
+    // a real camera from re-projecting the finished 2D canvas, where both would shift alike.
+    QVERIFY2(nearShift > farShift * 1.5,
+             qPrintable(QStringLiteral("near %1 vs far %2").arg(nearShift).arg(farShift)));
+
+    // Pulling the camera back shrinks what is on the canvas plane towards the centre.
+    drift::SceneCamera3d back = camera;
+    back.positionZ = 1000.0;
+    const QRectF offCentre(600, 400, 200, 200);
+    const double restX = centreOf(camera, offCentre, atPlane).x();
+    const double backX = centreOf(back, offCentre, atPlane).x();
+    QVERIFY(restX > 500.0);
+    QVERIFY2(backX < restX && backX > 500.0,
+             qPrintable(QStringLiteral("rest %1 back %2").arg(restX).arg(backX)));
+
+    // A yaw with no translation orbits about the world origin rather than spinning in place. The
+    // pivot is the giveaway: whatever sits on the canvas plane at the centre is what the camera
+    // swings around, so it stays dead centre however far the camera is turned.
+    drift::SceneCamera3d yawed = camera;
+    yawed.rotationY = 45.0;
+    const QPointF pivot = centreOf(yawed, rect, atPlane);
+    QVERIFY2(std::hypot(pivot.x() - 500.0, pivot.y() - 500.0) < 1e-3,
+             qPrintable(QStringLiteral("pivot %1,%2").arg(pivot.x()).arg(pivot.y())));
+
+    // What the orbit does to the rest of the canvas plane is tilt it, which is foreshortening, not
+    // a sideways slide: one half swings towards the eye and spreads, the other swings away and
+    // bunches up. A point near the pivot barely moves at all, so the asymmetry is what to measure.
+    // Two clips placed symmetrically about the centre stop being symmetric.
+    const QRectF leftOfCentre(200, 400, 200, 200); // centre 200 px left, mirroring offCentre
+    QVERIFY(std::abs((restX - 500.0) - (500.0 - centreOf(camera, leftOfCentre, atPlane).x()))
+            < 1e-3); // symmetric at rest
+    const double rightSpread = centreOf(yawed, offCentre, atPlane).x() - 500.0;
+    const double leftSpread = 500.0 - centreOf(yawed, leftOfCentre, atPlane).x();
+    QVERIFY(rightSpread > 0.0 && leftSpread > 0.0);
+    QVERIFY2(rightSpread > leftSpread * 1.2,
+             qPrintable(QStringLiteral("right %1 vs left %2").arg(rightSpread).arg(leftSpread)));
+
+    // The tilt is about a vertical axis, so nothing leaves its row.
+    QVERIFY(std::abs(centreOf(yawed, offCentre, atPlane).y() - 500.0) < 1e-3);
+    QVERIFY(std::abs(centreOf(yawed, leftOfCentre, atPlane).y() - 500.0) < 1e-3);
+
+    // Rolling the camera clockwise rolls the image the other way, so a clip 200 px to the right of
+    // the centre ends up 200 px above it.
+    drift::SceneCamera3d rolled = camera;
+    rolled.rotationZ = 90.0;
+    const QPointF spun = centreOf(rolled, offCentre, atPlane);
+    QVERIFY2(std::abs(spun.x() - 500.0) < 1e-3, qPrintable(QStringLiteral("x %1").arg(spun.x())));
+    QVERIFY2(std::abs(spun.y() - (1000.0 - restX)) < 1e-3,
+             qPrintable(QStringLiteral("y %1, expected %2").arg(spun.y()).arg(1000.0 - restX)));
+}
+
+void EngineTest::sceneCameraRendersThroughTheCompositor()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QImage white(64, 64, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+
+    // One white card, optionally at a depth, optionally seen through a camera.
+    const auto render = [&](const QRectF &rect, double positionZ, const drift::SceneCamera3d *cam) {
+        GpuLayer layer;
+        layer.source = white;
+        layer.rect = rect;
+        if (!qFuzzyIsNull(positionZ)) {
+            layer.pose3d.positionZ = positionZ;
+            layer.pose3d.perspective = 1000.0;
+        }
+        if (cam) {
+            layer.camera = *cam;
+            layer.cameraActive = true;
+        }
+        layer.valid = true;
+        GpuItem item;
+        item.layer = layer;
+        GpuScene scene;
+        scene.canvasSize = QSize(400, 400);
+        scene.backgroundColor = Qt::black;
+        scene.items.append(item);
+        return GpuCompositor::render(scene).convertToFormat(QImage::Format_RGBA8888);
+    };
+    // Horizontal centre of mass of the white pixels, or -1 when there are none.
+    const auto centroidX = [](const QImage &img) {
+        double sum = 0.0;
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x) {
+                if (img.pixelColor(x, y).red() > 128) {
+                    sum += x;
+                    ++n;
+                }
+            }
+        }
+        return n > 0 ? sum / n : -1.0;
+    };
+    const auto whiteCount = [](const QImage &img) {
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x)
+                n += img.pixelColor(x, y).red() > 128 ? 1 : 0;
+        }
+        return n;
+    };
+
+    const QRectF rect(170, 170, 60, 60); // centred on a 400x400 canvas
+
+    // A camera at rest must land the pixels exactly where no camera at all does. This is the
+    // guarantee the whole feature rests on, checked through the real GL path rather than on the
+    // matrices alone.
+    drift::SceneCamera3d rest;
+    rest.perspective = 1000.0;
+    const QImage noCamera = render(rect, 0.0, nullptr);
+    const QImage restCamera = render(rect, 0.0, &rest);
+    QVERIFY(!noCamera.isNull() && !restCamera.isNull());
+    QCOMPARE(restCamera, noCamera);
+
+    // The same with a depth already on the clip, where the per-clip path does its own projection.
+    const QImage noCameraDeep = render(rect, 400.0, nullptr);
+    const QImage restCameraDeep = render(rect, 400.0, &rest);
+    QCOMPARE(restCameraDeep, noCameraDeep);
+
+    // Panning the camera right moves the image left.
+    drift::SceneCamera3d panned = rest;
+    panned.positionX = 40.0;
+    const QImage pannedFlat = render(rect, 0.0, &panned);
+    QVERIFY(centroidX(pannedFlat) >= 0.0);
+    QVERIFY2(centroidX(pannedFlat) < centroidX(noCamera) - 5.0,
+             qPrintable(QStringLiteral("panned %1 vs rest %2")
+                                .arg(centroidX(pannedFlat))
+                                .arg(centroidX(noCamera))));
+
+    // Parallax, on real pixels: the same pan shifts a nearer card further than a far one. The
+    // canvas is deliberately roomy and the pan small, so neither card touches an edge — clipping
+    // drags the centroid back towards the middle and would understate the effect.
+    const QImage pannedDeep = render(rect, 400.0, &panned);
+    const double farShift = centroidX(noCamera) - centroidX(pannedFlat);
+    const double nearShift = centroidX(noCameraDeep) - centroidX(pannedDeep);
+    QVERIFY2(nearShift > farShift * 1.4,
+             qPrintable(QStringLiteral("near %1 vs far %2").arg(nearShift).arg(farShift)));
+
+    // Pulling the camera back shrinks the card; pushing in enlarges it.
+    drift::SceneCamera3d back = rest;
+    back.positionZ = 1000.0;
+    QVERIFY(whiteCount(render(rect, 0.0, &back)) < whiteCount(noCamera) * 0.6);
+    drift::SceneCamera3d forward = rest;
+    forward.positionZ = -400.0;
+    QVERIFY(whiteCount(render(rect, 0.0, &forward)) > whiteCount(noCamera) * 1.3);
+
+    // A clip under an affine transform-layer parent goes through the exact world-space path, so a
+    // camera at rest must still change nothing there either.
+    const auto renderParented = [&](const QTransform &parent, const drift::SceneCamera3d *cam) {
+        GpuLayer layer;
+        layer.source = white;
+        layer.rect = rect;
+        layer.parent = parent;
+        layer.hasParent = true;
+        if (cam) {
+            layer.camera = *cam;
+            layer.cameraActive = true;
+        }
+        layer.valid = true;
+        GpuItem item;
+        item.layer = layer;
+        GpuScene scene;
+        scene.canvasSize = QSize(400, 400);
+        scene.backgroundColor = Qt::black;
+        scene.items.append(item);
+        return GpuCompositor::render(scene).convertToFormat(QImage::Format_RGBA8888);
+    };
+    QTransform affine;
+    affine.translate(20.0, -10.0);
+    affine.scale(1.4, 0.8);
+    QVERIFY(affine.isAffine());
+    QCOMPARE(renderParented(affine, &rest), renderParented(affine, nullptr));
+
+    // And a projective parent, which takes the documented flat-card fallback, must also be left
+    // alone by a camera at rest.
+    QTransform projective = affine;
+    projective.setMatrix(projective.m11(), projective.m12(), 0.0004, projective.m21(),
+                         projective.m22(), 0.0002, projective.m31(), projective.m32(),
+                         projective.m33());
+    QVERIFY(!projective.isAffine());
+    QCOMPARE(renderParented(projective, &rest), renderParented(projective, nullptr));
+
+    // Under an affine parent the camera still has to work, not merely be harmless: a pan has to
+    // move the parented card too, and by the same amount as an unparented one at the same depth,
+    // because the parent only slides its children about within the canvas plane.
+    QTransform slide;
+    slide.translate(30.0, 0.0);
+    const double parentedRest = centroidX(renderParented(slide, nullptr));
+    const double parentedPan = centroidX(renderParented(slide, &panned));
+    QVERIFY(parentedRest >= 0.0 && parentedPan >= 0.0);
+    QVERIFY2(std::abs((parentedRest - parentedPan) - farShift) < 1.5,
+             qPrintable(QStringLiteral("parented shift %1 vs plain %2")
+                                .arg(parentedRest - parentedPan)
+                                .arg(farShift)));
+    // And the parent's own offset survives the camera: the card is still 30 px to the right of
+    // where it would be without the parent.
+    QVERIFY2(std::abs((parentedPan - centroidX(pannedFlat)) - 30.0) < 1.5,
+             qPrintable(QStringLiteral("offset %1").arg(parentedPan - centroidX(pannedFlat))));
+}
+
+void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QSize canvas(160, 160);
+    QImage white(40, 40, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    const QString whitePath = dir.filePath(QStringLiteral("white.png"));
+    QVERIFY(white.save(whitePath));
+
+    drift::Project project;
+    project.setResolution(canvas.width(), canvas.height());
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.ensureTrackIds();
+
+    // A small card dead centre, so a pan has room to move it without clipping.
+    drift::Clip card;
+    card.id = QStringLiteral("card");
+    card.type = drift::ClipType::Image;
+    card.path = whitePath;
+    card.timelineDuration = drift::secondsToUs(4.0);
+    card.srcOut = card.timelineDuration;
+    card.transformX.setKeyframe(0, {60.0});
+    card.transformY.setKeyframe(0, {60.0});
+    card.transformW.setKeyframe(0, {40.0});
+    card.transformH.setKeyframe(0, {40.0});
+    project.tracks()[0].clips.append(card);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    const auto centroidX = [](const QImage &img) {
+        double sum = 0.0;
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x) {
+                if (img.pixelColor(x, y).red() > 128) {
+                    sum += x;
+                    ++n;
+                }
+            }
+        }
+        return n > 0 ? sum / n : -1.0;
+    };
+
+    // No camera track: nothing anywhere in the scene claims a camera.
+    GpuScene plain;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), {}, &plain));
+    QCOMPARE(plain.items.size(), 1);
+    QVERIFY(!plain.items.at(0).layer.cameraActive);
+    const QImage before = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!before.isNull());
+    const double restX = centroidX(before);
+    QVERIFY(restX > 0.0);
+
+    // Add a camera that pans from rest at 0 s to +40 px at 2 s, exactly as the UI would: a Camera
+    // clip on a Camera track, animated through the clip's ordinary transform tracks.
+    const int cameraTrack = drift::insertCameraTrack(project.tracks());
+    project.ensureTrackIds();
+    drift::Clip camera = drift::makeCameraClip(0, drift::secondsToUs(4.0));
+    camera.transformX.setKeyframe(0, {0.0});
+    camera.transformX.setKeyframe(drift::secondsToUs(2.0), {40.0});
+    project.tracks()[cameraTrack].clips.append(camera);
+    drift::normalizeCameraLayers(project.tracks());
+    QCOMPARE(drift::cameraTrackIndex(project.tracks()), 0);
+
+    // The camera track contributes no pixels of its own — still one drawable.
+    GpuScene withCamera;
+    QVERIFY(compositor.buildSceneAt(0, {}, &withCamera));
+    QCOMPARE(withCamera.items.size(), 1);
+    QVERIFY(withCamera.items.at(0).layer.cameraActive);
+
+    // At 0 s the camera is at rest, so the frame has to be exactly what it was before it existed.
+    QCOMPARE(compositor.compositeAt(0), compositor.compositeAt(0));
+    const QImage atRest = compositor.compositeAt(0);
+    QVERIFY(std::abs(centroidX(atRest) - restX) < 0.5);
+
+    // By 2 s the camera has panned right, so the card has moved left.
+    const QImage panned = compositor.compositeAt(drift::secondsToUs(2.0));
+    QVERIFY2(centroidX(panned) < restX - 20.0,
+             qPrintable(QStringLiteral("panned %1 vs rest %2").arg(centroidX(panned)).arg(restX)));
+
+    // Half way along the keyframed pan, half the movement.
+    const QImage half = compositor.compositeAt(drift::secondsToUs(1.0));
+    const double halfShift = restX - centroidX(half);
+    const double fullShift = restX - centroidX(panned);
+    QVERIFY2(std::abs(halfShift - fullShift * 0.5) < 2.0,
+             qPrintable(QStringLiteral("half %1 full %2").arg(halfShift).arg(fullShift)));
+
+    // WYSIWYG: a half-scale preview frames the shot identically to the full-size export. Compared
+    // as a fraction of the canvas, because the images are different sizes.
+    FrameCompositor::RenderOptions preview;
+    preview.previewScale = 0.5;
+    const QImage small = compositor.compositeAt(drift::secondsToUs(2.0), preview);
+    QVERIFY(!small.isNull());
+    QCOMPARE(small.size(), QSize(80, 80));
+    QVERIFY2(std::abs(centroidX(small) / small.width() - centroidX(panned) / panned.width()) < 0.01,
+             qPrintable(QStringLiteral("preview %1 vs full %2")
+                                .arg(centroidX(small) / small.width())
+                                .arg(centroidX(panned) / panned.width())));
+
+    // Hiding the camera track bypasses it, the way hiding a transform layer does.
+    project.tracks()[cameraTrack].hidden = true;
+    GpuScene hidden;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(2.0), {}, &hidden));
+    QVERIFY(!hidden.items.at(0).layer.cameraActive);
+    QVERIFY(std::abs(centroidX(compositor.compositeAt(drift::secondsToUs(2.0))) - restX) < 0.5);
+    project.tracks()[cameraTrack].hidden = false;
+
+    // Past the end of the camera clip there is no camera, so the framing returns to normal. That
+    // is what makes two clips in a row read as a cut.
+    const QImage afterEnd = compositor.compositeAt(drift::secondsToUs(5.0));
+    QVERIFY(!afterEnd.isNull());
+}
+
+// Per-clip opt-in depth occlusion: a clip that asks for it is covered by whatever is nearer the
+// camera, instead of by whatever sits on a higher track. Everything that did not ask keeps drawing
+// in track order, which is what the rest of the timeline relies on.
+void EngineTest::depthOcclusionOverridesTrackOrderWhenOptedIn()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QImage red(60, 60, QImage::Format_RGBA8888);
+    red.fill(QColor(230, 20, 20));
+    QImage blue(60, 60, QImage::Format_RGBA8888);
+    blue.fill(QColor(20, 20, 230));
+
+    // Two overlapping cards. `near` is pushed toward the viewer, `far` away from it; the one
+    // listed last in scene.items is the one track order would put on top.
+    const auto render = [&](bool optIn, bool nearOnTop) {
+        const auto card = [&](const QImage &src, double z) {
+            GpuLayer layer;
+            layer.source = src;
+            layer.rect = QRectF(70, 70, 60, 60);
+            layer.pose3d.positionZ = z;
+            layer.pose3d.perspective = 2000.0;
+            layer.depthOcclude = optIn;
+            layer.valid = true;
+            return layer;
+        };
+        // Depth only: no tilt, so both cards stay the same size on screen and the only thing that
+        // can decide the overlap is depth or order.
+        GpuItem nearItem;
+        nearItem.layer = card(red, 300.0);
+        GpuItem farItem;
+        farItem.layer = card(blue, -300.0);
+
+        GpuScene scene;
+        scene.canvasSize = QSize(200, 200);
+        scene.backgroundColor = Qt::black;
+        if (nearOnTop) {
+            scene.items.append(farItem);
+            scene.items.append(nearItem);
+        } else {
+            scene.items.append(nearItem);
+            scene.items.append(farItem);
+        }
+        return GpuCompositor::render(scene).convertToFormat(QImage::Format_RGBA8888);
+    };
+    // Which card won the centre of the canvas.
+    const auto winner = [](const QImage &img) {
+        const QColor c = img.pixelColor(100, 100);
+        if (c.red() > 150 && c.blue() < 100)
+            return QStringLiteral("near");
+        if (c.blue() > 150 && c.red() < 100)
+            return QStringLiteral("far");
+        return QStringLiteral("neither: %1,%2,%3").arg(c.red()).arg(c.green()).arg(c.blue());
+    };
+
+    // Opted out, the drawing order decides — which is exactly today's behaviour, and the half of
+    // this that must not change.
+    QCOMPARE(winner(render(false, /*nearOnTop=*/true)), QStringLiteral("near"));
+    QCOMPARE(winner(render(false, /*nearOnTop=*/false)), QStringLiteral("far"));
+
+    // Opted in, depth decides, whichever way round they are emitted. The second case is the one
+    // that could not be expressed before: the near card is drawn *first* and still wins.
+    QCOMPARE(winner(render(true, /*nearOnTop=*/true)), QStringLiteral("near"));
+    QCOMPARE(winner(render(true, /*nearOnTop=*/false)), QStringLiteral("near"));
+
+    // A scene with nobody opted in must come out pixel-identical to one composed before the depth
+    // buffer existed at all — the extra target and blit must not change a single pixel.
+    GpuLayer plain;
+    plain.source = red;
+    plain.rect = QRectF(40, 40, 60, 60);
+    plain.valid = true;
+    GpuItem plainItem;
+    plainItem.layer = plain;
+    GpuScene a;
+    a.canvasSize = QSize(200, 200);
+    a.backgroundColor = Qt::black;
+    a.items.append(plainItem);
+    const QImage withoutDepth = GpuCompositor::render(a);
+    GpuScene b = a;
+    b.items[0].layer.depthOcclude = true;
+    const QImage withDepth = GpuCompositor::render(b);
+    QVERIFY(!withoutDepth.isNull() && !withDepth.isNull());
+    // One opted-in layer on its own has nothing to sort against, so the picture is unchanged.
+    QCOMPARE(withDepth, withoutDepth);
+
+    // Transparent regions must not write depth, or a tilted card's empty corner would punch a hole
+    // in whatever is behind it. A half-transparent near card over an opaque far one: where the
+    // near card is clear, the far one still shows.
+    QImage holed(60, 60, QImage::Format_RGBA8888);
+    holed.fill(QColor(230, 20, 20));
+    for (int y = 0; y < 60; ++y)
+        for (int x = 0; x < 30; ++x)
+            holed.setPixelColor(x, y, QColor(0, 0, 0, 0));
+    GpuLayer nearHoled;
+    nearHoled.source = holed;
+    nearHoled.rect = QRectF(70, 70, 60, 60);
+    nearHoled.pose3d.positionZ = 300.0;
+    nearHoled.pose3d.perspective = 2000.0;
+    nearHoled.depthOcclude = true;
+    nearHoled.valid = true;
+    GpuLayer farSolid;
+    farSolid.source = blue;
+    farSolid.rect = QRectF(70, 70, 60, 60);
+    farSolid.pose3d.positionZ = -300.0;
+    farSolid.pose3d.perspective = 2000.0;
+    farSolid.depthOcclude = true;
+    farSolid.valid = true;
+    GpuScene holes;
+    holes.canvasSize = QSize(200, 200);
+    holes.backgroundColor = Qt::black;
+    GpuItem i1;
+    i1.layer = nearHoled;
+    GpuItem i2;
+    i2.layer = farSolid;
+    holes.items.append(i1);
+    holes.items.append(i2);
+    const QImage out = GpuCompositor::render(holes).convertToFormat(QImage::Format_RGBA8888);
+    // Right half of the near card is opaque red and nearer, so it wins.
+    QCOMPARE(winner(out), QStringLiteral("near"));
+    // Left half is clear, so the far blue card shows through rather than being depth-culled.
+    const QColor through = out.pixelColor(80, 100);
+    QVERIFY2(through.blue() > 150 && through.red() < 100,
+             qPrintable(QStringLiteral("through %1,%2,%3")
+                                .arg(through.red()).arg(through.green()).arg(through.blue())));
 }
 
 void EngineTest::clipGizmoSolvesDrags()

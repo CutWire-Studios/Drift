@@ -63,6 +63,7 @@ struct MediaEditSpec;
 }
 
 #include "engine/AudioRecorder.h"
+#include "engine/SceneCamera3d.h"
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 
@@ -1278,9 +1279,23 @@ public:
     Q_INVOKABLE QVariantMap previewApplyGizmoDrag(const QVariantMap &start, const QString &handle,
                                                   double pressX, double pressY, double nowX,
                                                   double nowY, bool snap, double scale);
+    // The scene camera as the preview's camera overlay needs it: {active, track, clip} plus the
+    // seven values, all at the playhead. Taken once when a drag starts, so the drag solves from a
+    // fixed starting point instead of accumulating its own rounding.
+    Q_INVOKABLE QVariantMap cameraStateAtPlayhead() const;
+    // Moves the camera by a drag of (dx, dy) overlay px from that starting state. `tool` is the
+    // gizmo tool: "move" pans, "rotate" orbits, "scale" dollies. Returns the new state in the same
+    // shape, or `start` unchanged when nothing could be written.
+    Q_INVOKABLE QVariantMap previewApplyCameraDrag(const QVariantMap &start, const QString &tool,
+                                                   double dx, double dy, double scale, bool snap);
+
     Q_INVOKABLE QMatrix4x4 previewClipPoseMatrix(const QVariantMap &box, double x, double y,
                                                  double w, double h, double rotation,
                                                  double scaleX, double scaleY) const;
+    // True while a camera clip covers the playhead. The overlay needs it for the same reasons a
+    // tilt matters: the box is no longer axis-aligned, so snapping is off, and the grips have to be
+    // drawn through the camera rather than straight onto the canvas.
+    Q_INVOKABLE bool previewCameraActive() const;
 
     // Asset drag-and-drop. One resolver for every kind a browser can lift (AssetDrag.qml has
     // the list; media keeps its own asset-index path), shared by the desktop and phone
@@ -1505,6 +1520,9 @@ public:
     // Per-clip "3D layer" switch: the tilt/depth/perspective values render (and get grips) only
     // while it is on. Off keeps the values.
     Q_INVOKABLE void setClipLayer3d(int trackIndex, int clipIndex, bool enabled);
+    // Per-clip opt-in: let depth decide what covers this clip instead of the track order. Needs
+    // the 3D switch on and a Normal blend mode; does nothing otherwise.
+    Q_INVOKABLE void setClipDepthOcclude(int trackIndex, int clipIndex, bool enabled);
     // Stereo balance, -1..+1. previewSet* coalesces a slider drag into one undo entry the way
     // previewSetClipSpeed does; setClipPan is the one-shot for typing or resetting to centre.
     Q_INVOKABLE void previewSetClipPan(int trackIndex, int clipIndex, double pan);
@@ -1551,6 +1569,20 @@ public:
     // covering everything below with a 5 s clip at the playhead.
     Q_INVOKABLE void addTransformLayerForSelection();
     bool canTransformSelectionTogether() const;
+
+    // The scene camera: one viewpoint the whole sequence is seen through (engine/SceneCamera3d.h).
+    // Stored as Camera clips on a Camera adjustment track, so the camera animates on the timeline
+    // with the ordinary keyframe machinery and two clips in a row read as a camera cut.
+    //
+    // Adds the camera track with one clip at rest over the sequence's length, or just the clip
+    // when the track is already there. A camera at rest changes nothing on screen, which is what
+    // makes this safe to offer from a menu. Selects the new clip.
+    Q_INVOKABLE void addCameraTrack();
+    // A camera clip on the existing camera track; `atSeconds` < 0 is the playhead. Use this for a
+    // camera cut.
+    Q_INVOKABLE void addCameraClip(double atSeconds = -1.0, double durationSeconds = -1.0);
+    // True once the sequence has a camera track, whether or not any clip is on it.
+    Q_INVOKABLE bool hasCameraTrack() const;
     Q_INVOKABLE void makeTransformLayerFromSelection();
     // A layer directly above the topmost track holding one of `clipIds`, spanning to the lowest,
     // with one clip over their time range (or [atSeconds, +durationSeconds) when given). One undo
@@ -2593,6 +2625,11 @@ protected:
     // on a media clip, and every lane is adjacent to and directly above its parent. Both passes
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and
     // cheap when nothing is out of place, which is why it can run on every edit.
+    // The scene camera at the playhead in canvas pixels (renderScale 1, which is the space the
+    // preview overlay measures in). `active` reports whether a camera clip covers the playhead at
+    // all; when it does not, the camera comes back at rest and every caller keeps its old path.
+    drift::SceneCamera3d previewCamera(bool *active = nullptr) const;
+
     void normalizeProjectStructure(const drift::Project *before = nullptr);
     // What the transform layers over `trackIndex` do at the playhead; identity when none.
     drift::TransformParent transformParentFor(int trackIndex) const;
