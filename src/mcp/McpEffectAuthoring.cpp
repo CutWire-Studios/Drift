@@ -8,6 +8,7 @@
 #include "engine/TransitionCatalog.h"
 #include "engine/TransitionPackageLoader.h"
 #include "engine/audio/AudioEffectFactory.h"
+#include "engine/audio/PedalCatalog.h"
 #include "mcp/McpJson.h"
 #include "models/AddonManager.h"
 #include "models/AppController.h"
@@ -391,8 +392,9 @@ files: {"main.frag": "#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;
 const char *const kGuideAudio = R"(
 ## Audio effect — audio-effect.json (kind: "audio_effect")
 
-Audio effects carry no code: one of Drift's built-in DSP processors, with its parameters exposed
-under your names, ranges and defaults. Send the manifest only (no files).
+Audio effects carry no code. Send the manifest only (no files). Two shapes:
+
+1. One built-in processor, its parameters exposed under your names, ranges and defaults:
 
 {"displayName": "Long Hall Echo", "category": "space", "order": 900, "backend": "juce",
  "processor": "echo", "prerollMs": 2000, "parameters": [ …same identifiers the processor reads… ]}
@@ -401,6 +403,29 @@ A parameter's identifier must be one the processor reads — copy them from a bu
 uses the same processor (see `processors` below, then get_effect_source) and change displayName,
 ranges and defaults. prerollMs is how much earlier audio the processor needs to be correct from an
 arbitrary start (0 for stateless processors, the tail length for echoes and reverbs).
+
+2. A graph of pedals ("processor": "graph"), wired from the `pedals` catalog below:
+
+{"displayName": "Swirl", "category": "space", "backend": "juce", "processor": "graph", "prerollMs": 0,
+ "parameters": [{"identifier": "space", "displayName": "Space", "type": "float",
+                 "minValue": 0, "maxValue": 1, "defaultValue": 0.4}],
+ "graph": {"version": 1,
+   "modulators": [{"id": "m1", "type": "lfo", "knobs": {"rate": 0.5}}],
+   "chain": [
+     {"id": "f", "type": "filter", "knobs": {"mode": 2, "cutoff": 900},
+      "mod": {"cutoff": [{"from": "m1", "depth": 0.35}]}},
+     {"id": "s", "type": "split", "mode": "parallel", "crossfade": true, "blend": {"param": "space"},
+      "lanes": [{"chain": []}, {"chain": [{"id": "r", "type": "reverb", "knobs": {"mix": 1}}]}]}]}}
+
+- chain runs in order. Pedal types and their knobs (ids, ranges, choices as indices) are in
+  `pedals.pedals`; classic.<processor> pedals are the processors of shape 1.
+- A knob is a number or {"param": "<identifier>"}, which makes it a slider (and keyframable).
+- split: "parallel" (same sound in every lane, summed; crossfade + blend for two lanes) or "bands"
+  (with "crossovers": [Hz, …], one per lane boundary). 2–4 lanes, nested at most two deep.
+- modulators (`pedals.modulators`): lfo, envelope ("source": "input" or a pedal id), steps ("steps":
+  [0..1, …]). A pedal's "mod" maps a knob to routes; depth is a fraction of the knob's range, -1..1.
+- "bypass": true or {"param": …} switches a pedal off. prerollMs may be 0: Drift measures tails itself.
+- The convolution pedal needs an impulse-response file in the package; build those in Drift Forge.
 )";
 
 QJsonArray processorTable()
@@ -443,6 +468,8 @@ QJsonObject guide(const QString &kind)
     if (kind.isEmpty() || kind == QLatin1String("audio_effect")) {
         reply.insert(QStringLiteral("guide"), text + QString::fromUtf8(kGuideAudio));
         reply.insert(QStringLiteral("processors"), processorTable());
+        reply.insert(QStringLiteral("pedals"),
+                     QJsonDocument::fromJson(QByteArray::fromStdString(drift::audiofx::pedalCatalogJson())).object());
     }
     return ok(reply);
 }
