@@ -345,6 +345,20 @@ PanelFrame {
                              && EditorState.guideEditSetId === ""
                 }
 
+                // The scene camera's drag surface. Below the clip overlay in z so a clip's grips
+                // still win the pointer, and only visible while the camera clip is selected.
+                CameraOverlay {
+                    x: canvasRect.x
+                    y: canvasRect.y
+                    width: canvasRect.width
+                    height: canvasRect.height
+                    z: 99
+                    sx: width / Math.max(1, EditorState.projectWidth())
+                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
+                             && !EditorState.canvasCropMode && !EditorState.maskEditActive
+                             && EditorState.guideEditSetId === "" && cameraSelected
+                }
+
                 TransformOverlay {
                     id: transformOverlay
                     // Sits outside the (clipped) canvas rect, mirroring its

@@ -84,6 +84,7 @@ private slots:
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
     void cameraMovesThePreviewOverlayWithThePicture();
+    void cameraDragPansOrbitsAndDollies();
     void compositeClipSpeedRetimesToFit();
     void importedMediaIsCentredAndResetsToItsFit();
     void transformTogetherWrapsTheSelection();
@@ -857,6 +858,80 @@ void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
     QCOMPARE(hit.value(QStringLiteral("kind")).toString(), QStringLiteral("image"));
     // And where it used to be is now empty canvas.
     QVERIFY(state.previewClipAtCanvasPoint(restRendered.x(), restRendered.y()).isEmpty());
+}
+
+void EditorStateTest::cameraDragPansOrbitsAndDollies()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->setResolution(1000, 1000);
+
+    // No camera yet: the overlay must be told to stand down rather than guess.
+    QVERIFY(!state.cameraStateAtPlayhead().value(QStringLiteral("active")).toBool());
+
+    state.addCameraTrack();
+    state.setPlayheadSeconds(0.0);
+    const QVariantMap start = state.cameraStateAtPlayhead();
+    QVERIFY(start.value(QStringLiteral("active")).toBool());
+    QCOMPARE(start.value(QStringLiteral("x")).toDouble(), 0.0);
+    QCOMPARE(start.value(QStringLiteral("rotationY")).toDouble(), 0.0);
+    QCOMPARE(start.value(QStringLiteral("perspective")).toDouble(), 2000.0);
+
+    const int track = start.value(QStringLiteral("track")).toInt();
+    const int clip = start.value(QStringLiteral("clip")).toInt();
+
+    // Pan. The camera goes the opposite way to the drag, so the picture follows the pointer.
+    // sx = 0.5, so 100 overlay px is 200 canvas px.
+    const QVariantMap panned =
+        state.previewApplyCameraDrag(start, QStringLiteral("move"), 100, 50, 0.5, false);
+    QCOMPARE(panned.value(QStringLiteral("x")).toDouble(), -200.0);
+    QCOMPARE(panned.value(QStringLiteral("y")).toDouble(), -100.0);
+    QCOMPARE(state.project()->tracks().at(track).clips.at(clip).transformX.evaluateAt(0), -200.0);
+
+    // A drag solves from where it began, so re-applying the same total delta is idempotent rather
+    // than cumulative — that is what stops a slow drag drifting away from the pointer.
+    const QVariantMap again =
+        state.previewApplyCameraDrag(start, QStringLiteral("move"), 100, 50, 0.5, false);
+    QCOMPARE(again.value(QStringLiteral("x")).toDouble(), -200.0);
+
+    // Orbit, snapped to 15 degrees. 0.3 deg per canvas px: 100 overlay px at sx 0.5 is 200 canvas
+    // px is 60 degrees, which is already a multiple of 15.
+    const QVariantMap orbited =
+        state.previewApplyCameraDrag(start, QStringLiteral("rotate"), 100, 0, 0.5, true);
+    QCOMPARE(orbited.value(QStringLiteral("rotationY")).toDouble(), 60.0);
+    // Dragging down tips the camera's pitch the other way.
+    const QVariantMap pitched =
+        state.previewApplyCameraDrag(start, QStringLiteral("rotate"), 0, 100, 0.5, true);
+    QCOMPARE(pitched.value(QStringLiteral("rotationX")).toDouble(), -60.0);
+    // Unsnapped keeps the exact angle.
+    const QVariantMap free =
+        state.previewApplyCameraDrag(start, QStringLiteral("rotate"), 10, 0, 0.5, false);
+    QCOMPARE(free.value(QStringLiteral("rotationY")).toDouble(), 6.0);
+
+    // Dolly: 300 canvas px of drag is one eye distance, and down pulls the camera back.
+    const QVariantMap dollied =
+        state.previewApplyCameraDrag(start, QStringLiteral("scale"), 0, 150, 0.5, false);
+    QCOMPARE(dollied.value(QStringLiteral("z")).toDouble(), 2000.0);
+    const QVariantMap pushedIn =
+        state.previewApplyCameraDrag(start, QStringLiteral("scale"), 0, -75, 0.5, false);
+    QCOMPARE(pushedIn.value(QStringLiteral("z")).toDouble(), -1000.0);
+
+    // A drag on something that is not a camera clip is refused rather than writing to it.
+    QVariantMap bogus = start;
+    bogus.insert(QStringLiteral("track"), 99);
+    QCOMPARE(state.previewApplyCameraDrag(bogus, QStringLiteral("move"), 10, 10, 1.0, false),
+             bogus);
+
+    // The whole drag is one undo step: begin, several moves, commit.
+    const QString beforeHash = state.project()->contentHash();
+    state.beginPreviewDrag();
+    QVariantMap live = start;
+    for (int i = 1; i <= 5; ++i)
+        live = state.previewApplyCameraDrag(start, QStringLiteral("move"), 20 * i, 0, 1.0, false);
+    state.commitPreviewDrag();
+    QCOMPARE(live.value(QStringLiteral("x")).toDouble(), -100.0);
+    state.undo();
+    QCOMPARE(state.project()->contentHash(), beforeHash);
 }
 
 void EditorStateTest::compositeClipGetsAPreviewBox()

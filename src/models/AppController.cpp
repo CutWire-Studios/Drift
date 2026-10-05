@@ -15269,6 +15269,121 @@ bool AppController::previewCameraActive() const
     return active;
 }
 
+QVariantMap AppController::cameraStateAtPlayhead() const
+{
+    const QList<drift::Track> &tracks = m_project.tracks();
+    const int trackIndex = drift::cameraTrackIndex(tracks);
+    if (trackIndex >= 0 && !tracks.at(trackIndex).hidden) {
+        for (int c = 0; c < tracks.at(trackIndex).clips.size(); ++c) {
+            const drift::Clip &clip = tracks.at(trackIndex).clips.at(c);
+            if (!drift::isCameraClip(clip) || !clip.containsTime(m_playheadUs))
+                continue;
+            const drift::SceneCamera3d camera = drift::sceneCameraFromClip(clip, m_playheadUs, 1.0);
+            return QVariantMap{
+                {QStringLiteral("active"), true},
+                {QStringLiteral("track"), trackIndex},
+                {QStringLiteral("clip"), c},
+                {QStringLiteral("x"), camera.positionX},
+                {QStringLiteral("y"), camera.positionY},
+                {QStringLiteral("z"), camera.positionZ},
+                {QStringLiteral("rotationX"), camera.rotationX},
+                {QStringLiteral("rotationY"), camera.rotationY},
+                {QStringLiteral("rotation"), camera.rotationZ},
+                {QStringLiteral("perspective"), camera.perspective},
+            };
+        }
+    }
+    return QVariantMap{{QStringLiteral("active"), false}};
+}
+
+QVariantMap AppController::previewApplyCameraDrag(const QVariantMap &start, const QString &tool,
+                                                  double dx, double dy, double scale, bool snap)
+{
+    if (scale <= 0.0)
+        return start;
+    const int trackIndex = start.value(QStringLiteral("track")).toInt();
+    const int clipIndex = start.value(QStringLiteral("clip")).toInt();
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return start;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (!drift::isCameraClip(clip))
+        return start;
+
+    // The overlay measures in its own pixels; the camera is stored in canvas pixels.
+    const double cdx = dx / scale;
+    const double cdy = dy / scale;
+    const double startX = start.value(QStringLiteral("x")).toDouble();
+    const double startY = start.value(QStringLiteral("y")).toDouble();
+    const double startZ = start.value(QStringLiteral("z")).toDouble();
+    const double startPitch = start.value(QStringLiteral("rotationX")).toDouble();
+    const double startYaw = start.value(QStringLiteral("rotationY")).toDouble();
+    const double lens =
+        start.value(QStringLiteral("perspective"), drift::kDefaultClipPerspective).toDouble();
+
+    double x = startX;
+    double y = startY;
+    double z = startZ;
+    double pitch = startPitch;
+    double yaw = startYaw;
+
+    if (tool == QLatin1String("rotate")) {
+        // Turntable orbit: dragging right swings the camera to its right, so the scene appears to
+        // turn the other way — the convention every 3D viewport uses. 0.3 degrees per canvas px
+        // puts a half-turn within a comfortable drag.
+        constexpr double kDegPerPx = 0.3;
+        yaw = startYaw + cdx * kDegPerPx;
+        pitch = startPitch - cdy * kDegPerPx;
+        if (snap) {
+            yaw = qRound(yaw / 15.0) * 15.0;
+            pitch = qRound(pitch / 15.0) * 15.0;
+        }
+    } else if (tool == QLatin1String("scale")) {
+        // Dolly. Dragging down pulls the camera back, so the scene shrinks away; 300 px of drag
+        // moves it one eye distance, matching the clip gizmo's dolly feel.
+        z = startZ + cdy * (qMax(1.0, lens) / 300.0);
+    } else {
+        // Pan, and the camera goes the other way so the picture follows the pointer: dragging
+        // right should carry the scene right, which means moving the viewer left.
+        x = startX - cdx;
+        y = startY - cdy;
+    }
+
+    beginImplicitPreviewDrag(tool == QLatin1String("rotate") ? tr("Orbit camera")
+                             : tool == QLatin1String("scale") ? tr("Dolly camera")
+                                                              : tr("Pan camera"));
+    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
+    bool wrote = false;
+    QStringList keys;
+    const auto write = [&](drift::KeyframeTrack<double> &track, double value, const QString &key) {
+        if (writeKeyframeValue(track, relative, value, m_autoKeyEnabled, false)) {
+            wrote = true;
+            keys << key;
+        }
+    };
+    if (tool == QLatin1String("rotate")) {
+        write(clip.rotationX, pitch, QStringLiteral("rotationX"));
+        write(clip.rotationY, yaw, QStringLiteral("rotationY"));
+    } else if (tool == QLatin1String("scale")) {
+        write(clip.positionZ, z, QStringLiteral("z"));
+    } else {
+        write(clip.transformX, x, QStringLiteral("x"));
+        write(clip.transformY, y, QStringLiteral("y"));
+    }
+    if (!wrote) {
+        emit transformBlocked(tr("Turn on Auto keyframes to change this"));
+        return start;
+    }
+    emitPreviewEdit(trackIndex, clipIndex, keys);
+
+    QVariantMap out = start;
+    out.insert(QStringLiteral("x"), x);
+    out.insert(QStringLiteral("y"), y);
+    out.insert(QStringLiteral("z"), z);
+    out.insert(QStringLiteral("rotationX"), pitch);
+    out.insert(QStringLiteral("rotationY"), yaw);
+    return out;
+}
+
 QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x, double y,
                                                 double w, double h, double rotation,
                                                 double scaleX, double scaleY) const

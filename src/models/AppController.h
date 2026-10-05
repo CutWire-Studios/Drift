@@ -1279,6 +1279,16 @@ public:
     Q_INVOKABLE QVariantMap previewApplyGizmoDrag(const QVariantMap &start, const QString &handle,
                                                   double pressX, double pressY, double nowX,
                                                   double nowY, bool snap, double scale);
+    // The scene camera as the preview's camera overlay needs it: {active, track, clip} plus the
+    // seven values, all at the playhead. Taken once when a drag starts, so the drag solves from a
+    // fixed starting point instead of accumulating its own rounding.
+    Q_INVOKABLE QVariantMap cameraStateAtPlayhead() const;
+    // Moves the camera by a drag of (dx, dy) overlay px from that starting state. `tool` is the
+    // gizmo tool: "move" pans, "rotate" orbits, "scale" dollies. Returns the new state in the same
+    // shape, or `start` unchanged when nothing could be written.
+    Q_INVOKABLE QVariantMap previewApplyCameraDrag(const QVariantMap &start, const QString &tool,
+                                                   double dx, double dy, double scale, bool snap);
+
     Q_INVOKABLE QMatrix4x4 previewClipPoseMatrix(const QVariantMap &box, double x, double y,
                                                  double w, double h, double rotation,
                                                  double scaleX, double scaleY) const;

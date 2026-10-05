@@ -1042,6 +1042,7 @@ qt_add_qml_module(drift
         src/qml/PreviewPanel.qml
         src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/TransformOverlay.qml
+        src/qml/components/preview/CameraOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
