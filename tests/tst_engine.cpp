@@ -152,6 +152,7 @@ private slots:
     void clipPose3dRendersInPerspective();
     void sceneCameraIdentityMatchesPerClipEye();
     void sceneCameraMovesTheViewpoint();
+    void sceneCameraRendersThroughTheCompositor();
     void clipGizmoSolvesDrags();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
@@ -1232,6 +1233,140 @@ void EngineTest::sceneCameraMovesTheViewpoint()
     QVERIFY2(std::abs(spun.x() - 500.0) < 1e-3, qPrintable(QStringLiteral("x %1").arg(spun.x())));
     QVERIFY2(std::abs(spun.y() - (1000.0 - restX)) < 1e-3,
              qPrintable(QStringLiteral("y %1, expected %2").arg(spun.y()).arg(1000.0 - restX)));
+}
+
+void EngineTest::sceneCameraRendersThroughTheCompositor()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QImage white(64, 64, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+
+    // One white card, optionally at a depth, optionally seen through a camera.
+    const auto render = [&](const QRectF &rect, double positionZ, const drift::SceneCamera3d *cam) {
+        GpuLayer layer;
+        layer.source = white;
+        layer.rect = rect;
+        if (!qFuzzyIsNull(positionZ)) {
+            layer.pose3d.positionZ = positionZ;
+            layer.pose3d.perspective = 1000.0;
+        }
+        if (cam) {
+            layer.camera = *cam;
+            layer.cameraActive = true;
+        }
+        layer.valid = true;
+        GpuItem item;
+        item.layer = layer;
+        GpuScene scene;
+        scene.canvasSize = QSize(400, 400);
+        scene.backgroundColor = Qt::black;
+        scene.items.append(item);
+        return GpuCompositor::render(scene).convertToFormat(QImage::Format_RGBA8888);
+    };
+    // Horizontal centre of mass of the white pixels, or -1 when there are none.
+    const auto centroidX = [](const QImage &img) {
+        double sum = 0.0;
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x) {
+                if (img.pixelColor(x, y).red() > 128) {
+                    sum += x;
+                    ++n;
+                }
+            }
+        }
+        return n > 0 ? sum / n : -1.0;
+    };
+    const auto whiteCount = [](const QImage &img) {
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x)
+                n += img.pixelColor(x, y).red() > 128 ? 1 : 0;
+        }
+        return n;
+    };
+
+    const QRectF rect(170, 170, 60, 60); // centred on a 400x400 canvas
+
+    // A camera at rest must land the pixels exactly where no camera at all does. This is the
+    // guarantee the whole feature rests on, checked through the real GL path rather than on the
+    // matrices alone.
+    drift::SceneCamera3d rest;
+    rest.perspective = 1000.0;
+    const QImage noCamera = render(rect, 0.0, nullptr);
+    const QImage restCamera = render(rect, 0.0, &rest);
+    QVERIFY(!noCamera.isNull() && !restCamera.isNull());
+    QCOMPARE(restCamera, noCamera);
+
+    // The same with a depth already on the clip, where the per-clip path does its own projection.
+    const QImage noCameraDeep = render(rect, 400.0, nullptr);
+    const QImage restCameraDeep = render(rect, 400.0, &rest);
+    QCOMPARE(restCameraDeep, noCameraDeep);
+
+    // Panning the camera right moves the image left.
+    drift::SceneCamera3d panned = rest;
+    panned.positionX = 40.0;
+    const QImage pannedFlat = render(rect, 0.0, &panned);
+    QVERIFY(centroidX(pannedFlat) >= 0.0);
+    QVERIFY2(centroidX(pannedFlat) < centroidX(noCamera) - 5.0,
+             qPrintable(QStringLiteral("panned %1 vs rest %2")
+                                .arg(centroidX(pannedFlat))
+                                .arg(centroidX(noCamera))));
+
+    // Parallax, on real pixels: the same pan shifts a nearer card further than a far one. The
+    // canvas is deliberately roomy and the pan small, so neither card touches an edge — clipping
+    // drags the centroid back towards the middle and would understate the effect.
+    const QImage pannedDeep = render(rect, 400.0, &panned);
+    const double farShift = centroidX(noCamera) - centroidX(pannedFlat);
+    const double nearShift = centroidX(noCameraDeep) - centroidX(pannedDeep);
+    QVERIFY2(nearShift > farShift * 1.4,
+             qPrintable(QStringLiteral("near %1 vs far %2").arg(nearShift).arg(farShift)));
+
+    // Pulling the camera back shrinks the card; pushing in enlarges it.
+    drift::SceneCamera3d back = rest;
+    back.positionZ = 1000.0;
+    QVERIFY(whiteCount(render(rect, 0.0, &back)) < whiteCount(noCamera) * 0.6);
+    drift::SceneCamera3d forward = rest;
+    forward.positionZ = -400.0;
+    QVERIFY(whiteCount(render(rect, 0.0, &forward)) > whiteCount(noCamera) * 1.3);
+
+    // A clip under an affine transform-layer parent goes through the exact world-space path, so a
+    // camera at rest must still change nothing there either.
+    const auto renderParented = [&](const QTransform &parent, const drift::SceneCamera3d *cam) {
+        GpuLayer layer;
+        layer.source = white;
+        layer.rect = rect;
+        layer.parent = parent;
+        layer.hasParent = true;
+        if (cam) {
+            layer.camera = *cam;
+            layer.cameraActive = true;
+        }
+        layer.valid = true;
+        GpuItem item;
+        item.layer = layer;
+        GpuScene scene;
+        scene.canvasSize = QSize(400, 400);
+        scene.backgroundColor = Qt::black;
+        scene.items.append(item);
+        return GpuCompositor::render(scene).convertToFormat(QImage::Format_RGBA8888);
+    };
+    QTransform affine;
+    affine.translate(20.0, -10.0);
+    affine.scale(1.4, 0.8);
+    QVERIFY(affine.isAffine());
+    QCOMPARE(renderParented(affine, &rest), renderParented(affine, nullptr));
+
+    // And a projective parent, which takes the documented flat-card fallback, must also be left
+    // alone by a camera at rest.
+    QTransform projective = affine;
+    projective.setMatrix(projective.m11(), projective.m12(), 0.0004, projective.m21(),
+                         projective.m22(), 0.0002, projective.m31(), projective.m32(),
+                         projective.m33());
+    QVERIFY(!projective.isAffine());
+    QCOMPARE(renderParented(projective, &rest), renderParented(projective, nullptr));
 }
 
 void EngineTest::clipGizmoSolvesDrags()

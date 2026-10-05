@@ -1330,6 +1330,33 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         layer.hasParent = parent.hasParent;
     };
 
+    // The scene camera: one viewpoint for every clip on this timeline at this instant. Resolved
+    // once per frame, then stamped onto each layer the way a transform parent is. With no camera
+    // clip `cameraActive` stays false everywhere and every layer takes the per-clip path it always
+    // has, which is what makes a project without a camera render identically.
+    drift::SceneCamera3d sceneCamera;
+    bool sceneCameraActive = false;
+    if (const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), timelineUs)) {
+        const drift::TimeUs relative = timelineUs - cameraClip->timelineStart;
+        // Lengths are canvas pixels, so they scale with the render like every other layout value;
+        // the angles and the eye distance ratio do not, which is what keeps a preview at
+        // renderScale 0.5 framed exactly like the export at 1.0.
+        sceneCamera.positionX = transformValue(cameraClip->transformX, relative, 0.0) * renderScale;
+        sceneCamera.positionY = transformValue(cameraClip->transformY, relative, 0.0) * renderScale;
+        sceneCamera.positionZ = transformValue(cameraClip->positionZ, relative, 0.0) * renderScale;
+        sceneCamera.rotationX = transformValue(cameraClip->rotationX, relative, 0.0);
+        sceneCamera.rotationY = transformValue(cameraClip->rotationY, relative, 0.0);
+        sceneCamera.rotationZ = transformValue(cameraClip->rotation, relative, 0.0);
+        sceneCamera.perspective =
+            transformValue(cameraClip->perspective, relative, drift::kDefaultClipPerspective)
+            * renderScale;
+        sceneCameraActive = true;
+    }
+    const auto applyCamera = [&sceneCamera, sceneCameraActive](GpuLayer &layer) {
+        layer.camera = sceneCamera;
+        layer.cameraActive = sceneCameraActive;
+    };
+
     // Track 0 is topmost and composites in front, so emit back-to-front.
     const QList<drift::Track> &tracks = project.tracks();
     for (int ti = tracks.size() - 1; ti >= 0; --ti) {
@@ -1338,6 +1365,9 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             continue;
         // A transform layer draws nothing itself; transformParentsAt carries it to its tracks.
         if (track.isTransformLayer())
+            continue;
+        // Nor does the camera track: it contributes the viewpoint above and no pixels.
+        if (track.isCameraLayer())
             continue;
         // A nested lane has no z-position of its own — it is drawn inside its parent's clips,
         // gathered below as laneEffects. Emitting it here would apply it to the whole canvas.
@@ -1366,6 +1396,10 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                                         drift::laneMasksAt(project, ti, timelineUs, toClip->id));
                 applyParent(item.from, ti);
                 applyParent(item.to, ti);
+                // Both sides of a transition are placed before the shader mixes them, so each one
+                // is framed by the camera just as a plain layer would be.
+                applyCamera(item.from);
+                applyCamera(item.to);
                 item.progress =
                     drift::transitionProgress(*activeTransition, timelineUs, transitionStart, transitionEnd);
                 // Time is measured from the start of the transition window so a
@@ -1437,6 +1471,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             if (!item.layer.valid)
                 continue;
             applyParent(item.layer, ti);
+            applyCamera(item.layer);
             applyDepthOcclusion(project, scene, item.layer, nearestOccluder, occluders);
             scene.items.append(item);
             if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image) {

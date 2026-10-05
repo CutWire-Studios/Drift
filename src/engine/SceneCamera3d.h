@@ -4,6 +4,7 @@
 
 #include <QMatrix4x4>
 #include <QSizeF>
+#include <QTransform>
 
 namespace drift {
 
@@ -58,5 +59,21 @@ struct SceneCamera3d
 // For a camera that is `isIdentity()` and carries the clip's own `perspective`, this is exactly
 // the projection clipQuadToCanvas applies, so camera · clipQuadToWorld agrees with it.
 QMatrix4x4 cameraViewProjection(const SceneCamera3d &camera, const QSizeF &canvas);
+
+// An *affine* transform-layer parent (canvas px -> canvas px) as the same map in world space, with
+// z untouched: the layer slides, scales and spins its children within the canvas plane, and the
+// camera then views that plane in depth. Exact for an affine parent, which is every transform layer
+// that is not itself tilted.
+QMatrix4x4 worldParentFromAffine(const QTransform &parent, const QSizeF &canvas);
+
+// Homogeneous canvas pixels — what clipQuadToCanvas and parentedQuadToCanvas produce — read back as
+// points on the world's z = 0 plane and then viewed through the camera.
+//
+// This is the fallback for a clip under a *projective* (tilted) transform layer, where the parent is
+// a plane-to-plane homography that only means anything through the card's own eye, so it cannot be
+// lifted into world space without widening transformLayerMatrix to a full 4x4. The camera still
+// moves and turns the card correctly as a flat picture; what the clip does not get is parallax from
+// the card's own tilt. An identity camera leaves the pixels exactly where they were.
+QMatrix4x4 cameraCanvasPlaneToCanvas(const SceneCamera3d &camera, const QSizeF &canvas);
 
 } // namespace drift

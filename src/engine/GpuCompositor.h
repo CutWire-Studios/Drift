@@ -5,6 +5,7 @@
 #include "core/Mask.h"
 #include "core/Time.h"
 #include "engine/ClipTransform3d.h"
+#include "engine/SceneCamera3d.h"
 #include "engine/DepthSidecar.h"
 #include "engine/FaceLandmarker.h"
 #include "engine/GpuStatus.h"
@@ -83,6 +84,13 @@ struct GpuLayer
     // Transform layers over this clip's track, in canvas pixels; see drift::transformParentsAt.
     QTransform parent;
     bool hasParent = false;
+    // The sequence's shared viewpoint at this frame; see drift::SceneCamera3d. Carried per layer
+    // rather than read off the scene so modelMatrixFor stays a pure function of the layer, the
+    // same way `parent` resolves a scene-level concept down to each layer. `cameraActive` is false
+    // for any project without a camera clip, and that is what keeps every frame rendered so far on
+    // the untouched per-clip path.
+    drift::SceneCamera3d camera;
+    bool cameraActive = false;
     double opacity = 1.0;
     drift::TimeUs clipTimeUs = 0; // effect time base (relative to clip start)
     // This frame's baked face anchors, one per tracked slot, sampled by FrameCompositor. Carried
