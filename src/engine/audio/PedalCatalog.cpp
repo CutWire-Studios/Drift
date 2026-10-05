@@ -2,6 +2,8 @@
 
 #include <juce_core/juce_core.h>
 
+#include <cmath>
+
 namespace drift::audiofx {
 
 namespace {
@@ -227,6 +229,12 @@ std::string_view classicProcessorId(std::string_view type)
 
 namespace {
 
+// Knob values are floats; printed as doubles they come out as 0.300000011920929.
+double tidy(float value)
+{
+    return std::round(static_cast<double>(value) * 1e6) / 1e6;
+}
+
 juce::Array<juce::var> specsJson(const std::vector<PedalSpec> &specs)
 {
     juce::Array<juce::var> pedals;
@@ -236,9 +244,9 @@ juce::Array<juce::var> specsJson(const std::vector<PedalSpec> &specs)
             auto *k = new juce::DynamicObject;
             k->setProperty("id", knob.id);
             k->setProperty("label", knob.label);
-            k->setProperty("min", knob.min);
-            k->setProperty("max", knob.max);
-            k->setProperty("default", knob.defaultValue);
+            k->setProperty("min", tidy(knob.min));
+            k->setProperty("max", tidy(knob.max));
+            k->setProperty("default", tidy(knob.defaultValue));
             k->setProperty("scale", scaleName(knob.scale));
             k->setProperty("unit", knob.unit);
             if (!knob.aliases.empty()) {
