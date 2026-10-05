@@ -9603,6 +9603,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New track</source>
         <translation type="unfinished"></translation>
     </message>

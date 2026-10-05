@@ -9643,6 +9643,10 @@
         <translation>Transformacja</translation>
     </message>
     <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New track</source>
         <translation>Nowa ścieżka</translation>
     </message>

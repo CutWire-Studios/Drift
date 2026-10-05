@@ -9563,6 +9563,10 @@
         <translation>변환</translation>
     </message>
     <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New track</source>
         <translation>새 트랙</translation>
     </message>
