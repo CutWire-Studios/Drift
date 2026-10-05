@@ -18240,15 +18240,19 @@ void AppController::addCameraTrack()
 
 void AppController::addCameraClip(double atSeconds, double durationSeconds)
 {
-    const int index = drift::cameraTrackIndex(m_project.tracks());
-    if (index < 0) {
-        addCameraTrack();
-        return;
-    }
     const drift::TimeUs durUs = durationSeconds > 0.0 ? drift::secondsToUs(durationSeconds)
                                                       : drift::kImageClipDurationUs;
     const drift::TimeUs wanted = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
     const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+    int index = drift::cameraTrackIndex(m_project.tracks());
+    if (index < 0) {
+        // Make the lane here rather than delegating to addCameraTrack, which spans the whole
+        // sequence: a clip asked for at a particular time has to land there.
+        index = drift::insertCameraTrack(m_project.tracks());
+        if (m_selectedTransitionTrack >= 0)
+            ++m_selectedTransitionTrack;
+    }
     drift::Track &track = m_project.tracks()[index];
     const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, wanted, durUs,
                                                         m_snapEnabled, m_playheadUs);

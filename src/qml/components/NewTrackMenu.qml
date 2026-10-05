@@ -27,7 +27,11 @@ Popup {
     // Adjustment tracks carry a kind, so they go through their own call rather than widening
     // addTrack()'s type whitelist with compound strings.
     function addTrackOfType(type) {
-        if (type.indexOf("adjustment:") === 0)
+        // The camera lane carries a clip from the moment it is made — an empty one would frame
+        // nothing — so it goes through its own call rather than addTrack's bare-lane path.
+        if (type === "camera")
+            EditorState.addCameraTrack()
+        else if (type.indexOf("adjustment:") === 0)
             EditorState.addAdjustmentTrack(type.substring("adjustment:".length))
         else
             EditorState.addTrack(type)
@@ -88,7 +92,17 @@ Popup {
         }
         return false
     }
-    readonly property var trackTypes: allTrackTypes.filter((t) => !t.needsVisualTrack || hasVisualTrack)
+    // A sequence has one viewer, so the camera is offered only until it exists.
+    readonly property bool hasCamera: {
+        const tracks = EditorState.tracks
+        for (let i = 0; i < tracks.length; ++i) {
+            if (tracks[i].isCameraLayer === true)
+                return true
+        }
+        return false
+    }
+    readonly property var trackTypes: allTrackTypes.filter(
+        (t) => (!t.needsVisualTrack || hasVisualTrack) && !(t.oncePerSequence && hasCamera))
     readonly property var allTrackTypes: [
         { type: "video", label: qsTr("Video"), icon: Theme.icons.film },
         { type: "audio", label: qsTr("Audio"), icon: Theme.icons.music },
@@ -103,6 +117,10 @@ Popup {
         // A transform layer moves the tracks below it, so it is only offered once there is one.
         { type: "adjustment:transform", label: qsTr("Transform"), icon: Theme.icons.maximize,
           needsVisualTrack: true },
+        // The scene camera: one viewpoint everything below is seen through. Same reasoning as the
+        // transform layer for needing something to film, and only ever one per sequence.
+        { type: "camera", label: qsTr("Camera"), icon: Theme.icons.video,
+          needsVisualTrack: true, oncePerSequence: true },
     ]
 
     background: Rectangle {
