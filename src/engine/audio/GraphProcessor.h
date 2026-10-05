@@ -35,6 +35,8 @@ public:
     // Live edits of literal knobs, for Forge: dragging a knob that is not exposed as a slider.
     int nodeIndex(std::string_view id) const;
     void setKnob(int node, int knob, float value);
+    // A pedal's footswitch, when it is not bound to a parameter.
+    void setBypass(int node, bool bypassed);
     int modulatorIndex(std::string_view id) const;
     void setModulatorKnob(int modulator, int knob, float value);
     void setModulatorStep(int modulator, int step, float value);

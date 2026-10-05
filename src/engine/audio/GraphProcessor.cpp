@@ -62,6 +62,7 @@ struct GraphProcessor::Impl
         const GraphNode *desc = nullptr;
         const PedalSpec *spec = nullptr; // null for splits
         std::vector<float> literals;     // live-editable copies of the literal knob values
+        float bypassLiteral = 0.0f;
 
         virtual ~NodeRt() = default;
         virtual void prepare(const juce::dsp::ProcessSpec &spec) = 0;
@@ -392,6 +393,7 @@ struct GraphProcessor::Impl
             node->desc = &desc;
             for (const KnobValue &knob : desc.knobs)
                 node->literals.push_back(knob.literal);
+            node->bypassLiteral = desc.bypass.literal;
             nodes[size_t(desc.flat)] = node.get();
             series->nodes.push_back(std::move(node));
         }
@@ -471,7 +473,7 @@ struct GraphProcessor::Impl
                 pedal.sent[k] = value;
             }
         }
-        const float bypass = desc.bypass.param >= 0 ? params[size_t(desc.bypass.param)] : desc.bypass.literal;
+        const float bypass = desc.bypass.param >= 0 ? params[size_t(desc.bypass.param)] : pedal.bypassLiteral;
         pedal.bypass.setTargetValue(bypass >= 0.5f ? 1.0f : 0.0f);
     }
 
@@ -593,6 +595,12 @@ void GraphProcessor::setKnob(int node, int knob, float value)
     auto &literals = m->nodes[size_t(node)]->literals;
     if (knob >= 0 && size_t(knob) < literals.size())
         literals[size_t(knob)] = value;
+}
+
+void GraphProcessor::setBypass(int node, bool bypassed)
+{
+    if (node >= 0 && size_t(node) < m->nodes.size())
+        m->nodes[size_t(node)]->bypassLiteral = bypassed ? 1.0f : 0.0f;
 }
 
 int GraphProcessor::modulatorIndex(std::string_view id) const

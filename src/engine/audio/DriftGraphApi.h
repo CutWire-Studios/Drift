@@ -32,6 +32,7 @@ void dg_set_param(DriftGraph *graph, int index, float value);
 // Knob indices follow the pedal's (or modulator's) knob order in the pedal catalog.
 int dg_node_index(DriftGraph *graph, const char *nodeId);
 void dg_set_knob(DriftGraph *graph, int node, int knob, float value);
+void dg_set_bypass(DriftGraph *graph, int node, int bypassed);
 int dg_modulator_index(DriftGraph *graph, const char *modulatorId);
 int dg_modulator_count(DriftGraph *graph);
 void dg_set_modulator_knob(DriftGraph *graph, int modulator, int knob, float value);

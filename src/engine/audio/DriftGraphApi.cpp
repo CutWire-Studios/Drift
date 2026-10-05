@@ -146,6 +146,11 @@ void dg_set_knob(DriftGraph *graph, int node, int knob, float value)
     graph->processor->setKnob(node, knob, value);
 }
 
+void dg_set_bypass(DriftGraph *graph, int node, int bypassed)
+{
+    graph->processor->setBypass(node, bypassed != 0);
+}
+
 int dg_modulator_index(DriftGraph *graph, const char *modulatorId)
 {
     return graph->processor->modulatorIndex(modulatorId);
