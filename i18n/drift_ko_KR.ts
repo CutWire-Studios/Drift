@@ -3709,6 +3709,18 @@
         <translation>클립 크기 조정</translation>
     </message>
     <message>
+        <source>Orbit camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio effects go on the timeline.</source>
         <translation>오디오 효과는 타임라인에 적용됩니다.</translation>
     </message>
@@ -5509,6 +5521,21 @@
     </message>
     <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CameraOverlay</name>
+    <message>
+        <source>Drag to orbit the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag up and down to dolly the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to pan the camera</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
