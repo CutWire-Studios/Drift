@@ -1367,6 +1367,23 @@ void EngineTest::sceneCameraRendersThroughTheCompositor()
                          projective.m33());
     QVERIFY(!projective.isAffine());
     QCOMPARE(renderParented(projective, &rest), renderParented(projective, nullptr));
+
+    // Under an affine parent the camera still has to work, not merely be harmless: a pan has to
+    // move the parented card too, and by the same amount as an unparented one at the same depth,
+    // because the parent only slides its children about within the canvas plane.
+    QTransform slide;
+    slide.translate(30.0, 0.0);
+    const double parentedRest = centroidX(renderParented(slide, nullptr));
+    const double parentedPan = centroidX(renderParented(slide, &panned));
+    QVERIFY(parentedRest >= 0.0 && parentedPan >= 0.0);
+    QVERIFY2(std::abs((parentedRest - parentedPan) - farShift) < 1.5,
+             qPrintable(QStringLiteral("parented shift %1 vs plain %2")
+                                .arg(parentedRest - parentedPan)
+                                .arg(farShift)));
+    // And the parent's own offset survives the camera: the card is still 30 px to the right of
+    // where it would be without the parent.
+    QVERIFY2(std::abs((parentedPan - centroidX(pannedFlat)) - 30.0) < 1.5,
+             qPrintable(QStringLiteral("offset %1").arg(parentedPan - centroidX(pannedFlat))));
 }
 
 void EngineTest::clipGizmoSolvesDrags()
