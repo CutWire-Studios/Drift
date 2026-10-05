@@ -89,6 +89,46 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.7.5" date="2026-10-05">
+      <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.7.5</url>
+      <description>
+        <p>A bug-fix release that stops the crashes on Intel graphics when scrubbing
+        hardware-decoded video. It also brings a Face Retouch effect, AI video upscaling,
+        speed control for composite clips and a batch of smaller fixes and additions.</p>
+        <ul>
+          <li>Fixed crashes in the Intel media driver (iHD) when scrubbing hardware-decoded
+          video in the preview</li>
+          <li>Face Retouch: a beauty effect for smoothing skin, reshaping and lip and skin tone
+          colour, with a numbered face picker and support for still images</li>
+          <li>Enhance video: upscale clips with a choice of models, with trim and crop before
+          upscaling and a live frame preview</li>
+          <li>Speed adjustment for composite clips</li>
+          <li>Animated GIFs import as video and play on the timeline</li>
+          <li>Stabilized clips are rendered into the media bin as their own assets</li>
+          <li>Save media bin assets back out as files</li>
+          <li>Eye toggle to hide adjustment tracks, and nested adjustment lanes</li>
+          <li>Custom effects: new parameter types (2D points, choice lists, whole numbers and
+          colours with alpha), keyframable colours and toggles, a My Effects filter and audio
+          effects in .driftfx packages, which can now be imported directly</li>
+          <li>Install add-ons from .driftpkg or .zip files and from a custom add-ons folder</li>
+          <li>Market: a Sound Effects tab, asset variations and back buttons that stay in
+          place while scrolling</li>
+          <li>MCP: agents can create, update, delete and export custom effects, transitions and
+          audio effects</li>
+          <li>macOS: a native system menu bar, and install through Homebrew</li>
+          <li>Available on the Microsoft Store and Google Play</li>
+          <li>Fixes: effects work on people cutouts, ripple on edge trims, zoom-aware snapping,
+          sized SVGs scale to the clip and keep their CSS styles, the market catalog reloads
+          when its tab opens, package textures are no longer flipped, proxies no longer fill up
+          the temp folder, and image export on Android</li>
+          <li>Translations: Korean, Polish and Portuguese (Portugal) added; Japanese and
+          Vietnamese updated</li>
+        </ul>
+        <p>Thanks to @rangaNP for the macOS menu bar and the Homebrew cask; to @mildannerofc for
+        Korean and Portuguese (Portugal); to Paweł Korobajło for Polish; to @coolvitto for
+        Japanese; and to @tojidotakarin for Vietnamese.</p>
+      </description>
+    </release>
     <release version="0.7.0" date="2026-09-28">
       <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.7.0</url>
       <description>
