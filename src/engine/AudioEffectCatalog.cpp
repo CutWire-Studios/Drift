@@ -96,7 +96,7 @@ std::optional<AudioEffectEntry> loadManifest(const QString &packageDir, QString 
     }
     // Reject at load rather than at playback: a manifest naming a processor nobody implements would
     // otherwise show up in the browser and then do nothing.
-    if (!drift::audiofx::hasProcessor(entry.processorId)) {
+    if (!drift::audiofx::hasProcessor(entry.processorId.toStdString())) {
         if (errorOut)
             *errorOut = QStringLiteral("unknown processor '%1'").arg(entry.processorId);
         return std::nullopt;

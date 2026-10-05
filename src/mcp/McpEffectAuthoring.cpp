@@ -406,7 +406,8 @@ arbitrary start (0 for stateless processors, the tail length for echoes and reve
 QJsonArray processorTable()
 {
     QJsonArray rows;
-    for (const QString &processor : drift::audiofx::processorIds()) {
+    for (const std::string &id : drift::audiofx::processorIds()) {
+        const QString processor = QString::fromStdString(id);
         QJsonArray examples;
         QJsonArray params;
         for (const AudioEffectEntry &entry : audioEffectCatalog()) {

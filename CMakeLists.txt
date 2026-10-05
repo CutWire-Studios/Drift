@@ -519,6 +519,7 @@ qt_add_resources(driftcore "drift_text_animations"
 # from spreading across driftengine. AudioEffectRack.h is the only header that leaves here and it
 # mentions no JUCE type, so driftengine stays JUCE-free at the source level.
 add_library(driftaudiodsp STATIC
+    src/engine/audio/AudioStage.h
     src/engine/audio/AudioEffectProcessor.h
     src/engine/audio/AudioEffectProcessor.cpp
     src/engine/audio/FilterProcessors.h
@@ -531,6 +532,8 @@ add_library(driftaudiodsp STATIC
     src/engine/audio/SoundTouchPitchProcessor.cpp
     src/engine/audio/AudioEffectFactory.h
     src/engine/audio/AudioEffectFactory.cpp
+    src/engine/audio/PedalCatalog.h
+    src/engine/audio/PedalCatalog.cpp
     src/engine/audio/AudioEffectRack.h
     src/engine/audio/AudioEffectRack.cpp
     src/engine/audio/ClipAudioRetimer.h
@@ -553,6 +556,11 @@ target_compile_definitions(driftaudiodsp PRIVATE
     # Otherwise every binary that links this, tools and tests included, opens with "JUCE v8.0.15".
     JUCE_DISABLE_JUCE_VERSION_PRINTING=1
 )
+# The same sources are built to WebAssembly for Drift Forge's preview (wasm/). Fused multiply-adds
+# would round differently from the wasm build, and on ARM the compiler contracts by default.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(driftaudiodsp PRIVATE -ffp-contract=off)
+endif()
 
 # --- engine: FFmpeg-facing code, no QML deps -------------------------------
 add_library(driftengine STATIC

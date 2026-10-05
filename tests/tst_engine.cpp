@@ -60,6 +60,7 @@
 #include "engine/CompositorFrameHistory.h"
 #include "engine/AudioEffectCatalog.h"
 #include "engine/audio/AudioEffectFactory.h"
+#include "engine/audio/PedalCatalog.h"
 #include "engine/audio/AudioEffectRack.h"
 #include "engine/audio/ClipAudioRetimer.h"
 #include "engine/AudioFileWriter.h"
@@ -387,6 +388,8 @@ private slots:
     void clipAudioRetimerStreamsSyntheticSource();
     void audioEffectCatalogLoadsPackages();
     void audioEffectFactoryBuildsEveryCatalogEntry();
+    void pedalCatalogCoversBundledManifests();
+    void pedalCatalogKnobsAreBound();
     void audioEffectChainAltersSignal();
     void limiterHoldsTheCeilingInsteadOfAddingGain();
     void audioEffectChainBypassesUnknownEffect();
@@ -12151,7 +12154,7 @@ void EngineTest::audioEffectFactoryBuildsEveryCatalogEntry()
     QVERIFY(!catalog.isEmpty());
 
     for (const AudioEffectEntry &entry : catalog) {
-        QVERIFY2(drift::audiofx::hasProcessor(entry.processorId),
+        QVERIFY2(drift::audiofx::hasProcessor(entry.processorId.toStdString()),
                  qPrintable(QStringLiteral("%1 -> %2").arg(entry.id, entry.processorId)));
 
         // configure() only reports true once the factory has actually built a chain, so this is
@@ -12177,6 +12180,59 @@ void EngineTest::audioEffectFactoryBuildsEveryCatalogEntry()
                          qPrintable(QStringLiteral("%1 @%2Hz produced a non-finite sample")
                                         .arg(entry.id).arg(rate)));
             }
+        }
+    }
+}
+
+void EngineTest::pedalCatalogCoversBundledManifests()
+{
+    // Forge builds legacy effects as one classic pedal, and modulation normalises against the
+    // pedal's knob ranges. Both break if a bundled manifest uses a knob or a range the catalog
+    // does not know about.
+    const QList<AudioEffectEntry> &catalog = audioEffectCatalog();
+    QVERIFY(!catalog.isEmpty());
+
+    for (const AudioEffectEntry &entry : catalog) {
+        const std::string type = "classic." + entry.processorId.toStdString();
+        const drift::audiofx::PedalSpec *pedal = drift::audiofx::pedalSpec(type);
+        QVERIFY2(pedal, qPrintable(entry.id));
+
+        for (const drift::EffectParamSpec &param : entry.parameters) {
+            const QString where = QStringLiteral("%1.%2").arg(entry.id, param.key);
+            const drift::audiofx::KnobSpec *knob = drift::audiofx::findKnob(*pedal, param.key.toStdString());
+            QVERIFY2(knob, qPrintable(where));
+            if (param.type == drift::EffectParamType::Bool) {
+                QVERIFY2(knob->scale == drift::audiofx::KnobSpec::Scale::Toggle, qPrintable(where));
+                continue;
+            }
+            QVERIFY2(param.min >= knob->min - 1e-6 && param.max <= knob->max + 1e-6, qPrintable(where));
+            QVERIFY2(param.defaultValue >= knob->min - 1e-6 && param.defaultValue <= knob->max + 1e-6,
+                     qPrintable(where));
+        }
+    }
+}
+
+void EngineTest::pedalCatalogKnobsAreBound()
+{
+    // Every processor has a classic pedal, and every knob (and alias) reaches a stage setter —
+    // an unbound knob would be a control that silently does nothing.
+    for (const std::string &id : drift::audiofx::processorIds())
+        QVERIFY2(drift::audiofx::pedalSpec("classic." + id), id.c_str());
+
+    for (const drift::audiofx::PedalSpec &pedal : drift::audiofx::pedalSpecs()) {
+        QVERIFY2(pedal.knobs.size() > 0, pedal.type);
+        const std::string_view processorId = drift::audiofx::classicProcessorId(pedal.type);
+        if (processorId.empty())
+            continue;
+        QVERIFY2(drift::audiofx::hasProcessor(processorId), pedal.type);
+        for (const drift::audiofx::KnobSpec &knob : pedal.knobs) {
+            QVERIFY2(knob.min < knob.max, knob.id);
+            QVERIFY2(knob.defaultValue >= knob.min && knob.defaultValue <= knob.max, knob.id);
+            QVERIFY2(knob.scale != drift::audiofx::KnobSpec::Scale::Log || knob.min > 0, knob.id);
+            QVERIFY2(drift::audiofx::bindsParameter(processorId, knob.id),
+                     qPrintable(QStringLiteral("%1.%2").arg(pedal.type, knob.id)));
+            for (const char *alias : knob.aliases)
+                QVERIFY2(drift::audiofx::bindsParameter(processorId, alias), alias);
         }
     }
 }

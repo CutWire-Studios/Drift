@@ -3,6 +3,8 @@
 #include "engine/audio/AudioEffectFactory.h"
 #include "engine/audio/AudioEffectProcessor.h"
 
+#include <QHash>
+
 #include <algorithm>
 #include <vector>
 
@@ -17,13 +19,32 @@ constexpr int kSubBlock = 1024;
 
 } // namespace
 
+// A built chain and the spec it came from. Parameter ids resolve to binding indices on first use
+// and stay cached, so applying values per block is a hash hit rather than a string conversion.
+struct RackChain
+{
+    std::unique_ptr<ChainProcessor> processor;
+    int specIndex = 0;
+    QHash<QString, int> indices;
+
+    int indexOf(const QString &paramId)
+    {
+        const auto it = indices.constFind(paramId);
+        if (it != indices.constEnd())
+            return it.value();
+        const int index = processor->parameterIndex(paramId.toStdString());
+        indices.insert(paramId, index);
+        return index;
+    }
+};
+
 struct AudioEffectRack::Impl
 {
     QString signature;
     int sampleRate = 0;
     int primeFrames = 0;
     drift::TimeUs lastTimelineEndUs = -1;
-    std::vector<std::unique_ptr<ChainProcessor>> chains;
+    std::vector<RackChain> chains;
     juce::AudioBuffer<float> scratch;
 
     void run(const float *in, float *out, int frames);
@@ -45,7 +66,7 @@ void AudioEffectRack::Impl::run(const float *in, float *out, int frames)
 
         juce::dsp::AudioBlock<float> block(channels, 2, 0, static_cast<size_t>(count));
         for (auto &chain : chains)
-            chain->process(block);
+            chain.processor->process(block);
 
         if (out) {
             for (int i = 0; i < count; ++i) {
@@ -101,15 +122,16 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
 
         int latency = 0;
         int preroll = 0;
-        for (const AudioEffectSpec &spec : specs) {
-            auto chain = audiofx::createProcessor(spec.processorId);
+        for (int i = 0; i < specs.size(); ++i) {
+            const AudioEffectSpec &spec = specs[i];
+            auto chain = audiofx::createProcessor(spec.processorId.toStdString());
             if (!chain)
                 continue;
             chain->prepare(processSpec);
             latency += chain->latencySamples();
             preroll = std::max(preroll,
                                static_cast<int>((static_cast<int64_t>(spec.prerollMs) * sampleRate) / 1000));
-            m_impl->chains.push_back(std::move(chain));
+            m_impl->chains.push_back(RackChain{std::move(chain), i, {}});
         }
 
         // Latency has to be covered or output arrives late; preroll has to be covered or tails
@@ -120,20 +142,18 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
     if (m_impl->chains.empty())
         return false;
 
-    size_t index = 0;
-    for (const AudioEffectSpec &spec : specs) {
-        if (!audiofx::hasProcessor(spec.processorId))
-            continue;
-        ChainProcessor &chain = *m_impl->chains[index++];
+    // An unchanged signature means the same specs in the same order, so specIndex still holds.
+    for (RackChain &chain : m_impl->chains) {
+        const AudioEffectSpec &spec = specs[chain.specIndex];
         for (auto it = spec.parameters.constBegin(); it != spec.parameters.constEnd(); ++it)
-            chain.setParameter(it.key(), it.value());
+            chain.processor->setParameter(chain.indexOf(it.key()), it.value());
     }
 
     // Stages were prepared before their values arrived, so a new chain would otherwise open by
     // gliding up from its defaults. Nothing to lose here: these chains have no state yet.
     if (didRebuild) {
         for (auto &chain : m_impl->chains)
-            chain->reset();
+            chain.processor->reset();
     }
 
     return true;
@@ -161,7 +181,7 @@ void AudioEffectRack::process(float *interleavedStereo, int frames)
 void AudioEffectRack::reset()
 {
     for (auto &chain : m_impl->chains)
-        chain->reset();
+        chain.processor->reset();
     m_impl->lastTimelineEndUs = -1;
 }
 
