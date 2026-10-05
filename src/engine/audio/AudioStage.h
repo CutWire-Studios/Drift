@@ -11,7 +11,8 @@ inline constexpr double kParamRampSeconds = 0.02;
 // Jump a smoothed parameter straight to its target. The rack applies parameter values after
 // prepare(), so without this a freshly built stage would spend its first 20 ms ramping up from a
 // default nobody asked for.
-inline void snapToTarget(juce::SmoothedValue<float> &value)
+template <typename Smoothing>
+void snapToTarget(juce::SmoothedValue<float, Smoothing> &value)
 {
     value.setCurrentAndTargetValue(value.getTargetValue());
 }

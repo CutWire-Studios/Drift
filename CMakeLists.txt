@@ -534,6 +534,16 @@ add_library(driftaudiodsp STATIC
     src/engine/audio/AudioEffectFactory.cpp
     src/engine/audio/PedalCatalog.h
     src/engine/audio/PedalCatalog.cpp
+    src/engine/audio/WavReader.h
+    src/engine/audio/WavReader.cpp
+    src/engine/audio/AudioGraph.h
+    src/engine/audio/AudioGraph.cpp
+    src/engine/audio/GraphPedals.h
+    src/engine/audio/GraphPedals.cpp
+    src/engine/audio/GraphProcessor.h
+    src/engine/audio/GraphProcessor.cpp
+    src/engine/audio/DriftGraphApi.h
+    src/engine/audio/DriftGraphApi.cpp
     src/engine/audio/AudioEffectRack.h
     src/engine/audio/AudioEffectRack.cpp
     src/engine/audio/ClipAudioRetimer.h

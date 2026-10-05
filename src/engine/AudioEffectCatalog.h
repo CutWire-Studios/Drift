@@ -3,6 +3,7 @@
 #include "core/Effect.h"
 #include "core/EffectPreset.h"
 #include "engine/audio/AudioEffectRack.h"
+#include "engine/audio/AudioGraph.h"
 
 #include <QList>
 #include <QPair>
@@ -18,13 +19,15 @@
 // GPU effect catalog there is no built-in baseline — the whole catalog comes from packages, shipped
 // as the "audio-effects" addon kind (src/models/AddonManager) or found under a local override dir.
 //
-// The DSP itself is compiled in (src/engine/audio), so a manifest names a processor rather than
-// describing one. That means an addon can add a preset or relabel an effect but cannot contribute
-// new DSP — the trade taken when these moved off libavfilter chain strings.
+// The DSP itself is compiled in (src/engine/audio). A manifest either names one of the fixed
+// processors ("processor": "echo") or, with "processor": "graph", wires the compiled-in pedals
+// into a graph of its own — series chains, parallel or frequency-band splits, modulators and
+// impulse responses shipped in the package (see AudioGraph.h). Neither runs package code.
 
-// One parsed manifest. `processorId` selects a builder from the audio effect factory; `prerollMs`
-// is the lookback a correct block needs from an arbitrary timeline position (0 for stateless
-// stages, larger for echo tails).
+// One parsed manifest. `processorId` is "graph" or a legacy processor id; either way `graph` is
+// what the rack runs (a legacy processor is a one-pedal graph). `prerollMs` is the lookback a
+// correct block needs from an arbitrary timeline position (0 for stateless stages, larger for
+// echo tails).
 struct AudioEffectEntry
 {
     QString id;
@@ -32,6 +35,7 @@ struct AudioEffectEntry
     QString category; // stable slug: "voice", "transmission", "texture", "space"
     int order = 0;
     QString processorId;
+    std::shared_ptr<const drift::audiofx::AudioGraphDesc> graph;
     int prerollMs = 0;
     QList<drift::EffectParamSpec> parameters;
     QString packageDir; // where it was loaded from; traces the entry back to its addon

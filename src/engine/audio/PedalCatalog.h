@@ -10,7 +10,8 @@ namespace drift::audiofx {
 // slider range always fits inside; modulation normalises against these.
 struct KnobSpec
 {
-    enum class Scale { Linear, Log, Toggle };
+    // Choice knobs carry the option index as their value.
+    enum class Scale { Linear, Log, Toggle, Choice };
 
     const char *id;
     const char *label;
@@ -21,10 +22,15 @@ struct KnobSpec
     const char *unit = "";
     // Other identifiers manifests use for the same setter ("speed" on voice.alien's flanger).
     std::vector<const char *> aliases = {};
+    std::vector<const char *> options = {};
+
+    // Toggles and choices switch; only continuous knobs take modulation.
+    bool continuous() const { return scale == Scale::Linear || scale == Scale::Log; }
 };
 
 // A pedal Forge can put on the board. `classic.<processor>` pedals are the factory's fixed chains,
-// so every legacy audio-effect.json is a one-pedal board.
+// so every legacy audio-effect.json is a one-pedal board. Modulators reuse the shape: a type, a
+// label and knobs, with category "modulator".
 struct PedalSpec
 {
     const char *type;
@@ -36,6 +42,9 @@ struct PedalSpec
 
 const std::vector<PedalSpec> &pedalSpecs();
 const PedalSpec *pedalSpec(std::string_view type);
+const std::vector<PedalSpec> &modulatorSpecs();
+const PedalSpec *modulatorSpec(std::string_view type);
+int knobIndex(const PedalSpec &pedal, std::string_view idOrAlias);
 const KnobSpec *findKnob(const PedalSpec &pedal, std::string_view idOrAlias);
 
 // "classic.echo" -> "echo"; empty for anything else.

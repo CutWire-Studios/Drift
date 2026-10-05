@@ -1,7 +1,6 @@
 #include "engine/audio/AudioEffectRack.h"
 
-#include "engine/audio/AudioEffectFactory.h"
-#include "engine/audio/AudioEffectProcessor.h"
+#include "engine/audio/GraphProcessor.h"
 
 #include <QHash>
 
@@ -23,7 +22,7 @@ constexpr int kSubBlock = 1024;
 // and stay cached, so applying values per block is a hash hit rather than a string conversion.
 struct RackChain
 {
-    std::unique_ptr<ChainProcessor> processor;
+    std::unique_ptr<audiofx::GraphProcessor> processor;
     int specIndex = 0;
     QHash<QString, int> indices;
 
@@ -100,10 +99,13 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
     }
 
     // Only the structure goes into the signature. Values are pushed into live stages below, which
-    // is the whole point: changing one must not tear the DSP down.
+    // is the whole point: changing one must not tear the DSP down. The graph's address joins the
+    // id so a reloaded catalog (an addon updated in place) rebuilds too.
     QString signature = QString::number(sampleRate);
-    for (const AudioEffectSpec &spec : specs)
-        signature += QLatin1Char('|') + spec.processorId;
+    for (const AudioEffectSpec &spec : specs) {
+        signature += QLatin1Char('|') + spec.key + QLatin1Char('@')
+                     + QString::number(reinterpret_cast<quintptr>(spec.graph.get()), 16);
+    }
 
     const bool didRebuild = signature != m_impl->signature;
     if (rebuilt)
@@ -124,9 +126,9 @@ bool AudioEffectRack::configure(const QVector<AudioEffectSpec> &specs, int sampl
         int preroll = 0;
         for (int i = 0; i < specs.size(); ++i) {
             const AudioEffectSpec &spec = specs[i];
-            auto chain = audiofx::createProcessor(spec.processorId.toStdString());
-            if (!chain)
+            if (!spec.graph)
                 continue;
+            auto chain = std::make_unique<audiofx::GraphProcessor>(spec.graph);
             chain->prepare(processSpec);
             latency += chain->latencySamples();
             preroll = std::max(preroll,

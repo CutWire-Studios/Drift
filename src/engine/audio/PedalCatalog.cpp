@@ -18,9 +18,43 @@ KnobSpec log(const char *id, const char *label, float min, float max, float def,
     return {id, label, min, max, def, Scale::Log, unit};
 }
 
+KnobSpec toggle(const char *id, const char *label, float def = 0)
+{
+    return {id, label, 0, 1, def, Scale::Toggle};
+}
+
+KnobSpec choice(const char *id, const char *label, std::vector<const char *> options, float def = 0)
+{
+    return {id, label, 0, float(options.size() - 1), def, Scale::Choice, "", {}, std::move(options)};
+}
+
 std::vector<PedalSpec> buildSpecs()
 {
     std::vector<PedalSpec> specs{
+        // ---- graph pedals: juce::dsp building blocks, see GraphPedals.cpp ----
+        {"filter", "Filter", "filter", 50,
+         {choice("mode", "Mode", {"Low-pass", "High-pass", "Band-pass"}),
+          log("cutoff", "Cutoff", 20, 20000, 1200, "Hz"), log("resonance", "Resonance", 0.3f, 10, 0.707f, "Q")}},
+        {"ladder", "Ladder Filter", "filter", 50,
+         {choice("mode", "Mode", {"Low-pass 12", "High-pass 12", "Band-pass 12", "Low-pass 24", "High-pass 24", "Band-pass 24"}, 3),
+          log("cutoff", "Cutoff", 20, 20000, 1200, "Hz"), lin("resonance", "Resonance", 0, 1, 0.3f),
+          lin("drive", "Drive", 1, 10, 1, "x")}},
+        {"drive", "Drive", "texture", 50,
+         {choice("shape", "Shape", {"Soft", "Hard", "Fold", "Asymmetric"}), lin("drive", "Drive", 0, 40, 12, "dB"),
+          lin("mix", "Mix", 0, 1, 1), lin("output", "Output", -24, 12, -6, "dB")}},
+        {"reverb", "Reverb", "space", 3000,
+         {lin("size", "Size", 0, 1, 0.5f), lin("damping", "Damping", 0, 1, 0.5f), lin("width", "Width", 0, 1, 1),
+          lin("mix", "Mix", 0, 1, 0.3f), toggle("freeze", "Freeze")}},
+        // Preroll is the IR's own length, added by the graph.
+        {"convolution", "Convolution Reverb", "space", 0,
+         {lin("mix", "Mix", 0, 1, 0.35f), log("lowcut", "Low Cut", 20, 1000, 20, "Hz"),
+          log("highcut", "High Cut", 1000, 20000, 20000, "Hz"), lin("predelay", "Pre-delay", 0, 200, 0, "ms")}},
+        {"delay", "Delay", "space", 3000,
+         {log("time", "Time", 10, 2000, 350, "ms"), lin("feedback", "Feedback", 0, 0.95f, 0.4f),
+          log("tone", "Tone", 500, 20000, 8000, "Hz"), lin("mix", "Mix", 0, 1, 0.35f), toggle("pingpong", "Ping-pong")}},
+        {"pan", "Pan", "utility", 0, {lin("pan", "Pan", -1, 1, 0), lin("width", "Width", 0, 2, 1, "x")}},
+        {"gain", "Gain", "utility", 0, {lin("gain", "Gain", -60, 24, 0, "dB")}},
+
         // ---- utility ----
         {"classic.eq3", "3-Band EQ", "utility", 50,
          {lin("low", "Low", -12, 12, 0, "dB"), lin("mid", "Mid", -12, 12, 0, "dB"),
@@ -108,11 +142,27 @@ std::vector<PedalSpec> buildSpecs()
     return specs;
 }
 
+std::vector<PedalSpec> buildModulatorSpecs()
+{
+    return {
+        {"lfo", "LFO", "modulator", 0,
+         {choice("shape", "Shape", {"Sine", "Triangle", "Square", "Saw", "Random"}),
+          log("rate", "Rate", 0.01f, 20, 1, "Hz"), lin("phase", "Phase", 0, 1, 0)}},
+        // Preroll lets the follower settle on real audio before the clip's first sample.
+        {"envelope", "Envelope Follower", "modulator", 500,
+         {log("attack", "Attack", 1, 500, 10, "ms"), log("release", "Release", 10, 2000, 200, "ms"),
+          lin("gain", "Sensitivity", 0, 10, 2, "x")}},
+        {"steps", "Step Sequencer", "modulator", 0,
+         {log("rate", "Rate", 0.1f, 20, 4, "Hz"), lin("glide", "Glide", 0, 1, 0)}},
+    };
+}
+
 const char *scaleName(Scale scale)
 {
     switch (scale) {
     case Scale::Log: return "log";
     case Scale::Toggle: return "toggle";
+    case Scale::Choice: return "choice";
     case Scale::Linear: break;
     }
     return "linear";
@@ -135,6 +185,27 @@ const PedalSpec *pedalSpec(std::string_view type)
     return nullptr;
 }
 
+const std::vector<PedalSpec> &modulatorSpecs()
+{
+    static const std::vector<PedalSpec> specs = buildModulatorSpecs();
+    return specs;
+}
+
+const PedalSpec *modulatorSpec(std::string_view type)
+{
+    for (const PedalSpec &spec : modulatorSpecs()) {
+        if (type == spec.type)
+            return &spec;
+    }
+    return nullptr;
+}
+
+int knobIndex(const PedalSpec &pedal, std::string_view idOrAlias)
+{
+    const KnobSpec *knob = findKnob(pedal, idOrAlias);
+    return knob ? static_cast<int>(knob - pedal.knobs.data()) : -1;
+}
+
 const KnobSpec *findKnob(const PedalSpec &pedal, std::string_view idOrAlias)
 {
     for (const KnobSpec &knob : pedal.knobs) {
@@ -154,10 +225,12 @@ std::string_view classicProcessorId(std::string_view type)
     return type.substr(0, prefix.size()) == prefix ? type.substr(prefix.size()) : std::string_view{};
 }
 
-std::string pedalCatalogJson()
+namespace {
+
+juce::Array<juce::var> specsJson(const std::vector<PedalSpec> &specs)
 {
     juce::Array<juce::var> pedals;
-    for (const PedalSpec &spec : pedalSpecs()) {
+    for (const PedalSpec &spec : specs) {
         juce::Array<juce::var> knobs;
         for (const KnobSpec &knob : spec.knobs) {
             auto *k = new juce::DynamicObject;
@@ -174,6 +247,12 @@ std::string pedalCatalogJson()
                     aliases.add(alias);
                 k->setProperty("aliases", aliases);
             }
+            if (!knob.options.empty()) {
+                juce::Array<juce::var> options;
+                for (const char *option : knob.options)
+                    options.add(option);
+                k->setProperty("options", options);
+            }
             knobs.add(juce::var(k));
         }
         auto *p = new juce::DynamicObject;
@@ -184,9 +263,17 @@ std::string pedalCatalogJson()
         p->setProperty("knobs", knobs);
         pedals.add(juce::var(p));
     }
+    return pedals;
+}
+
+} // namespace
+
+std::string pedalCatalogJson()
+{
     auto *root = new juce::DynamicObject;
     root->setProperty("version", 1);
-    root->setProperty("pedals", pedals);
+    root->setProperty("pedals", specsJson(pedalSpecs()));
+    root->setProperty("modulators", specsJson(modulatorSpecs()));
     return juce::JSON::toString(juce::var(root)).toStdString();
 }
 

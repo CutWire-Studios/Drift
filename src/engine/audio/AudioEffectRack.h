@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Time.h"
+#include "engine/audio/AudioGraph.h"
 
 #include <QMap>
 #include <QString>
@@ -10,12 +11,13 @@
 
 namespace drift {
 
-// One effect instance reduced to what the DSP needs: which processor to build, how much warm-up it
+// One effect instance reduced to what the DSP needs: which graph to build, how much warm-up it
 // wants, and its resolved parameter values. Built by audioEffectSpecsFor() in AudioEffectCatalog,
 // which is what keeps this library independent of the catalog and its package loader.
 struct AudioEffectSpec
 {
-    QString processorId;
+    QString key; // catalog id: which effect this is, for deciding whether the chain must rebuild
+    std::shared_ptr<const audiofx::AudioGraphDesc> graph;
     int prerollMs = 0;
     QMap<QString, float> parameters;
 };
