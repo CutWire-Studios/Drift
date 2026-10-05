@@ -2,6 +2,7 @@
 #include "engine/AddonRegistry.h"
 #include "engine/AudioEffectCatalog.h"
 #include "engine/GpuPackageParse.h"
+#include "engine/audio/AudioEffectRack.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -11,6 +12,8 @@
 #include <QtTest>
 
 #include <QScopeGuard>
+
+#include <cmath>
 
 using namespace drift::addon;
 
@@ -34,6 +37,7 @@ private slots:
     void reportsCancellation();
     void installedAddonOutranksBundledContent();
     void installsForgeAudioEffectPackage();
+    void installsForgeAudioGraphPackage();
     void writesUserPackageThatInstalls();
     void classifiesSignatures();
     void installsUnverifiedWhenAllowed();
@@ -90,6 +94,60 @@ void TestAddonPackage::readsManifestWithoutVerifying()
 
 // tests/data/forge_fixture_echo.driftfx was exported by Drift Forge's audio editor, so this is the
 // contract between the two repos: the user layout check, the install, and the audio catalog.
+void TestAddonPackage::installsForgeAudioGraphPackage()
+{
+    // Exported by Drift Forge (scripts/make-drift-fixtures.ts): a filter swept by an LFO and followed
+    // by an envelope, then a blend into a convolution room (its IR shipped in the package) and a
+    // delay with a slider-bound footswitch.
+    const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/forge_fixture_rack.driftfx");
+    QString error;
+    const auto manifest = readManifest(path, &error, Container::User);
+    QVERIFY2(manifest.has_value(), qPrintable(error));
+    QCOMPARE(manifest->minAppVersion, QStringLiteral("0.8.0"));
+
+    const QString dest = m_tmp.filePath(QStringLiteral("forge-graph"));
+    PackageInfo info;
+    QVERIFY2(install(path, dest, {}, &info, &error, Container::User), qPrintable(error));
+    const QString root = dest + QStringLiteral("/audio-effects");
+    QVERIFY(QFile::exists(root + QStringLiteral("/forge_fixture_rack/ir/room.wav")));
+
+    reloadAudioEffectCatalog({root});
+    const auto restore = qScopeGuard([] { reloadAudioEffectCatalog(); });
+    const AudioEffectEntry *entry = audioEffectDefForId(QStringLiteral("forge_fixture_rack"));
+    QVERIFY(entry);
+    QCOMPARE(entry->processorId, QStringLiteral("graph"));
+    QVERIFY(entry->graph);
+    QCOMPARE(entry->graph->chain.size(), size_t(2));
+    QCOMPARE(entry->graph->modulators.size(), size_t(2));
+    const auto &lane = entry->graph->chain[1].lanes[1];
+    QCOMPARE(lane.front().type, std::string("convolution"));
+    QVERIFY(lane.front().ir && lane.front().ir->frames > 30000);
+    QVERIFY(entry->prerollMs >= 700); // the room's tail, measured by Drift itself
+
+    QStringList keys;
+    for (const drift::EffectParamSpec &p : entry->parameters)
+        keys << p.key;
+    QCOMPARE(keys, (QStringList{QStringLiteral("tone"), QStringLiteral("space"), QStringLiteral("echo_off")}));
+
+    // And it plays: through the same rack the mixer uses, loud enough to hear and never broken.
+    drift::Effect effect;
+    effect.catalogId = entry->id;
+    const QVector<drift::AudioEffectSpec> specs = audioEffectSpecsFor({effect});
+    drift::AudioEffectRack rack;
+    QVERIFY(rack.configure(specs, 48000));
+    rack.reset(0);
+    QVector<float> audio(48000 * 2);
+    for (int i = 0; i < 48000; ++i)
+        audio[i * 2] = audio[i * 2 + 1] = 0.4f * float(std::sin(2.0 * M_PI * 440.0 * i / 48000.0));
+    rack.process(audio.data(), 48000, 0);
+    float peak = 0.0f;
+    for (float v : audio) {
+        QVERIFY(std::isfinite(v));
+        peak = std::max(peak, std::abs(v));
+    }
+    QVERIFY2(peak > 0.01f, qPrintable(QString::number(peak)));
+}
+
 void TestAddonPackage::installsForgeAudioEffectPackage()
 {
     const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/forge_fixture_echo.driftfx");
