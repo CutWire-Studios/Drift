@@ -512,7 +512,7 @@ Item {
                     delegate: Item {
                         id: laneEye
                         required property var modelData
-                        readonly property bool laneHidden: root.tracks[modelData].hidden === true
+                        readonly property bool laneHidden: !!root.tracks[modelData] && root.tracks[modelData].hidden === true
                         width: 16
                         height: Theme.adjustmentLaneHeight
 

@@ -289,7 +289,6 @@ void ClipReaderPool::warmVideoFrames(const QList<VideoRequest> &requests)
                                   Qt::QueuedConnection,
                                   Q_ARG(quint64, request.streamId), Q_ARG(drift::TimeUs, request.sourceUs),
                                   Q_ARG(int, request.maxWidth), Q_ARG(int, request.maxHeight),
-                                  Q_ARG(QString, QString()), Q_ARG(int, 15), Q_ARG(bool, false),
                                   Q_ARG(int, request.rotationCorrection), Q_ARG(bool, approximate),
                                   Q_ARG(quintptr, session));
     }
