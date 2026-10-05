@@ -5188,6 +5188,14 @@
         <translation>Przeglądaj efekty audio</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">Przejdź do czasu, ustaw wartość, a następnie kliknij diament, aby dodać klatkę kluczową. Przy włączonych Auto klatkach kluczowych przeciąganie suwaka też je tworzy.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">Auto klatki kluczowe</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (niezainstalowane)</translation>
     </message>
@@ -5214,18 +5222,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>Usuń efekt audio</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>Wł.</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>Wył.</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>Edytuj efekt audio</translation>
     </message>
 </context>
 <context>

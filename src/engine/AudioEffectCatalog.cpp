@@ -2,9 +2,11 @@
 
 #include "GpuPackageParse.h"
 #include "engine/audio/AudioEffectFactory.h"
+#include "engine/audio/WavReader.h"
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -36,6 +38,47 @@ QString labelForCategory(const QString &slug)
     QString label = slug;
     label[0] = label[0].toUpper();
     return label;
+}
+
+// Impulse responses are capped so a package cannot stall the mixer: the convolution is set up on
+// the mixing thread whenever a clip's chain is rebuilt.
+constexpr qint64 kMaxIrBytes = 10 * 1024 * 1024;
+constexpr double kMaxIrSeconds = 10.0;
+
+// Reads an "ir" path from a graph manifest. Only files inside the package are allowed, so an
+// installed addon cannot read arbitrary files off the disk.
+std::shared_ptr<const drift::audiofx::IrData> loadPackageIr(const QString &packageDir, const std::string &path,
+                                                             std::string *error)
+{
+    const QString rel = QString::fromStdString(path);
+    const QString root = QFileInfo(packageDir).canonicalFilePath();
+    const QString file = QFileInfo(QDir(packageDir).filePath(rel)).canonicalFilePath();
+    if (QFileInfo(rel).isAbsolute() || file.isEmpty() || !file.startsWith(root + QLatin1Char('/'))) {
+        *error = "impulse response '" + path + "' is not a file inside the package";
+        return nullptr;
+    }
+    QFile in(file);
+    if (in.size() > kMaxIrBytes) {
+        *error = "impulse response '" + path + "' is larger than 10 MB";
+        return nullptr;
+    }
+    if (!in.open(QIODevice::ReadOnly)) {
+        *error = "cannot read impulse response '" + path + "'";
+        return nullptr;
+    }
+    const QByteArray bytes = in.readAll();
+    auto ir = std::make_shared<drift::audiofx::IrData>();
+    std::string wavError;
+    if (!drift::audiofx::readWav(reinterpret_cast<const uint8_t *>(bytes.constData()), size_t(bytes.size()),
+                                 ir.get(), &wavError)) {
+        *error = "impulse response '" + path + "': " + wavError;
+        return nullptr;
+    }
+    if (ir->frames > ir->sampleRate * kMaxIrSeconds) {
+        *error = "impulse response '" + path + "' is longer than 10 seconds";
+        return nullptr;
+    }
+    return ir;
 }
 
 std::optional<AudioEffectEntry> loadManifest(const QString &packageDir, QString *errorOut)
@@ -94,13 +137,6 @@ std::optional<AudioEffectEntry> loadManifest(const QString &packageDir, QString 
             *errorOut = QStringLiteral("audio-effect.json missing processor");
         return std::nullopt;
     }
-    // Reject at load rather than at playback: a manifest naming a processor nobody implements would
-    // otherwise show up in the browser and then do nothing.
-    if (!drift::audiofx::hasProcessor(entry.processorId)) {
-        if (errorOut)
-            *errorOut = QStringLiteral("unknown processor '%1'").arg(entry.processorId);
-        return std::nullopt;
-    }
 
     // Parameters share the GPU effect param schema (identifier/displayName/min/max/default); reuse
     // the same parser so both catalogs accept identical JSON. GPU-specific rules are off here.
@@ -110,6 +146,45 @@ std::optional<AudioEffectEntry> loadManifest(const QString &packageDir, QString 
         if (errorOut)
             *errorOut = paramError;
         return std::nullopt;
+    }
+
+    std::vector<std::string> paramIds;
+    std::vector<float> paramDefaults;
+    for (const drift::EffectParamSpec &spec : entry.parameters) {
+        paramIds.push_back(spec.key.toStdString());
+        paramDefaults.push_back(static_cast<float>(spec.defaultValue));
+    }
+
+    // Reject at load rather than at playback: a manifest naming a processor nobody implements, or a
+    // graph that does not validate, would otherwise show up in the browser and then do nothing.
+    if (entry.processorId == QLatin1String("graph")) {
+        const QJsonValue graph = root.value(QStringLiteral("graph"));
+        if (!graph.isObject()) {
+            if (errorOut)
+                *errorOut = QStringLiteral("processor 'graph' needs a \"graph\" object");
+            return std::nullopt;
+        }
+        const std::string json = QJsonDocument(graph.toObject()).toJson(QJsonDocument::Compact).toStdString();
+        std::string graphError;
+        entry.graph = drift::audiofx::parseAudioGraph(
+            json, std::move(paramIds), std::move(paramDefaults),
+            [&packageDir](const std::string &path, std::string *error) { return loadPackageIr(packageDir, path, error); },
+            &graphError);
+        if (!entry.graph) {
+            if (errorOut)
+                *errorOut = QStringLiteral("graph: %1").arg(QString::fromStdString(graphError));
+            return std::nullopt;
+        }
+        // The manifest's prerollMs is a floor; the graph knows its own tails.
+        entry.prerollMs = std::max(entry.prerollMs, entry.graph->prerollMs);
+    } else {
+        entry.graph = drift::audiofx::classicGraph(entry.processorId.toStdString(), std::move(paramIds),
+                                                   std::move(paramDefaults));
+        if (!entry.graph) {
+            if (errorOut)
+                *errorOut = QStringLiteral("unknown processor '%1'").arg(entry.processorId);
+            return std::nullopt;
+        }
     }
 
     entry.icon = root.value(QStringLiteral("icon")).toString();
@@ -220,7 +295,8 @@ QMap<QString, QVariant> resolvedAudioEffectParameters(const drift::Effect &effec
     return values;
 }
 
-QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &effects)
+QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &effects,
+                                                    drift::TimeUs ownerStartUs)
 {
     QVector<drift::AudioEffectSpec> specs;
     specs.reserve(effects.size());
@@ -233,12 +309,18 @@ QVector<drift::AudioEffectSpec> audioEffectSpecsFor(const QList<drift::Effect> &
             continue; // addon not installed — pass the audio through untouched
 
         drift::AudioEffectSpec spec;
-        spec.processorId = def->processorId;
+        spec.key = def->id;
+        spec.graph = def->graph;
         spec.prerollMs = def->prerollMs;
 
         const QMap<QString, QVariant> values = resolvedAudioEffectParameters(effect, *def);
         for (auto it = values.constBegin(); it != values.constEnd(); ++it)
             spec.parameters.insert(it.key(), static_cast<float>(it.value().toDouble()));
+        for (auto it = effect.paramKeyframes.constBegin(); it != effect.paramKeyframes.constEnd(); ++it) {
+            if (!it.value().isEmpty() && values.contains(it.key()))
+                spec.keyframes.insert(it.key(), it.value());
+        }
+        spec.ownerStartUs = ownerStartUs;
 
         specs.append(spec);
     }

@@ -2784,23 +2784,35 @@ drift::ShapeStyle shapeStyleForKind(const QString &shapeId)
     return style;
 }
 
-// Effect parameters are addressed as "fx.<effectIndex>.<paramKey>" so the whole generic keyframe
-// API — set / remove / move / interpolation / keyframe-strip selection — reaches them without a
-// parallel set of invokables. Indices match the effectIndex the effect invokables already take.
-bool parseEffectProp(const QString &prop, int *effectIndex, QString *paramKey)
+bool parseIndexedProp(const QString &prop, QLatin1String prefix, int *effectIndex, QString *paramKey)
 {
-    if (!prop.startsWith(QLatin1String("fx.")))
+    if (!prop.startsWith(prefix))
         return false;
-    const int dot = prop.indexOf(QLatin1Char('.'), 3);
-    if (dot < 0 || dot == 3 || dot + 1 >= prop.size())
+    const int start = int(prefix.size());
+    const int dot = prop.indexOf(QLatin1Char('.'), start);
+    if (dot < 0 || dot == start || dot + 1 >= prop.size())
         return false;
     bool ok = false;
-    const int index = QStringView(prop).mid(3, dot - 3).toInt(&ok);
+    const int index = QStringView(prop).mid(start, dot - start).toInt(&ok);
     if (!ok || index < 0)
         return false;
     *effectIndex = index;
     *paramKey = prop.mid(dot + 1);
     return true;
+}
+
+// Effect parameters are addressed as "fx.<effectIndex>.<paramKey>" so the whole generic keyframe
+// API — set / remove / move / interpolation / keyframe-strip selection — reaches them without a
+// parallel set of invokables. Indices match the effectIndex the effect invokables already take.
+bool parseEffectProp(const QString &prop, int *effectIndex, QString *paramKey)
+{
+    return parseIndexedProp(prop, QLatin1String("fx."), effectIndex, paramKey);
+}
+
+// Audio effect parameters, the same way: "afx.<audioEffectIndex>.<paramKey>".
+bool parseAudioEffectProp(const QString &prop, int *effectIndex, QString *paramKey)
+{
+    return parseIndexedProp(prop, QLatin1String("afx."), effectIndex, paramKey);
 }
 
 // A mask scalar is addressed as "mask.<key>" — no index, because a Mask adjustment carries
@@ -2997,6 +3009,16 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
 
     int effectIndex = -1;
     QString paramKey;
+    // Audio params are all scalars (floats and switches), so any declared one can carry a track.
+    if (parseAudioEffectProp(prop, &effectIndex, &paramKey)) {
+        if (effectIndex >= clip.audioEffects.size())
+            return nullptr;
+        drift::Effect &effect = clip.audioEffects[effectIndex];
+        if (createIfMissing)
+            return &effect.paramKeyframes[paramKey];
+        const auto it = effect.paramKeyframes.find(paramKey);
+        return it == effect.paramKeyframes.end() ? nullptr : &it.value();
+    }
     if (!parseEffectProp(prop, &effectIndex, &paramKey))
         return transformTrackForProp(clip, prop);
 
@@ -3031,7 +3053,7 @@ bool isKnownKeyframeProp(const QString &prop)
 {
     int effectIndex = -1;
     QString paramKey;
-    if (parseEffectProp(prop, &effectIndex, &paramKey))
+    if (parseEffectProp(prop, &effectIndex, &paramKey) || parseAudioEffectProp(prop, &effectIndex, &paramKey))
         return true;
     QString maskKey;
     if (parseMaskProp(prop, &maskKey))
@@ -3052,7 +3074,8 @@ QString normalizeKeyframeProp(const QString &prop)
     // are camelCase members ("text.pixelSize", "shape.cornerRadius") and SVG element ids are
     // case-sensitive, so they pass through like effect params.
     const QString trimmed = prop.trimmed();
-    return trimmed.startsWith(QLatin1String("fx.")) || trimmed.startsWith(QLatin1String("text."))
+    return trimmed.startsWith(QLatin1String("fx.")) || trimmed.startsWith(QLatin1String("afx."))
+                   || trimmed.startsWith(QLatin1String("text."))
                    || trimmed.startsWith(QLatin1String("shape.")) || trimmed.startsWith(QLatin1String("vector."))
                    || trimmed.startsWith(QLatin1String("model3d."))
                ? trimmed
@@ -3195,6 +3218,18 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
 
     int effectIndex = -1;
     QString paramKey;
+    if (parseAudioEffectProp(prop, &effectIndex, &paramKey)) {
+        if (effectIndex >= clip.audioEffects.size())
+            return false;
+        drift::Effect &effect = clip.audioEffects[effectIndex];
+        const auto existing = effect.paramKeyframes.constFind(paramKey);
+        const bool keyed = existing != effect.paramKeyframes.constEnd() && !existing->isEmpty();
+        if ((keyed || force || autoKey)
+            && !writeKeyframeValue(effect.paramKeyframes[paramKey], relative, value, autoKey, force))
+            return false;
+        effect.parameters.insert(paramKey, value);
+        return true;
+    }
     if (!parseEffectProp(prop, &effectIndex, &paramKey)) {
         drift::KeyframeTrack<double> *kt = transformTrackForProp(clip, prop);
         if (!kt || !writeKeyframeValue(*kt, relative, value, autoKey, force))
@@ -3375,7 +3410,8 @@ QVariantMap audioEffectBadgeToMap(const drift::Effect &effect)
 }
 
 // Audio effects use the same per-instance shape as video effects, but read from the audio catalog.
-QVariantMap audioEffectToMap(const drift::Effect &effect)
+// Params are addressed as "afx.<index>.<key>" for the keyframe API, key times on the timeline.
+QVariantMap audioEffectToMap(const drift::Effect &effect, int effectIndex, drift::TimeUs timelineStart)
 {
     const AudioEffectEntry *def = audioEffectDefForId(effect.catalogId);
     QVariantList params;
@@ -3393,6 +3429,9 @@ QVariantMap audioEffectToMap(const drift::Effect &effect)
                 {QStringLiteral("isBoolean"), paramDef.isBoolean()},
                 {QStringLiteral("type"), paramDef.typeName()},
                 {QStringLiteral("value"), value},
+                {QStringLiteral("prop"), QStringLiteral("afx.%1.%2").arg(effectIndex).arg(paramDef.key)},
+                {QStringLiteral("keyframes"),
+                 keyframeTrackToMap(effect.paramKeyframes.value(paramDef.key), timelineStart)},
             });
         }
     }
@@ -3506,6 +3545,11 @@ void remapKeyframesForRetime(drift::Clip &dst, const drift::Clip &src)
         const QMap<QString, drift::KeyframeTrack<double>> &srcParams = src.effects.at(i).paramKeyframes;
         for (auto it = srcParams.constBegin(); it != srcParams.constEnd(); ++it)
             remapKeyframeTrack(dst.effects[i].paramKeyframes[it.key()], it.value(), src, dst);
+    }
+    for (int i = 0; i < dst.audioEffects.size() && i < src.audioEffects.size(); ++i) {
+        const QMap<QString, drift::KeyframeTrack<double>> &srcParams = src.audioEffects.at(i).paramKeyframes;
+        for (auto it = srcParams.constBegin(); it != srcParams.constEnd(); ++it)
+            remapKeyframeTrack(dst.audioEffects[i].paramKeyframes[it.key()], it.value(), src, dst);
     }
 }
 
@@ -4377,8 +4421,8 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         effects.append(effectToMap(videoHost.effects.at(i), i, clip.timelineStart));
 
     QVariantList audioEffects;
-    for (const drift::Effect &effect : audioHost.audioEffects)
-        audioEffects.append(audioEffectToMap(effect));
+    for (int i = 0; i < audioHost.audioEffects.size(); ++i)
+        audioEffects.append(audioEffectToMap(audioHost.audioEffects.at(i), i, clip.timelineStart));
 
     QVariantList fadeShape;
     for (const QPointF &pt : clip.fadeShape.points()) {
@@ -6578,21 +6622,22 @@ void AppController::showKeyframeGraphProperty(const QString &prop)
 
 // Effect props are addressed by index, so removing an effect would leave a hidden flag attached to
 // some other effect's parameter. Drop the removed effect's entries and renumber everything above it.
-void AppController::dropKeyframeGraphPropertiesForEffect(int removedIndex)
+// `audio` picks the stack: "afx." props for the audio one, "fx." for the video one.
+void AppController::dropKeyframeGraphPropertiesForEffect(int removedIndex, bool audio)
 {
+    const auto parse = audio ? parseAudioEffectProp : parseEffectProp;
+    const QString format = audio ? QStringLiteral("afx.%1.%2") : QStringLiteral("fx.%1.%2");
     QStringList next;
     for (const QString &prop : std::as_const(m_keyframeGraphHiddenProperties)) {
         int effectIndex = -1;
         QString paramKey;
-        if (!parseEffectProp(prop, &effectIndex, &paramKey)) {
+        if (!parse(prop, &effectIndex, &paramKey)) {
             next.append(prop);
             continue;
         }
         if (effectIndex == removedIndex)
             continue;
-        next.append(effectIndex > removedIndex
-                        ? QStringLiteral("fx.%1.%2").arg(effectIndex - 1).arg(paramKey)
-                        : prop);
+        next.append(effectIndex > removedIndex ? format.arg(effectIndex - 1).arg(paramKey) : prop);
     }
     if (next == m_keyframeGraphHiddenProperties)
         return;
@@ -6602,16 +6647,18 @@ void AppController::dropKeyframeGraphPropertiesForEffect(int removedIndex)
 
 // Moving an effect between slots is the same addressing problem as remove: rewrite every
 // fx.N.* entry so the hidden set still points at the same parameters after the swap.
-void AppController::remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int toIndex)
+void AppController::remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int toIndex, bool audio)
 {
     if (fromIndex == toIndex)
         return;
+    const auto parse = audio ? parseAudioEffectProp : parseEffectProp;
+    const QString format = audio ? QStringLiteral("afx.%1.%2") : QStringLiteral("fx.%1.%2");
     QStringList next;
     next.reserve(m_keyframeGraphHiddenProperties.size());
     for (const QString &prop : std::as_const(m_keyframeGraphHiddenProperties)) {
         int effectIndex = -1;
         QString paramKey;
-        if (!parseEffectProp(prop, &effectIndex, &paramKey)) {
+        if (!parse(prop, &effectIndex, &paramKey)) {
             next.append(prop);
             continue;
         }
@@ -6627,9 +6674,7 @@ void AppController::remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int
             if (effectIndex >= toIndex && effectIndex < fromIndex)
                 mapped = effectIndex + 1;
         }
-        next.append(mapped == effectIndex
-                        ? prop
-                        : QStringLiteral("fx.%1.%2").arg(mapped).arg(paramKey));
+        next.append(mapped == effectIndex ? prop : format.arg(mapped).arg(paramKey));
     }
     if (next == m_keyframeGraphHiddenProperties)
         return;
@@ -14408,17 +14453,18 @@ void AppController::redirectToKeyframeHost(int *trackIndex, int *clipIndex,
 {
     if (!trackIndex || !clipIndex)
         return;
-    // Two kinds of payload live on an adjustment rather than on the clip the user selected: a
-    // video effect's params, and a mask's scalars. Audio params never gained tracks, so there is
-    // no third.
+    // Three kinds of payload live on an adjustment rather than on the clip the user selected: a
+    // video effect's params, an audio effect's params, and a mask's scalars.
     const bool isEffect = prop.startsWith(QLatin1String("fx."));
+    const bool isAudioEffect = prop.startsWith(QLatin1String("afx."));
     const bool isMask = prop.startsWith(QLatin1String("mask."));
-    if (!isEffect && !isMask)
+    if (!isEffect && !isAudioEffect && !isMask)
         return;
     const drift::ClipRef ref =
         const_cast<AppController *>(this)->effectHostRef(*trackIndex, *clipIndex,
-                                                         isMask ? drift::AdjustmentKind::Mask
-                                                                : drift::AdjustmentKind::VideoEffects,
+                                                         isMask           ? drift::AdjustmentKind::Mask
+                                                         : isAudioEffect ? drift::AdjustmentKind::AudioEffects
+                                                                          : drift::AdjustmentKind::VideoEffects,
                                                          /*create=*/false);
     if (ref.trackIndex < 0)
         return;
@@ -20806,6 +20852,12 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
                 if (value.isValid())
                     return value.toDouble();
             }
+            if (parseAudioEffectProp(prop, &effectIndex, &paramKey)
+                && effectIndex >= 0 && effectIndex < clip.audioEffects.size()) {
+                const QVariant value = clip.audioEffects.at(effectIndex).parameters.value(paramKey);
+                if (value.isValid())
+                    return value.toDouble();
+            }
             // Same rule for a mask scalar: the static member is what the rasterizer reads when
             // the track is empty, so it is the curve's baseline.
             QString maskKey;
@@ -20953,6 +21005,19 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
             for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
                 if (!it.value().isEmpty())
                     out.append(QStringLiteral("fx.%1.%2").arg(i).arg(it.key()));
+            }
+        }
+    }
+
+    const drift::Clip *audioHost =
+        effectHostClip(trackIndex, clipIndex, drift::AdjustmentKind::AudioEffects);
+    if (audioHost) {
+        for (int i = 0; i < audioHost->audioEffects.size(); ++i) {
+            const QMap<QString, drift::KeyframeTrack<double>> &params =
+                audioHost->audioEffects.at(i).paramKeyframes;
+            for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+                if (!it.value().isEmpty())
+                    out.append(QStringLiteral("afx.%1.%2").arg(i).arg(it.key()));
             }
         }
     }
@@ -22557,6 +22622,7 @@ void AppController::removeAudioEffect(int trackIndex, int clipIndex, int effectI
 
     const drift::Project before = m_project;
     clip.audioEffects.removeAt(effectIndex);
+    dropKeyframeGraphPropertiesForEffect(effectIndex, /*audio=*/true);
     pushProjectEdit(before, tr("Remove audio effect"));
     finishEdit(tr("Audio effect removed"));
 }
@@ -22612,6 +22678,7 @@ void AppController::moveAudioEffect(int trackIndex, int clipIndex, int fromIndex
 
     const drift::Project before = m_project;
     clip.audioEffects.move(fromIndex, toIndex);
+    remapKeyframeGraphPropertiesForEffectMove(fromIndex, toIndex, /*audio=*/true);
     pushProjectEdit(before, tr("Reorder audio effect"));
     finishEdit(tr("Audio effect reordered"));
 }
@@ -22693,8 +22760,7 @@ drift::EffectStackPreset AppController::effectStackFor(int trackIndex, int clipI
 
     const drift::Clip &clip = track.clips.at(clipIndex);
     stack.label = clip.name;
-    // Written even when the stack holds only audio effects, which are not keyframable: one field
-    // that is always present beats a reader that has to ask why it is missing.
+    // Keyframes on either half are stored against this duration, and rescaled onto the target's.
     stack.sourceDurationUs = clip.timelineDuration;
 
     // The stacks live on the adjustments linked to this clip. Indices match what the inspector
@@ -22770,6 +22836,7 @@ void AppController::applyEffectStack(int trackIndex, int clipIndex,
         for (const drift::Effect &incoming : stack.audioEffects) {
             if (const AudioEffectEntry *def = audioEffectDefForId(incoming.catalogId)) {
                 drift::Effect effect = audioEffectFromCatalogEntry(*def, incoming.parameters);
+                effect.paramKeyframes = incoming.paramKeyframes;
                 effect.enabled = incoming.enabled;
                 audio.append(effect);
             } else {
@@ -22780,8 +22847,8 @@ void AppController::applyEffectStack(int trackIndex, int clipIndex,
         }
     }
 
-    // Audio params are not keyframable, so only the video half moves.
     drift::rescaleEffectKeyframes(video, stack.sourceDurationUs, targetDurationUs);
+    drift::rescaleEffectKeyframes(audio, stack.sourceDurationUs, targetDurationUs);
 
     m_project.ensureTrackIds();
     const QString targetTrackId = m_project.tracks().at(trackIndex).id;
@@ -23164,6 +23231,7 @@ void AppController::pasteAttributes(const QVariantMap &options)
             for (const drift::Effect &incoming : sourceClip.audioEffects) {
                 if (const AudioEffectEntry *def = audioEffectDefForId(incoming.catalogId)) {
                     drift::Effect effect = audioEffectFromCatalogEntry(*def, incoming.parameters);
+                    effect.paramKeyframes = incoming.paramKeyframes;
                     effect.enabled = incoming.enabled;
                     audio.append(effect);
                 } else {
@@ -23172,6 +23240,7 @@ void AppController::pasteAttributes(const QVariantMap &options)
                         missingEffectPacks.append(incoming.catalogId);
                 }
             }
+            drift::rescaleEffectKeyframes(audio, srcDurationUs, targetDurationUs);
             if (replaceEffects) {
                 targetClip.audioEffects = audio;
             } else {

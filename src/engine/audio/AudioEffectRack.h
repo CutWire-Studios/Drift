@@ -1,6 +1,8 @@
 #pragma once
 
+#include "core/Keyframe.h"
 #include "core/Time.h"
+#include "engine/audio/AudioGraph.h"
 
 #include <QMap>
 #include <QString>
@@ -10,14 +12,20 @@
 
 namespace drift {
 
-// One effect instance reduced to what the DSP needs: which processor to build, how much warm-up it
+// One effect instance reduced to what the DSP needs: which graph to build, how much warm-up it
 // wants, and its resolved parameter values. Built by audioEffectSpecsFor() in AudioEffectCatalog,
 // which is what keeps this library independent of the catalog and its package loader.
 struct AudioEffectSpec
 {
-    QString processorId;
+    QString key; // catalog id: which effect this is, for deciding whether the chain must rebuild
+    std::shared_ptr<const audiofx::AudioGraphDesc> graph;
     int prerollMs = 0;
     QMap<QString, float> parameters;
+    // Animated parameters, keyed like `parameters`, in the owning clip's time: the rack evaluates
+    // them at (timeline time - ownerStartUs) every 128 frames and they win over the static value.
+    // The owner is the clip itself, or the adjustment clip the effect came from.
+    QMap<QString, KeyframeTrack<double>> keyframes;
+    drift::TimeUs ownerStartUs = 0;
 };
 
 // A clip's audio effect chain. Replaces the libavfilter graph that used to live in
@@ -54,12 +62,15 @@ public:
     // reset, so latent stages line up and stateful tails start warm instead of cold.
     int primeFrames() const;
 
+    // Every call says where on the timeline its first frame sits: keyframed parameters are
+    // evaluated there, and reset() seeds LFO and step phases from it.
+
     // Process and discard: fills stage state without emitting anything.
-    void warmUp(const float *interleavedStereo, int frames);
+    void warmUp(const float *interleavedStereo, int frames, drift::TimeUs timelineStartUs);
 
-    void process(float *interleavedStereo, int frames);
+    void process(float *interleavedStereo, int frames, drift::TimeUs timelineStartUs);
 
-    void reset();
+    void reset(drift::TimeUs timelineUs);
 
     drift::TimeUs lastTimelineEndUs() const;
     void setLastTimelineEndUs(drift::TimeUs us);

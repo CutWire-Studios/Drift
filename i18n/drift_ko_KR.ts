@@ -5142,6 +5142,14 @@
         <translation>오디오 효과 찾아보기</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">시간 위치로 이동하고 값을 설정한 다음 다이아몬드를 클릭하여 키프레임을 추가하세요. 자동 키프레임이 켜져 있으면 슬라이더를 드래그해도 키프레임이 생성됩니다.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">자동 키프레임</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1(설치되지 않음)</translation>
     </message>
@@ -5168,18 +5176,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>오디오 효과 제거</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>켜기</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>끄기</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>오디오 효과 편집</translation>
     </message>
 </context>
 <context>

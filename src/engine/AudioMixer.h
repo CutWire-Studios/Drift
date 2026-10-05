@@ -26,7 +26,8 @@ struct ClipAudioState
     std::shared_ptr<AudioMixer> nestedMixer;
     quint64 nestedSerial = 0;
     // The rack's specs, reused while the snapshot and the live lane adjustments stay the same.
-    // Effect parameters are not keyframed, so within one snapshot the chain decides them alone.
+    // Keyframed values travel inside the specs and the rack evaluates them as it plays, so within
+    // one snapshot the chain still decides them alone.
     QVector<drift::AudioEffectSpec> effectSpecs;
     quint64 effectSpecsSerial = 0;
     size_t effectSpecsKey = 0;

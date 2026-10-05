@@ -5142,6 +5142,14 @@
         <translation>Duyệt hiệu ứng âm thanh</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">Di chuyển đến một thời điểm, đặt giá trị, sau đó nhấp vào hình thoi để thêm khung hình chính. Khi bật keyframe Tự động, việc kéo thanh trượt cũng sẽ tạo ra chúng.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">Keyframe tự động</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (chưa được cài đặt)</translation>
     </message>
@@ -5168,18 +5176,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>Xóa hiệu ứng âm thanh</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>Bật</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>Tắt</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>Chỉnh sửa hiệu ứng âm thanh</translation>
     </message>
 </context>
 <context>

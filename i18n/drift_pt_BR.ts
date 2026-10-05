@@ -5165,6 +5165,14 @@
         <translation>Explorar efeitos de áudio</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">Vá até um tempo, defina um valor e clique no losango para adicionar um quadro-chave. Com Quadros-chave automáticos ativados, arrastar um controle deslizante também os cria.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">Quadros-chave automáticos</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (não instalado)</translation>
     </message>
@@ -5191,18 +5199,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>Remover efeito de áudio</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>Ativado</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>Desativado</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>Editar efeito de áudio</translation>
     </message>
 </context>
 <context>

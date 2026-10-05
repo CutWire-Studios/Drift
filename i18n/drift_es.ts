@@ -5165,6 +5165,14 @@
         <translation>Explorar efectos de audio</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">Muévete a una posición temporal, define un valor y luego haz clic en el rombo para añadir un fotograma clave. Con Fotogramas clave automáticos activado, arrastrar un control deslizante también los crea.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">Fotogramas clave automáticos</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (no instalado)</translation>
     </message>
@@ -5191,18 +5199,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>Eliminar efecto de audio</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>Activado</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>Desactivado</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>Editar efecto de audio</translation>
     </message>
 </context>
 <context>

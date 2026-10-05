@@ -61,6 +61,9 @@
 #include "engine/CompositorFrameHistory.h"
 #include "engine/AudioEffectCatalog.h"
 #include "engine/audio/AudioEffectFactory.h"
+#include "engine/audio/AudioGraph.h"
+#include "engine/audio/DriftGraphApi.h"
+#include "engine/audio/PedalCatalog.h"
 #include "engine/audio/AudioEffectRack.h"
 #include "engine/audio/ClipAudioRetimer.h"
 #include "engine/AudioFileWriter.h"
@@ -393,6 +396,19 @@ private slots:
     void clipAudioRetimerStreamsSyntheticSource();
     void audioEffectCatalogLoadsPackages();
     void audioEffectFactoryBuildsEveryCatalogEntry();
+    void pedalCatalogCoversBundledManifests();
+    void pedalCatalogKnobsAreBound();
+    void audioGraphRejectsInvalidManifests();
+    void audioGraphAlignsParallelLanes();
+    void audioGraphBandSplitSumsFlat();
+    void audioGraphOutputIgnoresBlockSize();
+    void audioGraphModulatorPhaseSurvivesSeek();
+    void audioGraphConvolvesStagedImpulse();
+    void audioGraphLiveEditsMatchRebuilt();
+    void audioGraphPackageLoadsImpulseFromPackage();
+    void audioEffectRackRebuildsWhenGraphChanges();
+    void audioEffectRackFollowsKeyframes();
+    void audioEffectRackSeedsModulatorsFromOwnerTime();
     void audioEffectChainAltersSignal();
     void limiterHoldsTheCeilingInsteadOfAddingGain();
     void audioEffectChainBypassesUnknownEffect();
@@ -11873,7 +11889,7 @@ QVector<float> runRack(const QList<drift::Effect> &effects, const float *interle
 
     drift::AudioEffectRack rack;
     if (rack.configure(audioEffectSpecsFor(effects), sampleRate))
-        rack.process(out.data(), frames);
+        rack.process(out.data(), frames, 0);
     return out;
 }
 
@@ -12704,8 +12720,7 @@ void EngineTest::audioEffectFactoryBuildsEveryCatalogEntry()
     QVERIFY(!catalog.isEmpty());
 
     for (const AudioEffectEntry &entry : catalog) {
-        QVERIFY2(drift::audiofx::hasProcessor(entry.processorId),
-                 qPrintable(QStringLiteral("%1 -> %2").arg(entry.id, entry.processorId)));
+        QVERIFY2(entry.graph, qPrintable(QStringLiteral("%1 -> %2").arg(entry.id, entry.processorId)));
 
         // configure() only reports true once the factory has actually built a chain, so this is
         // what proves the processor exists rather than the effect quietly becoming a passthrough.
@@ -12722,7 +12737,7 @@ void EngineTest::audioEffectFactoryBuildsEveryCatalogEntry()
 
             drift::AudioEffectRack rack;
             QVERIFY2(rack.configure(specs, rate), qPrintable(entry.id));
-            rack.process(buffer.data(), kFrames);
+            rack.process(buffer.data(), kFrames, 0);
 
             QCOMPARE(buffer.size(), kFrames * 2);
             for (int i = 0; i < buffer.size(); ++i) {
@@ -12732,6 +12747,464 @@ void EngineTest::audioEffectFactoryBuildsEveryCatalogEntry()
             }
         }
     }
+}
+
+void EngineTest::pedalCatalogCoversBundledManifests()
+{
+    // Forge builds legacy effects as one classic pedal, and modulation normalises against the
+    // pedal's knob ranges. Both break if a bundled manifest uses a knob or a range the catalog
+    // does not know about.
+    const QList<AudioEffectEntry> &catalog = audioEffectCatalog();
+    QVERIFY(!catalog.isEmpty());
+
+    for (const AudioEffectEntry &entry : catalog) {
+        const std::string type = "classic." + entry.processorId.toStdString();
+        const drift::audiofx::PedalSpec *pedal = drift::audiofx::pedalSpec(type);
+        QVERIFY2(pedal, qPrintable(entry.id));
+
+        for (const drift::EffectParamSpec &param : entry.parameters) {
+            const QString where = QStringLiteral("%1.%2").arg(entry.id, param.key);
+            const drift::audiofx::KnobSpec *knob = drift::audiofx::findKnob(*pedal, param.key.toStdString());
+            QVERIFY2(knob, qPrintable(where));
+            if (param.type == drift::EffectParamType::Bool) {
+                QVERIFY2(knob->scale == drift::audiofx::KnobSpec::Scale::Toggle, qPrintable(where));
+                continue;
+            }
+            QVERIFY2(param.min >= knob->min - 1e-6 && param.max <= knob->max + 1e-6, qPrintable(where));
+            QVERIFY2(param.defaultValue >= knob->min - 1e-6 && param.defaultValue <= knob->max + 1e-6,
+                     qPrintable(where));
+        }
+    }
+}
+
+void EngineTest::pedalCatalogKnobsAreBound()
+{
+    // Every processor has a classic pedal, and every knob (and alias) reaches a stage setter —
+    // an unbound knob would be a control that silently does nothing.
+    for (const std::string &id : drift::audiofx::processorIds())
+        QVERIFY2(drift::audiofx::pedalSpec("classic." + id), id.c_str());
+
+    for (const drift::audiofx::PedalSpec &pedal : drift::audiofx::pedalSpecs()) {
+        QVERIFY2(pedal.knobs.size() > 0, pedal.type);
+        const std::string_view processorId = drift::audiofx::classicProcessorId(pedal.type);
+        if (processorId.empty())
+            continue;
+        QVERIFY2(drift::audiofx::hasProcessor(processorId), pedal.type);
+        for (const drift::audiofx::KnobSpec &knob : pedal.knobs) {
+            QVERIFY2(knob.min < knob.max, knob.id);
+            QVERIFY2(knob.defaultValue >= knob.min && knob.defaultValue <= knob.max, knob.id);
+            QVERIFY2(knob.scale != drift::audiofx::KnobSpec::Scale::Log || knob.min > 0, knob.id);
+            QVERIFY2(drift::audiofx::bindsParameter(processorId, knob.id),
+                     qPrintable(QStringLiteral("%1.%2").arg(pedal.type, knob.id)));
+            for (const char *alias : knob.aliases)
+                QVERIFY2(drift::audiofx::bindsParameter(processorId, alias), alias);
+        }
+    }
+}
+
+namespace {
+
+// A graph manifest around `graph`, with optional parameters.
+QByteArray graphManifest(const char *graph, const char *parameters = "[]")
+{
+    return QByteArray(R"({"id":"t","backend":"juce","processor":"graph","parameters":)") + parameters
+           + R"(,"graph":)" + graph + "}";
+}
+
+struct GraphHandle
+{
+    DriftGraph *graph = nullptr;
+    explicit GraphHandle(const QByteArray &manifest, int rate = 48000)
+        : graph(dg_create(manifest.constData(), rate))
+    {
+    }
+    ~GraphHandle() { dg_destroy(graph); }
+};
+
+// Runs interleaved stereo through a graph in `chunk`-frame calls.
+QVector<float> renderGraph(DriftGraph *graph, const QVector<float> &in, int chunk = 1000)
+{
+    QVector<float> out = in;
+    const int frames = static_cast<int>(in.size() / 2);
+    for (int offset = 0; offset < frames; offset += chunk) {
+        const int count = std::min(chunk, frames - offset);
+        std::memcpy(dg_io(graph), out.constData() + offset * 2, sizeof(float) * size_t(count) * 2);
+        dg_process(graph, count);
+        std::memcpy(out.data() + offset * 2, dg_io(graph), sizeof(float) * size_t(count) * 2);
+    }
+    return out;
+}
+
+QVector<float> stereoNoise(int frames, quint32 seed = 1)
+{
+    QVector<float> out(frames * 2);
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<float> dist(-0.5f, 0.5f);
+    for (float &s : out)
+        s = dist(rng);
+    return out;
+}
+
+// 16-bit PCM WAV, mono.
+QByteArray monoWav(const QVector<float> &samples, int rate)
+{
+    QByteArray data;
+    for (float s : samples) {
+        const qint16 v = static_cast<qint16>(std::lround(std::clamp(s, -1.0f, 1.0f) * 32767.0f));
+        data.append(reinterpret_cast<const char *>(&v), 2);
+    }
+    QByteArray wav;
+    auto u32 = [&wav](quint32 v) { wav.append(reinterpret_cast<const char *>(&v), 4); };
+    auto u16 = [&wav](quint16 v) { wav.append(reinterpret_cast<const char *>(&v), 2); };
+    wav.append("RIFF");
+    u32(quint32(36 + data.size()));
+    wav.append("WAVEfmt ");
+    u32(16); u16(1); u16(1); u32(quint32(rate)); u32(quint32(rate * 2)); u16(2); u16(16);
+    wav.append("data");
+    u32(quint32(data.size()));
+    return wav + data;
+}
+
+} // namespace
+
+void EngineTest::audioGraphRejectsInvalidManifests()
+{
+    // Each of these must fail at load with a reason, never become a silent passthrough.
+    const QList<QByteArray> bad = {
+        graphManifest(R"({"chain":[{"id":"a","type":"wah"}]})"),
+        graphManifest(R"({"chain":[{"id":"a","type":"gain","knobs":{"gain":{"param":"nope"}}}]})"),
+        graphManifest(R"({"chain":[{"id":"a","type":"gain","knobs":{"volume":1}}]})"),
+        graphManifest(R"({"chain":[{"id":"a","type":"delay","mod":{"pingpong":[{"from":"m","depth":1}]}}],
+                          "modulators":[{"id":"m","type":"lfo"}]})"),
+        graphManifest(R"({"chain":[{"id":"a","type":"gain","mod":{"gain":[{"from":"x","depth":1}]}}]})"),
+        graphManifest(R"({"chain":[{"id":"s","type":"split","lanes":[{"chain":[]}]}]})"),
+        graphManifest(R"({"chain":[{"id":"s","type":"split","mode":"bands","crossfade":true,
+                          "lanes":[{"chain":[]},{"chain":[]}]}]})"),
+        graphManifest(R"({"chain":[{"id":"a","type":"gain"},{"id":"a","type":"gain"}]})"),
+        graphManifest(R"({"chain":[{"id":"c","type":"convolution"}]})"),
+        graphManifest(R"({"chain":[{"id":"c","type":"convolution","ir":"ir/missing.wav"}]})"),
+        graphManifest(R"({"chain":[],"modulators":[{"id":"e","type":"envelope","source":"ghost"}]})"),
+        graphManifest(R"({"chain":[{"id":"s1","type":"split","lanes":[{"chain":[{"id":"s2","type":"split",
+                          "lanes":[{"chain":[{"id":"s3","type":"split","lanes":[{"chain":[]},{"chain":[]}]}]},
+                          {"chain":[]}]}]},{"chain":[]}]}]})"),
+    };
+    for (const QByteArray &manifest : bad) {
+        GraphHandle handle(manifest);
+        QVERIFY2(!handle.graph, manifest.constData());
+        QVERIFY(std::strlen(dg_last_error()) > 0);
+    }
+
+    GraphHandle ok(graphManifest(R"({"chain":[{"id":"a","type":"gain","knobs":{"gain":{"param":"g"}}}]})",
+                                 R"([{"identifier":"g","type":"float","minValue":-12,"maxValue":12,"defaultValue":0}])"));
+    QVERIFY2(ok.graph, dg_last_error());
+}
+
+void EngineTest::audioGraphAlignsParallelLanes()
+{
+    // A dry lane beside a latent one must be delayed to match, or the two would comb-filter. The
+    // split's output is then exactly the latent pedal's output plus the input, delayed alike.
+    GraphHandle pitch(graphManifest(R"({"chain":[{"id":"p","type":"classic.pitch","knobs":{"pitch":1.2}}]})"));
+    GraphHandle split(graphManifest(R"({"chain":[{"id":"s","type":"split","lanes":[
+        {"chain":[{"id":"p","type":"classic.pitch","knobs":{"pitch":1.2}}]},{"chain":[]}]}]})"));
+    QVERIFY2(pitch.graph && split.graph, dg_last_error());
+
+    const int latency = dg_latency(pitch.graph);
+    QVERIFY(latency > 0);
+    QCOMPARE(dg_latency(split.graph), latency);
+
+    const QVector<float> in = stereoNoise(48000);
+    const QVector<float> wet = renderGraph(pitch.graph, in);
+    const QVector<float> sum = renderGraph(split.graph, in);
+    double worst = 0.0;
+    for (int i = latency * 2; i < in.size(); ++i)
+        worst = std::max(worst, std::abs(double(sum[i]) - (wet[i] + in[i - latency * 2])));
+    QVERIFY2(worst < 1e-5, qPrintable(QString::number(worst)));
+}
+
+void EngineTest::audioGraphBandSplitSumsFlat()
+{
+    // Linkwitz-Riley bands with allpass compensation recombine to a flat magnitude.
+    GraphHandle split(graphManifest(R"({"chain":[{"id":"s","type":"split","mode":"bands","crossovers":[300,3000],
+        "lanes":[{"chain":[]},{"chain":[]},{"chain":[]}]}]})"));
+    QVERIFY2(split.graph, dg_last_error());
+
+    for (const double hz : {60.0, 300.0, 1000.0, 3000.0, 9000.0}) {
+        dg_reset(split.graph, 0.0);
+        const QVector<float> in = stereoTone(48000, hz, 48000, 0.5f);
+        const QVector<float> out = renderGraph(split.graph, in);
+        const int half = static_cast<int>(in.size() / 2);
+        const double gainDb = 20.0 * std::log10(rms(out.constData() + half, half) / rms(in.constData() + half, half));
+        QVERIFY2(std::abs(gainDb) < 0.1, qPrintable(QStringLiteral("%1 Hz: %2 dB").arg(hz).arg(gainDb)));
+    }
+}
+
+void EngineTest::audioGraphOutputIgnoresBlockSize()
+{
+    // Control runs on fixed slices from the last reset, so how the host chunks the audio must not
+    // change a single sample. Forge's preview (128-frame quanta) depends on this.
+    const QByteArray manifest = graphManifest(R"({
+        "modulators":[{"id":"m","type":"lfo","knobs":{"rate":3}},
+                      {"id":"e","type":"envelope","knobs":{"attack":5,"release":80}}],
+        "chain":[{"id":"f","type":"filter","knobs":{"cutoff":900},"mod":{"cutoff":[{"from":"m","depth":0.4}]}},
+                 {"id":"d","type":"drive","mod":{"mix":[{"from":"e","depth":-0.5}]}},
+                 {"id":"s","type":"split","crossfade":true,"blend":0.3,"lanes":[
+                    {"chain":[{"id":"r","type":"reverb"}]},{"chain":[{"id":"l","type":"delay"}]}]}]})");
+    GraphHandle a(manifest);
+    GraphHandle b(manifest);
+    QVERIFY2(a.graph && b.graph, dg_last_error());
+
+    const QVector<float> in = stereoNoise(24000, 7);
+    const QVector<float> big = renderGraph(a.graph, in, 4096);
+    const QVector<float> odd = renderGraph(b.graph, in, 77);
+    for (int i = 0; i < in.size(); ++i)
+        QVERIFY2(big[i] == odd[i], qPrintable(QStringLiteral("sample %1: %2 vs %3").arg(i).arg(big[i]).arg(odd[i])));
+
+    // And the modulation is real: the same graph with its routes at zero depth sounds different.
+    QByteArray still = manifest;
+    still.replace(R"("depth":0.4)", R"("depth":0)").replace(R"("depth":-0.5)", R"("depth":0)");
+    GraphHandle c(still);
+    QVERIFY2(c.graph, dg_last_error());
+    const QVector<float> unmodulated = renderGraph(c.graph, in, 4096);
+    double diff = 0.0;
+    for (int i = 0; i < in.size(); ++i)
+        diff = std::max(diff, std::abs(double(big[i]) - unmodulated[i]));
+    QVERIFY2(diff > 0.01, qPrintable(QString::number(diff)));
+}
+
+void EngineTest::audioGraphModulatorPhaseSurvivesSeek()
+{
+    // A reset at clip time T must put LFOs and sequencers where continuous playback from 0 had
+    // them at T, so a seek does not hear a different wobble.
+    const QByteArray manifest = graphManifest(R"({"chain":[],"modulators":[
+        {"id":"m","type":"lfo","knobs":{"rate":1.7,"phase":0.2}},
+        {"id":"q","type":"steps","steps":[0,0.5,1,0.25],"knobs":{"rate":5}}]})");
+    GraphHandle continuous(manifest);
+    GraphHandle seeked(manifest);
+    QVERIFY2(continuous.graph && seeked.graph, dg_last_error());
+
+    constexpr int kSlices = 1000;
+    const QVector<float> silence(kSlices * 128 * 2, 0.0f);
+    renderGraph(continuous.graph, silence, 1000);
+    // The last control pass ran at the start of the final slice.
+    dg_reset(seeked.graph, double(kSlices - 1) * 128.0 / 48000.0);
+    for (int i = 0; i < 2; ++i) {
+        QVERIFY2(std::abs(dg_modulator_values(continuous.graph)[i] - dg_modulator_values(seeked.graph)[i]) < 1e-4,
+                 qPrintable(QStringLiteral("modulator %1: %2 vs %3").arg(i)
+                                .arg(dg_modulator_values(continuous.graph)[i])
+                                .arg(dg_modulator_values(seeked.graph)[i])));
+    }
+}
+
+void EngineTest::audioGraphLiveEditsMatchRebuilt()
+{
+    // Forge moves route depths and lane levels in a running graph instead of rebuilding it; doing
+    // that must sound exactly like a graph built with those values from the start.
+    const char *shape = R"({"modulators":[{"id":"m","type":"lfo","knobs":{"rate":2}}],
+        "chain":[{"id":"f","type":"filter","knobs":{"cutoff":800},"mod":{"cutoff":[{"from":"m","depth":%1}]}},
+                 {"id":"s","type":"split","lanes":[{"gain":%2,"chain":[]},{"gain":1,"chain":[{"id":"d","type":"delay"}]}]}]})";
+    GraphHandle built(graphManifest(QString::fromLatin1(shape).arg(0.6).arg(0.3).toLatin1()));
+    GraphHandle edited(graphManifest(QString::fromLatin1(shape).arg(0.0).arg(1.0).toLatin1()));
+    QVERIFY2(built.graph && edited.graph, dg_last_error());
+    dg_set_route_depth(edited.graph, dg_node_index(edited.graph, "f"), 1, dg_modulator_index(edited.graph, "m"), 0.6f);
+    dg_set_lane_gain(edited.graph, dg_node_index(edited.graph, "s"), 0, 0.3f);
+    dg_reset(edited.graph, 0.0);
+    dg_reset(built.graph, 0.0);
+
+    const QVector<float> in = stereoNoise(24000, 3);
+    const QVector<float> a = renderGraph(built.graph, in);
+    const QVector<float> b = renderGraph(edited.graph, in);
+    for (int i = 0; i < in.size(); ++i)
+        QVERIFY2(a[i] == b[i], qPrintable(QStringLiteral("sample %1: %2 vs %3").arg(i).arg(a[i]).arg(b[i])));
+}
+
+void EngineTest::audioGraphConvolvesStagedImpulse()
+{
+    // A single-tap IR keeps the waveform: what comes out is the input, scaled.
+    QVector<float> dirac(64, 0.0f);
+    dirac[0] = 1.0f;
+    const QByteArray wav = monoWav(dirac, 48000);
+    dg_stage_file("ir/dirac.wav", reinterpret_cast<const uint8_t *>(wav.constData()), int(wav.size()));
+    GraphHandle conv(graphManifest(R"({"chain":[{"id":"c","type":"convolution","ir":"ir/dirac.wav",
+        "knobs":{"mix":1,"lowcut":20,"highcut":20000}}]})"));
+    dg_clear_files();
+    QVERIFY2(conv.graph, dg_last_error());
+
+    const QVector<float> in = stereoTone(24000, 1000.0, 48000, 0.5f);
+    const QVector<float> out = renderGraph(conv.graph, in);
+    double dot = 0.0, inEnergy = 0.0, outEnergy = 0.0;
+    for (int i = in.size() / 2; i < in.size(); ++i) {
+        dot += double(in[i]) * out[i];
+        inEnergy += double(in[i]) * in[i];
+        outEnergy += double(out[i]) * out[i];
+    }
+    QVERIFY(outEnergy > 1e-6);
+    const double correlation = dot / std::sqrt(inEnergy * outEnergy);
+    QVERIFY2(correlation > 0.995, qPrintable(QString::number(correlation)));
+}
+
+void EngineTest::audioGraphPackageLoadsImpulseFromPackage()
+{
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    QVector<float> tail(4800);
+    for (int i = 0; i < tail.size(); ++i)
+        tail[i] = std::exp(-6.0f * float(i) / float(tail.size())) * ((i * 7919) % 13 - 6) / 6.0f;
+
+    auto writePackage = [&root](const QString &name, const QByteArray &manifest, const QByteArray &wav) {
+        const QString dir = root.filePath(name);
+        QDir().mkpath(dir + QStringLiteral("/ir"));
+        QFile json(dir + QStringLiteral("/audio-effect.json"));
+        if (!json.open(QIODevice::WriteOnly))
+            return QString();
+        json.write(manifest);
+        QFile ir(dir + QStringLiteral("/ir/room.wav"));
+        if (!ir.open(QIODevice::WriteOnly))
+            return QString();
+        ir.write(wav);
+        return dir;
+    };
+
+    const QByteArray wav = monoWav(tail, 48000);
+    const QString good = writePackage(
+        QStringLiteral("good"),
+        graphManifest(R"({"chain":[{"id":"c","type":"convolution","ir":"ir/room.wav"}]})"), wav);
+    QString error;
+    const std::optional<AudioEffectEntry> entry = loadAudioEffectPackage(good, &error);
+    QVERIFY2(entry, qPrintable(error));
+    QVERIFY(entry->graph);
+    QCOMPARE(entry->graph->chain.front().ir->frames, 4800);
+    QVERIFY(entry->prerollMs >= 100); // the IR's 100 ms tail
+
+    // A package may only reach files inside itself.
+    QFile outside(root.filePath(QStringLiteral("outside.wav")));
+    QVERIFY(outside.open(QIODevice::WriteOnly));
+    outside.write(wav);
+    outside.close();
+    const QString escaping = writePackage(
+        QStringLiteral("escaping"),
+        graphManifest(R"({"chain":[{"id":"c","type":"convolution","ir":"../outside.wav"}]})"), wav);
+    QVERIFY(!loadAudioEffectPackage(escaping, &error));
+    QVERIFY2(error.contains(QStringLiteral("inside the package")), qPrintable(error));
+}
+
+void EngineTest::audioEffectRackRebuildsWhenGraphChanges()
+{
+    // Every effect is a graph now, so the rack must tell effects apart by identity, not by a
+    // processor name they might share.
+    auto graphSpec = [](const char *key, const char *graph) {
+        drift::AudioEffectSpec spec;
+        spec.key = QString::fromLatin1(key);
+        std::string error;
+        spec.graph = drift::audiofx::parseAudioGraph(graph, {}, {}, {}, &error);
+        return spec;
+    };
+    const drift::AudioEffectSpec a = graphSpec("a", R"({"chain":[{"id":"x","type":"gain"}]})");
+    const drift::AudioEffectSpec b = graphSpec("b", R"({"chain":[{"id":"x","type":"reverb"}]})");
+    QVERIFY(a.graph && b.graph);
+
+    drift::AudioEffectRack rack;
+    bool rebuilt = false;
+    QVERIFY(rack.configure({a}, 48000, &rebuilt));
+    QVERIFY(rebuilt);
+    QVERIFY(rack.configure({a}, 48000, &rebuilt));
+    QVERIFY(!rebuilt);
+    QVERIFY(rack.configure({b}, 48000, &rebuilt));
+    QVERIFY(rebuilt);
+}
+
+namespace {
+
+// A one-parameter graph spec: "g" drives a gain pedal's gain in dB.
+drift::AudioEffectSpec gainSpec(const char *graph)
+{
+    drift::AudioEffectSpec spec;
+    spec.key = QStringLiteral("gain");
+    std::string error;
+    spec.graph = drift::audiofx::parseAudioGraph(graph, {"g"}, {0.0f}, {}, &error);
+    spec.parameters.insert(QStringLiteral("g"), 0.0f);
+    return spec;
+}
+
+// Runs a rack over `in` in `block`-frame calls, telling it where each block sits on the timeline.
+QVector<float> runTimedRack(drift::AudioEffectRack &rack, const QVector<float> &in, drift::TimeUs startUs,
+                            int rate, int block = 1000)
+{
+    QVector<float> out = in;
+    const int frames = static_cast<int>(in.size() / 2);
+    for (int offset = 0; offset < frames; offset += block) {
+        const int count = std::min(block, frames - offset);
+        rack.process(out.data() + offset * 2, count,
+                     startUs + static_cast<drift::TimeUs>(int64_t(offset) * drift::kUsPerSecond / rate));
+    }
+    return out;
+}
+
+} // namespace
+
+void EngineTest::audioEffectRackFollowsKeyframes()
+{
+    // A gain keyed from -60 dB to 0 dB over the first second of a clip that starts at 5 s: the
+    // output has to fade in with it, on the clip's clock rather than the timeline's.
+    drift::AudioEffectSpec spec =
+        gainSpec(R"({"chain":[{"id":"p","type":"gain","knobs":{"gain":{"param":"g"}}}]})");
+    QVERIFY(spec.graph);
+    drift::KeyframeTrack<double> fade;
+    fade.setKeyframe(0, -60.0);
+    fade.setKeyframe(drift::kUsPerSecond, 0.0);
+    spec.keyframes.insert(QStringLiteral("g"), fade);
+    spec.ownerStartUs = 5 * drift::kUsPerSecond;
+
+    constexpr int kRate = 48000;
+    drift::AudioEffectRack rack;
+    QVERIFY(rack.configure({spec}, kRate));
+    rack.reset(spec.ownerStartUs);
+    const QVector<float> tone = stereoTone(kRate * 2, 440.0, kRate, 0.5f);
+    const QVector<float> out = runTimedRack(rack, tone, spec.ownerStartUs, kRate);
+
+    const int window = kRate / 20; // 50 ms, stereo-interleaved below
+    const double inRms = rms(tone.constData(), window * 2);
+    const double early = rms(out.constData(), window * 2);
+    const double middle = rms(out.constData() + kRate, window * 2);       // ~0.5 s in
+    const double late = rms(out.constData() + kRate * 3, window * 2);     // ~1.5 s in
+    QVERIFY2(early < inRms * 0.01, qPrintable(QString::number(early / inRms)));
+    QVERIFY2(middle > early * 10 && middle < late, qPrintable(QStringLiteral("%1 %2").arg(middle).arg(late)));
+    QVERIFY2(std::abs(20.0 * std::log10(late / inRms)) < 0.1, qPrintable(QString::number(late / inRms)));
+}
+
+void EngineTest::audioEffectRackSeedsModulatorsFromOwnerTime()
+{
+    // An LFO on the gain, owned by a clip at 3 s. Playing from the clip's start and seeking
+    // straight to 4.5 s have to arrive at the same wobble.
+    const char *graph = R"({"modulators":[{"id":"m","type":"lfo","knobs":{"rate":0.5}}],
+        "chain":[{"id":"p","type":"gain","knobs":{"gain":-12},"mod":{"gain":[{"from":"m","depth":0.1}]}}]})";
+    drift::AudioEffectSpec spec = gainSpec(graph);
+    QVERIFY(spec.graph);
+    spec.ownerStartUs = 3 * drift::kUsPerSecond;
+
+    constexpr int kRate = 48000;
+    const QVector<float> dc(kRate * 2 * 2, 0.5f); // 2 s of constant input
+    const drift::TimeUs seekUs = spec.ownerStartUs + drift::kUsPerSecond * 3 / 2;
+    const int seekFrame = kRate * 3 / 2;
+
+    drift::AudioEffectRack continuous;
+    QVERIFY(continuous.configure({spec}, kRate));
+    continuous.reset(spec.ownerStartUs);
+    const QVector<float> played = runTimedRack(continuous, dc, spec.ownerStartUs, kRate);
+
+    drift::AudioEffectRack seeked;
+    QVERIFY(seeked.configure({spec}, kRate));
+    seeked.reset(seekUs);
+    const QVector<float> tail(dc.constBegin() + seekFrame * 2, dc.constEnd());
+    const QVector<float> jumped = runTimedRack(seeked, tail, seekUs, kRate);
+
+    // The gain glides over 20 ms, so compare a little after the jump.
+    for (const int at : {kRate / 20, kRate / 4}) {
+        const float a = played[(seekFrame + at) * 2];
+        const float b = jumped[at * 2];
+        QVERIFY2(std::abs(a - b) < 0.002f, qPrintable(QStringLiteral("+%1: %2 vs %3").arg(at).arg(a).arg(b)));
+    }
+    // And the LFO is actually moving the level, or the comparison proves nothing.
+    QVERIFY(std::abs(played[kRate / 2 * 2] - played[kRate * 3 / 2 * 2]) > 0.01f);
 }
 
 void EngineTest::audioEffectChainAltersSignal()
@@ -12839,7 +13312,7 @@ void EngineTest::audioEffectStreamIsContinuousAcrossBlocks()
     QVector<float> streamed(kTotal * 2);
     std::memcpy(streamed.data(), tone.constData(), static_cast<size_t>(kTotal) * 2 * sizeof(float));
     for (int block = 0; block < kBlocks; ++block)
-        rack.process(streamed.data() + block * kBlock * 2, kBlock);
+        rack.process(streamed.data() + block * kBlock * 2, kBlock, 0);
 
     const QVector<float> reference = runRack({tremolo}, tone.constData(), kTotal, kRate);
     QCOMPARE(reference.size(), streamed.size());
@@ -12910,18 +13383,18 @@ void EngineTest::audioEffectRackPrimingAlignsLatentStages()
 
     const QVector<float> continuous = stereoTone(primeFrames + kBlock, 440.0, kRate);
 
-    primed.warmUp(continuous.constData(), primeFrames);
+    primed.warmUp(continuous.constData(), primeFrames, 0);
     QVector<float> primedOut(kBlock * 2);
     std::memcpy(primedOut.data(), continuous.constData() + primeFrames * 2,
                 static_cast<size_t>(kBlock) * 2 * sizeof(float));
-    primed.process(primedOut.data(), kBlock);
+    primed.process(primedOut.data(), kBlock, 0);
 
     drift::AudioEffectRack cold;
     QVERIFY(cold.configure(specs, kRate));
     QVector<float> coldOut(kBlock * 2);
     std::memcpy(coldOut.data(), continuous.constData() + primeFrames * 2,
                 static_cast<size_t>(kBlock) * 2 * sizeof(float));
-    cold.process(coldOut.data(), kBlock);
+    cold.process(coldOut.data(), kBlock, 0);
 
     // The opening of the block is the part latency eats. Primed, it carries signal; cold, it is
     // the silence users heard at the head of every pitch-shifted clip.
@@ -12968,12 +13441,12 @@ void EngineTest::pitchShiftMovesPitchInTheRightDirection()
 
         const int prime = rack.primeFrames();
         const QVector<float> tone = stereoTone(prime + kMeasure, kToneHz, kRate);
-        rack.warmUp(tone.constData(), prime);
+        rack.warmUp(tone.constData(), prime, 0);
 
         QVector<float> out(kMeasure * 2);
         std::memcpy(out.data(), tone.constData() + prime * 2,
                     static_cast<size_t>(kMeasure) * 2 * sizeof(float));
-        rack.process(out.data(), kMeasure);
+        rack.process(out.data(), kMeasure, 0);
 
         const double shifted = kToneHz * testCase.ratio;
         const double atShifted = toneEnergy(out.constData(), kMeasure, shifted, kRate);
@@ -13016,11 +13489,11 @@ void EngineTest::audioEffectRackParameterChangeIsContinuous()
 
     drift::AudioEffectRack rack;
     QVERIFY(rack.configure(audioEffectSpecsFor({muffled}), kRate));
-    rack.process(first.data(), kBlock);
+    rack.process(first.data(), kBlock, 0);
 
     muffled.parameters.insert(QStringLiteral("gain"), 2.0);
     QVERIFY(rack.configure(audioEffectSpecsFor({muffled}), kRate));
-    rack.process(second.data(), kBlock);
+    rack.process(second.data(), kBlock, 0);
 
     const float boundaryStep = std::abs(second[0] - first[(kBlock - 1) * 2]);
     // An unsmoothed 0.5 -> 2.0 gain change on a 0.5 input steps by 0.75 in one sample.

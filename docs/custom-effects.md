@@ -10,7 +10,7 @@ agent over MCP (see [MCP.md](MCP.md#custom-effects)).
 |---|---|---|---|
 | Video effect | `effect.json` | GLSL fragment shaders | [gpu-effects.md](gpu-effects.md) |
 | Transition | `transition.json` | GLSL fragment shaders | [gpu-transitions.md](gpu-transitions.md) |
-| Audio effect | `audio-effect.json` | none: wraps a built-in processor | below |
+| Audio effect | `audio-effect.json` | none: a built-in processor, or a graph of built-in pedals | below |
 
 The MCP op `effect_authoring_guide` returns the same material, written for agents. Keep the two in
 step: its text lives in `src/mcp/McpEffectAuthoring.cpp`.
@@ -64,8 +64,12 @@ render time, a shader that fails to compile leaves the frame unchanged.
 
 ## Audio effects
 
-An audio effect has no DSP of its own. It names one of the processors compiled into Drift
-(`src/engine/audio/AudioEffectFactory.cpp`) and sets the parameters that processor reads:
+An audio effect has no DSP of its own. It either names one of the processors compiled into Drift,
+or wires the compiled-in pedals into a graph. Both run in the mixer for preview and export alike,
+and their `float`, `int` and `bool` parameters can be keyframed on the timeline like a video
+effect's.
+
+### A built-in processor
 
 ```json
 {
@@ -79,12 +83,73 @@ An audio effect has no DSP of its own. It names one of the processors compiled i
 }
 ```
 
-To find the right identifiers, copy them from a bundled effect that uses the same processor. The
-`processors` table in `effect_authoring_guide` lists those effects. Then change `displayName`, the
-ranges and the defaults to suit.
+The processors are in `src/engine/audio/AudioEffectFactory.cpp`. To find the right identifiers,
+copy them from a bundled effect that uses the same processor. The `processors` table in
+`effect_authoring_guide` lists those effects. Then change `displayName`, the ranges and the
+defaults to suit.
 
 `prerollMs` is how much earlier audio the processor needs to produce a correct block from an
 arbitrary start. Use 0 for stateless processors and the tail length for echoes.
+
+### A graph of pedals (Drift 0.8.0 and later)
+
+With `"processor": "graph"`, a `graph` object describes a pedalboard:
+
+```json
+{
+  "id": "user.swirl",
+  "displayName": "Swirl",
+  "category": "space",
+  "backend": "juce",
+  "processor": "graph",
+  "prerollMs": 0,
+  "parameters": [
+    { "identifier": "space", "displayName": "Space", "type": "float", "minValue": 0, "maxValue": 1, "defaultValue": 0.4 }
+  ],
+  "graph": {
+    "version": 1,
+    "modulators": [ { "id": "m1", "type": "lfo", "knobs": { "rate": 0.5 } } ],
+    "chain": [
+      { "id": "f", "type": "filter", "knobs": { "mode": 2, "cutoff": 900 },
+        "mod": { "cutoff": [ { "from": "m1", "depth": 0.35 } ] } },
+      { "id": "s", "type": "split", "mode": "parallel", "crossfade": true, "blend": { "param": "space" },
+        "lanes": [ { "chain": [] },
+                   { "chain": [ { "id": "c", "type": "convolution", "ir": "ir/room.wav", "knobs": { "mix": 1 } } ] } ] }
+    ]
+  }
+}
+```
+
+- **chain** runs in order. Each node has an `id` and a `type`: a pedal from
+  `src/engine/audio/PedalCatalog.cpp` (`effect_authoring_guide` returns the same catalog as
+  `pedals`), or `split`. `classic.<processor>` pedals are the processors above, so a legacy effect is
+  a one-pedal graph.
+- **knobs** map a knob id to a number, or to `{ "param": "<identifier>" }`, which makes it one of
+  the effect's parameters and so a slider in the inspector. Missing knobs take their defaults. Choice
+  knobs take the option's index.
+- **split** runs 2–4 `lanes`. `"mode": "parallel"` feeds every lane the same sound and sums them;
+  with `"crossfade": true` and two lanes it blends between them by `blend` instead. `"mode": "bands"`
+  splits the sound at `crossovers` (Hz, one per lane boundary) into Linkwitz–Riley bands that sum
+  back flat. Lanes with less latency are delayed to match. Splits nest at most two deep.
+- **modulators** turn knobs over time: `lfo` (sine, triangle, square, saw or random, up to 20 Hz),
+  `envelope` (follows the level of the graph input, or of a node's output with `"source": "<id>"`)
+  and `steps` (`"steps": [0..1, …]`, up to 16). A node's `mod` maps a continuous knob to routes;
+  `depth` is a fraction of the knob's range, from -1 to 1, and may itself be `{ "param": … }`.
+  LFO and step phases follow the clip's own time, so a seek lands where continuous playback would.
+- **bypass** (`true` or `{ "param": … }`) switches a pedal off, with a short crossfade.
+- **ir** gives a convolution pedal its impulse response: a WAV file inside the package (16/24/32-bit
+  PCM or 32-bit float, mono or stereo, up to 10 seconds and 10 MB). Paths outside the package are
+  rejected.
+
+`prerollMs` is a floor here: Drift measures a graph's tails itself (delays, reverbs, the IR's
+length, envelope settling) and primes from whichever is longer.
+
+A graph that doesn't validate is skipped when the catalog loads, with the reason in the log:
+an unknown pedal or knob, a `param` that isn't declared, a route to a switch, a missing IR.
+Packages that use graphs should declare `"minAppVersion": "0.8.0"`; Drift Forge does.
+
+Drift Forge builds these graphs as a pedalboard with a live preview that runs the same DSP compiled
+to WebAssembly (`wasm/`).
 
 ## Sharing
 

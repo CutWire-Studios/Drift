@@ -5167,6 +5167,14 @@
         <translation>Parcourir les effets audio</translation>
     </message>
     <message>
+        <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <translation type="unfinished">Déplacez‑vous à une heure, définissez une valeur, puis cliquez sur le diamant pour ajouter un cadre clé. Avec les cadres clés automatiques activés, faire glisser un curseur crée également des cadres clés.</translation>
+    </message>
+    <message>
+        <source>Auto keyframes</source>
+        <translation type="unfinished">Cadres clés automatiques</translation>
+    </message>
+    <message>
         <source>%1 (not installed)</source>
         <translation>%1 (non installé)</translation>
     </message>
@@ -5193,18 +5201,6 @@
     <message>
         <source>Remove audio effect</source>
         <translation>Supprimer l’effet audio</translation>
-    </message>
-    <message>
-        <source>On</source>
-        <translation>Activé</translation>
-    </message>
-    <message>
-        <source>Off</source>
-        <translation>Désactivé</translation>
-    </message>
-    <message>
-        <source>Edit audio effect</source>
-        <translation>Modifier l’effet audio</translation>
     </message>
 </context>
 <context>

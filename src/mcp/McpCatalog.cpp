@@ -71,7 +71,7 @@ QJsonObject animPropProp()
 {
     return stringProp(QStringLiteral(
         "Animated property: x, y, width, height, rotation, rotationX, rotationY, z, perspective, "
-        "opacity, volume, fx.<effectIndex>.<paramKey> "
+        "opacity, volume, fx.<effectIndex>.<paramKey>, afx.<audioEffectIndex>.<paramKey> "
         "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
         "text.layer.<layerId>.<opacity|offsetX|offsetY|blur|width|spread|trimStart|trimEnd|dashOffset|"
@@ -878,7 +878,7 @@ const QList<Op> &ops()
         { "list_animated_properties", "keyframes", "See what already has keys",
           "Returns {props:[…]} — only the properties that already carry keyframes on this clip. Empty "
           "on a fresh clip. Property spellings live in the `prop` schema of the other keyframes ops "
-          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>), not here.",
+          "(x, y, width, height, rotation, opacity, volume, fx.<i>.<key>, afx.<i>.<key>, mask.<key>, text.<key>, shape.<key>, vector.svg.<key>, model3d.<key>), not here.",
           objectSchema(clipRefProps()), true, false, true },
         { "list_keyframes", "keyframes", "Read keys for one property",
           "Returns {prop, enabled, keys:[{seconds, value, inDx, inDy, outDx, outDy, corner, hold, "

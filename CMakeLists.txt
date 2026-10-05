@@ -6,7 +6,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Oldest macOS release Drift 
 
 # C is enabled for JUCE only: its modules compile a handful of C sources (zlib, flac, oggvorbis)
 # and its CMake refuses to configure without it.
-project(Drift VERSION 0.7.5 LANGUAGES CXX C)
+project(Drift VERSION 0.8.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -519,6 +519,7 @@ qt_add_resources(driftcore "drift_text_animations"
 # from spreading across driftengine. AudioEffectRack.h is the only header that leaves here and it
 # mentions no JUCE type, so driftengine stays JUCE-free at the source level.
 add_library(driftaudiodsp STATIC
+    src/engine/audio/AudioStage.h
     src/engine/audio/AudioEffectProcessor.h
     src/engine/audio/AudioEffectProcessor.cpp
     src/engine/audio/FilterProcessors.h
@@ -531,6 +532,18 @@ add_library(driftaudiodsp STATIC
     src/engine/audio/SoundTouchPitchProcessor.cpp
     src/engine/audio/AudioEffectFactory.h
     src/engine/audio/AudioEffectFactory.cpp
+    src/engine/audio/PedalCatalog.h
+    src/engine/audio/PedalCatalog.cpp
+    src/engine/audio/WavReader.h
+    src/engine/audio/WavReader.cpp
+    src/engine/audio/AudioGraph.h
+    src/engine/audio/AudioGraph.cpp
+    src/engine/audio/GraphPedals.h
+    src/engine/audio/GraphPedals.cpp
+    src/engine/audio/GraphProcessor.h
+    src/engine/audio/GraphProcessor.cpp
+    src/engine/audio/DriftGraphApi.h
+    src/engine/audio/DriftGraphApi.cpp
     src/engine/audio/AudioEffectRack.h
     src/engine/audio/AudioEffectRack.cpp
     src/engine/audio/ClipAudioRetimer.h
@@ -553,6 +566,11 @@ target_compile_definitions(driftaudiodsp PRIVATE
     # Otherwise every binary that links this, tools and tests included, opens with "JUCE v8.0.15".
     JUCE_DISABLE_JUCE_VERSION_PRINTING=1
 )
+# The same sources are built to WebAssembly for Drift Forge's preview (wasm/). Fused multiply-adds
+# would round differently from the wasm build, and on ARM the compiler contracts by default.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(driftaudiodsp PRIVATE -ffp-contract=off)
+endif()
 
 # --- engine: FFmpeg-facing code, no QML deps -------------------------------
 add_library(driftengine STATIC

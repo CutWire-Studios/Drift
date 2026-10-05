@@ -2,16 +2,24 @@
 
 namespace drift {
 
-void ChainProcessor::bind(const QString &paramId, std::function<void(float)> setter)
+void ChainProcessor::bind(const char *paramId, std::function<void(float)> setter)
 {
-    m_bindings.insert(paramId, std::move(setter));
+    m_bindings.emplace_back(paramId, std::move(setter));
 }
 
-void ChainProcessor::setParameter(const QString &paramId, float value)
+int ChainProcessor::parameterIndex(std::string_view paramId) const
 {
-    const auto it = m_bindings.constFind(paramId);
-    if (it != m_bindings.constEnd())
-        it.value()(value);
+    for (size_t i = 0; i < m_bindings.size(); ++i) {
+        if (m_bindings[i].first == paramId)
+            return static_cast<int>(i);
+    }
+    return -1;
+}
+
+void ChainProcessor::setParameter(int index, float value)
+{
+    if (index >= 0 && index < static_cast<int>(m_bindings.size()))
+        m_bindings[static_cast<size_t>(index)].second(value);
 }
 
 void ChainProcessor::prepare(const juce::dsp::ProcessSpec &spec)

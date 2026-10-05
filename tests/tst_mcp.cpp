@@ -3661,6 +3661,9 @@ void McpTest::authoredEffectLifecycle()
     const QJsonObject guide = call("effect_authoring_guide", {{QStringLiteral("kind"), QStringLiteral("audio_effect")}});
     QVERIFY(guide.value(QStringLiteral("ok")).toBool());
     QVERIFY(guide.value(QStringLiteral("processors")).toArray().size() > 0);
+    const QJsonObject pedals = guide.value(QStringLiteral("pedals")).toObject();
+    QVERIFY(pedals.value(QStringLiteral("pedals")).toArray().size() > 26);
+    QVERIFY(pedals.value(QStringLiteral("modulators")).toArray().size() == 3);
 
     const QJsonObject manifest{
         {QStringLiteral("displayName"), QStringLiteral("Test Tint")},
@@ -3753,6 +3756,22 @@ void McpTest::authoredEffectLifecycle()
                                                         {QStringLiteral("slug"), QStringLiteral("test_nope")},
                                                         {QStringLiteral("manifest"), QJsonObject{{QStringLiteral("processor"), QStringLiteral("nope")}}}});
     QCOMPARE(badAudio.value(QStringLiteral("error")).toString(), QStringLiteral("bad_manifest"));
+
+    // The graph example the guide shows has to be one Drift accepts.
+    const QString guideText = call("effect_authoring_guide", {{QStringLiteral("kind"), QStringLiteral("audio_effect")}})
+                                  .value(QStringLiteral("guide")).toString();
+    const int start = guideText.indexOf(QStringLiteral("{\"displayName\": \"Swirl\""));
+    const int end = guideText.indexOf(QStringLiteral("\n\n- chain runs in order"), start);
+    QVERIFY(start > 0 && end > start);
+    QJsonParseError parseError;
+    const QJsonObject example = QJsonDocument::fromJson(guideText.mid(start, end - start).toUtf8(), &parseError).object();
+    QVERIFY2(parseError.error == QJsonParseError::NoError, qPrintable(parseError.errorString()));
+    const QJsonObject graph = call("create_effect", {{QStringLiteral("kind"), QStringLiteral("audio_effect")},
+                                                     {QStringLiteral("slug"), QStringLiteral("test_swirl")},
+                                                     {QStringLiteral("manifest"), example}});
+    QVERIFY2(graph.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(graph).toJson()));
+    QVERIFY(audioEffectDefForId(QStringLiteral("user.test_swirl")));
+    QVERIFY(audioEffectDefForId(QStringLiteral("user.test_swirl"))->graph->modulators.size() == 1);
 
     QJsonObject transition = manifest;
     QJsonObject pipeline = transition.value(QStringLiteral("pipeline")).toObject();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/audio/AudioEffectProcessor.h"
+#include "engine/audio/AudioStage.h"
 
 #include <memory>
 #include <vector>

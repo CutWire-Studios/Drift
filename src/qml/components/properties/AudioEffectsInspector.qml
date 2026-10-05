@@ -81,6 +81,27 @@ Item {
             onActionTriggered: root.browseAudioEffectsRequested()
         }
 
+        Column {
+            width: parent.width
+            spacing: 10
+            visible: root.hasAudio && root.selectedAudioEffects.length > 0
+
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.")
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedChip {
+                text: qsTr("Auto keyframes")
+                selected: EditorState.autoKeyEnabled
+                onClicked: EditorState.autoKeyEnabled = !EditorState.autoKeyEnabled
+            }
+        }
+
         // Integer models: previewSet* rebuilds selectedClipAudioEffects as a new
         // QVariantList on every tick. A list model would regenerate delegates and
         // destroy the pressed slider; a count only changes when effects are added/removed.
@@ -200,11 +221,30 @@ Item {
                             width: root.width
                             spacing: 4
 
+                            readonly property var keyframeList: (paramData.keyframes
+                                                                 && paramData.keyframes.points) || []
+                            readonly property bool animated: keyframeList.length > 0
+
+                            // Switches key the playhead like the video inspector's: animated, a
+                            // toggle writes a key; static, it sets the value.
                             Row {
+                                visible: !!audioParamRow.paramData.isBoolean
                                 width: parent.width
                                 spacing: 8
+                                ChannelKeyButton {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    keyframeList: audioParamRow.keyframeList
+                                    label: audioParamRow.paramData.label
+                                    onAddRequested: EditorState.setClipKeyframe(
+                                                        EditorState.selectedTrack, EditorState.selectedClip,
+                                                        audioParamRow.paramData.prop, EditorState.playheadSeconds,
+                                                        audioParamRow.paramData.value ? 1 : 0)
+                                    onRemoveRequested: EditorState.removeClipKeyframe(
+                                                           EditorState.selectedTrack, EditorState.selectedClip,
+                                                           audioParamRow.paramData.prop, EditorState.playheadSeconds)
+                                }
                                 Text {
-                                    width: parent.width - 48
+                                    width: parent.width - 48 - 30
                                     elide: Text.ElideRight
                                     text: audioParamRow.paramData.label
                                     color: Theme.mutedForeground
@@ -212,52 +252,43 @@ Item {
                                     font.pixelSize: Theme.fontSizeXs
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
-                                Text {
-                                    width: 40
-                                    horizontalAlignment: Text.AlignRight
-                                    text: audioParamRow.paramData.isBoolean
-                                          ? (audioParamRow.paramData.value ? qsTr("On") : qsTr("Off"))
-                                          : Number(audioParamSlider.value).toFixed(
-                                                Math.abs(audioParamRow.paramData.max - audioParamRow.paramData.min) >= 10 ? 1 : 2)
-                                    color: Theme.panelForeground
-                                    font.family: Theme.monoFontFamily
-                                    font.pixelSize: Theme.fontSizeXs
+                                ThemedSwitch {
                                     anchors.verticalCenter: parent.verticalCenter
+                                    checked: audioParamRow.animated
+                                             ? EditorState.propertyValueAt(
+                                                   EditorState.selectedTrack, EditorState.selectedClip,
+                                                   audioParamRow.paramData.prop,
+                                                   EditorState.inspectorPlayheadSeconds,
+                                                   audioParamRow.paramData.value ? 1 : 0) > 0.5
+                                             : !!audioParamRow.paramData.value
+                                    onToggled: audioParamRow.animated
+                                               ? EditorState.setClipKeyframe(
+                                                     EditorState.selectedTrack, EditorState.selectedClip,
+                                                     audioParamRow.paramData.prop, EditorState.playheadSeconds,
+                                                     checked ? 1 : 0)
+                                               : EditorState.setAudioEffectParam(
+                                                     EditorState.selectedTrack, EditorState.selectedClip,
+                                                     audioEffectCard.index, audioParamRow.paramData.key,
+                                                     checked ? 1 : 0)
                                 }
                             }
 
-                            ThemedSwitch {
-                                visible: !!audioParamRow.paramData.isBoolean
-                                checked: !!audioParamRow.paramData.value
-                                onToggled: EditorState.previewSetAudioEffectParam(
-                                               EditorState.selectedTrack, EditorState.selectedClip,
-                                               audioEffectCard.index, audioParamRow.paramData.key,
-                                               checked ? 1 : 0)
-                            }
-
-                            ThemedSlider {
-                                id: audioParamSlider
-                                lockWhilePlaying: true
-                                label: audioParamRow.paramData.label
+                            PropertyKeyframeRow {
                                 visible: !audioParamRow.paramData.isBoolean
                                 width: parent.width
-                                from: audioParamRow.paramData.min
-                                to: audioParamRow.paramData.max
-                                // Same pattern as PreviewPanel scrub: keep the model binding
-                                // off while pressed so preview ticks cannot fight the drag.
-                                Binding on value {
-                                    when: !audioParamSlider.pressed
-                                    value: audioParamRow.paramData.value
-                                }
-                                onMoved: EditorState.previewSetAudioEffectParam(
-                                             EditorState.selectedTrack, EditorState.selectedClip,
-                                             audioEffectCard.index, audioParamRow.paramData.key, value)
-                                onPressedChanged: {
-                                    if (pressed)
-                                        EditorState.beginPreviewDrag(qsTr("Edit audio effect"))
-                                    else
-                                        EditorState.commitPreviewDrag()
-                                }
+                                // `def` is the param's static value, which the row falls back to
+                                // whenever the track holds no keys.
+                                propDef: ({
+                                    key: audioParamRow.paramData.prop || "",
+                                    label: audioParamRow.paramData.label,
+                                    def: audioParamRow.paramData.value,
+                                    decimals: Math.abs(audioParamRow.paramData.max
+                                                       - audioParamRow.paramData.min) >= 10 ? 1 : 2
+                                })
+                                keyframeList: audioParamRow.keyframeList
+                                useSlider: true
+                                sliderFrom: audioParamRow.paramData.min
+                                sliderTo: audioParamRow.paramData.max
                             }
                         }
                     }
