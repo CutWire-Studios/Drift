@@ -45,6 +45,8 @@ QString adjustmentScopeToString(AdjustmentScope scope)
         return QStringLiteral("parentTrack");
     case AdjustmentScope::Range:
         return QStringLiteral("range");
+    case AdjustmentScope::Camera:
+        return QStringLiteral("camera");
     }
     return QStringLiteral("allBelow");
 }
@@ -55,6 +57,8 @@ AdjustmentScope adjustmentScopeFromString(const QString &scope)
         return AdjustmentScope::ParentTrack;
     if (scope == QStringLiteral("range"))
         return AdjustmentScope::Range;
+    if (scope == QStringLiteral("camera"))
+        return AdjustmentScope::Camera;
     return AdjustmentScope::AllBelow;
 }
 
@@ -84,6 +88,8 @@ bool Track::acceptsClip(const Clip &clip) const
         return false;
     if (clip.type != ClipType::Adjustment)
         return true;
+    if ((clip.adjustmentKind == AdjustmentKind::Camera) != isCameraLayer())
+        return false;
     return (clip.adjustmentKind == AdjustmentKind::Transform) == isTransformLayer();
 }
 

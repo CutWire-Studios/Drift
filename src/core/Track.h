@@ -19,7 +19,11 @@ TrackType trackTypeFromString(const QString &type);
 // it overlaps, inside that clip's own layer pass, so the clip's transform still carries them.
 // Range is a transform layer: its Transform clips parent every track from just below it down to
 // `spanEndTrackId`.
-enum class AdjustmentScope { AllBelow, ParentTrack, Range };
+// Camera is the scene camera: its Camera clips set the viewpoint every track in the sequence is
+// seen through. Unlike AllBelow it never snapshots or flattens the canvas — it contributes a
+// matrix and nothing else — and unlike Range it covers no span, because a scene has one viewer.
+// There is at most one of these per sequence; normalizeCameraLayers enforces that.
+enum class AdjustmentScope { AllBelow, ParentTrack, Range, Camera };
 
 QString adjustmentScopeToString(AdjustmentScope scope);
 AdjustmentScope adjustmentScopeFromString(const QString &scope);
@@ -63,7 +67,8 @@ struct Track
 
     bool allowsClipType(ClipType clipType) const;
     // allowsClipType plus the adjustment kind: a Range track holds Transform clips and nothing
-    // else, and a Transform clip lives nowhere else.
+    // else, a Camera track holds Camera clips and nothing else, and neither kind lives anywhere
+    // but on its own sort of track.
     bool acceptsClip(const Clip &clip) const;
 
     bool isAdjustment() const { return type == TrackType::Adjustment; }
@@ -76,6 +81,10 @@ struct Track
     bool isTransformLayer() const
     {
         return type == TrackType::Adjustment && adjustmentScope == AdjustmentScope::Range;
+    }
+    bool isCameraLayer() const
+    {
+        return type == TrackType::Adjustment && adjustmentScope == AdjustmentScope::Camera;
     }
 };
 

@@ -1545,7 +1545,8 @@ void CoreTest::shapeStyleSerialization()
     QVERIFY(mid.layers[1].width > 4.0 && mid.layers[1].width < 10.0);
     QCOMPARE(loadedClip.transformX.evaluateAt(0), 100.0);
     QCOMPARE(loadedClip.transformY.evaluateAt(0), 200.0);
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 11);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(),
+             drift::Project::kCurrentVersion);
 }
 
 // A project saved before format 8 carries the flat fill/stroke keys — possibly only the original
@@ -3844,7 +3845,8 @@ void CoreTest::transformLayerRoundTrips()
     QVERIFY(!effects.acceptsClip(transform));
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 11);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(),
+             drift::Project::kCurrentVersion);
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
     QVERIFY(error.isEmpty());

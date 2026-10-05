@@ -1032,6 +1032,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // A dangling span end has no earlier state to recover from here, so it is cleared.
     project.forEachTrackList([](QList<Track> &tracks) {
         normalizeTransformLayers(tracks);
+        normalizeCameraLayers(tracks);
         drift::ensureTrackIds(tracks);
     });
     // Version 6 added ClipType::Vector. Nothing to migrate; the bump exists so an older build
@@ -1045,6 +1046,10 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 10 added composite clips and the nested sequences they play. Nothing to migrate.
     // Version 11 added transform layers (Range adjustment tracks holding Transform clips). Nothing
     // to migrate; an older build would load them as effect adjustments with no effects.
+    // Version 12 added the scene camera (a Camera adjustment track holding Camera clips). Nothing
+    // to migrate; the bump is a gate, as for versions 6 and 9. An older build would load the
+    // camera as an effect adjustment with no effects and render the whole sequence from the
+    // default viewpoint — every shot framed wrongly, with nothing on screen to say why.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

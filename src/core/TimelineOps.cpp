@@ -670,6 +670,153 @@ void normalizeTransformLayers(QList<Track> &tracks, const QList<Track> *before)
     }
 }
 
+int cameraTrackIndex(const QList<Track> &tracks)
+{
+    for (int i = 0; i < tracks.size(); ++i) {
+        if (tracks.at(i).isCameraLayer())
+            return i;
+    }
+    return -1;
+}
+
+bool isCameraClip(const Clip &clip)
+{
+    return clip.type == ClipType::Adjustment && clip.adjustmentKind == AdjustmentKind::Camera;
+}
+
+int insertCameraTrack(QList<Track> &tracks)
+{
+    Track track;
+    track.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    track.type = TrackType::Adjustment;
+    track.adjustmentScope = AdjustmentScope::Camera;
+    tracks.prepend(track);
+    return 0;
+}
+
+Clip makeCameraClip(TimeUs startUs, TimeUs durationUs)
+{
+    Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = ClipType::Adjustment;
+    clip.adjustmentKind = AdjustmentKind::Camera;
+    clip.name = QStringLiteral("Camera");
+    clip.timelineStart = startUs;
+    clip.timelineDuration = durationUs;
+    clip.srcIn = 0;
+    clip.srcOut = durationUs;
+    // Every transform track is left empty, which evaluates to the camera at rest. A camera clip
+    // that has never been touched must therefore render exactly as no camera at all.
+    return clip;
+}
+
+const Clip *cameraClipAt(const QList<Track> &tracks, TimeUs timelineUs)
+{
+    const int index = cameraTrackIndex(tracks);
+    if (index < 0 || tracks.at(index).hidden)
+        return nullptr;
+    for (const Clip &clip : tracks.at(index).clips) {
+        if (isCameraClip(clip) && clip.containsTime(timelineUs))
+            return &clip;
+    }
+    return nullptr;
+}
+
+void normalizeCameraLayers(QList<Track> &tracks)
+{
+    // Runs after every edit, so the settled case — no camera track and no stray camera clip —
+    // must cost one scan and no allocation.
+    bool any = false;
+    for (const Track &track : tracks) {
+        if (track.isCameraLayer()) {
+            any = true;
+            break;
+        }
+        for (const Clip &clip : track.clips) {
+            if (isCameraClip(clip)) {
+                any = true;
+                break;
+            }
+        }
+        if (any)
+            break;
+    }
+    if (!any)
+        return;
+
+    // One camera per sequence. Extras hand their clips to the first and go; walking downwards
+    // keeps the topmost — the one insertCameraTrack made — as the survivor.
+    const int keep = cameraTrackIndex(tracks);
+    if (keep >= 0) {
+        for (int i = tracks.size() - 1; i > keep; --i) {
+            if (!tracks.at(i).isCameraLayer())
+                continue;
+            for (const Clip &clip : tracks.at(i).clips) {
+                if (isCameraClip(clip))
+                    tracks[keep].clips.append(clip);
+            }
+            tracks.removeAt(i);
+        }
+        // A camera covers the whole sequence, so a span or a parent would be meaningless.
+        tracks[keep].spanEndTrackId.clear();
+        tracks[keep].parentTrackId.clear();
+    }
+
+    // Camera clips belong on the camera track and nowhere else; anything else belongs off it.
+    // Collect both sets first, because fixing either one moves tracks about.
+    QList<Clip> homeless; // camera clips found elsewhere
+    QList<Clip> evicted;  // non-camera clips found on the camera track
+    for (int i = 0; i < tracks.size(); ++i) {
+        const bool isCamera = tracks.at(i).isCameraLayer();
+        for (int c = tracks[i].clips.size() - 1; c >= 0; --c) {
+            if (isCameraClip(tracks.at(i).clips.at(c)) != isCamera)
+                (isCamera ? evicted : homeless).prepend(tracks[i].clips.takeAt(c));
+        }
+    }
+
+    if (!homeless.isEmpty()) {
+        int index = cameraTrackIndex(tracks);
+        if (index < 0)
+            index = insertCameraTrack(tracks);
+        tracks[index].clips.append(homeless);
+    }
+    // Lifted onto a track of their own rather than dropped, the way a stray on a transform layer
+    // is: losing a clip to a normalisation pass is never the right answer.
+    for (const Clip &clip : evicted) {
+        Track lifted;
+        lifted.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        lifted.type = trackTypeForClipType(clip.type);
+        lifted.clips.append(clip);
+        tracks.append(lifted);
+    }
+
+    const int index = cameraTrackIndex(tracks);
+    if (index < 0)
+        return;
+    // A camera is not pinned to anything, and overlapping clips would make "the camera now"
+    // ambiguous. Sort by start and trim any overlap back, so one cut ends where the next begins.
+    for (Clip &clip : tracks[index].clips)
+        clip.linkedClipId.clear();
+    std::sort(tracks[index].clips.begin(), tracks[index].clips.end(),
+              [](const Clip &a, const Clip &b) { return a.timelineStart < b.timelineStart; });
+    QList<Clip> &clips = tracks[index].clips;
+    for (int c = 0; c + 1 < clips.size();) {
+        const TimeUs nextStart = clips.at(c + 1).timelineStart;
+        if (clips.at(c).timelineEnd() <= nextStart) {
+            ++c;
+            continue;
+        }
+        if (nextStart <= clips.at(c).timelineStart) {
+            // Fully swallowed by the one that follows; the later edit is the one to keep.
+            clips.removeAt(c);
+            continue;
+        }
+        clips[c].timelineDuration = nextStart - clips.at(c).timelineStart;
+        clips[c].srcOut = clips.at(c).srcIn + clips.at(c).timelineDuration;
+        ++c;
+    }
+}
+
 void liftAdjustmentClipsToOwnTracks(Project &project)
 {
     QList<Track> &tracks = project.tracks();

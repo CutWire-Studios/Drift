@@ -32,7 +32,10 @@ ClipType clipTypeFromString(const QString &type);
 // the same `effects` / `audioEffects` / `mask` members every clip has; the kind says which one
 // it is for, and drives the inspector tab and timeline tint. Transform is the odd one out: its
 // payload is the clip's own transform, applied as a parent to every track its Range track covers.
-enum class AdjustmentKind { VideoEffects, AudioEffects, Mask, Transform };
+// Camera is the other odd one: its payload is the clip's transform read as the sequence's shared
+// viewpoint (see engine/SceneCamera3d.h), so it has no pixels of its own and covers no range —
+// one camera serves the whole sequence for as long as the clip lasts.
+enum class AdjustmentKind { VideoEffects, AudioEffects, Mask, Transform, Camera };
 
 QString adjustmentKindToString(AdjustmentKind kind);
 AdjustmentKind adjustmentKindFromString(const QString &kind);

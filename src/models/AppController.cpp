@@ -14275,6 +14275,7 @@ void AppController::normalizeProjectStructure(const drift::Project *before)
     drift::hoistClipEffectsToAdjustmentLanes(m_project);
     normalizeAdjustmentLanes(m_project);
     drift::normalizeTransformLayers(m_project.tracks(), before ? &before->tracks() : nullptr);
+    drift::normalizeCameraLayers(m_project.tracks());
     m_project.ensureTrackIds();
     clampStoredTransitionDurations(m_project);
     restoreSelectionByTrackId(selection);
