@@ -176,6 +176,12 @@ struct Clip
     KeyframeTrack<double> rotationY;
     KeyframeTrack<double> positionZ;
     KeyframeTrack<double> perspective;
+    // Let depth decide what covers what, for this clip, instead of the track order that normally
+    // does. Off by default, and ignored unless layer3d is on: without a 3D pose there is no depth
+    // to sort by. Only clips that opt in take part — one at a depth behind an opted-in clip still
+    // draws over it if its track is higher, which is what keeps the usual compositing rules
+    // intact for everything else on the timeline.
+    bool depthOcclude = false;
     // Discrete pixel-orientation correction (0/90/180/270), applied losslessly at decode time —
     // distinct from `rotation` above, which is a free decorative spin effect. Relative, not
     // absolute: added on top of whatever display-matrix rotation the file actually being decoded

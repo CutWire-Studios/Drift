@@ -154,6 +154,7 @@ private slots:
     void sceneCameraMovesTheViewpoint();
     void sceneCameraRendersThroughTheCompositor();
     void sceneCameraClipDrivesTheWholeTimeline();
+    void depthOcclusionOverridesTrackOrderWhenOptedIn();
     void clipGizmoSolvesDrags();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
@@ -1504,6 +1505,132 @@ void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
     // is what makes two clips in a row read as a cut.
     const QImage afterEnd = compositor.compositeAt(drift::secondsToUs(5.0));
     QVERIFY(!afterEnd.isNull());
+}
+
+// Per-clip opt-in depth occlusion: a clip that asks for it is covered by whatever is nearer the
+// camera, instead of by whatever sits on a higher track. Everything that did not ask keeps drawing
+// in track order, which is what the rest of the timeline relies on.
+void EngineTest::depthOcclusionOverridesTrackOrderWhenOptedIn()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QImage red(60, 60, QImage::Format_RGBA8888);
+    red.fill(QColor(230, 20, 20));
+    QImage blue(60, 60, QImage::Format_RGBA8888);
+    blue.fill(QColor(20, 20, 230));
+
+    // Two overlapping cards. `near` is pushed toward the viewer, `far` away from it; the one
+    // listed last in scene.items is the one track order would put on top.
+    const auto render = [&](bool optIn, bool nearOnTop) {
+        const auto card = [&](const QImage &src, double z) {
+            GpuLayer layer;
+            layer.source = src;
+            layer.rect = QRectF(70, 70, 60, 60);
+            layer.pose3d.positionZ = z;
+            layer.pose3d.perspective = 2000.0;
+            layer.depthOcclude = optIn;
+            layer.valid = true;
+            return layer;
+        };
+        // Depth only: no tilt, so both cards stay the same size on screen and the only thing that
+        // can decide the overlap is depth or order.
+        GpuItem nearItem;
+        nearItem.layer = card(red, 300.0);
+        GpuItem farItem;
+        farItem.layer = card(blue, -300.0);
+
+        GpuScene scene;
+        scene.canvasSize = QSize(200, 200);
+        scene.backgroundColor = Qt::black;
+        if (nearOnTop) {
+            scene.items.append(farItem);
+            scene.items.append(nearItem);
+        } else {
+            scene.items.append(nearItem);
+            scene.items.append(farItem);
+        }
+        return GpuCompositor::render(scene).convertToFormat(QImage::Format_RGBA8888);
+    };
+    // Which card won the centre of the canvas.
+    const auto winner = [](const QImage &img) {
+        const QColor c = img.pixelColor(100, 100);
+        if (c.red() > 150 && c.blue() < 100)
+            return QStringLiteral("near");
+        if (c.blue() > 150 && c.red() < 100)
+            return QStringLiteral("far");
+        return QStringLiteral("neither: %1,%2,%3").arg(c.red()).arg(c.green()).arg(c.blue());
+    };
+
+    // Opted out, the drawing order decides — which is exactly today's behaviour, and the half of
+    // this that must not change.
+    QCOMPARE(winner(render(false, /*nearOnTop=*/true)), QStringLiteral("near"));
+    QCOMPARE(winner(render(false, /*nearOnTop=*/false)), QStringLiteral("far"));
+
+    // Opted in, depth decides, whichever way round they are emitted. The second case is the one
+    // that could not be expressed before: the near card is drawn *first* and still wins.
+    QCOMPARE(winner(render(true, /*nearOnTop=*/true)), QStringLiteral("near"));
+    QCOMPARE(winner(render(true, /*nearOnTop=*/false)), QStringLiteral("near"));
+
+    // A scene with nobody opted in must come out pixel-identical to one composed before the depth
+    // buffer existed at all — the extra target and blit must not change a single pixel.
+    GpuLayer plain;
+    plain.source = red;
+    plain.rect = QRectF(40, 40, 60, 60);
+    plain.valid = true;
+    GpuItem plainItem;
+    plainItem.layer = plain;
+    GpuScene a;
+    a.canvasSize = QSize(200, 200);
+    a.backgroundColor = Qt::black;
+    a.items.append(plainItem);
+    const QImage withoutDepth = GpuCompositor::render(a);
+    GpuScene b = a;
+    b.items[0].layer.depthOcclude = true;
+    const QImage withDepth = GpuCompositor::render(b);
+    QVERIFY(!withoutDepth.isNull() && !withDepth.isNull());
+    // One opted-in layer on its own has nothing to sort against, so the picture is unchanged.
+    QCOMPARE(withDepth, withoutDepth);
+
+    // Transparent regions must not write depth, or a tilted card's empty corner would punch a hole
+    // in whatever is behind it. A half-transparent near card over an opaque far one: where the
+    // near card is clear, the far one still shows.
+    QImage holed(60, 60, QImage::Format_RGBA8888);
+    holed.fill(QColor(230, 20, 20));
+    for (int y = 0; y < 60; ++y)
+        for (int x = 0; x < 30; ++x)
+            holed.setPixelColor(x, y, QColor(0, 0, 0, 0));
+    GpuLayer nearHoled;
+    nearHoled.source = holed;
+    nearHoled.rect = QRectF(70, 70, 60, 60);
+    nearHoled.pose3d.positionZ = 300.0;
+    nearHoled.pose3d.perspective = 2000.0;
+    nearHoled.depthOcclude = true;
+    nearHoled.valid = true;
+    GpuLayer farSolid;
+    farSolid.source = blue;
+    farSolid.rect = QRectF(70, 70, 60, 60);
+    farSolid.pose3d.positionZ = -300.0;
+    farSolid.pose3d.perspective = 2000.0;
+    farSolid.depthOcclude = true;
+    farSolid.valid = true;
+    GpuScene holes;
+    holes.canvasSize = QSize(200, 200);
+    holes.backgroundColor = Qt::black;
+    GpuItem i1;
+    i1.layer = nearHoled;
+    GpuItem i2;
+    i2.layer = farSolid;
+    holes.items.append(i1);
+    holes.items.append(i2);
+    const QImage out = GpuCompositor::render(holes).convertToFormat(QImage::Format_RGBA8888);
+    // Right half of the near card is opaque red and nearer, so it wins.
+    QCOMPARE(winner(out), QStringLiteral("near"));
+    // Left half is clear, so the far blue card shows through rather than being depth-culled.
+    const QColor through = out.pixelColor(80, 100);
+    QVERIFY2(through.blue() > 150 && through.red() < 100,
+             qPrintable(QStringLiteral("through %1,%2,%3")
+                                .arg(through.red()).arg(through.green()).arg(through.blue())));
 }
 
 void EngineTest::clipGizmoSolvesDrags()

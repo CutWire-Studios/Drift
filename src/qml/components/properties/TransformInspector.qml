@@ -18,6 +18,10 @@ Item {
     readonly property bool isModel3d: clipKind === "model3d"
     readonly property bool isTransformLayer: clipKind === "adjustment"
                                              && clipData.adjustmentKind === "transform"
+    // The dest-reading blend modes copy the canvas aside before they draw, so a depth test cannot
+    // sort them; depth occlusion is only offered on a Normal blend.
+    readonly property bool blendIsNormal: !hasSelection
+                                          || (clipData.blendMode || "normal") === "normal"
     // The transform clips over this one, innermost first; the nearest names its frame.
     readonly property var transformParents: hasSelection ? (clipData.transformParents || []) : []
     readonly property string parentName: transformParents.length > 0
@@ -378,6 +382,25 @@ Item {
                 }
                 onToggled: EditorState.setClipLayer3d(EditorState.selectedTrack,
                                                       EditorState.selectedClip, checked)
+            }
+
+            // Depth occlusion. Off by default everywhere, because track order deciding what covers
+            // what is the rule the rest of the timeline relies on; this opts one clip out of it.
+            ThemedSwitch {
+                visible: !root.isModel3d && !!root.clipData.layer3d
+                enabled: root.blendIsNormal
+                text: qsTr("Occlude by depth")
+                tooltip: root.blendIsNormal
+                         ? qsTr("Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.")
+                         : qsTr("Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.")
+                Binding on checked {
+                    value: {
+                        void root.clipDataRevision
+                        return !!root.clipData.depthOcclude
+                    }
+                }
+                onToggled: EditorState.setClipDepthOcclude(EditorState.selectedTrack,
+                                                           EditorState.selectedClip, checked)
             }
 
             // The preview gizmo's tool and the axes its handles follow. Editor preferences shared by

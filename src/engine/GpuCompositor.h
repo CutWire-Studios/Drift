@@ -103,6 +103,10 @@ struct GpuLayer
     // lay `depth` out on the canvas once the layer is drawn. On an occluded layer, occluderItem
     // is the scene index of that occluder, and wherever it is nearer than occludeDepth this layer
     // gives way.
+    // Per-clip opt-in: let depth decide what covers this layer instead of the track order it was
+    // emitted in. Set only for a clip whose 3D switch is on and whose blend is Normal; the
+    // compositor gives the canvas a depth buffer when any layer in the scene asks for this.
+    bool depthOcclude = false;
     bool emitDepthCanvas = false;
     int occluderItem = -1;
     float occludeDepth = 0.f;

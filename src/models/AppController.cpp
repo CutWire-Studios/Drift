@@ -2939,6 +2939,8 @@ void clearClipPose3d(drift::Clip &clip)
     clip.positionZ = {};
     clip.perspective = {};
     clip.layer3d = false;
+    // Depth sorting only means anything with a pose, so switching 3D off takes it with it.
+    clip.depthOcclude = false;
 }
 
 drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop)
@@ -4433,6 +4435,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("reverse"), clip.reverse},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("layer3d"), clip.layer3d},
+        {QStringLiteral("depthOcclude"), clip.depthOcclude},
         {QStringLiteral("flipV"), clip.flipV},
         // Discrete lossless orientation fix, distinct from the free "rotation" keyframe track
         // below. "orientation" is the absolute result (what the inspector shows), the correction
@@ -17189,6 +17192,22 @@ void AppController::setClipLayer3d(int trackIndex, int clipIndex, bool enabled)
         clearClipPose3d(clip);
     pushProjectEdit(before, enabled ? tr("Enable 3D") : tr("Disable 3D"));
     finishEdit(enabled ? tr("Clip is a 3D layer") : tr("Clip is flat"));
+}
+
+void AppController::setClipDepthOcclude(int trackIndex, int clipIndex, bool enabled)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    // Needs a pose to sort by, and the dest-reading blend modes copy the canvas aside before they
+    // draw, which a depth test cannot see through — so those are refused rather than silently
+    // ignored. The inspector greys the control for the same two reasons.
+    if (!clip.layer3d || clip.blendMode != drift::BlendMode::Normal || clip.depthOcclude == enabled)
+        return;
+    const drift::Project before = m_project;
+    clip.depthOcclude = enabled;
+    pushProjectEdit(before, enabled ? tr("Enable depth occlusion") : tr("Disable depth occlusion"));
+    finishEdit(enabled ? tr("Clip is occluded by depth") : tr("Clip uses track order"));
 }
 
 void AppController::setClipFlip(int trackIndex, int clipIndex, bool flipH, bool flipV)

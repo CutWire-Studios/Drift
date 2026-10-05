@@ -1510,6 +1510,9 @@ public:
     // Per-clip "3D layer" switch: the tilt/depth/perspective values render (and get grips) only
     // while it is on. Off keeps the values.
     Q_INVOKABLE void setClipLayer3d(int trackIndex, int clipIndex, bool enabled);
+    // Per-clip opt-in: let depth decide what covers this clip instead of the track order. Needs
+    // the 3D switch on and a Normal blend mode; does nothing otherwise.
+    Q_INVOKABLE void setClipDepthOcclude(int trackIndex, int clipIndex, bool enabled);
     // Stereo balance, -1..+1. previewSet* coalesces a slider drag into one undo entry the way
     // previewSetClipSpeed does; setClipPan is the one-shot for typing or resetting to centre.
     Q_INVOKABLE void previewSetClipPan(int trackIndex, int clipIndex, double pan);

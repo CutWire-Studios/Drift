@@ -1265,6 +1265,12 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     fillGpuLayerMasks(layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight);
     layer.rect = destRect;
     layer.rotation = rotation;
+    // Depth sorting needs a pose to sort by, and the dest-reading blend modes copy the canvas
+    // aside before they draw, which a depth test cannot see through. Enforced here as well as in
+    // the setter, so an imported or hand-edited project cannot ask for something undrawable.
+    layer.depthOcclude = clip.depthOcclude && clip.layer3d
+                         && clip.blendMode == drift::BlendMode::Normal
+                         && clip.type != drift::ClipType::Model3d;
     if (clip.type != drift::ClipType::Model3d) {
         layer.pose3d.rotationX = transformValue(clip.rotationX, clipTimeUs, 0.0);
         layer.pose3d.rotationY = transformValue(clip.rotationY, clipTimeUs, 0.0);
