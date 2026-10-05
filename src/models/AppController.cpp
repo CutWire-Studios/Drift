@@ -1558,6 +1558,8 @@ QVariantList AppController::tracks() const
         QString trackAdjustmentKind;
         if (track.isTransformLayer())
             trackAdjustmentKind = QStringLiteral("transform");
+        else if (track.isCameraLayer())
+            trackAdjustmentKind = QStringLiteral("camera");
         else if (track.isAdjustment() && !track.clips.isEmpty())
             trackAdjustmentKind = drift::adjustmentKindToString(track.clips.constFirst().adjustmentKind);
         QVariantList coveredBy;
@@ -1581,6 +1583,9 @@ QVariantList AppController::tracks() const
             // Transform layers: the span a Range track covers, how deeply it nests, and for any
             // track the layers over it, outermost first.
             {QStringLiteral("isTransformLayer"), track.isTransformLayer()},
+            // The camera track: no span and no pixels, so the timeline gives it a row and a label
+            // but none of the coverage drawing a Range track gets.
+            {QStringLiteral("isCameraLayer"), track.isCameraLayer()},
             {QStringLiteral("spanEndTrackId"), track.spanEndTrackId},
             {QStringLiteral("spanEndIndex"), drift::transformSpanEndIndex(m_project.tracks(), ti)},
             {QStringLiteral("spanDepth"), track.isTransformLayer() ? coveredBy.size() : 0},
@@ -18013,6 +18018,55 @@ void AppController::addTransformLayerForSelection()
         ++m_selectedTransitionTrack;
     pushProjectEdit(before, tr("Add transform layer"));
     finishEdit(tr("Transform layer added"));
+    selectClipById(clip.id);
+}
+
+bool AppController::hasCameraTrack() const
+{
+    return drift::cameraTrackIndex(m_project.tracks()) >= 0;
+}
+
+void AppController::addCameraTrack()
+{
+    const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+    int index = drift::cameraTrackIndex(m_project.tracks());
+    const bool fresh = index < 0;
+    if (fresh) {
+        index = drift::insertCameraTrack(m_project.tracks());
+        // The camera goes in above everything, so every stored track index below it shifts by one.
+        if (m_selectedTransitionTrack >= 0)
+            ++m_selectedTransitionTrack;
+    }
+    // Long enough to cover the whole sequence, so the first camera frames every shot rather than
+    // snapping back to the default viewpoint partway through. An empty timeline still gets a
+    // usable clip to drag keys onto.
+    const drift::TimeUs span = qMax(m_project.durationUs(), drift::kImageClipDurationUs);
+    const drift::Clip clip = drift::makeCameraClip(0, span);
+    m_project.tracks()[index].clips.append(clip);
+    pushProjectEdit(before, fresh ? tr("Add camera") : tr("Add camera clip"));
+    finishEdit(fresh ? tr("Camera added") : tr("Camera clip added"));
+    selectClipById(clip.id);
+}
+
+void AppController::addCameraClip(double atSeconds, double durationSeconds)
+{
+    const int index = drift::cameraTrackIndex(m_project.tracks());
+    if (index < 0) {
+        addCameraTrack();
+        return;
+    }
+    const drift::TimeUs durUs = durationSeconds > 0.0 ? drift::secondsToUs(durationSeconds)
+                                                      : drift::kImageClipDurationUs;
+    const drift::TimeUs wanted = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
+    const drift::Project before = m_project;
+    drift::Track &track = m_project.tracks()[index];
+    const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, wanted, durUs,
+                                                        m_snapEnabled, m_playheadUs);
+    const drift::Clip clip = drift::makeCameraClip(start, durUs);
+    track.clips.append(clip);
+    pushProjectEdit(before, tr("Add camera clip"));
+    finishEdit(tr("Camera clip added"));
     selectClipById(clip.id);
 }
 

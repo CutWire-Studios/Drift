@@ -188,7 +188,8 @@ Item {
     // Single-letter stand-in for the type glyph plus name band, which do not fit a 72px
     // compact header. "V1"/"A2" is the fallback identification a phone gets until the track
     // has a custom name — see trackCompactLabel, which prefers that name when it's set.
-    function trackTypeShortLabel(type, isTransform) {
+    function trackTypeShortLabel(type, isTransform, isCamera) {
+        if (isCamera) return qsTr("CAM");
         if (isTransform) return qsTr("TF");
         if (type === "adjustment") return qsTr("FX");
         if (type === "audio") return qsTr("A");
@@ -199,7 +200,8 @@ Item {
     }
 
     // Human label for a track type.
-    function trackTypeLabel(type, isTransform) {
+    function trackTypeLabel(type, isTransform, isCamera) {
+        if (isCamera) return qsTr("Camera");
         if (isTransform) return qsTr("Transform");
         if (type === "adjustment") return qsTr("Adjustment");
         if (type === "audio") return qsTr("Audio");
@@ -280,6 +282,8 @@ Item {
             return ""
         if (tracks[i].name && tracks[i].name.length > 0)
             return tracks[i].name
+        if (tracks[i].isCameraLayer === true)
+            return trackTypeLabel(tracks[i].type, false, true)
         return trackTypeLabel(tracks[i].type, tracks[i].isTransformLayer) + " " + trackTypeOrdinal(i)
     }
 
@@ -325,16 +329,21 @@ Item {
             readonly property string trackDisplayName:
                 root.tracks[index].name && root.tracks[index].name.length > 0
                 ? root.tracks[index].name
-                : root.trackTypeLabel(root.tracks[index].type, root.tracks[index].isTransformLayer)
-                  + " " + root.trackTypeOrdinal(index)
+                : root.tracks[index].isCameraLayer === true
+                  ? root.trackTypeLabel(root.tracks[index].type, false, true)
+                  : root.trackTypeLabel(root.tracks[index].type, root.tracks[index].isTransformLayer)
+                    + " " + root.trackTypeOrdinal(index)
             // Same, but falling back to the short "V1"/"A2" form the compact header uses when
             // there's no custom name to show instead.
             readonly property string trackCompactLabel:
                 root.tracks[index].name && root.tracks[index].name.length > 0
                 ? root.tracks[index].name
-                : root.trackTypeShortLabel(root.tracks[index].type, root.tracks[index].isTransformLayer)
-                  + root.trackTypeOrdinal(index)
+                : root.tracks[index].isCameraLayer === true
+                  ? root.trackTypeShortLabel(root.tracks[index].type, false, true)
+                  : root.trackTypeShortLabel(root.tracks[index].type, root.tracks[index].isTransformLayer)
+                    + root.trackTypeOrdinal(index)
             readonly property bool isTransformLayer: root.tracks[index].isTransformLayer === true
+            readonly property bool isCameraLayer: root.tracks[index].isCameraLayer === true
             readonly property bool transformable: ["video", "text", "subtitle", "shape"]
                                                   .indexOf(root.tracks[index].type) !== -1
             readonly property bool insideBracket: (root.tracks[index].transformCoveredBy || []).length > 0

@@ -153,6 +153,7 @@ private slots:
     void sceneCameraIdentityMatchesPerClipEye();
     void sceneCameraMovesTheViewpoint();
     void sceneCameraRendersThroughTheCompositor();
+    void sceneCameraClipDrivesTheWholeTimeline();
     void clipGizmoSolvesDrags();
     void faceTrackV2CarriesContoursAndPose();
     void faceTrackV1FileStillLoads();
@@ -1384,6 +1385,125 @@ void EngineTest::sceneCameraRendersThroughTheCompositor()
     // where it would be without the parent.
     QVERIFY2(std::abs((parentedPan - centroidX(pannedFlat)) - 30.0) < 1.5,
              qPrintable(QStringLiteral("offset %1").arg(parentedPan - centroidX(pannedFlat))));
+}
+
+void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("OpenGL offscreen context unavailable");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QSize canvas(160, 160);
+    QImage white(40, 40, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    const QString whitePath = dir.filePath(QStringLiteral("white.png"));
+    QVERIFY(white.save(whitePath));
+
+    drift::Project project;
+    project.setResolution(canvas.width(), canvas.height());
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.ensureTrackIds();
+
+    // A small card dead centre, so a pan has room to move it without clipping.
+    drift::Clip card;
+    card.id = QStringLiteral("card");
+    card.type = drift::ClipType::Image;
+    card.path = whitePath;
+    card.timelineDuration = drift::secondsToUs(4.0);
+    card.srcOut = card.timelineDuration;
+    card.transformX.setKeyframe(0, {60.0});
+    card.transformY.setKeyframe(0, {60.0});
+    card.transformW.setKeyframe(0, {40.0});
+    card.transformH.setKeyframe(0, {40.0});
+    project.tracks()[0].clips.append(card);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    const auto centroidX = [](const QImage &img) {
+        double sum = 0.0;
+        int n = 0;
+        for (int y = 0; y < img.height(); ++y) {
+            for (int x = 0; x < img.width(); ++x) {
+                if (img.pixelColor(x, y).red() > 128) {
+                    sum += x;
+                    ++n;
+                }
+            }
+        }
+        return n > 0 ? sum / n : -1.0;
+    };
+
+    // No camera track: nothing anywhere in the scene claims a camera.
+    GpuScene plain;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), {}, &plain));
+    QCOMPARE(plain.items.size(), 1);
+    QVERIFY(!plain.items.at(0).layer.cameraActive);
+    const QImage before = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!before.isNull());
+    const double restX = centroidX(before);
+    QVERIFY(restX > 0.0);
+
+    // Add a camera that pans from rest at 0 s to +40 px at 2 s, exactly as the UI would: a Camera
+    // clip on a Camera track, animated through the clip's ordinary transform tracks.
+    const int cameraTrack = drift::insertCameraTrack(project.tracks());
+    project.ensureTrackIds();
+    drift::Clip camera = drift::makeCameraClip(0, drift::secondsToUs(4.0));
+    camera.transformX.setKeyframe(0, {0.0});
+    camera.transformX.setKeyframe(drift::secondsToUs(2.0), {40.0});
+    project.tracks()[cameraTrack].clips.append(camera);
+    drift::normalizeCameraLayers(project.tracks());
+    QCOMPARE(drift::cameraTrackIndex(project.tracks()), 0);
+
+    // The camera track contributes no pixels of its own — still one drawable.
+    GpuScene withCamera;
+    QVERIFY(compositor.buildSceneAt(0, {}, &withCamera));
+    QCOMPARE(withCamera.items.size(), 1);
+    QVERIFY(withCamera.items.at(0).layer.cameraActive);
+
+    // At 0 s the camera is at rest, so the frame has to be exactly what it was before it existed.
+    QCOMPARE(compositor.compositeAt(0), compositor.compositeAt(0));
+    const QImage atRest = compositor.compositeAt(0);
+    QVERIFY(std::abs(centroidX(atRest) - restX) < 0.5);
+
+    // By 2 s the camera has panned right, so the card has moved left.
+    const QImage panned = compositor.compositeAt(drift::secondsToUs(2.0));
+    QVERIFY2(centroidX(panned) < restX - 20.0,
+             qPrintable(QStringLiteral("panned %1 vs rest %2").arg(centroidX(panned)).arg(restX)));
+
+    // Half way along the keyframed pan, half the movement.
+    const QImage half = compositor.compositeAt(drift::secondsToUs(1.0));
+    const double halfShift = restX - centroidX(half);
+    const double fullShift = restX - centroidX(panned);
+    QVERIFY2(std::abs(halfShift - fullShift * 0.5) < 2.0,
+             qPrintable(QStringLiteral("half %1 full %2").arg(halfShift).arg(fullShift)));
+
+    // WYSIWYG: a half-scale preview frames the shot identically to the full-size export. Compared
+    // as a fraction of the canvas, because the images are different sizes.
+    FrameCompositor::RenderOptions preview;
+    preview.previewScale = 0.5;
+    const QImage small = compositor.compositeAt(drift::secondsToUs(2.0), preview);
+    QVERIFY(!small.isNull());
+    QCOMPARE(small.size(), QSize(80, 80));
+    QVERIFY2(std::abs(centroidX(small) / small.width() - centroidX(panned) / panned.width()) < 0.01,
+             qPrintable(QStringLiteral("preview %1 vs full %2")
+                                .arg(centroidX(small) / small.width())
+                                .arg(centroidX(panned) / panned.width())));
+
+    // Hiding the camera track bypasses it, the way hiding a transform layer does.
+    project.tracks()[cameraTrack].hidden = true;
+    GpuScene hidden;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(2.0), {}, &hidden));
+    QVERIFY(!hidden.items.at(0).layer.cameraActive);
+    QVERIFY(std::abs(centroidX(compositor.compositeAt(drift::secondsToUs(2.0))) - restX) < 0.5);
+    project.tracks()[cameraTrack].hidden = false;
+
+    // Past the end of the camera clip there is no camera, so the framing returns to normal. That
+    // is what makes two clips in a row read as a cut.
+    const QImage afterEnd = compositor.compositeAt(drift::secondsToUs(5.0));
+    QVERIFY(!afterEnd.isNull());
 }
 
 void EngineTest::clipGizmoSolvesDrags()

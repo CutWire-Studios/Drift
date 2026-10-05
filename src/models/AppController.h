@@ -1551,6 +1551,20 @@ public:
     // covering everything below with a 5 s clip at the playhead.
     Q_INVOKABLE void addTransformLayerForSelection();
     bool canTransformSelectionTogether() const;
+
+    // The scene camera: one viewpoint the whole sequence is seen through (engine/SceneCamera3d.h).
+    // Stored as Camera clips on a Camera adjustment track, so the camera animates on the timeline
+    // with the ordinary keyframe machinery and two clips in a row read as a camera cut.
+    //
+    // Adds the camera track with one clip at rest over the sequence's length, or just the clip
+    // when the track is already there. A camera at rest changes nothing on screen, which is what
+    // makes this safe to offer from a menu. Selects the new clip.
+    Q_INVOKABLE void addCameraTrack();
+    // A camera clip on the existing camera track; `atSeconds` < 0 is the playhead. Use this for a
+    // camera cut.
+    Q_INVOKABLE void addCameraClip(double atSeconds = -1.0, double durationSeconds = -1.0);
+    // True once the sequence has a camera track, whether or not any clip is on it.
+    Q_INVOKABLE bool hasCameraTrack() const;
     Q_INVOKABLE void makeTransformLayerFromSelection();
     // A layer directly above the topmost track holding one of `clipIds`, spanning to the lowest,
     // with one clip over their time range (or [atSeconds, +durationSeconds) when given). One undo

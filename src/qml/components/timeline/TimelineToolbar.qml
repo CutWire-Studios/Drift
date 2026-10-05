@@ -67,7 +67,9 @@ Item {
         "adjustmentLayer": { glyph: Theme.icons.wand, label: qsTr("Add adjustment layer") },
         "transformLayer": { glyph: Theme.icons.group, label: qsTr("Add transform layer"),
                             tip: qsTr("Add transform layer — moves the selected clips' tracks as one"),
-                            shortcut: "transformTogether" }
+                            shortcut: "transformTogether" },
+        "camera": { glyph: Theme.icons.video, label: qsTr("Add camera"),
+                    tip: qsTr("Add camera — one viewpoint the whole timeline is seen through") }
     })
 
     readonly property var defaultToolbarItems: [
@@ -77,7 +79,7 @@ Item {
     readonly property var defaultMenuItems: [
         "trimStart", "trimEnd", "separator", "copy", "paste", "duplicate", "separator",
         "bookmark", "markIn", "markOut", "loop", "clearWorkArea", "separator",
-        "merge", "freeze", "adjustmentLayer", "transformLayer"
+        "merge", "freeze", "adjustmentLayer", "transformLayer", "camera"
     ]
 
     // The stored layout, cleaned: unknown or repeated ids are dropped and any action missing
@@ -134,6 +136,7 @@ Item {
         case "freeze": EditorState.freezeFrameAtPlayhead(); break
         case "adjustmentLayer": EditorState.addAdjustmentClip(-1, -1); break
         case "transformLayer": EditorState.addTransformLayerForSelection(); break
+        case "camera": EditorState.addCameraTrack(); break
         }
     }
 

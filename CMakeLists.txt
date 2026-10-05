@@ -1071,6 +1071,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TextAnimPresetTile.qml
         src/qml/components/properties/TextLookPicker.qml
         src/qml/components/properties/TransformInspector.qml
+        src/qml/components/properties/CameraInspector.qml
         src/qml/components/properties/TransformLayerCard.qml
         src/qml/components/properties/StabilizeInspector.qml
         src/qml/components/properties/AudioInspector.qml
