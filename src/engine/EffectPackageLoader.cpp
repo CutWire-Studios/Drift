@@ -79,6 +79,8 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
             entry.needsFace = true;
         } else if (requirement == QLatin1String("depth") && backend == QLatin1String("gpu")) {
             entry.needsDepth = true;
+        } else if (requirement == QLatin1String("mask") && backend == QLatin1String("gpu")) {
+            entry.needsMask = true;
         } else {
             setError(errorOut, &entry, QStringLiteral("unsupported requires '%1'").arg(requirement));
             return entry;
@@ -146,6 +148,7 @@ EffectPresetEntry EffectPackageLoader::loadPackage(const QString &packageDir, QS
             }
         }
         entry.gpu.needsDepth = entry.needsDepth;
+        entry.gpu.needsMask = entry.needsMask;
         return entry;
     }
 

@@ -3893,6 +3893,10 @@
         <translation>깊이 효과는 한 클립의 깊이 데이터를 읽으므로 보정 레이어가 아닌 클립에 적용합니다.</translation>
     </message>
     <message>
+        <source>Mask effects read one clip&apos;s masks, so they go on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Face effects follow one clip&apos;s faces, so they go on a clip, not on an adjustment layer.</source>
         <translation>얼굴 효과는 한 클립의 얼굴을 따라가므로 보정 레이어가 아닌 클립에 적용합니다.</translation>
     </message>
@@ -4129,6 +4133,18 @@
     <message>
         <source>Effect preset deleted</source>
         <translation>효과 프리셋이 삭제됨</translation>
+    </message>
+    <message>
+        <source>Only effects you imported can be deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not export the effect preset</source>
@@ -6380,8 +6396,30 @@
         <translation>선택한 클립에 적용</translation>
     </message>
     <message>
+        <source>Delete from My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Built-in</source>
         <translation>기본 제공</translation>
+    </message>
+    <message>
+        <source>Delete effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete “%1” from My Effects? It is used %n time(s) in this project, and those clips will play without it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Delete “%1” from My Effects? You can import its .driftfx file again later.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

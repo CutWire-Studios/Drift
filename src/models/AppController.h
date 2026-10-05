@@ -1814,6 +1814,10 @@ public:
     Q_INVOKABLE void applyEffectPreset(int trackIndex, int clipIndex, const QString &presetId);
     Q_INVOKABLE bool renameUserEffectPreset(const QString &presetId, const QString &label);
     Q_INVOKABLE bool deleteUserEffectPreset(const QString &presetId);
+    // My Effects: how many effects in the project use the imported package `effectId`, and
+    // deleting the package from disk. Packages from Drift itself or an add-on are refused.
+    Q_INVOKABLE int userEffectUses(const QString &effectId) const;
+    Q_INVOKABLE bool deleteUserEffect(const QString &effectId);
     Q_INVOKABLE bool exportUserEffectPreset(const QString &presetId, const QUrl &fileUrl);
     Q_INVOKABLE bool importUserEffectPreset(const QUrl &fileUrl);
     Q_INVOKABLE void setTrackMuted(int trackIndex, bool muted);

@@ -373,6 +373,21 @@ Column {
                             enabled: EditorState.selectedClip >= 0
                             onClicked: root.applyPreset(presetCard.modelData.id)
                         }
+
+                        // Imported effects only: built-in and add-on ones aren't the user's to delete.
+                        IconButton {
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: 3
+                            visible: presetCard.modelData.user === true
+                                     && (cardHover.hovered || Theme.touchUi)
+                            glyph: Theme.icons.trash
+                            variant: "ghost"
+                            buttonSize: 18
+                            iconSize: 12
+                            tooltip: qsTr("Delete from My Effects")
+                            onClicked: deleteEffectDialog.openFor(presetCard.modelData)
+                        }
                     }
 
                     Text {
@@ -401,4 +416,40 @@ Column {
             }
         }
         }
+
+    ThemedDialog {
+        id: deleteEffectDialog
+
+        property string effectId: ""
+        property string effectLabel: ""
+        property int uses: 0
+
+        title: qsTr("Delete effect")
+        acceptText: qsTr("Delete")
+        acceptVariant: "destructive"
+        preferredWidth: Theme.dialogWidthSm
+        acceptOnReturn: false
+
+        function openFor(preset) {
+            effectId = preset.id
+            effectLabel = preset.label
+            uses = EditorState.userEffectUses(preset.id)
+            open()
+        }
+
+        onAccepted: EditorState.deleteUserEffect(deleteEffectDialog.effectId)
+
+        contentItem: Text {
+            width: parent ? parent.width : 320
+            wrapMode: Text.WordWrap
+            text: deleteEffectDialog.uses > 0
+                  ? qsTr("Delete “%1” from My Effects? It is used %n time(s) in this project, and those clips will play without it.", "", deleteEffectDialog.uses)
+                        .arg(deleteEffectDialog.effectLabel)
+                  : qsTr("Delete “%1” from My Effects? You can import its .driftfx file again later.")
+                        .arg(deleteEffectDialog.effectLabel)
+            color: Theme.panelForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSm
+        }
+    }
 }

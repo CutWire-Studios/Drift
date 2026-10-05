@@ -50,11 +50,9 @@ in vec2 v_texCoord;
 out vec4 fragColor;
 uniform sampler2D u_layer;
 uniform sampler2D u_mask;
-uniform sampler2D u_fgr;
 uniform float u_opacity;
 uniform float u_hasMask;
 uniform float u_maskInvert;
-uniform float u_hasFgr;
 uniform float u_layerPremul;
 // Depth occlusion: 1 where this layer shows, falling to 0 where the occluder's depth, laid out on
 // the canvas by kDepthPlaceFragShader, is nearer than the distance the layer was placed at.
@@ -77,13 +75,6 @@ float occlusion() {
 }
 void main() {
     vec4 c = texture(u_layer, v_texCoord);
-    // A matte can carry a decontaminated foreground alongside its coverage map. It replaces the
-    // colour only; alpha still comes from the mask below. The sidecar is straight colour, so it
-    // has to be premultiplied back when the layer texture is.
-    if (u_hasFgr > 0.5) {
-        vec3 f = texture(u_fgr, v_texCoord).rgb;
-        c.rgb = (u_layerPremul > 0.5) ? f * c.a : f;
-    }
     float s = u_opacity;
     if (u_hasMask > 0.5) {
         float m = texture(u_mask, v_texCoord).r;
@@ -103,13 +94,11 @@ in vec2 v_texCoord;
 out vec4 fragColor;
 uniform sampler2D u_layer;
 uniform sampler2D u_mask;
-uniform sampler2D u_fgr;
 uniform sampler2D u_dst;      // canvas, premultiplied
 uniform vec2 u_canvasSize;
 uniform float u_opacity;
 uniform float u_hasMask;
 uniform float u_maskInvert;
-uniform float u_hasFgr;
 uniform float u_layerPremul;
 uniform int u_blendMode;      // 1 multiply, 2 screen, 3 overlay, 5 darken, 6 lighten
 // Depth occlusion: 1 where this layer shows, falling to 0 where the occluder's depth, laid out on
@@ -148,9 +137,6 @@ vec3 blendRgb(vec3 base, vec3 src) {
 void main() {
     vec4 src = texture(u_layer, v_texCoord);
     vec3 srcRgb = (u_layerPremul > 0.5 && src.a > 0.0001) ? src.rgb / src.a : src.rgb;
-    // The foreground sidecar is straight, not premultiplied, so it replaces srcRgb after the
-    // un-premultiply above rather than before it.
-    if (u_hasFgr > 0.5) srcRgb = texture(u_fgr, v_texCoord).rgb;
     float sa = src.a * u_opacity;
     if (u_hasMask > 0.5) {
         float m = texture(u_mask, v_texCoord).r;
@@ -377,6 +363,18 @@ void main() {
 }
 )";
 
+// A cutout's decontaminated foreground in place of the layer's colour, keeping the layer's alpha.
+// Both are straight alpha and share the layer's uv.
+constexpr const char *kForegroundSwapFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_layer;
+uniform sampler2D u_fgr;
+void main() {
+    fragColor = vec4(texture(u_fgr, v_texCoord).rgb, texture(u_layer, v_texCoord).a);
+}
+)";
+
 // A composed canvas is premultiplied, while every layer target is straight alpha.
 GlTarget unpremultipliedCopy(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GlTarget &canvas)
 {
@@ -429,6 +427,63 @@ GlTarget cropTarget(GlRuntime &rt, GlTarget source, const QRectF &crop)
     return out;
 }
 
+GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
+                           const QSize &size);
+GlTarget promoteMaskMedia(GlRuntime &rt, QOpenGLExtraFunctions *gl, const MaskMediaFrame &media);
+int soleMediaIndex(const GpuLayer &layer);
+
+// The layer's source with its colour taken from the cutout's decontaminated foreground, which is
+// what removes background spill from hair edges. Done before the effect chain so effects work on
+// the clean colours rather than being painted over by them (issue #237). Returns `source`
+// unchanged when the foreground cannot be drawn.
+GlTarget swapInForeground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget source,
+                          const MaskMediaFrame &fgr)
+{
+    QOpenGLShaderProgram *program = rt.builtinProgram(
+        QStringLiteral("__fgr_swap__"), kQuadVertexShader, kForegroundSwapFragShader);
+    if (!program)
+        return source;
+    GlTarget fg = promoteMaskMedia(rt, gl, fgr);
+    if (!fg.isValid())
+        return source;
+    GlTarget out = rt.acquireTarget(source.width, source.height);
+    if (!out.isValid()) {
+        rt.releaseTarget(std::move(fg));
+        return source;
+    }
+    out.fbo->bind();
+    gl->glViewport(0, 0, out.width, out.height);
+    gl->glDisable(GL_BLEND);
+    program->bind();
+    program->setUniformValue("u_layer", 0);
+    program->setUniformValue("u_fgr", 1);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, source.texture());
+    gl->glActiveTexture(GL_TEXTURE1);
+    gl->glBindTexture(GL_TEXTURE_2D, fg.texture());
+    gl->glActiveTexture(GL_TEXTURE0);
+    bindQuad(rt, gl);
+    program->release();
+    out.fbo->release();
+    rt.releaseTarget(std::move(fg));
+    rt.releaseTarget(std::move(source));
+    return out;
+}
+
+// True when an enabled "requires": "mask" effect in the layer's chain reads its masks. Such a
+// layer is not cut out by them: the effect decides what the mask means.
+bool chainConsumesMasks(const GpuLayer &layer)
+{
+    for (const drift::Effect &effect : layer.effects) {
+        if (!effect.enabled || effect.catalogId.isEmpty())
+            continue;
+        const EffectPresetEntry *def = effectDefForId(effect.catalogId);
+        if (def && def->needsMask)
+            return true;
+    }
+    return false;
+}
+
 GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
                           const QSize &canvasSize)
 {
@@ -462,6 +517,14 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     }
     if (!target.isValid())
         return {};
+
+    // A lone cutout's foreground only means anything while the cutout still cuts the layer.
+    if (!layer.fgr.isNull() && !chainConsumesMasks(layer) && soleMediaIndex(layer) >= 0)
+        target = swapInForeground(rt, gl, std::move(target), layer.fgr);
+
+    // The folded mask stack, built the first time an effect asks for it and shared down the chain.
+    GlTarget clipMask;
+    bool clipMaskTried = false;
 
     for (const drift::Effect &effect : layer.effects) {
         const EffectPresetEntry *def =
@@ -502,8 +565,14 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         if (def->needsFace)
             drift::applyFaceUniforms(&params, layer.faceSlots);
 
+        if (def->gpu.needsMask && !clipMaskTried) {
+            clipMaskTried = true;
+            if (!drift::masksAreInert(layer.masks))
+                clipMask = composeMaskTarget(rt, gl, layer, target.size());
+        }
+
         const std::vector<const GlTarget *> sources{&target};
-        const PipelineAux aux{layer.depth};
+        const PipelineAux aux{layer.depth, clipMask.isValid() ? clipMask.texture() : 0u};
         GlTarget next = runPipeline(rt, gl, def->meta.id, def->gpu, sources, params,
                                     layer.clipTimeUs, 0.0, target.size(), &aux);
         if (!next.isValid())
@@ -513,6 +582,8 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         target = std::move(next);
     }
 
+    if (clipMask.isValid())
+        rt.releaseTarget(std::move(clipMask));
     return target;
 }
 
@@ -893,44 +964,35 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     // Media coverage changes every frame, so it goes through the recycled target pool rather than
     // maskTexture()'s static cache, which is keyed by mask parameters and would never evict.
     GlTarget maskTarget;
-    GlTarget fgrTarget;
     GLuint maskTex = 0;
-    GLuint fgrTex = 0;
     float maskInvert = 0.f;
-    if (const int sole = soleMediaIndex(layer); sole >= 0) {
+    // A chain that reads the masks has consumed them; the layer is drawn whole.
+    const bool consumed = chainConsumesMasks(layer);
+    if (const int sole = consumed ? -1 : soleMediaIndex(layer); sole >= 0) {
         // One plain full-frame media mask owns the coverage: bind it straight to the layer shader
         // and skip the compose pass entirely. Invert stays a uniform rather than being baked in,
         // because the same matte file backs both halves of a cutout and differs only by this flag.
         maskTarget = promoteMaskMedia(rt, gl, layer.maskMedia.at(sole));
         maskTex = maskTarget.isValid() ? maskTarget.texture() : 0;
         maskInvert = layer.masks.at(sole).invert ? 1.f : 0.f;
-        // The decontaminated foreground only means anything on this path — with a stack there is
-        // no single entry whose colours the layer should take.
-        if (!layer.fgr.isNull()) {
-            fgrTarget = promoteMaskMedia(rt, gl, layer.fgr);
-            fgrTex = fgrTarget.isValid() ? fgrTarget.texture() : 0;
-        }
-    } else if (!drift::masksAreInert(layer.masks)) {
+    } else if (!consumed && !drift::masksAreInert(layer.masks)) {
         // Feather, placement and the combine ops all live in the fold, which bakes invert in too.
         maskTarget = composeMaskTarget(rt, gl, layer, layerTarget.size());
         maskTex = maskTarget.isValid() ? maskTarget.texture() : 0;
     }
     const QMatrix4x4 model = modelMatrixFor(layer, canvasSize);
 
-    // Every return path below must recycle the mask targets.
+    // Every return path below must recycle the mask target.
     struct MaskGuard
     {
         GlRuntime &rt;
         GlTarget &mask;
-        GlTarget &fgr;
         ~MaskGuard()
         {
             if (mask.isValid())
                 rt.releaseTarget(std::move(mask));
-            if (fgr.isValid())
-                rt.releaseTarget(std::move(fgr));
         }
-    } maskGuard{rt, maskTarget, fgrTarget};
+    } maskGuard{rt, maskTarget};
 
     // Only worth it when the quad is actually smaller than the texture; at ~1:1 the
     // single bilinear tap is already exact and the copy would be pure cost.
@@ -998,18 +1060,14 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         program->setUniformValue("u_opacity", float(layer.opacity));
         program->setUniformValue("u_hasMask", maskTex ? 1.f : 0.f);
         program->setUniformValue("u_maskInvert", maskInvert);
-        program->setUniformValue("u_hasFgr", fgrTex ? 1.f : 0.f);
         program->setUniformValue("u_layer", 0);
         program->setUniformValue("u_mask", 1);
-        program->setUniformValue("u_fgr", 2);
         program->setUniformValue("u_layerPremul", layerPremul);
         setOcclusionUniforms(program, gl, occlusion, canvas);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, layerTex);
         gl->glActiveTexture(GL_TEXTURE1);
         gl->glBindTexture(GL_TEXTURE_2D, maskTex);
-        gl->glActiveTexture(GL_TEXTURE2);
-        gl->glBindTexture(GL_TEXTURE_2D, fgrTex);
         bindQuad(rt, gl);
         program->release();
         gl->glDisable(GL_BLEND);
@@ -1043,14 +1101,12 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     program->setUniformValue("u_opacity", float(layer.opacity));
     program->setUniformValue("u_hasMask", maskTex ? 1.f : 0.f);
     program->setUniformValue("u_maskInvert", maskInvert);
-    program->setUniformValue("u_hasFgr", fgrTex ? 1.f : 0.f);
     program->setUniformValue("u_blendMode", blendModeCode(blend));
     program->setUniformValue("u_canvasSize",
                              QVector2D(float(canvasSize.width()), float(canvasSize.height())));
     program->setUniformValue("u_layer", 0);
     program->setUniformValue("u_mask", 1);
     program->setUniformValue("u_dst", 2);
-    program->setUniformValue("u_fgr", 3);
     program->setUniformValue("u_layerPremul", layerPremul);
     setOcclusionUniforms(program, gl, occlusion, canvas);
     gl->glActiveTexture(GL_TEXTURE0);
@@ -1059,8 +1115,6 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     gl->glBindTexture(GL_TEXTURE_2D, maskTex);
     gl->glActiveTexture(GL_TEXTURE2);
     gl->glBindTexture(GL_TEXTURE_2D, previous.texture());
-    gl->glActiveTexture(GL_TEXTURE3);
-    gl->glBindTexture(GL_TEXTURE_2D, fgrTex);
     bindQuad(rt, gl);
     program->release();
     canvas.fbo->release();
@@ -1071,8 +1125,39 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
 // Render a clip into its own transparent canvas-sized layer, with its transform
 // baked in. Transitions need both sides in the same UV space for the shader to
 // mix them.
+// The layer's folded mask stack laid out on the canvas exactly where the layer itself lands, for
+// transitions that read the outgoing clip's masks. `sourceSize` is the layer target's size, the
+// space the masks are rasterized in. r holds the coverage; invalid when there is no mask.
+GlTarget maskCanvasTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
+                          const QSize &sourceSize, const QSize &canvasSize)
+{
+    if (drift::masksAreInert(layer.masks))
+        return {};
+    GlTarget mask = composeMaskTarget(rt, gl, layer, sourceSize);
+    if (!mask.isValid())
+        return {};
+    GlTarget out = rt.acquireTarget(canvasSize.width(), canvasSize.height());
+    if (out.isValid()) {
+        out.fbo->bind();
+        gl->glViewport(0, 0, out.width, out.height);
+        gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+        gl->glClear(GL_COLOR_BUFFER_BIT);
+        out.fbo->release();
+        GpuLayer placed = layer;
+        placed.effects.clear();
+        placed.masks.clear();
+        placed.maskMedia.clear();
+        placed.opacity = 1.0;
+        drawLayerOnCanvas(rt, gl, out, mask, placed, drift::BlendMode::Normal, canvasSize);
+    }
+    rt.releaseTarget(std::move(mask));
+    return out;
+}
+
+// With `canvasMask`, the transition reading this side consumes its masks: the layer is drawn
+// whole and its mask stack comes back laid out on the canvas instead.
 GlTarget renderIsolatedLayer(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
-                             const QSize &canvasSize)
+                             const QSize &canvasSize, GlTarget *canvasMask = nullptr)
 {
     GlTarget isolated = rt.acquireTarget(canvasSize.width(), canvasSize.height());
     if (!isolated.isValid())
@@ -1085,13 +1170,24 @@ GlTarget renderIsolatedLayer(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Gpu
     gl->glClear(GL_COLOR_BUFFER_BIT);
     isolated.fbo->release();
 
-    GlTarget source = buildLayerTarget(rt, gl, layer, canvasSize);
+    // A transition that reads this side's masks has consumed them, cutout foreground included.
+    GpuLayer whole = layer;
+    if (canvasMask)
+        whole.fgr = {};
+    GlTarget source = buildLayerTarget(rt, gl, whole, canvasSize);
     if (!source.isValid())
         return isolated; // transparent, which is what a shader sampling this side expects
 
     // Isolated layers always composite source-over: the clip's own blend mode has
     // nothing to blend against here, and the transition shader does the mixing.
-    drawLayerOnCanvas(rt, gl, isolated, source, layer, drift::BlendMode::Normal, canvasSize);
+    if (canvasMask) {
+        *canvasMask = maskCanvasTarget(rt, gl, layer, source.size(), canvasSize);
+        whole.masks.clear();
+        whole.maskMedia.clear();
+        drawLayerOnCanvas(rt, gl, isolated, source, whole, drift::BlendMode::Normal, canvasSize);
+    } else {
+        drawLayerOnCanvas(rt, gl, isolated, source, layer, drift::BlendMode::Normal, canvasSize);
+    }
     rt.releaseTarget(std::move(source));
     return isolated;
 }
@@ -1323,20 +1419,30 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &canvas, b
             continue;
         }
 
-        GlTarget fromTarget = renderIsolatedLayer(rt, gl, item.from, canvasSize);
+        const bool readsMask =
+            item.transitionGpu && item.transitionGpu->valid && item.transitionGpu->needsMask;
+        GlTarget fromMask;
+        GlTarget fromTarget =
+            renderIsolatedLayer(rt, gl, item.from, canvasSize, readsMask ? &fromMask : nullptr);
         GlTarget toTarget = renderIsolatedLayer(rt, gl, item.to, canvasSize);
         if (!fromTarget.isValid() || !toTarget.isValid()) {
             rt.releaseTarget(std::move(fromTarget));
             rt.releaseTarget(std::move(toTarget));
+            if (fromMask.isValid())
+                rt.releaseTarget(std::move(fromMask));
             continue;
         }
 
         GlTarget mixed;
         if (item.transitionGpu && item.transitionGpu->valid) {
             const std::vector<const GlTarget *> sources{&fromTarget, &toTarget};
+            const PipelineAux aux{nullptr, fromMask.isValid() ? fromMask.texture() : 0u};
             mixed = runPipeline(rt, gl, item.transitionKey, *item.transitionGpu, sources,
-                                item.transitionParams, item.transitionTimeUs, item.progress, canvasSize);
+                                item.transitionParams, item.transitionTimeUs, item.progress, canvasSize,
+                                &aux);
         }
+        if (fromMask.isValid())
+            rt.releaseTarget(std::move(fromMask));
 
         if (mixed.isValid()) {
             // The mixed result already carries both sides' transforms and alpha.

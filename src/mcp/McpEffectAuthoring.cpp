@@ -339,7 +339,7 @@ GLSL: write `#version 330 core` (translated to GLSL ES on mobile), `in vec2 v_te
 its identifier. Engine uniforms: u_resolution (vec2, pixels), u_time (float seconds),
 u_frameIndex (int), u_timeUs (float). Do not declare parameters with reserved names: u_currentTexture,
 u_textureN, u_resolution, u_time, u_timeUs, u_frameIndex, u_progress, u_fromTexture, u_toTexture,
-u_depth*, u_hasDepth, u_templateBounds, u_meshAspect, u_face*.
+u_depth*, u_hasDepth, u_clipMask, u_hasClipMask, u_templateBounds, u_meshAspect, u_face*.
 Shaders are test-compiled on create/update; compile errors come back as shader_compile_failed with
 the driver log per pass. A shader that fails at render time shows the frame unchanged.
 )";
@@ -361,6 +361,9 @@ category is a free slug (color, blur, distort, stylize, dreamy, …); backend mu
 Keep alpha: write the source alpha back unless the effect means to change coverage.
 "requires": "face" / "depth" exist for face- and depth-aware effects; read a bundled one
 (e.g. depth.fog) with get_effect_source before using them.
+"requires": "mask" reads the clip's masks instead of cutting the clip out with them: every pass gets
+float driftMask(vec2 uv) (1 inside the mask stack, 0 outside) and u_hasClipMask (0: the clip has no
+mask, driftMask is 0 everywhere). Pair it with Cut out subject for a person matte.
 )";
 
 const char *const kGuideTransition = R"(

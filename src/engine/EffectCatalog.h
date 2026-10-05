@@ -21,6 +21,7 @@ struct EffectPresetEntry
     bool isFaceSwap = false;               // true for "backend": "faceswap" packages
     bool needsFace = false;                // "requires": "face" — engine injects u_face* uniforms
     bool needsDepth = false;               // "requires": "depth" — engine binds the depth map
+    bool needsMask = false;                // "requires": "mask" — engine binds the clip's masks
     drift::GpuEffectDefinition gpu;        // valid when isGpu && gpu.valid; packageDir also set for model3d
     int catalogOrder = 0;                  // lower sorts first in the browser catalog
     QString thumbnailPath;                 // absolute path to package thumbnail (optional)

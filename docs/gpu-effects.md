@@ -189,6 +189,26 @@ silhouette and depth only decides in front or behind. The occluder is looked for
 scene, so inside a composite clip it stays inside it. Not applied in transitions or the CPU
 compositor, and a 3D model counts as one flat plane at `depth`.
 
+## Mask effects
+
+A package with `"requires": "mask"` reads the clip's masks: every Mask-kind adjustment pinned to
+the clip (Cut out subject, People Cutout, SAM, rectangle, ellipse, freeform), folded exactly as the
+compositor would cut with them — feather, invert and the add/subtract/intersect ops included. The
+package **consumes** the masks: while it is enabled the clip is drawn whole, so a person matte can
+drive an outline, a glow or a background effect without the background disappearing. The cutout's
+decontaminated foreground is not used either. The engine compiles a prelude into every pass — **do
+not declare these yourself**:
+
+| Name | Kind | Notes |
+|---|---|---|
+| `u_clipMask` | `sampler2D` | The folded coverage in `.r`, bound on unit 9, in the source's uv space |
+| `u_hasClipMask` | `float` | **`< 0.5` means the clip has no mask** |
+| `float driftMask(vec2 uv)` | helper | 1 inside the mask stack, 0 outside; 0 everywhere without a mask |
+
+A transition with `"requires": "mask"` reads the **outgoing** clip's masks, laid out on the canvas
+where that clip is drawn, and that side is drawn whole for the transition. Neither is applied on the
+CPU compositor, where the package runs with `u_hasClipMask = 0` and the clip is still cut out.
+
 ## Special case: time_echo
 
 History frames are still decoded in `FrameCompositor`; blending runs on the GPU via `GpuEffectExecutor::blendTimeEcho` (CPU fallback if GL is unavailable).

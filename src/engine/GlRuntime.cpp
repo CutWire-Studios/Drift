@@ -346,6 +346,31 @@ float unpackDepth(vec2 rg)
 }
 )";
 
+// Compiled into every pass of a "requires": "mask" package. Same uv convention as the source.
+constexpr const char *kMaskPrelude = R"(
+uniform sampler2D u_clipMask;
+uniform float u_hasClipMask;
+
+// How much of the clip's mask stack covers uv: 1 inside, 0 outside, with feather, invert and the
+// add/subtract/intersect ops already applied. 0 everywhere when the clip has no mask, so effects
+// should test u_hasClipMask before trusting it.
+float driftMask(vec2 uv)
+{
+    return u_hasClipMask > 0.5 ? texture(u_clipMask, uv).r : 0.0;
+}
+)";
+
+// The engine declarations a package's passes are compiled with.
+QByteArray packagePrelude(const drift::GpuEffectDefinition &gpu)
+{
+    QByteArray out;
+    if (gpu.needsDepth)
+        out += kDepthPrelude;
+    if (gpu.needsMask)
+        out += kMaskPrelude;
+    return out;
+}
+
 constexpr const char *kCopyFragShader = R"(#version 330 core
 in vec2 v_texCoord;
 out vec4 fragColor;
@@ -2986,9 +3011,11 @@ bool GlRuntime::validateProgram(const drift::GpuEffectDefinition &gpu, QStringLi
                 errors->append(QStringLiteral("%1 vertex: %2").arg(where, program.log().trimmed()));
                 continue;
             }
+            const QByteArray prelude = packagePrelude(gpu);
             if (!program.addShaderFromSourceCode(QOpenGLShader::Fragment,
                                                  translateShader(pass.fragmentShaderSource, true,
-                                                                 gpu.needsDepth ? kDepthPrelude : nullptr))) {
+                                                                 prelude.isEmpty() ? nullptr
+                                                                                   : prelude.constData()))) {
                 errors->append(QStringLiteral("%1: %2").arg(where, program.log().trimmed()));
                 continue;
             }
@@ -3010,6 +3037,9 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
     sourceSig += QString::number(gpu.passes.size());
     if (gpu.needsDepth)
         sourceSig += QLatin1String("#depth");
+    if (gpu.needsMask)
+        sourceSig += QLatin1String("#mask");
+    const QByteArray prelude = packagePrelude(gpu);
 
     CompiledEffect &cached = programs[cacheKey];
     if (cached.ok && cached.id == cacheKey && cached.sourceSig == sourceSig)
@@ -3035,8 +3065,8 @@ CompiledEffect *GlRuntime::compile(const QString &cacheKey, const drift::GpuEffe
         }
         if (!cp.program->addShaderFromSourceCode(QOpenGLShader::Fragment,
                                                 translateShader(pass.fragmentShaderSource, true,
-                                                                gpu.needsDepth ? kDepthPrelude
-                                                                               : nullptr))) {
+                                                                prelude.isEmpty() ? nullptr
+                                                                                  : prelude.constData()))) {
             qWarning("GlRuntime: fragment compile failed for %s pass %d (%s): %s", qPrintable(cacheKey),
                      pass.passIndex, qPrintable(pass.fragmentShaderFile), qPrintable(cp.program->log()));
             programs.erase(cacheKey);
@@ -3833,6 +3863,15 @@ GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &ca
                                          QVector2D(float(qMax(1, depthSize.width())),
                                                    float(qMax(1, depthSize.height()))));
                 program->setUniformValue("u_hasDepth", depthTex ? 1.f : 0.f);
+            }
+
+            if (gpu.needsMask) {
+                const GLuint maskTex = aux ? aux->clipMask : 0;
+                gl->glActiveTexture(GL_TEXTURE0 + kClipMaskTextureUnit);
+                gl->glBindTexture(GL_TEXTURE_2D, maskTex);
+                gl->glActiveTexture(GL_TEXTURE0);
+                program->setUniformValue("u_clipMask", kClipMaskTextureUnit);
+                program->setUniformValue("u_hasClipMask", maskTex ? 1.f : 0.f);
             }
 
             if (face111) {

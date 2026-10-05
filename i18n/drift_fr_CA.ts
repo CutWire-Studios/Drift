@@ -3908,6 +3908,10 @@
         <translation>Les effets de profondeur lisent la profondeur d&apos;un clip, ils se placent donc sur un clip et non sur un calque de réglage.</translation>
     </message>
     <message>
+        <source>Mask effects read one clip&apos;s masks, so they go on a clip, not on an adjustment layer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Face effects follow one clip&apos;s faces, so they go on a clip, not on an adjustment layer.</source>
         <translation>Les effets de visage suivent les visages d&apos;un clip, ils se placent donc sur un clip et non sur un calque de réglage.</translation>
     </message>
@@ -4147,6 +4151,18 @@
     <message>
         <source>Effect preset deleted</source>
         <translation>Préréglage d&apos;effet supprimé</translation>
+    </message>
+    <message>
+        <source>Only effects you imported can be deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not export the effect preset</source>
@@ -6411,8 +6427,31 @@
         <translation>Appliquer au clip sélectionné</translation>
     </message>
     <message>
+        <source>Delete from My Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Built-in</source>
         <translation>Intégré</translation>
+    </message>
+    <message>
+        <source>Delete effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Supprimer</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete “%1” from My Effects? It is used %n time(s) in this project, and those clips will play without it.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Delete “%1” from My Effects? You can import its .driftfx file again later.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -552,6 +552,8 @@ GLuint staticTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &pa
 // The texture unit the depth map is bound to, clear of the units package inputs count up from.
 // GL 3.3 and GLES 3.0 both guarantee 16 fragment units.
 constexpr int kDepthTextureUnit = 8;
+// The clip's folded mask stack, for "requires": "mask" packages. Next to the depth unit.
+constexpr int kClipMaskTextureUnit = 9;
 
 // A single-channel 16-bit texture of a depth frame, uploaded once and cached by DepthFrame::key.
 // R16 where the context has it; GLES without EXT_texture_norm16 gets R16F, which is filterable in
@@ -562,6 +564,9 @@ GLuint depthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, const drift::Depth
 struct PipelineAux
 {
     std::shared_ptr<const drift::DepthFrame> depth;
+    // The clip's masks folded into one coverage map (r: 1 inside), in the same uv space as the
+    // pipeline's source 0. 0 leaves u_hasClipMask at 0.
+    GLuint clipMask = 0;
 };
 
 // Upload a QImage into a pooled FBO, so sources, intermediate buffers and the
@@ -595,8 +600,9 @@ void setPackageUniforms(QOpenGLShaderProgram *program, const QMap<QString, QVari
 // pooled target with the result. Nothing is read back to the CPU. Returns an
 // invalid target on failure (grace mode).
 //
-// `aux` carries the layer's depth for packages that need it. Without one a depth package still
-// runs, with u_hasDepth = 0, which the prelude helpers turn into a pass-through.
+// `aux` carries the layer's depth and mask for packages that need them. Without one a depth package
+// still runs, with u_hasDepth = 0, which the prelude helpers turn into a pass-through; a mask
+// package likewise runs with u_hasClipMask = 0.
 GlTarget runPipeline(GlRuntime &rt, QOpenGLExtraFunctions *gl, const QString &cacheKey,
                      const drift::GpuEffectDefinition &gpu, const std::vector<const GlTarget *> &sources,
                      const QMap<QString, QVariant> &parameters, drift::TimeUs timeUs, double progress,

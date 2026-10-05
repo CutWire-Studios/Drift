@@ -20742,7 +20742,7 @@ bool isFaceEffectId(const QString &catalogId)
 bool AppController::effectFitsTrack(int trackIndex, const QString &effectId, QString *why) const
 {
     const EffectPresetEntry *def = effectDefForId(effectId);
-    if (!def || !(def->needsFace || def->needsDepth || def->isFaceSwap || def->isModel3d))
+    if (!def || !(def->needsFace || def->needsDepth || def->needsMask || def->isFaceSwap || def->isModel3d))
         return true;
     const bool standalone = trackIndex < 0
                             || (trackIndex < m_project.tracks().size()
@@ -20753,6 +20753,8 @@ bool AppController::effectFitsTrack(int trackIndex, const QString &effectId, QSt
     if (why) {
         *why = def->needsDepth
                    ? tr("Depth effects read one clip's depth, so they go on a clip, not on an adjustment layer.")
+               : def->needsMask
+                   ? tr("Mask effects read one clip's masks, so they go on a clip, not on an adjustment layer.")
                    : tr("Face effects follow one clip's faces, so they go on a clip, not on an adjustment layer.");
     }
     return false;
@@ -22909,6 +22911,42 @@ bool AppController::deleteUserEffectPreset(const QString &presetId)
     }
     emit userEffectPresetsChanged();
     setLastMessage(tr("Effect preset deleted"), QStringLiteral("success"));
+    return true;
+}
+
+int AppController::userEffectUses(const QString &effectId) const
+{
+    int count = 0;
+    m_project.forEachTrackList([&](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks) {
+            for (const drift::Clip &clip : track.clips) {
+                for (const drift::Effect &effect : clip.effects)
+                    count += effect.catalogId == effectId ? 1 : 0;
+            }
+        }
+    });
+    return count;
+}
+
+bool AppController::deleteUserEffect(const QString &effectId)
+{
+    const EffectPresetEntry *def = effectDefForId(effectId);
+    if (!def || !isUserPackageDir(def->gpu.packageDir, QStringLiteral("effects"))) {
+        setLastMessage(tr("Only effects you imported can be deleted"), QStringLiteral("error"));
+        return false;
+    }
+    const QString name = def->meta.displayName;
+    // The catalog entry dies with the reload below, so nothing may read `def` after this.
+    if (!QDir(def->gpu.packageDir).removeRecursively()) {
+        setLastMessage(tr("Could not delete %1").arg(name), QStringLiteral("error"));
+        return false;
+    }
+    // Clips that used it keep the entry and render without it, like any missing effect.
+    if (m_addonManager)
+        m_addonManager->reloadForKinds({QStringLiteral("effects")});
+    else
+        reloadEffectCatalog();
+    setLastMessage(tr("Deleted %1").arg(name), QStringLiteral("success"));
     return true;
 }
 

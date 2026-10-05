@@ -99,8 +99,20 @@ TransitionPresetEntry TransitionPackageLoader::loadPackage(const QString &packag
                                           &entry.fixedParams);
 
     // Transitions get two source frames: index 0 = outgoing (from), index 1 = incoming (to).
-    if (!GpuPackageParse::loadGpuPipeline(root, packageDir, /*maxSourceIndex=*/1, &entry.gpu, &error))
+    if (!GpuPackageParse::loadGpuPipeline(root, packageDir, /*maxSourceIndex=*/1, &entry.gpu, &error)) {
         setError(errorOut, &entry, error);
+        return entry;
+    }
+
+    // Only "mask" means anything to a transition: the outgoing clip's masks, laid out on the
+    // canvas. Other requirements were never read here, so they stay ignored rather than refused.
+    const QJsonValue requiresValue = root.value(QStringLiteral("requires"));
+    const QJsonArray requirements = requiresValue.isArray() ? requiresValue.toArray()
+                                                            : QJsonArray{requiresValue};
+    for (const QJsonValue &v : requirements) {
+        if (v.toString() == QLatin1String("mask"))
+            entry.gpu.needsMask = true;
+    }
 
     return entry;
 }

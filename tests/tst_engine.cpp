@@ -333,6 +333,8 @@ private slots:
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
     void soleMediaMaskCarriesTheDecontaminatedForeground();
+    void maskEffectReadsTheMaskAndDrawsTheClipWhole();
+    void effectsApplyOnTopOfTheCutoutForeground();
     void aVideoEffectsAdjustmentKeepsItsOwnMask();
     void standaloneAdjustmentKeepsSeeThroughCanvasAlpha();
     void pinnedLaneAdjustmentsStayOnTheirOwnClip();
@@ -696,6 +698,13 @@ void EngineTest::effectPackageLoaderParsesDepthRequirement()
     QVERIFY(single.needsDepth);
     QVERIFY(single.gpu.needsDepth);
     QVERIFY(!single.needsFace);
+
+    const EffectPresetEntry mask =
+        EffectPackageLoader::loadPackage(writePackage(QStringLiteral("mask"), "\"mask\"", "[]"), &error);
+    QVERIFY2(mask.gpu.valid, qPrintable(error));
+    QVERIFY(mask.needsMask);
+    QVERIFY(mask.gpu.needsMask);
+    QVERIFY(!mask.needsDepth);
 
     const EffectPresetEntry both = EffectPackageLoader::loadPackage(
         writePackage(QStringLiteral("both"), R"(["face", "depth"])", "[]"), &error);
@@ -9782,6 +9791,150 @@ void EngineTest::soleMediaMaskCarriesTheDecontaminatedForeground()
     QCOMPARE(stacked.items.constFirst().layer.masks.size(), 2);
     QVERIFY2(stacked.items.constFirst().layer.fgr.isNull(),
              "a stack drops the decontaminated foreground");
+}
+
+// Issue #237: the cutout's decontaminated foreground replaced the layer's colour after the effect
+// chain had run, so a Brightness on a People Cutout clip did nothing inside the mask. It is now
+// swapped in before the chain, and the effect lands on top of it.
+void EngineTest::effectsApplyOnTopOfTheCutoutForeground()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    const QString mattePath = dir.filePath(QStringLiteral("matte.png"));
+    const QString fgrPath = dir.filePath(QStringLiteral("fgr.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+        QVERIFY(image.save(mattePath));
+        QImage fgr(64, 64, QImage::Format_RGBA8888);
+        fgr.fill(Qt::green);
+        QVERIFY(fgr.save(fgrPath));
+    }
+    const QString pkg = dir.filePath(QStringLiteral("effects/red_up"));
+    QVERIFY(QDir().mkpath(pkg));
+    {
+        QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+        QVERIFY(json.open(QIODevice::WriteOnly | QIODevice::Text));
+        json.write(R"({"id": "test.red_up", "backend": "gpu", "parameters": [],
+          "pipeline": {"intermediateBuffers": [], "passes": [
+            {"passIndex": 0, "fragmentShader": "x.frag",
+             "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}})");
+        QFile frag(QDir(pkg).filePath(QStringLiteral("x.frag")));
+        QVERIFY(frag.open(QIODevice::WriteOnly | QIODevice::Text));
+        frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+                   "uniform sampler2D u_currentTexture;\n"
+                   "void main(){ vec4 c = texture(u_currentTexture, v_texCoord);"
+                   " fragColor = vec4(1.0, c.g, c.b, c.a); }\n");
+    }
+    reloadEffectCatalog({dir.filePath(QStringLiteral("effects")), QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR)});
+    QVERIFY(effectDefForId(QStringLiteral("test.red_up")));
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    drift::Effect effect;
+    effect.catalogId = QStringLiteral("test.red_up");
+    clip.effects.append(effect);
+    project.tracks()[0].clips.append(clip);
+
+    drift::Mask matte = drift::fullFrameMediaMask(mattePath);
+    matte.mediaFgrPath = fgrPath;
+    drift::setLinkedMask(project, 0, 0, matte);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage out = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!out.isNull());
+    const QColor px = out.pixelColor(32, 32);
+    // Green from the foreground, red from the effect: yellow. Before the fix it was plain green.
+    QVERIFY2(px.red() > 200 && px.green() > 200 && px.blue() < 40,
+             qPrintable(QStringLiteral("r=%1 g=%2 b=%3").arg(px.red()).arg(px.green()).arg(px.blue())));
+
+    reloadEffectCatalog({QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR)});
+}
+
+// A "requires": "mask" effect sees the clip's mask stack through driftMask() and takes it over:
+// the clip is drawn whole instead of being cut out.
+void EngineTest::maskEffectReadsTheMaskAndDrawsTheClipWhole()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    {
+        QImage image(64, 64, QImage::Format_RGBA8888);
+        image.fill(Qt::white);
+        QVERIFY(image.save(imagePath));
+    }
+    const QString pkg = dir.filePath(QStringLiteral("effects/mask_probe"));
+    QVERIFY(QDir().mkpath(pkg));
+    {
+        QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+        QVERIFY(json.open(QIODevice::WriteOnly | QIODevice::Text));
+        json.write(R"({"id": "test.mask_probe", "backend": "gpu", "requires": "mask", "parameters": [],
+          "pipeline": {"intermediateBuffers": [], "passes": [
+            {"passIndex": 0, "fragmentShader": "x.frag",
+             "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}})");
+        QFile frag(QDir(pkg).filePath(QStringLiteral("x.frag")));
+        QVERIFY(frag.open(QIODevice::WriteOnly | QIODevice::Text));
+        // Red: the mask. Green: whether there is one. Blue: the clip itself.
+        frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+                   "uniform sampler2D u_currentTexture;\n"
+                   "void main(){ fragColor = vec4(driftMask(v_texCoord), u_hasClipMask,"
+                   " texture(u_currentTexture, v_texCoord).b, 1.0); }\n");
+    }
+    reloadEffectCatalog({dir.filePath(QStringLiteral("effects")), QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR)});
+    const EffectPresetEntry *def = effectDefForId(QStringLiteral("test.mask_probe"));
+    QVERIFY(def && def->needsMask);
+
+    drift::Project project;
+    project.setResolution(64, 64);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    drift::Effect effect;
+    effect.catalogId = def->meta.id;
+    clip.effects.append(effect);
+    project.tracks()[0].clips.append(clip);
+
+    drift::Mask ellipse;
+    ellipse.shape = drift::MaskShape::Ellipse;
+    ellipse.w = 0.5;
+    ellipse.h = 0.5;
+    drift::setLinkedMask(project, 0, 0, ellipse);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    const QImage out = compositor.compositeAt(drift::secondsToUs(1.0));
+    QVERIFY(!out.isNull());
+    const QColor centre = out.pixelColor(32, 32);
+    const QColor corner = out.pixelColor(2, 2);
+    QVERIFY2(centre.red() > 200 && centre.green() > 200, "the effect reads the mask inside it");
+    QVERIFY2(corner.red() < 40, "and reads 0 outside it");
+    QVERIFY2(corner.green() > 200 && corner.blue() > 200, "the corner is drawn, not masked away");
+
+    reloadEffectCatalog({QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR)});
 }
 
 // A standalone video-effects adjustment can carry a mask to scope where its chain lands. That is

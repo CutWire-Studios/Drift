@@ -29,6 +29,7 @@ inline bool isEngineBoundGpuUniform(const QString &name)
         || name == QLatin1String("u_currentTexture") || name == QLatin1String("u_progress")
         || name == QLatin1String("u_fromTexture") || name == QLatin1String("u_toTexture")
         || name == QLatin1String("u_hasDepth") || name == QLatin1String("u_templateBounds")
+        || name == QLatin1String("u_clipMask") || name == QLatin1String("u_hasClipMask")
         || name == QLatin1String("u_meshAspect")) {
         return true;
     }
@@ -104,6 +105,10 @@ struct GpuEffectDefinition
     // "requires": "depth": the depth prelude is compiled into every pass and the clip's depth map
     // is bound beside the declared inputs. See docs/gpu-effects.md.
     bool needsDepth = false;
+    // "requires": "mask": the mask prelude is compiled into every pass and the clip's folded mask
+    // stack is bound beside the declared inputs. The package consumes the masks: the clip is no
+    // longer cut out by them. See docs/gpu-effects.md.
+    bool needsMask = false;
     bool valid = false;
     QString errorMessage;
 };
