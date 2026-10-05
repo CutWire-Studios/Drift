@@ -3771,6 +3771,22 @@
         <translation>변환 클립이 추가됨</translation>
     </message>
     <message>
+        <source>Add camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add camera clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera clip added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Transform together</source>
         <translation>함께 변환</translation>
     </message>
@@ -5435,6 +5451,49 @@
     <message>
         <source>Reset to Normal</source>
         <translation>일반으로 초기화</translation>
+    </message>
+</context>
+<context>
+    <name>CameraInspector</name>
+    <message>
+        <source>Pan X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pan Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dolly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pitch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yaw</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lens</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a camera clip to frame the shot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10199,6 +10258,10 @@ If playback stutters, try another.</source>
         <translation>변환</translation>
     </message>
     <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization</source>
         <translation>안정화</translation>
     </message>
@@ -13990,6 +14053,14 @@ If playback stutters, try another.</source>
         <translation>변환 레이어 추가 — 선택한 클립의 트랙을 하나처럼 이동</translation>
     </message>
     <message>
+        <source>Add camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add camera — one viewpoint the whole timeline is seen through</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Main</source>
         <translation>메인</translation>
     </message>
@@ -14184,6 +14255,10 @@ If playback stutters, try another.</source>
         <translation>동영상 + 파형</translation>
     </message>
     <message>
+        <source>CAM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>TF</source>
         <translation>TF</translation>
     </message>
@@ -14210,6 +14285,10 @@ If playback stutters, try another.</source>
     <message>
         <source>V</source>
         <translation>V</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transform</source>
