@@ -2445,12 +2445,12 @@ void CoreTest::stabilizePlanDoesNotKeyEveryFrame()
     clip.transformH.setKeyframe(0, 720.0);
 
     const drift::StabilizePlan pan = drift::planStabilizeKeyframes(
-        path, clip, 30.0, 1.0, 1.0, /*smoothing=*/15, /*tripod=*/true, /*epsilon=*/1.0);
+        path, 0, clip, 30.0, 1.0, 1.0, /*smoothing=*/15, /*tripod=*/true, /*epsilon=*/1.0);
     QVERIFY(pan.keys.size() >= 2);
     QVERIFY(pan.keys.size() < frames / 4);
 
     const drift::StabilizePlan smoothed = drift::planStabilizeKeyframes(
-        path, clip, 30.0, 1.0, 1.0, /*smoothing=*/15, /*tripod=*/false, /*epsilon=*/1.0);
+        path, 0, clip, 30.0, 1.0, 1.0, /*smoothing=*/15, /*tripod=*/false, /*epsilon=*/1.0);
     QVERIFY(smoothed.keys.size() < frames / 2);
 
     // vid.stab applies C - S (tripod: the accumulated path). A +x local motion

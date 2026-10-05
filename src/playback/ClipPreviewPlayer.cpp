@@ -30,7 +30,7 @@ void ClipPreviewFrameWorker::decode(const QString &path, quint64 streamId, qint6
 
     const QImage image = ClipReaderPool::instance().readVideoFrame(
         path, streamId, static_cast<drift::TimeUs>(sourceUs), maxWidth, maxHeight,
-        QString(), 15, false, rotationCorrection);
+        rotationCorrection);
     if (!image.isNull())
         emit decoded(image, token);
 }

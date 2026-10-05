@@ -74,9 +74,8 @@ public:
     // memory ceiling would multiply by the number of them.
     void setPreviewCacheShare(int shares) { m_previewCacheShares = qMax(1, shares); }
     // Extra quarter-turns applied on top of the source's own probed display-matrix rotation for
-    // every subsequent decode (see Clip::rotationCorrection). Applied per-call like
-    // setStabilizeParams, not gated behind open()'s reopen guard, so a change takes effect on the
-    // very next frame.
+    // every subsequent decode (see Clip::rotationCorrection). Applied per-call, not gated behind
+    // open()'s reopen guard, so a change takes effect on the very next frame.
     void setRotationCorrection(int degrees)
     {
         if (m_rotationCorrection == degrees)
@@ -226,12 +225,11 @@ private:
         // Seek even if decoding forward from the current position would get there.
         bool forceSeek = false;
     };
-    bool advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure)
+    bool advanceVideoTo(drift::TimeUs sourceUs, bool *hwFailure)
     {
-        return advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure, AdvanceLimits());
+        return advanceVideoTo(sourceUs, hwFailure, AdvanceLimits());
     }
-    bool advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure,
-                        const AdvanceLimits &limits);
+    bool advanceVideoTo(drift::TimeUs sourceUs, bool *hwFailure, const AdvanceLimits &limits);
 
     // Decode size fitted into the caller's box, quantized so small preview
     // resizes don't churn the sws context and the frame cache.
@@ -309,32 +307,6 @@ private:
     int m_vppH = 0;
     bool m_hwScalerFailed = false;
 
-    QString m_stabilizePath;
-    int m_stabilizeSmoothing = 15;
-    bool m_stabilizeTripod = false;
-    int m_expectedNextFrameIndex = -1;
-    QString m_tempTrfPath;
-    struct AVFilterGraph *m_swFilterGraph = nullptr;
-    struct AVFilterContext *m_swFilterSrc = nullptr;
-    struct AVFilterContext *m_swFilterSink = nullptr;
-    int m_swFilterW = 0;
-    int m_swFilterH = 0;
-    AVPixelFormat m_swFilterFormat = AV_PIX_FMT_NONE;
-    int m_swFilterSmoothing = 15;
-    bool m_swFilterTripod = false;
-
-    bool initSwFilterGraph(int width, int height, AVPixelFormat pixFmt);
-    void teardownSwFilterGraph();
-    struct AVFrame* filterFrameInPlace(struct AVFrame *frame, int targetWidth, int targetHeight);
-
-public:
-    void setStabilizeParams(const QString &path, int smoothing, bool tripod) {
-        m_stabilizePath = path;
-        m_stabilizeSmoothing = smoothing;
-        m_stabilizeTripod = tripod;
-    }
-
-private:
 
     // Sequential-decode state: lets playback decode forward without re-seeking
     // to a keyframe on every frame. Only seek on a backward jump or a large gap.

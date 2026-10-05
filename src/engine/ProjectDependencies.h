@@ -16,7 +16,7 @@ class Project;
 namespace drift::bundle {
 
 // Every external file the project references, in document order: source media first, then the
-// derived artifacts (mattes, face tracks, stabilized renders). `embedded` is preset — derived
+// derived artifacts (mattes, face tracks, depth maps). `embedded` is preset — derived
 // artifacts are always embedded, source media follows `embedSource` — and callers may still flip
 // source entries. Files a Lottie/SVG document loads from beside itself follow as extra entries
 // with `resourceOf` set and their document's `embedded`; flip them together with it.

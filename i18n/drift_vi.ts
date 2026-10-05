@@ -2601,10 +2601,6 @@
         <translation>Ổn định Video</translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation>Ổn định video thành công!</translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation>Xóa tính năng ổn định</translation>
     </message>
@@ -3625,6 +3621,10 @@
         <translation>%1 sao chép</translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation>Chọn một video clip để nâng cấp</translation>
     </message>
@@ -3661,12 +3661,20 @@
         <translation>Bản dựng Drift này không hỗ trợ ổn định video</translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation>Kết xuất ổn định không thành công.</translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
         <translation>Kết xuất ổn định không thành công: %1</translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -12241,12 +12249,12 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
-        <translation>Ghi một video mới</translation>
-    </message>
-    <message>
         <source>Animate with keyframes</source>
         <translation>Hoạt ảnh với keyframe</translation>
+    </message>
+    <message>
+        <source>Render a new video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12273,16 +12281,16 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation>Giảm rung máy bằng cách viết keyframe về vị trí. Các pan tuyến tính nằm cách xa nhau như hai phím; chỉ những thay đổi hướng mới nhận được thêm chìa khóa. Việc thay đổi độ mượt hoặc chân máy không cập nhật bản xem trước cho đến khi bạn áp dụng.</translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>Làm mượt hiện tượng rung lắc máy quay. Drift quét đoạn phim một lần, sau đó tạo video mới. Việc thay đổi độ mượt hoặc chân máy sẽ không cập nhật bản xem trước cho đến khi bạn áp dụng.</translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation>Chế độ</translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
-        <translation>Ghi tệp mới, hoặc tạo hoạt ảnh cho clip bằng các khóa biến đổi thưa</translation>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>

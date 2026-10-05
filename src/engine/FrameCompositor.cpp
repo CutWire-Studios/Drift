@@ -712,7 +712,7 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
             read.path, streamIdFor(clip.id), read.sourceUs,
             framed ? qCeil(maxWidth / crop.width()) : maxWidth,
             framed ? qCeil(maxHeight / crop.height()) : maxHeight,
-            QString(), 15, false, clip.rotationCorrection);
+            clip.rotationCorrection);
         if (framed && !image.isNull()) {
             const int left = qBound(0, qRound(crop.x() * image.width()), image.width() - 1);
             const int top = qBound(0, qRound(crop.y() * image.height()), image.height() - 1);
@@ -933,7 +933,7 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
         const PreviewVideoFrame video = ClipReaderPool::instance().readPreviewVideoFrame(
             read.path, streamIdFor(clip.id), read.sourceUs,
             qCeil(maxWidth / clip.sourceFrame.width()), qCeil(maxHeight / clip.sourceFrame.height()),
-            QString(), 15, false, clip.rotationCorrection);
+            clip.rotationCorrection);
         if (video.isValid()) {
             layer.video = video;
             layer.videoCrop = clip.sourceFrame;

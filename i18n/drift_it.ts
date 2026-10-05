@@ -2606,10 +2606,6 @@
         <translation>Stabilizza video</translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation>Video stabilizzato con successo!</translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation>Rimuovi stabilizzazione</translation>
     </message>
@@ -3624,6 +3620,10 @@
         <translation>Copia di %1</translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3660,12 +3660,20 @@
         <translation>Questa versione di Drift non supporta la stabilizzazione video</translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation>Rendering della stabilizzazione non riuscito.</translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
         <translation>Rendering della stabilizzazione non riuscito: %1</translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -12286,12 +12294,12 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
-        <translation>Esegui il rendering di un nuovo video</translation>
-    </message>
-    <message>
         <source>Animate with keyframes</source>
         <translation>Anima con fotogrammi chiave</translation>
+    </message>
+    <message>
+        <source>Render a new video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12318,16 +12326,16 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Attenua le oscillazioni della telecamera generando fotogrammi chiave di posizione. Le panoramiche lineari rimangono impostate con due chiavi distanti; solo i cambi di direzione ricevono chiavi aggiuntive. La modifica di attenuazione o treppiede non aggiorna l&apos;anteprima finché non si applica.</translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>Attenua le oscillazioni della telecamera. Drift scansiona la clip una volta, quindi esegue il rendering di un nuovo video. La modifica di attenuazione o treppiede non aggiorna l&apos;anteprima finché non si applica.</translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation>Modalità</translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
-        <translation>Esegui il rendering di un nuovo file o anima la clip con fotogrammi chiave di trasformazione sparsi</translation>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>

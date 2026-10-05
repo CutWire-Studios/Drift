@@ -2622,10 +2622,6 @@
         <translation>تثبيت صورة الفيديو</translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation>تم تثبيت صورة الفيديو بنجاح!</translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation>إزالة تثبيت الصورة</translation>
     </message>
@@ -3544,6 +3540,10 @@
         <translation>تقدير العمق</translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3584,12 +3584,20 @@
         <translation>لا يدعم هذا الإصدار من Drift تثبيت صورة الفيديو</translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation>فشلت معالجة تثبيت الصورة.</translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
         <translation>فشلت معالجة تثبيت الصورة: %1</translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -12466,12 +12474,12 @@ If playback stutters, try another.</source>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
-        <translation>إنشاء فيديو جديد</translation>
-    </message>
-    <message>
         <source>Animate with keyframes</source>
         <translation>التحريك بإطارات مفتاحية</translation>
+    </message>
+    <message>
+        <source>Render a new video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12498,16 +12506,16 @@ If playback stutters, try another.</source>
         <translation>يقلل اهتزاز الكاميرا عبر كتابة إطارات مفتاحية للموضع. تظل حركات التمرير الخطي كإطارين متباعدين؛ ولا تحصل سوى تغييرات الاتجاه على إطارات إضافية. تغيير التنعيم أو وضع الحامل الثلاثي لا يحدّث المعاينة حتى تقوم بالتطبيق.</translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>يقلل اهتزاز الكاميرا. يمسح Drift المقطع مرة واحدة، ثم يعالج فيديو جديدًا. تغيير التنعيم أو وضع الحامل الثلاثي لا يحدّث المعاينة حتى تقوم بالتطبيق.</translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation>الوضع</translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
-        <translation>إنشاء ملف جديد، أو تحريك المقطع بإطارات تحويل متباعدة</translation>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>

@@ -93,15 +93,10 @@ public:
     // `rotationCorrection` (Clip::rotationCorrection) lets a clip's orientation fix reach the
     // decoder losslessly.
     QImage readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
-                          int maxHeight, const QString &stabilizePath = QString(),
-                          int stabilizeSmoothing = 15, bool stabilizeTripod = false,
-                          int rotationCorrection = 0);
+                          int maxHeight, int rotationCorrection = 0);
     // Preview path: AVFrame handle (hardware surfaces stay on the GPU). Empty when decode fails.
     PreviewVideoFrame readPreviewVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
-                                            int maxWidth, int maxHeight,
-                                            const QString &stabilizePath = QString(),
-                                            int stabilizeSmoothing = 15, bool stabilizeTripod = false,
-                                            int rotationCorrection = 0);
+                                            int maxWidth, int maxHeight, int rotationCorrection = 0);
     int readAudioInterleaved(const QString &path, quint64 streamId, drift::TimeUs sourceStartUs,
                              int sampleCount, int outputSampleRate, float *interleavedStereoOut,
                              int audioStreamOrdinal = 0);

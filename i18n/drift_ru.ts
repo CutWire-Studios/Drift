@@ -2611,10 +2611,6 @@
         <translation>Стабилизировать видео</translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation>Видео успешно стабилизировано!</translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation>Убрать стабилизацию</translation>
     </message>
@@ -3631,6 +3627,10 @@
         <translation>Копия %1</translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3667,12 +3667,20 @@
         <translation>В этой сборке Drift стабилизация видео не поддерживается</translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation>Не удалось создать стабилизированное видео.</translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
         <translation>Не удалось создать стабилизированное видео: %1</translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -12331,12 +12339,12 @@ If playback stutters, try another.</source>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
-        <translation>Создать новый видеофайл</translation>
-    </message>
-    <message>
         <source>Animate with keyframes</source>
         <translation>Анимировать ключевыми кадрами</translation>
+    </message>
+    <message>
+        <source>Render a new video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12363,16 +12371,16 @@ If playback stutters, try another.</source>
         <translation>Сглаживает дрожание камеры с помощью ключевых кадров положения. При прямолинейном движении остаются два отдалённых друг от друга кадра; дополнительные кадры создаются только при смене направления. Изменения сглаживания и режима штатива появятся в предпросмотре после применения.</translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>Сглаживает дрожание камеры. Drift один раз сканирует клип, затем создаёт новое видео. Изменения сглаживания и режима штатива появятся в предпросмотре после применения.</translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation>Режим</translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
-        <translation>Создать новый файл или анимировать клип редкими ключевыми кадрами трансформации</translation>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>

@@ -212,7 +212,8 @@ QStringList rotationChain(int rotation)
 
 // buffer (source frames, microsecond timestamps) -> `chain` -> buffersink.
 bool buildFilterGraph(const AVCodecContext *dec, const AVStream *stream, const QString &chain,
-                      AVFilterGraph **graphOut, AVFilterContext **srcOut, AVFilterContext **sinkOut)
+                      const QList<FilterOption> &options, AVFilterGraph **graphOut,
+                      AVFilterContext **srcOut, AVFilterContext **sinkOut)
 {
     AVFilterGraph *graph = avfilter_graph_alloc();
     if (!graph)
@@ -238,30 +239,55 @@ bool buildFilterGraph(const AVCodecContext *dec, const AVStream *stream, const Q
 
     AVFilterContext *src = nullptr;
     AVFilterContext *sink = nullptr;
-    AVFilterInOut *outputs = nullptr;
-    AVFilterInOut *inputs = nullptr;
     bool ok = avfilter_graph_create_filter(&src, avfilter_get_by_name("buffer"), "in",
                                            args.constData(), nullptr, graph)
             >= 0
         && avfilter_graph_create_filter(&sink, avfilter_get_by_name("buffersink"), "out", nullptr,
                                         nullptr, graph)
             >= 0;
+
+    // avfilter_graph_parse_ptr in its steps, so `options` land after the chain's own options and
+    // before init: a filter refuses a non-runtime option once it is initialized.
+    AVFilterGraphSegment *segment = nullptr;
+    AVFilterInOut *freeInputs = nullptr;
+    AVFilterInOut *freeOutputs = nullptr;
     if (ok) {
-        outputs = avfilter_inout_alloc();
-        inputs = avfilter_inout_alloc();
-        ok = outputs && inputs;
-    }
-    if (ok) {
-        outputs->name = av_strdup("in");
-        outputs->filter_ctx = src;
-        inputs->name = av_strdup("out");
-        inputs->filter_ctx = sink;
         const QByteArray chainUtf8 = chain.toUtf8();
-        ok = avfilter_graph_parse_ptr(graph, chainUtf8.constData(), &inputs, &outputs, nullptr) >= 0
-            && avfilter_graph_config(graph, nullptr) >= 0;
+        ok = avfilter_graph_segment_parse(graph, chainUtf8.constData(), 0, &segment) >= 0
+            && avfilter_graph_segment_create_filters(segment, 0) >= 0
+            && avfilter_graph_segment_apply_opts(segment, 0) >= 0;
     }
-    avfilter_inout_free(&inputs);
-    avfilter_inout_free(&outputs);
+    for (const FilterOption &option : options) {
+        if (!ok)
+            break;
+        bool applied = false;
+        for (size_t c = 0; ok && c < segment->nb_chains; ++c) {
+            const AVFilterChain *filterChain = segment->chains[c];
+            for (size_t f = 0; f < filterChain->nb_filters; ++f) {
+                AVFilterContext *ctx = filterChain->filters[f]->filter;
+                if (!ctx || option.filter != ctx->filter->name)
+                    continue;
+                if (av_opt_set(ctx, option.option.constData(), option.value.toUtf8().constData(),
+                               AV_OPT_SEARCH_CHILDREN)
+                    < 0) {
+                    ok = false;
+                    break;
+                }
+                applied = true;
+            }
+        }
+        ok = ok && applied;
+    }
+    // The chain is one unlabeled run, so it leaves exactly one free pad at each end.
+    ok = ok && avfilter_graph_segment_init(segment, 0) >= 0
+        && avfilter_graph_segment_link(segment, 0, &freeInputs, &freeOutputs) >= 0
+        && freeInputs && !freeInputs->next && freeOutputs && !freeOutputs->next
+        && avfilter_link(src, 0, freeInputs->filter_ctx, freeInputs->pad_idx) >= 0
+        && avfilter_link(freeOutputs->filter_ctx, freeOutputs->pad_idx, sink, 0) >= 0
+        && avfilter_graph_config(graph, nullptr) >= 0;
+    avfilter_inout_free(&freeInputs);
+    avfilter_inout_free(&freeOutputs);
+    avfilter_graph_segment_free(&segment);
     if (!ok) {
         avfilter_graph_free(&graph);
         return false;
@@ -528,13 +554,16 @@ bool Mp4Writer::open(const QString &path, const AVFrame *firstVideo, AVRational 
     m_videoCtx->color_trc = firstVideo->color_trc;
     m_videoCtx->time_base = AVRational{frameRate.den, frameRate.num};
     m_videoCtx->framerate = frameRate;
-    // The result is timeline media, so it keeps the short GOP that keeps scrubbing it cheap.
-    m_videoCtx->gop_size = 12;
-    m_videoCtx->max_b_frames = 0;
+    // The result is timeline media: a keyframe about every second keeps a scrub's seek to a
+    // second of decoding at most. B-frames and CRF 18 are what keep the file near the size of a
+    // camera original — CRF 16 with a 12-frame GOP and no B-frames ran 1080p at ~45 Mbps.
+    m_videoCtx->gop_size = std::max(1, int(std::lround(av_q2d(frameRate))));
+    m_videoCtx->max_b_frames = 3;
     if (m_fmt->oformat->flags & AVFMT_GLOBALHEADER)
         m_videoCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    // It replaces the original in the project and is what export reads, so near-transparent.
-    av_opt_set(m_videoCtx->priv_data, "crf", "16", 0);
+    // It replaces the original in the project and is what export reads, so still visually
+    // lossless.
+    av_opt_set(m_videoCtx->priv_data, "crf", "18", 0);
     av_opt_set(m_videoCtx->priv_data, "preset", "fast", 0);
 
     if (avcodec_open2(m_videoCtx, vCodec, nullptr) < 0)
@@ -942,8 +971,8 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
         // lines up with the audio's first sample.
         chain << QStringLiteral("fps=fps=%1/%2:start_time=0").arg(frameRate.num).arg(frameRate.den)
               << QStringLiteral("format=%1").arg(QString::fromLatin1(av_get_pix_fmt_name(graphFormat)));
-        if (!buildFilterGraph(vDec, vStream, chain.join(QLatin1Char(',')), &graph, &filterSrc,
-                              &filterSink)) {
+        if (!buildFilterGraph(vDec, vStream, chain.join(QLatin1Char(',')), spec.videoFilterOptions,
+                              &graph, &filterSrc, &filterSink)) {
             if (swr)
                 swr_free(&swr);
             if (aDec)
@@ -974,6 +1003,9 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
     std::vector<float> pendingPcm;
     bool ok = packet && frame && filtered && (hooked || !spec.frameHook);
     bool wroteVideo = false;
+    // Set once a stream decodes past the out-point; with both set, the rest of the file is skipped.
+    bool videoPastOut = false;
+    bool audioPastOut = false;
     const TimeUs spanUs = (outUs == std::numeric_limits<TimeUs>::max() ? durationUs : outUs) - inUs;
 
     auto cleanup = [&] {
@@ -1087,8 +1119,10 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
         const TimeUs ptsUs = framePtsUs(decoded, vStream->time_base);
         if (ptsUs + 1000 < inUs)
             return true;
-        if (ptsUs >= outUs)
+        if (ptsUs >= outUs) {
+            videoPastOut = true;
             return true;
+        }
         // Real timestamps into the fps filter, relative to the in-point: it is what places each
         // frame on the output grid, instead of the frames simply being counted.
         decoded->pts = ptsUs - inUs;
@@ -1113,8 +1147,10 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
         const TimeUs ptsUs = framePtsUs(decoded, aStream->time_base);
         if (ptsUs + 20000 < inUs)
             return true;
-        if (ptsUs >= outUs)
+        if (ptsUs >= outUs) {
+            audioPastOut = true;
             return true;
+        }
         const int maxOut = swr_get_out_samples(swr, decoded->nb_samples);
         pcm.resize(std::max(0, maxOut) * 2);
         uint8_t *outData[1] = {reinterpret_cast<uint8_t *>(pcm.data())};
@@ -1144,7 +1180,7 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
         return writeAudio(pcm.data() + offset * 2, count);
     };
 
-    while (ok) {
+    while (ok && !(videoPastOut && (audioPastOut || !aDec || !swr))) {
         if (av_read_frame(fmt, packet) < 0)
             break;
         AVCodecContext *dec = nullptr;
@@ -1224,7 +1260,8 @@ bool editVideo(const MediaEditSpec &spec, QString *errorOut,
 
 } // namespace
 
-bool analyzeVideo(const QString &inputPath, const QString &filter, QString *errorOut,
+bool analyzeVideo(const QString &inputPath, TimeUs inUs, TimeUs outUs, const QString &filter,
+                  const QList<FilterOption> &filterOptions, QString *errorOut,
                   const std::function<bool(double)> &onProgress)
 {
     auto fail = [&](const QString &message) {
@@ -1266,21 +1303,31 @@ bool analyzeVideo(const QString &inputPath, const QString &filter, QString *erro
     AVFilterGraph *graph = nullptr;
     AVFilterContext *filterSrc = nullptr;
     AVFilterContext *filterSink = nullptr;
-    if (!buildFilterGraph(vDec, vStream, chain.join(QLatin1Char(',')), &graph, &filterSrc,
-                          &filterSink)) {
+    if (!buildFilterGraph(vDec, vStream, chain.join(QLatin1Char(',')), filterOptions, &graph,
+                          &filterSrc, &filterSink)) {
         avcodec_free_context(&vDec);
         avformat_close_input(&fmt);
         return fail(trEdit("Could not set up the video analysis"));
     }
 
+    inUs = std::max<TimeUs>(0, inUs);
+    if (outUs < 0)
+        outUs = std::numeric_limits<TimeUs>::max();
     const TimeUs durationUs = fmt->duration > 0 ? fmt->duration
                                                 : av_rescale_q(vStream->duration, vStream->time_base,
                                                                {1, AV_TIME_BASE});
+    const TimeUs spanUs = (outUs == std::numeric_limits<TimeUs>::max() ? durationUs : outUs) - inUs;
+    if (inUs > 0) {
+        const int64_t ts = av_rescale_q(inUs, {1, AV_TIME_BASE}, vStream->time_base);
+        av_seek_frame(fmt, videoIndex, ts, AVSEEK_FLAG_BACKWARD);
+        avcodec_flush_buffers(vDec);
+    }
     AVPacket *packet = av_packet_alloc();
     AVFrame *frame = av_frame_alloc();
     AVFrame *filtered = av_frame_alloc();
     bool ok = packet && frame && filtered;
     int framesAnalyzed = 0;
+    bool pastOut = false;
 
     auto drainFilter = [&]() -> bool {
         for (;;) {
@@ -1293,20 +1340,24 @@ bool analyzeVideo(const QString &inputPath, const QString &filter, QString *erro
         }
     };
 
-    // Same timestamp handling and pre-roll skip as editVideo's handleVideo with no trim, so
-    // both passes feed the filter the same frames.
+    // Same seek, timestamp handling and trim as editVideo's handleVideo, so both passes feed the
+    // filter the same frames.
     auto handleVideo = [&](AVFrame *decoded) -> bool {
         const TimeUs ptsUs = framePtsUs(decoded, vStream->time_base);
-        if (ptsUs + 1000 < 0)
+        if (ptsUs + 1000 < inUs)
             return true;
-        decoded->pts = ptsUs;
+        if (ptsUs >= outUs) {
+            pastOut = true;
+            return true;
+        }
+        decoded->pts = ptsUs - inUs;
         decoded->duration = av_rescale_q(decoded->duration, vStream->time_base, {1, AV_TIME_BASE});
         if (av_buffersrc_add_frame_flags(filterSrc, decoded, AV_BUFFERSRC_FLAG_KEEP_REF) < 0)
             return fail(trEdit("Could not analyze a frame"));
         ++framesAnalyzed;
         if (!drainFilter())
             return false;
-        if (durationUs > 0 && cancelled(onProgress, double(ptsUs) / double(durationUs)))
+        if (spanUs > 0 && cancelled(onProgress, double(ptsUs - inUs) / double(spanUs)))
             return fail(trEdit("Cancelled"));
         return true;
     };
@@ -1325,7 +1376,7 @@ bool analyzeVideo(const QString &inputPath, const QString &filter, QString *erro
         }
     };
 
-    while (ok && av_read_frame(fmt, packet) >= 0) {
+    while (ok && !pastOut && av_read_frame(fmt, packet) >= 0) {
         if (packet->stream_index != videoIndex) {
             av_packet_unref(packet);
             continue;
@@ -1360,6 +1411,17 @@ bool analyzeVideo(const QString &inputPath, const QString &filter, QString *erro
 bool hasVideoFilter(const char *name)
 {
     return avfilter_get_by_name(name) != nullptr;
+}
+
+QString stabilizationCacheDir()
+{
+    const QString root = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (root.isEmpty())
+        return {};
+    const QString dir = QDir(root).filePath(QStringLiteral("stabilization"));
+    if (!QDir().mkpath(dir))
+        return {};
+    return dir;
 }
 
 QString newEditedMediaPath(const QString &projectId, const QString &kind)

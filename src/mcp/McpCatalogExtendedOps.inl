@@ -1457,19 +1457,22 @@
                         {QStringLiteral("preset"), stringProp(QStringLiteral("Scale preset id from list_export_presets"))}},
                        {QStringLiteral("path"), QStringLiteral("preset")}) },
         { "stabilize_clip", "canvas", "Stabilise shaky footage",
-          "Start a two-pass stabilise on a video clip. Async: poll inspect({clips:true,detail:true}) "
-          "for that clip's stabilizing/stabilizeProgress/stabilizeStatus.",
+          "Start a two-pass stabilise on a video clip's source range. bake renders a '<name> (stabilized)' "
+          "bin asset with the clip's audio, points the clip at it and deletes its linked audio clip. "
+          "Re-running always starts from the original video. Async: poll "
+          "inspect({clips:true,detail:true}) for that clip's stabilizing/stabilizeProgress/stabilizeStatus.",
           objectSchema(mergeProps(
               {{QStringLiteral("smoothing"), integerProp(QStringLiteral("Smoothing window, typical 10–30"))},
                {QStringLiteral("tripod"), boolProp(QStringLiteral("Lock camera translation"))},
-               {QStringLiteral("mode"), enumProp(QStringLiteral("bake writes a proxy; keyframes write transform keys"),
+               {QStringLiteral("mode"), enumProp(QStringLiteral("bake renders a stabilized bin asset; keyframes write transform keys"),
                                                  {QStringLiteral("bake"), QStringLiteral("keyframes")})}},
               clipRefProps())) },
         { "cancel_stabilize", "canvas", "Stop stabilise job",
           "Cancel an in-flight stabilize_clip. Returns ok even when nothing was running.",
           objectSchema(clipRefProps()) },
-        { "remove_stabilize", "canvas", "Undo stabilize_clip's proxy or keyframes",
-          "Clear the baked proxy / keyframe rest pose from a clip.",
+        { "remove_stabilize", "canvas", "Undo stabilize_clip's keyframes",
+          "Restore the rest pose of a clip stabilized in keyframes mode. Errors on a bake: that is a "
+          "bin asset of its own, so point the clip back at the original instead.",
           objectSchema(clipRefProps()), false, true },
         { "list_addons", "ai", "What add-ons exist",
           "Returns {addons:[{id, name, kind, version, state, installed}]}. Use id with install_addon.",

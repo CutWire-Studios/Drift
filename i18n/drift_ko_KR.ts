@@ -2601,10 +2601,6 @@
         <translation>동영상 안정화</translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation>동영상이 성공적으로 안정화되었습니다!</translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation>안정화 제거</translation>
     </message>
@@ -3617,6 +3613,10 @@
         <translation>%1 복사본</translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3653,12 +3653,20 @@
         <translation>이 Drift 빌드에서는 동영상 안정화를 지원하지 않습니다</translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation>안정화 렌더링에 실패했습니다.</translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
         <translation>안정화 렌더링에 실패했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -12234,12 +12242,12 @@ If playback stutters, try another.</source>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
-        <translation>새 동영상으로 굽기</translation>
-    </message>
-    <message>
         <source>Animate with keyframes</source>
         <translation>키프레임으로 애니메이션</translation>
+    </message>
+    <message>
+        <source>Render a new video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12266,16 +12274,16 @@ If playback stutters, try another.</source>
         <translation>위치 키프레임을 기록하여 카메라 흔들림을 부드럽게 합니다. 선형 패닝은 멀리 떨어진 두 개의 키로 유지하고, 방향이 바뀌는 곳에만 추가 키를 만듭니다. 부드러움이나 삼각대 설정을 변경해도 적용할 때까지 미리보기가 업데이트되지 않습니다.</translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>카메라 흔들림을 부드럽게 합니다. Drift가 클립을 한 번 스캔한 다음 새 동영상을 렌더링합니다. 부드러움이나 삼각대 설정을 변경해도 적용할 때까지 미리보기가 업데이트되지 않습니다.</translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation>모드</translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
-        <translation>새 파일로 굽거나 듬성듬성한 변환 키로 클립에 애니메이션 적용</translation>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>

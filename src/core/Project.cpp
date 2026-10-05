@@ -258,7 +258,6 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("faceTrackPath"), clip.faceTrackPath},
         {QStringLiteral("faceTrackSrcOffsetUs"), qint64(clip.faceTrackSrcOffsetUs)},
         {QStringLiteral("depthPath"), clip.depthPath},
-        {QStringLiteral("stabilizePath"), clip.stabilizePath},
         {QStringLiteral("stabilizeMode"), stabilizeModeToString(clip.stabilizeMode)},
         {QStringLiteral("stabilizeSmoothing"), clip.stabilizeSmoothing},
         {QStringLiteral("stabilizeTripod"), clip.stabilizeTripod},
@@ -389,7 +388,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.faceTrackSrcOffsetUs =
         TimeUs(object.value(QStringLiteral("faceTrackSrcOffsetUs")).toInteger(0));
     clip.depthPath = object.value(QStringLiteral("depthPath")).toString();
-    clip.stabilizePath = object.value(QStringLiteral("stabilizePath")).toString();
+    clip.legacyStabilizePath = object.value(QStringLiteral("stabilizePath")).toString();
     clip.stabilizeMode =
         stabilizeModeFromString(object.value(QStringLiteral("stabilizeMode")).toString());
     clip.stabilizeSmoothing = object.value(QStringLiteral("stabilizeSmoothing")).toInt(15);
@@ -406,7 +405,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.stabilizeRestRot = object.value(QStringLiteral("stabilizeRestRot")).toDouble(0.0);
     // Older projects stored a bake without recording which settings produced it.
     // Treat the current sliders as applied so the inspector does not warn spuriously.
-    if (!clip.stabilizePath.isEmpty() && clip.stabilizeAppliedSmoothing < 0) {
+    if (!clip.legacyStabilizePath.isEmpty() && clip.stabilizeAppliedSmoothing < 0) {
         clip.stabilizeAppliedSmoothing = clip.stabilizeSmoothing;
         clip.stabilizeAppliedTripod = clip.stabilizeTripod;
         clip.stabilizeAppliedMode = StabilizeMode::Bake;

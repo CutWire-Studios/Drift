@@ -4547,7 +4547,9 @@ void EngineTest::mediaEditorStabilizesInProcess()
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString sourcePath = dir.filePath(QStringLiteral("shaky.mp4"));
-    const QString trfPath = dir.filePath(QStringLiteral("motion.trf"));
+    // Spaces and a colon: the app data dir is "CutWire Drift", which the filtergraph parser cannot
+    // take, so the path reaches vid.stab as a filter option instead.
+    const QString trfPath = dir.filePath(QStringLiteral("motion data: v1.trf"));
     const QString outPath = dir.filePath(QStringLiteral("stable.mp4"));
     QProcess process;
     process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
@@ -4561,11 +4563,9 @@ void EngineTest::mediaEditorStabilizesInProcess()
     QCOMPARE(process.exitCode(), 0);
 
     QString error;
-    QVERIFY2(drift::analyzeVideo(sourcePath,
-                                 QStringLiteral("vidstabdetect=shakiness=5:accuracy=15:result='%1'")
-                                     .arg(QString(trfPath).replace(QLatin1Char(':'),
-                                                                   QStringLiteral("\\:"))),
-                                 &error, {}),
+    QVERIFY2(drift::analyzeVideo(sourcePath, 0, -1,
+                                 QStringLiteral("vidstabdetect=shakiness=5:accuracy=15"),
+                                 {{"vidstabdetect", "result", trfPath}}, &error, {}),
              qPrintable(error));
     // vid.stab's binary file carries one record past the last frame; the ffmpeg CLI's does too.
     QCOMPARE(drift::readTrfFrameTranslations(trfPath).size(), 31);
@@ -4574,14 +4574,31 @@ void EngineTest::mediaEditorStabilizesInProcess()
     spec.inputPath = sourcePath;
     spec.outputPath = outPath;
     spec.kind = QStringLiteral("video");
-    spec.videoFilter = QStringLiteral("vidstabtransform=input='%1':smoothing=15:tripod=0:optzoom=1")
-                           .arg(QString(trfPath).replace(QLatin1Char(':'), QStringLiteral("\\:")));
+    spec.videoFilter = QStringLiteral("vidstabtransform=smoothing=15:tripod=0:optzoom=1");
+    spec.videoFilterOptions = {{"vidstabtransform", "input", trfPath}};
     QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
 
     const MediaInfo info = MediaProbe::probe(outPath);
     QVERIFY(info.ok);
     QCOMPARE(info.streams.first().width, 320);
     QCOMPARE(info.streams.first().height, 240);
+
+    // A trimmed range: both passes see the same 15 frames, and the render is just that range.
+    const QString rangeTrf = dir.filePath(QStringLiteral("range.trf"));
+    const QString rangeOut = dir.filePath(QStringLiteral("range.mp4"));
+    QVERIFY2(drift::analyzeVideo(sourcePath, 250'000, 750'000,
+                                 QStringLiteral("vidstabdetect=shakiness=5:accuracy=15"),
+                                 {{"vidstabdetect", "result", rangeTrf}}, &error, {}),
+             qPrintable(error));
+    QCOMPARE(drift::readTrfFrameTranslations(rangeTrf).size(), 16);
+    spec.outputPath = rangeOut;
+    spec.inSeconds = 0.25;
+    spec.outSeconds = 0.75;
+    spec.videoFilterOptions = {{"vidstabtransform", "input", rangeTrf}};
+    QVERIFY2(drift::editMedia(spec, &error, {}), qPrintable(error));
+    const MediaInfo rangeInfo = MediaProbe::probe(rangeOut);
+    QVERIFY(rangeInfo.ok);
+    QVERIFY(qAbs(rangeInfo.durationUs - 500'000) <= 40'000);
 }
 
 void EngineTest::reverseProxyLookupIsByContainmentAndSourceIdentity()
@@ -4672,13 +4689,6 @@ void EngineTest::resolveVideoReadMirrorsTheClipOntoTheProxy()
     QCOMPARE(read.path, proxyPath);
     QCOMPARE(read.sourceUs, coverOut - clip.srcIn);
 
-    QCOMPARE(drift::videoReadPath(clip), proxyPath);
-
-    clip.reverse = false;
-    clip.stabilizePath = proxyPath;
-    read = drift::resolveVideoRead(clip, clip.timelineStart);
-    QCOMPARE(read.path, proxyPath);
-    QCOMPARE(read.sourceUs, clip.srcIn);
     QCOMPARE(drift::videoReadPath(clip), proxyPath);
 }
 

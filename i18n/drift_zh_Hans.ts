@@ -2601,10 +2601,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3617,6 +3613,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3653,11 +3653,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12234,11 +12242,11 @@ If playback stutters, try another.</source>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
+        <source>Animate with keyframes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Animate with keyframes</source>
+        <source>Render a new video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12266,15 +12274,15 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

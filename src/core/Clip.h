@@ -119,10 +119,14 @@ struct Clip
     // pixels it was estimated from change.
     QString depthPath;
 
-    // Baked stabilized video written by the two-pass ffmpeg job, plus the settings
-    // last used to produce it. `stabilizing` is transient UI state and is not saved.
-    // Keyframe mode writes sparse transformX/Y keys instead of a new video.
-    QString stabilizePath;
+    // Stabilize settings, and the ones the last run used. Bake mode renders a new
+    // "(stabilized)" bin asset and points the clip at it; keyframe mode writes sparse
+    // transformX/Y keys instead. `stabilizing` is transient UI state and is not saved.
+    //
+    // legacyStabilizePath is only ever read: projects from before stabilized videos were bin
+    // assets kept a whole-source render here, and AppController::migrateLegacyStabilizedClips
+    // turns it into an asset on load.
+    QString legacyStabilizePath;
     bool stabilizing = false;
     StabilizeMode stabilizeMode = StabilizeMode::Bake;
     int stabilizeSmoothing = 15;
@@ -177,8 +181,8 @@ struct Clip
     // distinct from `rotation` above, which is a free decorative spin effect. Relative, not
     // absolute: added on top of whatever display-matrix rotation the file actually being decoded
     // carries. That is what lets one value stay right across every file a clip can read from —
-    // the original, a reverse proxy (tag preserved) or a vidstab bake (ffmpeg autorotated the
-    // pixels and dropped the tag). 0 = show the file as its own tag says.
+    // the original, a reverse proxy (tag preserved) or a stabilized render (autorotated pixels,
+    // tag dropped). 0 = show the file as its own tag says.
     int rotationCorrection = 0;
     KeyframeTrack<double> volume;
     QList<Effect> effects;

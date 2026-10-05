@@ -19,8 +19,10 @@ Item {
     readonly property string stabilizeMode: (clipData && clipData.stabilizeMode)
                                             ? clipData.stabilizeMode : "bake"
     readonly property bool keyframeMode: root.stabilizeMode === "keyframes"
+    readonly property bool appliedAsKeyframes: root.stabilized && !!clipData
+                                               && clipData.stabilizeAppliedMode === "keyframes"
     readonly property var modeIds: ["bake", "keyframes"]
-    readonly property var modeLabels: [qsTr("Bake a new video"), qsTr("Animate with keyframes")]
+    readonly property var modeLabels: [qsTr("Render a new video"), qsTr("Animate with keyframes")]
     readonly property string actionLabel: {
         if (root.stabilized && root.stale)
             return qsTr("Update stabilization")
@@ -56,7 +58,7 @@ Item {
             wrapMode: Text.WordWrap
             text: root.keyframeMode
                   ? qsTr("Smooths camera shake by writing position keyframes. Linear pans stay as two keys far apart; only direction changes get extra keys. Changing smoothness or tripod does not update the preview until you apply.")
-                  : qsTr("Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.")
+                  : qsTr("Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.")
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -79,7 +81,7 @@ Item {
                 model: root.modeLabels
                 enabled: !root.stabilizing
                 currentIndex: Math.max(0, root.modeIds.indexOf(root.stabilizeMode))
-                tooltip: qsTr("Bake a new file, or animate the clip with sparse transform keys")
+                tooltip: qsTr("Render a stabilized copy, or animate the clip with sparse transform keys")
                 onActivated: (index) => {
                     EditorState.setClipStabilizeMode(
                                 EditorState.selectedTrack, EditorState.selectedClip,
@@ -194,7 +196,8 @@ Item {
             ThemedButton {
                 text: qsTr("Remove")
                 variant: "ghost"
-                visible: root.stabilized
+                // A stabilized video is its own bin item; the original is still there to swap back.
+                visible: root.appliedAsKeyframes
                 onClicked: EditorState.removeClipStabilization(
                                EditorState.selectedTrack, EditorState.selectedClip)
             }

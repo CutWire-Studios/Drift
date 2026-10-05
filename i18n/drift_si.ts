@@ -2606,10 +2606,6 @@
         <translation>වීඩියෝව ස්ථාවර කරන්න</translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation>වීඩියෝව සාර්ථකව ස්ථාවර කරන ලදී!</translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation>ස්ථාවර කිරීම ඉවත් කරන්න</translation>
     </message>
@@ -3624,6 +3620,10 @@
         <translation>%1 පිටපත</translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3660,12 +3660,20 @@
         <translation>Drift හි මෙම සංස්කරණයට වීඩියෝ ස්ථාවර කිරීමේ සහාය නොමැත</translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation>ස්ථාවර කිරීම රෙන්ඩර් වීම අසමත් විය.</translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
         <translation>ස්ථාවර කිරීම රෙන්ඩර් වීම අසමත් විය: %1</translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -12286,12 +12294,12 @@ If playback stutters, try another.</source>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
-        <translation>නව වීඩියෝවක් සාදන්න (Bake)</translation>
-    </message>
-    <message>
         <source>Animate with keyframes</source>
         <translation>කීෆ්‍රේම මඟින් සජීවිකරණය කරන්න</translation>
+    </message>
+    <message>
+        <source>Render a new video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12318,16 +12326,16 @@ If playback stutters, try another.</source>
         <translation>පිහිටුම් කීෆ්‍රේම ලිවීමෙන් කැමරා සෙලවීම් සුමට කරයි. රේඛීය පෑන් (Linear pans) ඈතින් ඇති යතුරු දෙකක් ලෙස පවතී; දිශාව වෙනස් වන විට පමණක් අමතර යතුරු ලැබේ. සුමටතාව හෝ ට්‍රයිපොඩ් වෙනස් කිරීම ඔබ යොදන තෙක් පෙරදසුන යාවත්කාලීන නොකරයි.</translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>කැමරා සෙලවීම් සුමට කරයි. Drift ක්ලිප් එක එක් වරක් ස්කෑන් කර, නව වීඩියෝවක් රෙන්ඩර් කරයි. සුමටතාව හෝ ට්‍රයිපොඩ් වෙනස් කිරීම ඔබ යොදන තෙක් පෙරදසුන යාවත්කාලීන නොකරයි.</translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation>ප්‍රකාරය</translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
-        <translation>නව ගොනුවක් සාදන්න, නැතහොත් පරිවර්තන යතුරු මඟින් ක්ලිප් එක සජීවිකරණය කරන්න</translation>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>

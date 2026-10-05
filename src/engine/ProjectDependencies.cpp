@@ -5,6 +5,7 @@
 #include "AudioFileWriter.h"
 #include "EffectCatalog.h"
 #include "FontCatalog.h"
+#include "MediaEditor.h"
 #include "TransitionCatalog.h"
 #include "core/Project.h"
 
@@ -162,6 +163,9 @@ QString numberedName(const QString &name, int n)
 QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
 {
     const QString denoiseDir = denoiseCacheDir();
+    // Stabilized renders made before they were written as project media; on load they become
+    // bin assets that still live in this cache directory.
+    const QString stabilizationDir = stabilizationCacheDir();
     const QString emojiDir = emojiCacheDir();
 
     QList<MediaEntry> media;
@@ -197,8 +201,11 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
         if (!asset || isUnder(asset->path, emojiDir))
             continue;
         // Denoised audio is an ordinary asset, but its file lives in a cache directory that gets
-        // swept — it is a post-process result, so it travels with the project either way.
-        append(asset->path, MediaRole::Source, embedSource || isUnder(asset->path, denoiseDir));
+        // swept — it is a post-process result, so it travels with the project either way. Same
+        // for a stabilized render from before those were project media.
+        append(asset->path, MediaRole::Source,
+               embedSource || isUnder(asset->path, denoiseDir)
+                   || isUnder(asset->path, stabilizationDir));
     }
 
     QList<Track> allTracks;
@@ -210,7 +217,8 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
                 continue;
             // Clips carry their own copy of the asset path; a text or shape clip has none.
             append(clip.path, MediaRole::Source,
-                   embedSource || isUnder(clip.path, denoiseDir));
+                   embedSource || isUnder(clip.path, denoiseDir)
+                       || isUnder(clip.path, stabilizationDir));
         }
     }
 
@@ -221,7 +229,6 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
             append(clip.mask.mediaFgrPath, MediaRole::Matte, true);
             append(clip.faceTrackPath, MediaRole::FaceTrack, true);
             append(clip.depthPath, MediaRole::Depth, true);
-            append(clip.stabilizePath, MediaRole::Stabilized, true);
             for (const VectorSlotValue &slot : clip.vector.slotValues) {
                 if (slot.type == VectorSlotValue::Type::Image)
                     append(slot.image, MediaRole::Source, embedSource);

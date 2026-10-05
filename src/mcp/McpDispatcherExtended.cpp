@@ -2595,6 +2595,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
+        const drift::Clip &clip = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+        if (clip.stabilizeAppliedSmoothing < 0
+            || clip.stabilizeAppliedMode != drift::StabilizeMode::Keyframes)
+            return err("not_keyframe_stabilized",
+                       QStringLiteral("Only keyframe stabilization can be removed; a stabilized "
+                                      "video is a bin asset, so point the clip back at the original"));
         m_controller->removeClipStabilization(ref.track, ref.clip);
         return ok(clipFeedback(ref));
     }

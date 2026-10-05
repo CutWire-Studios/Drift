@@ -31,6 +31,8 @@
 
 #include "playback/CompositorService.h"
 #include "engine/HwAccel.h"
+#include "engine/MediaEditor.h"
+#include "engine/MediaProbe.h"
 #include "engine/FrameCompositor.h"
 #include "engine/ClipReaderPool.h"
 #include "models/AppController.h"
@@ -171,6 +173,8 @@ private slots:
     void guidesTravelWithProject();
     void guideLibraryEditing();
     void projectJsonImportRejectsGarbageAndLeavesTimeline();
+    void legacyStabilizedRenderBecomesBinAsset();
+    void stabilizeRendersRangeIntoBinAndSwapsClip();
     void mogrtImportIntoExistingProject();
     void newProjectClearsEverything();
     void projectSetupOnPristineProjectStaysClean();
@@ -2706,6 +2710,202 @@ void EditorStateTest::projectJsonImportRejectsGarbageAndLeavesTimeline()
     QCOMPARE(state.lastMessage(), QStringLiteral("This file isn’t a Drift project."));
     QCOMPARE(state.tracks().size(), 2);
     QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("clips")).toList().size(), 1);
+}
+
+// Projects from before stabilized videos were bin assets kept the render on the clip as
+// "stabilizePath". Loading one turns the render into a "(stabilized)" asset the clip reads, shared
+// by every clip that used it; a render that is gone leaves the clip on its original.
+void EditorStateTest::legacyStabilizedRenderBecomesBinAsset()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString original = dir.filePath(QStringLiteral("shaky.mp4"));
+    const QString render = dir.filePath(QStringLiteral("render.mp4"));
+    for (const QString &path : {original, render}) {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("x");
+    }
+
+    drift::Project project;
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Video;
+    asset.path = original;
+    asset.name = QStringLiteral("shaky");
+    asset.durationUs = 10 * drift::kUsPerSecond;
+    asset.width = 1080;
+    asset.height = 1920;
+    asset.rotationDegrees = 90;
+    const QString assetId = project.addAsset(asset);
+    for (int i = 0; i < 3; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Video;
+        clip.assetId = assetId;
+        clip.path = original;
+        clip.timelineStart = i * 2 * drift::kUsPerSecond;
+        clip.timelineDuration = 2 * drift::kUsPerSecond;
+        clip.srcIn = i * 2 * drift::kUsPerSecond;
+        clip.srcOut = clip.srcIn + 2 * drift::kUsPerSecond;
+        project.tracks()[0].clips.append(clip);
+    }
+
+    QJsonObject root = project.toJson();
+    QJsonArray tracks = root.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    for (int i = 0; i < 3; ++i) {
+        QJsonObject clip = clips.at(i).toObject();
+        clip.insert(QStringLiteral("stabilizePath"),
+                    i < 2 ? render : dir.filePath(QStringLiteral("gone.mp4")));
+        clip.insert(QStringLiteral("stabilizeSmoothing"), 22);
+        clips.replace(i, clip);
+    }
+    track.insert(QStringLiteral("clips"), clips);
+    tracks.replace(0, track);
+    root.insert(QStringLiteral("tracks"), tracks);
+    const QString jsonPath = dir.filePath(QStringLiteral("project.json"));
+    {
+        QFile file(jsonPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(QJsonDocument(root).toJson());
+    }
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.loadProjectJson(QUrl::fromLocalFile(jsonPath));
+    const drift::Project &loaded = *state.project();
+    QCOMPARE(loaded.assetOrder().size(), 2);
+
+    const QList<drift::Clip> &loadedClips = loaded.tracks().at(0).clips;
+    const drift::MediaAsset *stabilized = loaded.asset(loadedClips.at(0).assetId);
+    QVERIFY(stabilized);
+    QVERIFY(stabilized->id != assetId);
+    QCOMPARE(stabilized->path, render);
+    QCOMPARE(stabilized->name, QStringLiteral("shaky (stabilized)"));
+    // Upright: the render dropped the tag and turned the pixels.
+    QCOMPARE(stabilized->width, 1920);
+    QCOMPARE(stabilized->height, 1080);
+    QCOMPARE(stabilized->generator.value(QStringLiteral("kind")).toString(), QStringLiteral("stabilize"));
+    QCOMPARE(stabilized->generator.value(QStringLiteral("sourceAssetId")).toString(), assetId);
+    QCOMPARE(stabilized->generator.value(QStringLiteral("smoothing")).toInt(), 22);
+
+    // The render covers the whole source in its own time, so the range carries over unchanged.
+    QCOMPARE(loadedClips.at(0).path, render);
+    QCOMPARE(loadedClips.at(0).srcIn, 0);
+    QCOMPARE(loadedClips.at(1).assetId, stabilized->id);
+    QCOMPARE(loadedClips.at(1).srcIn, 2 * drift::kUsPerSecond);
+    QCOMPARE(loadedClips.at(2).assetId, assetId);
+    QCOMPARE(loadedClips.at(2).path, original);
+    for (const drift::Clip &clip : loadedClips)
+        QVERIFY(clip.legacyStabilizePath.isEmpty());
+
+    state.saveProjectJson(QUrl::fromLocalFile(jsonPath));
+    QVERIFY(!readFile(jsonPath).contains("stabilizePath"));
+}
+
+// Bake mode renders only the clip's source range, with its audio, into a "(stabilized)" bin asset,
+// points the clip at it and drops the linked audio clip — one undoable edit.
+void EditorStateTest::stabilizeRendersRangeIntoBinAndSwapsClip()
+{
+    if (!drift::hasVideoFilter("vidstabdetect") || !drift::hasVideoFilter("vidstabtransform"))
+        QSKIP("libavfilter here was built without vid.stab");
+    const QString ffmpeg = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpeg.isEmpty())
+        QSKIP("ffmpeg not on PATH");
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("shaky.mp4"));
+    QProcess process;
+    process.start(ffmpeg, {QStringLiteral("-y"), QStringLiteral("-loglevel"), QStringLiteral("error"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("testsrc=d=2:r=30:s=400x300"),
+                           QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                           QStringLiteral("sine=d=2"),
+                           QStringLiteral("-vf"),
+                           QStringLiteral("crop=320:240:40+30*sin(t*20):30+20*cos(t*17)"),
+                           QStringLiteral("-pix_fmt"), QStringLiteral("yuv420p"),
+                           QStringLiteral("-c:v"), QStringLiteral("libx264"),
+                           QStringLiteral("-c:a"), QStringLiteral("aac"),
+                           QStringLiteral("-shortest"), source});
+    QVERIFY(process.waitForFinished(60'000));
+    QCOMPARE(process.exitCode(), 0);
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    drift::MediaAsset asset;
+    asset.kind = drift::MediaKind::Video;
+    asset.path = source;
+    asset.name = QStringLiteral("shaky");
+    asset.durationUs = 2 * drift::kUsPerSecond;
+    asset.width = 320;
+    asset.height = 240;
+    asset.fps = 30.0;
+    asset.hasAudio = true;
+    asset.hasAudioKnown = true;
+    const QString assetId = project.addAsset(asset);
+
+    drift::Clip video;
+    video.id = QStringLiteral("v1");
+    video.type = drift::ClipType::Video;
+    video.assetId = assetId;
+    video.path = source;
+    video.linkId = QStringLiteral("pair");
+    video.suppressEmbeddedAudio = true;
+    video.timelineStart = 0;
+    video.timelineDuration = drift::kUsPerSecond;
+    video.srcIn = 500'000;
+    video.srcOut = 1'500'000;
+    drift::Clip audio = video;
+    audio.id = QStringLiteral("a1");
+    audio.type = drift::ClipType::Audio;
+    audio.suppressEmbeddedAudio = false;
+    audio.volume.setKeyframe(0, 0.5);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    project.tracks().append(drift::Track{.type = drift::TrackType::Audio});
+    project.tracks()[0].clips.append(video);
+    project.tracks()[1].clips.append(audio);
+    state.selectClip(0, 0);
+
+    state.stabilizeClip(0, 0);
+    QTRY_VERIFY_WITH_TIMEOUT(!state.project()->tracks().at(0).clips.at(0).stabilizing, 120'000);
+    QCOMPARE(state.lastMessage(), QStringLiteral("Stabilized video added to the media bin"));
+
+    const drift::Clip &swapped = state.project()->tracks().at(0).clips.at(0);
+    const drift::MediaAsset *stabilized = state.project()->asset(swapped.assetId);
+    QVERIFY(stabilized);
+    QVERIFY(stabilized->id != assetId);
+    QCOMPARE(stabilized->name, QStringLiteral("shaky (stabilized)"));
+    QCOMPARE(swapped.path, stabilized->path);
+    QCOMPARE(stabilized->generator.value(QStringLiteral("sourceAssetId")).toString(), assetId);
+    QCOMPARE(stabilized->generator.value(QStringLiteral("sourceInUs")).toInteger(), 500'000);
+    // The render starts at the old in-point and holds only the range, with the audio.
+    QCOMPARE(swapped.srcIn, 0);
+    QCOMPARE(swapped.srcOut, drift::kUsPerSecond);
+    const MediaInfo info = MediaProbe::probe(stabilized->path);
+    QVERIFY(info.ok);
+    QVERIFY(qAbs(info.durationUs - drift::kUsPerSecond) <= 50'000);
+    QVERIFY(std::any_of(info.streams.begin(), info.streams.end(), [](const StreamInfo &stream) {
+        return stream.type == StreamInfo::Type::Audio;
+    }));
+
+    QVERIFY(swapped.linkId.isEmpty());
+    QVERIFY(!swapped.suppressEmbeddedAudio);
+    QCOMPARE(swapped.volume.evaluateAt(0), 0.5);
+    QVERIFY(state.project()->tracks().at(1).clips.isEmpty());
+    QCOMPARE(swapped.stabilizeAppliedMode, drift::StabilizeMode::Bake);
+
+    state.undo();
+    const drift::Clip &restored = state.project()->tracks().at(0).clips.at(0);
+    QCOMPARE(restored.assetId, assetId);
+    QCOMPARE(restored.srcIn, 500'000);
+    QCOMPARE(restored.linkId, QStringLiteral("pair"));
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
 }
 
 namespace {

@@ -313,8 +313,7 @@ qint64 ClipReaderPool::decodeWaitNs()
 }
 
 QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
-                                      int maxWidth, int maxHeight, const QString &stabilizePath,
-                                      int stabilizeSmoothing, bool stabilizeTripod, int rotationCorrection)
+                                      int maxWidth, int maxHeight, int rotationCorrection)
 {
     if (path.isEmpty())
         return {};
@@ -337,7 +336,6 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
     QMetaObject::invokeMethod(worker, "decodeVideo", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QImage, frame),
                                Q_ARG(quint64, streamId), Q_ARG(drift::TimeUs, sourceUs),
                                Q_ARG(int, maxWidth), Q_ARG(int, maxHeight),
-                               Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing), Q_ARG(bool, stabilizeTripod),
                                Q_ARG(int, rotationCorrection));
     t_decodeWaitNs += decodeWait.nsecsElapsed();
 
@@ -354,8 +352,6 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
 
 PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, quint64 streamId,
                                                         drift::TimeUs sourceUs, int maxWidth, int maxHeight,
-                                                        const QString &stabilizePath,
-                                                        int stabilizeSmoothing, bool stabilizeTripod,
                                                         int rotationCorrection)
 {
     if (path.isEmpty())
@@ -376,9 +372,7 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
     QMetaObject::invokeMethod(worker, "decodePreviewVideo", Qt::BlockingQueuedConnection,
                                Q_RETURN_ARG(PreviewVideoFrame, frame), Q_ARG(quint64, streamId),
                                Q_ARG(drift::TimeUs, sourceUs), Q_ARG(int, maxWidth),
-                               Q_ARG(int, maxHeight),
-                               Q_ARG(QString, stabilizePath), Q_ARG(int, stabilizeSmoothing),
-                               Q_ARG(bool, stabilizeTripod), Q_ARG(int, rotationCorrection),
+                               Q_ARG(int, maxHeight), Q_ARG(int, rotationCorrection),
                                Q_ARG(bool, approximate), Q_ARG(quintptr, quintptr(QThread::currentThread())));
     t_decodeWaitNs += decodeWait.nsecsElapsed();
 

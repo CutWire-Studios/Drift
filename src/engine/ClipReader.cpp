@@ -13,9 +13,6 @@
 #include <QFile>
 #include <QSettings>
 #include <QDir>
-#include <QUuid>
-#include <QTextStream>
-#include <QStandardPaths>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QThread>
@@ -62,60 +59,6 @@ extern "C" {
 }
 
 namespace {
-
-bool sliceTrfFile(const QString &sourcePath, const QString &destPath, int startFrame, double scaleX, double scaleY)
-{
-    QFile src(sourcePath);
-    if (!src.open(QIODevice::ReadOnly | QIODevice::Text))
-        return false;
-
-    QFile dest(destPath);
-    if (!dest.open(QIODevice::WriteOnly | QIODevice::Text))
-        return false;
-
-    QTextStream srcStream(&src);
-    QTextStream destStream(&dest);
-
-    // Read and copy all header lines starting with '#'
-    while (!srcStream.atEnd()) {
-        qint64 pos = src.pos();
-        QString line = srcStream.readLine();
-        if (line.startsWith(QLatin1Char('#'))) {
-            destStream << line << "\n";
-        } else {
-            src.seek(pos);
-            break;
-        }
-    }
-
-    int currentLine = 0;
-    while (currentLine < startFrame && !srcStream.atEnd()) {
-        srcStream.readLine();
-        currentLine++;
-    }
-
-    int outFrameIndex = 1;
-    while (!srcStream.atEnd()) {
-        QString line = srcStream.readLine();
-        QStringList parts = line.split(QLatin1Char(' '), Qt::SkipEmptyParts);
-        if (parts.size() >= 5) {
-            bool ok1 = false, ok2 = false;
-            double ox = parts[3].toDouble(&ok1);
-            double oy = parts[4].toDouble(&ok2);
-            if (ok1 && ok2) {
-                parts[3] = QString::number(ox * scaleX, 'f', 6);
-                parts[4] = QString::number(oy * scaleY, 'f', 6);
-            }
-            parts[0] = QString::number(outFrameIndex);
-            destStream << parts.join(QLatin1Char(' ')) << "\n";
-            outFrameIndex++;
-        } else {
-            destStream << line << "\n";
-        }
-    }
-
-    return true;
-}
 
 bool isHardwarePixelFormat(AVPixelFormat fmt)
 {
@@ -337,7 +280,6 @@ ClipReader::~ClipReader()
 
 void ClipReader::teardownVideoDecoder()
 {
-    teardownSwFilterGraph();
     teardownHwScaler();
     // Hardware surfaces in the cursor belong to the decoder pool; drop them
     // before the context goes away.
@@ -1292,7 +1234,7 @@ bool ClipReader::tryOpenMediaCodecDecoder(HardwareDecodeMode mode)
     // wrongly shows up as a corrupt preview with nothing to catch it — the same reason the VAAPI
     // dma-buf path is a setting. Declined for a reader that has had to produce a QImage: there is
     // no av_hwframe_transfer_data for MEDIACODEC, so a surface frame cannot become one.
-    if (mediaCodecZeroCopyEnabled() && !m_mcSurfaceDisabled && m_stabilizePath.isEmpty()
+    if (mediaCodecZeroCopyEnabled() && !m_mcSurfaceDisabled
         && g_mcSurfaceAllowed.load(std::memory_order_relaxed)
         && !g_mcSurfaceImportFailed.load(std::memory_order_relaxed)) {
         m_mcImages = drift::MediaCodecImagePool::create(par->width, par->height, kMcMaxImages);
@@ -1438,120 +1380,6 @@ void ClipReader::teardownHwScaler()
     m_vppH = 0;
 }
 
-void ClipReader::teardownSwFilterGraph()
-{
-    if (m_swFilterGraph)
-        avfilter_graph_free(&m_swFilterGraph);
-    m_swFilterGraph = nullptr;
-    m_swFilterSrc = nullptr;
-    m_swFilterSink = nullptr;
-    m_swFilterW = 0;
-    m_swFilterH = 0;
-    m_swFilterFormat = AV_PIX_FMT_NONE;
-    m_expectedNextFrameIndex = -1;
-    if (!m_tempTrfPath.isEmpty()) {
-        QFile::remove(m_tempTrfPath);
-        m_tempTrfPath.clear();
-    }
-}
-
-bool ClipReader::initSwFilterGraph(int width, int height, AVPixelFormat pixFmt)
-{
-    if (m_swFilterGraph) {
-        if (m_swFilterW == width && m_swFilterH == height && m_swFilterFormat == pixFmt
-            && m_swFilterSmoothing == m_stabilizeSmoothing && m_swFilterTripod == m_stabilizeTripod)
-            return true;
-        teardownSwFilterGraph();
-    }
-
-    m_swFilterGraph = avfilter_graph_alloc();
-    if (!m_swFilterGraph)
-        return false;
-
-    const AVFilter *bufferFilter = avfilter_get_by_name("buffer");
-    const AVFilter *sinkFilter = avfilter_get_by_name("buffersink");
-    if (!bufferFilter || !sinkFilter) {
-        teardownSwFilterGraph();
-        return false;
-    }
-
-    m_swFilterSrc = avfilter_graph_alloc_filter(m_swFilterGraph, bufferFilter, "in");
-    if (!m_swFilterSrc) {
-        teardownSwFilterGraph();
-        return false;
-    }
-
-    AVBufferSrcParameters *params = av_buffersrc_parameters_alloc();
-    if (!params) {
-        teardownSwFilterGraph();
-        return false;
-    }
-    params->format = pixFmt;
-    params->width = width;
-    params->height = height;
-    params->time_base = m_fmt->streams[m_videoStream]->time_base;
-    const int paramsRc = av_buffersrc_parameters_set(m_swFilterSrc, params);
-    av_free(params);
-    if (paramsRc < 0 || avfilter_init_str(m_swFilterSrc, nullptr) < 0) {
-        teardownSwFilterGraph();
-        return false;
-    }
-
-    AVFilterContext *sink = nullptr;
-    if (avfilter_graph_create_filter(&sink, sinkFilter, "out", nullptr, nullptr, m_swFilterGraph) < 0) {
-        teardownSwFilterGraph();
-        return false;
-    }
-    m_swFilterSink = sink;
-
-    QString targetTrfPath = m_tempTrfPath.isEmpty() ? m_stabilizePath : m_tempTrfPath;
-    targetTrfPath.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
-    targetTrfPath.replace(QLatin1Char('\''), QStringLiteral("'\\''"));
-    targetTrfPath.replace(QLatin1Char(':'), QStringLiteral("\\:"));
-    int smoothing = m_stabilizeSmoothing > 0 ? m_stabilizeSmoothing : 15;
-    int tripod = m_stabilizeTripod ? 1 : 0;
-    QString filterDesc = QString("vidstabtransform=input='%1':zoom=15:smoothing=%2:tripod=%3")
-                             .arg(targetTrfPath)
-                             .arg(smoothing)
-                             .arg(tripod);
-    QByteArray filterStr = filterDesc.toUtf8();
-
-    AVFilterInOut *outputs = avfilter_inout_alloc();
-    AVFilterInOut *inputs = avfilter_inout_alloc();
-    if (!outputs || !inputs) {
-        if (outputs) avfilter_inout_free(&outputs);
-        if (inputs) avfilter_inout_free(&inputs);
-        teardownSwFilterGraph();
-        return false;
-    }
-
-    outputs->name = av_strdup("in");
-    outputs->filter_ctx = m_swFilterSrc;
-    outputs->pad_idx = 0;
-    outputs->next = nullptr;
-
-    inputs->name = av_strdup("out");
-    inputs->filter_ctx = m_swFilterSink;
-    inputs->pad_idx = 0;
-    inputs->next = nullptr;
-
-    int rc = avfilter_graph_parse_ptr(m_swFilterGraph, filterStr.constData(), &inputs, &outputs, nullptr);
-    avfilter_inout_free(&inputs);
-    avfilter_inout_free(&outputs);
-
-    if (rc < 0 || avfilter_graph_config(m_swFilterGraph, nullptr) < 0) {
-        teardownSwFilterGraph();
-        return false;
-    }
-
-    m_swFilterW = width;
-    m_swFilterH = height;
-    m_swFilterFormat = pixFmt;
-    m_swFilterSmoothing = m_stabilizeSmoothing;
-    m_swFilterTripod = m_stabilizeTripod;
-    return true;
-}
-
 bool ClipReader::ensureHwScaler(const AVFrame *hwFrame, int targetWidth, int targetHeight)
 {
     if (m_hwScalerFailed || !hwFrame->hw_frames_ctx)
@@ -1690,72 +1518,6 @@ bool ClipReader::transferHwFrameToImage(const AVFrame *hwFrame, QImage &out, int
 
     out = image;
     return true;
-}
-
-AVFrame* ClipReader::filterFrameInPlace(AVFrame *frame, int targetWidth, int targetHeight)
-{
-    if (m_stabilizePath.isEmpty() || !QFile::exists(m_stabilizePath))
-        return frame;
-
-    const AVStream *videoStream = m_fmt->streams[m_videoStream];
-    const AVRational timeBase = videoStream->time_base;
-    const drift::TimeUs framePtsUs = av_rescale_q(frame->pts, timeBase, {1, drift::kUsPerSecond});
-    drift::TimeUs startTimeUs = 0;
-    if (videoStream->start_time != AV_NOPTS_VALUE) {
-        startTimeUs = av_rescale_q(videoStream->start_time, videoStream->time_base, {1, drift::kUsPerSecond});
-    }
-    const drift::TimeUs relativePtsUs = framePtsUs - startTimeUs;
-    double fps = av_q2d(videoStream->r_frame_rate);
-    int frameIndex = qMax<int>(0, qRound(drift::usToSeconds(relativePtsUs) * fps));
-
-    AVFrame *swFrame = frame;
-    bool isHw = (m_hwAccelActive && frame->format == m_hwPixFmt)
-                || isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format));
-    if (isHw) {
-        swFrame = hwFrameToSoftware(frame, targetWidth, targetHeight);
-        if (!swFrame)
-            return frame;
-    }
-
-    if (m_expectedNextFrameIndex == -1 || frameIndex != m_expectedNextFrameIndex) {
-        if (m_tempTrfPath.isEmpty()) {
-            const QString root = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-            const QString dir = QDir(root).filePath(QStringLiteral("stabilization_temp"));
-            QDir().mkpath(dir);
-            m_tempTrfPath = QDir(dir).filePath(QStringLiteral("temp-%1.trf").arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
-        }
-        int nativeWidth = m_fmt->streams[m_videoStream]->codecpar->width;
-        int nativeHeight = m_fmt->streams[m_videoStream]->codecpar->height;
-        double scaleX = nativeWidth > 0 ? double(swFrame->width) / double(nativeWidth) : 1.0;
-        double scaleY = nativeHeight > 0 ? double(swFrame->height) / double(nativeHeight) : 1.0;
-        if (sliceTrfFile(m_stabilizePath, m_tempTrfPath, frameIndex, scaleX, scaleY)) {
-            teardownSwFilterGraph();
-        }
-    }
-
-    if (initSwFilterGraph(swFrame->width, swFrame->height, static_cast<AVPixelFormat>(swFrame->format))) {
-        int rc = av_buffersrc_add_frame_flags(m_swFilterSrc, swFrame, AV_BUFFERSRC_FLAG_KEEP_REF);
-        if (rc >= 0) {
-            AVFrame *filterOutFrame = av_frame_alloc();
-            if (filterOutFrame) {
-                rc = av_buffersink_get_frame(m_swFilterSink, filterOutFrame);
-                if (rc >= 0) {
-                    m_expectedNextFrameIndex = frameIndex + 1;
-                    if (isHw) {
-                        return filterOutFrame;
-                    } else {
-                        av_frame_unref(frame);
-                        av_frame_move_ref(frame, filterOutFrame);
-                        av_frame_free(&filterOutFrame);
-                        return frame;
-                    }
-                }
-                av_frame_free(&filterOutFrame);
-            }
-        }
-    }
-
-    return frame;
 }
 
 bool ClipReader::convertFrame(const AVFrame *frame, QImage &out, int targetWidth, int targetHeight)
@@ -1962,7 +1724,7 @@ bool ClipReader::refVideoFrame(AVFrame *&dst, const AVFrame *src)
     return av_frame_ref(dst, src) >= 0;
 }
 
-bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHeight, bool *hwFailure,
+bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, bool *hwFailure,
                                 const AdvanceLimits &limits)
 {
     if (hwFailure)
@@ -2037,15 +1799,12 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
             }
 #endif
 
-            AVFrame *stabilized = filterFrameInPlace(decoded, maxWidth, maxHeight);
-            const drift::TimeUs ptsUs = videoPtsToUs(stabilized);
+            const drift::TimeUs ptsUs = videoPtsToUs(decoded);
             m_lastVideoPtsUs = ptsUs;
             g_videoFramesDecoded.fetch_add(1, std::memory_order_relaxed);
 
             if (ptsUs <= sourceUs) {
-                if (!refVideoFrame(m_coverFrame, stabilized)) {
-                    if (stabilized != decoded)
-                        av_frame_free(&stabilized);
+                if (!refVideoFrame(m_coverFrame, decoded)) {
                     av_frame_unref(decoded);
                     done = true;
                     break;
@@ -2053,9 +1812,7 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
                 m_coverPtsUs = ptsUs;
                 m_hasCover = true;
             } else {
-                if (!refVideoFrame(m_peekFrame, stabilized)) {
-                    if (stabilized != decoded)
-                        av_frame_free(&stabilized);
+                if (!refVideoFrame(m_peekFrame, decoded)) {
                     av_frame_unref(decoded);
                     done = true;
                     break;
@@ -2064,8 +1821,6 @@ bool ClipReader::advanceVideoTo(drift::TimeUs sourceUs, int maxWidth, int maxHei
                 m_hasPeek = true;
                 done = true;
             }
-            if (stabilized != decoded)
-                av_frame_free(&stabilized);
             av_frame_unref(decoded);
             // Only frames count, not packets: MediaCodec can need several inputs before its
             // first output, and those keep going until a frame arrives.
@@ -2164,7 +1919,7 @@ bool ClipReader::decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int
     if (lookupCachedFrame(sourceUs, out))
         return true;
 
-    if (!advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure))
+    if (!advanceVideoTo(sourceUs, hwFailure))
         return false;
     if (!m_coverFrame)
         return false;
@@ -2233,7 +1988,7 @@ bool ClipReader::decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVi
     if (lookupCachedPreview(sourceUs, out))
         return true;
 
-    if (!advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure))
+    if (!advanceVideoTo(sourceUs, hwFailure))
         return false;
     if (!m_coverFrame)
         return false;
@@ -2358,7 +2113,7 @@ bool ClipReader::decodePreviewVideoFrameApprox(drift::TimeUs sourceUs, PreviewVi
         }
     }
 
-    if (!advanceVideoTo(sourceUs, maxWidth, maxHeight, hwFailure, limits))
+    if (!advanceVideoTo(sourceUs, hwFailure, limits))
         return false;
     if (!m_coverFrame)
         return false;

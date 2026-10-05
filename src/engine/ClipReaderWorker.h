@@ -49,12 +49,10 @@ public slots:
     void openPath(const QString &path);
     void closePath();
     QImage decodeVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth, int maxHeight,
-                       const QString &stabilizePath = QString(), int stabilizeSmoothing = 15,
-                       bool stabilizeTripod = false, int rotationCorrection = 0);
+                       int rotationCorrection = 0);
     PreviewVideoFrame decodePreviewVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
-                                         int maxHeight, const QString &stabilizePath = QString(),
-                                         int stabilizeSmoothing = 15, bool stabilizeTripod = false,
-                                         int rotationCorrection = 0, bool approximate = false,
+                                         int maxHeight, int rotationCorrection = 0,
+                                         bool approximate = false,
                                          quintptr session = 0);
     // The streams on this path that `session` (one compositor thread) reads for the frame it is
     // building. A reader of that session outside the set is free to be handed to a new stream.

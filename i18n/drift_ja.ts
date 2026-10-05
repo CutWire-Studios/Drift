@@ -2601,10 +2601,6 @@
         <translation>ビデオ手ぶれ補正</translation>
     </message>
     <message>
-        <source>Video stabilized successfully!</source>
-        <translation>ビデオの手ぶれ補正に成功しました！</translation>
-    </message>
-    <message>
         <source>Remove Stabilization</source>
         <translation>手ぶれ補正を削除</translation>
     </message>
@@ -3617,6 +3613,10 @@
         <translation>%1 をコピー</translation>
     </message>
     <message>
+        <source>%1 (stabilized)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to enhance</source>
         <translation>強化するビデオクリップを選択してください</translation>
     </message>
@@ -3653,12 +3653,20 @@
         <translation>このビルドの Drift はビデオの手ぶれ補正に対応していません</translation>
     </message>
     <message>
+        <source>The video this clip was stabilized from is no longer in the media bin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stabilization rendering failed.</source>
         <translation>手ぶれ補正のレンダリングに失敗しました。</translation>
     </message>
     <message>
         <source>Stabilization rendering failed: %1</source>
         <translation>手ぶれ補正のレンダリングに失敗しました : %1</translation>
+    </message>
+    <message>
+        <source>Stabilized video added to the media bin</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -12241,12 +12249,12 @@ If playback stutters, try another.</source>
 <context>
     <name>StabilizeInspector</name>
     <message>
-        <source>Bake a new video</source>
-        <translation>新しいビデオを焼き込む</translation>
-    </message>
-    <message>
         <source>Animate with keyframes</source>
         <translation>キーフレームでアニメーション</translation>
+    </message>
+    <message>
+        <source>Render a new video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12273,16 +12281,16 @@ If playback stutters, try another.</source>
         <translation>位置キーフレームを書き込んでカメラの揺れを滑らかにします。直線的なパンは離れた2つのキーとして保持され、方向の変更時にのみ追加のキーが生成されます。滑らかさや三脚モードを変更しても、適用するまでプレビューは更新されません。</translation>
     </message>
     <message>
-        <source>Smooths camera shake. Drift scans the clip once, then renders a new video. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>カメラの揺れを滑らかにします。Drift はクリップを一度スキャンし、新しいビデオをレンダリングします。滑らかさや三脚モードを変更しても、適用するまでプレビューは更新されません。</translation>
-    </message>
-    <message>
         <source>Mode</source>
         <translation>モード</translation>
     </message>
     <message>
-        <source>Bake a new file, or animate the clip with sparse transform keys</source>
-        <translation>新しいファイルを焼き込むか、疎な変換キーでクリップをアニメーション化</translation>
+        <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Smoothing</source>

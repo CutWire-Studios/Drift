@@ -264,9 +264,9 @@ QVector<int> piecewiseLinearBreakpoints(const QVector<QPointF> &points, double e
     return keys;
 }
 
-StabilizePlan planStabilizeKeyframes(const QString &trfPath, const Clip &clip, double fps,
-                                     double scaleX, double scaleY, int smoothing, bool tripod,
-                                     double epsilonCanvasPx)
+StabilizePlan planStabilizeKeyframes(const QString &trfPath, TimeUs trfStartUs, const Clip &clip,
+                                     double fps, double scaleX, double scaleY, int smoothing,
+                                     bool tripod, double epsilonCanvasPx)
 {
     StabilizePlan plan;
     const QVector<QPointF> translations = readTrfFrameTranslations(trfPath);
@@ -286,7 +286,7 @@ StabilizePlan planStabilizeKeyframes(const QString &trfPath, const Clip &clip, d
     TimeUs lastTime = -1;
     for (int i = 0; i < compensation.size(); ++i) {
         const TimeUs sourceUs =
-            static_cast<TimeUs>(llround(static_cast<double>(i) * 1'000'000.0 / fps));
+            trfStartUs + static_cast<TimeUs>(llround(static_cast<double>(i) * 1'000'000.0 / fps));
         if (sourceUs < clip.srcIn || sourceUs > clip.srcOut)
             continue;
         const TimeUs local = qBound(TimeUs{0}, clip.sourceUsToClipLocalUs(sourceUs),

@@ -2660,6 +2660,13 @@ protected:
     QString addRenderedVideoAsset(const QString &path, const QString &name,
                                   const QString &folderId, const MediaInfo &info,
                                   const QString &undoText);
+    // The same without the undo step, for a caller folding it into an edit of its own.
+    QString insertRenderedVideoAsset(const QString &path, const QString &name,
+                                     const QString &folderId, const MediaInfo &info);
+    // Projects saved before stabilized videos were bin assets kept the render on the clip; this
+    // makes each one a "(stabilized)" asset the clip reads instead. Runs on load, after bundle
+    // paths are remapped.
+    void migrateLegacyStabilizedClips();
     QList<int> subtitleMergeIndices(const QList<QPair<int, int>> &pairs) const;
     void mergeSubtitleClipsAt(int trackIndex, QList<int> clipIndices);
 

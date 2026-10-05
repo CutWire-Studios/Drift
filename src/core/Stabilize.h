@@ -30,11 +30,11 @@ QVector<QPointF> readTrfFrameTranslations(const QString &path);
 // camera path instead of one key per frame.
 QVector<int> piecewiseLinearBreakpoints(const QVector<QPointF> &points, double epsilon);
 
-// Builds clip-local X/Y offsets from a vid.stab .trf. Keys are a piecewise-linear
-// fit of the compensation path, not one per frame.
-StabilizePlan planStabilizeKeyframes(const QString &trfPath, const Clip &clip, double fps,
-                                     double scaleX, double scaleY, int smoothing, bool tripod,
-                                     double epsilonCanvasPx = 1.0);
+// Builds clip-local X/Y offsets from a vid.stab .trf whose first frame sits at source time
+// trfStartUs. Keys are a piecewise-linear fit of the compensation path, not one per frame.
+StabilizePlan planStabilizeKeyframes(const QString &trfPath, TimeUs trfStartUs, const Clip &clip,
+                                     double fps, double scaleX, double scaleY, int smoothing,
+                                     bool tripod, double epsilonCanvasPx = 1.0);
 
 void captureStabilizeRestPose(Clip &clip);
 void restoreStabilizeRestPose(Clip &clip);

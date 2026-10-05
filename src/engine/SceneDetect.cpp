@@ -462,8 +462,7 @@ void applyObjectLabels(const SceneDetectRequest &request, SceneAnalysis *analysi
             const TimeUs at = scene.sourceIn + TimeUs(double(scene.duration()) * through);
 
             const QImage frame = ClipReaderPool::instance().readVideoFrame(
-                request.path, kSceneScanStreamId, at, 0, 0, QString(), 15, false,
-                request.rotationCorrection);
+                request.path, kSceneScanStreamId, at, 0, 0, request.rotationCorrection);
             if (frame.isNull())
                 continue;
 
@@ -707,7 +706,7 @@ SceneAnalysis detectScenes(const SceneDetectRequest &request, const SceneProgres
         const TimeUs sourceUs = request.sourceIn + TimeUs(std::llround(double(i) * intervalUs));
         const QImage frame = ClipReaderPool::instance().readVideoFrame(
             request.path, kSceneScanStreamId, sourceUs, kScanFrameWidth, kScanFrameHeight,
-            QString(), 15, false, request.rotationCorrection);
+            request.rotationCorrection);
         if (frame.isNull())
             return fail(QObject::tr("Could not decode frame %1").arg(i + 1));
 
