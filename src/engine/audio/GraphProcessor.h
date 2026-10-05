@@ -37,6 +37,9 @@ public:
     void setKnob(int node, int knob, float value);
     // A pedal's footswitch, when it is not bound to a parameter.
     void setBypass(int node, bool bypassed);
+    // A literal route depth: the route from `modulator` to knob `knob` of pedal `node`.
+    void setRouteDepth(int node, int knob, int modulator, float depth);
+    void setLaneGain(int node, int lane, float gain);
     int modulatorIndex(std::string_view id) const;
     void setModulatorKnob(int modulator, int knob, float value);
     void setModulatorStep(int modulator, int step, float value);

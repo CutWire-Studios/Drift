@@ -63,6 +63,8 @@ struct GraphProcessor::Impl
         const PedalSpec *spec = nullptr; // null for splits
         std::vector<float> literals;     // live-editable copies of the literal knob values
         float bypassLiteral = 0.0f;
+        std::vector<std::vector<float>> depthLiterals; // pedals: per knob, per route
+        std::vector<float> laneGains;                   // splits
 
         virtual ~NodeRt() = default;
         virtual void prepare(const juce::dsp::ProcessSpec &spec) = 0;
@@ -272,7 +274,7 @@ struct GraphProcessor::Impl
             for (int i = 0; i < frames; ++i) {
                 float gains[kMaxSplitLanes];
                 for (size_t j = 0; j < laneCount; ++j)
-                    gains[j] = desc->laneGains[j];
+                    gains[j] = laneGains[j];
                 if (desc->crossfade) {
                     const float angle = blend.getNextValue() * juce::MathConstants<float>::halfPi;
                     gains[0] *= std::cos(angle);
@@ -394,6 +396,12 @@ struct GraphProcessor::Impl
             for (const KnobValue &knob : desc.knobs)
                 node->literals.push_back(knob.literal);
             node->bypassLiteral = desc.bypass.literal;
+            for (const auto &routes : desc.routes) {
+                node->depthLiterals.emplace_back();
+                for (const ModRoute &route : routes)
+                    node->depthLiterals.back().push_back(route.depth.literal);
+            }
+            node->laneGains = desc.laneGains;
             nodes[size_t(desc.flat)] = node.get();
             series->nodes.push_back(std::move(node));
         }
@@ -462,8 +470,9 @@ struct GraphProcessor::Impl
             float value = paramOr(desc.knobs[k], pedal.literals[k], spec);
             if (!desc.routes[k].empty()) {
                 float norm = toNorm(spec, value);
-                for (const ModRoute &route : desc.routes[k]) {
-                    const float depth = route.depth.param >= 0 ? params[size_t(route.depth.param)] : route.depth.literal;
+                for (size_t r = 0; r < desc.routes[k].size(); ++r) {
+                    const ModRoute &route = desc.routes[k][r];
+                    const float depth = route.depth.param >= 0 ? params[size_t(route.depth.param)] : pedal.depthLiterals[k][r];
                     norm += depth * modValues[size_t(route.modulator)];
                 }
                 value = fromNorm(spec, juce::jlimit(0.0f, 1.0f, norm));
@@ -595,6 +604,29 @@ void GraphProcessor::setKnob(int node, int knob, float value)
     auto &literals = m->nodes[size_t(node)]->literals;
     if (knob >= 0 && size_t(knob) < literals.size())
         literals[size_t(knob)] = value;
+}
+
+void GraphProcessor::setRouteDepth(int node, int knob, int modulator, float depth)
+{
+    if (node < 0 || size_t(node) >= m->nodes.size())
+        return;
+    Impl::NodeRt &rt = *m->nodes[size_t(node)];
+    if (knob < 0 || size_t(knob) >= rt.depthLiterals.size())
+        return;
+    const auto &routes = rt.desc->routes[size_t(knob)];
+    for (size_t r = 0; r < routes.size(); ++r) {
+        if (routes[r].modulator == modulator)
+            rt.depthLiterals[size_t(knob)][r] = juce::jlimit(-1.0f, 1.0f, depth);
+    }
+}
+
+void GraphProcessor::setLaneGain(int node, int lane, float gain)
+{
+    if (node < 0 || size_t(node) >= m->nodes.size())
+        return;
+    auto &gains = m->nodes[size_t(node)]->laneGains;
+    if (lane >= 0 && size_t(lane) < gains.size())
+        gains[size_t(lane)] = juce::jlimit(0.0f, 4.0f, gain);
 }
 
 void GraphProcessor::setBypass(int node, bool bypassed)

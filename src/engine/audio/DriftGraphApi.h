@@ -33,6 +33,8 @@ void dg_set_param(DriftGraph *graph, int index, float value);
 int dg_node_index(DriftGraph *graph, const char *nodeId);
 void dg_set_knob(DriftGraph *graph, int node, int knob, float value);
 void dg_set_bypass(DriftGraph *graph, int node, int bypassed);
+void dg_set_route_depth(DriftGraph *graph, int node, int knob, int modulator, float depth);
+void dg_set_lane_gain(DriftGraph *graph, int node, int lane, float gain);
 int dg_modulator_index(DriftGraph *graph, const char *modulatorId);
 int dg_modulator_count(DriftGraph *graph);
 void dg_set_modulator_knob(DriftGraph *graph, int modulator, int knob, float value);

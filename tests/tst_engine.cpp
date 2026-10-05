@@ -398,6 +398,7 @@ private slots:
     void audioGraphOutputIgnoresBlockSize();
     void audioGraphModulatorPhaseSurvivesSeek();
     void audioGraphConvolvesStagedImpulse();
+    void audioGraphLiveEditsMatchRebuilt();
     void audioGraphPackageLoadsImpulseFromPackage();
     void audioEffectRackRebuildsWhenGraphChanges();
     void audioEffectRackFollowsKeyframes();
@@ -12439,6 +12440,28 @@ void EngineTest::audioGraphModulatorPhaseSurvivesSeek()
                                 .arg(dg_modulator_values(continuous.graph)[i])
                                 .arg(dg_modulator_values(seeked.graph)[i])));
     }
+}
+
+void EngineTest::audioGraphLiveEditsMatchRebuilt()
+{
+    // Forge moves route depths and lane levels in a running graph instead of rebuilding it; doing
+    // that must sound exactly like a graph built with those values from the start.
+    const char *shape = R"({"modulators":[{"id":"m","type":"lfo","knobs":{"rate":2}}],
+        "chain":[{"id":"f","type":"filter","knobs":{"cutoff":800},"mod":{"cutoff":[{"from":"m","depth":%1}]}},
+                 {"id":"s","type":"split","lanes":[{"gain":%2,"chain":[]},{"gain":1,"chain":[{"id":"d","type":"delay"}]}]}]})";
+    GraphHandle built(graphManifest(QString::fromLatin1(shape).arg(0.6).arg(0.3).toLatin1()));
+    GraphHandle edited(graphManifest(QString::fromLatin1(shape).arg(0.0).arg(1.0).toLatin1()));
+    QVERIFY2(built.graph && edited.graph, dg_last_error());
+    dg_set_route_depth(edited.graph, dg_node_index(edited.graph, "f"), 1, dg_modulator_index(edited.graph, "m"), 0.6f);
+    dg_set_lane_gain(edited.graph, dg_node_index(edited.graph, "s"), 0, 0.3f);
+    dg_reset(edited.graph, 0.0);
+    dg_reset(built.graph, 0.0);
+
+    const QVector<float> in = stereoNoise(24000, 3);
+    const QVector<float> a = renderGraph(built.graph, in);
+    const QVector<float> b = renderGraph(edited.graph, in);
+    for (int i = 0; i < in.size(); ++i)
+        QVERIFY2(a[i] == b[i], qPrintable(QStringLiteral("sample %1: %2 vs %3").arg(i).arg(a[i]).arg(b[i])));
 }
 
 void EngineTest::audioGraphConvolvesStagedImpulse()

@@ -151,6 +151,16 @@ void dg_set_bypass(DriftGraph *graph, int node, int bypassed)
     graph->processor->setBypass(node, bypassed != 0);
 }
 
+void dg_set_route_depth(DriftGraph *graph, int node, int knob, int modulator, float depth)
+{
+    graph->processor->setRouteDepth(node, knob, modulator, depth);
+}
+
+void dg_set_lane_gain(DriftGraph *graph, int node, int lane, float gain)
+{
+    graph->processor->setLaneGain(node, lane, gain);
+}
+
 int dg_modulator_index(DriftGraph *graph, const char *modulatorId)
 {
     return graph->processor->modulatorIndex(modulatorId);

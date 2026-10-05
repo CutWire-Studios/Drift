@@ -125,7 +125,7 @@ target_compile_options(drift-audio PRIVATE -O2 -fwasm-exceptions -ffp-contract=o
 
 set(_exports
     dg_stage_file dg_clear_files dg_create dg_last_error dg_destroy dg_param_index dg_set_param
-    dg_node_index dg_set_knob dg_set_bypass dg_modulator_index dg_modulator_count dg_set_modulator_knob
+    dg_node_index dg_set_knob dg_set_bypass dg_set_route_depth dg_set_lane_gain dg_modulator_index dg_modulator_count dg_set_modulator_knob
     dg_set_modulator_step dg_modulator_values dg_reset dg_latency dg_prime_frames dg_io
     dg_io_capacity dg_process dg_enable_taps dg_tap_slots dg_tap_stride dg_collect_taps
     dg_pedal_catalog malloc free)
