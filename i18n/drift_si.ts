@@ -15246,10 +15246,6 @@ If playback stutters, try another.</source>
         <translation>යාවත්කාලීනයක් පවතී</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Drift %1 ලබාගත හැක</translation>
     </message>
@@ -15260,18 +15256,6 @@ If playback stutters, try another.</source>
     <message>
         <source>You have %1.</source>
         <translation>ඔබ සතුව ඇත්තේ %1 ය.</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">පිටපත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15288,14 +15272,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Download</source>
         <translation>බාගන්න</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>

@@ -15193,10 +15193,6 @@ If playback stutters, try another.</source>
         <translation>アップデートが利用可能</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Drift %1 が利用可能です</translation>
     </message>
@@ -15207,18 +15203,6 @@ If playback stutters, try another.</source>
     <message>
         <source>You have %1.</source>
         <translation>現在のバージョンは %1 です。</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">コピー</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15235,14 +15219,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Download</source>
         <translation>ダウンロード</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>

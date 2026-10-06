@@ -3,14 +3,12 @@
 #include "UpdateAsset.h"
 #include "VersionCompare.h"
 
-#include <QClipboard>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
 #include <QDnsLookup>
-#include <QGuiApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -185,9 +183,7 @@ bool UpdateChecker::updateAvailable() const
 
 bool UpdateChecker::canInstall() const
 {
-    // A Homebrew cask owns this copy. Installing the disk image beside it leaves two apps and
-    // breaks `brew upgrade`, so the dialog offers the brew command instead.
-    return installSupported() && !isHomebrew() && !m_assetUrl.isEmpty() && !m_assetName.isEmpty();
+    return installSupported() && !m_assetUrl.isEmpty() && !m_assetName.isEmpty();
 }
 
 QString UpdateChecker::currentVersion() const
@@ -355,25 +351,6 @@ void UpdateChecker::markAnnounced()
         return;
     m_announcedVersion = m_latestVersion;
     QSettings().setValue(settingsKey("announcedVersion"), m_announcedVersion);
-}
-
-bool UpdateChecker::isHomebrew() const
-{
-#if defined(Q_OS_MACOS)
-    const bool caskExists = QDir(QStringLiteral("/opt/homebrew/Caskroom/drift")).exists()
-            || QDir(QStringLiteral("/usr/local/Caskroom/drift")).exists()
-            || (!qEnvironmentVariableIsEmpty("HOMEBREW_PREFIX")
-                && QDir(qEnvironmentVariable("HOMEBREW_PREFIX") + QStringLiteral("/Caskroom/drift")).exists());
-    return caskExists;
-#else
-    return false;
-#endif
-}
-
-void UpdateChecker::copyHomebrewCommand()
-{
-    if (QClipboard *clip = QGuiApplication::clipboard())
-        clip->setText(QStringLiteral("brew upgrade --cask drift"));
 }
 
 void UpdateChecker::check(bool manual)

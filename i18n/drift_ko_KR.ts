@@ -15185,10 +15185,6 @@ If playback stutters, try another.</source>
         <translation>업데이트 사용 가능</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Drift %1을(를) 사용할 수 있습니다</translation>
     </message>
@@ -15199,18 +15195,6 @@ If playback stutters, try another.</source>
     <message>
         <source>You have %1.</source>
         <translation>현재 버전은 %1입니다.</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">복사</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15227,14 +15211,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Download</source>
         <translation>다운로드</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>
