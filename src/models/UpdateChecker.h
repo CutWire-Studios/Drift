@@ -52,6 +52,9 @@ class UpdateChecker : public QObject
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
     // Download or install failure. Empty while a check or transfer is healthy.
     Q_PROPERTY(QString error READ error NOTIFY statusChanged)
+    // True when this Mac copy lives in a Homebrew Caskroom. The dialog then offers
+    // `brew upgrade` instead of installing a second copy from the disk image.
+    Q_PROPERTY(bool isHomebrew READ isHomebrew CONSTANT)
 
 public:
     explicit UpdateChecker(QObject *parent = nullptr);
@@ -83,6 +86,8 @@ public:
     Q_INVOKABLE void skipVersion();
 
     Q_INVOKABLE void openDownloadPage();
+    Q_INVOKABLE void copyHomebrewCommand();
+    bool isHomebrew() const;
 
     // Downloads the installer for this platform. When it is ready, quits so the helper can
     // install — unless the dialog has been closed, in which case the install waits for the

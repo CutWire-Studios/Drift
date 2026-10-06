@@ -2,6 +2,33 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="tl" sourcelanguage="en">
 <context>
+    <name>AboutDialog</name>
+    <message>
+        <source>About Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Isara</translation>
+    </message>
+    <message>
+        <source>Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open-source video editor by CutWire Studios.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Licensed under GPLv3. Copyright © CutWire Studios.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -8312,10 +8339,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Preferences…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>&amp;Playback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8416,7 +8439,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>About Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Debug Info…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 is the latest version.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8429,6 +8464,14 @@
     </message>
     <message>
         <source>Project closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already checking for updates…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking for updates…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15175,11 +15218,31 @@ If playback stutters, try another.</source>
         <translation type="unfinished">May available na update</translation>
     </message>
     <message>
+        <source>Copied command to clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>A new Drift update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>You have %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopyahin</translation>
+    </message>
+    <message>
+        <source>Copy command to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15196,6 +15259,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copies the brew upgrade command to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

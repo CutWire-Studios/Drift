@@ -16,7 +16,15 @@ ThemedDialog {
     Shortcut {
         sequences: ["Return", "Enter"]
         enabled: root.visible
-        onActivated: root.download()
+        onActivated: {
+            if (Updates.isHomebrew) {
+                Updates.copyHomebrewCommand()
+                Toasts.success(qsTr("Copied command to clipboard"))
+                root.close()
+            } else {
+                root.download()
+            }
+        }
     }
 
     function download() {
@@ -46,12 +54,60 @@ ThemedDialog {
             width: parent.width
             size: "base"
             tone: "default"
-            text: qsTr("Drift %1 is available").arg(Updates.latestVersion)
+            text: Updates.latestVersion.length > 0
+                  ? qsTr("Drift %1 is available").arg(Updates.latestVersion)
+                  : qsTr("A new Drift update is available")
         }
 
         ThemedLabel {
             width: parent.width
             text: qsTr("You have %1.").arg(Updates.currentVersion)
+        }
+
+        // If installed via Homebrew, show the Terminal command to upgrade cleanly.
+        Column {
+            width: parent.width
+            spacing: Theme.spacingSm
+            visible: Updates.isHomebrew
+
+            ThemedLabel {
+                width: parent.width
+                text: qsTr("Drift was installed via Homebrew. Run in your terminal to update:")
+                size: "xs"
+                tone: "muted"
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 38
+                radius: Theme.radiusMd
+                color: Theme.panelBackground
+                border.width: Theme.borderWidth
+                border.color: Theme.panelBorder
+
+                ThemedLabel {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingLg
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "brew upgrade --cask drift"
+                    font.family: Theme.monoFontFamily
+                    size: "sm"
+                }
+
+                ThemedButton {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    variant: "ghost"
+                    glyph: Theme.icons.copy
+                    text: qsTr("Copy")
+                    tooltip: qsTr("Copy command to clipboard")
+                    onClicked: {
+                        Updates.copyHomebrewCommand()
+                        Toasts.success(qsTr("Copied command to clipboard"))
+                    }
+                }
+            }
         }
 
         Rectangle {
@@ -100,7 +156,7 @@ ThemedDialog {
 
         Item {
             width: parent.width
-            height: downloadButton.height
+            height: actionButton.height
 
             ThemedButton {
                 anchors.left: parent.left
@@ -125,17 +181,30 @@ ThemedDialog {
                 }
 
                 ThemedButton {
-                    id: downloadButton
+                    id: actionButton
                     variant: "primary"
-                    glyph: Theme.icons.download
-                    enabled: !Updates.downloading && !Updates.preparing
-                    text: Updates.readyToInstall ? qsTr("Restart and install")
+                    glyph: Updates.isHomebrew ? Theme.icons.copy : Theme.icons.download
+                    enabled: Updates.isHomebrew || (!Updates.downloading && !Updates.preparing)
+                    text: Updates.isHomebrew ? qsTr("Copy Command")
+                          : Updates.readyToInstall ? qsTr("Restart and install")
                           : (Updates.downloading || Updates.preparing) ? qsTr("Downloading…")
                           : qsTr("Download")
-                    tooltip: Updates.canInstall
-                             ? qsTr("Downloads the update and installs it")
-                             : qsTr("Opens the release page in your browser")
-                    onClicked: Updates.readyToInstall ? Updates.requestQuit() : root.download()
+                    tooltip: Updates.isHomebrew
+                             ? qsTr("Copies the brew upgrade command to clipboard")
+                             : Updates.canInstall
+                               ? qsTr("Downloads the update and installs it")
+                               : qsTr("Opens the release page in your browser")
+                    onClicked: {
+                        if (Updates.isHomebrew) {
+                            Updates.copyHomebrewCommand()
+                            Toasts.success(qsTr("Copied command to clipboard"))
+                            root.close()
+                        } else if (Updates.readyToInstall) {
+                            Updates.requestQuit()
+                        } else {
+                            root.download()
+                        }
+                    }
                 }
             }
         }
@@ -144,7 +213,7 @@ ThemedDialog {
     onOpened: {
         Updates.markAnnounced()
         Updates.setInstallPromptOpen(true)
-        downloadButton.forceActiveFocus()
+        actionButton.forceActiveFocus()
     }
     onClosed: Updates.setInstallPromptOpen(false)
 }
