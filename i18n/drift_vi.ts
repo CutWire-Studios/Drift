@@ -15193,10 +15193,6 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation>Đã có bản cập nhật</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Drift %1 đang có sẵn</translation>
     </message>
@@ -15207,18 +15203,6 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>You have %1.</source>
         <translation>Bạn có %1.</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">Sao chép</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15235,14 +15219,6 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>Download</source>
         <translation>Tải xuống</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>

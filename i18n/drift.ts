@@ -15238,10 +15238,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15251,18 +15247,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>You have %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15279,14 +15263,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Download</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

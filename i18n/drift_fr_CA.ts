@@ -15251,10 +15251,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Mise à jour disponible</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Drift %1 est disponible</translation>
     </message>
@@ -15265,18 +15261,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>You have %1.</source>
         <translation>Vous avez %1.</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">Copier</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15293,14 +15277,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Download</source>
         <translation>Télécharger</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>

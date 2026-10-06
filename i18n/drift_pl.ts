@@ -15299,10 +15299,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Dostępna aktualizacja</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Dostępny jest Drift %1</translation>
     </message>
@@ -15313,18 +15309,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>You have %1.</source>
         <translation>Masz %1.</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">Kopiuj</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15341,14 +15325,6 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Download</source>
         <translation>Pobierz</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>

@@ -15458,10 +15458,6 @@ If playback stutters, try another.</source>
         <translation>تحديث متوفر</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Drift %1 متوفر</translation>
     </message>
@@ -15472,18 +15468,6 @@ If playback stutters, try another.</source>
     <message>
         <source>You have %1.</source>
         <translation>لديك %1.</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">نسخ</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15500,14 +15484,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Download</source>
         <translation>تنزيل</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>

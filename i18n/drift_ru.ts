@@ -15299,10 +15299,6 @@ If playback stutters, try another.</source>
         <translation>Доступно обновление</translation>
     </message>
     <message>
-        <source>Copied command to clipboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Drift %1 is available</source>
         <translation>Доступна версия Drift %1</translation>
     </message>
@@ -15313,18 +15309,6 @@ If playback stutters, try another.</source>
     <message>
         <source>You have %1.</source>
         <translation>У вас версия %1.</translation>
-    </message>
-    <message>
-        <source>Drift was installed via Homebrew. Run in your terminal to update:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">Копировать</translation>
-    </message>
-    <message>
-        <source>Copy command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Skip</source>
@@ -15341,14 +15325,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Download</source>
         <translation>Скачать</translation>
-    </message>
-    <message>
-        <source>Copy Command</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copies the brew upgrade command to clipboard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>
