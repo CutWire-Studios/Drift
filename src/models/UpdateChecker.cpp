@@ -92,6 +92,8 @@ QString updatePlatform()
     return QStringLiteral("windows");
 #elif defined(Q_OS_MACOS)
     return QStringLiteral("macos");
+#elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    return QStringLiteral("linux");
 #else
     return {};
 #endif
@@ -113,6 +115,10 @@ UpdateChecker::UpdateChecker(QObject *parent)
         connect(qApp, &QCoreApplication::aboutToQuit, this, [this] { launchStagedInstall(); });
     }
 
+    for (auto changed : {&UpdateChecker::activityChanged, &UpdateChecker::progressChanged,
+                         &UpdateChecker::statusChanged, &UpdateChecker::resultChanged})
+        connect(this, changed, this, &UpdateChecker::downloadJobChanged);
+
     scheduleStartup();
 }
 
@@ -133,6 +139,11 @@ bool UpdateChecker::installSupported() const
     return supported() && kDistribution == QLatin1String("windows");
 #elif defined(Q_OS_MACOS)
     return supported() && kDistribution == QLatin1String("macos");
+#elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    // The AppImage is replaced in place, so the folder holding it has to be writable.
+    const QString path = appImagePath();
+    return supported() && kDistribution == QLatin1String("appimage") && !path.isEmpty()
+            && QFileInfo(QFileInfo(path).absolutePath()).isWritable();
 #else
     return false;
 #endif
@@ -171,6 +182,11 @@ bool UpdateChecker::readyToInstall() const
     return m_readyToInstall;
 }
 
+bool UpdateChecker::installScheduled() const
+{
+    return m_installOnQuit;
+}
+
 qreal UpdateChecker::progress() const
 {
     return m_progress;
@@ -183,7 +199,8 @@ bool UpdateChecker::updateAvailable() const
 
 bool UpdateChecker::canInstall() const
 {
-    return installSupported() && !m_assetUrl.isEmpty() && !m_assetName.isEmpty();
+    return installSupported() && !m_assetUrl.isEmpty() && !m_assetName.isEmpty()
+            && !m_assetSha256.isEmpty();
 }
 
 QString UpdateChecker::currentVersion() const
@@ -214,6 +231,43 @@ QString UpdateChecker::status() const
 QString UpdateChecker::error() const
 {
     return m_error;
+}
+
+QVariantMap UpdateChecker::downloadJob() const
+{
+    QString status;
+    if (m_downloading)
+        status = QStringLiteral("downloading");
+    else if (m_preparing)
+        status = QStringLiteral("preparing");
+    else if (m_readyToInstall)
+        status = QStringLiteral("done");
+    else
+        status = m_downloadOutcome;
+    if (status.isEmpty())
+        return {};
+
+    const bool running = m_downloading || m_preparing;
+    const double seconds = m_downloadClock.isValid() ? m_downloadClock.elapsed() / 1000.0 : 0;
+    return {
+        {QStringLiteral("itemId"), QStringLiteral("drift-update")},
+        {QStringLiteral("kind"), QStringLiteral("update")},
+        {QStringLiteral("mediaKind"), QStringLiteral("update")},
+        {QStringLiteral("title"), tr("Drift %1 update").arg(m_latestVersion)},
+        {QStringLiteral("status"), status},
+        {QStringLiteral("running"), running},
+        {QStringLiteral("finished"), !running},
+        {QStringLiteral("retryable"), status == QLatin1String("failed")},
+        {QStringLiteral("progress"), m_progress},
+        {QStringLiteral("bytesReceived"), m_bytesReceived},
+        {QStringLiteral("bytesTotal"), m_bytesTotal},
+        {QStringLiteral("speed"), m_downloading && seconds > 0.5 ? m_bytesReceived / seconds : 0.0},
+        {QStringLiteral("errorMessage"), m_error},
+        {QStringLiteral("phase"), tr("Preparing the update…")},
+        {QStringLiteral("doneDetail"), m_installOnQuit ? tr("Installs when you close Drift")
+                                                       : tr("Ready to install")},
+        {QStringLiteral("destinationDir"), QString()},
+    };
 }
 
 void UpdateChecker::setChecking(bool checking)
@@ -306,6 +360,7 @@ void UpdateChecker::skipVersion()
 {
     cancelDownload();
     m_installOnQuit = false;
+    m_downloadOutcome.clear();
     setReadyToInstall(false);
     if (m_latestVersion.isEmpty())
         return;
@@ -320,15 +375,31 @@ void UpdateChecker::openDownloadPage()
         QDesktopServices::openUrl(QUrl(m_releaseUrl));
 }
 
-void UpdateChecker::downloadAndInstall()
+void UpdateChecker::downloadAndInstall(bool installOnQuit)
 {
-    if (!canInstall() || m_downloading || m_preparing)
+    if (!canInstall() || m_downloading || m_preparing || m_readyToInstall)
         return;
-    if (m_readyToInstall && !m_stagedPath.isEmpty()) {
-        requestQuit();
-        return;
-    }
+    m_installOnQuit = installOnQuit;
+    m_relaunch = false;
+    emit activityChanged();
     beginDownload();
+}
+
+void UpdateChecker::retryDownload()
+{
+    if (!canInstall() || m_downloading || m_preparing || m_readyToInstall)
+        return;
+    beginDownload();
+}
+
+void UpdateChecker::clearDownloadState()
+{
+    if (m_downloadOutcome.isEmpty())
+        return;
+    m_downloadOutcome.clear();
+    setError(QString());
+    setStatus(QString());
+    emit downloadJobChanged();
 }
 
 void UpdateChecker::requestQuit()
@@ -336,13 +407,19 @@ void UpdateChecker::requestQuit()
     if (!m_readyToInstall || m_stagedPath.isEmpty())
         return;
     m_installOnQuit = true;
-    m_deferQuit = false;
+    m_relaunch = true;
+    emit activityChanged();
     emit quitRequested();
 }
 
-void UpdateChecker::setInstallPromptOpen(bool open)
+void UpdateChecker::scheduleInstallOnQuit()
 {
-    m_deferQuit = !open;
+    if (m_installOnQuit)
+        return;
+    m_installOnQuit = true;
+    emit activityChanged();
+    if (m_readyToInstall)
+        setStatus(tr("Drift %1 will install when you close Drift.").arg(m_latestVersion));
 }
 
 void UpdateChecker::markAnnounced()
@@ -441,7 +518,7 @@ void UpdateChecker::fetchRelease(const QString &version, bool manual)
             || !applyRelease(reply->readAll(), manual, version))
             publishFromVersion(version, manual);
         else
-            setChecking(false);
+            finishCheck(version, manual);
     });
 }
 
@@ -451,10 +528,46 @@ void UpdateChecker::publishFromVersion(const QString &version, bool manual)
                                                       QSysInfo::currentCpuArchitecture(), version);
     publishRelease(version, QString(), drift::releasePageUrl(kFeedUrl, version), fileName,
                    drift::releaseDownloadUrl(kFeedUrl, version, fileName), QString(), 0);
-    if (manual)
-        setStatus(tr("Drift %1 is available.").arg(version));
-    announceIfNeeded();
-    setChecking(false);
+    finishCheck(version, manual);
+}
+
+void UpdateChecker::finishCheck(const QString &version, bool manual)
+{
+    auto done = [this, version, manual] {
+        if (manual)
+            setStatus(tr("Drift %1 is available.").arg(version));
+        announceIfNeeded();
+        setChecking(false);
+    };
+
+    // An installer is only downloaded when its hash is known. GitHub's API gives one per asset;
+    // when that request failed, or the asset has no digest, the release's SHA256SUMS is asked
+    // instead. Without either, canInstall() stays false and the button opens the release page.
+    if (!installSupported() || m_assetName.isEmpty() || !m_assetSha256.isEmpty()) {
+        done();
+        return;
+    }
+
+    QNetworkRequest request{QUrl(drift::releaseDownloadUrl(kFeedUrl, version,
+                                                           QStringLiteral("SHA256SUMS")))};
+    request.setHeader(QNetworkRequest::UserAgentHeader, QLatin1String("Drift/") + kCurrentVersion);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setTransferTimeout(kTransferTimeoutMs);
+
+    QNetworkReply *reply = m_network->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, version, done] {
+        reply->deleteLater();
+        if (reply->error() == QNetworkReply::NoError && m_latestVersion == version) {
+            const QString sha = drift::sha256FromSums(reply->readAll(), m_assetName);
+            if (!sha.isEmpty()) {
+                m_assetSha256 = sha;
+                storePending();
+                emit resultChanged();
+            }
+        }
+        done();
+    });
 }
 
 bool UpdateChecker::applyRelease(const QByteArray &json, bool manual, const QString &expectedVersion)
@@ -482,9 +595,6 @@ bool UpdateChecker::applyRelease(const QByteArray &json, bool manual, const QStr
     publishRelease(version, release.value(QStringLiteral("body")).toString(),
                    release.value(QStringLiteral("html_url")).toString(), assetName, assetUrl,
                    asset.sha256, asset.size);
-    if (manual)
-        setStatus(tr("Drift %1 is available.").arg(version));
-    announceIfNeeded();
     return true;
 }
 
@@ -578,6 +688,13 @@ QString UpdateChecker::updatesDir() const
     return dir;
 }
 
+QString UpdateChecker::appImagePath() const
+{
+    // Set by the AppImage runtime to the file that was launched.
+    const QString path = qEnvironmentVariable("APPIMAGE");
+    return path.isEmpty() ? QString() : QFileInfo(path).canonicalFilePath();
+}
+
 QString UpdateChecker::macBundleName() const
 {
     if (kCurrentVersion.contains(QLatin1String("-nightly.")))
@@ -598,15 +715,20 @@ void UpdateChecker::beginDownload()
 {
     setError(QString());
     setReadyToInstall(false);
-    m_installOnQuit = false;
+    m_downloadOutcome.clear();
     m_stagedPath.clear();
     m_packagePath = updatesDir() + QLatin1Char('/') + m_assetName;
 
-    // A previous attempt that finished is reused. A partial file is not: the hash is only known
-    // once the whole body has been written.
-    if (m_assetSize > 0 && QFileInfo(m_packagePath).size() == m_assetSize) {
-        stagePackage();
-        return;
+    // A previous attempt that finished is reused once its hash checks out. A partial file is not.
+    QFile previous(m_packagePath);
+    if (previous.open(QIODevice::ReadOnly)) {
+        QCryptographicHash hash(QCryptographicHash::Sha256);
+        hash.addData(&previous);
+        previous.close();
+        if (QString::fromLatin1(hash.result().toHex()) == m_assetSha256) {
+            stagePackage();
+            return;
+        }
     }
     QFile::remove(m_packagePath);
 
@@ -617,6 +739,7 @@ void UpdateChecker::beginDownload()
     if (!m_downloadFile->open(QIODevice::WriteOnly)) {
         delete m_downloadFile;
         m_downloadFile = nullptr;
+        m_downloadOutcome = QStringLiteral("failed");
         setError(tr("Couldn’t download the update: the cache isn’t writable."));
         return;
     }
@@ -624,8 +747,12 @@ void UpdateChecker::beginDownload()
     delete m_hasher;
     m_hasher = new QCryptographicHash(QCryptographicHash::Sha256);
     m_downloadCancelled = false;
+    m_bytesReceived = 0;
+    m_bytesTotal = m_assetSize;
+    m_downloadClock.start();
     setProgress(0);
     setDownloading(true);
+    emit downloadStarted();
 
     QNetworkRequest request{QUrl(m_assetUrl)};
     request.setHeader(QNetworkRequest::UserAgentHeader, QLatin1String("Drift/") + kCurrentVersion);
@@ -651,6 +778,8 @@ void UpdateChecker::beginDownload()
     });
     connect(m_reply, &QNetworkReply::downloadProgress, this, [this](qint64 received, qint64 total) {
         const qint64 expected = total > 0 ? total : m_assetSize;
+        m_bytesReceived = received;
+        m_bytesTotal = expected;
         if (expected > 0)
             setProgress(qMin(1.0, double(received) / double(expected)));
     });
@@ -685,14 +814,17 @@ void UpdateChecker::finishDownload()
 
     if (cancelled || !reply || reply->error() != QNetworkReply::NoError) {
         QFile::remove(m_partialPath);
+        m_downloadOutcome = cancelled ? QStringLiteral("cancelled") : QStringLiteral("failed");
+        emit downloadJobChanged();
         if (!cancelled)
             setError(tr("Couldn’t download the update: %1")
                              .arg(reply ? reply->errorString() : tr("the download was interrupted.")));
         return;
     }
 
-    if (!m_assetSha256.isEmpty() && QString::fromLatin1(digest) != m_assetSha256) {
+    if (QString::fromLatin1(digest) != m_assetSha256) {
         QFile::remove(m_partialPath);
+        m_downloadOutcome = QStringLiteral("failed");
         setError(tr("Couldn’t download the update: the file didn’t match the release."));
         return;
     }
@@ -700,6 +832,7 @@ void UpdateChecker::finishDownload()
     QFile::remove(m_packagePath);
     if (!QFile::rename(m_partialPath, m_packagePath)) {
         QFile::remove(m_partialPath);
+        m_downloadOutcome = QStringLiteral("failed");
         setError(tr("Couldn’t download the update: the cache isn’t writable."));
         return;
     }
@@ -712,10 +845,24 @@ void UpdateChecker::stagePackage()
 {
 #if defined(Q_OS_MACOS)
     stageMacApp();
+#elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    stageAppImage();
 #else
     m_stagedPath = m_packagePath;
     finishStage();
 #endif
+}
+
+void UpdateChecker::stageAppImage()
+{
+    QFile file(m_packagePath);
+    if (!file.setPermissions(file.permissions() | QFileDevice::ExeOwner | QFileDevice::ExeGroup
+                             | QFileDevice::ExeOther)) {
+        failPrepare(tr("Couldn’t prepare the update."));
+        return;
+    }
+    m_stagedPath = m_packagePath;
+    finishStage();
 }
 
 void UpdateChecker::runStageStep(const QString &program, const QStringList &arguments,
@@ -816,6 +963,7 @@ void UpdateChecker::failPrepare(const QString &message)
     setPreparing(false);
     setDownloading(false);
     m_stagedPath.clear();
+    m_downloadOutcome = QStringLiteral("failed");
     setError(message);
 }
 
@@ -823,13 +971,14 @@ void UpdateChecker::finishStage()
 {
     setDownloading(false);
     setPreparing(false);
-    m_installOnQuit = true;
     setReadyToInstall(true);
     setProgress(1);
-    if (m_deferQuit)
-        setStatus(tr("Drift %1 will install when you quit.").arg(m_latestVersion));
-    else
-        emit quitRequested();
+    if (m_installOnQuit) {
+        setStatus(tr("Drift %1 will install when you close Drift.").arg(m_latestVersion));
+    } else {
+        setStatus(tr("Drift %1 is ready to install.").arg(m_latestVersion));
+        emit installReady();
+    }
 }
 
 void UpdateChecker::launchStagedInstall()
@@ -847,8 +996,9 @@ void UpdateChecker::launchStagedInstall()
     if (!script.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return;
     // The helper waits out this process, then runs the Inno installer. /DRIFTUPDATE=1 is what
-    // makes a silent install launch Drift again; without it skipifsilent would leave the user
-    // with the app closed. -Verb RunAs is the UAC prompt — the installer writes to Program Files.
+    // makes a silent install launch Drift again, so it is passed only for "Restart and install";
+    // an install on close leaves Drift closed, as skipifsilent does without it.
+    // -Verb RunAs is the UAC prompt — the installer writes to Program Files.
     const QString body = QStringLiteral(
             "$processId = %1\r\n"
             "$installer = %2\r\n"
@@ -857,13 +1007,14 @@ void UpdateChecker::launchStagedInstall()
             "}\r\n"
             "try {\r\n"
             "    Start-Process -FilePath $installer -ArgumentList "
-            "'/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/DRIFTUPDATE=1' "
+            "'/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART'%3 "
             "-Verb RunAs -Wait\r\n"
             "} catch {\r\n"
             "    exit 1\r\n"
             "}\r\n")
                                  .arg(pid)
-                                 .arg(powerShellQuote(QDir::toNativeSeparators(m_stagedPath)));
+                                 .arg(powerShellQuote(QDir::toNativeSeparators(m_stagedPath)),
+                                      m_relaunch ? QStringLiteral(",'/DRIFTUPDATE=1'") : QString());
     script.write(body.toUtf8());
     script.close();
 
@@ -907,14 +1058,58 @@ void UpdateChecker::launchStagedInstall()
             "if ! /bin/bash %2; then\n"
             "  /usr/bin/osascript -e \"do shell script \\\"/bin/bash %3\\\" with administrator privileges\"\n"
             "fi\n"
-            "open %4\n")
+            "%4\n")
                                      .arg(QString::number(pid), shellSingleQuote(copyPath),
-                                          shellSingleQuote(copyPath), shellSingleQuote(dest));
+                                          shellSingleQuote(copyPath),
+                                          m_relaunch ? QStringLiteral("open ") + shellSingleQuote(dest)
+                                                     : QString());
     waitScript.write(waitBody.toUtf8());
     waitScript.close();
     waitScript.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
 
     QProcess::startDetached(QStringLiteral("/bin/bash"), {waitPath});
+#elif defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    const QString target = appImagePath();
+    if (target.isEmpty())
+        return;
+    const QString scriptPath = dir + QStringLiteral("/install-update.sh");
+    QFile script(scriptPath);
+    if (!script.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return;
+    // Copied next to the target first so the final mv is a rename on one filesystem: a launcher
+    // that starts Drift mid-update gets the old file or the new one, never half of either.
+    const QString temp = target + QStringLiteral(".drift-update");
+    const QString body = QStringLiteral(
+            "#!/bin/sh\n"
+            "while kill -0 %1 2>/dev/null; do\n"
+            "  sleep 0.4\n"
+            "done\n"
+            "if ! { cp -f %2 %3 && chmod 755 %3 && mv -f %3 %4; }; then\n"
+            "  rm -f %3\n"
+            "  exit 1\n"
+            "fi\n"
+            "rm -f %2\n"
+            "%5\n")
+                                 .arg(QString::number(pid), shellSingleQuote(m_stagedPath),
+                                      shellSingleQuote(temp), shellSingleQuote(target),
+                                      m_relaunch ? QStringLiteral("nohup ") + shellSingleQuote(target)
+                                                         + QStringLiteral(" >/dev/null 2>&1 &")
+                                                 : QString());
+    script.write(body.toUtf8());
+    script.close();
+
+    // The AppImage runtime and AppRun point these at this copy's mount, which is gone once we
+    // exit. The relaunched AppImage sets its own.
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    for (const char *name : {"APPIMAGE", "APPDIR", "ARGV0", "OWD", "LD_LIBRARY_PATH", "QT_PLUGIN_PATH",
+                             "QML2_IMPORT_PATH", "QML_IMPORT_PATH", "QT_QPA_PLATFORM_PLUGIN_PATH"})
+        env.remove(QString::fromLatin1(name));
+
+    QProcess helper;
+    helper.setProgram(QStringLiteral("/bin/sh"));
+    helper.setArguments({scriptPath});
+    helper.setProcessEnvironment(env);
+    helper.startDetached();
 #else
     Q_UNUSED(dir);
     Q_UNUSED(pid);

@@ -15146,6 +15146,26 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
 <context>
     <name>UpdateChecker</name>
     <message>
+        <source>Drift %1 update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preparing the update…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installs when you close Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 will install when you close Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t check for updates: %1</source>
         <translation>Không thể kiểm tra cập nhật: %1</translation>
     </message>
@@ -15182,7 +15202,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift %1 will install when you quit.</source>
+        <source>Drift %1 is ready to install.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15191,6 +15211,18 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>Update available</source>
         <translation>Đã có bản cập nhật</translation>
+    </message>
+    <message>
+        <source>Update ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 will install when you close Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 is downloaded and ready to install</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drift %1 is available</source>
@@ -15205,6 +15237,14 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation>Bạn có %1.</translation>
     </message>
     <message>
+        <source>Install automatically when I close Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads in the background and installs the next time you close Drift. Unchecked, you choose when to install once the download finishes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Skip</source>
         <translation>Bỏ qua</translation>
     </message>
@@ -15217,8 +15257,20 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation>Để sau</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>Tải xuống</translation>
+        <source>Install when I close Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">Cập nhật</translation>
+    </message>
+    <message>
+        <source>Closes Drift, installs the update and opens Drift again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads the update in the background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>
@@ -15233,20 +15285,12 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift will quit and install %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Restart and install</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Downloading…</source>
         <translation type="unfinished">Đang tải xuống…</translation>
-    </message>
-    <message>
-        <source>Downloads the update and installs it</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

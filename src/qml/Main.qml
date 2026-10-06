@@ -753,6 +753,12 @@ ApplicationWindow {
         function onUpdateReady() {
             window.openUpdateDialog()
         }
+        function onInstallReady() {
+            window.openUpdateDialog()
+        }
+        function onDownloadStarted() {
+            downloadsWindowLoader.ensure().show()
+        }
         function onQuitRequested() {
             window.close()
         }

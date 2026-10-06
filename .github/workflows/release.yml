@@ -94,6 +94,21 @@ jobs:
           the ones you want from the Addon Manager in the app header.
           EOF
 
+      # The in-app updater falls back to this when GitHub's API does not give it an asset digest,
+      # and refuses to install a file it has no hash for.
+      - name: Write SHA256SUMS
+        run: |
+          sha256sum \
+            dist/linux-appimage/*.AppImage \
+            dist/windows-installer/*.exe \
+            dist/windows-portable/*.zip \
+            dist/macos-dmg/*.dmg \
+            dist/arch-package/*.pkg.tar.zst \
+            dist/flatpak-bundle/*.flatpak \
+            dist/android-apk-*/*.apk \
+            | sed -E 's#  .*/#  #' > SHA256SUMS
+          cat SHA256SUMS
+
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -108,7 +123,8 @@ jobs:
             dist/macos-dmg/*.dmg \
             dist/arch-package/*.pkg.tar.zst \
             dist/flatpak-bundle/*.flatpak \
-            dist/android-apk-*/*.apk
+            dist/android-apk-*/*.apk \
+            SHA256SUMS
 
       - name: Update Homebrew Tap
         continue-on-error: true
@@ -135,6 +151,10 @@ jobs:
           sed -i.bak -E "s/version \"[0-9.]+\"/version \"${VERSION}\"/" Casks/drift.rb
           sed -i.bak -E "s/sha256 \"[a-f0-9]{64}\"/sha256 \"${SHA256}\"/" Casks/drift.rb
           rm -f Casks/drift.rb.bak
+          # Drift updates itself in place, so brew should not treat the cask's version as stale.
+          if ! grep -qE '^\s*auto_updates true' Casks/drift.rb; then
+            sed -i -E '/^\s*sha256 "/a\  auto_updates true' Casks/drift.rb
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

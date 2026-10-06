@@ -451,7 +451,11 @@ Rectangle {
 
             Item {
                 id: downloadsButton
-                visible: Market.configured
+                // The app update also lands in the Downloads window, so the button shows while
+                // one is running even without the marketplace.
+                readonly property int activeCount: Market.activeDownloadCount
+                                                  + (Updates.downloading || Updates.preparing ? 1 : 0)
+                visible: Market.configured || activeCount > 0
                 implicitWidth: downloadsBtn.implicitWidth
                 implicitHeight: downloadsBtn.implicitHeight
                 width: visible ? implicitWidth : 0
@@ -463,9 +467,9 @@ Rectangle {
                     anchors.fill: parent
                     glyph: Theme.icons.download
                     variant: "ghost"
-                    active: Market.activeDownloadCount > 0
-                    tooltip: Market.activeDownloadCount > 0
-                             ? qsTr("Downloads — %n running", "", Market.activeDownloadCount)
+                    active: downloadsButton.activeCount > 0
+                    tooltip: downloadsButton.activeCount > 0
+                             ? qsTr("Downloads — %n running", "", downloadsButton.activeCount)
                              : qsTr("Downloads")
                     onClicked: root.downloadsRequested()
                 }
@@ -473,7 +477,7 @@ Rectangle {
                 // Count rather than a plain dot: with a queue behind a three-at-a-time cap,
                 // how many are outstanding is the thing worth knowing at a glance.
                 Rectangle {
-                    visible: Market.activeDownloadCount > 0
+                    visible: downloadsButton.activeCount > 0
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.margins: Theme.spacingXs
@@ -485,7 +489,7 @@ Rectangle {
                     Text {
                         id: downloadCount
                         anchors.centerIn: parent
-                        text: String(Market.activeDownloadCount)
+                        text: String(downloadsButton.activeCount)
                         color: Theme.primaryForeground
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeXs

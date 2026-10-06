@@ -45,6 +45,8 @@ ReleaseAsset selectReleaseAsset(const QJsonArray &assets, const QString &platfor
         suffix = QStringLiteral("-arm64.dmg");
     else if (macos && arch == QLatin1String("x86_64"))
         suffix = QStringLiteral("-x86_64.dmg");
+    else if (platform == QLatin1String("linux") && arch == QLatin1String("x86_64"))
+        suffix = QStringLiteral("-x86_64.AppImage");
     else
         return {};
 
@@ -56,7 +58,7 @@ ReleaseAsset selectReleaseAsset(const QJsonArray &assets, const QString &platfor
         // The portable zip is not an installer, and a dmg is never named Setup.
         if (windows && !name.startsWith(QLatin1String("Drift-Setup-")))
             continue;
-        if (macos && !name.startsWith(QLatin1String("Drift-")))
+        if (!windows && !name.startsWith(QLatin1String("Drift-")))
             continue;
 
         const QUrl url(asset.value(QStringLiteral("browser_download_url")).toString());
@@ -83,6 +85,18 @@ QString parseVersionText(const QByteArray &raw)
         text = text.mid(1);
     static const QRegularExpression version(QStringLiteral("^\\d+(?:\\.\\d+)*$"));
     return version.match(text).hasMatch() ? text : QString();
+}
+
+QString sha256FromSums(const QByteArray &sums, const QString &fileName)
+{
+    static const QRegularExpression line(QStringLiteral("^([0-9a-fA-F]{64})\\s+\\*?(.+)$"));
+    const QStringList lines = QString::fromUtf8(sums).split(QLatin1Char('\n'));
+    for (const QString &raw : lines) {
+        const QRegularExpressionMatch match = line.match(raw.trimmed());
+        if (match.hasMatch() && match.captured(2) == fileName)
+            return match.captured(1).toLower();
+    }
+    return {};
 }
 
 namespace {
@@ -141,6 +155,8 @@ QString installerFileName(const QString &platform, const QString &arch, const QS
         return QStringLiteral("Drift-%1-arm64.dmg").arg(version);
     if (platform == QLatin1String("macos") && arch == QLatin1String("x86_64"))
         return QStringLiteral("Drift-%1-x86_64.dmg").arg(version);
+    if (platform == QLatin1String("linux") && arch == QLatin1String("x86_64"))
+        return QStringLiteral("Drift-%1-x86_64.AppImage").arg(version);
     return {};
 }
 

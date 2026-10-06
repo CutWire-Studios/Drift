@@ -131,6 +131,10 @@ if(NOT DRIFT_DISTRIBUTION IN_LIST DRIFT_DISTRIBUTIONS)
     message(FATAL_ERROR "DRIFT_DISTRIBUTION must be one of ${DRIFT_DISTRIBUTIONS}, not '${DRIFT_DISTRIBUTION}'")
 endif()
 message(STATUS "Drift distribution: ${DRIFT_DISTRIBUTION}")
+# Google Play updates this build itself, and scripts/build.sh has no way to pass an empty feed.
+if(DRIFT_DISTRIBUTION STREQUAL "android-play")
+    set(DRIFT_UPDATE_FEED_URL "")
+endif()
 
 find_package(Qt6 6.10 REQUIRED COMPONENTS Quick QuickControls2 Multimedia Test Concurrent Widgets OpenGL Network QuickEffects Svg Xml)
 find_package(Qt6 COMPONENTS LinguistTools QUIET)

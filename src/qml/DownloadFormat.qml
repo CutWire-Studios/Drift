@@ -54,6 +54,8 @@ QtObject {
             return Theme.icons.image
         if (kind === "video")
             return Theme.icons.film
+        if (kind === "update")
+            return Theme.icons.package
         return Theme.icons.fileText
     }
 
@@ -87,6 +89,8 @@ QtObject {
         if (job.status === "waiting")
             return qsTr("Waiting for a free slot")
         if (job.status === "done") {
+            if (job.doneDetail)
+                return job.doneDetail
             const size = downloadFormat.formatBytes(job.bytesReceived)
             return size.length > 0 ? qsTr("%1 · in the media bin").arg(size)
                                    : qsTr("In the media bin")

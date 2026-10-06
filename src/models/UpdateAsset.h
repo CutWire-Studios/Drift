@@ -17,9 +17,10 @@ struct ReleaseAsset
     bool isValid() const { return !url.isEmpty(); }
 };
 
-// platform is "windows" or "macos". arch is QSysInfo::currentCpuArchitecture()
-// ("x86_64", "arm64"). Only the installer formats those two packages actually ship:
-// Drift-Setup-*-x64.exe and Drift-*-arm64.dmg. The portable zip is a different product.
+// platform is "windows", "macos" or "linux". arch is QSysInfo::currentCpuArchitecture()
+// ("x86_64", "arm64"). Only the formats those packages can replace themselves with:
+// Drift-Setup-*-x64.exe, Drift-*-arm64.dmg and Drift-*-x86_64.AppImage. The portable zip is a
+// different product.
 ReleaseAsset selectReleaseAsset(const QJsonArray &assets, const QString &platform, const QString &arch);
 
 // A TXT value from drift-version.cutwire.org. Accepts "0.7.5" and "v0.7.5"; anything else
@@ -31,6 +32,10 @@ QString parseVersionText(const QByteArray &raw);
 QString releaseTagApiUrl(const QString &feedUrl, const QString &version);
 QString releasePageUrl(const QString &feedUrl, const QString &version);
 QString releaseDownloadUrl(const QString &feedUrl, const QString &version, const QString &fileName);
+
+// The hash for fileName in a `sha256sum` listing (the release's SHA256SUMS), lower-case hex, or
+// empty when the file is not listed.
+QString sha256FromSums(const QByteArray &sums, const QString &fileName);
 
 // File name the packaging workflow uploads for this platform, or empty when it ships nothing
 // this build can install.

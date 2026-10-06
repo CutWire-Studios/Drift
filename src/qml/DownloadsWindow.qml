@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import Drift 1.0
 import "components"
 
-// Marketplace downloads: what is running, what is waiting behind the concurrency cap, and
+// Marketplace downloads, plus the app update when one is downloading: what is running, what is waiting behind the concurrency cap, and
 // what this session already finished. A window rather than a dialog because a download
 // outlives the panel that started it — the Market tab can be closed, or the app switched to
 // another project, while three clips are still being fetched.
@@ -22,9 +22,14 @@ Window {
     title: qsTr("Downloads")
     color: Theme.appBackground
 
-    readonly property var jobs: Market.downloads
-    readonly property int activeCount: Market.activeDownloadCount
+    // The update row has the same shape as a marketplace job; its buttons route to Updates.
+    readonly property var updateJob: Updates.downloadJob
+    readonly property bool hasUpdateJob: updateJob.itemId !== undefined
+    readonly property var jobs: (hasUpdateJob ? [updateJob] : []).concat(Market.downloads)
+    readonly property int activeCount: Market.activeDownloadCount + (hasUpdateJob && updateJob.running ? 1 : 0)
     readonly property bool hasFinished: {
+        if (hasUpdateJob && (updateJob.status === "failed" || updateJob.status === "cancelled"))
+            return true
         const list = Market.downloads
         for (var i = 0; i < list.length; ++i) {
             if (list[i].finished)
@@ -80,7 +85,10 @@ Window {
                 text: qsTr("Clear finished")
                 variant: "ghost"
                 enabled: root.hasFinished
-                onClicked: Market.clearFinishedDownloads()
+                onClicked: {
+                    Updates.clearDownloadState()
+                    Market.clearFinishedDownloads()
+                }
             }
         }
 
@@ -228,7 +236,9 @@ Window {
                         visible: row.modelData.retryable
                         glyph: Theme.icons.refresh
                         tooltip: qsTr("Try again")
-                        onClicked: Market.retryDownload(row.modelData.itemId)
+                        onClicked: row.modelData.kind === "update"
+                                   ? Updates.retryDownload()
+                                   : Market.retryDownload(row.modelData.itemId)
                     }
 
                     IconButton {
@@ -236,7 +246,10 @@ Window {
                         visible: !row.modelData.finished
                         glyph: Theme.icons.x
                         tooltip: qsTr("Cancel")
-                        onClicked: Market.cancelDownload(row.modelData.itemId)
+                        enabled: row.modelData.status !== "preparing"
+                        onClicked: row.modelData.kind === "update"
+                                   ? Updates.cancelDownload()
+                                   : Market.cancelDownload(row.modelData.itemId)
                     }
                 }
             }

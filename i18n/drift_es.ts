@@ -15199,6 +15199,26 @@ Si la reproducción se corta, prueba con otra opción.</translation>
 <context>
     <name>UpdateChecker</name>
     <message>
+        <source>Drift %1 update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preparing the update…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installs when you close Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 will install when you close Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Couldn’t check for updates: %1</source>
         <translation>No se pudieron buscar actualizaciones: %1</translation>
     </message>
@@ -15235,7 +15255,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift %1 will install when you quit.</source>
+        <source>Drift %1 is ready to install.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15244,6 +15264,18 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Update available</source>
         <translation>Actualización disponible</translation>
+    </message>
+    <message>
+        <source>Update ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 will install when you close Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 is downloaded and ready to install</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Drift %1 is available</source>
@@ -15258,6 +15290,14 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Tienes %1.</translation>
     </message>
     <message>
+        <source>Install automatically when I close Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads in the background and installs the next time you close Drift. Unchecked, you choose when to install once the download finishes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Skip</source>
         <translation>Omitir</translation>
     </message>
@@ -15270,8 +15310,20 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>Descargar</translation>
+        <source>Install when I close Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">Actualizar</translation>
+    </message>
+    <message>
+        <source>Closes Drift, installs the update and opens Drift again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads the update in the background</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>
@@ -15286,20 +15338,12 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drift will quit and install %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Restart and install</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Downloading…</source>
         <translation type="unfinished">Descargando…</translation>
-    </message>
-    <message>
-        <source>Downloads the update and installs it</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

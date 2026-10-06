@@ -13,6 +13,8 @@ private slots:
     void versionText();
     void windowsInstallerIgnoresPortableZip();
     void macDiskImage();
+    void linuxAppImageIgnoresZsync();
+    void checksumFromSums();
     void rejectsNonGitHubUrl();
     void releaseUrlsFollowTheVersion();
     void installerFileName();
@@ -68,6 +70,34 @@ void UpdateAssetTest::macDiskImage()
     QCOMPARE(asset.name, QStringLiteral("Drift-1.2.0-arm64.dmg"));
 }
 
+void UpdateAssetTest::linuxAppImageIgnoresZsync()
+{
+    const QJsonArray assets{
+            QJsonObject{{QStringLiteral("name"), QStringLiteral("Drift-1.2.0-x86_64.AppImage.zsync")},
+                        {QStringLiteral("browser_download_url"),
+                         QStringLiteral("https://github.com/CutWire-Studios/Drift/releases/download/v1.2.0/Drift-1.2.0-x86_64.AppImage.zsync")}},
+            QJsonObject{{QStringLiteral("name"), QStringLiteral("Drift-1.2.0-x86_64.AppImage")},
+                        {QStringLiteral("browser_download_url"),
+                         QStringLiteral("https://github.com/CutWire-Studios/Drift/releases/download/v1.2.0/Drift-1.2.0-x86_64.AppImage")}}};
+
+    const drift::ReleaseAsset asset = drift::selectReleaseAsset(assets, QStringLiteral("linux"),
+                                                                QStringLiteral("x86_64"));
+    QCOMPARE(asset.name, QStringLiteral("Drift-1.2.0-x86_64.AppImage"));
+}
+
+void UpdateAssetTest::checksumFromSums()
+{
+    const QByteArray sums =
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  Drift-1.2.0-arm64.dmg\n"
+            "ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789 *Drift-Setup-1.2.0-x64.exe\r\n";
+    QCOMPARE(drift::sha256FromSums(sums, QStringLiteral("Drift-1.2.0-arm64.dmg")),
+             QStringLiteral("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"));
+    QCOMPARE(drift::sha256FromSums(sums, QStringLiteral("Drift-Setup-1.2.0-x64.exe")),
+             QStringLiteral("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"));
+    QVERIFY(drift::sha256FromSums(sums, QStringLiteral("Drift-1.2.0-x86_64.AppImage")).isEmpty());
+    QVERIFY(drift::sha256FromSums("not a listing", QStringLiteral("Drift-1.2.0-arm64.dmg")).isEmpty());
+}
+
 void UpdateAssetTest::rejectsNonGitHubUrl()
 {
     const QJsonArray assets{
@@ -101,7 +131,10 @@ void UpdateAssetTest::installerFileName()
     QCOMPARE(drift::installerFileName(QStringLiteral("macos"), QStringLiteral("arm64"),
                                       QStringLiteral("0.7.5")),
              QStringLiteral("Drift-0.7.5-arm64.dmg"));
-    QVERIFY(drift::installerFileName(QStringLiteral("linux"), QStringLiteral("x86_64"),
+    QCOMPARE(drift::installerFileName(QStringLiteral("linux"), QStringLiteral("x86_64"),
+                                      QStringLiteral("0.7.5")),
+             QStringLiteral("Drift-0.7.5-x86_64.AppImage"));
+    QVERIFY(drift::installerFileName(QStringLiteral("linux"), QStringLiteral("arm64"),
                                      QStringLiteral("0.7.5"))
                     .isEmpty());
 }

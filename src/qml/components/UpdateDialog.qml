@@ -2,13 +2,15 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Drift
 
-// Opened from the header badge, and on its own the first time a Windows or macOS build finds a
-// newer version. Three actions, and "Skip" belongs away from the two safe ones, so the buttons
-// live in the content and ThemedDialog's two-button footer is off (same shape as UnsavedChangesDialog).
+// Opened from the header badge, on its own the first time a build that installs its own updates
+// finds a newer version, and again when a download the user started is ready. Nothing downloads
+// or installs until Update is pressed, and Drift never quits unless "Restart and install" is.
+// "Skip" belongs away from the safe actions, so the buttons live in the content and ThemedDialog's
+// two-button footer is off (same shape as UnsavedChangesDialog).
 ThemedDialog {
     id: root
 
-    title: qsTr("Update available")
+    title: Updates.readyToInstall ? qsTr("Update ready") : qsTr("Update available")
     preferredWidth: Theme.dialogWidthMd
     showFooter: false
     acceptOnReturn: false
@@ -16,25 +18,26 @@ ThemedDialog {
     Shortcut {
         sequences: ["Return", "Enter"]
         enabled: root.visible
-        onActivated: root.download()
+        onActivated: if (actionButton.enabled) actionButton.clicked()
     }
 
     function download() {
-        if (Updates.canInstall) {
-            Updates.downloadAndInstall()
-            return
-        }
-        Updates.openDownloadPage()
+        if (Updates.canInstall)
+            Updates.downloadAndInstall(installOnCloseBox.checked)
+        else
+            Updates.openDownloadPage()
         close()
     }
+
+    readonly property bool busy: Updates.downloading || Updates.preparing
 
     readonly property string progressText: {
         if (Updates.downloading)
             return qsTr("Downloading Drift %1…").arg(Updates.latestVersion)
         if (Updates.preparing)
             return qsTr("Preparing the update…")
-        if (Updates.readyToInstall)
-            return qsTr("Drift will quit and install %1.").arg(Updates.latestVersion)
+        if (Updates.readyToInstall && Updates.installScheduled)
+            return qsTr("Drift %1 will install when you close Drift.").arg(Updates.latestVersion)
         return Updates.error
     }
 
@@ -46,9 +49,11 @@ ThemedDialog {
             width: parent.width
             size: "base"
             tone: "default"
-            text: Updates.latestVersion.length > 0
-                  ? qsTr("Drift %1 is available").arg(Updates.latestVersion)
-                  : qsTr("A new Drift update is available")
+            text: Updates.readyToInstall
+                  ? qsTr("Drift %1 is downloaded and ready to install").arg(Updates.latestVersion)
+                  : Updates.latestVersion.length > 0
+                    ? qsTr("Drift %1 is available").arg(Updates.latestVersion)
+                    : qsTr("A new Drift update is available")
         }
 
         ThemedLabel {
@@ -88,8 +93,18 @@ ThemedDialog {
 
         ThemedProgressBar {
             width: parent.width
-            visible: Updates.downloading || Updates.preparing
+            visible: root.busy
             value: Updates.progress
+        }
+
+        ThemedCheckBox {
+            id: installOnCloseBox
+            width: parent.width
+            visible: Updates.canInstall && !root.busy && !Updates.readyToInstall
+            checked: true
+            text: qsTr("Install automatically when I close Drift")
+            tooltip: qsTr("Downloads in the background and installs the next time you close Drift. "
+                          + "Unchecked, you choose when to install once the download finishes.")
         }
 
         ThemedLabel {
@@ -127,17 +142,36 @@ ThemedDialog {
                 }
 
                 ThemedButton {
+                    variant: "secondary"
+                    visible: Updates.readyToInstall && !Updates.installScheduled
+                    text: qsTr("Install when I close Drift")
+                    onClicked: {
+                        Updates.scheduleInstallOnQuit()
+                        root.close()
+                    }
+                }
+
+                ThemedButton {
                     id: actionButton
                     variant: "primary"
-                    glyph: Theme.icons.download
-                    enabled: !Updates.downloading && !Updates.preparing
+                    glyph: Updates.readyToInstall ? Theme.icons.refresh : Theme.icons.download
+                    enabled: !root.busy
                     text: Updates.readyToInstall ? qsTr("Restart and install")
-                          : (Updates.downloading || Updates.preparing) ? qsTr("Downloading…")
-                          : qsTr("Download")
-                    tooltip: Updates.canInstall
-                             ? qsTr("Downloads the update and installs it")
-                             : qsTr("Opens the release page in your browser")
-                    onClicked: Updates.readyToInstall ? Updates.requestQuit() : root.download()
+                          : root.busy ? qsTr("Downloading…")
+                          : qsTr("Update")
+                    tooltip: Updates.readyToInstall
+                             ? qsTr("Closes Drift, installs the update and opens Drift again")
+                             : Updates.canInstall
+                               ? qsTr("Downloads the update in the background")
+                               : qsTr("Opens the release page in your browser")
+                    onClicked: {
+                        if (Updates.readyToInstall) {
+                            root.close()
+                            Updates.requestQuit()
+                        } else {
+                            root.download()
+                        }
+                    }
                 }
             }
         }
@@ -145,8 +179,6 @@ ThemedDialog {
 
     onOpened: {
         Updates.markAnnounced()
-        Updates.setInstallPromptOpen(true)
         actionButton.forceActiveFocus()
     }
-    onClosed: Updates.setInstallPromptOpen(false)
 }
