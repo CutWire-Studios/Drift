@@ -32,6 +32,7 @@
 #include "engine/ClipReaderPool.h"
 #include "engine/ClipGizmo.h"
 #include "engine/ClipTransform3d.h"
+#include "engine/PreviewSnap.h"
 #include "engine/TransformLayer.h"
 #include "engine/DebugReport.h"
 #include "engine/HwAccel.h"
@@ -697,6 +698,13 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // Selecting a mask clip turns the preview's handles on, so anything that can change what is
     // selected — or move a mask out from under the playhead — has to re-ask.
     connect(this, &AppController::selectionChanged, this, &AppController::maskEditActiveChanged);
+    // The 3D view draws the selection's box and the camera's frame on it.
+    connect(this, &AppController::selectionChanged, this, [this] {
+        if (m_previewMode != QLatin1String("3d"))
+            return;
+        ++m_editorViewSerial;
+        pushEditorView();
+    });
     connect(this, &AppController::tracksChanged, this, &AppController::maskEditActiveChanged);
     connect(this, &AppController::maskEditModeChanged, this, &AppController::maskEditActiveChanged);
     if (m_assetLibrary) {
@@ -2455,9 +2463,56 @@ void applyVectorOptions(drift::Clip &clip, const QVariantMap &opts)
         clip.name = opts.value(QStringLiteral("name")).toString();
 }
 
-// Non-keyed model options plus the pose/light statics as plain writes (keyframed ones go
-// through setClipKeyframe). Returns the keys it did not understand.
-QStringList applyModel3dOptions(drift::Clip &clip, const QVariantMap &opts)
+double clipTransformValue(const drift::KeyframeTrack<double> &track, drift::TimeUs relative,
+                          double defaultValue);
+drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QString &prop);
+bool writeKeyframeValue(drift::KeyframeTrack<double> &track, drift::TimeUs relative, double value,
+                        bool autoKey, bool force);
+
+// Before format 13 a model kept its pose on the model ("scale", "depth", "rotX/Y/Z"), and scripts
+// written then still address it that way. Each legacy key becomes the transform writes it now
+// means, at `relative`; empty for anything else. `projectHeight` turns the old fractions into px.
+QList<QPair<QString, double>> legacyModel3dPoseWrites(const drift::Clip &clip, const QString &key,
+                                                      double value, drift::TimeUs relative,
+                                                      double projectHeight)
+{
+    if (clip.type != drift::ClipType::Model3d)
+        return {};
+    // Old rotations were about glTF's y-up axes; the clip's are about the canvas's y-down ones.
+    if (key == QLatin1String("rotX"))
+        return {{QStringLiteral("rotationX"), -value}};
+    if (key == QLatin1String("rotY"))
+        return {{QStringLiteral("rotationY"), value}};
+    if (key == QLatin1String("rotZ"))
+        return {{QStringLiteral("rotation"), -value}};
+    if (key == QLatin1String("depth"))
+        return {{QStringLiteral("perspective"), projectHeight / (2.0 * qBound(0.01, value, 1.0))}};
+    if (key == QLatin1String("scale")) {
+        const double w = clipTransformValue(clip.transformW, relative, projectHeight);
+        const double h = clipTransformValue(clip.transformH, relative, projectHeight);
+        const double cx = clipTransformValue(clip.transformX, relative, 0.0) + w / 2.0;
+        const double cy = clipTransformValue(clip.transformY, relative, 0.0) + h / 2.0;
+        const QSizeF face = drift::modelClipFaceSize(clip.model3d.aabbMin, clip.model3d.aabbMax,
+                                                     qMax(0.01, value) * projectHeight);
+        return {{QStringLiteral("x"), cx - face.width() / 2.0},
+                {QStringLiteral("y"), cy - face.height() / 2.0},
+                {QStringLiteral("width"), face.width()},
+                {QStringLiteral("height"), face.height()}};
+    }
+    return {};
+}
+
+bool isLegacyModel3dPoseKey(const QString &key)
+{
+    return key == QLatin1String("scale") || key == QLatin1String("depth")
+           || key == QLatin1String("rotX") || key == QLatin1String("rotY")
+           || key == QLatin1String("rotZ");
+}
+
+// Non-keyed model options plus the light statics as plain writes (keyframed ones go through
+// setClipKeyframe); the legacy pose keys write the transform. Returns the keys it did not
+// understand.
+QStringList applyModel3dOptions(drift::Clip &clip, const QVariantMap &opts, double projectHeight)
 {
     drift::Model3dSource &m = clip.model3d;
     QStringList unknown;
@@ -2472,6 +2527,12 @@ QStringList applyModel3dOptions(drift::Clip &clip, const QVariantMap &opts)
         } else if (key == QStringLiteral("name")) {
             if (!it->toString().isEmpty())
                 clip.name = it->toString();
+        } else if (isLegacyModel3dPoseKey(key)) {
+            for (const auto &write :
+                 legacyModel3dPoseWrites(clip, key, it->toDouble(), 0, projectHeight)) {
+                if (drift::KeyframeTrack<double> *track = transformTrackForProp(clip, write.first))
+                    writeKeyframeValue(*track, 0, write.second, false, false);
+            }
         } else if (!drift::setModel3dScalar(m, key, it->toDouble())) {
             unknown.append(key);
         }
@@ -2925,7 +2986,7 @@ bool looksLikeModel3dProp(const QString &prop)
         return false;
     drift::Model3dSource probe;
     double value = 0.0;
-    return drift::model3dScalar(probe, prop.mid(8), &value);
+    return drift::model3dScalar(probe, prop.mid(8), &value) || isLegacyModel3dPoseKey(prop.mid(8));
 }
 
 void clearClipPose3d(drift::Clip &clip)
@@ -3237,7 +3298,7 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
         // A 3D value written to a flat clip would do nothing, so writing one makes it a 3D layer.
         if (kt == &clip.rotationX || kt == &clip.rotationY || kt == &clip.positionZ
             || kt == &clip.perspective) {
-            clip.layer3d = clip.type != drift::ClipType::Model3d;
+            clip.layer3d = true;
         }
         return true;
     }
@@ -3579,6 +3640,17 @@ void fitClipLayoutToCanvas(drift::Clip &clip, int mediaW, int mediaH, int canvas
     setClipLayoutPixels(clip, (canvasW - w) / 2.0, (canvasH - h) / 2.0, w, h);
 }
 
+// A new model clip's rect is its bounding box's front face, with the largest rest extent half the
+// canvas height across, centred. Models are always 3D layers.
+void placeModelClipLayout(drift::Clip &clip, int canvasW, int canvasH)
+{
+    const QSizeF face =
+        drift::modelClipFaceSize(clip.model3d.aabbMin, clip.model3d.aabbMax, 0.5 * canvasH);
+    setClipLayoutPixels(clip, (canvasW - face.width()) / 2.0, (canvasH - face.height()) / 2.0,
+                        face.width(), face.height());
+    clip.layer3d = true;
+}
+
 // Fills what the inspector and the overlay need from the .glb (animation list, rest bounds) so
 // neither ever parses on the GUI thread; the loader's cache makes this a hit after the first.
 void probeModel3dSource(drift::Model3dSource &source)
@@ -3656,7 +3728,10 @@ void applyAssetLayout(drift::Clip &clip, const QVariantMap &asset, int canvasW, 
             mediaH = qMax(1, qRound(mediaH * clip.sourceFrame.height()));
         }
     }
-    fitClipLayoutToCanvas(clip, mediaW, mediaH, canvasW, canvasH);
+    if (clip.type == drift::ClipType::Model3d)
+        placeModelClipLayout(clip, canvasW, canvasH);
+    else
+        fitClipLayoutToCanvas(clip, mediaW, mediaH, canvasW, canvasH);
     clip.rotationCorrection = asset.value(QStringLiteral("rotationCorrection")).toInt();
 
     // A bin-preview trim is non-destructive (AssetLibrary::setAssetTrim never touches the file),
@@ -15373,8 +15448,13 @@ QVariantList polylineToVariant(const QPolygonF &line)
 QVariantMap AppController::previewGizmoGeometry(const QVariantMap &box, double scale, double size) const
 {
     using namespace drift::gizmo;
+    // A camera has no size to scale; the lens is the inspector's.
+    if (box.value(QStringLiteral("kind")).toString() == QLatin1String("camera")
+        && toolFromString(m_gizmoTool) == Tool::Scale)
+        return {{QStringLiteral("valid"), false}};
     const Geometry g = geometry(gizmoPoseFromBox(box), toolFromString(m_gizmoTool),
-                                orientationFromString(m_gizmoOrientation), scale, size);
+                                orientationFromString(m_gizmoOrientation), scale, size,
+                                previewGizmoView());
     QVariantList handles;
     for (const Handle &h : g.handles) {
         QVariantList front;
@@ -15403,8 +15483,12 @@ QString AppController::previewGizmoPick(const QVariantMap &box, double scale, do
                                         double y, double tolerance) const
 {
     using namespace drift::gizmo;
+    if (box.value(QStringLiteral("kind")).toString() == QLatin1String("camera")
+        && toolFromString(m_gizmoTool) == Tool::Scale)
+        return {};
     const Geometry g = geometry(gizmoPoseFromBox(box), toolFromString(m_gizmoTool),
-                                orientationFromString(m_gizmoOrientation), scale, size);
+                                orientationFromString(m_gizmoOrientation), scale, size,
+                                previewGizmoView());
     return pick(g, QPointF(x, y), tolerance);
 }
 
@@ -15418,13 +15502,62 @@ QVariantMap AppController::previewApplyGizmoDrag(const QVariantMap &start, const
     if (!isValidClipIndex(trackIndex, clipIndex))
         return start;
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
-    if (clip.type == drift::ClipType::Model3d)
-        return start;
 
     const Tool tool = toolFromString(m_gizmoTool);
     const DragResult result = drag(gizmoPoseFromBox(start), tool, orientationFromString(m_gizmoOrientation),
-                                   handle, QPointF(pressX, pressY), QPointF(nowX, nowY), snap, scale);
+                                   handle, QPointF(pressX, pressY), QPointF(nowX, nowY), snap, scale,
+                                   previewGizmoView());
     const Pose &pose = result.pose;
+
+    if (start.value(QStringLiteral("kind")).toString() == QLatin1String("camera")) {
+        if (!drift::isCameraClip(clip) || tool == Tool::Scale)
+            return start;
+        // The gizmo moved or turned the eye. The camera stores C = R · translate(P) with the eye at
+        // C · (0, 0, d), so the position that puts the eye there under the new turn is
+        // P = R⁻¹ · eye - (0, 0, d).
+        const QVector3D eye(float(pose.rect.center().x() - pose.canvas.width() * 0.5),
+                            float(pose.rect.center().y() - pose.canvas.height() * 0.5),
+                            float(pose.pose3d.positionZ));
+        QMatrix4x4 turn;
+        turn.rotate(float(pose.pose3d.rotationX), 1.f, 0.f, 0.f);
+        turn.rotate(float(pose.pose3d.rotationY), 0.f, 1.f, 0.f);
+        turn.rotate(float(pose.rotation), 0.f, 0.f, 1.f);
+        const double lens = std::max(1.0, start.value(QStringLiteral("perspective")).toDouble());
+        const QVector3D position =
+            turn.transposed().map(eye) - QVector3D(0.f, 0.f, float(lens));
+
+        beginImplicitPreviewDrag(tool == Tool::Move ? tr("Move camera") : tr("Rotate camera"));
+        const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
+        bool wrote = false;
+        QStringList keys;
+        const auto write = [&](drift::KeyframeTrack<double> &track, double value, const QString &key) {
+            if (writeKeyframeValue(track, relative, value, m_autoKeyEnabled, false)) {
+                wrote = true;
+                keys << key;
+            }
+        };
+        write(clip.transformX, position.x(), QStringLiteral("x"));
+        write(clip.transformY, position.y(), QStringLiteral("y"));
+        write(clip.positionZ, position.z(), QStringLiteral("z"));
+        if (tool == Tool::Rotate) {
+            write(clip.rotationX, pose.pose3d.rotationX, QStringLiteral("rotationX"));
+            write(clip.rotationY, pose.pose3d.rotationY, QStringLiteral("rotationY"));
+            write(clip.rotation, pose.rotation, QStringLiteral("rotation"));
+        }
+        if (!wrote) {
+            emit transformBlocked(tr("Turn on Auto keyframes to change this"));
+            return start;
+        }
+        emitPreviewEdit(trackIndex, clipIndex, keys);
+        QVariantMap out = start;
+        out.insert(QStringLiteral("x"), pose.rect.x());
+        out.insert(QStringLiteral("y"), pose.rect.y());
+        out.insert(QStringLiteral("z"), pose.pose3d.positionZ);
+        out.insert(QStringLiteral("rotationX"), pose.pose3d.rotationX);
+        out.insert(QStringLiteral("rotationY"), pose.pose3d.rotationY);
+        out.insert(QStringLiteral("rotation"), pose.rotation);
+        return out;
+    }
 
     beginImplicitPreviewDrag(tool == Tool::Move     ? tr("Move clip in 3D")
                              : tool == Tool::Rotate ? tr("Rotate clip in 3D")
@@ -15482,6 +15615,203 @@ QVariantMap AppController::previewApplyGizmoDrag(const QVariantMap &start, const
     return out;
 }
 
+drift::gizmo::View AppController::previewGizmoView() const
+{
+    drift::gizmo::View view;
+    view.valid = previewViewProjection(&view.worldToCanvas);
+    return view;
+}
+
+bool AppController::previewViewProjection(QMatrix4x4 *view) const
+{
+    const QSizeF canvas(m_project.width(), m_project.height());
+    bool cameraActive = false;
+    const drift::SceneCamera3d camera = previewCamera(&cameraActive);
+    if (m_previewMode == QLatin1String("3d")) {
+        // The view renders the panel's frame; overlays measure from the project canvas centred in
+        // it, so the same picture is shifted back by where that canvas sits.
+        const drift::EditorFrame frame = drift::editorFrame(canvas, QSizeF(m_playback.previewRenderSize()));
+        QMatrix4x4 shift;
+        shift.translate(float(-frame.offset.x()), float(-frame.offset.y()));
+        *view = shift * drift::editorViewProjection(m_editorView, frame.size, camera);
+        return true;
+    }
+    if (!cameraActive)
+        return false;
+    *view = drift::cameraViewProjection(camera, canvas);
+    return true;
+}
+
+void AppController::pushEditorView()
+{
+    FrameCompositor::RenderOptions::EditorView request;
+    request.active = m_previewMode == QLatin1String("3d");
+    request.view = m_editorView;
+    request.serial = m_editorViewSerial;
+    if (isValidClipIndex(m_selectedTrack, m_selectedClip))
+        request.selectedClipId = m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).id;
+    request.navigating = m_editorNavigating;
+    m_playback.setEditorView(request);
+}
+
+void AppController::setEditorView(const drift::EditorView3d &view)
+{
+    m_editorView = view;
+    ++m_editorViewSerial;
+    pushEditorView();
+    emit editorViewChanged();
+}
+
+void AppController::setPreviewMode(const QString &mode)
+{
+    const QString next = mode == QLatin1String("3d") ? QStringLiteral("3d") : QStringLiteral("2d");
+    if (next == m_previewMode)
+        return;
+    m_previewMode = next;
+    if (next == QLatin1String("3d") && !m_editorViewPlaced) {
+        m_editorViewPlaced = true;
+        m_editorView = drift::EditorView3d::overview(QSizeF(m_project.width(), m_project.height()));
+    }
+    ++m_editorViewSerial;
+    pushEditorView();
+    emit previewModeChanged();
+    emit editorViewChanged();
+}
+
+void AppController::editorOrbit(double dxDeg, double dyDeg)
+{
+    setEditorView(drift::orbitEditorView(m_editorView, dxDeg, dyDeg));
+}
+
+void AppController::editorPan(double dxCanvas, double dyCanvas)
+{
+    const drift::EditorFrame frame = drift::editorFrame(QSizeF(m_project.width(), m_project.height()),
+                                                        QSizeF(m_playback.previewRenderSize()));
+    setEditorView(drift::panEditorView(m_editorView, dxCanvas, dyCanvas, frame.size));
+}
+
+void AppController::editorDolly(double steps)
+{
+    setEditorView(drift::dollyEditorView(m_editorView, steps));
+}
+
+void AppController::editorFrameSelection()
+{
+    const QSizeF canvas(m_project.width(), m_project.height());
+    QVector3D centre;
+    double radius = 0.5 * std::hypot(canvas.width(), canvas.height());
+    if (isValidClipIndex(m_selectedTrack, m_selectedClip)) {
+        const drift::Clip &clip = m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip);
+        const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
+        const double w = clipTransformValue(clip.transformW, relative, canvas.width());
+        const double h = clipTransformValue(clip.transformH, relative, canvas.height());
+        if (clip.adjustmentKind == drift::AdjustmentKind::Camera && clip.type == drift::ClipType::Adjustment) {
+            const drift::SceneCamera3d camera = drift::sceneCameraFromClip(clip, m_playheadUs, 1.0);
+            centre = drift::sceneCameraEye(camera);
+            radius = camera.perspective * 0.5;
+        } else {
+            centre = QVector3D(float(clipTransformValue(clip.transformX, relative, 0.0) + w / 2.0
+                                     - canvas.width() / 2.0),
+                               float(clipTransformValue(clip.transformY, relative, 0.0) + h / 2.0
+                                     - canvas.height() / 2.0),
+                               float(clipTransformValue(clip.positionZ, relative, 0.0)));
+            radius = 0.5 * std::hypot(w, h);
+        }
+    }
+    setEditorView(drift::frameEditorView(m_editorView, centre, std::max(1.0, radius)));
+}
+
+void AppController::editorSetAxisView(const QString &axis)
+{
+    drift::EditorView3d view = m_editorView;
+    view.lookThrough = false;
+    view.yaw = 0.0;
+    view.pitch = 0.0;
+    if (axis == QLatin1String("back"))
+        view.yaw = 180.0;
+    else if (axis == QLatin1String("right"))
+        view.yaw = 90.0;
+    else if (axis == QLatin1String("left"))
+        view.yaw = -90.0;
+    else if (axis == QLatin1String("top"))
+        view.pitch = 89.0;
+    else if (axis == QLatin1String("bottom"))
+        view.pitch = -89.0;
+    setEditorView(view);
+}
+
+void AppController::editorToggleLookThrough()
+{
+    drift::EditorView3d view = m_editorView;
+    view.lookThrough = !view.lookThrough;
+    setEditorView(view);
+}
+
+void AppController::notifyPreviewResized()
+{
+    if (m_previewMode != QLatin1String("3d"))
+        return;
+    // The view's frame follows the panel, so everything drawn through it moves.
+    ++m_editorViewSerial;
+    pushEditorView();
+    emit editorViewChanged();
+}
+
+void AppController::editorSetNavigating(bool navigating)
+{
+    if (m_editorNavigating == navigating)
+        return;
+    m_editorNavigating = navigating;
+    ++m_editorViewSerial;
+    pushEditorView();
+}
+
+void AppController::editorResetView()
+{
+    setEditorView(drift::EditorView3d::overview(QSizeF(m_project.width(), m_project.height())));
+}
+
+QVariantList AppController::editorAxes() const
+{
+    QVariantList out;
+    QMatrix4x4 view;
+    if (!previewViewProjection(&view))
+        return out;
+    const QVector3D origin = m_editorView.lookThrough ? QVector3D() : m_editorView.target;
+    const QVector3D eye = drift::gizmo::eyeOf(view);
+    const QVector3D toEye = (eye - origin).normalized();
+    const float reach = float(std::max(1.0, double((eye - origin).length())) * 0.05);
+    const auto project = [&view](const QVector3D &p, QPointF *out) {
+        const QVector4D h = view.map(QVector4D(p, 1.f));
+        if (h.w() <= 1e-6f)
+            return false;
+        *out = QPointF(h.x() / h.w(), h.y() / h.w());
+        return true;
+    };
+    QPointF at;
+    if (!project(origin, &at))
+        return out;
+    static const char *names[] = {"x", "y", "z"};
+    for (int i = 0; i < 3; ++i) {
+        const QVector3D axis(i == 0 ? 1.f : 0.f, i == 1 ? 1.f : 0.f, i == 2 ? 1.f : 0.f);
+        QPointF tip;
+        QPointF dir;
+        if (project(origin + axis * reach, &tip)) {
+            dir = tip - at;
+            const double len = std::hypot(dir.x(), dir.y());
+            // Scaled by how much of the axis lies across the screen, so one pointing at the
+            // viewer shrinks toward the widget's centre.
+            const double across = std::sqrt(std::max(0.0, 1.0 - std::pow(double(QVector3D::dotProduct(axis, toEye)), 2.0)));
+            dir = len > 1e-9 ? dir / len * across : QPointF();
+        }
+        out.append(QVariantMap{{QStringLiteral("axis"), QString::fromLatin1(names[i])},
+                               {QStringLiteral("x"), dir.x()},
+                               {QStringLiteral("y"), dir.y()},
+                               {QStringLiteral("depth"), double(QVector3D::dotProduct(axis, toEye))}});
+    }
+    return out;
+}
+
 drift::SceneCamera3d AppController::previewCamera(bool *active) const
 {
     // renderScale 1: the overlay measures in canvas pixels, and so does every box it is handed.
@@ -15529,92 +15859,75 @@ QVariantMap AppController::cameraStateAtPlayhead() const
     return QVariantMap{{QStringLiteral("active"), false}};
 }
 
-QVariantMap AppController::previewApplyCameraDrag(const QVariantMap &start, const QString &tool,
-                                                  double dx, double dy, double scale, bool snap)
+QVariantMap AppController::previewCameraBox() const
 {
-    if (scale <= 0.0)
-        return start;
-    const int trackIndex = start.value(QStringLiteral("track")).toInt();
-    const int clipIndex = start.value(QStringLiteral("clip")).toInt();
-    if (!isValidClipIndex(trackIndex, clipIndex))
-        return start;
-    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
-    if (!drift::isCameraClip(clip))
-        return start;
+    if (m_previewMode != QLatin1String("3d"))
+        return {};
+    const QVariantMap state = cameraStateAtPlayhead();
+    if (!state.value(QStringLiteral("active")).toBool())
+        return {};
+    drift::SceneCamera3d camera;
+    camera.positionX = state.value(QStringLiteral("x")).toDouble();
+    camera.positionY = state.value(QStringLiteral("y")).toDouble();
+    camera.positionZ = state.value(QStringLiteral("z")).toDouble();
+    camera.rotationX = state.value(QStringLiteral("rotationX")).toDouble();
+    camera.rotationY = state.value(QStringLiteral("rotationY")).toDouble();
+    camera.rotationZ = state.value(QStringLiteral("rotation")).toDouble();
+    camera.perspective = state.value(QStringLiteral("perspective")).toDouble();
+    const QVector3D eye = drift::sceneCameraEye(camera);
+    const double width = m_project.width();
+    const double height = m_project.height();
+    // A gizmo "clip" standing at the eye and turned as the camera is: the clip gizmo then draws and
+    // solves the camera exactly, and only the write-back differs.
+    QVariantMap box = state;
+    box.insert(QStringLiteral("kind"), QStringLiteral("camera"));
+    box.insert(QStringLiteral("x"), eye.x() + width / 2.0 - 0.5);
+    box.insert(QStringLiteral("y"), eye.y() + height / 2.0 - 0.5);
+    box.insert(QStringLiteral("width"), 1.0);
+    box.insert(QStringLiteral("height"), 1.0);
+    box.insert(QStringLiteral("z"), eye.z());
+    box.insert(QStringLiteral("layer3d"), true);
+    box.insert(QStringLiteral("canvasWidth"), width);
+    box.insert(QStringLiteral("canvasHeight"), height);
+    return box;
+}
 
-    // The overlay measures in its own pixels; the camera is stored in canvas pixels.
-    const double cdx = dx / scale;
-    const double cdy = dy / scale;
-    const double startX = start.value(QStringLiteral("x")).toDouble();
-    const double startY = start.value(QStringLiteral("y")).toDouble();
-    const double startZ = start.value(QStringLiteral("z")).toDouble();
-    const double startPitch = start.value(QStringLiteral("rotationX")).toDouble();
-    const double startYaw = start.value(QStringLiteral("rotationY")).toDouble();
-    const double lens =
-        start.value(QStringLiteral("perspective"), drift::kDefaultClipPerspective).toDouble();
-
-    double x = startX;
-    double y = startY;
-    double z = startZ;
-    double pitch = startPitch;
-    double yaw = startYaw;
-
-    if (tool == QLatin1String("rotate")) {
-        // Turntable orbit: dragging right swings the camera to its right, so the scene appears to
-        // turn the other way — the convention every 3D viewport uses. 0.3 degrees per canvas px
-        // puts a half-turn within a comfortable drag.
-        constexpr double kDegPerPx = 0.3;
-        yaw = startYaw + cdx * kDegPerPx;
-        pitch = startPitch - cdy * kDegPerPx;
-        if (snap) {
-            yaw = qRound(yaw / 15.0) * 15.0;
-            pitch = qRound(pitch / 15.0) * 15.0;
-        }
-    } else if (tool == QLatin1String("scale")) {
-        // Dolly. Dragging down pulls the camera back, so the scene shrinks away; 300 px of drag
-        // moves it one eye distance, matching the clip gizmo's dolly feel.
-        z = startZ + cdy * (qMax(1.0, lens) / 300.0);
-    } else {
-        // Pan, and the camera goes the other way so the picture follows the pointer: dragging
-        // right should carry the scene right, which means moving the viewer left.
-        x = startX - cdx;
-        y = startY - cdy;
+bool AppController::editorPickCamera(double canvasX, double canvasY, double tolerance)
+{
+    const QVariantMap box = previewCameraBox();
+    QMatrix4x4 view;
+    if (box.isEmpty() || !previewViewProjection(&view))
+        return false;
+    const int trackIndex = box.value(QStringLiteral("track")).toInt();
+    const int clipIndex = box.value(QStringLiteral("clip")).toInt();
+    const drift::SceneCamera3d camera =
+        drift::sceneCameraFromClip(m_project.tracks().at(trackIndex).clips.at(clipIndex), m_playheadUs, 1.0);
+    const QMatrix4x4 c = drift::sceneCameraWorld(camera);
+    const float d = float(std::max(1.0, camera.perspective));
+    const float hw = float(m_project.width() * 0.5);
+    const float hh = float(m_project.height() * 0.5);
+    const float t = 0.15f;
+    QList<QPointF> points;
+    for (const QVector3D &local : {QVector3D(0.f, 0.f, d), QVector3D(-hw * t, -hh * t, d * (1.f - t)),
+                                   QVector3D(hw * t, -hh * t, d * (1.f - t)),
+                                   QVector3D(hw * t, hh * t, d * (1.f - t)),
+                                   QVector3D(-hw * t, hh * t, d * (1.f - t))}) {
+        const QVector4D h = view.map(QVector4D(c.map(local), 1.f));
+        if (h.w() <= 1e-6f)
+            return false;
+        points.append(QPointF(h.x() / h.w(), h.y() / h.w()));
     }
-
-    beginImplicitPreviewDrag(tool == QLatin1String("rotate") ? tr("Orbit camera")
-                             : tool == QLatin1String("scale") ? tr("Dolly camera")
-                                                              : tr("Pan camera"));
-    const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
-    bool wrote = false;
-    QStringList keys;
-    const auto write = [&](drift::KeyframeTrack<double> &track, double value, const QString &key) {
-        if (writeKeyframeValue(track, relative, value, m_autoKeyEnabled, false)) {
-            wrote = true;
-            keys << key;
-        }
-    };
-    if (tool == QLatin1String("rotate")) {
-        write(clip.rotationX, pitch, QStringLiteral("rotationX"));
-        write(clip.rotationY, yaw, QStringLiteral("rotationY"));
-    } else if (tool == QLatin1String("scale")) {
-        write(clip.positionZ, z, QStringLiteral("z"));
-    } else {
-        write(clip.transformX, x, QStringLiteral("x"));
-        write(clip.transformY, y, QStringLiteral("y"));
-    }
-    if (!wrote) {
-        emit transformBlocked(tr("Turn on Auto keyframes to change this"));
-        return start;
-    }
-    emitPreviewEdit(trackIndex, clipIndex, keys);
-
-    QVariantMap out = start;
-    out.insert(QStringLiteral("x"), x);
-    out.insert(QStringLiteral("y"), y);
-    out.insert(QStringLiteral("z"), z);
-    out.insert(QStringLiteral("rotationX"), pitch);
-    out.insert(QStringLiteral("rotationY"), yaw);
-    return out;
+    // The body as drawn: the eye, the near frame and the four sides between them.
+    const QPointF p(canvasX, canvasY);
+    bool hit = QLineF(p, points.at(0)).length() <= tolerance
+               || QPolygonF({points.at(1), points.at(2), points.at(3), points.at(4)})
+                      .containsPoint(p, Qt::OddEvenFill);
+    for (int i = 1; i <= 4 && !hit; ++i)
+        hit = QPolygonF({points.at(0), points.at(i), points.at(i % 4 + 1)}).containsPoint(p, Qt::OddEvenFill);
+    if (!hit)
+        return false;
+    selectClip(trackIndex, clipIndex);
+    return true;
 }
 
 QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x, double y,
@@ -15628,15 +15941,13 @@ QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x
     QMatrix4x4 m;
     m.scale(float(scaleX), float(scaleY));
     m.translate(float(-x), float(-y));
-    bool cameraActive = false;
-    const drift::SceneCamera3d camera = previewCamera(&cameraActive);
-    if (cameraActive) {
-        // Through the camera, using the same placement the compositor draws with, so the overlay
-        // sits exactly on the picture.
+    QMatrix4x4 view;
+    if (previewViewProjection(&view)) {
+        // Through the camera (or the 3D view), using the same placement the compositor draws
+        // with, so the overlay sits exactly on the picture.
         const QTransform parent = previewBoxParent(box);
-        m *= drift::cameraClipLocalToCanvas(camera, QRectF(x, y, w, h), rotation,
-                                            previewBoxPose(box), parent, !parent.isIdentity(),
-                                            canvas);
+        m *= drift::viewClipLocalToCanvas(view, QRectF(x, y, w, h), rotation, previewBoxPose(box),
+                                          parent, !parent.isIdentity(), canvas);
     } else {
         // A parented box, flat or not, is placed through its transform layers too.
         m *= liftHomography(previewBoxParent(box));
@@ -15644,6 +15955,112 @@ QMatrix4x4 AppController::previewClipPoseMatrix(const QVariantMap &box, double x
     }
     m.scale(float(1.0 / scaleX), float(1.0 / scaleY));
     return m;
+}
+
+namespace {
+
+drift::snap::Targets canvasSnapTargets(double width, double height, const QVariantMap &guides)
+{
+    drift::snap::Targets targets;
+    targets.x = {0.0, width / 2.0, width};
+    targets.y = {0.0, height / 2.0, height};
+    for (const QVariant &v : guides.value(QStringLiteral("x")).toList())
+        targets.x << v.toDouble();
+    for (const QVariant &v : guides.value(QStringLiteral("y")).toList())
+        targets.y << v.toDouble();
+    return targets;
+}
+
+} // namespace
+
+drift::snap::PlacedClip AppController::previewPlacedClip(const QVariantMap &box) const
+{
+    const double x = box.value(QStringLiteral("x")).toDouble();
+    const double y = box.value(QStringLiteral("y")).toDouble();
+    const double w = box.value(QStringLiteral("width")).toDouble();
+    const double h = box.value(QStringLiteral("height")).toDouble();
+    const double rotation = box.value(QStringLiteral("rotation")).toDouble();
+    // The pose matrix is relative to the item's own position, which sits at the rect origin.
+    const auto placedAt = [&](double px, double py) {
+        QMatrix4x4 m;
+        m.translate(float(px), float(py));
+        return m * previewClipPoseMatrix(box, px, py, w, h, rotation, 1.0, 1.0);
+    };
+    drift::snap::PlacedClip placed;
+    placed.local = placedAt(x, y);
+    // Moving the rect is linear in homogeneous coordinates, so a one-pixel step gives the exact
+    // per-pixel change of every point.
+    const QVector4D origin(0.f, 0.f, 0.f, 1.f);
+    const QVector4D at0 = placed.local.map(origin);
+    placed.ex = placedAt(x + 1.0, y).map(origin) - at0;
+    placed.ey = placedAt(x, y + 1.0).map(origin) - at0;
+    placed.size = QSizeF(w, h);
+    return placed;
+}
+
+QVariantMap AppController::previewSnapMove(const QVariantMap &box, double pressX, double pressY,
+                                           double nowX, double nowY, double tolerance,
+                                           bool snap) const
+{
+    const drift::snap::PlacedClip placed = previewPlacedClip(box);
+    const std::optional<QPointF> delta =
+        drift::snap::dragDelta(placed, QPointF(pressX, pressY), QPointF(nowX, nowY));
+    if (!delta)
+        return {{QStringLiteral("valid"), false}};
+    drift::snap::MoveSnap moved{*delta, -1.0, -1.0};
+    // A spun box has no edges along the screen axes to line up, so it does not snap.
+    if (snap && qAbs(box.value(QStringLiteral("rotation")).toDouble()) < 0.01) {
+        const double w = box.value(QStringLiteral("canvasWidth")).toDouble();
+        const double h = box.value(QStringLiteral("canvasHeight")).toDouble();
+        const QVariantMap guides = m_guidesEnabled ? guideSnapTargets(w, h) : QVariantMap{};
+        moved = drift::snap::snapMove(placed, *delta, canvasSnapTargets(w, h, guides), tolerance);
+    }
+    return {
+        {QStringLiteral("valid"), true},
+        {QStringLiteral("x"), box.value(QStringLiteral("x")).toDouble() + moved.delta.x()},
+        {QStringLiteral("y"), box.value(QStringLiteral("y")).toDouble() + moved.delta.y()},
+        {QStringLiteral("guideX"), moved.guideX},
+        {QStringLiteral("guideY"), moved.guideY},
+    };
+}
+
+QVariantMap AppController::previewSnapResize(const QVariantMap &box, double width, double height,
+                                             int dxSign, int dySign, bool centrePivot,
+                                             double tolerance) const
+{
+    QVariantMap out{
+        {QStringLiteral("width"), width},
+        {QStringLiteral("height"), height},
+        {QStringLiteral("guideX"), -1.0},
+        {QStringLiteral("guideY"), -1.0},
+        {QStringLiteral("distX"), -1.0},
+        {QStringLiteral("distY"), -1.0},
+    };
+    if (qAbs(box.value(QStringLiteral("rotation")).toDouble()) >= 0.01)
+        return out;
+    const drift::snap::PlacedClip placed = previewPlacedClip(box);
+    const double cw = box.value(QStringLiteral("canvasWidth")).toDouble();
+    const double ch = box.value(QStringLiteral("canvasHeight")).toDouble();
+    const QVariantMap guides = m_guidesEnabled ? guideSnapTargets(cw, ch) : QVariantMap{};
+    const drift::snap::Targets targets = canvasSnapTargets(cw, ch, guides);
+    // Where the moving edge sits in the grabbed rect's own px, as anchor + scale * size: about
+    // the centre it moves half as far, about the opposite edge the whole way.
+    const auto axis = [&](int sign, double start, double size, bool horizontal,
+                          const char *sizeKey, const char *guideKey, const char *distKey) {
+        if (sign == 0)
+            return;
+        const double scale = centrePivot ? sign * 0.5 : double(sign);
+        const double anchor = centrePivot ? start / 2.0 : (sign < 0 ? start : 0.0);
+        if (const auto snapped = drift::snap::snapEdge(placed, horizontal, anchor, scale, size,
+                                                       targets, tolerance)) {
+            out.insert(QLatin1String(sizeKey), snapped->size);
+            out.insert(QLatin1String(guideKey), snapped->guide);
+            out.insert(QLatin1String(distKey), snapped->distance);
+        }
+    };
+    axis(dxSign, placed.size.width(), width, true, "width", "guideX", "distX");
+    axis(dySign, placed.size.height(), height, false, "height", "guideY", "distY");
+    return out;
 }
 
 QVariantMap AppController::previewClipAtCanvasPoint(double canvasX, double canvasY) const
@@ -15798,8 +16215,9 @@ QVariantList AppController::previewClipsAtPlayhead() const
     const QList<drift::Track> &tracks = m_project.tracks();
     const QList<drift::TransformParent> parents =
         drift::transformParentsAt(m_project, m_playheadUs, 1.0);
-    bool cameraActive = false;
-    const drift::SceneCamera3d camera = previewCamera(&cameraActive);
+    QMatrix4x4 view;
+    const bool cameraActive = previewViewProjection(&view);
+    const bool mode3d = m_previewMode == QLatin1String("3d");
     for (int trackIndex = 0; trackIndex < tracks.size(); ++trackIndex) {
         const drift::Track &track = tracks.at(trackIndex);
         if (track.hidden)
@@ -15880,31 +16298,6 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 {QStringLiteral("canvasWidth"), canvasWidth},
                 {QStringLiteral("canvasHeight"), canvasHeight},
             };
-            if (clip.type == drift::ClipType::Model3d) {
-                // The layer is the whole canvas; the box the overlay shows is the model's
-                // projected rest bounds, and anchorX/Y is what previewSetClipPosition takes.
-                const drift::Model3dSource resolved =
-                    clip.model3d.isAnimated() ? clip.model3d.resolvedAt(relative) : clip.model3d;
-                const double cx = 0.5 + x / canvasWidth;
-                const double cy = 0.5 + y / canvasHeight;
-                QRectF box(cx - 0.05, cy - 0.05, 0.1, 0.1);
-                if (resolved.hasAabb()) {
-                    box = drift::modelClipScreenRect(
-                        drift::modelClipParamsFromSource(resolved, cx, cy), resolved.aabbMin,
-                        resolved.aabbMax, double(canvasHeight) / double(canvasWidth));
-                }
-                entry.insert(QStringLiteral("anchorX"), x);
-                entry.insert(QStringLiteral("anchorY"), y);
-                entry.insert(QStringLiteral("x"), box.x() * canvasWidth);
-                entry.insert(QStringLiteral("y"), box.y() * canvasHeight);
-                entry.insert(QStringLiteral("width"), box.width() * canvasWidth);
-                entry.insert(QStringLiteral("height"), box.height() * canvasHeight);
-                entry.insert(QStringLiteral("rotation"), 0.0);
-                entry.insert(QStringLiteral("layer3d"), false);
-                entry.insert(QStringLiteral("rotationX"), 0.0);
-                entry.insert(QStringLiteral("rotationY"), 0.0);
-                entry.insert(QStringLiteral("z"), 0.0);
-            }
             // Where the box lands on screen, through its own pose, every parent and the camera.
             {
                 const QRectF rect(entry.value(QStringLiteral("x")).toDouble(),
@@ -15915,9 +16308,9 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 const drift::ClipPose3d pose = previewBoxPose(entry);
                 QMatrix4x4 placed;
                 if (cameraActive) {
-                    placed = drift::cameraQuadToCanvas(camera, rect, spin, false, false, pose,
-                                                       parent.matrix, parent.hasParent,
-                                                       QSizeF(canvasWidth, canvasHeight));
+                    placed = drift::viewQuadToCanvas(view, rect, spin, false, false, pose,
+                                                     parent.matrix, parent.hasParent,
+                                                     QSizeF(canvasWidth, canvasHeight));
                 } else {
                     const QMatrix4x4 quadMatrix =
                         pose.isActive() ? drift::clipQuadToCanvas(rect, spin, false, false, pose,
@@ -15930,10 +16323,14 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 QVariantList quad;
                 for (const QPointF &p : drift::projectedQuad(placed))
                     quad.append(p);
+                // The 3D view can look past a clip or stand inside it; a box partly behind the eye
+                // has no outline to draw.
+                if (mode3d && quad.isEmpty())
+                    continue;
                 entry.insert(QStringLiteral("quad"), quad);
             }
-            // The overlay reads this to turn snapping off and to take its 3D drawing path: a
-            // camera leaves the box with no axis-aligned edges, exactly as a tilt does.
+            // The overlay reads this to take its 3D drawing path: under a camera the box is drawn
+            // and dragged through the camera's projection rather than straight onto the canvas.
             entry.insert(QStringLiteral("cameraActive"), cameraActive);
             out.append(entry);
         }
@@ -16269,9 +16666,6 @@ void AppController::previewSetClipSize(int trackIndex, int clipIndex, double wid
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
-    // A model clip is placed by its camera; its box has no size or spin of its own.
-    if (clip.type == drift::ClipType::Model3d)
-        return;
     beginImplicitPreviewDrag(tr("Resize clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     const bool wroteW =
@@ -16297,9 +16691,6 @@ void AppController::previewSetClipRect(int trackIndex, int clipIndex, double xPi
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
-    // A model clip is placed by its camera; its box has no size or spin of its own.
-    if (clip.type == drift::ClipType::Model3d)
-        return;
     beginImplicitPreviewDrag(tr("Transform clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     bool wrote = false;
@@ -16329,9 +16720,6 @@ void AppController::previewSetClipRotation(int trackIndex, int clipIndex, double
         return;
 
     drift::Clip &clip = track.clips[clipIndex];
-    // A model clip is placed by its camera; its box has no size or spin of its own.
-    if (clip.type == drift::ClipType::Model3d)
-        return;
     beginImplicitPreviewDrag(tr("Rotate clip"));
     const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_playheadUs - clip.timelineStart);
     if (!writeKeyframeValue(clip.rotation, relative, degrees, m_autoKeyEnabled, false)) {
@@ -18450,24 +18838,26 @@ bool AppController::hasCameraTrack() const
 
 void AppController::addCameraTrack()
 {
+    // With the lane already there, a whole-sequence clip would land on top of the ones it holds:
+    // add a new shot at the playhead instead, in the next free slot.
+    if (drift::cameraTrackIndex(m_project.tracks()) >= 0) {
+        addCameraClip();
+        return;
+    }
     const drift::Project before = m_project;
     m_project.ensureTrackIds();
-    int index = drift::cameraTrackIndex(m_project.tracks());
-    const bool fresh = index < 0;
-    if (fresh) {
-        index = drift::insertCameraTrack(m_project.tracks());
-        // The camera goes in above everything, so every stored track index below it shifts by one.
-        if (m_selectedTransitionTrack >= 0)
-            ++m_selectedTransitionTrack;
-    }
+    const int index = drift::insertCameraTrack(m_project.tracks());
+    // The camera goes in above everything, so every stored track index below it shifts by one.
+    if (m_selectedTransitionTrack >= 0)
+        ++m_selectedTransitionTrack;
     // Long enough to cover the whole sequence, so the first camera frames every shot rather than
     // snapping back to the default viewpoint partway through. An empty timeline still gets a
     // usable clip to drag keys onto.
     const drift::TimeUs span = qMax(m_project.durationUs(), drift::kImageClipDurationUs);
     const drift::Clip clip = drift::makeCameraClip(0, span);
     m_project.tracks()[index].clips.append(clip);
-    pushProjectEdit(before, fresh ? tr("Add camera") : tr("Add camera clip"));
-    finishEdit(fresh ? tr("Camera added") : tr("Camera clip added"));
+    pushProjectEdit(before, tr("Add camera"));
+    finishEdit(tr("Camera added"));
     selectClipById(clip.id);
 }
 
@@ -19569,8 +19959,8 @@ QVariantMap AppController::addModel3dClip(const QString &path, int trackIndex, d
     clip.srcOut = duration;
     QVariantMap options = opts;
     options.remove(QStringLiteral("duration"));
-    const QStringList unknown = applyModel3dOptions(clip, options);
-    fitClipLayoutToCanvas(clip, 0, 0, m_project.width(), m_project.height());
+    placeModelClipLayout(clip, m_project.width(), m_project.height());
+    const QStringList unknown = applyModel3dOptions(clip, options, m_project.height());
 
     track.clips.append(clip);
     const int newClipIndex = track.clips.size() - 1;
@@ -19614,7 +20004,7 @@ QVariantMap AppController::setModel3dSource(int trackIndex, int clipIndex, const
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
     clip.path = model.path;
     clip.model3d = model;
-    const QStringList unknown = applyModel3dOptions(clip, opts);
+    const QStringList unknown = applyModel3dOptions(clip, opts, m_project.height());
     pushProjectEdit(before, tr("3D model replaced"));
     finishEdit(tr("3D model replaced"));
 
@@ -19634,7 +20024,8 @@ QString AppController::setModel3dOptions(int trackIndex, int clipIndex, const QV
     if (opts.isEmpty())
         return QStringLiteral("nothing to change");
     const drift::Project before = m_project;
-    const QStringList unknown = applyModel3dOptions(m_project.tracks()[trackIndex].clips[clipIndex], opts);
+    const QStringList unknown = applyModel3dOptions(m_project.tracks()[trackIndex].clips[clipIndex], opts,
+                                                   m_project.height());
     if (unknown.size() == opts.size()) {
         m_project = before;
         return QStringLiteral("unknown option: %1").arg(unknown.join(QStringLiteral(", ")));
@@ -20617,8 +21008,15 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
     // clip's base layout key. Neither is ever what the caller meant.
     const drift::TimeUs rel = qBound<drift::TimeUs>(
         0, drift::secondsToUs(atSeconds) - clip.timelineStart, clip.timelineDuration);
-    if (!writeClipPropValue(clip, prop, rel, value, m_autoKeyEnabled, /*force=*/true))
+    if (prop.startsWith(QLatin1String("model3d.")) && isLegacyModel3dPoseKey(prop.mid(8))) {
+        bool wrote = false;
+        for (const auto &write : legacyModel3dPoseWrites(clip, prop.mid(8), value, rel, m_project.height()))
+            wrote = writeClipPropValue(clip, write.first, rel, write.second, m_autoKeyEnabled, true) || wrote;
+        if (!wrote)
+            return;
+    } else if (!writeClipPropValue(clip, prop, rel, value, m_autoKeyEnabled, /*force=*/true)) {
         return;
+    }
     pushProjectEdit(before, tr("Add keyframe"));
     finishEdit(tr("Keyframe set"));
 }
@@ -20896,6 +21294,14 @@ QVariantList AppController::clipKeyframes(int trackIndex, int clipIndex, const Q
     const drift::Track &track = m_project.tracks().at(trackIndex);
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return out;
+    // A legacy model pose key reads back the transform track it writes.
+    if (track.clips.at(clipIndex).type == drift::ClipType::Model3d
+        && prop.startsWith(QLatin1String("model3d.")) && isLegacyModel3dPoseKey(prop.mid(8))) {
+        const QList<QPair<QString, double>> writes =
+            legacyModel3dPoseWrites(track.clips.at(clipIndex), prop.mid(8), 1.0, 0, 1.0);
+        return clipKeyframes(trackIndex, clipIndex, writes.size() == 1 ? writes.first().first
+                                                                       : QStringLiteral("width"));
+    }
 
     const drift::Clip &clip = track.clips.at(clipIndex);
     const drift::KeyframeTrack<double> *kt = keyframeTrackForProp(clip, prop);
@@ -21135,6 +21541,31 @@ void AppController::setKeyframeHold(int trackIndex, int clipIndex, const QString
     finishEdit(hold ? tr("Keyframe holds") : tr("Keyframe interpolates"));
 }
 
+bool AppController::resetSceneCamera(int trackIndex, int clipIndex)
+{
+    if (trackIndex < 0) {
+        const QVariantMap state = cameraStateAtPlayhead();
+        if (!state.value(QStringLiteral("active")).toBool())
+            return false;
+        trackIndex = state.value(QStringLiteral("track")).toInt();
+        clipIndex = state.value(QStringLiteral("clip")).toInt();
+    }
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || !drift::isCameraClip(m_project.tracks().at(trackIndex).clips.at(clipIndex)))
+        return false;
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    clip.transformX = {};
+    clip.transformY = {};
+    clip.positionZ = {};
+    clip.rotationX = {};
+    clip.rotationY = {};
+    clip.rotation = {};
+    pushProjectEdit(before, tr("Reset camera"));
+    finishEdit(tr("Camera reset"));
+    return true;
+}
+
 void AppController::resetClipTransform(int trackIndex, int clipIndex)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -21177,7 +21608,9 @@ void AppController::resetClipTransform(int trackIndex, int clipIndex)
             }
         }
     }
-    if (mediaW > 0 && mediaH > 0)
+    if (clip.type == drift::ClipType::Model3d)
+        placeModelClipLayout(clip, m_project.width(), m_project.height());
+    else if (mediaW > 0 && mediaH > 0)
         fitClipLayoutToCanvas(clip, mediaW, mediaH, m_project.width(), m_project.height());
     else
         setClipLayoutPixels(clip, 0, 0, m_project.width(), m_project.height());

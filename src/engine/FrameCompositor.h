@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GpuCompositor.h"
+#include "EditorView3d.h"
 #include "core/Project.h"
 #include "core/Time.h"
 
@@ -38,6 +39,24 @@ public:
         // the keyframe at or before the time) instead of decoding forward to the exact one. The
         // caller asks again without it once the gesture settles.
         bool approximateSeek = false;
+        // The preview's 3D mode: the scene seen from the editor's free viewpoint, with the camera
+        // and the stage drawn as guides. Only the preview sets it; export never does.
+        struct EditorView
+        {
+            bool active = false;
+            drift::EditorView3d view;
+            // Bumped by the preview on every view change, so two requests at the same playhead
+            // with different views are not taken for the same frame.
+            quint64 serial = 0;
+            // The selected clip, whose box, and the camera's frame on whose plane, the view draws.
+            QString selectedClipId;
+            // The view is being dragged: the preview drops its supersampling to keep up.
+            bool navigating = false;
+            // The size of the frame to render, in px: the panel's aspect rather than the
+            // project's, supersampled while still. Empty renders the project's frame.
+            QSize target;
+        };
+        EditorView editor;
     };
 
     void setProject(const drift::Project *project) { m_project = project; }

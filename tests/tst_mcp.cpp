@@ -3037,19 +3037,18 @@ void McpTest::importGlbBecomesModel3dAsset()
     QCOMPARE(clip.value(QStringLiteral("kind")).toString(), QStringLiteral("model3d"));
     const QVariantMap model = clip.value(QStringLiteral("model3d")).toMap();
     QCOMPARE(model.value(QStringLiteral("path")).toString(), path);
-    QCOMPARE(model.value(QStringLiteral("scale")).toDouble(), 0.5);
+    QVERIFY(!model.contains(QStringLiteral("scale")));
+    QVERIFY(clip.value(QStringLiteral("layer3d")).toBool());
     QCOMPARE(model.value(QStringLiteral("loop")).toString(), QStringLiteral("loop"));
     QVERIFY(model.value(QStringLiteral("animations")).toList().isEmpty());
     QCOMPARE(clip.value(QStringLiteral("duration")).toDouble(), drift::usToSeconds(drift::kImageClipDurationUs));
-    // The overlay box is the projected model, centred on the canvas; the anchor is the clip's x/y.
+    // The overlay box is the model's bounding-box front face, centred on the canvas.
     bool found = false;
     for (const QVariant &entry : state.previewClipsAtPlayhead()) {
         const QVariantMap m = entry.toMap();
         if (m.value(QStringLiteral("kind")).toString() != QLatin1String("model3d"))
             continue;
         found = true;
-        QCOMPARE(m.value(QStringLiteral("anchorX")).toDouble(), 0.0);
-        QCOMPARE(m.value(QStringLiteral("anchorY")).toDouble(), 0.0);
         const double cx = m.value(QStringLiteral("x")).toDouble() + m.value(QStringLiteral("width")).toDouble() / 2.0;
         const double cy = m.value(QStringLiteral("y")).toDouble() + m.value(QStringLiteral("height")).toDouble() / 2.0;
         QVERIFY(std::abs(cx - state.projectWidth() / 2.0) < 1.0);
@@ -3086,10 +3085,18 @@ void McpTest::model3dKeyframesAndOptions()
     const QPair<int, int> loc = state.mcpLocateClip(id);
     const int track = loc.first;
     const int clip = loc.second;
+    // A model is a 3D layer: the old rotY shorthand lands on the clip's own rotation.
     QVariantMap model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
-    QCOMPARE(model.value(QStringLiteral("rotY")).toDouble(), 30.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotationY"), 0.0, 0.0), 30.0);
+    QVERIFY(state.clipAt(track, clip).value(QStringLiteral("layer3d")).toBool());
     QCOMPARE(model.value(QStringLiteral("loop")).toString(), QStringLiteral("hold"));
     QCOMPARE(state.clipAt(track, clip).value(QStringLiteral("duration")).toDouble(), 4.0);
+    const auto boxSpan = [&]() {
+        return std::max(state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0),
+                        state.propertyValueAt(track, clip, QStringLiteral("height"), 0.0, 0.0));
+    };
+    // Its largest extent starts at half the canvas height.
+    QCOMPARE(boxSpan(), state.projectHeight() * 0.5);
 
     QJsonObject r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
                                         {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.rotY")},
@@ -3099,13 +3106,16 @@ void McpTest::model3dKeyframesAndOptions()
                             {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.rotY")},
                              {QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 180.0}});
     QVERIFY(r.value(QStringLiteral("ok")).toBool());
-    // camelCase survives normalisation: the key lands on the clip, not on "model3d.roty".
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("model3d.rotY"), 1.0, 0.0), 90.0);
-    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("model3d.rotY")));
-    QCOMPARE(state.keyframePropertyLabel(track, clip, QStringLiteral("model3d.rotY")), QStringLiteral("Rotation Y"));
-    model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
-    QCOMPARE(model.value(QStringLiteral("keyframes")).toMap().value(QStringLiteral("rotY")).toMap()
-                 .value(QStringLiteral("points")).toList().size(), 2);
+    // The legacy key keyframes the clip's rotationY.
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotationY"), 1.0, 0.0), 90.0);
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("rotationY")));
+    // And the light keys still live on the model, camelCase intact.
+    r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.lightYaw")},
+                             {QStringLiteral("at"), 0.0}, {QStringLiteral("value"), 10.0}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("model3d.lightYaw")));
+    QCOMPARE(state.keyframePropertyLabel(track, clip, QStringLiteral("model3d.lightYaw")), QStringLiteral("Light direction"));
 
     const QJsonObject nope = dispatcher.applyOne(QStringLiteral("set_keyframe"),
                                                  {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.nope")},
@@ -3118,47 +3128,48 @@ void McpTest::model3dKeyframesAndOptions()
                             {{QStringLiteral("clip"), id}, {QStringLiteral("depth"), 3.0}});
     QVERIFY(!r.value(QStringLiteral("ok")).toBool());
     QCOMPARE(r.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
-    // A plain value write, and the animation index clamps on a static file.
+    // The scale shorthand resizes the box about its centre, and the animation index clamps on a
+    // static file.
+    const double centreX = state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0)
+                           + state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0) / 2.0;
     r = dispatcher.applyOne(QStringLiteral("set_model3d_options"),
                             {{QStringLiteral("clip"), id}, {QStringLiteral("scale"), 0.8}, {QStringLiteral("animation"), 5}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    QCOMPARE(boxSpan(), state.projectHeight() * 0.8);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0)
+                 + state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0) / 2.0,
+             centreX);
     model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
-    QCOMPARE(model.value(QStringLiteral("scale")).toDouble(), 0.8);
     QCOMPARE(model.value(QStringLiteral("animation")).toInt(), 0);
+    // depth clamps to the old 0..1 and becomes the eye distance.
     QCOMPARE(state.setModel3dOptions(track, clip, {{QStringLiteral("depth"), 3.0}}), QString());
-    QCOMPARE(state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap().value(QStringLiteral("depth")).toDouble(), 1.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("perspective"), 0.0, 0.0),
+             state.projectHeight() / 2.0);
     QVERIFY(!state.setModel3dOptions(track, clip, {{QStringLiteral("nope"), 1.0}}).isEmpty());
     state.undo();
     state.undo();
-    model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
-    QCOMPARE(model.value(QStringLiteral("scale")).toDouble(), 0.5);
+    QCOMPARE(boxSpan(), state.projectHeight() * 0.5);
 
-    // The canvas grips never resize or spin this kind; the anchor still moves.
+    // The canvas grips size and spin a model like any clip.
     state.previewSetClipRect(track, clip, 10.0, 20.0, 300.0, 200.0);
     state.previewSetClipRotation(track, clip, 45.0);
-    state.previewSetClipPosition(track, clip, 10.0, 20.0);
     state.commitPreviewDrag();
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotation"), 0.0, 0.0), 0.0);
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0), double(state.projectWidth()));
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("height"), 0.0, 0.0), double(state.projectHeight()));
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotation"), 0.0, 0.0), 45.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0), 300.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("height"), 0.0, 0.0), 200.0);
     QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0), 10.0);
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("y"), 0.0, 0.0), 20.0);
 
-    // set_transform writes w/h through the generic path; the overlay box (and the render, which
-    // shares the formula) is anchored on x/y alone, so a size write cannot shift the model.
-    auto overlayCentreX = [&]() {
-        for (const QVariant &entry : state.previewClipsAtPlayhead()) {
-            const QVariantMap m = entry.toMap();
-            if (m.value(QStringLiteral("track")).toInt() == track && m.value(QStringLiteral("clip")).toInt() == clip)
-                return m.value(QStringLiteral("x")).toDouble() + m.value(QStringLiteral("width")).toDouble() / 2.0;
-        }
-        return -1.0;
-    };
-    const double centreBefore = overlayCentreX();
-    r = dispatcher.applyOne(QStringLiteral("set_transform"),
-                            {{QStringLiteral("clip"), id}, {QStringLiteral("w"), 300.0}, {QStringLiteral("h"), 200.0}});
-    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
-    QCOMPARE(overlayCentreX(), centreBefore);
+    // The overlay box is the clip's rect, as for any 3D layer.
+    bool found = false;
+    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+        const QVariantMap m = entry.toMap();
+        if (m.value(QStringLiteral("track")).toInt() != track || m.value(QStringLiteral("clip")).toInt() != clip)
+            continue;
+        found = true;
+        QCOMPARE(m.value(QStringLiteral("width")).toDouble(), 300.0);
+        QVERIFY(m.value(QStringLiteral("layer3d")).toBool());
+    }
+    QVERIFY(found);
 }
 
 void McpTest::lottieBatchUndoesAsOneStep()

@@ -19,6 +19,9 @@ PanelFrame {
     readonly property real currentSeconds: EditorState.playheadSeconds
     readonly property real durationSeconds: EditorState.durationSeconds
     readonly property bool playing: EditorState.playing
+    // 3D mode is a desktop tool: phones keep the camera's picture and its 2D grips.
+    readonly property bool mobile: Qt.platform.os === "android" || Qt.platform.os === "ios"
+    readonly property bool mode3d: EditorState.previewMode === "3d" && !mobile
 
     // Driven by Main, which owns the window and the panels that hide around it.
     property bool previewFullscreen: false
@@ -46,10 +49,18 @@ PanelFrame {
     Column {
         anchors.fill: parent
 
+        PreviewHeader {
+            id: header
+            width: parent.width
+            visible: !root.mobile && !root.previewFullscreen
+            height: visible ? implicitHeight : 0
+            implicitHeight: Theme.controlHeightSm + Theme.spacingMd * 2
+        }
+
         Item {
             id: viewportOuter
             width: parent.width
-            height: parent.height - toolbar.height - scrubBar.height
+            height: parent.height - header.height - toolbar.height - scrubBar.height
             clip: true
 
             // `transformBlocked` is now handled centrally in Main.qml and shown
@@ -113,14 +124,43 @@ PanelFrame {
                     NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easingInOut }
                 }
 
+                // 3D view keys, Blender's: F frames the selection, Home resets, Numpad 0 looks
+                // through the camera, Numpad 1/3/7 look from the front/right/top (Ctrl: the
+                // opposite side). Reached by bubbling from whatever in the preview has focus.
+                Keys.onPressed: (event) => {
+                    if (!root.mode3d)
+                        return
+                    const keypad = (event.modifiers & Qt.KeypadModifier) !== 0
+                    const opposite = (event.modifiers & Qt.ControlModifier) !== 0
+                    if (event.key === Qt.Key_F && !opposite) {
+                        EditorState.editorFrameSelection()
+                    } else if (event.key === Qt.Key_Home) {
+                        EditorState.editorResetView()
+                    } else if (keypad && event.key === Qt.Key_0) {
+                        EditorState.editorToggleLookThrough()
+                    } else if (keypad && event.key === Qt.Key_1) {
+                        EditorState.editorSetAxisView(opposite ? "back" : "front")
+                    } else if (keypad && event.key === Qt.Key_3) {
+                        EditorState.editorSetAxisView(opposite ? "left" : "right")
+                    } else if (keypad && event.key === Qt.Key_7) {
+                        EditorState.editorSetAxisView(opposite ? "bottom" : "top")
+                    } else {
+                        return
+                    }
+                    event.accepted = true
+                }
+
                 // Zoom and pan for normal preview. Declared first so it sits
                 // under the canvas and the transform grips, and takes only the
                 // middle button, so left-drags still reach the clip handles.
                 // In crop mode CropOverlay (z: 200) has the same gestures and
                 // takes them first.
+                //
+                // In 3D mode the same surface moves the viewpoint instead: middle- or right-drag
+                // orbits, with Shift it pans, and the wheel dollies.
                 MouseArea {
                     anchors.fill: parent
-                    acceptedButtons: Qt.MiddleButton
+                    acceptedButtons: root.mode3d ? (Qt.MiddleButton | Qt.RightButton) : Qt.MiddleButton
                     cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
 
                     property real lastX: 0
@@ -129,20 +169,42 @@ PanelFrame {
                     onPressed: (mouse) => {
                         lastX = mouse.x
                         lastY = mouse.y
+                        if (root.mode3d) {
+                            viewport.forceActiveFocus()
+                            EditorState.editorSetNavigating(true)
+                        }
                     }
+                    onReleased: EditorState.editorSetNavigating(false)
+                    onCanceled: EditorState.editorSetNavigating(false)
                     onPositionChanged: (mouse) => {
                         if (!pressed)
                             return
-                        viewport.panX += mouse.x - lastX
-                        viewport.panY += mouse.y - lastY
+                        const dx = mouse.x - lastX
+                        const dy = mouse.y - lastY
                         lastX = mouse.x
                         lastY = mouse.y
+                        if (root.mode3d) {
+                            if (mouse.modifiers & Qt.ShiftModifier) {
+                                const perCanvas = canvasRect.width / Math.max(1, EditorState.projectWidth())
+                                EditorState.editorPan(dx / perCanvas, dy / perCanvas)
+                            } else {
+                                EditorState.editorOrbit(dx * 0.4, dy * 0.4)
+                            }
+                            return
+                        }
+                        viewport.panX += dx
+                        viewport.panY += dy
                     }
 
                     // Ctrl-less scrolls are explicitly rejected so they keep
                     // propagating: a MouseArea accepts wheel events even with
                     // no onWheel bound.
                     onWheel: (wheel) => {
+                        if (root.mode3d && wheel.angleDelta.y !== 0) {
+                            EditorState.editorDolly(wheel.angleDelta.y / 120)
+                            wheel.accepted = true
+                            return
+                        }
                         if (!(wheel.modifiers & Qt.ControlModifier)
                                 || wheel.angleDelta.y === 0) {
                             wheel.accepted = false
@@ -160,19 +222,26 @@ PanelFrame {
                     height: viewport.fitHeight
                     x: (viewport.width - width) / 2 + viewport.panX
                     y: (viewport.height - height) / 2 + viewport.panY
-                    color: (EditorState.background && EditorState.background.kind === "transparent")
+                    // The 3D view draws the whole panel, with its own outline of the stage; this rect
+                    // only keeps the project frame's place for the overlays.
+                    color: root.mode3d || (EditorState.background && EditorState.background.kind === "transparent")
                            ? "transparent" : Theme.overlayColor
-                    border.width: Theme.borderWidth
+                    border.width: root.mode3d ? 0 : Theme.borderWidth
                     border.color: Theme.border
-                    clip: true
+                    clip: !root.mode3d
 
                     Checkerboard {
                         anchors.fill: parent
+                        visible: !root.mode3d
                     }
 
                     PreviewItem {
                         id: preview
-                        anchors.fill: parent
+                        // In 3D the picture fills the whole panel around the project frame.
+                        x: root.mode3d ? -canvasRect.x : 0
+                        y: root.mode3d ? -canvasRect.y : 0
+                        width: root.mode3d ? viewport.width : canvasRect.width
+                        height: root.mode3d ? viewport.height : canvasRect.height
                         // Not decoration: the engine only binds the window's frame cadence —
                         // afterAnimating, frameSwapped and the screen's refresh rate — once a
                         // preview names it, and it is what pulls each composited frame across.
@@ -187,6 +256,7 @@ PanelFrame {
                         function updateRenderSize() {
                             EditorState.playback.setPreviewRenderSize(Math.round(width * pixelRatio),
                                                                       Math.round(height * pixelRatio))
+                            EditorState.notifyPreviewResized()
                         }
 
                         Component.onCompleted: updateRenderSize()
@@ -253,6 +323,7 @@ PanelFrame {
 
                     GuideLayer {
                         anchors.fill: parent
+                        visible: !root.mode3d
                     }
 
                     // On a brand-new project this — the largest, most central panel —
@@ -325,7 +396,7 @@ PanelFrame {
                     width: canvasRect.width
                     height: canvasRect.height
                     z: 150
-                    active: !root.playing && EditorState.projectWidth() > 0
+                    active: !root.playing && EditorState.projectWidth() > 0 && !root.mode3d
                             && EditorState.maskEditActive && !EditorState.canvasCropMode
                             && EditorState.guideEditSetId === ""
                     sourceComponent: Component { MaskOverlay { } }
@@ -342,21 +413,27 @@ PanelFrame {
                     z: 120
                     visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
                              && !EditorState.canvasCropMode && !EditorState.maskEditActive
-                             && EditorState.guideEditSetId === ""
+                             && EditorState.guideEditSetId === "" && !root.mode3d
                 }
 
-                // The scene camera's drag surface. Below the clip overlay in z so a clip's grips
-                // still win the pointer, and only visible while the camera clip is selected.
-                CameraOverlay {
-                    x: canvasRect.x
-                    y: canvasRect.y
-                    width: canvasRect.width
-                    height: canvasRect.height
-                    z: 99
-                    sx: width / Math.max(1, EditorState.projectWidth())
-                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
-                             && !EditorState.canvasCropMode && !EditorState.maskEditActive
-                             && EditorState.guideEditSetId === "" && cameraSelected
+                // Which way the world's axes point, and a click away from looking down one.
+                ViewAxisWidget {
+                    visible: root.mode3d
+                    x: canvasRect.x + canvasRect.width - width - Theme.spacingLg
+                    y: canvasRect.y + Theme.spacingLg
+                    z: 160
+                }
+
+                // In 3D mode a click on the camera's drawn body selects it, so its gizmo shows.
+                // Below the clip overlay, so a clip's box still wins the pointer.
+                TapHandler {
+                    enabled: root.mode3d && !root.playing
+                    onTapped: (eventPoint) => {
+                        viewport.forceActiveFocus()
+                        const p = canvasRect.mapFromItem(viewport, eventPoint.position.x, eventPoint.position.y)
+                        const perCanvas = canvasRect.width / Math.max(1, EditorState.projectWidth())
+                        EditorState.editorPickCamera(p.x / perCanvas, p.y / perCanvas, 14 / perCanvas)
+                    }
                 }
 
                 TransformOverlay {
@@ -387,6 +464,7 @@ PanelFrame {
                     z: 150
                     enabled: EditorState.projectWidth() > 0 && !EditorState.canvasCropMode
                              && !EditorState.maskEditActive && EditorState.guideEditSetId === ""
+                             && !root.mode3d
 
                     DropArea {
                         anchors.fill: parent
@@ -504,6 +582,16 @@ PanelFrame {
         function onPlayingChanged() {
             if (!EditorState.playing)
                 EditorState.playback.refreshFrame()
+        }
+        // The 2D zoom and pan mean nothing to the 3D view, and cropping is a 2D tool.
+        function onPreviewModeChanged() {
+            viewport.resetView()
+            if (EditorState.previewMode === "3d" && EditorState.canvasCropMode)
+                EditorState.previewMode = "2d"
+        }
+        function onCanvasCropModeChanged() {
+            if (EditorState.canvasCropMode)
+                EditorState.previewMode = "2d"
         }
     }
 

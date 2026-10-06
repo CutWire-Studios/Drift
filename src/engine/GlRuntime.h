@@ -205,6 +205,12 @@ public:
     std::list<DepthTexture> depthTextures;
     static constexpr size_t kMaxDepthTextures = 4;
 
+    // A sampleable depth attachment for model clips that take part in depth occlusion: the
+    // pooled targets carry a renderbuffer, which a later pass cannot read. One is enough, since
+    // model draws run one at a time on the GL thread. Destroyed in shutdown().
+    GLuint modelDepthTexture = 0;
+    QSize modelDepthSize;
+
     // A QOpenGLContext has thread affinity and can only be made current on the
     // thread it lives on, but GL work arrives from several threads (the
     // compositor worker, the export job, tools and tests). So the context lives

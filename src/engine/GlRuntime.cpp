@@ -1426,6 +1426,11 @@ void GlRuntime::shutdown()
                 for (const DepthTexture &entry : depthTextures)
                     gl->glDeleteTextures(1, &entry.texture);
                 depthTextures.clear();
+                if (modelDepthTexture) {
+                    gl->glDeleteTextures(1, &modelDepthTexture);
+                    modelDepthTexture = 0;
+                    modelDepthSize = {};
+                }
                 for (const auto &entry : faceSwapPhotos) {
                     if (entry.second.texture)
                         gl->glDeleteTextures(1, &entry.second.texture);

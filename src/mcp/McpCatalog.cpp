@@ -83,9 +83,10 @@ QJsonObject animPropProp()
         "geometry knobs shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>. On "
         "an SVG vector clip the svg.* overrides: vector.svg.<strokeWidth|opacity>, "
         "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. On a 3D "
-        "model clip model3d.<scale|depth|rotX|rotY|rotZ|lightYaw|lightPitch|lightIntensity|ambient> "
-        "(rotations are about the model's own axes, X then Y then Z; keyframe model3d.rotY to spin a "
-        "tilted model about its own axis). "
+        "model clip model3d.<lightYaw|lightPitch|lightIntensity|ambient>; a model is placed by its "
+        "transform like any 3D layer (x, y, width, height, z, rotationX, rotationY, rotation, "
+        "perspective), and the older model3d.<scale|depth|rotX|rotY|rotZ> are still accepted as "
+        "shorthands that write those. "
         "Note width/height here vs w/h in set_transform. Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
         "fresh clip), so do not use it to learn names."));

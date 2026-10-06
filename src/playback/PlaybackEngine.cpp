@@ -989,6 +989,16 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
         options.skipClipId = m_editingClipId;
 
     options.allowProxies = true;
+    options.editor = m_editorView;
+    // The 3D view fills the panel, and is antialiased by rendering it at twice the panel's
+    // resolution, which the scene graph's linear filter averages back down. Orbiting re-renders
+    // the whole scene per step, so it drops to one sample per pixel until the release.
+    if (m_editorView.active && m_previewRenderWidth > 0 && m_previewRenderHeight > 0) {
+        const double area = double(m_previewRenderWidth) * double(m_previewRenderHeight);
+        const double factor = m_editorView.navigating ? 1.0 : qBound(1.0, std::sqrt(3840.0 * 2160.0 / area), 2.0);
+        options.editor.target = QSize(qMax(1, int(std::lround(m_previewRenderWidth * factor))),
+                                      qMax(1, int(std::lround(m_previewRenderHeight * factor))));
+    }
 
     // The first seek of a scrub is often all there is (a tap on the ruler), so it stays exact;
     // the ones after it are passing through.
@@ -998,6 +1008,16 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
         options.maxTimeEchoHistoryFrames = 12;
     }
     return options;
+}
+
+void PlaybackEngine::setEditorView(const FrameCompositor::RenderOptions::EditorView &view)
+{
+    if (m_editorView.active == view.active && m_editorView.serial == view.serial
+        && m_editorView.navigating == view.navigating)
+        return;
+    m_editorView = view;
+    if (!m_playing)
+        refreshFrame();
 }
 
 void PlaybackEngine::setEditingClipId(const QString &id)

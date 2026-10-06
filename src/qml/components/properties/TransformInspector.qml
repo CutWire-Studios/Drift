@@ -13,8 +13,7 @@ Item {
     }
     readonly property bool hasSelection: !!clipData && Object.keys(clipData).length > 0
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
-    // A model clip is a full-canvas layer placed by its camera: x/y shift the model, the box
-    // size and spin mean nothing (its own size and rotation live on the 3D Model tab).
+    // A model clip is always a 3D layer: its rect is the model's bounding-box front face.
     readonly property bool isModel3d: clipKind === "model3d"
     readonly property bool isTransformLayer: clipKind === "adjustment"
                                              && clipData.adjustmentKind === "transform"
@@ -178,7 +177,7 @@ Item {
             }
 
             Text {
-                text: root.isModel3d ? qsTr("Offset (px)") : qsTr("Position (px)")
+                text: qsTr("Position (px)")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -215,7 +214,6 @@ Item {
             }
 
             Item {
-                visible: !root.isModel3d
                 width: parent.width
                 height: sizeLinkButton.height
 
@@ -244,7 +242,7 @@ Item {
             }
 
             Row {
-                visible: !root.isModel3d && root.sizeLinked
+                visible: root.sizeLinked
                 width: parent.width
                 spacing: 8
 
@@ -285,7 +283,7 @@ Item {
             }
 
             PropertyKeyframeRow {
-                visible: !root.isModel3d && !root.sizeLinked
+                visible: !root.sizeLinked
                 width: parent.width
                 propDef: root.propWidth
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.width && root.clipData.keyframes.width.points) || []
@@ -295,7 +293,7 @@ Item {
                 unit: "px"
             }
             PropertyKeyframeRow {
-                visible: !root.isModel3d && !root.sizeLinked
+                visible: !root.sizeLinked
                 width: parent.width
                 propDef: root.propHeight
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.height && root.clipData.keyframes.height.points) || []
@@ -306,7 +304,7 @@ Item {
             }
 
             Text {
-                text: root.isModel3d ? qsTr("Opacity") : qsTr("Opacity & rotation")
+                text: qsTr("Opacity & rotation")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -324,7 +322,6 @@ Item {
             }
 
             PropertyKeyframeRow {
-                visible: !root.isModel3d
                 width: parent.width
                 propDef: root.propRotation
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotation && root.clipData.keyframes.rotation.points) || []
@@ -335,7 +332,6 @@ Item {
             }
 
             Text {
-                visible: !root.isModel3d
                 text: qsTr("Rotate 90°")
                 color: Theme.mutedForeground
                 font.family: Theme.fontFamily
@@ -344,7 +340,6 @@ Item {
             }
 
             Flow {
-                visible: !root.isModel3d
                 width: parent.width
                 spacing: 6
                 Repeater {
@@ -387,7 +382,7 @@ Item {
             // Depth occlusion. Off by default everywhere, because track order deciding what covers
             // what is the rule the rest of the timeline relies on; this opts one clip out of it.
             ThemedSwitch {
-                visible: !root.isModel3d && !!root.clipData.layer3d
+                visible: !!root.clipData.layer3d
                 enabled: root.blendIsNormal
                 text: qsTr("Occlude by depth")
                 tooltip: root.blendIsNormal
@@ -406,7 +401,7 @@ Item {
             // The preview gizmo's tool and the axes its handles follow. Editor preferences shared by
             // every clip, not stored on this one.
             Row {
-                visible: !root.isModel3d && !!root.clipData.layer3d
+                visible: !!root.clipData.layer3d
                 spacing: 6
 
                 Repeater {
@@ -433,7 +428,7 @@ Item {
             }
 
             Flow {
-                visible: !root.isModel3d && !!root.clipData.layer3d
+                visible: !!root.clipData.layer3d
                 width: parent.width
                 spacing: 6
 
@@ -455,7 +450,7 @@ Item {
             }
 
             PropertyKeyframeRow {
-                visible: !root.isModel3d && !!root.clipData.layer3d
+                visible: !!root.clipData.layer3d
                 width: parent.width
                 propDef: root.propRotationX
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotationX && root.clipData.keyframes.rotationX.points) || []
@@ -465,7 +460,7 @@ Item {
                 unit: "°"
             }
             PropertyKeyframeRow {
-                visible: !root.isModel3d && !!root.clipData.layer3d
+                visible: !!root.clipData.layer3d
                 width: parent.width
                 propDef: root.propRotationY
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotationY && root.clipData.keyframes.rotationY.points) || []
@@ -475,7 +470,7 @@ Item {
                 unit: "°"
             }
             PropertyKeyframeRow {
-                visible: !root.isModel3d && !!root.clipData.layer3d
+                visible: !!root.clipData.layer3d
                 width: parent.width
                 propDef: root.propZ
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.z && root.clipData.keyframes.z.points) || []
@@ -485,7 +480,7 @@ Item {
                 unit: "px"
             }
             PropertyKeyframeRow {
-                visible: !root.isModel3d && !!root.clipData.layer3d
+                visible: !!root.clipData.layer3d
                 width: parent.width
                 propDef: root.propPerspective
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.perspective && root.clipData.keyframes.perspective.points) || []
@@ -568,7 +563,7 @@ Item {
             }
 
             ThemedButton {
-                text: root.isModel3d ? qsTr("Reset position") : qsTr("Reset position & size")
+                text: qsTr("Reset position & size")
                 onClicked: EditorState.resetClipTransform(
                                EditorState.selectedTrack, EditorState.selectedClip)
             }

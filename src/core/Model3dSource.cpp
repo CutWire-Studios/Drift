@@ -107,19 +107,44 @@ Model3dSource Model3dSource::fromJson(const QJsonObject &o)
         if (o.contains(key))
             setModel3dScalar(m, key, o.value(key).toDouble());
     }
+    static const QStringList legacyKeys{QStringLiteral("scale"), QStringLiteral("depth"),
+                                        QStringLiteral("rotX"), QStringLiteral("rotY"),
+                                        QStringLiteral("rotZ")};
+    LegacyPose &legacy = m.legacyPose;
+    for (const QString &key : legacyKeys) {
+        if (!o.contains(key))
+            continue;
+        legacy.present = true;
+        const double v = o.value(key).toDouble();
+        if (key == legacyKeys.at(0))
+            legacy.scale = std::max(0.01, v);
+        else if (key == legacyKeys.at(1))
+            legacy.depth = std::clamp(v, 0.0, 1.0);
+        else if (key == legacyKeys.at(2))
+            legacy.rotX = v;
+        else if (key == legacyKeys.at(3))
+            legacy.rotY = v;
+        else
+            legacy.rotZ = v;
+    }
     const QJsonObject keyframesJson = o.value(QStringLiteral("keyframes")).toObject();
-    for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it)
-        m.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+    for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it) {
+        if (legacyKeys.contains(it.key())) {
+            legacy.present = true;
+            legacy.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+        } else {
+            m.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+        }
+    }
     return m;
 }
 
 const QStringList &model3dKeyframeProperties()
 {
     static const QStringList keys{
-        QStringLiteral("scale"),      QStringLiteral("depth"),
-        QStringLiteral("rotX"),       QStringLiteral("rotY"),
-        QStringLiteral("rotZ"),       QStringLiteral("lightYaw"),
-        QStringLiteral("lightPitch"), QStringLiteral("lightIntensity"),
+        QStringLiteral("lightYaw"),
+        QStringLiteral("lightPitch"),
+        QStringLiteral("lightIntensity"),
         QStringLiteral("ambient"),
     };
     return keys;
@@ -128,17 +153,7 @@ const QStringList &model3dKeyframeProperties()
 bool model3dScalar(const Model3dSource &source, const QString &key, double *out)
 {
     double v = 0.0;
-    if (key == QStringLiteral("scale"))
-        v = source.scale;
-    else if (key == QStringLiteral("depth"))
-        v = source.depth;
-    else if (key == QStringLiteral("rotX"))
-        v = source.rotX;
-    else if (key == QStringLiteral("rotY"))
-        v = source.rotY;
-    else if (key == QStringLiteral("rotZ"))
-        v = source.rotZ;
-    else if (key == QStringLiteral("lightYaw"))
+    if (key == QStringLiteral("lightYaw"))
         v = source.lightYaw;
     else if (key == QStringLiteral("lightPitch"))
         v = source.lightPitch;
@@ -155,17 +170,7 @@ bool model3dScalar(const Model3dSource &source, const QString &key, double *out)
 
 bool setModel3dScalar(Model3dSource &source, const QString &key, double value)
 {
-    if (key == QStringLiteral("scale"))
-        source.scale = std::max(0.01, value);
-    else if (key == QStringLiteral("depth"))
-        source.depth = std::clamp(value, 0.0, 1.0);
-    else if (key == QStringLiteral("rotX"))
-        source.rotX = value;
-    else if (key == QStringLiteral("rotY"))
-        source.rotY = value;
-    else if (key == QStringLiteral("rotZ"))
-        source.rotZ = value;
-    else if (key == QStringLiteral("lightYaw"))
+    if (key == QStringLiteral("lightYaw"))
         source.lightYaw = value;
     else if (key == QStringLiteral("lightPitch"))
         source.lightPitch = value;
@@ -180,16 +185,6 @@ bool setModel3dScalar(Model3dSource &source, const QString &key, double value)
 
 QString model3dKeyframeLabel(const QString &key)
 {
-    if (key == QStringLiteral("scale"))
-        return QCoreApplication::translate("Model3dSource", "Size");
-    if (key == QStringLiteral("depth"))
-        return QCoreApplication::translate("Model3dSource", "Depth");
-    if (key == QStringLiteral("rotX"))
-        return QCoreApplication::translate("Model3dSource", "Rotation X");
-    if (key == QStringLiteral("rotY"))
-        return QCoreApplication::translate("Model3dSource", "Rotation Y");
-    if (key == QStringLiteral("rotZ"))
-        return QCoreApplication::translate("Model3dSource", "Rotation Z");
     if (key == QStringLiteral("lightYaw"))
         return QCoreApplication::translate("Model3dSource", "Light direction");
     if (key == QStringLiteral("lightPitch"))

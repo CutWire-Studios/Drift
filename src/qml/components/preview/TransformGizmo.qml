@@ -33,6 +33,7 @@ Item {
     readonly property var geometry: {
         void EditorState.gizmoTool
         void EditorState.gizmoOrientation
+        void EditorState.editorViewRevision
         return pose ? EditorState.previewGizmoGeometry(pose, sx, handleSize) : null
     }
 

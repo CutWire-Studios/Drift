@@ -140,6 +140,10 @@ public:
     // Id of the text clip currently edited in place on the preview; that clip is
     // omitted from the composited frame so the QML inline editor stands in for it.
     void setEditingClipId(const QString &id);
+    // The preview's 3D mode and its free viewpoint; inactive renders the camera's picture.
+    void setEditorView(const FrameCompositor::RenderOptions::EditorView &view);
+    // The panel's size in device px, as the preview last reported it.
+    QSize previewRenderSize() const { return QSize(m_previewRenderWidth, m_previewRenderHeight); }
 
     // Empty id follows the system default. Applied to the sink immediately.
     void setAudioDeviceId(const QByteArray &id) { m_audio.setDeviceId(id); }
@@ -251,6 +255,7 @@ private:
     drift::ClipAudioRetimer m_rateRetimer;
     std::atomic<quint64> m_audioStreamGeneration{1};
     QString m_editingClipId;
+    FrameCompositor::RenderOptions::EditorView m_editorView;
     int m_previewRenderWidth = 0;
     int m_previewRenderHeight = 0;
     // Display cadence. The refresh rate comes from the window's screen and is 0 until one

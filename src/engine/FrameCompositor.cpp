@@ -16,6 +16,7 @@
 #include "TransformLayer.h"
 #include "core/TextAnimationPreset.h"
 #include "TransitionCatalog.h"
+#include "ModelAsset.h"
 #include "ModelClipRenderer.h"
 #include "VectorClipRenderer.h"
 #include "core/Clip.h"
@@ -1229,15 +1230,22 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         request.path = clip.path;
         request.source = clip.model3d.isAnimated() ? clip.model3d.resolvedAt(clipTimeUs) : clip.model3d;
         request.animUs = clip.timelineToSourceUs(timelineUs) - clip.srcIn;
-        // x/y offset the model from the canvas centre; the size tracks play no part, so a
-        // set_transform w/h (or a width key) cannot shift it.
-        request.centre = QPointF(0.5 + x / canvasWidth, 0.5 + y / canvasHeight);
+        // The model sits in the world like any 3D layer, its bounding box fitted to the clip rect.
+        request.rect = layoutRect;
+        request.rotation = rotation;
+        request.pose.rotationX = transformValue(clip.rotationX, clipTimeUs, 0.0);
+        request.pose.rotationY = transformValue(clip.rotationY, clipTimeUs, 0.0);
+        request.pose.positionZ = transformValue(clip.positionZ, clipTimeUs, 0.0) * renderScale;
+        request.pose.perspective =
+            transformValue(clip.perspective, clipTimeUs, drift::kDefaultClipPerspective) * renderScale;
+        request.canvas = QSizeF(canvasWidth, canvasHeight);
         layer.model3d = drift::model3d::makeDrawRequest(request);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
-        // The model is placed by its camera, so the layer is the whole canvas: nothing can be
-        // clipped at a rect edge, and the layer rotation stays off (rotZ is the model's own spin).
+        // The model is drawn already in place, through the viewpoint, into a canvas-sized layer:
+        // nothing can be clipped at a rect edge, and the layer itself is not moved again.
         destRect = QRectF(0, 0, canvasWidth, canvasHeight);
         rotation = 0.0;
+        layer.screenSpace = true;
     } else if (clip.type == drift::ClipType::Composite) {
         if (const drift::Project *nested = nestedProject(project, clip)) {
             const NestedScope scope(clip);
@@ -1269,8 +1277,7 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     // aside before they draw, which a depth test cannot see through. Enforced here as well as in
     // the setter, so an imported or hand-edited project cannot ask for something undrawable.
     layer.depthOcclude = clip.depthOcclude && clip.layer3d
-                         && clip.blendMode == drift::BlendMode::Normal
-                         && clip.type != drift::ClipType::Model3d;
+                         && clip.blendMode == drift::BlendMode::Normal;
     if (clip.type != drift::ClipType::Model3d) {
         layer.pose3d.rotationX = transformValue(clip.rotationX, clipTimeUs, 0.0);
         layer.pose3d.rotationY = transformValue(clip.rotationY, clipTimeUs, 0.0);
@@ -1308,6 +1315,10 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
     const drift::Background &bg = project.background();
     if (nested) {
         scene.backgroundColor = QColor(0, 0, 0, 0);
+    } else if (options.editor.active) {
+        // The 3D view looks at the world, not the camera's frame: the project background is what
+        // the camera sees behind everything, so it has no place here.
+        scene.backgroundColor = QColor(0x30, 0x30, 0x33);
     } else if (bg.kind == drift::BackgroundKind::Blur) {
         scene.backgroundColor = Qt::black;
         scene.backgroundBlur = true;
@@ -1346,9 +1357,73 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         sceneCamera = drift::sceneCameraFromClip(*cameraClip, timelineUs, renderScale);
         sceneCameraActive = true;
     }
-    const auto applyCamera = [&sceneCamera, sceneCameraActive](GpuLayer &layer) {
-        layer.camera = sceneCamera;
-        layer.cameraActive = sceneCameraActive;
+    QMatrix4x4 sceneView = drift::cameraViewProjection(sceneCamera, QSizeF(width, height));
+    bool sceneViewActive = sceneCameraActive;
+    const bool editorView = options.editor.active && !nested;
+    if (editorView) {
+        // The editor's view is kept in project px; the render may be scaled down, so the world is
+        // read at project scale and the result scaled back onto this canvas.
+        //
+        // It also renders its own frame, the panel's: the project's frame centred in it.
+        const QSizeF projectCanvas(projectWidth, projectHeight);
+        const QSize target = options.editor.target.isEmpty() ? QSize(width, height) : options.editor.target;
+        const drift::EditorFrame frame = drift::editorFrame(projectCanvas, QSizeF(target));
+        drift::SceneCamera3d projectCamera;
+        if (const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), timelineUs))
+            projectCamera = drift::sceneCameraFromClip(*cameraClip, timelineUs, 1.0);
+        QMatrix4x4 toTarget;
+        toTarget.scale(float(target.width() / frame.size.width()), float(target.height() / frame.size.height()),
+                       1.f);
+        QMatrix4x4 fromRender;
+        fromRender.scale(1.f / float(renderScale));
+        sceneView = toTarget * drift::editorViewProjection(options.editor.view, frame.size, projectCamera)
+                    * fromRender;
+        scene.canvasSize = target;
+        sceneViewActive = true;
+        scene.editorView = true;
+        scene.editorViewProj = sceneView;
+    }
+    drift::EditorOverlayInput guides;
+    guides.canvas = QSizeF(width, height);
+    guides.cameraActive = sceneCameraActive;
+    guides.camera = sceneCamera;
+    if (editorView && !options.editor.selectedClipId.isEmpty()) {
+        const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), timelineUs);
+        guides.cameraSelected = cameraClip && cameraClip->id == options.editor.selectedClipId;
+    }
+    // The selected clip's placement in the world, for its box and the camera's frame on its plane.
+    const auto noteSelection = [&](const drift::Clip &clip, const GpuLayer &layer) {
+        if (!editorView || clip.id != options.editor.selectedClipId)
+            return;
+        if (layer.hasParent && !layer.parent.isAffine())
+            return;
+        const QSizeF canvas(width, height);
+        const QMatrix4x4 parent = layer.hasParent ? drift::worldParentFromAffine(layer.parent, canvas)
+                                                  : QMatrix4x4();
+        if (layer.model3d) {
+            const drift::model3d::ModelDrawRequest &model = *layer.model3d;
+            guides.hasSelectedQuad = true;
+            guides.selectedQuad = parent * drift::clipQuadToWorld(model.rect, model.rotation, false, false,
+                                                                  model.pose3d, canvas);
+            if (model.asset) {
+                guides.hasSelectedModel = true;
+                guides.selectedModelMin = model.asset->aabbMin;
+                guides.selectedModelMax = model.asset->aabbMax;
+                guides.selectedModel = parent * drift::modelClipWorld(model.rect, model.rotation, model.pose3d,
+                                                                      model.asset->aabbMin,
+                                                                      model.asset->aabbMax, canvas);
+            }
+            return;
+        }
+        guides.hasSelectedQuad = true;
+        guides.selectedQuad = parent * drift::clipQuadToWorld(layer.rect, layer.rotation, false, false,
+                                                              layer.pose3d, canvas);
+    };
+    const QSizeF layoutCanvas = editorView ? QSizeF(width, height) : QSizeF();
+    const auto applyCamera = [&sceneView, sceneViewActive, layoutCanvas](GpuLayer &layer) {
+        layer.viewProj = sceneView;
+        layer.viewActive = sceneViewActive;
+        layer.layoutCanvas = layoutCanvas;
     };
 
     // Track 0 is topmost and composites in front, so emit back-to-front.
@@ -1428,6 +1503,9 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                     && clip.adjustmentKind != drift::AdjustmentKind::Mask) {
                     continue;
                 }
+                // A canvas-wide adjustment grades the camera's picture, which the 3D view is not.
+                if (editorView)
+                    continue;
 
                 GpuItem item;
                 item.isAdjustment = true;
@@ -1466,6 +1544,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 continue;
             applyParent(item.layer, ti);
             applyCamera(item.layer);
+            noteSelection(clip, item.layer);
             applyDepthOcclusion(project, scene, item.layer, nearestOccluder, occluders);
             scene.items.append(item);
             if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image) {
@@ -1477,6 +1556,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         }
     }
 
+    if (editorView)
+        scene.editorLines = drift::buildEditorOverlay(guides);
     return scene;
 }
 

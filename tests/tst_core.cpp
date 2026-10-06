@@ -123,6 +123,7 @@ private slots:
     void vectorClipIsSyntheticOnGraphicTracks();
     void model3dSourceSerialization();
     void model3dScalarClampsAndResolves();
+    void model3dPoseMigratesToTransform();
     void foldVectorTimeTable_data();
     void foldVectorTimeTable();
     void effectCatalogIdSerialization();
@@ -1882,17 +1883,12 @@ void CoreTest::model3dSourceSerialization()
     clip.model3d.animation = 1;
     clip.model3d.loop = drift::VectorLoop::PingPong;
     clip.model3d.startOffsetUs = drift::secondsToUs(0.25);
-    clip.model3d.scale = 0.75;
-    clip.model3d.depth = 0.2;
-    clip.model3d.rotX = 10.0;
-    clip.model3d.rotY = -45.0;
-    clip.model3d.rotZ = 5.0;
     clip.model3d.lightYaw = 60.0;
     clip.model3d.lightPitch = -10.0;
     clip.model3d.lightIntensity = 1.5;
     clip.model3d.ambient = 0.1;
-    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(0, 0.0);
-    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(drift::secondsToUs(2.0), 360.0);
+    clip.model3d.keyframes[QStringLiteral("lightYaw")].setKeyframe(0, 0.0);
+    clip.model3d.keyframes[QStringLiteral("lightYaw")].setKeyframe(drift::secondsToUs(2.0), 360.0);
     project.tracks()[0].clips.append(clip);
 
     // Non-model clips must not grow a model3d key.
@@ -1926,17 +1922,14 @@ void CoreTest::model3dSourceSerialization()
     QCOMPARE(c.model3d.animationDurationUs(), drift::secondsToUs(0.5));
     QCOMPARE(c.model3d.loop, drift::VectorLoop::PingPong);
     QCOMPARE(c.model3d.startOffsetUs, drift::secondsToUs(0.25));
-    QCOMPARE(c.model3d.scale, 0.75);
-    QCOMPARE(c.model3d.depth, 0.2);
-    QCOMPARE(c.model3d.rotX, 10.0);
-    QCOMPARE(c.model3d.rotY, -45.0);
-    QCOMPARE(c.model3d.rotZ, 5.0);
     QCOMPARE(c.model3d.lightYaw, 60.0);
     QCOMPARE(c.model3d.lightPitch, -10.0);
     QCOMPARE(c.model3d.lightIntensity, 1.5);
     QCOMPARE(c.model3d.ambient, 0.1);
     QCOMPARE(c.model3d.keyframes.size(), 1);
-    QCOMPARE(c.model3d.keyframes.value(QStringLiteral("rotY")).evaluateAt(drift::secondsToUs(1.0)), 180.0);
+    QCOMPARE(c.model3d.keyframes.value(QStringLiteral("lightYaw")).evaluateAt(drift::secondsToUs(1.0)), 180.0);
+    // A current file carries no legacy pose, so nothing is migrated on the way back in.
+    QVERIFY(!c.model3d.legacyPose.present);
     QVERIFY(c.model3d.isAnimated());
 
     QCOMPARE(drift::Model3dSource::fromJson(QJsonObject()).loop, drift::VectorLoop::Loop);
@@ -1964,45 +1957,111 @@ void CoreTest::model3dSourceSerialization()
 void CoreTest::model3dScalarClampsAndResolves()
 {
     drift::Model3dSource m;
-    QCOMPARE(drift::model3dKeyframeProperties().size(), 9);
+    QCOMPARE(drift::model3dKeyframeProperties().size(), 4);
     for (const QString &key : drift::model3dKeyframeProperties()) {
         double v = -1.0;
         QVERIFY2(drift::model3dScalar(m, key, &v), qPrintable(key));
     }
     QVERIFY(!drift::model3dScalar(m, QStringLiteral("nope"), nullptr));
     QVERIFY(!drift::setModel3dScalar(m, QStringLiteral("nope"), 1.0));
+    // The pose moved onto the clip's transform; these are no longer the model's.
+    QVERIFY(!drift::setModel3dScalar(m, QStringLiteral("scale"), 1.0));
+    QVERIFY(!drift::setModel3dScalar(m, QStringLiteral("rotY"), 1.0));
 
-    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("scale"), -3.0));
-    QCOMPARE(m.scale, 0.01);
-    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("depth"), 4.0));
-    QCOMPARE(m.depth, 1.0);
     QVERIFY(drift::setModel3dScalar(m, QStringLiteral("ambient"), -1.0));
     QCOMPARE(m.ambient, 0.0);
     QVERIFY(drift::setModel3dScalar(m, QStringLiteral("lightIntensity"), -1.0));
     QCOMPARE(m.lightIntensity, 0.0);
-    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("rotY"), 720.0));
-    QCOMPARE(m.rotY, 720.0);
+    QVERIFY(drift::setModel3dScalar(m, QStringLiteral("lightYaw"), 720.0));
+    QCOMPARE(m.lightYaw, 720.0);
 
     QVERIFY(!m.isAnimated());
-    m.keyframes[QStringLiteral("scale")].setKeyframe(0, 0.2);
-    m.keyframes[QStringLiteral("scale")].setKeyframe(drift::secondsToUs(1.0), 0.6);
+    m.keyframes[QStringLiteral("lightPitch")].setKeyframe(0, 20.0);
+    m.keyframes[QStringLiteral("lightPitch")].setKeyframe(drift::secondsToUs(1.0), 60.0);
     QVERIFY(m.isAnimated());
     const drift::Model3dSource baked = m.resolvedAt(drift::secondsToUs(0.5));
-    QCOMPARE(baked.scale, 0.4);
+    QCOMPARE(baked.lightPitch, 40.0);
     QVERIFY(baked.keyframes.isEmpty());
     QVERIFY(!baked.isAnimated());
-    QCOMPARE(baked.rotY, 720.0);
+    QCOMPARE(baked.lightYaw, 720.0);
 
     // A disabled track leaves the static value alone.
-    m.keyframes[QStringLiteral("scale")].setEnabled(false);
+    m.keyframes[QStringLiteral("lightPitch")].setEnabled(false);
     QVERIFY(!m.isAnimated());
-    QCOMPARE(m.resolvedAt(drift::secondsToUs(0.5)).scale, 0.01);
+    QCOMPARE(m.resolvedAt(drift::secondsToUs(0.5)).lightPitch, 20.0);
 
     m.animations = {{QStringLiteral("a"), drift::secondsToUs(1.0)}};
     m.animation = 5;
     QCOMPARE(m.animationDurationUs(), 0);
     m.animation = 0;
     QCOMPARE(m.animationDurationUs(), drift::secondsToUs(1.0));
+}
+
+void CoreTest::model3dPoseMigratesToTransform()
+{
+    // A format 12 model clip: pose on the model, x/y the centre's offset from the canvas centre.
+    QJsonObject model{
+        {QStringLiteral("path"), QStringLiteral("/media/robot.glb")},
+        {QStringLiteral("aabbMin"), QJsonArray{-1.0, -0.5, -0.25}},
+        {QStringLiteral("aabbMax"), QJsonArray{1.0, 0.5, 0.25}},
+        {QStringLiteral("scale"), 0.5},
+        {QStringLiteral("depth"), 0.25},
+        {QStringLiteral("rotX"), 10.0},
+        {QStringLiteral("rotY"), 30.0},
+        {QStringLiteral("rotZ"), 5.0},
+        {QStringLiteral("lightYaw"), 45.0},
+    };
+    drift::KeyframeTrack<double> spin;
+    spin.setKeyframe(0, 0.0);
+    spin.setKeyframe(drift::secondsToUs(2.0), 90.0);
+    model.insert(QStringLiteral("keyframes"),
+                 QJsonObject{{QStringLiteral("rotY"), drift::keyframesToJson(spin)}});
+
+    drift::Project legacy;
+    legacy.setResolution(1920, 1080);
+    legacy.tracks().clear();
+    legacy.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+    drift::Clip clip;
+    clip.id = QStringLiteral("m");
+    clip.type = drift::ClipType::Model3d;
+    clip.path = QStringLiteral("/media/robot.glb");
+    clip.timelineDuration = drift::secondsToUs(3.0);
+    clip.transformX.setKeyframe(0, -200.0);
+    clip.transformY.setKeyframe(0, 100.0);
+    legacy.tracks()[0].clips.append(clip);
+    QJsonObject json = legacy.toJson();
+    json.insert(QStringLiteral("version"), 12);
+    QJsonArray tracks = json.value(QStringLiteral("tracks")).toArray();
+    QJsonObject track = tracks.at(0).toObject();
+    QJsonArray clips = track.value(QStringLiteral("clips")).toArray();
+    QJsonObject clipJson = clips.at(0).toObject();
+    clipJson.insert(QStringLiteral("model3d"), model);
+    clips[0] = clipJson;
+    track.insert(QStringLiteral("clips"), clips);
+    tracks[0] = track;
+    json.insert(QStringLiteral("tracks"), tracks);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    const drift::Clip &c = loaded.tracks().at(0).clips.at(0);
+    // Largest extent (x, 2 units) spanned half the height: a 540 x 270 front face, centred where
+    // the old offset put the model (960 - 200, 540 + 100).
+    QCOMPARE(c.transformW.evaluateAt(0), 540.0);
+    QCOMPARE(c.transformH.evaluateAt(0), 270.0);
+    QCOMPARE(c.transformX.evaluateAt(0) + 270.0, 760.0);
+    QCOMPARE(c.transformY.evaluateAt(0) + 135.0, 640.0);
+    // glTF's up is the canvas's down: X and Z flip, Y keeps its keys.
+    QCOMPARE(c.rotationX.evaluateAt(0), -10.0);
+    QCOMPARE(c.rotation.evaluateAt(0), -5.0);
+    QCOMPARE(c.rotationY.evaluateAt(drift::secondsToUs(1.0)), 45.0);
+    QCOMPARE(c.rotationY.keyframes().size(), 2);
+    // The old lens put the eye height / (2 * depth) from the model.
+    QCOMPARE(c.perspective.evaluateAt(0), 1080.0 / 0.5);
+    QVERIFY(c.layer3d);
+    QCOMPARE(c.model3d.lightYaw, 45.0);
+    QVERIFY(c.model3d.keyframes.isEmpty());
+    QVERIFY(!c.model3d.legacyPose.present);
 }
 
 void CoreTest::foldVectorTimeTable_data()

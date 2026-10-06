@@ -1,56 +1,43 @@
 #pragma once
 
 #include "core/Model3dSource.h"
+#include "engine/ClipTransform3d.h"
 
 #include <QMatrix3x3>
 #include <QMatrix4x4>
 #include <QRectF>
+#include <QSizeF>
 #include <QVector3D>
 
 namespace drift {
 
-// Resolved pose/light knobs for one model clip draw. `centreX/Y` is the model centre as a
-// fraction of the canvas (top-left origin), which is how the clip's transformX/Y arrive.
+// Resolved light knobs for one model clip draw.
 struct ModelClipParams
 {
-    double scale = 0.5;
-    double depth = 0.5;
-    double rotX = 0.0;
-    double rotY = 0.0;
-    double rotZ = 0.0;
-    double centreX = 0.5;
-    double centreY = 0.5;
     double lightYaw = 30.0;
     double lightPitch = 20.0;
     double lightIntensity = 1.0;
     double ambient = 0.35;
 };
 
-ModelClipParams modelClipParamsFromSource(const Model3dSource &source, double centreX,
-                                          double centreY);
+ModelClipParams modelClipParamsFromSource(const Model3dSource &source);
 
-struct ModelClipCamera
-{
-    QMatrix4x4 mvp;
-    QMatrix4x4 modelView;
-    QMatrix3x3 normalMatrix;
-};
+// Model space (the file's own units, glTF axes: +y up, +z toward the viewer) to world space
+// (canvas px about the canvas centre, y down, +z toward the viewer), the space every clip's quad
+// lives in. The model's rest bounding box is fitted to the clip: its front face is the layout
+// `rect` at the rect's centre and `pose.positionZ`, its depth scales with the geometric mean of
+// the two face scales, and the clip's rotations turn it about its centre exactly as they turn a
+// flat clip (X, then Y, then the in-plane spin). `pose.perspective` plays no part: the eye
+// belongs to whoever views the world.
+QMatrix4x4 modelClipWorld(const QRectF &rect, double rotation, const ClipPose3d &pose,
+                          const QVector3D &aabbMin, const QVector3D &aabbMax, const QSizeF &canvas);
 
-// Builds the model→clip-space matrix for a free-standing model clip. Takes `aspect`
-// (height/width), never a pixel size — the same WYSIWYG invariant as faceModelMvp: preview at
-// renderScale 0.5 and export at 1.0 get a bit-identical matrix.
-//
-// The camera sits on +z looking down −z; `scale` is the fraction of canvas height the model's
-// largest rest extent spans at the model-centre plane, and `depth` only changes how much
-// perspective foreshortening there is (camera distance and field of view move together so the
-// projected size stays put). rotX/rotY/rotZ are intrinsic: about the model's own axes, applied
-// X, then Y, then Z, each following the earlier ones. Output is plain GL orientation (+y up);
-// drawModelClip flips rows in its resolve pass to match the compositor's v=0-is-top convention.
-ModelClipCamera modelClipCamera(const ModelClipParams &params, const QVector3D &aabbMin,
-                                const QVector3D &aabbMax, double aspect);
+// The light frame of a model draw: world space with y flipped up, the frame screenLightDir's
+// yaw/pitch are measured in. Normals go model -> world -> here, so the light stays put in the
+// world whichever way the model or the viewer turns.
+QMatrix3x3 modelClipNormalMatrix(const QMatrix4x4 &world);
 
-// Projected rest-pose bounds as canvas fractions, top-left origin. Animated parts may leave it.
-QRectF modelClipScreenRect(const ModelClipParams &params, const QVector3D &aabbMin,
-                           const QVector3D &aabbMax, double aspect);
+// The size a model's bounding box front face gets when the largest rest extent spans `span` px.
+QSizeF modelClipFaceSize(const QVector3D &aabbMin, const QVector3D &aabbMax, double span);
 
 } // namespace drift

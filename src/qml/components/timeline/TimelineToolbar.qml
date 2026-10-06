@@ -69,7 +69,7 @@ Item {
                             tip: qsTr("Add transform layer — moves the selected clips' tracks as one"),
                             shortcut: "transformTogether" },
         "camera": { glyph: Theme.icons.video, label: qsTr("Add camera"),
-                    tip: qsTr("Add camera — one viewpoint the whole timeline is seen through") }
+                    tip: qsTr("Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead") }
     })
 
     readonly property var defaultToolbarItems: [

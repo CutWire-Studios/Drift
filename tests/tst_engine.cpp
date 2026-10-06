@@ -49,6 +49,9 @@
 #include "engine/PreviewProxyRenderer.h"
 #include "engine/ClipGizmo.h"
 #include "engine/SceneCamera3d.h"
+#include "engine/PreviewSnap.h"
+#include "engine/EditorView3d.h"
+#include "engine/EditorOverlay.h"
 #include "engine/TransformLayer.h"
 #include "engine/GpuCompositor.h"
 #include "engine/MediaWaveform.h"
@@ -155,6 +158,11 @@ private slots:
     void clipPose3dRendersInPerspective();
     void sceneCameraIdentityMatchesPerClipEye();
     void sceneCameraMovesTheViewpoint();
+    void previewSnapFollowsThePointerThroughTheCamera();
+    void previewSnapLandsProjectedEdgesOnTargets();
+    void clipGizmoWorksThroughAView();
+    void editorViewLooksAtTheWorld();
+    void editorOverlayDrawsTheCameraAndClipsAtTheEye();
     void sceneCameraRendersThroughTheCompositor();
     void sceneCameraClipDrivesTheWholeTimeline();
     void depthOcclusionOverridesTrackOrderWhenOptedIn();
@@ -186,8 +194,7 @@ private slots:
     void modelAssetParsesRiggedSimple();
     void modelAnimSamplerInterpolates();
     void modelPoseHierarchyAndSkinning();
-    void modelClipCameraIsAspectOnly();
-    void modelClipScreenRectMatchesMvp();
+    void modelClipWorldFitsTheRect();
     void modelClipDrawRequestFollowsLoopMode();
     void modelClipRendersCube();
     void modelClipRigRenders();
@@ -1262,6 +1269,122 @@ void EngineTest::sceneCameraMovesTheViewpoint()
              qPrintable(QStringLiteral("y %1, expected %2").arg(spun.y()).arg(1000.0 - restX)));
 }
 
+namespace {
+
+drift::snap::PlacedClip placedThrough(const drift::SceneCamera3d &camera, const QRectF &rect,
+                                      const drift::ClipPose3d &pose, const QSizeF &canvas)
+{
+    const auto at = [&](const QRectF &r) {
+        return drift::cameraClipLocalToCanvas(camera, r, 0.0, pose, QTransform(), false, canvas);
+    };
+    const QVector4D origin(0.f, 0.f, 0.f, 1.f);
+    drift::snap::PlacedClip placed;
+    placed.local = at(rect);
+    placed.ex = at(rect.translated(1.0, 0.0)).map(origin) - placed.local.map(origin);
+    placed.ey = at(rect.translated(0.0, 1.0)).map(origin) - placed.local.map(origin);
+    placed.size = rect.size();
+    return placed;
+}
+
+QPointF projectLocal(const drift::snap::PlacedClip &placed, const QPointF &local, const QPointF &delta)
+{
+    const QVector4D h = placed.local.map(QVector4D(float(local.x()), float(local.y()), 0.f, 1.f))
+                        + placed.ex * float(delta.x()) + placed.ey * float(delta.y());
+    return QPointF(h.x() / h.w(), h.y() / h.w());
+}
+
+} // namespace
+
+void EngineTest::previewSnapFollowsThePointerThroughTheCamera()
+{
+    const QSizeF canvas(1920, 1080);
+    const QRectF rect(400, 300, 320, 180);
+
+    // At rest the drag is the plain pointer delta, as it was before there was a camera.
+    {
+        const drift::snap::PlacedClip placed =
+            placedThrough(drift::SceneCamera3d{}, rect, drift::ClipPose3d{}, canvas);
+        const auto delta = drift::snap::dragDelta(placed, QPointF(500, 350), QPointF(510, 370));
+        QVERIFY(delta.has_value());
+        QVERIFY(std::abs(delta->x() - 10.0) < 1e-2);
+        QVERIFY(std::abs(delta->y() - 20.0) < 1e-2);
+    }
+
+    // Through a panned, yawed and dollied camera, and with the clip pushed in depth, the grabbed
+    // point still lands under the pointer.
+    drift::SceneCamera3d camera;
+    camera.positionX = 137.0;
+    camera.positionZ = -300.0;
+    camera.rotationY = 25.0;
+    camera.rotationX = -10.0;
+    drift::ClipPose3d pose;
+    pose.positionZ = 150.0;
+    const drift::snap::PlacedClip placed = placedThrough(camera, rect, pose, canvas);
+    const QPointF grabbed(90.0, 40.0);
+    const QPointF moved(37.0, -12.0);
+    const auto delta = drift::snap::dragDelta(placed, projectLocal(placed, grabbed, {}),
+                                              projectLocal(placed, grabbed, moved));
+    QVERIFY(delta.has_value());
+    QVERIFY2(std::abs(delta->x() - moved.x()) < 0.05 && std::abs(delta->y() - moved.y()) < 0.05,
+             qPrintable(QStringLiteral("%1, %2").arg(delta->x()).arg(delta->y())));
+
+    // Seen exactly edge-on, the clip's plane has no point under the pointer.
+    drift::SceneCamera3d edgeOn;
+    edgeOn.rotationX = 90.0;
+    const drift::snap::PlacedClip flat = placedThrough(edgeOn, rect, drift::ClipPose3d{}, canvas);
+    QVERIFY(!drift::snap::dragDelta(flat, QPointF(960, 540), QPointF(980, 560)).has_value());
+}
+
+void EngineTest::previewSnapLandsProjectedEdgesOnTargets()
+{
+    const QSizeF canvas(1920, 1080);
+    const QRectF rect(3, 100, 200, 100);
+    const drift::snap::Targets canvasTargets{{0.0, 960.0, 1920.0}, {0.0, 540.0, 1080.0}};
+
+    // At rest it is the old flat snap: a left edge 3 px off the canvas edge pulls onto it.
+    {
+        const drift::snap::PlacedClip placed =
+            placedThrough(drift::SceneCamera3d{}, rect, drift::ClipPose3d{}, canvas);
+        const drift::snap::MoveSnap snapped = drift::snap::snapMove(placed, {}, canvasTargets, 8.0);
+        QCOMPARE(snapped.guideX, 0.0);
+        QVERIFY(std::abs(snapped.delta.x() + 3.0) < 1e-2);
+        QCOMPARE(snapped.guideY, -1.0);
+    }
+
+    // Panned, yawed and pushed back: vertical edges stay vertical on screen, so the projected left
+    // edge snaps, and it lands on the target exactly rather than by its layout distance.
+    drift::SceneCamera3d camera;
+    camera.positionX = -80.0;
+    camera.positionZ = 400.0;
+    camera.rotationY = 20.0;
+    const drift::snap::PlacedClip placed =
+        placedThrough(camera, rect, drift::ClipPose3d{}, canvas);
+    const double leftNow = projectLocal(placed, QPointF(0, 50), {}).x();
+    const drift::snap::Targets near{{leftNow + 5.0}, {}};
+    const drift::snap::MoveSnap snapped = drift::snap::snapMove(placed, {}, near, 8.0);
+    QCOMPARE(snapped.guideX, leftNow + 5.0);
+    QVERIFY(std::abs(projectLocal(placed, QPointF(0, 50), snapped.delta).x() - (leftNow + 5.0)) < 0.01);
+
+    // Out of reach, nothing moves.
+    const drift::snap::MoveSnap far = drift::snap::snapMove(placed, {}, {{leftNow + 50.0}, {}}, 8.0);
+    QCOMPARE(far.guideX, -1.0);
+    QCOMPARE(far.delta, QPointF());
+
+    // A rolled camera leaves no edge along the screen axes, so nothing snaps.
+    drift::SceneCamera3d rolled;
+    rolled.rotationZ = 30.0;
+    const drift::snap::PlacedClip tilted = placedThrough(rolled, rect, drift::ClipPose3d{}, canvas);
+    const double rolledLeft = projectLocal(tilted, QPointF(0, 50), {}).x();
+    QCOMPARE(drift::snap::snapMove(tilted, {}, {{rolledLeft + 2.0}, {}}, 8.0).guideX, -1.0);
+
+    // Resizing: the right edge (anchored on the left) is pulled onto a target through the camera.
+    const double rightNow = projectLocal(placed, QPointF(200, 50), {}).x();
+    const auto edge = drift::snap::snapEdge(placed, true, 0.0, 1.0, 200.0, {{rightNow - 4.0}, {}}, 8.0);
+    QVERIFY(edge.has_value());
+    QVERIFY(std::abs(projectLocal(placed, QPointF(edge->size, 50), {}).x() - (rightNow - 4.0)) < 0.01);
+    QVERIFY(edge->size < 200.0);
+}
+
 void EngineTest::sceneCameraRendersThroughTheCompositor()
 {
     if (!GpuCompositor::isAvailable())
@@ -1280,8 +1403,8 @@ void EngineTest::sceneCameraRendersThroughTheCompositor()
             layer.pose3d.perspective = 1000.0;
         }
         if (cam) {
-            layer.camera = *cam;
-            layer.cameraActive = true;
+            layer.viewProj = drift::cameraViewProjection(*cam, QSizeF(400, 400));
+            layer.viewActive = true;
         }
         layer.valid = true;
         GpuItem item;
@@ -1368,8 +1491,8 @@ void EngineTest::sceneCameraRendersThroughTheCompositor()
         layer.parent = parent;
         layer.hasParent = true;
         if (cam) {
-            layer.camera = *cam;
-            layer.cameraActive = true;
+            layer.viewProj = drift::cameraViewProjection(*cam, QSizeF(400, 400));
+            layer.viewActive = true;
         }
         layer.valid = true;
         GpuItem item;
@@ -1466,7 +1589,7 @@ void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
     GpuScene plain;
     QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), {}, &plain));
     QCOMPARE(plain.items.size(), 1);
-    QVERIFY(!plain.items.at(0).layer.cameraActive);
+    QVERIFY(!plain.items.at(0).layer.viewActive);
     const QImage before = compositor.compositeAt(drift::secondsToUs(1.0));
     QVERIFY(!before.isNull());
     const double restX = centroidX(before);
@@ -1487,7 +1610,7 @@ void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
     GpuScene withCamera;
     QVERIFY(compositor.buildSceneAt(0, {}, &withCamera));
     QCOMPARE(withCamera.items.size(), 1);
-    QVERIFY(withCamera.items.at(0).layer.cameraActive);
+    QVERIFY(withCamera.items.at(0).layer.viewActive);
 
     // At 0 s the camera is at rest, so the frame has to be exactly what it was before it existed.
     QCOMPARE(compositor.compositeAt(0), compositor.compositeAt(0));
@@ -1522,7 +1645,7 @@ void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
     project.tracks()[cameraTrack].hidden = true;
     GpuScene hidden;
     QVERIFY(compositor.buildSceneAt(drift::secondsToUs(2.0), {}, &hidden));
-    QVERIFY(!hidden.items.at(0).layer.cameraActive);
+    QVERIFY(!hidden.items.at(0).layer.viewActive);
     QVERIFY(std::abs(centroidX(compositor.compositeAt(drift::secondsToUs(2.0))) - restX) < 0.5);
     project.tracks()[cameraTrack].hidden = false;
 
@@ -1656,6 +1779,176 @@ void EngineTest::depthOcclusionOverridesTrackOrderWhenOptedIn()
     QVERIFY2(through.blue() > 150 && through.red() < 100,
              qPrintable(QStringLiteral("through %1,%2,%3")
                                 .arg(through.red()).arg(through.green()).arg(through.blue())));
+}
+
+void EngineTest::clipGizmoWorksThroughAView()
+{
+    using namespace drift::gizmo;
+    Pose pose;
+    pose.canvas = QSizeF(1920, 1080);
+    pose.rect = QRectF(500, 300, 400, 300);
+    pose.pose3d.rotationY = 20.0;
+    pose.pose3d.positionZ = 120.0;
+    const double scale = 0.5;
+
+    // A camera at rest with the clip's own lens is the clip's own eye: same gizmo either way.
+    drift::SceneCamera3d rest;
+    rest.perspective = pose.pose3d.perspective;
+    View restView{true, drift::cameraViewProjection(rest, pose.canvas)};
+    const Geometry legacy = geometry(pose, Tool::Move, Orientation::Global, scale);
+    const Geometry viewed = geometry(pose, Tool::Move, Orientation::Global, scale, 1.0, restView);
+    QVERIFY(legacy.valid && viewed.valid);
+    QVERIFY(QLineF(legacy.origin, viewed.origin).length() < 0.05);
+    QCOMPARE(viewed.handles.size(), legacy.handles.size());
+    for (int i = 0; i < legacy.handles.size(); ++i) {
+        QCOMPARE(viewed.handles.at(i).kind, legacy.handles.at(i).kind);
+        if (!legacy.handles.at(i).head.isEmpty())
+            QVERIFY(QLineF(legacy.handles.at(i).head.first(), viewed.handles.at(i).head.first()).length() < 0.5);
+    }
+    QVERIFY((eyeOf(restView.worldToCanvas) - QVector3D(0, 0, 2000)).length() < 0.5f);
+
+    // Through a moved camera the origin sits on the clip's projected centre, and an X arrow drag
+    // to where the centre would be 60 px further along X moves the clip by exactly that.
+    drift::SceneCamera3d camera;
+    camera.positionX = 140.0;
+    camera.positionZ = 300.0;
+    camera.rotationY = -30.0;
+    camera.rotationX = 12.0;
+    const QMatrix4x4 worldToCanvas = drift::cameraViewProjection(camera, pose.canvas);
+    const View view{true, worldToCanvas};
+    const auto onOverlay = [&](const QVector3D &world) {
+        const QVector4D h = worldToCanvas.map(QVector4D(world, 1.f));
+        return QPointF(h.x() / h.w(), h.y() / h.w()) * scale;
+    };
+    const QVector3D centre(float(pose.rect.center().x() - 960.0), float(pose.rect.center().y() - 540.0),
+                           float(pose.pose3d.positionZ));
+    const Geometry g = geometry(pose, Tool::Move, Orientation::Global, scale, 1.0, view);
+    QVERIFY(g.valid);
+    QVERIFY(QLineF(g.origin, onOverlay(centre)).length() < 0.05);
+    const DragResult moved = drag(pose, Tool::Move, Orientation::Global, QStringLiteral("x"),
+                                  onOverlay(centre), onOverlay(centre + QVector3D(60, 0, 0)), false,
+                                  scale, view);
+    QVERIFY2(std::abs(moved.pose.rect.x() - (pose.rect.x() + 60.0)) < 0.1,
+             qPrintable(QString::number(moved.pose.rect.x())));
+    QVERIFY(std::abs(moved.pose.rect.y() - pose.rect.y()) < 1e-6);
+
+    // A Z arrow drag moves it in depth by what the pointer says.
+    const DragResult pushed = drag(pose, Tool::Move, Orientation::Global, QStringLiteral("z"),
+                                   onOverlay(centre), onOverlay(centre + QVector3D(0, 0, -80)), false,
+                                   scale, view);
+    QVERIFY2(std::abs(pushed.pose.pose3d.positionZ - (pose.pose3d.positionZ - 80.0)) < 0.5,
+             qPrintable(QString::number(pushed.pose.pose3d.positionZ)));
+
+    // A tilted transform layer cannot be folded into the view, so there is no gizmo.
+    Pose tiltedParent = pose;
+    tiltedParent.parent = QTransform(1, 0, 0.0004, 0, 1, 0, 0, 0, 1);
+    QVERIFY(!geometry(tiltedParent, Tool::Move, Orientation::Global, scale, 1.0, view).valid);
+}
+
+void EngineTest::editorViewLooksAtTheWorld()
+{
+    const QSizeF canvas(1920, 1080);
+    const auto onCanvas = [&](const QMatrix4x4 &m, const QVector3D &p) {
+        const QVector4D h = m.map(QVector4D(p, 1.f));
+        return QPointF(h.x() / h.w(), h.y() / h.w());
+    };
+
+    // Head on, the target is the canvas centre, world +x is right and world +y (down) is down.
+    drift::EditorView3d front;
+    front.distance = 3000.0;
+    const QMatrix4x4 m = drift::editorViewProjection(front, canvas);
+    QVERIFY(QLineF(onCanvas(m, {}), QPointF(960, 540)).length() < 0.01);
+    QVERIFY(onCanvas(m, QVector3D(100, 0, 0)).x() > 960.0);
+    QVERIFY(onCanvas(m, QVector3D(0, 100, 0)).y() > 540.0);
+    // Nearer the eye is drawn bigger, and its GL depth is smaller.
+    const QVector4D nearPt = m.map(QVector4D(100, 0, 500, 1));
+    const QVector4D farPt = m.map(QVector4D(100, 0, -500, 1));
+    QVERIFY(nearPt.x() / nearPt.w() > farPt.x() / farPt.w());
+    QVERIFY(nearPt.z() / nearPt.w() < farPt.z() / farPt.w());
+    QVERIFY((drift::editorViewEye(front) - QVector3D(0, 0, 3000)).length() < 0.01f);
+    QVERIFY((drift::gizmo::eyeOf(m) - QVector3D(0, 0, 3000)).length() < 1.0f);
+
+    // Pitching up lifts the eye above the scene, which in world space is -y.
+    drift::EditorView3d above = front;
+    above.pitch = 45.0;
+    QVERIFY(drift::editorViewEye(above).y() < -1000.f);
+    // Yaw swings it to +x, and the target stays dead centre.
+    const drift::EditorView3d side = drift::orbitEditorView(front, -90.0, 0.0);
+    QVERIFY(drift::editorViewEye(side).x() > 2999.f);
+    QVERIFY(QLineF(onCanvas(drift::editorViewProjection(side, canvas), {}), QPointF(960, 540)).length() < 0.01);
+
+    // Panning moves the scene with the pointer: drag right, the target point goes right.
+    const drift::EditorView3d panned = drift::panEditorView(front, 50.0, 0.0, canvas);
+    QVERIFY(onCanvas(drift::editorViewProjection(panned, canvas), {}).x() > 960.0);
+    // A dolly step in shortens the distance, framing fills the view with the sphere.
+    QVERIFY(drift::dollyEditorView(front, 1.0).distance < front.distance);
+    const drift::EditorView3d framed = drift::frameEditorView(front, QVector3D(10, 20, 30), 100.0);
+    QCOMPARE(framed.target, QVector3D(10, 20, 30));
+
+    // Looking through the camera is exactly the camera's projection.
+    drift::SceneCamera3d camera;
+    camera.positionX = 120.0;
+    camera.rotationY = 15.0;
+    drift::EditorView3d through = front;
+    through.lookThrough = true;
+    QCOMPARE(drift::editorViewProjection(through, canvas, camera), drift::cameraViewProjection(camera, canvas));
+    QVERIFY((drift::sceneCameraEye(drift::SceneCamera3d{}) - QVector3D(0, 0, 2000)).length() < 1e-3f);
+
+    // The view fills the panel: a wide panel widens the frame around the project canvas, a tall
+    // one heightens it, and the canvas stays centred at the project's scale.
+    const drift::EditorFrame wide = drift::editorFrame(canvas, QSizeF(3000, 1000));
+    QCOMPARE(wide.size, QSizeF(3240, 1080));
+    QCOMPARE(wide.offset, QPointF(660, 0));
+    const drift::EditorFrame tall = drift::editorFrame(canvas, QSizeF(1000, 1000));
+    QCOMPARE(tall.size, QSizeF(1920, 1920));
+    QCOMPARE(tall.offset, QPointF(0, 420));
+    QCOMPARE(drift::editorFrame(canvas, QSizeF()).size, canvas);
+}
+
+void EngineTest::editorOverlayDrawsTheCameraAndClipsAtTheEye()
+{
+    const QSizeF canvas(1920, 1080);
+    drift::EditorView3d front;
+    front.distance = 3000.0;
+    const QMatrix4x4 view = drift::editorViewProjection(front, canvas);
+
+    // A segment that runs from the stage to behind the eye keeps its visible half only.
+    QPointF a;
+    QPointF b;
+    QVERIFY(drift::clipEditorSegment(view, QVector3D(0, 0, 0), QVector3D(0, 0, 6000), &a, &b));
+    QVERIFY(QLineF(a, QPointF(960, 540)).length() < 0.01);
+    QVERIFY(std::isfinite(b.x()) && std::isfinite(b.y()));
+    QVERIFY(!drift::clipEditorSegment(view, QVector3D(0, 0, 5000), QVector3D(100, 0, 6000), &a, &b));
+
+    // A camera at rest frames the stage exactly: its frame's corners are the canvas corners.
+    drift::EditorOverlayInput input;
+    input.canvas = canvas;
+    input.cameraActive = true;
+    const QList<drift::EditorLine> lines = drift::buildEditorOverlay(input);
+    QVERIFY(!lines.isEmpty());
+    int frameCorners = 0;
+    for (const drift::EditorLine &line : lines) {
+        if (line.under)
+            continue;
+        if ((line.a - QVector3D(0, 0, 2000)).length() < 0.01f
+            && std::abs(std::abs(line.b.x()) - 960.f) < 0.01f && std::abs(std::abs(line.b.y()) - 540.f) < 0.01f
+            && std::abs(line.b.z()) < 0.01f)
+            ++frameCorners;
+    }
+    QCOMPARE(frameCorners, 4);
+    // The floor goes under the clips, the rest over them.
+    QVERIFY(std::any_of(lines.cbegin(), lines.cend(), [](const drift::EditorLine &l) { return l.under; }));
+
+    // The camera's frame on a clip pushed back is bigger than on the stage, by the eye distances.
+    drift::ClipPose3d back;
+    back.positionZ = -2000.0;
+    input.hasSelectedQuad = true;
+    input.selectedQuad = drift::clipQuadToWorld(QRectF(0, 0, 1920, 1080), 0.0, false, false, back, canvas);
+    QVector3D hit;
+    QVERIFY(drift::rayHitsQuadPlane(QVector3D(0, 0, 2000), QVector3D(960, 540, 0), input.selectedQuad, &hit));
+    QVERIFY((hit - QVector3D(1920, 1080, -2000)).length() < 0.5f);
+    // A plane behind the eye is not hit.
+    QVERIFY(!drift::rayHitsQuadPlane(QVector3D(0, 0, -3000), QVector3D(0, 0, -4000), input.selectedQuad, &hit));
 }
 
 void EngineTest::clipGizmoSolvesDrags()
@@ -2808,126 +3101,49 @@ void EngineTest::modelPoseHierarchyAndSkinning()
     QCOMPARE(drift::modelAnimationDurationUs(drift::ModelAsset(), 0), 0);
 }
 
-void EngineTest::modelClipCameraIsAspectOnly()
+void EngineTest::modelClipWorldFitsTheRect()
 {
-    const QVector3D aabbMin(-0.5f, -0.5f, -0.5f);
-    const QVector3D aabbMax(0.5f, 0.5f, 0.5f);
-    drift::ModelClipParams params;
-    params.scale = 0.5;
+    const QVector3D aabbMin(-1.0f, -0.25f, -0.25f);
+    const QVector3D aabbMax(1.0f, 0.75f, 0.25f);
+    const QSizeF canvas(400, 300);
+    const QRectF rect(100, 50, 200, 100);
+    drift::ClipPose3d pose;
+    pose.positionZ = 30.0;
 
-    for (const double depth : {0.0, 0.5, 1.0}) {
-        params.depth = depth;
-        const double aspect = 9.0 / 16.0;
-        const QMatrix4x4 a = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
-        const QMatrix4x4 b = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
-        for (int i = 0; i < 16; ++i)
-            QCOMPARE(a.data()[i], b.data()[i]);
+    // The box's front face is the rect, at the rect's centre and the clip's depth; its depth
+    // scales with the face (sqrt(100 * 100) per model unit here).
+    const QMatrix4x4 world = drift::modelClipWorld(rect, 0.0, pose, aabbMin, aabbMax, canvas);
+    const QVector3D lo = world.map(QVector3D(-1.f, -0.25f, -0.25f));
+    const QVector3D hi = world.map(QVector3D(1.f, 0.75f, 0.25f));
+    QVERIFY((lo - QVector3D(-100.f, 0.f, 5.f)).length() < 1e-3f);
+    // glTF's top (+y) is the top of the picture, so it lands at the smaller world y.
+    QVERIFY((hi - QVector3D(100.f, -100.f, 55.f)).length() < 1e-3f);
+    QCOMPARE(drift::modelClipFaceSize(aabbMin, aabbMax, 300.0), QSizeF(300.0, 150.0));
 
-        // Size compensation: the unit extent at the model-centre plane spans 2*scale NDC
-        // vertically whatever the depth, so the depth slider never changes the on-screen size.
-        const QVector4D top = a * QVector4D(0.f, 0.5f, 0.f, 1.f);
-        const QVector4D bottom = a * QVector4D(0.f, -0.5f, 0.f, 1.f);
-        const double span = double(top.y() / top.w()) - double(bottom.y() / bottom.w());
-        QVERIFY2(std::abs(span - 1.0) < 1e-4,
-                 qPrintable(QStringLiteral("depth %1: span %2").arg(depth).arg(span)));
-        // And the horizontal extent honours the aspect: a unit width spans 2*scale*aspect.
-        const QVector4D left = a * QVector4D(-0.5f, 0.f, 0.f, 1.f);
-        const QVector4D right = a * QVector4D(0.5f, 0.f, 0.f, 1.f);
-        const double hspan = double(right.x() / right.w()) - double(left.x() / left.w());
-        QVERIFY2(std::abs(hspan - aspect) < 1e-4,
-                 qPrintable(QStringLiteral("depth %1: hspan %2").arg(depth).arg(hspan)));
-    }
+    // It turns about the rect centre exactly as a flat clip does: the centre of the rest box sits
+    // where clipQuadToWorld puts the quad's centre, under any pose.
+    drift::ClipPose3d turned = pose;
+    turned.rotationX = 25.0;
+    turned.rotationY = -40.0;
+    const QMatrix4x4 spun = drift::modelClipWorld(rect, 15.0, turned, aabbMin, aabbMax, canvas);
+    const QMatrix4x4 quad = drift::clipQuadToWorld(rect, 15.0, false, false, turned, canvas);
+    QVERIFY((spun.map((aabbMin + aabbMax) * 0.5f) - quad.map(QVector3D())).length() < 1e-3f);
+    // And the model's +x edge rides the quad's right edge.
+    QVERIFY((spun.map(QVector3D(1.f, 0.25f, 0.f)) - quad.map(QVector3D(1.f, 0.f, 0.f))).length() < 1e-3f);
 
-    // Perspective: at depth 1 a point nearer the camera (+z) projects larger than one behind.
-    params.depth = 1.0;
-    const QMatrix4x4 persp = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
-    const QVector4D nearPt = persp * QVector4D(0.5f, 0.f, 0.5f, 1.f);
-    const QVector4D farPt = persp * QVector4D(0.5f, 0.f, -0.5f, 1.f);
-    QVERIFY(nearPt.x() / nearPt.w() > farPt.x() / farPt.w());
-    // Orthographic at depth 0: both project to the same x.
-    params.depth = 0.0;
-    const QMatrix4x4 ortho = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
-    const QVector4D nearO = ortho * QVector4D(0.5f, 0.f, 0.5f, 1.f);
-    const QVector4D farO = ortho * QVector4D(0.5f, 0.f, -0.5f, 1.f);
-    QCOMPARE(nearO.x() / nearO.w(), farO.x() / farO.w());
-    // Nearer surfaces win GL_LESS in both modes.
-    QVERIFY(nearO.z() / nearO.w() < farO.z() / farO.w());
-    QVERIFY(nearPt.z() / nearPt.w() < farPt.z() / farPt.w());
+    // Normals land in the light frame (world with y up again): at rest, model up stays up.
+    const QMatrix3x3 n = drift::modelClipNormalMatrix(world);
+    const QVector3D up = QVector3D(n(0, 1), n(1, 1), n(2, 1)).normalized();
+    QVERIFY((up - QVector3D(0.f, 1.f, 0.f)).length() < 1e-4f);
 
-    // Rotations are about the model's own axes: with the model tilted by X, spinning Y keeps
-    // the model's up axis where the tilt put it (the spin is about that axis), where a world-axis
-    // Y spin would swing it around.
-    {
-        drift::ModelClipParams tilted;
-        tilted.scale = 0.5;
-        tilted.depth = 0.0;
-        tilted.rotX = 90.0;
-        QVector3D upAt0;
-        for (const double spin : {0.0, 45.0, 90.0, 180.0}) {
-            tilted.rotY = spin;
-            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
-            const QVector3D up = cam.modelView.mapVector(QVector3D(0.f, 1.f, 0.f)).normalized();
-            if (spin == 0.0)
-                upAt0 = up;
-            QVERIFY2((up - upAt0).length() < 1e-4f,
-                     qPrintable(QStringLiteral("rotY %1 moved the up axis to %2,%3,%4")
-                                    .arg(spin).arg(up.x()).arg(up.y()).arg(up.z())));
-        }
-        // And Z rolls about the model's forward axis after both: with X = 90, model +Z (its
-        // forward) now points down (−Y in view), and rolling Z leaves it there.
-        tilted.rotY = 0.0;
-        for (const double roll : {0.0, 60.0}) {
-            tilted.rotZ = roll;
-            const drift::ModelClipCamera cam = drift::modelClipCamera(tilted, aabbMin, aabbMax, 1.0);
-            const QVector3D fwd = cam.modelView.mapVector(QVector3D(0.f, 0.f, 1.f)).normalized();
-            QVERIFY((fwd - QVector3D(0.f, -1.f, 0.f)).length() < 1e-4f);
-        }
-    }
-
-    // The centre lands where the clip's x/y put it, as a sticker (independent of depth).
-    params.depth = 0.7;
-    params.centreX = 0.25;
-    params.centreY = 0.75;
-    const QMatrix4x4 moved = drift::modelClipCamera(params, aabbMin, aabbMax, 1.0).mvp;
-    const QVector4D centre = moved * QVector4D(0.f, 0.f, 0.f, 1.f);
-    QVERIFY(std::abs(double(centre.x() / centre.w()) - (2.0 * 0.25 - 1.0)) < 1e-5);
-    QVERIFY(std::abs(double(centre.y() / centre.w()) - (1.0 - 2.0 * 0.75)) < 1e-5);
-}
-
-void EngineTest::modelClipScreenRectMatchesMvp()
-{
-    const QVector3D aabbMin(-0.5f, -0.25f, -0.125f);
-    const QVector3D aabbMax(0.5f, 0.25f, 0.125f);
-    drift::ModelClipParams params;
-    params.scale = 0.4;
-    params.depth = 0.0;
-    params.centreX = 0.5;
-    params.centreY = 0.5;
-    const double aspect = 9.0 / 16.0;
-    // Orthographic and unrotated: the largest axis (x) spans 0.4 of the height, i.e.
-    // 0.4 * aspect of the width, centred.
-    const QRectF rect = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
-    QVERIFY(std::abs(rect.width() - 0.4 * aspect) < 1e-4);
-    QVERIFY(std::abs(rect.height() - 0.2) < 1e-4);
-    QVERIFY(std::abs(rect.center().x() - 0.5) < 1e-4);
-    QVERIFY(std::abs(rect.center().y() - 0.5) < 1e-4);
-
-    // Every projected corner lies inside the rect (top-left origin, y down) under perspective.
-    params.depth = 1.0;
-    params.rotY = 35.0;
-    params.rotX = -20.0;
-    const QRectF r2 = drift::modelClipScreenRect(params, aabbMin, aabbMax, aspect);
-    const QMatrix4x4 mvp = drift::modelClipCamera(params, aabbMin, aabbMax, aspect).mvp;
-    for (int i = 0; i < 8; ++i) {
-        const QVector4D c = mvp * QVector4D((i & 1) ? aabbMax.x() : aabbMin.x(),
-                                            (i & 2) ? aabbMax.y() : aabbMin.y(),
-                                            (i & 4) ? aabbMax.z() : aabbMin.z(), 1.f);
-        const QPointF p((c.x() / c.w() + 1.0) * 0.5, (1.0 - c.y() / c.w()) * 0.5);
-        QVERIFY2(r2.adjusted(-1e-5, -1e-5, 1e-5, 1e-5).contains(p),
-                 qPrintable(QStringLiteral("corner %1 (%2, %3) outside %4,%5 %6x%7")
-                                .arg(i).arg(p.x()).arg(p.y())
-                                .arg(r2.x()).arg(r2.y()).arg(r2.width()).arg(r2.height())));
-    }
+    // Seen through a viewpoint, a model vertex and a quad point at the same world place share a
+    // depth, which is what lets the two occlude each other in one depth buffer.
+    drift::SceneCamera3d camera;
+    camera.rotationY = 20.0;
+    const QMatrix4x4 view = drift::cameraViewProjection(camera, canvas);
+    const QVector4D a = view.map(QVector4D(spun.map(QVector3D(1.f, 0.25f, 0.f)), 1.f));
+    const QVector4D b = view.map(QVector4D(quad.map(QVector3D(1.f, 0.f, 0.f)), 1.f));
+    QVERIFY(std::abs(a.z() / a.w() - b.z() / b.w()) < 1e-5f);
 }
 
 void EngineTest::modelClipDrawRequestFollowsLoopMode()
@@ -2935,17 +3151,19 @@ void EngineTest::modelClipDrawRequestFollowsLoopMode()
     const QString path = QStringLiteral(DRIFT_TEST_DATA_DIR "/cube.glb");
     drift::model3d::RenderRequest request;
     request.path = path;
-    request.centre = QPointF(0.5, 0.5);
+    request.rect = QRectF(10, 20, 30, 40);
+    request.rotation = 12.0;
+    request.pose.rotationY = 45.0;
     request.source.path = path;
-    request.source.scale = 0.3;
-    request.source.rotY = 45.0;
+    request.source.lightYaw = 75.0;
 
     const auto draw = drift::model3d::makeDrawRequest(request);
     QVERIFY(draw);
     QVERIFY(draw->asset);
-    QCOMPARE(draw->params.scale, 0.3);
-    QCOMPARE(draw->params.rotY, 45.0);
-    QCOMPARE(draw->params.centreX, 0.5);
+    QCOMPARE(draw->params.lightYaw, 75.0);
+    QCOMPARE(draw->rect, request.rect);
+    QCOMPARE(draw->rotation, 12.0);
+    QCOMPARE(draw->pose3d.rotationY, 45.0);
 
     request.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/does-not-exist.glb");
     QVERIFY(!drift::model3d::makeDrawRequest(request));
@@ -2953,22 +3171,24 @@ void EngineTest::modelClipDrawRequestFollowsLoopMode()
 
 namespace {
 
+// A model centred with half the canvas across, tipped toward the viewer, seen through an eye
+// `size / (2 * depth)` px away (the old "depth" lens).
 GpuScene modelClipScene(const QString &path, int size, double rotY = 0.0, double lightPitch = 20.0,
                         double depth = 0.5)
 {
     drift::model3d::RenderRequest request;
     request.path = path;
-    request.centre = QPointF(0.5, 0.5);
+    request.rect = QRectF(size * 0.25, size * 0.25, size * 0.5, size * 0.5);
+    request.pose.rotationX = -20.0;
+    request.pose.rotationY = rotY;
+    request.pose.perspective = size / (2.0 * depth);
     request.source.path = path;
-    request.source.scale = 0.5;
-    request.source.depth = depth;
-    request.source.rotY = rotY;
-    request.source.rotX = 20.0;
     request.source.lightPitch = lightPitch;
 
     GpuLayer layer;
     layer.model3d = drift::model3d::makeDrawRequest(request);
     layer.rect = QRectF(0, 0, size, size);
+    layer.screenSpace = true;
     layer.valid = true;
 
     GpuItem item;
@@ -2999,8 +3219,8 @@ void EngineTest::modelClipRendersCube()
     const QRgb corner = out.pixel(2, 2);
     QVERIFY2(qRed(corner) + qGreen(corner) + qBlue(corner) < 30,
              qPrintable(QStringLiteral("corner #%1").arg(corner, 8, 16, QLatin1Char('0'))));
-    // Rows are flipped in the resolve so v=0 is the image top: rotX tips the cube's top toward
-    // the camera, so under perspective the top of the picture is the wider (nearer) end. The
+    // Rows land with v=0 at the image top: the tilt brings the cube's top toward the viewer, so
+    // under perspective the top of the picture is the wider (nearer) end. The
     // cube's shared vertices have no per-face normals, so lighting cannot tell faces apart.
     const QImage tipped = GpuCompositor::render(modelClipScene(path, 64, 0.0, 20.0, 1.0));
     QVERIFY(!tipped.isNull());
@@ -3041,18 +3261,18 @@ GpuScene modelClipSceneAt(const QString &path, int size, drift::TimeUs animUs, d
 {
     drift::model3d::RenderRequest request;
     request.path = path;
-    request.centre = QPointF(0.5, 0.5);
+    request.rect = QRectF(size * 0.2, size * 0.2, size * 0.6, size * 0.6);
+    request.pose.rotationX = -25.0;
+    request.pose.rotationY = 30.0;
+    request.pose.perspective = size / 0.6;
     request.source.path = path;
-    request.source.scale = 0.6;
-    request.source.depth = 0.3;
-    request.source.rotX = 25.0;
-    request.source.rotY = 30.0;
     request.source.loop = loop;
     request.animUs = animUs;
 
     GpuLayer layer;
     layer.model3d = drift::model3d::makeDrawRequest(request);
     layer.rect = QRectF(0, 0, size, size);
+    layer.screenSpace = true;
     layer.valid = layer.model3d != nullptr;
 
     GpuItem item;
@@ -3121,28 +3341,27 @@ void EngineTest::compositorRendersModelClip()
     clip.type = drift::ClipType::Model3d;
     clip.path = QStringLiteral(DRIFT_TEST_DATA_DIR "/model/BoxAnimated.glb");
     clip.model3d.path = clip.path;
-    clip.model3d.scale = 0.4;
-    clip.model3d.depth = 0.0;
     clip.model3d.loop = drift::VectorLoop::Hold;
+    clip.layer3d = true;
     clip.timelineStart = 0;
     clip.timelineDuration = drift::secondsToUs(4.0);
     clip.srcIn = 0;
     clip.srcOut = drift::secondsToUs(4.0);
-    // Off-centre: x/y shift the model, and the size keys are ignored.
-    clip.transformX.setKeyframe(0, -50.0);
-    clip.transformY.setKeyframe(0, 0.0);
-    clip.transformW.setKeyframe(0, 200.0);
-    clip.transformH.setKeyframe(0, 100.0);
-    // A rotY key animates the pose from the clip's own keyframes.
-    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(0, 0.0);
-    clip.model3d.keyframes[QStringLiteral("rotY")].setKeyframe(drift::secondsToUs(2.0), 90.0);
+    // Off-centre: the box is a 40 px face centred at x = 50.
+    clip.transformX.setKeyframe(0, 30.0);
+    clip.transformY.setKeyframe(0, 30.0);
+    clip.transformW.setKeyframe(0, 40.0);
+    clip.transformH.setKeyframe(0, 40.0);
+    // A rotationY key turns it like any 3D layer.
+    clip.rotationY.setKeyframe(0, 0.0);
+    clip.rotationY.setKeyframe(drift::secondsToUs(2.0), 90.0);
     project.tracks()[0].clips.append(clip);
 
     FrameCompositor compositor;
     compositor.setProject(&project);
     const QImage t0 = compositor.compositeAt(0).convertToFormat(QImage::Format_RGBA8888);
     QCOMPARE(t0.size(), QSize(200, 100));
-    // Covered pixels sit left of centre (the model centre is at x = 100 − 50 = 50).
+    // Covered pixels sit left of centre, around the box's centre at x = 50.
     long sumX = 0;
     long count = 0;
     for (int y = 0; y < 100; ++y)
@@ -3155,7 +3374,7 @@ void EngineTest::compositorRendersModelClip()
     QVERIFY(count > 200);
     const double meanX = double(sumX) / double(count);
     QVERIFY2(std::abs(meanX - 50.0) < 6.0, qPrintable(QString::number(meanX)));
-    // Nothing spills past the canvas midline: scale 0.4 of a 100 px height is a 40 px box.
+    // Nothing spills past the canvas midline: the box is 40 px across.
     for (int y = 0; y < 100; ++y)
         QVERIFY(qGray(t0.pixel(150, y)) <= 20);
 

@@ -35,6 +35,21 @@ QMatrix4x4 cameraViewProjection(const SceneCamera3d &camera, const QSizeF &canva
     return projection;
 }
 
+QMatrix4x4 sceneCameraWorld(const SceneCamera3d &camera)
+{
+    QMatrix4x4 m;
+    m.rotate(float(camera.rotationX), 1.f, 0.f, 0.f);
+    m.rotate(float(camera.rotationY), 0.f, 1.f, 0.f);
+    m.rotate(float(camera.rotationZ), 0.f, 0.f, 1.f);
+    m.translate(float(camera.positionX), float(camera.positionY), float(camera.positionZ));
+    return m;
+}
+
+QVector3D sceneCameraEye(const SceneCamera3d &camera)
+{
+    return sceneCameraWorld(camera).map(QVector3D(0.f, 0.f, float(std::max(1.0, camera.perspective))));
+}
+
 QMatrix4x4 worldParentFromAffine(const QTransform &parent, const QSizeF &canvas)
 {
     // Canvas coordinates are top-left origin and world coordinates are centre origin, so the
@@ -56,6 +71,11 @@ QMatrix4x4 worldParentFromAffine(const QTransform &parent, const QSizeF &canvas)
 
 QMatrix4x4 cameraCanvasPlaneToCanvas(const SceneCamera3d &camera, const QSizeF &canvas)
 {
+    return viewCanvasPlaneToCanvas(cameraViewProjection(camera, canvas), canvas);
+}
+
+QMatrix4x4 viewCanvasPlaneToCanvas(const QMatrix4x4 &view, const QSizeF &canvas)
+{
     // (X, Y, *, W) standing for the canvas pixel (X/W, Y/W) becomes the world point
     // (X - cx*W, Y - cy*W, 0, W). Dropping the incoming z is deliberate: it carried the clip's own
     // near-plane encoding, and the camera's projection supplies that afresh.
@@ -65,7 +85,7 @@ QMatrix4x4 cameraCanvasPlaneToCanvas(const SceneCamera3d &camera, const QSizeF &
                              0.f, 1.f, 0.f, -cy,
                              0.f, 0.f, 0.f, 0.f,
                              0.f, 0.f, 0.f, 1.f);
-    return cameraViewProjection(camera, canvas) * flatten;
+    return view * flatten;
 }
 
 namespace {
@@ -111,7 +131,14 @@ QMatrix4x4 cameraQuadToCanvas(const SceneCamera3d &camera, const QRectF &rect, d
                               bool flipH, bool flipV, const ClipPose3d &pose,
                               const QTransform &parent, bool hasParent, const QSizeF &canvas)
 {
-    const QMatrix4x4 view = cameraViewProjection(camera, canvas);
+    return viewQuadToCanvas(cameraViewProjection(camera, canvas), rect, rotation, flipH, flipV, pose,
+                            parent, hasParent, canvas);
+}
+
+QMatrix4x4 viewQuadToCanvas(const QMatrix4x4 &view, const QRectF &rect, double rotation, bool flipH,
+                            bool flipV, const ClipPose3d &pose, const QTransform &parent,
+                            bool hasParent, const QSizeF &canvas)
+{
     if (!hasParent) {
         // The ordinary case, and the whole point of the feature: the clip sits in world space and
         // one eye looks at it, so clips at different depths move by different amounts.
@@ -126,23 +153,30 @@ QMatrix4x4 cameraQuadToCanvas(const SceneCamera3d &camera, const QRectF &rect, d
     const QMatrix4x4 quad = pose.isActive()
                                 ? clipQuadToCanvas(rect, rotation, flipH, flipV, pose, canvas)
                                 : flatQuadToCanvas(rect, rotation, flipH, flipV);
-    return cameraCanvasPlaneToCanvas(camera, canvas) * parentedQuadToCanvas(parent, quad);
+    return viewCanvasPlaneToCanvas(view, canvas) * parentedQuadToCanvas(parent, quad);
 }
 
 QMatrix4x4 cameraClipLocalToCanvas(const SceneCamera3d &camera, const QRectF &rect, double rotation,
                                    const ClipPose3d &pose, const QTransform &parent, bool hasParent,
                                    const QSizeF &canvas)
 {
+    return viewClipLocalToCanvas(cameraViewProjection(camera, canvas), rect, rotation, pose, parent,
+                                 hasParent, canvas);
+}
+
+QMatrix4x4 viewClipLocalToCanvas(const QMatrix4x4 &view, const QRectF &rect, double rotation,
+                                 const ClipPose3d &pose, const QTransform &parent, bool hasParent,
+                                 const QSizeF &canvas)
+{
     QMatrix4x4 m;
     if (!hasParent) {
-        m = cameraViewProjection(camera, canvas) * clipLocalToWorld(rect, rotation, pose, canvas);
+        m = view * clipLocalToWorld(rect, rotation, pose, canvas);
     } else if (parent.isAffine()) {
-        m = cameraViewProjection(camera, canvas) * worldParentFromAffine(parent, canvas)
-            * clipLocalToWorld(rect, rotation, pose, canvas);
+        m = view * worldParentFromAffine(parent, canvas) * clipLocalToWorld(rect, rotation, pose, canvas);
     } else {
-        // The projective-parent fallback, matching cameraQuadToCanvas: the card is placed through
+        // The projective-parent fallback, matching viewQuadToCanvas: the card is placed through
         // its own eye and then viewed flat.
-        m = cameraCanvasPlaneToCanvas(camera, canvas) * liftParent(parent)
+        m = viewCanvasPlaneToCanvas(view, canvas) * liftParent(parent)
             * clipLocalToCanvas(rect, rotation, pose, canvas);
     }
     // A z = 0 point stays at z = 0 and the matrix stays invertible, exactly as clipLocalToCanvas

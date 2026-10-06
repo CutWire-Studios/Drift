@@ -700,6 +700,14 @@ add_library(driftengine STATIC
     src/engine/ClipTransform3d.cpp
     src/engine/SceneCamera3d.h
     src/engine/SceneCamera3d.cpp
+    src/engine/PreviewSnap.h
+    src/engine/EditorView3d.h
+    src/engine/EditorView3d.cpp
+    src/engine/EditorOverlay.h
+    src/engine/EditorOverlay.cpp
+    src/engine/GlEditorOverlay.h
+    src/engine/GlEditorOverlay.cpp
+    src/engine/PreviewSnap.cpp
     src/engine/TransformLayer.h
     src/engine/TransformLayer.cpp
     src/engine/ClipGizmo.h
@@ -1060,9 +1068,10 @@ qt_add_qml_module(drift
         src/qml/EditorHeader.qml
         src/qml/AssetsPanel.qml
         src/qml/PreviewPanel.qml
+        src/qml/components/preview/PreviewHeader.qml
+        src/qml/components/preview/ViewAxisWidget.qml
         src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/TransformOverlay.qml
-        src/qml/components/preview/CameraOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml

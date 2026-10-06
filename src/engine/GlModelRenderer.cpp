@@ -25,6 +25,9 @@
 #ifndef GL_RGBA32F
 #define GL_RGBA32F 0x8814
 #endif
+#ifndef GL_DEPTH_COMPONENT24
+#define GL_DEPTH_COMPONENT24 0x81A6
+#endif
 #include <vector>
 
 namespace drift::gl {
@@ -358,8 +361,8 @@ void drawModelPrimitives(QOpenGLExtraFunctions *gl, QOpenGLShaderProgram *prog,
     }
 }
 
-// Resolve for the model clip: flip rows (the draw is +y up, the compositor wants v=0 on top),
-// box-filter when supersampled, and unpremultiply because layer targets carry straight alpha.
+// Resolve for the model clip: box-filter when supersampled, and unpremultiply because layer
+// targets carry straight alpha. The draw already has the compositor's v=0-is-top rows.
 constexpr const char *kModelClipResolveFrag = R"(#version 330 core
 in vec2 v_texCoord;
 out vec4 fragColor;
@@ -367,7 +370,7 @@ uniform sampler2D u_currentTexture;
 uniform vec2 u_texel;  // 1/srcSize
 uniform float u_taps;  // 1 = single sample, 2 = 2x2 box
 void main() {
-    vec2 uv = vec2(v_texCoord.x, 1.0 - v_texCoord.y);
+    vec2 uv = v_texCoord;
     vec4 c;
     if (u_taps > 1.5) {
         c  = texture(u_currentTexture, uv + u_texel * vec2(-0.5, -0.5));
@@ -381,6 +384,48 @@ void main() {
     fragColor = vec4(c.a > 0.0 ? c.rgb / c.a : vec3(0.0), c.a);
 }
 )";
+
+// The model's depth for the compositor's depth test, nearest of the supersampled taps, packed
+// into 24 bits of RGB (a colour target is what the layer pipeline carries). The layer shader's
+// depth variant unpacks it into gl_FragDepth.
+constexpr const char *kModelClipDepthFrag = R"(#version 330 core
+out vec4 fragColor;
+uniform highp sampler2D u_depth;
+uniform float u_taps;
+void main() {
+    ivec2 base = ivec2(gl_FragCoord.xy) * int(u_taps + 0.5);
+    float d = texelFetch(u_depth, base, 0).r;
+    if (u_taps > 1.5) {
+        d = min(d, texelFetch(u_depth, base + ivec2(1, 0), 0).r);
+        d = min(d, texelFetch(u_depth, base + ivec2(0, 1), 0).r);
+        d = min(d, texelFetch(u_depth, base + ivec2(1, 1), 0).r);
+    }
+    float v = floor(clamp(d, 0.0, 1.0) * 16777215.0 + 0.5);
+    float r = floor(v / 65536.0);
+    float g = floor((v - r * 65536.0) / 256.0);
+    float b = v - r * 65536.0 - g * 256.0;
+    fragColor = vec4(r, g, b, 255.0) / 255.0;
+}
+)";
+
+// A depth texture of the scratch's size on the runtime's single slot, created or resized as needed.
+GLuint modelDepthTexture(GlRuntime &rt, QOpenGLExtraFunctions *gl, int width, int height)
+{
+    if (rt.modelDepthTexture && rt.modelDepthSize == QSize(width, height))
+        return rt.modelDepthTexture;
+    if (!rt.modelDepthTexture)
+        gl->glGenTextures(1, &rt.modelDepthTexture);
+    gl->glBindTexture(GL_TEXTURE_2D, rt.modelDepthTexture);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT,
+                     GL_UNSIGNED_INT, nullptr);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glBindTexture(GL_TEXTURE_2D, 0);
+    rt.modelDepthSize = QSize(width, height);
+    return rt.modelDepthTexture;
+}
 
 } // namespace
 
@@ -963,7 +1008,8 @@ GlTarget resolveFaceOverlay(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &
 }
 
 GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
-                       const model3d::ModelDrawRequest &request, const QSize &canvasSize)
+                       const model3d::ModelDrawRequest &request, const QSize &canvasSize,
+                       const QMatrix4x4 &viewProjection, GlTarget *depthOut)
 {
     if (!gl || !request.asset || canvasSize.isEmpty())
         return {};
@@ -977,11 +1023,32 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
     const bool supersample = (qint64(outW) * outH) <= (1920LL * 1080LL);
     const int drawW = supersample ? outW * 2 : outW;
     const int drawH = supersample ? outH * 2 : outH;
-    const double aspect = double(outH) / double(outW);
 
-    GlTarget scratch = rt.acquireTarget(drawW, drawH, /*wantDepth=*/true);
+    // With a depth output the scratch takes a sampleable depth texture in place of a renderbuffer.
+    GLuint depthTexture = 0;
+    GlTarget scratch = rt.acquireTarget(drawW, drawH, /*wantDepth=*/!depthOut);
     if (!scratch.isValid())
         return {};
+    if (depthOut) {
+        depthTexture = modelDepthTexture(rt, gl, drawW, drawH);
+        scratch.fbo->bind();
+        gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+        if (gl->glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            // No depth textures here: draw without, and the model simply does not occlude.
+            gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+            scratch.fbo->release();
+            rt.releaseTarget(std::move(scratch));
+            return drawModelClip(rt, gl, request, canvasSize, viewProjection, nullptr);
+        }
+        scratch.fbo->release();
+    }
+    const auto detachDepth = [&] {
+        if (!depthTexture)
+            return;
+        scratch.fbo->bind();
+        gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+        scratch.fbo->release();
+    };
 
     // Animated files draw through the rig with a palette; a static file (or a rig the GPU cannot
     // take) draws the baked buffer with the face effect's program.
@@ -994,6 +1061,7 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
     QOpenGLShaderProgram *resolve = rt.builtinProgram(QStringLiteral("model_clip_resolve"),
                                                       kQuadVertexShader, kModelClipResolveFrag);
     if (!prog || !resolve) {
+        detachDepth();
         rt.releaseTarget(std::move(scratch));
         return {};
     }
@@ -1005,12 +1073,15 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         scratch.fbo->bind();
         gl->glViewport(0, 0, drawW, drawH);
         gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+        gl->glDepthMask(GL_TRUE);
         gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         gl->glEnable(GL_DEPTH_TEST);
         gl->glDepthFunc(GL_LESS);
         gl->glEnable(GL_CULL_FACE);
         gl->glCullFace(GL_BACK);
-        gl->glFrontFace(GL_CCW);
+        // Canvas row 0 lands on framebuffer row 0, so the picture is stored upside down from GL's
+        // point of view and a counter-clockwise front face arrives clockwise.
+        gl->glFrontFace(GL_CW);
 
         const ModelAsset &cpu = *model->cpu;
         QVector3D aabbMin;
@@ -1021,7 +1092,15 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
             aabbMin = cpu.aabbMin;
             aabbMax = cpu.aabbMax;
         }
-        const ModelClipCamera cam = modelClipCamera(request.params, aabbMin, aabbMax, aspect);
+        const QMatrix4x4 world = modelClipWorld(request.rect, request.rotation, request.pose3d,
+                                                aabbMin, aabbMax,
+                                                request.canvas.isEmpty() ? QSizeF(canvasSize) : request.canvas);
+        // Canvas px -> NDC with no row flip: the layer's v=0 is the canvas top, as everywhere in
+        // the compositor (see modelMatrixFor).
+        QMatrix4x4 ndc;
+        ndc.translate(-1.f, -1.f);
+        ndc.scale(2.f / float(outW), 2.f / float(outH));
+        const QMatrix4x4 mvp = ndc * viewProjection * world;
 
         prog->bind();
         if (skinning) {
@@ -1030,12 +1109,12 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
             gl->glActiveTexture(GL_TEXTURE1);
             uploadPalette(gl, *model, palette);
             prog->setUniformValue("u_palette", 1);
-            prog->setUniformValue("u_post", cam.mvp);
+            prog->setUniformValue("u_post", mvp);
         } else {
-            prog->setUniformValue("u_mvp", cam.mvp);
+            prog->setUniformValue("u_mvp", mvp);
             prog->setUniformValue("u_flipDepth", 1.f);
         }
-        prog->setUniformValue("u_normalMatrix", cam.normalMatrix);
+        prog->setUniformValue("u_normalMatrix", modelClipNormalMatrix(world));
         prog->setUniformValue("u_lightDir",
                               screenLightDir(request.params.lightYaw, request.params.lightPitch));
         prog->setUniformValue("u_lightIntensity", float(request.params.lightIntensity));
@@ -1053,12 +1132,14 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         gl->glDepthMask(GL_TRUE);
         gl->glDisable(GL_DEPTH_TEST);
         gl->glDisable(GL_CULL_FACE);
+        gl->glFrontFace(GL_CCW);
         gl->glDisable(GL_BLEND);
         scratch.fbo->release();
     }
 
     GlTarget result = rt.acquireTarget(outW, outH);
     if (!result.isValid()) {
+        detachDepth();
         rt.releaseTarget(std::move(scratch));
         return {};
     }
@@ -1075,6 +1156,29 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
     gl->glBindVertexArray(0);
     resolve->release();
     result.fbo->release();
+
+    detachDepth();
+    if (depthTexture) {
+        QOpenGLShaderProgram *depthResolve = rt.builtinProgram(
+            QStringLiteral("model_clip_depth"), kQuadVertexShader, kModelClipDepthFrag);
+        GlTarget depth = depthResolve ? rt.acquireTarget(outW, outH) : GlTarget{};
+        if (depth.isValid()) {
+            depth.fbo->bind();
+            gl->glViewport(0, 0, outW, outH);
+            depthResolve->bind();
+            depthResolve->setUniformValue("u_depth", 0);
+            depthResolve->setUniformValue("u_taps", supersample ? 2.f : 1.f);
+            gl->glActiveTexture(GL_TEXTURE0);
+            gl->glBindTexture(GL_TEXTURE_2D, depthTexture);
+            gl->glBindVertexArray(rt.vao);
+            gl->glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            gl->glBindVertexArray(0);
+            gl->glBindTexture(GL_TEXTURE_2D, 0);
+            depthResolve->release();
+            depth.fbo->release();
+            *depthOut = std::move(depth);
+        }
+    }
     rt.releaseTarget(std::move(scratch));
     return result;
 }

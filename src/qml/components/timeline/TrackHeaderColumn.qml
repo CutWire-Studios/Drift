@@ -887,6 +887,14 @@ Item {
                     }
                     ThemedMenuSeparator {
                         visible: trackLabelRow.isTransformLayer || trackLabelRow.transformable
+                                 || trackLabelRow.isCameraLayer
+                    }
+                    // Back-to-back camera clips are cuts between framings; each new one starts at rest.
+                    ThemedMenuItem {
+                        visible: trackLabelRow.isCameraLayer
+                        text: qsTr("Add camera clip at playhead")
+                        icon.name: Theme.icons.video
+                        onTriggered: EditorState.addCameraClip()
                     }
                     // A submenu cannot be hidden per row, so the span choices open as their
                     // own menu from here.

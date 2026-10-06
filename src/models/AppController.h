@@ -55,6 +55,12 @@ class AddonManager;
 class MarketClient;
 class JobRegistry;
 
+namespace drift::snap {
+struct PlacedClip;
+}
+namespace drift::gizmo {
+struct View;
+}
 namespace drift::mcp {
 class McpServer;
 }
@@ -63,6 +69,7 @@ struct MediaEditSpec;
 }
 
 #include "engine/AudioRecorder.h"
+#include "engine/EditorView3d.h"
 #include "engine/SceneCamera3d.h"
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
@@ -376,6 +383,13 @@ class AppController : public QObject
     Q_PROPERTY(int selectedTransitionTrack READ selectedTransitionTrack NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(int selectedTransitionLeftClip READ selectedTransitionLeftClip NOTIFY selectedTransitionDataChanged)
     Q_PROPERTY(bool guidesEnabled READ guidesEnabled WRITE setGuidesEnabled NOTIFY guidesChanged)
+    // The preview's mode: "2d" shows the camera's picture, "3d" the world from a free viewpoint
+    // with the camera drawn in it. Editor state, never saved with the project.
+    Q_PROPERTY(QString previewMode READ previewMode WRITE setPreviewMode NOTIFY previewModeChanged)
+    // In 3D mode: looking through the scene camera rather than from the free viewpoint.
+    Q_PROPERTY(bool editorLookThrough READ editorLookThrough NOTIFY editorViewChanged)
+    // Bumped whenever the 3D viewpoint moves, so overlays drawn through it re-read their geometry.
+    Q_PROPERTY(int editorViewRevision READ editorViewRevision NOTIFY editorViewChanged)
     // The preview's 3D gizmo on a clip that is a 3D layer: which tool ("move", "rotate", "scale")
     // and whether its handles follow the camera's axes ("global") or the clip's own ("local").
     // Editor preferences, not project data.
@@ -630,6 +644,28 @@ public:
     int selectedTransitionTrack() const { return m_selectedTransitionTrack; }
     int selectedTransitionLeftClip() const { return m_selectedTransitionLeftClip; }
     bool guidesEnabled() const { return m_guidesEnabled; }
+    QString previewMode() const { return m_previewMode; }
+    void setPreviewMode(const QString &mode);
+    bool editorLookThrough() const { return m_editorView.lookThrough; }
+    int editorViewRevision() const { return int(m_editorViewSerial); }
+    // 3D mode navigation. Orbit is in degrees; pan in canvas px of pointer travel; dolly in wheel
+    // steps (+ toward the target). Each re-renders the preview.
+    Q_INVOKABLE void editorOrbit(double dxDeg, double dyDeg);
+    Q_INVOKABLE void editorPan(double dxCanvas, double dyCanvas);
+    Q_INVOKABLE void editorDolly(double steps);
+    // Frames the selected clip (or the whole stage when nothing is selected).
+    Q_INVOKABLE void editorFrameSelection();
+    // "front", "back", "left", "right", "top" or "bottom", looking at the current target.
+    Q_INVOKABLE void editorSetAxisView(const QString &axis);
+    Q_INVOKABLE void editorToggleLookThrough();
+    Q_INVOKABLE void editorResetView();
+    // True while the pointer is orbiting, panning or dollying: the preview renders lighter.
+    Q_INVOKABLE void editorSetNavigating(bool navigating);
+    // The preview panel changed size: the 3D view's frame, which fills it, changed with it.
+    Q_INVOKABLE void notifyPreviewResized();
+    // For the corner axis widget: [{axis: "x"|"y"|"z", x, y, depth}] — each world axis's direction
+    // on screen (y down) and how far it points toward the viewer, as unit-ish values.
+    Q_INVOKABLE QVariantList editorAxes() const;
     QString gizmoTool() const { return m_gizmoTool; }
     void setGizmoTool(const QString &tool);
     QString gizmoOrientation() const { return m_gizmoOrientation; }
@@ -1283,19 +1319,34 @@ public:
     // seven values, all at the playhead. Taken once when a drag starts, so the drag solves from a
     // fixed starting point instead of accumulating its own rounding.
     Q_INVOKABLE QVariantMap cameraStateAtPlayhead() const;
-    // Moves the camera by a drag of (dx, dy) overlay px from that starting state. `tool` is the
-    // gizmo tool: "move" pans, "rotate" orbits, "scale" dollies. Returns the new state in the same
-    // shape, or `start` unchanged when nothing could be written.
-    Q_INVOKABLE QVariantMap previewApplyCameraDrag(const QVariantMap &start, const QString &tool,
-                                                   double dx, double dy, double scale, bool snap);
+    // In 3D mode, the scene camera as a gizmo box (kind "camera"): a point at the eye turned as the
+    // camera is, which previewGizmoGeometry/Pick/ApplyGizmoDrag move and turn. Empty otherwise.
+    Q_INVOKABLE QVariantMap previewCameraBox() const;
+    // In 3D mode, selects the camera clip when (canvasX, canvasY) is on its drawn body, within
+    // `tolerance` canvas px of its eye. False when it is not there.
+    Q_INVOKABLE bool editorPickCamera(double canvasX, double canvasY, double tolerance);
 
     Q_INVOKABLE QMatrix4x4 previewClipPoseMatrix(const QVariantMap &box, double x, double y,
                                                  double w, double h, double rotation,
                                                  double scaleX, double scaleY) const;
-    // True while a camera clip covers the playhead. The overlay needs it for the same reasons a
-    // tilt matters: the box is no longer axis-aligned, so snapping is off, and the grips have to be
-    // drawn through the camera rather than straight onto the canvas.
+    // True while a camera clip covers the playhead: the grips have to be drawn through the camera
+    // rather than straight onto the canvas.
     Q_INVOKABLE bool previewCameraActive() const;
+    // A body drag of a previewClipsAtPlayhead box from press to now (canvas px), through its pose,
+    // parents and the camera, so the grabbed point stays under the pointer. With `snap`, the
+    // projected edges and centre pull to the canvas edges, centre lines and visible guides within
+    // `tolerance` canvas px. Returns {valid, x, y, guideX, guideY} with the box's new rect origin;
+    // guides are canvas px, -1 when not engaged.
+    Q_INVOKABLE QVariantMap previewSnapMove(const QVariantMap &box, double pressX, double pressY,
+                                            double nowX, double nowY, double tolerance,
+                                            bool snap) const;
+    // A resize of the box (its rect as it stood at the grab) to `width` x `height`, with the moving
+    // edges along `dxSign`/`dySign` (-1 left/top, +1 right/bottom, 0 fixed). `centrePivot` says the
+    // rect grows about its centre rather than the opposite edge. Returns {width, height, guideX,
+    // guideY, distX, distY}: each axis snapped on its own, with how far it was pulled (-1 if not).
+    Q_INVOKABLE QVariantMap previewSnapResize(const QVariantMap &box, double width, double height,
+                                              int dxSign, int dySign, bool centrePivot,
+                                              double tolerance) const;
 
     // Asset drag-and-drop. One resolver for every kind a browser can lift (AssetDrag.qml has
     // the list; media keeps its own asset-index path), shared by the desktop and phone
@@ -1765,6 +1816,10 @@ public:
     Q_INVOKABLE void setKeyframeInterpolation(int trackIndex, int clipIndex, const QString &prop,
                                               const QString &mode);
     Q_INVOKABLE void resetClipTransform(int trackIndex, int clipIndex);
+    // Puts a camera clip back at rest: no pan, dolly or turn, so it frames the canvas head on again.
+    // The lens is kept. Without indexes, the camera covering the playhead. One undo step; false
+    // when there is no such camera.
+    Q_INVOKABLE bool resetSceneCamera(int trackIndex = -1, int clipIndex = -1);
     Q_INVOKABLE QVariantList effectCatalog() const;
     Q_INVOKABLE QVariantList effectCategories() const;
     Q_INVOKABLE QVariantList effectTemplateCatalog() const;
@@ -2329,6 +2384,8 @@ signals:
     void subtitleWaveformReady(double startSeconds, double durSeconds, int sampleCount);
     void beatAnalysisChanged();
     void guidesChanged();
+    void previewModeChanged();
+    void editorViewChanged();
     void gizmoChanged();
     void guideEditSetIdChanged();
     void shortcutsChanged();
@@ -2629,6 +2686,18 @@ protected:
     // preview overlay measures in). `active` reports whether a camera clip covers the playhead at
     // all; when it does not, the camera comes back at rest and every caller keeps its old path.
     drift::SceneCamera3d previewCamera(bool *active = nullptr) const;
+    // A previewClipsAtPlayhead box as the snapping maths needs it, in canvas px.
+    drift::snap::PlacedClip previewPlacedClip(const QVariantMap &box) const;
+    // The viewpoint the preview's gizmo is drawn and solved from: the scene camera when one
+    // covers the playhead, otherwise none (each clip's own eye).
+    drift::gizmo::View previewGizmoView() const;
+    // The viewpoint every preview overlay is drawn through, world -> homogeneous canvas px at
+    // project scale: the free view in 3D mode, else the scene camera when one covers the playhead.
+    // False for the plain per-clip eye.
+    bool previewViewProjection(QMatrix4x4 *view) const;
+    // Hands the current mode and viewpoint to the preview renderer.
+    void pushEditorView();
+    void setEditorView(const drift::EditorView3d &view);
 
     void normalizeProjectStructure(const drift::Project *before = nullptr);
     // What the transform layers over `trackIndex` do at the playhead; identity when none.
@@ -3052,6 +3121,11 @@ protected:
     mutable QHash<int, QCursor> m_trimCursorCache;
     QCursor trimCursorFor(int side, int heightPx) const;
     bool m_guidesEnabled = false;
+    QString m_previewMode = QStringLiteral("2d");
+    drift::EditorView3d m_editorView;
+    bool m_editorViewPlaced = false;
+    quint64 m_editorViewSerial = 0;
+    bool m_editorNavigating = false;
     QString m_gizmoTool = QStringLiteral("move");
     QString m_gizmoOrientation = QStringLiteral("global");
     bool m_canvasCropMode = false;

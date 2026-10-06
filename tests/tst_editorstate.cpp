@@ -86,7 +86,7 @@ private slots:
     void compositeFromSelectionUndoRedo();
     void compositeClipGetsAPreviewBox();
     void cameraMovesThePreviewOverlayWithThePicture();
-    void cameraDragPansOrbitsAndDollies();
+    void cameraGizmoMovesAndTurnsTheEye();
     void compositeClipSpeedRetimesToFit();
     void importedMediaIsCentredAndResetsToItsFit();
     void transformTogetherWrapsTheSelection();
@@ -865,78 +865,106 @@ void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
     QVERIFY(state.previewClipAtCanvasPoint(restRendered.x(), restRendered.y()).isEmpty());
 }
 
-void EditorStateTest::cameraDragPansOrbitsAndDollies()
+void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
 {
     AssetLibrary library;
     AppController state(&library);
     state.project()->setResolution(1000, 1000);
 
-    // No camera yet: the overlay must be told to stand down rather than guess.
+    // No camera, or the 2D view: nothing to put a gizmo on.
     QVERIFY(!state.cameraStateAtPlayhead().value(QStringLiteral("active")).toBool());
-
     state.addCameraTrack();
     state.setPlayheadSeconds(0.0);
-    const QVariantMap start = state.cameraStateAtPlayhead();
-    QVERIFY(start.value(QStringLiteral("active")).toBool());
-    QCOMPARE(start.value(QStringLiteral("x")).toDouble(), 0.0);
-    QCOMPARE(start.value(QStringLiteral("rotationY")).toDouble(), 0.0);
-    QCOMPARE(start.value(QStringLiteral("perspective")).toDouble(), 2000.0);
+    QVERIFY(state.previewCameraBox().isEmpty());
 
+    state.setPreviewMode(QStringLiteral("3d"));
+    QCOMPARE(state.previewMode(), QStringLiteral("3d"));
+    const QVariantMap start = state.previewCameraBox();
+    QCOMPARE(start.value(QStringLiteral("kind")).toString(), QStringLiteral("camera"));
+    // The box stands at the eye: 2000 px in front of the canvas centre.
+    QCOMPARE(start.value(QStringLiteral("x")).toDouble() + 0.5, 500.0);
+    QCOMPARE(start.value(QStringLiteral("z")).toDouble(), 2000.0);
     const int track = start.value(QStringLiteral("track")).toInt();
     const int clip = start.value(QStringLiteral("clip")).toInt();
 
-    // Pan. The camera goes the opposite way to the drag, so the picture follows the pointer.
-    // sx = 0.5, so 100 overlay px is 200 canvas px.
-    const QVariantMap panned =
-        state.previewApplyCameraDrag(start, QStringLiteral("move"), 100, 50, 0.5, false);
-    QCOMPARE(panned.value(QStringLiteral("x")).toDouble(), -200.0);
-    QCOMPARE(panned.value(QStringLiteral("y")).toDouble(), -100.0);
-    QCOMPARE(state.project()->tracks().at(track).clips.at(clip).transformX.evaluateAt(0), -200.0);
+    // A click on the drawn body picks the camera; one far away does not.
+    QVERIFY(!state.editorPickCamera(-5000.0, -5000.0, 10.0));
+    QVariantList axes = state.editorAxes();
+    QCOMPARE(axes.size(), 3);
+    state.editorToggleLookThrough();
+    QVERIFY(state.editorLookThrough());
+    state.editorToggleLookThrough();
 
-    // A drag solves from where it began, so re-applying the same total delta is idempotent rather
-    // than cumulative — that is what stops a slow drag drifting away from the pointer.
-    const QVariantMap again =
-        state.previewApplyCameraDrag(start, QStringLiteral("move"), 100, 50, 0.5, false);
-    QCOMPARE(again.value(QStringLiteral("x")).toDouble(), -200.0);
-
-    // Orbit, snapped to 15 degrees. 0.3 deg per canvas px: 100 overlay px at sx 0.5 is 200 canvas
-    // px is 60 degrees, which is already a multiple of 15.
-    const QVariantMap orbited =
-        state.previewApplyCameraDrag(start, QStringLiteral("rotate"), 100, 0, 0.5, true);
-    QCOMPARE(orbited.value(QStringLiteral("rotationY")).toDouble(), 60.0);
-    // Dragging down tips the camera's pitch the other way.
-    const QVariantMap pitched =
-        state.previewApplyCameraDrag(start, QStringLiteral("rotate"), 0, 100, 0.5, true);
-    QCOMPARE(pitched.value(QStringLiteral("rotationX")).toDouble(), -60.0);
-    // Unsnapped keeps the exact angle.
-    const QVariantMap free =
-        state.previewApplyCameraDrag(start, QStringLiteral("rotate"), 10, 0, 0.5, false);
-    QCOMPARE(free.value(QStringLiteral("rotationY")).toDouble(), 6.0);
-
-    // Dolly: 300 canvas px of drag is one eye distance, and down pulls the camera back.
-    const QVariantMap dollied =
-        state.previewApplyCameraDrag(start, QStringLiteral("scale"), 0, 150, 0.5, false);
-    QCOMPARE(dollied.value(QStringLiteral("z")).toDouble(), 2000.0);
-    const QVariantMap pushedIn =
-        state.previewApplyCameraDrag(start, QStringLiteral("scale"), 0, -75, 0.5, false);
-    QCOMPARE(pushedIn.value(QStringLiteral("z")).toDouble(), -1000.0);
-
-    // A drag on something that is not a camera clip is refused rather than writing to it.
-    QVariantMap bogus = start;
-    bogus.insert(QStringLiteral("track"), 99);
-    QCOMPARE(state.previewApplyCameraDrag(bogus, QStringLiteral("move"), 10, 10, 1.0, false),
-             bogus);
-
-    // The whole drag is one undo step: begin, several moves, commit.
-    const QString beforeHash = state.project()->contentHash();
+    // Move along X through the 3D view: the eye goes right, so the camera's position does too
+    // (unturned, position and eye differ only by the lens along z).
+    QMatrix4x4 view = drift::editorViewProjection(drift::EditorView3d::overview(QSizeF(1000, 1000)),
+                                                  QSizeF(1000, 1000));
+    const auto onOverlay = [&view](const QVector3D &p) {
+        const QVector4D h = view.map(QVector4D(p, 1.f));
+        return QPointF(h.x() / h.w(), h.y() / h.w());
+    };
+    const QVector3D eye(0, 0, 2000);
+    state.setGizmoTool(QStringLiteral("move"));
+    state.setGizmoOrientation(QStringLiteral("global"));
     state.beginPreviewDrag();
-    QVariantMap live = start;
-    for (int i = 1; i <= 5; ++i)
-        live = state.previewApplyCameraDrag(start, QStringLiteral("move"), 20 * i, 0, 1.0, false);
+    const QPointF press = onOverlay(eye);
+    const QPointF now = onOverlay(eye + QVector3D(150, 0, 0));
+    const QVariantMap moved = state.previewApplyGizmoDrag(start, QStringLiteral("x"), press.x(), press.y(),
+                                                          now.x(), now.y(), false, 1.0);
     state.commitPreviewDrag();
-    QCOMPARE(live.value(QStringLiteral("x")).toDouble(), -100.0);
+    const drift::Clip &camera = state.project()->tracks().at(track).clips.at(clip);
+    QVERIFY2(std::abs(camera.transformX.evaluateAt(0) - 150.0) < 0.5,
+             qPrintable(QString::number(camera.transformX.evaluateAt(0))));
+    QVERIFY(std::abs(camera.positionZ.isEmpty() ? 0.0 : camera.positionZ.evaluateAt(0)) < 0.5);
+    QVERIFY(std::abs(moved.value(QStringLiteral("x")).toDouble() + 0.5 - 650.0) < 0.5);
+
+    // Turning keeps the eye where it is: a yaw about the eye moves the stored position, not the eye.
+    const QVariantMap before = state.previewCameraBox();
+    state.setGizmoTool(QStringLiteral("rotate"));
+    const QVector3D eyeNow(150, 0, 2000);
+    state.beginPreviewDrag();
+    const QPointF a = onOverlay(eyeNow + QVector3D(60, 0, 0));
+    const QPointF b = onOverlay(eyeNow + QVector3D(0, 0, -60));
+    state.previewApplyGizmoDrag(before, QStringLiteral("y"), a.x(), a.y(), b.x(), b.y(), false, 1.0);
+    state.commitPreviewDrag();
+    const QVariantMap after = state.previewCameraBox();
+    QVERIFY(std::abs(after.value(QStringLiteral("rotationY")).toDouble()) > 1.0);
+    QVERIFY(std::abs(after.value(QStringLiteral("x")).toDouble() - before.value(QStringLiteral("x")).toDouble()) < 0.5);
+    QVERIFY(std::abs(after.value(QStringLiteral("z")).toDouble() - before.value(QStringLiteral("z")).toDouble()) < 0.5);
+
+    // A camera has nothing to scale.
+    state.setGizmoTool(QStringLiteral("scale"));
+    QVERIFY(!state.previewGizmoGeometry(after, 1.0, 1.0).value(QStringLiteral("valid")).toBool());
+
+    // Reset puts it back at rest, keeping the lens, in one undo step.
+    state.project()->tracks()[track].clips[clip].perspective.setKeyframe(0, 1500.0);
+    QVERIFY(state.resetSceneCamera());
+    const QVariantMap rest = state.previewCameraBox();
+    QCOMPARE(rest.value(QStringLiteral("x")).toDouble() + 0.5, 500.0);
+    QCOMPARE(rest.value(QStringLiteral("z")).toDouble(), 1500.0);
+    QCOMPARE(rest.value(QStringLiteral("rotationY")).toDouble(), 0.0);
     state.undo();
-    QCOMPARE(state.project()->contentHash(), beforeHash);
+    QVERIFY(std::abs(state.previewCameraBox().value(QStringLiteral("rotationY")).toDouble()) > 1.0);
+    QVERIFY(!state.resetSceneCamera(0, 99));
+
+    // Adding a camera again makes a new shot on the same lane, never one on top of another.
+    state.addCameraTrack();
+    state.setPlayheadSeconds(20.0);
+    state.addCameraClip();
+    const QList<drift::Clip> &shots = state.project()->tracks().at(track).clips;
+    QCOMPARE(shots.size(), 3);
+    for (int i = 0; i < shots.size(); ++i) {
+        for (int j = i + 1; j < shots.size(); ++j) {
+            const drift::Clip &a = shots.at(i);
+            const drift::Clip &b = shots.at(j);
+            QVERIFY(a.timelineStart + a.timelineDuration <= b.timelineStart
+                    || b.timelineStart + b.timelineDuration <= a.timelineStart);
+        }
+    }
+    state.setPlayheadSeconds(0.0);
+
+    state.setPreviewMode(QStringLiteral("2d"));
+    QVERIFY(state.previewCameraBox().isEmpty());
 }
 
 void EditorStateTest::compositeClipGetsAPreviewBox()

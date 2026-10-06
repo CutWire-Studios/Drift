@@ -16,7 +16,11 @@ std::shared_ptr<const ModelDrawRequest> makeDrawRequest(const RenderRequest &req
     auto out = std::make_shared<ModelDrawRequest>();
     out->path = request.path;
     out->asset = asset;
-    out->params = modelClipParamsFromSource(request.source, request.centre.x(), request.centre.y());
+    out->params = modelClipParamsFromSource(request.source);
+    out->rect = request.rect;
+    out->rotation = request.rotation;
+    out->pose3d = request.pose;
+    out->canvas = request.canvas;
 
     if (asset->rig && !asset->rig->animations.isEmpty()) {
         const int animIndex =

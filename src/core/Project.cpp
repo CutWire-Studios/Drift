@@ -12,6 +12,8 @@
 #include <QUuid>
 #include <QtMath>
 
+#include <algorithm>
+
 namespace drift {
 
 namespace {
@@ -881,6 +883,106 @@ QString Project::binFolderIdAt(int index) const
 
 namespace {
 
+// A legacy model track with one sign flipped, tangents included.
+KeyframeTrack<double> scaledTrack(const KeyframeTrack<double> &source, double sign)
+{
+    KeyframeTrack<double> out;
+    out.setEnabled(source.enabled());
+    for (auto it = source.keyframes().constBegin(); it != source.keyframes().constEnd(); ++it) {
+        Keyframe<double> key = it.value();
+        key.value *= sign;
+        key.inDy *= sign;
+        key.outDy *= sign;
+        out.setKeyframe(it.key(), key);
+    }
+    return out;
+}
+
+// Version 13 made a model clip a 3D layer like any other. Its pose used to live on the model: a
+// size as a fraction of the project height, a "depth" lens, and rotations about glTF's y-up axes,
+// with transformX/Y the model centre's offset from the canvas centre. Now the clip's rect is the
+// model's bounding-box front face, its rotations are the clip's, and the lens is its perspective.
+void migrateModelPoseToTransform(QList<Track> &tracks, double width, double height)
+{
+    for (Track &track : tracks) {
+        for (Clip &clip : track.clips) {
+            if (clip.type != ClipType::Model3d)
+                continue;
+            const Model3dSource::LegacyPose old = clip.model3d.legacyPose;
+            clip.model3d.legacyPose = {};
+            const auto legacyTrack = [&old](const char *key) -> const KeyframeTrack<double> * {
+                const auto it = old.keyframes.constFind(QLatin1String(key));
+                return it != old.keyframes.constEnd() && !it->isEmpty() && it->enabled() ? &*it
+                                                                                        : nullptr;
+            };
+
+            // The front face for one unit of span, from the rest bounds (a unit cube if unprobed).
+            const QVector3D extent = clip.model3d.aabbMax - clip.model3d.aabbMin;
+            const double largest = std::max({double(extent.x()), double(extent.y()), double(extent.z())});
+            const double faceX = largest > 1e-6 ? std::max(double(extent.x()), largest * 1e-3) / largest : 1.0;
+            const double faceY = largest > 1e-6 ? std::max(double(extent.y()), largest * 1e-3) / largest : 1.0;
+
+            // Size and position are resampled together wherever either was keyed.
+            const KeyframeTrack<double> *scale = legacyTrack("scale");
+            QList<TimeUs> times;
+            for (const KeyframeTrack<double> *t :
+                 std::initializer_list<const KeyframeTrack<double> *>{scale, &clip.transformX, &clip.transformY}) {
+                if (t)
+                    times.append(t->keyframes().keys());
+            }
+            std::sort(times.begin(), times.end());
+            times.erase(std::unique(times.begin(), times.end()), times.end());
+            if (times.isEmpty())
+                times.append(0);
+            KeyframeTrack<double> x;
+            KeyframeTrack<double> y;
+            KeyframeTrack<double> w;
+            KeyframeTrack<double> h;
+            for (const TimeUs t : times) {
+                const double span = std::max(0.01, scale ? scale->evaluateAt(t) : old.scale) * height;
+                const double faceW = faceX * span;
+                const double faceH = faceY * span;
+                const double offsetX = clip.transformX.isEmpty() ? 0.0 : clip.transformX.evaluateAt(t);
+                const double offsetY = clip.transformY.isEmpty() ? 0.0 : clip.transformY.evaluateAt(t);
+                x.setKeyframe(t, offsetX + (width - faceW) / 2.0);
+                y.setKeyframe(t, offsetY + (height - faceH) / 2.0);
+                w.setKeyframe(t, faceW);
+                h.setKeyframe(t, faceH);
+            }
+            clip.transformX = x;
+            clip.transformY = y;
+            clip.transformW = w;
+            clip.transformH = h;
+
+            // glTF's y is up and the canvas's is down: X and Z turn the other way round.
+            const auto rotationTrack = [&](const char *key, double value, double sign) {
+                if (const KeyframeTrack<double> *keyed = legacyTrack(key))
+                    return scaledTrack(*keyed, sign);
+                KeyframeTrack<double> out;
+                if (!qFuzzyIsNull(value))
+                    out.setKeyframe(0, sign * value);
+                return out;
+            };
+            clip.rotationX = rotationTrack("rotX", old.rotX, -1.0);
+            clip.rotationY = rotationTrack("rotY", old.rotY, 1.0);
+            clip.rotation = rotationTrack("rotZ", old.rotZ, -1.0);
+
+            // The old lens put the eye height / (2 * depth) px from the model's plane.
+            const auto lens = [height](double depth) { return height / (2.0 * std::max(0.01, depth)); };
+            KeyframeTrack<double> perspective;
+            if (const KeyframeTrack<double> *depth = legacyTrack("depth")) {
+                for (auto it = depth->keyframes().constBegin(); it != depth->keyframes().constEnd(); ++it)
+                    perspective.setKeyframe(it.key(), lens(it.value().value));
+            } else {
+                perspective.setKeyframe(0, lens(old.depth));
+            }
+            clip.perspective = perspective;
+            clip.positionZ = {};
+            clip.layer3d = true;
+        }
+    }
+}
+
 } // namespace
 
 Project Project::fromJson(const QJsonObject &object, QString *errorOut)
@@ -1034,6 +1136,12 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         // combinable. Runs after the v4 pass, which is what mints the track ids a lane needs.
         migrateClipMasksToAdjustmentLanes(project);
     }
+    if (version < 13) {
+        const double width = project.width();
+        const double height = project.height();
+        project.forEachTrackList(
+            [width, height](QList<Track> &tracks) { migrateModelPoseToTransform(tracks, width, height); });
+    }
     // A dangling span end has no earlier state to recover from here, so it is cleared.
     project.forEachTrackList([](QList<Track> &tracks) {
         normalizeTransformLayers(tracks);
@@ -1055,6 +1163,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // to migrate; the bump is a gate, as for versions 6 and 9. An older build would load the
     // camera as an effect adjustment with no effects and render the whole sequence from the
     // default viewpoint — every shot framed wrongly, with nothing on screen to say why.
+    // Version 13 moved a model clip's pose off the model onto the clip's transform (above).
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

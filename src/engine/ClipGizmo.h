@@ -9,6 +9,7 @@
 #include <QSizeF>
 #include <QString>
 #include <QTransform>
+#include <QVector3D>
 
 // The preview's 3D transform gizmo for a clip that is a 3D layer: arrows to move, rings to
 // rotate, square-tipped handles to scale. Pure geometry, so the maths is testable without QML.
@@ -39,6 +40,16 @@ struct Pose
     QTransform parent;
 };
 
+// A viewpoint other than the clip's own eye: the scene camera, or the preview's free 3D view.
+// `worldToCanvas` takes world space (canvas px about the canvas centre, y down, +z toward the
+// default viewer) to homogeneous canvas px, with GL's clip-space z, as cameraViewProjection does.
+// Without one, the clip is seen through its own `perspective`, with the eye at the canvas centre.
+struct View
+{
+    bool valid = false;
+    QMatrix4x4 worldToCanvas;
+};
+
 enum class HandleKind {
     Arrow,   // move along an axis
     Dolly,   // move along an axis that points at the viewer: drawn as a ring, dragged vertically
@@ -64,9 +75,10 @@ struct Geometry
     QList<Handle> handles;
 };
 
-// `size` scales the handles (1 on desktop, larger for touch).
+// `size` scales the handles (1 on desktop, larger for touch). Under a `view`, a transform-layer
+// parent must be affine (it is folded into the view); a tilted parent gives no gizmo.
 Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double scale,
-                  double size = 1.0);
+                  double size = 1.0, const View &view = {});
 
 // The handle within `tolerance` overlay px of `point`, nearest first; empty for none.
 QString pick(const Geometry &geometry, QPointF point, double tolerance);
@@ -80,7 +92,11 @@ struct DragResult
 // The pose after dragging `handle` from `press` to `now` (overlay px), starting from `start`.
 // `snap` steps rotations by 15°.
 DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QString &handle,
-                QPointF press, QPointF now, bool snap, double scale);
+                QPointF press, QPointF now, bool snap, double scale, const View &view = {});
+
+// Where a homogeneous projection's eye sits in the space it projects from: the point it maps to
+// w = 0 at the screen's centre lines. For a world -> canvas matrix that is the camera position.
+QVector3D eyeOf(const QMatrix4x4 &worldToCanvas);
 
 // X-then-Y-then-Z Euler angles (degrees) for a rotation matrix, choosing among the equivalent
 // solutions the one closest to `nearest`, so a drag never jumps by a full turn.

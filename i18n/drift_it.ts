@@ -3155,6 +3155,14 @@
         <translation>Modifica fotogramma chiave</translation>
     </message>
     <message>
+        <source>Move camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit effect</source>
         <translation>Modifica effetto</translation>
     </message>
@@ -3751,18 +3759,6 @@
         <translation>Scala clip</translation>
     </message>
     <message>
-        <source>Orbit camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dolly camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pan camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Audio effects go on the timeline.</source>
         <translation>Gli effetti audio vanno sulla timeline.</translation>
     </message>
@@ -3967,6 +3963,14 @@
     <message>
         <source>Keyframe interpolates</source>
         <translation>Interpolazione fotogramma chiave</translation>
+    </message>
+    <message>
+        <source>Reset camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera reset</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset transform</source>
@@ -5593,19 +5597,12 @@
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>CameraOverlay</name>
     <message>
-        <source>Drag to orbit the camera</source>
+        <source>Reset camera position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag up and down to dolly the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag to pan the camera</source>
+        <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9453,32 +9450,8 @@
         <translation>Scostamento iniziale</translation>
     </message>
     <message>
-        <source>Pose</source>
-        <translation>Posa</translation>
-    </message>
-    <message>
-        <source>Rotations follow the model&apos;s own axes: X tilts, Y then spins about the tilted up axis, Z rolls after both.</source>
-        <translation>Le rotazioni seguono gli assi del modello: X inclina, Y ruota attorno all&apos;asse verticale inclinato, Z ruota dopo entrambi.</translation>
-    </message>
-    <message>
-        <source>Size</source>
-        <translation>Dimensione</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Profondità</translation>
-    </message>
-    <message>
-        <source>Rotation X</source>
-        <translation>Rotazione X</translation>
-    </message>
-    <message>
-        <source>Rotation Y</source>
-        <translation>Rotazione Y</translation>
-    </message>
-    <message>
-        <source>Rotation Z</source>
-        <translation>Rotazione Z</translation>
+        <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Lighting</source>
@@ -9519,26 +9492,6 @@
 </context>
 <context>
     <name>Model3dSource</name>
-    <message>
-        <source>Size</source>
-        <translation>Dimensione</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Profondità</translation>
-    </message>
-    <message>
-        <source>Rotation X</source>
-        <translation>Rotazione X</translation>
-    </message>
-    <message>
-        <source>Rotation Y</source>
-        <translation>Rotazione Y</translation>
-    </message>
-    <message>
-        <source>Rotation Z</source>
-        <translation>Rotazione Z</translation>
-    </message>
     <message>
         <source>Light direction</source>
         <translation>Direzione luce</translation>
@@ -9986,6 +9939,77 @@
     <message>
         <source>Samples</source>
         <translation>Campioni</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewHeader</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looking through the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">Sposta</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">Ruota</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Scala</translation>
+    </message>
+    <message>
+        <source>Gizmo follows the selection&apos;s own axes (click for world axes)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo follows the world axes (click for the selection&apos;s own)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numpad 0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset the scene camera&apos;s position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14249,10 +14273,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add camera — one viewpoint the whole timeline is seen through</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Main</source>
         <translation>Principale</translation>
     </message>
@@ -14295,6 +14315,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Add adjustment layer</source>
         <translation>Aggiungi livello di regolazione</translation>
+    </message>
+    <message>
+        <source>Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Customize toolbar…</source>
@@ -14548,6 +14572,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Disattiva trasformazione</translation>
     </message>
     <message>
+        <source>Add camera clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Covers…</source>
         <translation>Copre…</translation>
     </message>
@@ -14715,10 +14743,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Posizione (px)</translation>
     </message>
     <message>
-        <source>Offset (px)</source>
-        <translation>Scostamento (px)</translation>
-    </message>
-    <message>
         <source>Measured inside %1&apos;s frame</source>
         <translation>Misurato all&apos;interno del riquadro di %1</translation>
     </message>
@@ -14825,10 +14849,6 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Reset position &amp; size</source>
         <translation>Reimposta posizione e dimensioni</translation>
-    </message>
-    <message>
-        <source>Reset position</source>
-        <translation>Reimposta posizione</translation>
     </message>
     <message>
         <source>Fix orientation</source>

@@ -3,8 +3,8 @@ import QtQuick.Controls.Basic
 import Drift
 import ".."
 
-// 3D model clip inspector: which .glb it is, which animation plays, and the pose and lighting
-// knobs. Position is on the Transform tab (the model sits at the clip's x/y centre).
+// 3D model clip inspector: which .glb it is, which animation plays, and the lighting knobs. The
+// model is placed like any 3D layer, from the Transform tab.
 Item {
     id: root
 
@@ -18,8 +18,6 @@ Item {
     readonly property var model3d: hasModel ? clipData.model3d : ({
                                                  "path": "", "animations": [], "animation": 0,
                                                  "loop": "loop", "offset": 0,
-                                                 "scale": 0.5, "depth": 0.5,
-                                                 "rotX": 0, "rotY": 0, "rotZ": 0,
                                                  "lightYaw": 30, "lightPitch": 20,
                                                  "lightIntensity": 1, "ambient": 0.35
                                              })
@@ -190,68 +188,11 @@ Item {
             }
         }
 
-        // ----- Pose --------------------------------------------------------
-        Column {
+        ThemedLabel {
             width: parent.width
-            spacing: Theme.spacingMd
-
-            ThemedLabel { text: qsTr("Pose") }
-            ThemedLabel {
-                width: parent.width
-                opacity: 0.8
-                wrapMode: Text.Wrap
-                text: qsTr("Rotations follow the model's own axes: X tilts, Y then spins about the tilted up axis, Z rolls after both.")
-            }
-
-            Row {
-                width: parent.width
-                spacing: 8
-                PropertyKeyframeRow {
-                    width: (parent.width - parent.spacing) / 2
-                    propDef: root.knob("scale", qsTr("Size"), 2)
-                    keyframeList: root.knobKeyframes("scale")
-                    useSlider: true
-                    sliderFrom: 0.05
-                    sliderTo: 3
-                }
-                PropertyKeyframeRow {
-                    width: (parent.width - parent.spacing) / 2
-                    propDef: root.knob("depth", qsTr("Depth"), 2)
-                    keyframeList: root.knobKeyframes("depth")
-                    useSlider: true
-                    sliderFrom: 0
-                    sliderTo: 1
-                    percent: true
-                }
-            }
-
-            PropertyKeyframeRow {
-                width: parent.width
-                propDef: root.knob("rotX", qsTr("Rotation X"), 0)
-                keyframeList: root.knobKeyframes("rotX")
-                useSlider: true
-                sliderFrom: -180
-                sliderTo: 180
-                unit: "°"
-            }
-            PropertyKeyframeRow {
-                width: parent.width
-                propDef: root.knob("rotY", qsTr("Rotation Y"), 0)
-                keyframeList: root.knobKeyframes("rotY")
-                useSlider: true
-                sliderFrom: -180
-                sliderTo: 180
-                unit: "°"
-            }
-            PropertyKeyframeRow {
-                width: parent.width
-                propDef: root.knob("rotZ", qsTr("Rotation Z"), 0)
-                keyframeList: root.knobKeyframes("rotZ")
-                useSlider: true
-                sliderFrom: -180
-                sliderTo: 180
-                unit: "°"
-            }
+            opacity: 0.8
+            wrapMode: Text.Wrap
+            text: qsTr("Position, size, rotation and depth occlusion are on the Transform tab.")
         }
 
         // ----- Lighting ----------------------------------------------------

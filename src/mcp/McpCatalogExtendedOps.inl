@@ -587,15 +587,17 @@
           objectSchema(clipRefProps()), true, false, true },
 
         { "add_model3d", "model3d", "Place a 3D model (.glb)",
-          "Add a glTF binary as a model clip on a graphic track, creating one when needed. The clip "
-          "is a full-canvas layer; the model sits at the clip's x/y centre (move it with "
-          "set_transform x/y or the keyframes ops — w/h/rotation are ignored for this kind). scale "
-          "is the fraction of canvas height the model spans, depth 0..1 is how much perspective "
-          "foreshortening there is (size never changes with it), rotX/rotY/rotZ are degrees about "
-          "the MODEL'S OWN axes (intrinsic, applied X then Y then Z: Y spins about the model's up "
-          "axis as tilted by X, Z rolls about its forward axis after both — so a keyframed rotY "
-          "spins a tilted model about its own axis rather than wobbling it around the world's), "
-          "and lightYaw/lightPitch/lightIntensity/ambient light it. All nine are keyframable as "
+          "Add a glTF binary as a model clip on a graphic track, creating one when needed. A model "
+          "clip is a 3D layer like any other: its rect (x, y, w, h) is the front face of the "
+          "model's bounding box, z pushes it in depth, rotationX/rotationY/rotation turn it "
+          "(intrinsic, X then Y then the in-plane spin, the same as a tilted clip), and "
+          "perspective is the eye it is seen through when there is no scene camera — set them with "
+          "set_transform or set_keyframe like any clip. It occludes and is occluded by other 3D "
+          "layers when \"Occlude by depth\" is on in the editor. It starts centred with its largest extent half "
+          "the canvas height. scale/depth/rotX/rotY/rotZ are older shorthands still accepted: scale "
+          "resizes the box about its centre to that fraction of canvas height, depth sets the "
+          "perspective, rotX/rotY/rotZ set the rotations about the model's glTF axes (+y up). "
+          "lightYaw/lightPitch/lightIntensity/ambient light it and are keyframable as "
           "model3d.<key>. An animated file plays its first animation at its own length unless "
           "duration is given; loop decides what happens past the end. Returns {id, track, index, "
           "animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}.",
@@ -607,11 +609,11 @@
                         {QStringLiteral("loop"), enumProp(QStringLiteral("Past the animation's end: hold the last frame, loop, ping-pong, or hide (default loop)"),
                                                            {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
                         {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start (default 0)"))},
-                        {QStringLiteral("scale"), numberProp(QStringLiteral("Fraction of canvas height the model spans (default 0.5)"), 0.01, 10.0)},
-                        {QStringLiteral("depth"), numberProp(QStringLiteral("Perspective strength 0 (flat) .. 1 (strong); default 0.5"), 0.0, 1.0)},
-                        {QStringLiteral("rotX"), numberProp(QStringLiteral("Degrees about the model's own X axis (tilt; applied first)"))},
-                        {QStringLiteral("rotY"), numberProp(QStringLiteral("Degrees about the model's own Y axis after the X tilt (turntable / spin)"))},
-                        {QStringLiteral("rotZ"), numberProp(QStringLiteral("Degrees about the model's own Z axis after X and Y (roll)"))},
+                        {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height (default 0.5); writes w/h"), 0.01, 10.0)},
+                        {QStringLiteral("depth"), numberProp(QStringLiteral("Shorthand: perspective strength 0 (flat) .. 1 (strong); writes perspective"), 0.0, 1.0)},
+                        {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: degrees about the model's X axis; writes rotationX = -rotX"))},
+                        {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: degrees about the model's up axis; writes rotationY"))},
+                        {QStringLiteral("rotZ"), numberProp(QStringLiteral("Shorthand: degrees about the model's Z axis; writes rotation = -rotZ"))},
                         {QStringLiteral("lightYaw"), numberProp(QStringLiteral("Key light direction, degrees (default 30)"))},
                         {QStringLiteral("lightPitch"), numberProp(QStringLiteral("Key light elevation, degrees (default 20)"))},
                         {QStringLiteral("lightIntensity"), numberProp(QStringLiteral("Key light strength (default 1)"), 0.0, 10.0)},
@@ -627,24 +629,26 @@
                                   clipRefProps())),
           true, false, true },
         { "set_model3d_source", "model3d", "Swap the file under a model clip",
-          "Replace the clip's .glb, keeping its position, length, pose, lighting and keyframes; the "
+          "Replace the clip's .glb, keeping its transform, length, lighting and keyframes; the "
           "animation index is clamped to the new file. Returns the inspect summary of the new file.",
           objectSchema(mergeProps({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute .glb path"))}},
                                   clipRefProps()),
                        {QStringLiteral("path")}) },
-        { "set_model3d_options", "model3d", "Animation, loop, pose or lighting of a model clip",
-          "Change how a model clip plays and looks; only supplied keys change. Pose and light values "
-          "set here are plain (non-keyed) values — use set_keyframe with model3d.<key> to animate them. "
-          "Rotations are about the model's own axes, applied X then Y then Z (see add_model3d).",
+        { "set_model3d_options", "model3d", "Animation, loop or lighting of a model clip",
+          "Change how a model clip plays and looks; only supplied keys change. Light values set here "
+          "are plain (non-keyed) values — use set_keyframe with model3d.<key> to animate them. The "
+          "model's placement is its clip transform (set_transform, rotationX/rotationY/z/"
+          "perspective keyframes); scale/depth/rotX/rotY/rotZ are accepted as the shorthands "
+          "add_model3d describes.",
           objectSchema(mergeProps({{QStringLiteral("animation"), integerProp(QStringLiteral("Index into the file's animations"))},
                                    {QStringLiteral("loop"), enumProp(QStringLiteral("hold | loop | pingpong | hide"),
                                                                       {QStringLiteral("hold"), QStringLiteral("loop"), QStringLiteral("pingpong"), QStringLiteral("hide")})},
                                    {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start"))},
-                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Fraction of canvas height the model spans"), 0.01, 10.0)},
-                                   {QStringLiteral("depth"), numberProp(QStringLiteral("Perspective strength 0..1"), 0.0, 1.0)},
-                                   {QStringLiteral("rotX"), numberProp(QStringLiteral("Degrees about the model's own X axis (tilt; applied first)"))},
-                                   {QStringLiteral("rotY"), numberProp(QStringLiteral("Degrees about the model's own Y axis after the X tilt (turntable / spin)"))},
-                                   {QStringLiteral("rotZ"), numberProp(QStringLiteral("Degrees about the model's own Z axis after X and Y (roll)"))},
+                                   {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height; writes w/h"), 0.01, 10.0)},
+                                   {QStringLiteral("depth"), numberProp(QStringLiteral("Shorthand: perspective strength 0..1; writes perspective"), 0.0, 1.0)},
+                                   {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: writes rotationX = -rotX"))},
+                                   {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: writes rotationY"))},
+                                   {QStringLiteral("rotZ"), numberProp(QStringLiteral("Shorthand: writes rotation = -rotZ"))},
                                    {QStringLiteral("lightYaw"), numberProp(QStringLiteral("Key light direction, degrees"))},
                                    {QStringLiteral("lightPitch"), numberProp(QStringLiteral("Key light elevation, degrees"))},
                                    {QStringLiteral("lightIntensity"), numberProp(QStringLiteral("Key light strength"), 0.0, 10.0)},

@@ -251,6 +251,9 @@ bool CompositorService::isRedundantRequest(drift::TimeUs time,
            && options.readAheadUs == last.readAheadUs
            && options.skipClipId == last.skipClipId
            && options.allowProxies == last.allowProxies
+           && options.editor.active == last.editor.active
+           && options.editor.serial == last.editor.serial
+           && options.editor.target == last.editor.target
            && (options.approximateSeek == last.approximateSeek || options.approximateSeek);
 }
 

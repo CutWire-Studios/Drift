@@ -3155,6 +3155,14 @@
         <translation>කීෆ්‍රේමය සංස්කරණය කරන්න</translation>
     </message>
     <message>
+        <source>Move camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit effect</source>
         <translation>ප්‍රයෝගය සංස්කරණය කරන්න</translation>
     </message>
@@ -3751,18 +3759,6 @@
         <translation>ක්ලිපය පරිමාණය කරන්න</translation>
     </message>
     <message>
-        <source>Orbit camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dolly camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pan camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Audio effects go on the timeline.</source>
         <translation>ශ්‍රව්‍ය ප්‍රයෝග යෙදෙන්නේ කාලරේඛාව මතය.</translation>
     </message>
@@ -3967,6 +3963,14 @@
     <message>
         <source>Keyframe interpolates</source>
         <translation>කීෆ්‍රේමය අන්තර්නිවේශනය වේ (Interpolates)</translation>
+    </message>
+    <message>
+        <source>Reset camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera reset</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset transform</source>
@@ -5593,19 +5597,12 @@
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>CameraOverlay</name>
     <message>
-        <source>Drag to orbit the camera</source>
+        <source>Reset camera position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag up and down to dolly the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag to pan the camera</source>
+        <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9453,32 +9450,8 @@
         <translation>ආරම්භක ඕෆ්සෙට් එක</translation>
     </message>
     <message>
-        <source>Pose</source>
-        <translation>ඉරියව්ව (Pose)</translation>
-    </message>
-    <message>
-        <source>Rotations follow the model&apos;s own axes: X tilts, Y then spins about the tilted up axis, Z rolls after both.</source>
-        <translation>භ්‍රමණයන් ආකෘතියේම අක්ෂ අනුගමනය කරයි: X මඟින් ඇල කරයි, පසුව Y මඟින් ඇලවූ ඉහළ අක්ෂය වටා කරකවයි, දෙකටම පසුව Z මඟින් රෝල් කරයි.</translation>
-    </message>
-    <message>
-        <source>Size</source>
-        <translation>ප්‍රමාණය</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>ගැඹුර</translation>
-    </message>
-    <message>
-        <source>Rotation X</source>
-        <translation>X භ්‍රමණය</translation>
-    </message>
-    <message>
-        <source>Rotation Y</source>
-        <translation>Y භ්‍රමණය</translation>
-    </message>
-    <message>
-        <source>Rotation Z</source>
-        <translation>Z භ්‍රමණය</translation>
+        <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Lighting</source>
@@ -9519,26 +9492,6 @@
 </context>
 <context>
     <name>Model3dSource</name>
-    <message>
-        <source>Size</source>
-        <translation>ප්‍රමාණය</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>ගැඹුර</translation>
-    </message>
-    <message>
-        <source>Rotation X</source>
-        <translation>X භ්‍රමණය</translation>
-    </message>
-    <message>
-        <source>Rotation Y</source>
-        <translation>Y භ්‍රමණය</translation>
-    </message>
-    <message>
-        <source>Rotation Z</source>
-        <translation>Z භ්‍රමණය</translation>
-    </message>
     <message>
         <source>Light direction</source>
         <translation>ආලෝක දිශාව</translation>
@@ -9986,6 +9939,77 @@
     <message>
         <source>Samples</source>
         <translation>සාම්පල</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewHeader</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looking through the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">ගෙනයන්න</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">කරකවන්න</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">පරිමාණය (Scale)</translation>
+    </message>
+    <message>
+        <source>Gizmo follows the selection&apos;s own axes (click for world axes)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo follows the world axes (click for the selection&apos;s own)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numpad 0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset the scene camera&apos;s position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14249,10 +14273,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add camera — one viewpoint the whole timeline is seen through</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Main</source>
         <translation>ප්‍රධාන</translation>
     </message>
@@ -14295,6 +14315,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Add adjustment layer</source>
         <translation>ගැලපුම් ස්තරයක් එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Customize toolbar…</source>
@@ -14548,6 +14572,10 @@ If playback stutters, try another.</source>
         <translation>පරිවර්තනය අක්‍රිය කරන්න</translation>
     </message>
     <message>
+        <source>Add camera clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Covers…</source>
         <translation>ආවරණය කරන්නේ…</translation>
     </message>
@@ -14715,10 +14743,6 @@ If playback stutters, try another.</source>
         <translation>පිහිටීම (px)</translation>
     </message>
     <message>
-        <source>Offset (px)</source>
-        <translation>විස්ථාපනය (px)</translation>
-    </message>
-    <message>
         <source>Measured inside %1&apos;s frame</source>
         <translation>%1 හි රාමුව තුළ මනිනු ලැබේ</translation>
     </message>
@@ -14825,10 +14849,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Reset position &amp; size</source>
         <translation>පිහිටීම සහ ප්‍රමාණය යළි සකසන්න</translation>
-    </message>
-    <message>
-        <source>Reset position</source>
-        <translation>පිහිටීම යළි සකසන්න</translation>
     </message>
     <message>
         <source>Fix orientation</source>

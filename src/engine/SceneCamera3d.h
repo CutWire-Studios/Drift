@@ -7,6 +7,7 @@
 #include <QMatrix4x4>
 #include <QSizeF>
 #include <QTransform>
+#include <QVector3D>
 
 namespace drift {
 
@@ -53,6 +54,11 @@ struct SceneCamera3d
                && qFuzzyIsNull(rotationX) && qFuzzyIsNull(rotationY) && qFuzzyIsNull(rotationZ);
     }
 };
+
+// The camera's own transform in world space, C = rotX · rotY · rotZ · translate(P), and the eye
+// it puts at C · (0, 0, perspective). What the 3D view draws the camera's body and frustum from.
+QMatrix4x4 sceneCameraWorld(const SceneCamera3d &camera);
+QVector3D sceneCameraEye(const SceneCamera3d &camera);
 
 struct Clip;
 
@@ -107,5 +113,16 @@ QMatrix4x4 cameraQuadToCanvas(const SceneCamera3d &camera, const QRectF &rect, d
 QMatrix4x4 cameraClipLocalToCanvas(const SceneCamera3d &camera, const QRectF &rect, double rotation,
                                    const ClipPose3d &pose, const QTransform &parent, bool hasParent,
                                    const QSizeF &canvas);
+
+// The three placements above for any viewpoint, given as its world -> homogeneous canvas px
+// matrix (cameraViewProjection, or the preview's free 3D view). The camera* forms are these with
+// cameraViewProjection.
+QMatrix4x4 viewCanvasPlaneToCanvas(const QMatrix4x4 &view, const QSizeF &canvas);
+QMatrix4x4 viewQuadToCanvas(const QMatrix4x4 &view, const QRectF &rect, double rotation, bool flipH,
+                            bool flipV, const ClipPose3d &pose, const QTransform &parent,
+                            bool hasParent, const QSizeF &canvas);
+QMatrix4x4 viewClipLocalToCanvas(const QMatrix4x4 &view, const QRectF &rect, double rotation,
+                                 const ClipPose3d &pose, const QTransform &parent, bool hasParent,
+                                 const QSizeF &canvas);
 
 } // namespace drift

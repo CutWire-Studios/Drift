@@ -1,7 +1,10 @@
 #include "engine/ClipGizmo.h"
 
+#include "engine/SceneCamera3d.h"
+
 #include <QLineF>
 #include <QVector3D>
+#include <QVector4D>
 
 #include <algorithm>
 #include <cmath>
@@ -23,19 +26,31 @@ constexpr double kDollyRadius = 16.0;
 constexpr double kNear = 0.02;
 constexpr int kRingSegments = 72;
 
-// World space is canvas px about the canvas centre: y down, z toward the viewer, eye at (0, 0, d).
+// World space is canvas px about the canvas centre: y down, z toward the viewer. Without a view
+// the eye sits at (0, 0, d); with one, the view's matrix says where everything lands.
 struct Space
 {
     double d = 2000.0;
     QSizeF canvas;
     double scale = 1.0;
     QTransform parent;
+    bool hasView = false;
+    QMatrix4x4 view;
+    QVector3D viewEye;
 
     double w(const QVector3D &p) const { return 1.0 - double(p.z()) / d; }
 
     // Overlay px; false at or behind the eye (the clip's, or its parent card's).
     bool project(const QVector3D &p, QPointF *out) const
     {
+        if (hasView) {
+            const QVector4D h = view.map(QVector4D(p, 1.f));
+            // GL's near plane: what the renderer would clip away has no place on screen either.
+            if (h.w() <= 1e-6f || h.z() < -h.w())
+                return false;
+            *out = QPointF(h.x() / h.w(), h.y() / h.w()) * scale;
+            return true;
+        }
         const double pw = w(p);
         if (pw <= kNear)
             return false;
@@ -60,23 +75,45 @@ struct Space
         return invertible ? inverse.map(overlay / scale) * scale : overlay;
     }
 
-    QVector3D eye() const { return QVector3D(0.f, 0.f, float(d)); }
+    QVector3D eye() const { return hasView ? viewEye : QVector3D(0.f, 0.f, float(d)); }
 
     // Direction of the ray from the eye through an overlay point.
     QVector3D ray(QPointF overlay) const
     {
+        if (hasView) {
+            // The ray is where the planes "x/w = px" and "y/w = py" meet; it points the way w grows.
+            const double px = overlay.x() / scale;
+            const double py = overlay.y() / scale;
+            const QVector4D r3 = view.row(3);
+            const QVector4D a = view.row(0) - r3 * float(px);
+            const QVector4D b = view.row(1) - r3 * float(py);
+            QVector3D dir = QVector3D::crossProduct(a.toVector3D(), b.toVector3D());
+            if (QVector3D::dotProduct(r3.toVector3D(), dir) < 0.f)
+                dir = -dir;
+            return dir;
+        }
         const QVector3D onCanvas(float(overlay.x() / scale - canvas.width() * 0.5),
                                  float(overlay.y() / scale - canvas.height() * 0.5), 0.f);
         return onCanvas - eye();
     }
 };
 
-Space spaceFor(const Pose &pose, double scale)
+Space spaceFor(const Pose &pose, double scale, const View &view = {})
 {
     Space s;
     s.d = std::max(1.0, pose.pose3d.perspective);
     s.canvas = pose.canvas;
     s.scale = scale;
+    if (view.valid) {
+        // An affine parent slides, scales and spins the clip within its plane: fold it into the
+        // view, so the gizmo works in the clip's own space and the pointer needs no unparenting.
+        s.hasView = true;
+        s.view = view.worldToCanvas;
+        if (!pose.parent.isIdentity())
+            s.view = s.view * worldParentFromAffine(pose.parent, pose.canvas);
+        s.viewEye = eyeOf(s.view);
+        return s;
+    }
     s.parent = pose.parent;
     return s;
 }
@@ -209,18 +246,30 @@ Orientation orientationFromString(const QString &name)
     return name == QLatin1String("local") ? Orientation::Local : Orientation::Global;
 }
 
-Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double scale, double size)
+Geometry geometry(const Pose &pose, Tool tool, Orientation orientation, double scale, double size,
+                  const View &view)
 {
     Geometry g;
-    const Space s = spaceFor(pose, scale);
+    if (view.valid && !pose.parent.isAffine())
+        return g;
+    const Space s = spaceFor(pose, scale, view);
     const QVector3D origin = originOf(pose);
     if (!s.project(origin, &g.origin))
         return g;
     g.valid = true;
     // Overlay px per world px at the origin, so handles keep their on-screen size at any depth
     // and under any parent scale.
-    double magnify = scale / s.w(origin);
-    if (!s.parent.isIdentity()) {
+    double magnify = s.hasView ? 0.0 : scale / s.w(origin);
+    if (s.hasView) {
+        // The longest of the three axes on screen: whichever way the view looks, at least one of
+        // them lies close to the screen plane.
+        for (int axis = 0; axis < 3; ++axis) {
+            QPointF step;
+            if (s.project(origin + basis(axis), &step))
+                magnify = std::max(magnify, QLineF(g.origin, step).length());
+        }
+        magnify = std::max(1e-6, magnify);
+    } else if (!s.parent.isIdentity()) {
         QPointF step;
         if (s.project(origin + QVector3D(1.f, 0.f, 0.f), &step))
             magnify = std::max(1e-6, QLineF(g.origin, step).length());
@@ -374,11 +423,13 @@ void eulerFromMatrix(const QMatrix4x4 &r, double nearest[3], double out[3])
 }
 
 DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QString &handle,
-                QPointF press, QPointF now, bool snap, double scale)
+                QPointF press, QPointF now, bool snap, double scale, const View &view)
 {
     DragResult result;
     result.pose = start;
-    if (!start.parent.isIdentity()) {
+    if (view.valid && !start.parent.isAffine())
+        return result;
+    if (!view.valid && !start.parent.isIdentity()) {
         // Solve in the clip's own space: pointer back through the parent, gizmo without it.
         const Space parented = spaceFor(start, scale);
         Pose own = start;
@@ -388,9 +439,9 @@ DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QSt
         result.pose.parent = start.parent;
         return result;
     }
-    const Space s = spaceFor(start, scale);
+    const Space s = spaceFor(start, scale, view);
     const QVector3D origin = originOf(start);
-    const double d = s.d;
+    const double d = s.hasView ? std::max(1.0, double((s.eye() - origin).length())) : s.d;
 
     if (tool == Tool::Scale) {
         const bool uniform = handle == QLatin1String("xy");
@@ -431,7 +482,7 @@ DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QSt
         double delta = 0.0;
         double t0 = 0.0;
         double t1 = 0.0;
-        const Geometry g = geometry(start, tool, orientation, scale);
+        const Geometry g = geometry(start, tool, orientation, scale, 1.0, view);
         const bool dolly = std::any_of(g.handles.cbegin(), g.handles.cend(), [&](const Handle &h) {
             return h.id == handle && h.kind == HandleKind::Dolly;
         });
@@ -442,9 +493,10 @@ DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QSt
             delta = (now.y() - press.y()) * d / 300.0 * (a.z() >= 0.f ? 1.0 : -1.0);
         }
         QVector3D moved = origin + a * float(delta);
-        // Stop short of the eye, where the clip would vanish.
+        // Stop short of the eye, where the clip would vanish. A view's eye can be anywhere, and the
+        // clip is free to pass it.
         const double maxZ = d * 0.8;
-        if (moved.z() > maxZ && std::abs(a.z()) > 1e-6f) {
+        if (!s.hasView && moved.z() > maxZ && std::abs(a.z()) > 1e-6f) {
             const double back = (moved.z() - maxZ) / a.z();
             moved -= a * float(back);
         }
@@ -495,6 +547,24 @@ DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QSt
     result.pose.pose3d.rotationY = angles[1];
     result.pose.rotation = angles[2];
     return result;
+}
+
+QVector3D eyeOf(const QMatrix4x4 &m)
+{
+    // Solve rows 0, 1 and 3 of m·(p, 1) = 0 for p.
+    QMatrix4x4 system;
+    for (const int i : {0, 1}) {
+        const QVector4D r = m.row(i);
+        system.setRow(i, QVector4D(r.x(), r.y(), r.z(), 0.f));
+    }
+    const QVector4D r3 = m.row(3);
+    system.setRow(2, QVector4D(r3.x(), r3.y(), r3.z(), 0.f));
+    system.setRow(3, QVector4D(0.f, 0.f, 0.f, 1.f));
+    bool invertible = false;
+    const QMatrix4x4 inverse = system.inverted(&invertible);
+    if (!invertible)
+        return {};
+    return inverse.mapVector(QVector3D(-m(0, 3), -m(1, 3), -m(3, 3)));
 }
 
 } // namespace drift::gizmo
