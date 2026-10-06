@@ -59,6 +59,7 @@ ApplicationWindow {
 
     // Set true after the unsaved prompt resolves so onClosing can finish quit.
     property bool forceClose: false
+    property bool manualUpdateCheck: false
 
     // On macOS, instantiate a native MenuBar via Qt.labs.platform.
     // On other platforms (Windows, Linux, Android), no menu bar is created so the
@@ -67,7 +68,6 @@ ApplicationWindow {
         active: Theme.isMacOS
         sourceComponent: Component {
         Platform.MenuBar {
-            Component.onCompleted: console.log("=== MAC MENU BAR LOADED ===")
             window: window
 
             Platform.Menu {
@@ -212,15 +212,15 @@ ApplicationWindow {
                     onTriggered: window.openAboutDialog()
                 }
                 Platform.MenuItem {
-                    text: qsTr("Preferences…")
+                    text: qsTr("Settings…")
                     shortcut: StandardKey.Preferences
-                    role: Platform.MenuItem.PreferencesRole
+                    role: Platform.MenuItem.ApplicationSpecificRole
                     onTriggered: window.openSettings()
                 }
                 Platform.MenuItem {
                     text: qsTr("Check for Updates…")
                     role: Platform.MenuItem.ApplicationSpecificRole
-                    onTriggered: window.openUpdateDialog()
+                    onTriggered: window.checkForUpdates()
                 }
             }
 
@@ -803,6 +803,26 @@ ApplicationWindow {
     }
 
     Connections {
+        target: Updates
+        function onCheckingChanged() {
+            if (!Updates.checking && window.manualUpdateCheck) {
+                window.manualUpdateCheck = false
+                if (Updates.updateAvailable) {
+                    window.openUpdateDialog()
+                } else if (Updates.status.length > 0) {
+                    if (Updates.status.indexOf(Updates.currentVersion) !== -1) {
+                        Toasts.success(Updates.status)
+                    } else {
+                        Toasts.info(Updates.status)
+                    }
+                } else {
+                    Toasts.success(qsTr("Drift %1 is the latest version.").arg(Updates.currentVersion))
+                }
+            }
+        }
+    }
+
+    Connections {
         target: EditorState
         function onOpenSegmentationWindowRequested(track, clip, startSeconds, durationSeconds) {
             segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds, true)
@@ -1045,6 +1065,20 @@ ApplicationWindow {
     // Opened from the header badge, which only exists while there is something to show.
     function openAboutDialog() {
         aboutDialogLoader.ensure().open()
+    }
+
+    function checkForUpdates() {
+        if (Updates.updateAvailable) {
+            openUpdateDialog()
+            return
+        }
+        if (Updates.checking) {
+            Toasts.info(qsTr("Already checking for updates…"))
+            return
+        }
+        window.manualUpdateCheck = true
+        Toasts.info(qsTr("Checking for updates…"))
+        Updates.checkNow()
     }
 
     function openUpdateDialog() {

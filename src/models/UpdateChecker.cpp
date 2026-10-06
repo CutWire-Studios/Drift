@@ -3,12 +3,14 @@
 #include "UpdateAsset.h"
 #include "VersionCompare.h"
 
+#include <QClipboard>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDesktopServices>
-#include <QDnsLookup>
 #include <QDir>
+#include <QDnsLookup>
+#include <QGuiApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
@@ -183,7 +185,9 @@ bool UpdateChecker::updateAvailable() const
 
 bool UpdateChecker::canInstall() const
 {
-    return installSupported() && !m_assetUrl.isEmpty() && !m_assetName.isEmpty();
+    // A Homebrew cask owns this copy. Installing the disk image beside it leaves two apps and
+    // breaks `brew upgrade`, so the dialog offers the brew command instead.
+    return installSupported() && !isHomebrew() && !m_assetUrl.isEmpty() && !m_assetName.isEmpty();
 }
 
 QString UpdateChecker::currentVersion() const
@@ -353,6 +357,25 @@ void UpdateChecker::markAnnounced()
     QSettings().setValue(settingsKey("announcedVersion"), m_announcedVersion);
 }
 
+bool UpdateChecker::isHomebrew() const
+{
+#if defined(Q_OS_MACOS)
+    const bool caskExists = QDir(QStringLiteral("/opt/homebrew/Caskroom/drift")).exists()
+            || QDir(QStringLiteral("/usr/local/Caskroom/drift")).exists()
+            || (!qEnvironmentVariableIsEmpty("HOMEBREW_PREFIX")
+                && QDir(qEnvironmentVariable("HOMEBREW_PREFIX") + QStringLiteral("/Caskroom/drift")).exists());
+    return caskExists;
+#else
+    return false;
+#endif
+}
+
+void UpdateChecker::copyHomebrewCommand()
+{
+    if (QClipboard *clip = QGuiApplication::clipboard())
+        clip->setText(QStringLiteral("brew upgrade --cask drift"));
+}
+
 void UpdateChecker::check(bool manual)
 {
     if (m_checking || m_downloading || m_preparing || !supported())
@@ -368,14 +391,15 @@ void UpdateChecker::check(bool manual)
         dns->deleteLater();
 
         if (dns->error() != QDnsLookup::NoError) {
-            setChecking(false);
             // A background check that failed says nothing: being offline is not an error the user
             // asked about. Only record the attempt when the record was actually read, so a laptop
             // that launches offline all week still checks the day it has a connection.
+            // Status is published before checking goes false, so a manual check's toast sees it.
             if (manual)
                 setStatus(tr("Couldn’t check for updates: %1").arg(dns->errorString()));
             else
                 announceIfNeeded();
+            setChecking(false);
             return;
         }
 
@@ -391,18 +415,18 @@ void UpdateChecker::check(bool manual)
                 break;
         }
         if (version.isEmpty()) {
-            setChecking(false);
             if (manual)
                 setStatus(tr("Couldn’t check for updates: unexpected response."));
+            setChecking(false);
             return;
         }
 
         QSettings().setValue(settingsKey("lastCheck"), QDateTime::currentDateTimeUtc());
         if (drift::compareVersions(kCurrentVersion, version) >= 0) {
-            setChecking(false);
             clearRelease();
             if (manual)
                 setStatus(tr("Drift %1 is the latest version.").arg(kCurrentVersion));
+            setChecking(false);
             return;
         }
 
@@ -433,19 +457,19 @@ void UpdateChecker::fetchRelease(const QString &version, bool manual)
     QNetworkReply *reply = m_network->get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply, manual, version] {
         reply->deleteLater();
-        setChecking(false);
 
         // The version already came from DNS. A missing release body still leaves a download
         // built from that version; notes and the checksum are the only things this request adds.
         if (reply->error() != QNetworkReply::NoError
             || !applyRelease(reply->readAll(), manual, version))
             publishFromVersion(version, manual);
+        else
+            setChecking(false);
     });
 }
 
 void UpdateChecker::publishFromVersion(const QString &version, bool manual)
 {
-    setChecking(false);
     const QString fileName = drift::installerFileName(updatePlatform(),
                                                       QSysInfo::currentCpuArchitecture(), version);
     publishRelease(version, QString(), drift::releasePageUrl(kFeedUrl, version), fileName,
@@ -453,6 +477,7 @@ void UpdateChecker::publishFromVersion(const QString &version, bool manual)
     if (manual)
         setStatus(tr("Drift %1 is available.").arg(version));
     announceIfNeeded();
+    setChecking(false);
 }
 
 bool UpdateChecker::applyRelease(const QByteArray &json, bool manual, const QString &expectedVersion)
