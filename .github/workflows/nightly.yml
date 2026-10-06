@@ -1,9 +1,9 @@
 name: Nightly
 
 # One pre-release, tagged `nightly`, rewritten in place every night — rather than a tag per build,
-# which would bury the stable releases. Because it is a pre-release it can never become "Latest",
-# `releases/latest` keeps returning the newest stable tag, and the in-app update check (which
-# refuses pre-releases outright, see UpdateChecker::applyRelease) never offers it to anyone.
+# which would bury the stable releases. The in-app update check reads the stable version from
+# the TXT record on drift-version.cutwire.org and is compiled out of nightly builds
+# (DRIFT_UPDATE_FEED_URL is empty), so a nightly never offers to replace itself.
 #
 # Nightly builds carry their own application identity on every platform — bundle id, Windows
 # AppId, Flatpak app id, Android package, Arch package name — so one can be installed and

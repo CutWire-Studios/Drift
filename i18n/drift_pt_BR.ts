@@ -11516,10 +11516,6 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Verificar ao iniciar</translation>
     </message>
     <message>
-        <source>Ask GitHub once a day whether a newer Drift has been released</source>
-        <translation>Perguntar ao GitHub uma vez por dia se saiu uma versão mais nova do Drift</translation>
-    </message>
-    <message>
         <source>Checking…</source>
         <translation>Verificando…</translation>
     </message>
@@ -11638,6 +11634,14 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Unlink the marketplace account from this device</source>
         <translation>Desvincular a conta do marketplace deste dispositivo</translation>
+    </message>
+    <message>
+        <source>Once a day, check whether a newer Drift has been released</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15147,6 +15151,30 @@ Se a reprodução travar, experimente outro.</translation>
         <source>Drift %1 is available.</source>
         <translation>O Drift %1 está disponível.</translation>
     </message>
+    <message>
+        <source>Couldn’t download the update: the cache isn’t writable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t download the update: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the download was interrupted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t download the update: the file didn’t match the release.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t prepare the update.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 will install when you quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UpdateDialog</name>
@@ -15181,6 +15209,30 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Opens the release page in your browser</source>
         <translation>Abre a página da versão no seu navegador</translation>
+    </message>
+    <message>
+        <source>Downloading Drift %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preparing the update…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift will quit and install %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart and install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads the update and installs it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

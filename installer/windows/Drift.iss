@@ -75,3 +75,11 @@ Root: HKCR; Subkey: "CutWire.Drift.Project\shell\open\command"; ValueType: strin
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+; Silent in-app updates pass /DRIFTUPDATE=1. skipifsilent would otherwise leave Drift closed.
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: LaunchAfterSilentUpdate
+
+[Code]
+function LaunchAfterSilentUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:DRIFTUPDATE|}') = '1';
+end;

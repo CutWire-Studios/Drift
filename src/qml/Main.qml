@@ -737,6 +737,16 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: Updates
+        function onUpdateReady() {
+            window.openUpdateDialog()
+        }
+        function onQuitRequested() {
+            window.close()
+        }
+    }
+
     LazyLoader {
         id: updateDialogLoader
         sourceComponent: Component {

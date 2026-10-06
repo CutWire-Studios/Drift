@@ -2,11 +2,9 @@ import QtQuick
 import QtQuick.Controls.Basic
 import Drift
 
-// Opened from the badge in EditorHeader, never by itself — a dialog over the project someone just
-// launched to work on is an interruption, and the badge is already the notification.
-//
-// Three actions, and "Skip" belongs away from the two safe ones, so the buttons live in the
-// content and ThemedDialog's two-button footer is off (same shape as UnsavedChangesDialog).
+// Opened from the header badge, and on its own the first time a Windows or macOS build finds a
+// newer version. Three actions, and "Skip" belongs away from the two safe ones, so the buttons
+// live in the content and ThemedDialog's two-button footer is off (same shape as UnsavedChangesDialog).
 ThemedDialog {
     id: root
 
@@ -22,8 +20,22 @@ ThemedDialog {
     }
 
     function download() {
+        if (Updates.canInstall) {
+            Updates.downloadAndInstall()
+            return
+        }
         Updates.openDownloadPage()
         close()
+    }
+
+    readonly property string progressText: {
+        if (Updates.downloading)
+            return qsTr("Downloading Drift %1…").arg(Updates.latestVersion)
+        if (Updates.preparing)
+            return qsTr("Preparing the update…")
+        if (Updates.readyToInstall)
+            return qsTr("Drift will quit and install %1.").arg(Updates.latestVersion)
+        return Updates.error
     }
 
     contentItem: Column {
@@ -72,6 +84,20 @@ ThemedDialog {
             }
         }
 
+        ThemedProgressBar {
+            width: parent.width
+            visible: Updates.downloading || Updates.preparing
+            value: Updates.progress
+        }
+
+        ThemedLabel {
+            width: parent.width
+            size: "sm"
+            tone: "default"
+            visible: root.progressText.length > 0
+            text: root.progressText
+        }
+
         Item {
             width: parent.width
             height: downloadButton.height
@@ -102,13 +128,23 @@ ThemedDialog {
                     id: downloadButton
                     variant: "primary"
                     glyph: Theme.icons.download
-                    text: qsTr("Download")
-                    tooltip: qsTr("Opens the release page in your browser")
-                    onClicked: root.download()
+                    enabled: !Updates.downloading && !Updates.preparing
+                    text: Updates.readyToInstall ? qsTr("Restart and install")
+                          : (Updates.downloading || Updates.preparing) ? qsTr("Downloading…")
+                          : qsTr("Download")
+                    tooltip: Updates.canInstall
+                             ? qsTr("Downloads the update and installs it")
+                             : qsTr("Opens the release page in your browser")
+                    onClicked: Updates.readyToInstall ? Updates.requestQuit() : root.download()
                 }
             }
         }
     }
 
-    onOpened: downloadButton.forceActiveFocus()
+    onOpened: {
+        Updates.markAnnounced()
+        Updates.setInstallPromptOpen(true)
+        downloadButton.forceActiveFocus()
+    }
+    onClosed: Updates.setInstallPromptOpen(false)
 }

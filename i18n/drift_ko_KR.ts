@@ -11464,10 +11464,6 @@ If playback stutters, try another.</source>
         <translation>시작 시 확인</translation>
     </message>
     <message>
-        <source>Ask GitHub once a day whether a newer Drift has been released</source>
-        <translation>하루에 한 번 GitHub에 최신 Drift 릴리스가 있는지 확인</translation>
-    </message>
-    <message>
         <source>Checking…</source>
         <translation>확인 중…</translation>
     </message>
@@ -11586,6 +11582,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Unlink the marketplace account from this device</source>
         <translation>이 장치에서 마켓플레이스 계정 연결 해제</translation>
+    </message>
+    <message>
+        <source>Once a day, check whether a newer Drift has been released</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15086,6 +15090,30 @@ If playback stutters, try another.</source>
         <source>Drift %1 is available.</source>
         <translation>Drift %1을(를) 사용할 수 있습니다.</translation>
     </message>
+    <message>
+        <source>Couldn’t download the update: the cache isn’t writable.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t download the update: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the download was interrupted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t download the update: the file didn’t match the release.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t prepare the update.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift %1 will install when you quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UpdateDialog</name>
@@ -15120,6 +15148,30 @@ If playback stutters, try another.</source>
     <message>
         <source>Opens the release page in your browser</source>
         <translation>브라우저에서 릴리스 페이지를 엽니다</translation>
+    </message>
+    <message>
+        <source>Downloading Drift %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preparing the update…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift will quit and install %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart and install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads the update and installs it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

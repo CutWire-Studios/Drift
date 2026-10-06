@@ -406,7 +406,7 @@ Item {
                     ThemedSwitch {
                         checked: Updates.enabled
                         text: qsTr("Check on startup")
-                        tooltip: qsTr("Ask GitHub once a day whether a newer Drift has been released")
+                        tooltip: qsTr("Once a day, check whether a newer Drift has been released")
                         onToggled: Updates.enabled = checked
                     }
 
@@ -418,8 +418,10 @@ Item {
                             id: checkNowButton
                             variant: "secondary"
                             glyph: Theme.icons.refresh
-                            text: Updates.checking ? qsTr("Checking…") : qsTr("Check now")
-                            enabled: !Updates.checking
+                            text: Updates.checking ? qsTr("Checking…")
+                                  : Updates.downloading ? qsTr("Downloading…")
+                                  : qsTr("Check now")
+                            enabled: !Updates.checking && !Updates.downloading && !Updates.preparing
                             onClicked: Updates.checkNow()
                         }
 

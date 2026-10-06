@@ -82,9 +82,9 @@ set(DRIFT_MARKET_CLIENT_KEY "5409a0bebab4446f88e51d06024a5cf9a694ee141a6a1c6be7a
     CACHE STRING "HMAC key for marketplace client identity and request signing")
 
 # --- Update check -----------------------------------------------------------
-# Where src/models/UpdateChecker looks for a newer release, once a day, to raise the badge in the
-# header. GitHub's releases/latest is the source of truth because the release tag already is: it
-# excludes drafts and pre-releases, and needs no service of our own.
+# Where the installer for a newer release is downloaded. The version itself comes from the TXT
+# record on drift-version.cutwire.org (see UpdateChecker); this URL is only how that version's
+# release notes and installer are found.
 #
 # Set it to an empty string for builds a package manager owns — the Flatpak manifests and the Arch
 # PKGBUILD all do. There, pacman or flatpak fetches the update on its own schedule and an in-app
@@ -861,6 +861,8 @@ qt_add_executable(drift
     src/models/VersionCompare.h
     src/models/UpdateChecker.h
     src/models/UpdateChecker.cpp
+    src/models/UpdateAsset.h
+    src/models/UpdateAsset.cpp
     src/models/AppController.h
     src/models/AppController.cpp
     src/models/EditorState.h
