@@ -122,6 +122,39 @@ struct Clip
     // pixels it was estimated from change.
     QString depthPath;
 
+    // A patch the user circled, baked by the object-track job and indexed at
+    // (sourceUs - objectTrackSrcOffsetUs), same as a face track. The seed is where the
+    // circle sits in the source frame (x/y 0..1, radius as a fraction of width) and the
+    // source time it was placed at. The "ran" fields are the seed the sidecar was built
+    // from, so moving the circle marks the track stale instead of silently disagreeing.
+    //
+    // Lock turns that path into position and size keys that keep the point on the hold
+    // spot. Follow, on a sticker or text clip, names the host whose track should carry it.
+    QString objectTrackPath;
+    TimeUs objectTrackSrcOffsetUs = 0;
+    double objectTrackX = 0.5;
+    double objectTrackY = 0.5;
+    double objectTrackRadius = 0.12;
+    double objectTrackZoom = 2.0;
+    double objectTrackHoldX = 0.5;
+    double objectTrackHoldY = 0.5;
+    TimeUs objectTrackSeedUs = 0;
+    double objectTrackRanX = 0.5;
+    double objectTrackRanY = 0.5;
+    double objectTrackRanRadius = 0.12;
+    TimeUs objectTrackRanUs = 0;
+    bool objectLockApplied = false;
+    double objectLockZoom = 2.0;
+    double objectLockHoldX = 0.5;
+    double objectLockHoldY = 0.5;
+    QString objectLockPath;
+    bool objectLockHasRestPose = false;
+    double objectLockRestX = 0.0;
+    double objectLockRestY = 0.0;
+    double objectLockRestW = 0.0;
+    double objectLockRestH = 0.0;
+    QString objectFollowClipId;
+
     // Stabilize settings, and the ones the last run used. Bake mode renders a new
     // "(stabilized)" bin asset and points the clip at it; keyframe mode writes sparse
     // transformX/Y keys instead. `stabilizing` is transient UI state and is not saved.

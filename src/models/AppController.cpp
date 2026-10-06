@@ -65,6 +65,7 @@
 #include "engine/FacePropImport.h"
 #include "engine/FaceSwapSource.h"
 #include "engine/FaceTrack.h"
+#include "engine/ObjectTrack.h"
 #include "engine/DepthSidecar.h"
 #include "engine/VdaDepth.h"
 #include "engine/Restorer.h"
@@ -142,6 +143,9 @@
 #include <QFutureWatcher>
 #include <numeric>
 #include <QtConcurrent>
+
+#include <cmath>
+#include <limits>
 #include <QtMath>
 #include <algorithm>
 #include <climits>
@@ -175,6 +179,7 @@ constexpr quint64 kDenoiseScanStreamId = 0xA5'11'5C'A4'00'00'00'02ull;
 constexpr quint64 kSegmentEncodeStreamId = 0xA5'11'5C'A4'00'00'00'03ull;
 constexpr quint64 kCutoutRenderStreamId = 0xA5'11'5C'A4'00'00'00'04ull;
 constexpr quint64 kFaceDetectStreamId = 0xA5'11'5C'A4'00'00'00'05ull;
+constexpr quint64 kObjectTrackStreamId = 0xA5'11'5C'A4'00'00'00'06ull;
 constexpr quint64 kDepthScanStreamId = 0xA5'11'5C'A4'00'00'00'09ull;
 constexpr quint64 kRestorePreviewStreamId = 0xA5'11'5C'A4'00'00'00'0Aull;
 constexpr quint64 kSegmentScrubStreamId = 0xA5'11'5C'A4'00'00'00'0Bull;
@@ -4456,6 +4461,21 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
                  || clip.stabilizeMode != clip.stabilizeAppliedMode)},
         {QStringLiteral("stabilizeProgress"), m_stabilizeProgress.value(clip.id, 0.0)},
         {QStringLiteral("stabilizeStatus"), m_stabilizeStatus.value(clip.id)},
+        {QStringLiteral("objectTrackX"), clip.objectTrackX},
+        {QStringLiteral("objectTrackY"), clip.objectTrackY},
+        {QStringLiteral("objectTrackRadius"), clip.objectTrackRadius},
+        {QStringLiteral("objectTrackZoom"), clip.objectTrackZoom},
+        {QStringLiteral("objectTrackHoldX"), clip.objectTrackHoldX},
+        {QStringLiteral("objectTrackHoldY"), clip.objectTrackHoldY},
+        {QStringLiteral("hasObjectTrack"), !clip.objectTrackPath.isEmpty()},
+        {QStringLiteral("objectTrackStale"), drift::objectTrackIsStale(clip)},
+        {QStringLiteral("objectLockApplied"), clip.objectLockApplied},
+        {QStringLiteral("objectLockStale"), drift::objectLockIsStale(clip)},
+        {QStringLiteral("objectFollowClipId"), clip.objectFollowClipId},
+        {QStringLiteral("canObjectTrack"), clip.type == drift::ClipType::Video},
+        {QStringLiteral("canFollowObject"), clip.type == drift::ClipType::Text
+             || clip.type == drift::ClipType::Image || clip.type == drift::ClipType::Shape
+             || clip.type == drift::ClipType::Vector || clip.type == drift::ClipType::Subtitle},
         {QStringLiteral("start"), drift::usToSeconds(clip.timelineStart)},
         {QStringLiteral("duration"), drift::usToSeconds(clip.timelineDuration)},
         {QStringLiteral("inPoint"), drift::usToSeconds(clip.srcIn)},
@@ -13486,6 +13506,479 @@ void AppController::finalizeFaceDetection(const QString &clipId, const QString &
     selectClip(trackIndex, clipIndex);
 }
 
+namespace {
+
+bool locateClip(const drift::Project &project, const QString &id, int *trackIndex, int *clipIndex)
+{
+    for (int t = 0; t < project.tracks().size(); ++t) {
+        const drift::Track &track = project.tracks().at(t);
+        for (int c = 0; c < track.clips.size(); ++c) {
+            if (track.clips.at(c).id == id) {
+                *trackIndex = t;
+                *clipIndex = c;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+} // namespace
+
+void AppController::trackObjectForClip(int trackIndex, int clipIndex)
+{
+    if (m_objectTracking) {
+        setLastMessage(tr("Object tracking already in progress"), QStringLiteral("warning"));
+        return;
+    }
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+
+    const drift::Clip clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video) {
+        setLastMessage(tr("Select a video clip to track"), QStringLiteral("warning"));
+        return;
+    }
+    if (clip.path.isEmpty() || clip.srcOut <= clip.srcIn) {
+        setLastMessage(tr("Clip has no video to track"), QStringLiteral("warning"));
+        return;
+    }
+
+    // Playback drives the same decoder pool. One walker at a time, same as face detection.
+    setPlaying(false);
+
+    drift::TimeUs seedUs = clip.objectTrackSeedUs;
+    if (seedUs < clip.srcIn || seedUs >= clip.srcOut) {
+        seedUs = clip.containsTime(m_playheadUs) ? clip.timelineToSourceUs(m_playheadUs) : clip.srcIn;
+    }
+
+    m_objectTrackCancel.storeRelaxed(0);
+    m_objectTrackProgress = 0.0;
+    m_objectTrackStatus = tr("Getting ready…");
+    m_objectTrackingClipId = clip.id;
+    m_objectTracking = true;
+    emit objectTrackProgressChanged();
+    emit objectTrackStatusChanged();
+    emit objectTrackingChanged();
+    emit selectedClipDataChanged();
+    setLastMessage(tr("Tracking object…"));
+
+    const QString path = clip.path;
+    const QString clipId = clip.id;
+    const drift::TimeUs srcIn = clip.srcIn;
+    const drift::TimeUs srcOut = clip.srcOut;
+    const int fps = qMax(1, m_project.fps());
+    const int rotationCorrection = clip.rotationCorrection;
+    const double seedX = clip.objectTrackX;
+    const double seedY = clip.objectTrackY;
+    const double seedRadius = clip.objectTrackRadius;
+
+    (void)QtConcurrent::run([this, path, clipId, srcIn, srcOut, fps, rotationCorrection, seedUs, seedX,
+                             seedY, seedRadius]() {
+        auto setProgress = [this](double fraction, const QString &status) {
+            QMetaObject::invokeMethod(
+                this,
+                [this, fraction, status]() {
+                    m_objectTrackProgress = fraction;
+                    emit objectTrackProgressChanged();
+                    if (!status.isEmpty() && status != m_objectTrackStatus) {
+                        m_objectTrackStatus = status;
+                        emit objectTrackStatusChanged();
+                    }
+                },
+                Qt::QueuedConnection);
+        };
+        auto finish = [this, clipId, srcIn, seedX, seedY, seedRadius, seedUs](
+                          bool ok, const QString &message, const QString &trackPath) {
+            QMetaObject::invokeMethod(
+                this,
+                [this, ok, message, trackPath, clipId, srcIn, seedX, seedY, seedRadius, seedUs]() {
+                    m_objectTracking = false;
+                    m_objectTrackProgress = ok ? 1.0 : 0.0;
+                    m_objectTrackStatus = ok ? tr("Done") : message;
+                    emit objectTrackingChanged();
+                    emit objectTrackProgressChanged();
+                    emit objectTrackStatusChanged();
+                    if (!ok) {
+                        setLastMessage(message, QStringLiteral("error"));
+                        return;
+                    }
+                    finalizeObjectTrack(clipId, trackPath, srcIn, seedX, seedY, seedRadius, seedUs);
+                    setLastMessage(message);
+                },
+                Qt::QueuedConnection);
+        };
+
+        const drift::TimeUs span = qMax(drift::TimeUs{1}, srcOut - srcIn);
+        int trackFps = qMin(fps, 12);
+        int count = int((span * trackFps + drift::kUsPerSecond - 1) / drift::kUsPerSecond);
+        count = qMax(1, count);
+        // A long clip is sampled sparsely. sample() interpolates, and a few hundred
+        // patches is enough to follow a person or a car without decoding every frame.
+        if (count > 480) {
+            count = 480;
+            trackFps = qMax(1, int((qint64(count) * drift::kUsPerSecond) / span));
+            count = qMax(1, int((span * trackFps + drift::kUsPerSecond - 1) / drift::kUsPerSecond));
+            count = qMin(count, 480);
+        }
+
+        QVector<drift::TimeUs> times;
+        times.reserve(count);
+        int seedIndex = 0;
+        drift::TimeUs bestGap = std::numeric_limits<drift::TimeUs>::max();
+        for (int i = 0; i < count; ++i) {
+            drift::TimeUs t = srcIn + drift::TimeUs(i) * drift::kUsPerSecond / trackFps;
+            if (t >= srcOut)
+                t = srcOut - 1;
+            t = qMax(srcIn, t);
+            times.append(t);
+            const drift::TimeUs gap = t > seedUs ? t - seedUs : seedUs - t;
+            if (gap < bestGap) {
+                bestGap = gap;
+                seedIndex = i;
+            }
+        }
+
+        auto decode = [&](drift::TimeUs sourceUs) {
+            return ClipReaderPool::instance().readVideoFrame(path, kObjectTrackStreamId, sourceUs, 360,
+                                                             360, rotationCorrection);
+        };
+
+        const QImage seedFrame = decode(times.at(seedIndex));
+        if (seedFrame.isNull()) {
+            finish(false, tr("Could not decode the frame under the circle"), {});
+            return;
+        }
+
+        drift::ObjectPatchTracker tracker;
+        const drift::ObjectSample seed = tracker.start(seedFrame, seedX, seedY, seedRadius);
+        if (!seed.valid) {
+            finish(false, tr("Place the circle on a part of the picture that has some detail"), {});
+            return;
+        }
+
+        drift::ObjectTrack track;
+        track.fps = trackFps;
+        track.startSrcUs = times.at(0);
+        track.frames.resize(count);
+        track.frames[seedIndex] = seed;
+
+        int lost = 0;
+        int done = 1;
+        const int steps = count;
+        for (int i = seedIndex + 1; i < count; ++i) {
+            if (m_objectTrackCancel.loadRelaxed() != 0) {
+                finish(false, tr("Object tracking cancelled"), {});
+                return;
+            }
+            const drift::ObjectSample sample = tracker.next(decode(times.at(i)));
+            track.frames[i] = sample;
+            if (!sample.valid)
+                ++lost;
+            ++done;
+            setProgress(double(done) / steps, tr("Tracking frame %1 of %2…").arg(done).arg(steps));
+        }
+        tracker.resetToSeed();
+        for (int i = seedIndex - 1; i >= 0; --i) {
+            if (m_objectTrackCancel.loadRelaxed() != 0) {
+                finish(false, tr("Object tracking cancelled"), {});
+                return;
+            }
+            const drift::ObjectSample sample = tracker.next(decode(times.at(i)));
+            track.frames[i] = sample;
+            if (!sample.valid)
+                ++lost;
+            ++done;
+            setProgress(double(done) / steps, tr("Tracking frame %1 of %2…").arg(done).arg(steps));
+        }
+
+        drift::smoothObjectTrack(&track);
+
+        const QString trackPath = drift::newObjectTrackPath();
+        QString error;
+        if (trackPath.isEmpty() || !drift::writeObjectTrack(trackPath, track, &error)) {
+            finish(false, error.isEmpty() ? tr("Could not write the object track") : error, {});
+            return;
+        }
+        finish(true,
+               lost > 0 ? tr("Tracking complete — the object was lost in %1 of %2 frames")
+                              .arg(lost)
+                              .arg(count)
+                        : tr("Tracking complete"),
+               trackPath);
+    });
+}
+
+void AppController::cancelObjectTracking()
+{
+    if (m_objectTracking)
+        m_objectTrackCancel.storeRelaxed(1);
+}
+
+void AppController::finalizeObjectTrack(const QString &clipId, const QString &trackPath,
+                                        drift::TimeUs srcOffsetUs, double seedX, double seedY,
+                                        double seedRadius, drift::TimeUs seedUs)
+{
+    int trackIndex = -1;
+    int clipIndex = -1;
+    if (!locateClip(m_project, clipId, &trackIndex, &clipIndex)) {
+        QFile::remove(trackPath);
+        setLastMessage(tr("Tracked clip no longer exists"), QStringLiteral("warning"));
+        return;
+    }
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    clip.objectTrackPath = trackPath;
+    clip.objectTrackSrcOffsetUs = srcOffsetUs;
+    clip.objectTrackRanX = seedX;
+    clip.objectTrackRanY = seedY;
+    clip.objectTrackRanRadius = seedRadius;
+    clip.objectTrackRanUs = seedUs;
+    // A seed that was never placed (time 0 on a trimmed clip) would look stale next to the
+    // time the scan actually used. Keep a circle the user moved during the scan as a new seed.
+    if (std::abs(clip.objectTrackX - seedX) < 0.004 && std::abs(clip.objectTrackY - seedY) < 0.004
+        && std::abs(clip.objectTrackRadius - seedRadius) < 0.004) {
+        clip.objectTrackSeedUs = seedUs;
+    }
+    pushProjectEdit(before, tr("Track Object"));
+    finishEdit(tr("Track Object"));
+    selectClip(trackIndex, clipIndex);
+}
+
+void AppController::clearObjectTrack(int trackIndex, int clipIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (clip.objectTrackPath.isEmpty())
+        return;
+    // The sidecar stays on disk so undo can point the clip back at it.
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].objectTrackPath.clear();
+    m_project.tracks()[trackIndex].clips[clipIndex].objectTrackSrcOffsetUs = 0;
+    pushProjectEdit(before, tr("Clear Object Track"));
+    finishEdit(tr("Clear Object Track"));
+}
+
+void AppController::setObjectTrackSeed(int trackIndex, int clipIndex, double x, double y, double radius)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    x = qBound(0.0, x, 1.0);
+    y = qBound(0.0, y, 1.0);
+    radius = qBound(0.02, radius, 0.45);
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video)
+        return;
+    if (std::abs(clip.objectTrackX - x) < 1e-5 && std::abs(clip.objectTrackY - y) < 1e-5
+        && std::abs(clip.objectTrackRadius - radius) < 1e-5) {
+        return;
+    }
+    const bool moved = std::abs(clip.objectTrackX - x) >= 1e-5 || std::abs(clip.objectTrackY - y) >= 1e-5;
+    const bool inside = clip.containsTime(m_playheadUs);
+    const drift::TimeUs seedUs = inside ? clip.timelineToSourceUs(m_playheadUs) : clip.objectTrackSeedUs;
+
+    const drift::Project before = m_project;
+    drift::Clip &c = m_project.tracks()[trackIndex].clips[clipIndex];
+    c.objectTrackX = x;
+    c.objectTrackY = y;
+    c.objectTrackRadius = radius;
+    if (moved && inside)
+        c.objectTrackSeedUs = seedUs;
+    pushProjectEdit(before, tr("Move Tracking Circle"));
+    finishEdit(tr("Move Tracking Circle"));
+}
+
+void AppController::setObjectTrackZoom(int trackIndex, int clipIndex, double zoom)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    zoom = qBound(1.0, zoom, 6.0);
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (std::abs(clip.objectTrackZoom - zoom) < 1e-4)
+        return;
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].objectTrackZoom = zoom;
+    pushProjectEdit(before, tr("Set Tracking Zoom"));
+    finishEdit(tr("Set Tracking Zoom"));
+}
+
+void AppController::setObjectTrackHold(int trackIndex, int clipIndex, double holdX, double holdY)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    holdX = qBound(0.0, holdX, 1.0);
+    holdY = qBound(0.0, holdY, 1.0);
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (std::abs(clip.objectTrackHoldX - holdX) < 1e-5 && std::abs(clip.objectTrackHoldY - holdY) < 1e-5)
+        return;
+    const drift::Project before = m_project;
+    drift::Clip &c = m_project.tracks()[trackIndex].clips[clipIndex];
+    c.objectTrackHoldX = holdX;
+    c.objectTrackHoldY = holdY;
+    pushProjectEdit(before, tr("Set Tracking Anchor"));
+    finishEdit(tr("Set Tracking Anchor"));
+}
+
+void AppController::applyObjectLock(int trackIndex, int clipIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video) {
+        setLastMessage(tr("Select a video clip to reframe"), QStringLiteral("warning"));
+        return;
+    }
+    const std::shared_ptr<const drift::ObjectTrack> track =
+        drift::loadObjectTrackCached(clip.objectTrackPath);
+    if (!track || track->isEmpty()) {
+        setLastMessage(tr("Track the object before locking the frame"), QStringLiteral("warning"));
+        return;
+    }
+
+    drift::ObjectLockOptions options;
+    options.zoom = qMax(1.0, clip.objectTrackZoom);
+    options.holdX = clip.objectTrackHoldX;
+    options.holdY = clip.objectTrackHoldY;
+    options.canvasW = m_project.width();
+    options.canvasH = m_project.height();
+    const QList<drift::ObjectLockKey> keys = drift::planObjectLock(*track, options);
+    if (keys.isEmpty()) {
+        setLastMessage(tr("The track has no point to follow"), QStringLiteral("warning"));
+        return;
+    }
+
+    const drift::Project before = m_project;
+    drift::Clip &c = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (!c.objectLockHasRestPose) {
+        c.objectLockRestX = c.transformX.isEmpty() ? 0.0 : c.transformX.evaluateAt(0);
+        c.objectLockRestY = c.transformY.isEmpty() ? 0.0 : c.transformY.evaluateAt(0);
+        c.objectLockRestW = c.transformW.isEmpty() ? options.canvasW : c.transformW.evaluateAt(0);
+        c.objectLockRestH = c.transformH.isEmpty() ? options.canvasH : c.transformH.evaluateAt(0);
+        c.objectLockHasRestPose = true;
+    }
+
+    drift::KeyframeTrack<double> xs;
+    drift::KeyframeTrack<double> ys;
+    for (const drift::ObjectLockKey &key : keys) {
+        const drift::TimeUs sourceUs =
+            track->startSrcUs
+            + drift::TimeUs(qRound64(double(key.frame) * double(drift::kUsPerSecond) / track->fps));
+        const drift::TimeUs local =
+            qBound(drift::TimeUs{0}, c.sourceUsToClipLocalUs(sourceUs), c.timelineDuration);
+        xs.setKeyframe(local, key.x);
+        ys.setKeyframe(local, key.y);
+    }
+    if (!xs.isEmpty() && xs.keyframes().firstKey() > 0) {
+        xs.setKeyframe(0, xs.keyframes().first().value);
+        ys.setKeyframe(0, ys.keyframes().first().value);
+    }
+    if (!xs.isEmpty() && xs.keyframes().lastKey() < c.timelineDuration) {
+        xs.setKeyframe(c.timelineDuration, xs.keyframes().last().value);
+        ys.setKeyframe(c.timelineDuration, ys.keyframes().last().value);
+    }
+    c.transformX = xs;
+    c.transformY = ys;
+    c.transformW = {};
+    c.transformH = {};
+    c.transformW.setKeyframe(0, qMax(1.0, keys.first().w));
+    c.transformH.setKeyframe(0, qMax(1.0, keys.first().h));
+    c.objectLockApplied = true;
+    c.objectLockZoom = c.objectTrackZoom;
+    c.objectLockHoldX = c.objectTrackHoldX;
+    c.objectLockHoldY = c.objectTrackHoldY;
+    c.objectLockPath = c.objectTrackPath;
+    pushProjectEdit(before, tr("Lock Tracked Object"));
+    finishEdit(tr("Lock Tracked Object"));
+}
+
+void AppController::removeObjectLock(int trackIndex, int clipIndex)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (!clip.objectLockApplied && !clip.objectLockHasRestPose)
+        return;
+
+    const double canvasW = m_project.width();
+    const double canvasH = m_project.height();
+    const drift::Project before = m_project;
+    drift::Clip &c = m_project.tracks()[trackIndex].clips[clipIndex];
+    c.transformX = {};
+    c.transformY = {};
+    c.transformW = {};
+    c.transformH = {};
+    c.transformX.setKeyframe(0, c.objectLockRestX);
+    c.transformY.setKeyframe(0, c.objectLockRestY);
+    c.transformW.setKeyframe(0, qMax(1.0, c.objectLockRestW > 1.0 ? c.objectLockRestW : canvasW));
+    c.transformH.setKeyframe(0, qMax(1.0, c.objectLockRestH > 1.0 ? c.objectLockRestH : canvasH));
+    c.objectLockApplied = false;
+    c.objectLockHasRestPose = false;
+    c.objectLockPath.clear();
+    pushProjectEdit(before, tr("Remove Object Lock"));
+    finishEdit(tr("Remove Object Lock"));
+}
+
+void AppController::setObjectFollowClip(int trackIndex, int clipIndex, const QString &hostClipId)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return;
+    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    if (hostClipId == clip.id)
+        return;
+    if (!hostClipId.isEmpty()) {
+        int hostTrack = -1;
+        int hostClip = -1;
+        if (!locateClip(m_project, hostClipId, &hostTrack, &hostClip))
+            return;
+        const drift::Clip &host = m_project.tracks().at(hostTrack).clips.at(hostClip);
+        if (host.objectTrackPath.isEmpty())
+            return;
+    }
+    if (clip.objectFollowClipId == hostClipId)
+        return;
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].objectFollowClipId = hostClipId;
+    pushProjectEdit(before, hostClipId.isEmpty() ? tr("Unpin From Object") : tr("Pin To Object"));
+    finishEdit(hostClipId.isEmpty() ? tr("Unpin From Object") : tr("Pin To Object"));
+}
+
+QVariantList AppController::objectTrackTargets() const
+{
+    QVariantList out;
+    for (const drift::Track &track : m_project.tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.type != drift::ClipType::Video || clip.objectTrackPath.isEmpty())
+                continue;
+            out.append(QVariantMap{{QStringLiteral("id"), clip.id},
+                                   {QStringLiteral("name"),
+                                    clip.name.isEmpty() ? tr("Video") : clip.name}});
+        }
+    }
+    return out;
+}
+
+QVariantMap AppController::objectTrackSample(int trackIndex, int clipIndex) const
+{
+    const QVariantMap none{{QStringLiteral("valid"), false}};
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return none;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const std::shared_ptr<const drift::ObjectTrack> track =
+        drift::loadObjectTrackCached(clip.objectTrackPath);
+    if (!track || track->isEmpty())
+        return none;
+    const drift::TimeUs relative = clip.containsTime(m_playheadUs)
+                                       ? clip.timelineToSourceUs(m_playheadUs) - clip.objectTrackSrcOffsetUs
+                                       : 0;
+    const drift::ObjectSample sample = track->sample(relative);
+    return QVariantMap{{QStringLiteral("valid"), sample.valid},
+                       {QStringLiteral("x"), double(sample.x)},
+                       {QStringLiteral("y"), double(sample.y)},
+                       {QStringLiteral("confidence"), double(sample.confidence)}};
+}
+
 // --- scene detection --------------------------------------------------------
 
 double AppController::sceneThreshold() const
@@ -15789,11 +16282,20 @@ QVariantList AppController::previewClipsAtPlayhead() const
                 continue;
 
             const drift::TimeUs relative = m_playheadUs - clip.timelineStart;
-            const double x = clipTransformValue(clip.transformX, relative, 0.0);
-            const double y = clipTransformValue(clip.transformY, relative, 0.0);
+            double x = clipTransformValue(clip.transformX, relative, 0.0);
+            double y = clipTransformValue(clip.transformY, relative, 0.0);
             const double w = clipTransformValue(clip.transformW, relative, static_cast<double>(canvasWidth));
             const double h = clipTransformValue(clip.transformH, relative, static_cast<double>(canvasHeight));
             const double rotation = clipTransformValue(clip.rotation, relative, 0.0);
+            // The gizmo has to sit where the picture does. A pinned sticker is moved in the
+            // compositor, so the box follows the same point or the handle and the pixels disagree.
+            double followedX = x;
+            double followedY = y;
+            if (drift::objectFollowPosition(tracks, clip, m_playheadUs, canvasWidth, canvasHeight,
+                                            &followedX, &followedY)) {
+                x = followedX;
+                y = followedY;
+            }
 
             const bool isTransform = track.isTransformLayer();
             int childCount = 0;

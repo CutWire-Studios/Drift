@@ -111,6 +111,7 @@ PanelFrame {
         "transform": qsTr("Transform"),
         "camera": qsTr("Camera"),
         "stabilize": qsTr("Stabilization"),
+        "track": qsTr("Track"),
         "animation": qsTr("Animation"),
         "audio": qsTr("Audio"),
         "speed": qsTr("Speed"),
@@ -136,6 +137,7 @@ PanelFrame {
         ListElement { tabId: "transform"; icon: 4; group: 1 }
         ListElement { tabId: "camera"; icon: 16; group: 1 }
         ListElement { tabId: "stabilize"; icon: 5; group: 1 }
+        ListElement { tabId: "track"; icon: 5; group: 1 }
         ListElement { tabId: "animation"; icon: 6; group: 1 }
         ListElement { tabId: "audio"; icon: 7; group: 1 }
         ListElement { tabId: "speed"; icon: 8; group: 1 }
@@ -205,6 +207,10 @@ PanelFrame {
                    || root.clipKind === "composite"
         if (tabId === "stabilize")
             return root.clipKind === "video"
+        if (tabId === "track")
+            return root.clipKind === "video" || root.clipKind === "image"
+                   || root.clipKind === "text" || root.clipKind === "shape"
+                   || root.clipKind === "vector" || root.clipKind === "subtitle"
         // Masks and effect stacks live on the adjustments pinned to a clip, and those adjustments
         // are what you select to edit them. The clip is where you *aim* one from — the assets
         // panel does that — but not where it is configured: a clip can carry several mask
@@ -740,6 +746,12 @@ PanelFrame {
                     active: root.currentTabId === "stabilize"
                     visible: active
                     sourceComponent: Component { StabilizeInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "track"
+                    visible: active
+                    sourceComponent: Component { ObjectTrackInspector { width: tabColumn.width } }
                 }
 
                 Loader {

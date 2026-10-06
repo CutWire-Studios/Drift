@@ -74,6 +74,7 @@
 #include "engine/EffectPackageLoader.h"
 #include "engine/EffectProcessor.h"
 #include "engine/FaceTrack.h"
+#include "engine/ObjectTrack.h"
 #include "engine/FaceMesh.h"
 #include "engine/Face111.h"
 #include "engine/FacePropCatalog.h"
@@ -139,6 +140,9 @@ private slots:
     void reverseProxyLookupIsByContainmentAndSourceIdentity();
     void resolveVideoReadMirrorsTheClipOntoTheProxy();
     void faceTrackRoundTripsAndInterpolates();
+    void objectTrackRoundTripsAndInterpolates();
+    void objectTrackFollowsAMovingPatch();
+    void objectLockHoldsThePointAndPinsAFollower();
     void depthSidecarRoundTripsAndNormalises();
     void depthSidecarRejectsUnfinishedFile();
     void vdaStitcherAlignsAndBlendsWindows();
@@ -1949,6 +1953,160 @@ void EngineTest::faceTrackRoundTripsAndInterpolates()
 
     // A slot that was never baked is simply absent.
     QVERIFY(!loaded.sample(0, 3).valid);
+}
+
+void EngineTest::objectTrackRoundTripsAndInterpolates()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("object.json"));
+
+    drift::ObjectTrack track;
+    track.fps = 10;
+    track.startSrcUs = drift::secondsToUs(1.0);
+    for (int i = 0; i < 3; ++i) {
+        drift::ObjectSample sample;
+        sample.valid = i != 1;
+        sample.x = 0.2f + 0.2f * i;
+        sample.y = 0.4f;
+        sample.radius = 0.1f;
+        sample.confidence = sample.valid ? 0.9f : 0.f;
+        track.frames.append(sample);
+    }
+
+    QString error;
+    QVERIFY2(drift::writeObjectTrack(path, track, &error), qPrintable(error));
+    drift::ObjectTrack loaded;
+    QVERIFY2(drift::readObjectTrack(path, &loaded, &error), qPrintable(error));
+    QCOMPARE(loaded.fps, 10);
+    QCOMPARE(loaded.startSrcUs, drift::secondsToUs(1.0));
+    QCOMPARE(loaded.frames.size(), 3);
+
+    const drift::ObjectSample between = loaded.sample(drift::kUsPerSecond / 20);
+    // Halfway from frame 0 to the invalid frame 1 holds frame 0 rather than sliding
+    // across the gap.
+    QVERIFY(between.valid);
+    QVERIFY(qAbs(between.x - 0.2f) < 1e-4);
+
+    const drift::ObjectSample onValid = loaded.sample(2 * drift::kUsPerSecond / 10);
+    QVERIFY(onValid.valid);
+    QVERIFY(qAbs(onValid.x - 0.6f) < 1e-4);
+}
+
+void EngineTest::objectTrackFollowsAMovingPatch()
+{
+    const int w = 220;
+    const int h = 140;
+    const int patch = 32;
+    QList<QImage> frames;
+    for (int i = 0; i < 6; ++i) {
+        QImage frame(w, h, QImage::Format_RGB32);
+        frame.fill(QColor(180, 180, 180));
+        const int ox = 24 + i * 12;
+        const int oy = 36;
+        for (int y = 0; y < patch; ++y) {
+            for (int x = 0; x < patch; ++x) {
+                const int luma = 30 + (x * 13 + y * 7) % 180;
+                frame.setPixel(ox + x, oy + y, qRgb(luma, 40 + (x % 9) * 12, 220 - (y % 7) * 15));
+            }
+        }
+        frames.append(frame);
+    }
+
+    const double nx = (24 + 16) / double(w - 1);
+    const double ny = (36 + 16) / double(h - 1);
+    const QList<drift::ObjectSample> tracked =
+        drift::trackObjectFrames(frames, 0, nx, ny, double(patch) / (2.0 * w));
+    QCOMPARE(tracked.size(), 6);
+    for (int i = 0; i < tracked.size(); ++i) {
+        QVERIFY2(tracked.at(i).valid, qPrintable(QStringLiteral("frame %1 lost").arg(i)));
+        const double expectX = (24 + i * 12 + 16) / double(w - 1);
+        const double expectY = (36 + 16) / double(h - 1);
+        QVERIFY2(qAbs(tracked.at(i).x - expectX) < 4.0 / w,
+                 qPrintable(QStringLiteral("frame %1 x %2 vs %3")
+                                .arg(i)
+                                .arg(tracked.at(i).x)
+                                .arg(expectX)));
+        QVERIFY2(qAbs(tracked.at(i).y - expectY) < 4.0 / h,
+                 qPrintable(QStringLiteral("frame %1 y %2 vs %3")
+                                .arg(i)
+                                .arg(tracked.at(i).y)
+                                .arg(expectY)));
+    }
+}
+
+void EngineTest::objectLockHoldsThePointAndPinsAFollower()
+{
+    drift::ObjectLockOptions options;
+    options.zoom = 2.0;
+    options.holdX = 0.5;
+    options.holdY = 0.5;
+    options.canvasW = 1000;
+    options.canvasH = 1000;
+    const drift::ObjectLockPose centred = drift::objectLockPose(0.5, 0.5, options);
+    QCOMPARE(centred.w, 2000.0);
+    QCOMPARE(centred.x, -500.0);
+    // The source centre lands on the canvas centre.
+    QVERIFY(qAbs((centred.x + 0.5 * centred.w) - 500.0) < 1e-6);
+
+    // A straight move sparsifies to the two ends.
+    drift::ObjectTrack track;
+    track.fps = 10;
+    for (int i = 0; i < 8; ++i) {
+        drift::ObjectSample sample;
+        sample.valid = true;
+        sample.x = 0.3f + 0.05f * i;
+        sample.y = 0.5f;
+        sample.radius = 0.1f;
+        sample.confidence = 1.f;
+        track.frames.append(sample);
+    }
+    const QList<drift::ObjectLockKey> keys = drift::planObjectLock(track, options);
+    QVERIFY(keys.size() >= 2);
+    QVERIFY(keys.size() < track.frames.size());
+    QCOMPARE(keys.first().frame, 0);
+    QCOMPARE(keys.last().frame, track.frames.size() - 1);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("follow.json"));
+    drift::ObjectTrack followTrack;
+    followTrack.fps = 10;
+    drift::ObjectSample at;
+    at.valid = true;
+    at.x = 0.25f;
+    at.y = 0.4f;
+    at.radius = 0.1f;
+    at.confidence = 1.f;
+    followTrack.frames.append(at);
+    QString error;
+    QVERIFY2(drift::writeObjectTrack(path, followTrack, &error), qPrintable(error));
+
+    drift::Track hostTrack;
+    drift::Clip host;
+    host.id = QStringLiteral("host");
+    host.type = drift::ClipType::Video;
+    host.timelineDuration = drift::kUsPerSecond;
+    host.srcOut = drift::kUsPerSecond;
+    host.objectTrackPath = path;
+    host.transformW.setKeyframe(0, 1000);
+    host.transformH.setKeyframe(0, 500);
+    drift::Clip sticker;
+    sticker.id = QStringLiteral("sticker");
+    sticker.type = drift::ClipType::Image;
+    sticker.timelineDuration = drift::kUsPerSecond;
+    sticker.objectFollowClipId = host.id;
+    sticker.transformW.setKeyframe(0, 100);
+    sticker.transformH.setKeyframe(0, 40);
+    hostTrack.clips.append(host);
+    hostTrack.clips.append(sticker);
+
+    double x = 0;
+    double y = 0;
+    QVERIFY(drift::objectFollowPosition({hostTrack}, sticker, 0, 1000, 500, &x, &y));
+    // The sidecar stores the centre as float, so the mapped pixel is exact only to that.
+    QVERIFY(qAbs(x - 200.0) < 1e-3);
+    QVERIFY(qAbs(y - 180.0) < 1e-3);
 }
 
 namespace {

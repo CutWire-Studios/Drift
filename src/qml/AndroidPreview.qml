@@ -267,6 +267,14 @@ Item {
                     }
                 }
 
+                ObjectTrackOverlay {
+                    x: canvasRect.x
+                    y: canvasRect.y
+                    width: canvasRect.width
+                    height: canvasRect.height
+                    z: 130
+                }
+
                 AndroidTransformOverlay {
                     id: transformOverlay
                     // Sits outside the (clipped) canvas rect, mirroring its geometry,

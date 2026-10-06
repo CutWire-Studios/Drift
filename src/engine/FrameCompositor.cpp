@@ -7,6 +7,7 @@
 #include "EffectCatalog.h"
 #include "EffectProcessor.h"
 #include "FaceTrack.h"
+#include "ObjectTrack.h"
 #include "GpuCompositor.h"
 #include "GpuEffectExecutor.h"
 #include "MaskApplier.h"
@@ -1147,6 +1148,17 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
                       &rotation);
     if (w <= 0.5 || h <= 0.5)
         return layer;
+
+    // A sticker or caption pinned to an object track is placed from the host's layout, in
+    // the same pixel space as the keys, before renderScale. Doing it here — before the text
+    // or shape is rasterised into that rect — is what keeps preview and export on the point.
+    double followX = 0.0;
+    double followY = 0.0;
+    if (drift::objectFollowPosition(project.tracks(), clip, timelineUs, projectWidth, projectHeight,
+                                    &followX, &followY)) {
+        x = followX * renderScale;
+        y = followY * renderScale;
+    }
 
     const int layoutW = qMax(1, qRound(w));
     const int layoutH = qMax(1, qRound(h));

@@ -674,6 +674,8 @@ add_library(driftengine STATIC
     src/engine/FaceLandmarker.cpp
     src/engine/FaceTrack.h
     src/engine/FaceTrack.cpp
+    src/engine/ObjectTrack.h
+    src/engine/ObjectTrack.cpp
     src/engine/FaceModelTransform.h
     src/engine/FaceModelTransform.cpp
     src/engine/ModelAnimation.h
@@ -1043,6 +1045,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/CameraOverlay.qml
+        src/qml/components/preview/ObjectTrackOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
@@ -1075,6 +1078,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/CameraInspector.qml
         src/qml/components/properties/TransformLayerCard.qml
         src/qml/components/properties/StabilizeInspector.qml
+        src/qml/components/properties/ObjectTrackInspector.qml
         src/qml/components/properties/AudioInspector.qml
         src/qml/components/properties/AudioEffectsInspector.qml
         src/qml/components/properties/SpeedFadeInspector.qml

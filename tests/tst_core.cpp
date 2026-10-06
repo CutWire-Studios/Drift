@@ -3113,6 +3113,10 @@ void CoreTest::faceTrackSerialization()
     clip.timelineDuration = drift::secondsToUs(3.0);
     clip.faceTrackPath = QStringLiteral("/tmp/facetracks/abc.json");
     clip.faceTrackSrcOffsetUs = drift::secondsToUs(2.25);
+    clip.objectTrackPath = QStringLiteral("/tmp/objecttracks/abc.json");
+    clip.objectTrackX = 0.25;
+    clip.objectTrackZoom = 2.5;
+    clip.objectFollowClipId = QStringLiteral("host-1");
     clip.depthPath = QStringLiteral("/tmp/depth/abc.driftdepth");
     project.tracks()[0].clips.append(clip);
 
@@ -3124,6 +3128,10 @@ void CoreTest::faceTrackSerialization()
     const drift::Clip &out = loaded.tracks()[0].clips[0];
     QCOMPARE(out.faceTrackPath, QStringLiteral("/tmp/facetracks/abc.json"));
     QCOMPARE(out.faceTrackSrcOffsetUs, drift::secondsToUs(2.25));
+    QCOMPARE(out.objectTrackPath, QStringLiteral("/tmp/objecttracks/abc.json"));
+    QCOMPARE(out.objectTrackX, 0.25);
+    QCOMPARE(out.objectTrackZoom, 2.5);
+    QCOMPARE(out.objectFollowClipId, QStringLiteral("host-1"));
     QCOMPARE(out.depthPath, QStringLiteral("/tmp/depth/abc.driftdepth"));
 
     // A project written before face tracking existed carries neither key, and must still load with
@@ -4225,6 +4233,8 @@ void CoreTest::retargetClipToSourceClearsPerSourceState()
     program.linkId = QStringLiteral("pair-1");
     program.faceTrackPath = QStringLiteral("/cache/cam1.faces");
     program.faceTrackSrcOffsetUs = drift::secondsToUs(5.0);
+    program.objectTrackPath = QStringLiteral("/cache/cam1.objects");
+    program.objectTrackSrcOffsetUs = drift::secondsToUs(5.0);
     program.speedCurve.setPoints({{0.0, 1.0}, {1.0, 2.0}});
     QVERIFY(program.hasSpeedCurve());
 
@@ -4235,6 +4245,8 @@ void CoreTest::retargetClipToSourceClearsPerSourceState()
     QVERIFY(program.linkId.isEmpty());
     QVERIFY(program.faceTrackPath.isEmpty());
     QCOMPARE(program.faceTrackSrcOffsetUs, drift::TimeUs{0});
+    QVERIFY(program.objectTrackPath.isEmpty());
+    QCOMPARE(program.objectTrackSrcOffsetUs, drift::TimeUs{0});
     QVERIFY(!program.hasSpeedCurve());
 }
 

@@ -350,6 +350,10 @@ class AppController : public QObject
     Q_PROPERTY(bool faceDetecting READ faceDetecting NOTIFY faceDetectingChanged)
     Q_PROPERTY(double faceDetectProgress READ faceDetectProgress NOTIFY faceDetectProgressChanged)
     Q_PROPERTY(QString faceDetectStatus READ faceDetectStatus NOTIFY faceDetectStatusChanged)
+    Q_PROPERTY(bool objectTracking READ objectTracking NOTIFY objectTrackingChanged)
+    Q_PROPERTY(double objectTrackProgress READ objectTrackProgress NOTIFY objectTrackProgressChanged)
+    Q_PROPERTY(QString objectTrackStatus READ objectTrackStatus NOTIFY objectTrackStatusChanged)
+    Q_PROPERTY(QString objectTrackingClipId READ objectTrackingClipId NOTIFY objectTrackingChanged)
     // Detected shots for the clip named by sceneClipId. Analysis state, not project state:
     // it describes the source media, so it is cached on disk rather than saved (see
     // engine/SceneDetect.h) and is never pushed through the undo stack.
@@ -603,6 +607,10 @@ public:
     bool faceDetecting() const { return m_faceDetecting; }
     double faceDetectProgress() const { return m_faceDetectProgress; }
     QString faceDetectStatus() const { return m_faceDetectStatus; }
+    bool objectTracking() const { return m_objectTracking; }
+    double objectTrackProgress() const { return m_objectTrackProgress; }
+    QString objectTrackStatus() const { return m_objectTrackStatus; }
+    QString objectTrackingClipId() const { return m_objectTrackingClipId; }
     QVariantList scenes() const { return m_scenes; }
     QString sceneClipId() const { return m_sceneClipId; }
     QString sceneClipPath() const { return m_sceneClipPath; }
@@ -1143,6 +1151,21 @@ public:
     Q_INVOKABLE void detectFacesForClip(int trackIndex, int clipIndex);
     Q_INVOKABLE void cancelFaceDetection();
     Q_INVOKABLE void clearFaceTrack(int trackIndex, int clipIndex);
+
+    // Bakes a patch track from the circle on a video clip, then can lock the framing to it
+    // or pin another clip (text, sticker, shape) so it rides the same point.
+    Q_INVOKABLE void trackObjectForClip(int trackIndex, int clipIndex);
+    Q_INVOKABLE void cancelObjectTracking();
+    Q_INVOKABLE void clearObjectTrack(int trackIndex, int clipIndex);
+    Q_INVOKABLE void setObjectTrackSeed(int trackIndex, int clipIndex, double x, double y, double radius);
+    Q_INVOKABLE void setObjectTrackZoom(int trackIndex, int clipIndex, double zoom);
+    Q_INVOKABLE void setObjectTrackHold(int trackIndex, int clipIndex, double holdX, double holdY);
+    Q_INVOKABLE void applyObjectLock(int trackIndex, int clipIndex);
+    Q_INVOKABLE void removeObjectLock(int trackIndex, int clipIndex);
+    Q_INVOKABLE void setObjectFollowClip(int trackIndex, int clipIndex, const QString &hostClipId);
+    Q_INVOKABLE QVariantList objectTrackTargets() const;
+    // {valid, x, y, confidence} of the selected clip's track at the playhead, source-normalised.
+    Q_INVOKABLE QVariantMap objectTrackSample(int trackIndex, int clipIndex) const;
     Q_INVOKABLE bool faceDetectionAvailable();
 
     // Estimates the clip's depth for the depth effects as a JobRegistry "depth" job targeting the
@@ -2275,6 +2298,9 @@ signals:
     void transitionCurveChanged();
     void transitionCurveApplied();
     void faceDetectingChanged();
+    void objectTrackingChanged();
+    void objectTrackProgressChanged();
+    void objectTrackStatusChanged();
     void depthJobChanged(const QString &clipId);
     void restoreJobChanged(const QString &clipId);
     void restorePreviewChanged();
@@ -2492,6 +2518,8 @@ protected:
     void finalizeDepth(const QString &clipId, const QString &path);
     void finalizeFaceDetection(const QString &clipId, const QString &trackPath,
                                drift::TimeUs srcOffsetUs);
+    void finalizeObjectTrack(const QString &clipId, const QString &trackPath, drift::TimeUs srcOffsetUs,
+                             double seedX, double seedY, double seedRadius, drift::TimeUs seedUs);
     // Landmark a Face Swap source photo in the background and cache the result. Cheap enough
     // (one still, sub-second once the session is warm) that it gets no progress UI of its own —
     // the effect renders pass-through until the landmarks land, then the preview refreshes.
@@ -2988,6 +3016,11 @@ protected:
     double m_faceDetectProgress = 0.0;
     QString m_faceDetectStatus;
     QAtomicInt m_faceDetectCancel = 0;
+    bool m_objectTracking = false;
+    double m_objectTrackProgress = 0.0;
+    QString m_objectTrackStatus;
+    QString m_objectTrackingClipId;
+    QAtomicInt m_objectTrackCancel = 0;
     // Photos with an ingest in flight, so a slider nudge or a second clip using the same photo
     // does not queue the landmarker twice.
     QSet<QString> m_faceSwapIngesting;

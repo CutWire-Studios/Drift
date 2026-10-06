@@ -12,6 +12,8 @@
 #include <QUuid>
 #include <QtMath>
 
+#include <cmath>
+
 namespace drift {
 
 namespace {
@@ -228,6 +230,75 @@ QList<SubtitleCue> subtitleCuesFromJson(const QJsonArray &array)
     return cues;
 }
 
+bool objectTrackTouched(const Clip &clip)
+{
+    return !clip.objectTrackPath.isEmpty() || !clip.objectFollowClipId.isEmpty()
+        || clip.objectLockApplied || clip.objectLockHasRestPose || clip.objectTrackSeedUs != 0
+        || std::abs(clip.objectTrackX - 0.5) > 1e-4 || std::abs(clip.objectTrackY - 0.5) > 1e-4
+        || std::abs(clip.objectTrackRadius - 0.12) > 1e-4 || std::abs(clip.objectTrackZoom - 2.0) > 1e-3
+        || std::abs(clip.objectTrackHoldX - 0.5) > 1e-4 || std::abs(clip.objectTrackHoldY - 0.5) > 1e-4;
+}
+
+QJsonObject objectTrackToJson(const Clip &clip)
+{
+    return QJsonObject{
+        {QStringLiteral("path"), clip.objectTrackPath},
+        {QStringLiteral("srcOffsetUs"), qint64(clip.objectTrackSrcOffsetUs)},
+        {QStringLiteral("x"), clip.objectTrackX},
+        {QStringLiteral("y"), clip.objectTrackY},
+        {QStringLiteral("radius"), clip.objectTrackRadius},
+        {QStringLiteral("zoom"), clip.objectTrackZoom},
+        {QStringLiteral("holdX"), clip.objectTrackHoldX},
+        {QStringLiteral("holdY"), clip.objectTrackHoldY},
+        {QStringLiteral("seedUs"), qint64(clip.objectTrackSeedUs)},
+        {QStringLiteral("ranX"), clip.objectTrackRanX},
+        {QStringLiteral("ranY"), clip.objectTrackRanY},
+        {QStringLiteral("ranRadius"), clip.objectTrackRanRadius},
+        {QStringLiteral("ranUs"), qint64(clip.objectTrackRanUs)},
+        {QStringLiteral("lock"), clip.objectLockApplied},
+        {QStringLiteral("lockZoom"), clip.objectLockZoom},
+        {QStringLiteral("lockHoldX"), clip.objectLockHoldX},
+        {QStringLiteral("lockHoldY"), clip.objectLockHoldY},
+        {QStringLiteral("lockPath"), clip.objectLockPath},
+        {QStringLiteral("rest"), clip.objectLockHasRestPose},
+        {QStringLiteral("restX"), clip.objectLockRestX},
+        {QStringLiteral("restY"), clip.objectLockRestY},
+        {QStringLiteral("restW"), clip.objectLockRestW},
+        {QStringLiteral("restH"), clip.objectLockRestH},
+        {QStringLiteral("follow"), clip.objectFollowClipId},
+    };
+}
+
+void objectTrackFromJson(Clip &clip, const QJsonObject &object)
+{
+    if (object.isEmpty())
+        return;
+    clip.objectTrackPath = object.value(QStringLiteral("path")).toString();
+    clip.objectTrackSrcOffsetUs = TimeUs(object.value(QStringLiteral("srcOffsetUs")).toInteger(0));
+    clip.objectTrackX = object.value(QStringLiteral("x")).toDouble(0.5);
+    clip.objectTrackY = object.value(QStringLiteral("y")).toDouble(0.5);
+    clip.objectTrackRadius = object.value(QStringLiteral("radius")).toDouble(0.12);
+    clip.objectTrackZoom = object.value(QStringLiteral("zoom")).toDouble(2.0);
+    clip.objectTrackHoldX = object.value(QStringLiteral("holdX")).toDouble(0.5);
+    clip.objectTrackHoldY = object.value(QStringLiteral("holdY")).toDouble(0.5);
+    clip.objectTrackSeedUs = TimeUs(object.value(QStringLiteral("seedUs")).toInteger(0));
+    clip.objectTrackRanX = object.value(QStringLiteral("ranX")).toDouble(clip.objectTrackX);
+    clip.objectTrackRanY = object.value(QStringLiteral("ranY")).toDouble(clip.objectTrackY);
+    clip.objectTrackRanRadius = object.value(QStringLiteral("ranRadius")).toDouble(clip.objectTrackRadius);
+    clip.objectTrackRanUs = TimeUs(object.value(QStringLiteral("ranUs")).toInteger(clip.objectTrackSeedUs));
+    clip.objectLockApplied = object.value(QStringLiteral("lock")).toBool(false);
+    clip.objectLockZoom = object.value(QStringLiteral("lockZoom")).toDouble(clip.objectTrackZoom);
+    clip.objectLockHoldX = object.value(QStringLiteral("lockHoldX")).toDouble(clip.objectTrackHoldX);
+    clip.objectLockHoldY = object.value(QStringLiteral("lockHoldY")).toDouble(clip.objectTrackHoldY);
+    clip.objectLockPath = object.value(QStringLiteral("lockPath")).toString();
+    clip.objectLockHasRestPose = object.value(QStringLiteral("rest")).toBool(false);
+    clip.objectLockRestX = object.value(QStringLiteral("restX")).toDouble(0.0);
+    clip.objectLockRestY = object.value(QStringLiteral("restY")).toDouble(0.0);
+    clip.objectLockRestW = object.value(QStringLiteral("restW")).toDouble(0.0);
+    clip.objectLockRestH = object.value(QStringLiteral("restH")).toDouble(0.0);
+    clip.objectFollowClipId = object.value(QStringLiteral("follow")).toString();
+}
+
 QJsonObject clipToJson(const Clip &clip)
 {
     QJsonObject json{
@@ -292,6 +363,8 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("effects"), effectsToJson(clip.effects)},
         {QStringLiteral("audioEffects"), effectsToJson(clip.audioEffects)},
     };
+    if (objectTrackTouched(clip))
+        json.insert(QStringLiteral("objectTrack"), objectTrackToJson(clip));
     if (clip.audioFadeInUs > 0)
         json.insert(QStringLiteral("audioFadeInUs"), static_cast<double>(clip.audioFadeInUs));
     if (clip.audioFadeOutUs > 0)
@@ -390,6 +463,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.faceTrackSrcOffsetUs =
         TimeUs(object.value(QStringLiteral("faceTrackSrcOffsetUs")).toInteger(0));
     clip.depthPath = object.value(QStringLiteral("depthPath")).toString();
+    objectTrackFromJson(clip, object.value(QStringLiteral("objectTrack")).toObject());
     clip.legacyStabilizePath = object.value(QStringLiteral("stabilizePath")).toString();
     clip.stabilizeMode =
         stabilizeModeFromString(object.value(QStringLiteral("stabilizeMode")).toString());
