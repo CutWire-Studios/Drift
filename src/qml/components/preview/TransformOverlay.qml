@@ -495,7 +495,8 @@ Item {
                 border.width: (handle.selected || handle.editing)
                               ? Theme.borderWidthFocus : Theme.borderWidth
                 border.color: handle.selected ? (handle.isTransform ? Theme.clipTransform : Theme.primary)
-                              : handle.coveredBySelectedLayer ? Theme.clipTransform : Theme.guideStrong
+                              : handle.coveredBySelectedLayer ? Theme.clipTransform
+                              : hover.hovered ? Theme.guideStrong : "transparent"
                 radius: Theme.radiusXs
 
                 Behavior on border.width {
@@ -549,6 +550,10 @@ Item {
                 }
                 Keys.onEscapePressed: handle.cancelEdit()
                 onActiveFocusChanged: if (!activeFocus && handle.editing) handle.commitEdit()
+            }
+
+            HoverHandler {
+                id: hover
             }
 
             TapHandler {
