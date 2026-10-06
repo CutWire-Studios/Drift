@@ -58,7 +58,7 @@ flatpak run org.cutwire.Drift
 brew install --cask cutwire-studios/tap/drift
 ```
 
-> **First launch on macOS:** Drift is signed ad-hoc. If Gatekeeper blocks opening it, run:
+> **First launch on macOS:** Drift is signed ad-hoc (not notarized by Apple). The quarantine attribute is automatically removed when installing via Homebrew. If you install manually via `.dmg` or if Gatekeeper still blocks opening it, run:
 > ```bash
 > xattr -dr com.apple.quarantine /Applications/Drift.app
 > ```

@@ -1187,6 +1187,7 @@ qt_add_qml_module(drift
         src/qml/components/AddonManagerDialog.qml
         src/qml/components/AddonStartupDialog.qml
         src/qml/components/MissingAddonsDialog.qml
+        src/qml/components/AboutDialog.qml
         src/qml/components/UpdateDialog.qml
         src/qml/components/DebugInfoDialog.qml
         src/qml/components/preview/PlaybackStatsOverlay.qml
