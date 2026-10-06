@@ -11639,7 +11639,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Đang tải xuống…</translation>
     </message>
 </context>
 <context>
@@ -15246,7 +15246,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Đang tải xuống…</translation>
     </message>
     <message>
         <source>Downloads the update and installs it</source>

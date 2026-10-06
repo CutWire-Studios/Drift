@@ -11684,7 +11684,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Descargando…</translation>
     </message>
 </context>
 <context>
@@ -15299,7 +15299,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Descargando…</translation>
     </message>
     <message>
         <source>Downloads the update and installs it</source>
