@@ -11687,7 +11687,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Téléchargement en cours…</translation>
     </message>
 </context>
 <context>
@@ -15304,7 +15304,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Téléchargement en cours…</translation>
     </message>
     <message>
         <source>Downloads the update and installs it</source>

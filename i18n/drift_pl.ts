@@ -11729,7 +11729,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pobieranie…</translation>
     </message>
 </context>
 <context>
@@ -15352,7 +15352,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pobieranie…</translation>
     </message>
     <message>
         <source>Downloads the update and installs it</source>

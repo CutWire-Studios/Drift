@@ -11639,7 +11639,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ダウンロード中…</translation>
     </message>
 </context>
 <context>
@@ -15246,7 +15246,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ダウンロード中…</translation>
     </message>
     <message>
         <source>Downloads the update and installs it</source>

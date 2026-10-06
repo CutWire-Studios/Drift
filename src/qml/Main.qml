@@ -756,6 +756,22 @@ ApplicationWindow {
         function onQuitRequested() {
             window.close()
         }
+        function onActivityChanged() {
+            if (!Updates.checking && window.manualUpdateCheck) {
+                window.manualUpdateCheck = false
+                if (Updates.updateAvailable) {
+                    window.openUpdateDialog()
+                } else if (Updates.status.length > 0) {
+                    if (Updates.status.indexOf(Updates.currentVersion) !== -1) {
+                        Toasts.success(Updates.status)
+                    } else {
+                        Toasts.info(Updates.status)
+                    }
+                } else {
+                    Toasts.success(qsTr("Drift %1 is the latest version.").arg(Updates.currentVersion))
+                }
+            }
+        }
     }
 
     LazyLoader {
@@ -799,26 +815,6 @@ ApplicationWindow {
         id: segmentationWindowLoader
         sourceComponent: Component {
             SegmentationWindow { }
-        }
-    }
-
-    Connections {
-        target: Updates
-        function onCheckingChanged() {
-            if (!Updates.checking && window.manualUpdateCheck) {
-                window.manualUpdateCheck = false
-                if (Updates.updateAvailable) {
-                    window.openUpdateDialog()
-                } else if (Updates.status.length > 0) {
-                    if (Updates.status.indexOf(Updates.currentVersion) !== -1) {
-                        Toasts.success(Updates.status)
-                    } else {
-                        Toasts.info(Updates.status)
-                    }
-                } else {
-                    Toasts.success(qsTr("Drift %1 is the latest version.").arg(Updates.currentVersion))
-                }
-            }
         }
     }
 
