@@ -130,8 +130,11 @@ Effects, transitions, templates and audio effects are staged into `Drift.app/Con
 ### Disk image
 
 ```bash
+third_party/build-qt-ffmpeg-plugin.sh   # once per Homebrew Qt/FFmpeg upgrade
 scripts/package-macos.sh
 ```
+
+Homebrew builds Qt Multimedia without its FFmpeg backend on macOS, which leaves the media preview unable to play AVI, MKV, WebM and anything else AVFoundation does not open. The first script builds that plugin against Homebrew's Qt and FFmpeg and installs it next to Qt's other multimedia plugins; packaging refuses to continue without it. Qt from qt.io already ships it.
 
 Builds Release, runs `macdeployqt` to copy Qt, FFmpeg, OpenSSL, zstd and SoundTouch into `Contents/Frameworks`, drops the build machine's `LC_RPATH` entries, signs, and writes `dist/Drift-<version>-<arch>.dmg`. The rpath step matters: dyld searches the executable's rpaths before the `@loader_path` entries in the nested frameworks, so a bundle still listing `/opt/homebrew/opt/qt6/lib` loads the host's Qt on any Mac that has one.
 

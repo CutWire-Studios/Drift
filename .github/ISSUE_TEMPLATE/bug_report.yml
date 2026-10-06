@@ -18,17 +18,23 @@ body:
       options:
         - Linux
         - Windows
+        - macOS
+        - Android
     validations:
       required: true
 
   - type: input
-    id: distro
+    id: os_version
     attributes:
-      label: Linux distribution
-      description: Linux only — leave blank on Windows.
-      placeholder: e.g. Ubuntu 24.04, Fedora 42, Arch Linux, openSUSE Tumbleweed
+      label: OS version
+      description: |
+        Linux: distribution and version, plus Wayland or X11.
+        Windows: edition and version (Settings → System → About).
+        macOS: version and chip, Apple Silicon or Intel (Apple menu → About This Mac).
+        Android: Android version and phone or tablet model.
+      placeholder: e.g. Fedora 42 (Wayland), Windows 11 24H2, macOS 15.6 on M2, Android 15 on Pixel 8
     validations:
-      required: false
+      required: true
 
   - type: input
     id: version
@@ -48,6 +54,12 @@ body:
         - AppImage
         - Arch (AUR / package)
         - Windows installer
+        - Windows portable (.zip)
+        - Microsoft Store
+        - macOS DMG
+        - Homebrew
+        - Google Play
+        - Android APK
         - Built from source
         - Other
     validations:
@@ -59,6 +71,7 @@ body:
       label: What went wrong?
       description: |
         Write in plain language. Attach screenshots, a short screen recording, or log files if you have them.
+        GitHub only accepts some video types (MP4, MOV, WebM); zip anything else (AVI, MKV, ...) before attaching it.
         A useful report usually covers:
         1. What you were doing
         2. What you expected

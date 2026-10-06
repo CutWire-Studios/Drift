@@ -134,6 +134,13 @@ while IFS= read -r -d '' PLUGIN; do
   done < <(otool -L "$PLUGIN" | awk -F'@rpath/' '/@rpath\//{print $2}' | awk '{print $1}')
 done < <(find "$APP/Contents/PlugIns" -name "*.dylib" -print0)
 
+# Without it QtMultimedia falls back to AVFoundation, and the media preview cannot play AVI, MKV,
+# WebM and the rest that the timeline opens fine. Homebrew's Qt does not ship it.
+if [[ ! -f "$APP/Contents/PlugIns/multimedia/libffmpegmediaplugin.dylib" ]]; then
+  echo "Qt's FFmpeg multimedia plugin was not deployed; run third_party/build-qt-ffmpeg-plugin.sh first." >&2
+  exit 1
+fi
+
 # Those same modules also get a QML module directory laid down with a symlink to the plugin that
 # was never copied. A dangling symlink is enough on its own to fail codesign --deep --strict, and
 # a module directory without its plugin is unusable anyway, so the directory goes with it.

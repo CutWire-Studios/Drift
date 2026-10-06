@@ -557,7 +557,7 @@ Item {
             ThemedToolTip {
                 text: cardRoot.isFolder ? name
                       : qsTr("%1 — drag to the timeline, right-click to preview").arg(name)
-                visible: cardHover.hovered
+                visible: cardHover.hovered && !cardMenu.visible && !folderMenu.visible
                 // Explicit rather than the default above-parent Popup placement: for the top
                 // row, that placement had no room to spare and overlapped the folder row/search
                 // field above the grid.
@@ -1220,7 +1220,7 @@ Item {
             ThemedToolTip {
                 text: listRow.isFolder ? name
                       : qsTr("%1 — drag to the timeline, right-click to preview").arg(name)
-                visible: rowHover.hovered
+                visible: rowHover.hovered && !rowMenu.visible && !folderRowMenu.visible
                 y: parent.height + 4
             }
 
