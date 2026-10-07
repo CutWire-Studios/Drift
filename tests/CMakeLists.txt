@@ -18,6 +18,7 @@ qt_add_executable(tst_editorstate
     # requestImage is called directly.
     ../src/MulticamImageProvider.cpp
     ../src/models/AppController.cpp
+    ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp
     ../src/models/CloudProviders.cpp
@@ -183,6 +184,7 @@ qt_add_executable(tst_mcp
     ../src/ClipPreviewImageStore.cpp
     ../src/MulticamImageStore.cpp
     ../src/models/AppController.cpp
+    ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp
     ../src/models/CloudProviders.cpp

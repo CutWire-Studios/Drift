@@ -11,7 +11,7 @@ import ".."
 // the mouse-only affordances (hover, wheel pass-through, arrow-key nudging,
 // Shift/Ctrl modifiers) are gone — a phone has none of them. Corner grips
 // therefore keep footage aspect unconditionally and snapping is always on.
-// Geometry (x/y/width/height/z/visible) is driven by AndroidPreview.
+// Geometry and visibility are driven by PreviewToolHost.
 Item {
     id: root
 
@@ -103,7 +103,7 @@ Item {
             return
         if (EditorState.playing)
             return
-        const next = EditorState.previewClipsAtPlayhead()
+        const next = EditorState.preview.clipsAtPlayhead()
         if (clipsOverlayEqual(overlayClips, next))
             return
         const sameClips = sameOverlayClips(overlayClips, next)
@@ -153,7 +153,6 @@ Item {
             }
         }
         function onSelectionChanged() { root.refreshOverlay() }
-        function onEditorViewChanged() { root.refreshOverlay() }
         // A scrub moves the playhead per scroll event; catch up once when it ends.
         function onPlayheadSecondsChanged() {
             if (!EditorState.scrubbing)
@@ -167,6 +166,11 @@ Item {
             if (!EditorState.playing)
                 root.refreshOverlay()
         }
+    }
+
+    Connections {
+        target: EditorState.preview
+        function onViewChanged() { root.refreshOverlay() }
     }
 
     Repeater {
@@ -186,7 +190,7 @@ Item {
             readonly property bool isTransform: box.kind === "transform"
             readonly property bool hasParent: box.parentActive === true
             readonly property var parentInverse: hasParent
-                ? EditorState.previewParentOverlayMatrix(box, handle.sx).inverted() : null
+                ? EditorState.preview.parentOverlayMatrix(box, handle.sx).inverted() : null
             // Overlay point (in the parented frame) -> the box's own overlay frame.
             function toParentLocal(p) {
                 if (!handle.hasParent)
@@ -335,8 +339,8 @@ Item {
             rotation: is3d || hasParent || viaCamera ? 0 : layoutRotation
             transform: Matrix4x4 {
                 id: poseTransform
-                matrix: (void EditorState.editorViewRevision, handle.is3d || handle.hasParent || handle.viaCamera)
-                        ? EditorState.previewClipPoseMatrix({
+                matrix: (void EditorState.preview.viewRevision, handle.is3d || handle.hasParent || handle.viaCamera)
+                        ? EditorState.preview.clipPoseMatrix({
                                                                 "canvasWidth": handle.box.canvasWidth,
                                                                 "canvasHeight": handle.box.canvasHeight,
                                                                 "rotationX": handle.pose3d.rotationX || 0,
@@ -376,7 +380,7 @@ Item {
             // do not run along the screen axes.
             // The 3D view's screen is not the canvas, so there is nothing there to snap to.
             readonly property bool canSnap: Math.abs(handle.layoutRotation) < 0.01
-                                            && EditorState.previewMode !== "3d"
+                                            && EditorState.preview.mode !== "3d"
 
             // The box as it stood at the grab, in the shape the snapping calls take.
             function grabBox() {
@@ -477,7 +481,7 @@ Item {
                     if (handle.isTransform) {
                         const p = root.mapFromItem(null, eventPoint.scenePosition.x,
                                                    eventPoint.scenePosition.y)
-                        const hit = EditorState.previewClipAtCanvasPoint(p.x / handle.sx, p.y / handle.sy)
+                        const hit = EditorState.preview.clipAtCanvasPoint(p.x / handle.sx, p.y / handle.sy)
                         if (hit && hit.track !== undefined) {
                             EditorState.selectClip(hit.track, hit.clip)
                             Haptics.select()
@@ -556,7 +560,7 @@ Item {
                     const p = root.mapFromItem(null, centroid.scenePosition.x, centroid.scenePosition.y)
                     // Both edges and the centre stick, so a clip can be landed
                     // flush against a canvas edge or dead-centre by feel.
-                    const moved = EditorState.previewSnapMove(startBox, pressCanvas.x, pressCanvas.y,
+                    const moved = EditorState.preview.snapMove(startBox, pressCanvas.x, pressCanvas.y,
                                                               p.x / handle.sx, p.y / handle.sy,
                                                               root.snapTolPx / handle.sx, handle.canSnap)
                     // Seen edge-on, the plane has no point under the finger: hold still.
@@ -693,7 +697,7 @@ Item {
                         if (handle.canSnap) {
                             // Each moving edge is snapped as it projects, through the pose,
                             // parents and camera.
-                            const snapped = EditorState.previewSnapResize(grip.startBox, w, h, dxSign, dySign,
+                            const snapped = EditorState.preview.snapResize(grip.startBox, w, h, dxSign, dySign,
                                                                           handle.is3d,
                                                                           root.snapTolPx / handle.sx)
                             if (locked) {

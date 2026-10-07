@@ -1,15 +1,11 @@
 import QtQuick
-// .Basic, matching every other file. Plain QtQuick.Controls pulled in the
-// platform style, so the inline text editor below was styled differently from
-// the rest of the app.
-import QtQuick.Controls.Basic
-// Window was used (fullscreen toggle) without being imported.
-import QtQuick.Window
-import QtQuick.Layouts
 import Drift
 import "components"
 import "components/preview"
+import "components/preview/modes"
 
+// The desktop preview: the shared viewport and tools, the on-screen controls that fade over it,
+// and the transport bar underneath.
 PanelFrame {
     id: root
 
@@ -18,10 +14,9 @@ PanelFrame {
 
     readonly property real currentSeconds: EditorState.playheadSeconds
     readonly property real durationSeconds: EditorState.durationSeconds
-    readonly property bool playing: EditorState.playing
     // 3D mode is a desktop tool: phones keep the camera's picture and its 2D grips.
     readonly property bool mobile: Qt.platform.os === "android" || Qt.platform.os === "ios"
-    readonly property bool mode3d: EditorState.previewMode === "3d" && !mobile
+    readonly property bool mode3d: EditorState.preview.mode === "3d" && !mobile
 
     // Driven by Main, which owns the window and the panels that hide around it.
     property bool previewFullscreen: false
@@ -46,493 +41,90 @@ PanelFrame {
         return pad(h) + ":" + pad(m) + ":" + pad(s) + ":" + pad(f);
     }
 
-    Column {
-        anchors.fill: parent
+    // Fullscreen gives the whole screen to the picture: no gutter, and the transport joins the OSD
+    // over it instead of taking a strip of its own.
+    color: previewFullscreen ? Theme.overlayColor : Theme.panelBackground
+    border.width: previewFullscreen ? 0 : 1
+    radius: previewFullscreen ? 0 : Theme.radiusSm
 
-        PreviewHeader {
-            id: header
-            width: parent.width
-            visible: !root.mobile && !root.previewFullscreen
-            height: visible ? implicitHeight : 0
-            implicitHeight: Theme.controlHeightSm + Theme.spacingMd * 2
-        }
+    Item {
+        id: viewportOuter
+        anchors.top: parent.top
+        width: parent.width
+        height: root.previewFullscreen ? parent.height : parent.height - bottomBar.height
+        clip: true
 
-        Item {
-            id: viewportOuter
-            width: parent.width
-            height: parent.height - header.height - toolbar.height - scrubBar.height
-            clip: true
+        PreviewViewport {
+            id: panelViewport
+            anchors.fill: parent
+            // The inset is also the gutter the transform grips overflow into when a clip sits
+            // flush against a canvas edge — viewportOuter clips, so a zero margin would shear
+            // the bottom handles in half. Fullscreen is for watching, so the frame fills it.
+            anchors.margins: root.previewFullscreen ? 0 : Theme.spacingLg
+            mode3d: root.mode3d
 
-            // `transformBlocked` is now handled centrally in Main.qml and shown
-            // through the app-wide toast host, so the same block raised by a
-            // timeline drag is reported too. This panel-local toast is gone.
+            toolHost.tools: ({
+                transform: transformTool,
+                mask: maskTool,
+                crop: cropTool,
+                guideEdit: guideEditTool
+            })
+            toolHost.companion: transformCompanion
 
-            Item {
-                id: viewport
+            // Key presses that bubble up from anything in the preview with focus.
+            Keys.onPressed: (event) => {
+                if (root.mode3d && modeView.view)
+                    modeView.view.handleKey(event)
+            }
+
+            // Under the canvas, as navigation always was: it only takes the buttons and wheel
+            // events the tools leave alone.
+            Loader {
+                id: modeView
+                // Typed loosely, so the 3D view's handleKey can be reached.
+                readonly property var view: item
                 anchors.fill: parent
-                // The inset is also the gutter the transform grips overflow into
-                // when a clip sits flush against a canvas edge — viewportOuter
-                // clips, so a zero margin would shear the bottom handles in half.
-                anchors.margins: Theme.spacingLg
-
-                property real aspect: {
-                    void EditorState.tracksRevision
-                    const w = EditorState.projectWidth()
-                    const h = EditorState.projectHeight()
-                    return (w > 0 && h > 0) ? (w / h) : (16 / 9)
-                }
-                // Crop mode pulls the canvas in so there is room around it to drag
-                // an edge outward and grow the frame.
-                property real cropZoom: EditorState.canvasCropMode ? 0.72 : 1.0
-                // View navigation: wheel zoom about the cursor, middle-drag pan.
-                // Both reset when crop mode starts or ends, so neither view is
-                // ever entered already scrolled off-centre.
-                property real userZoom: 1.0
-                property real panX: 0
-                property real panY: 0
-
-                readonly property real baseWidth: Math.min(width, height * aspect)
-                readonly property real baseHeight: baseWidth / aspect
-                property real fitWidth: baseWidth * cropZoom * userZoom
-                property real fitHeight: baseHeight * cropZoom * userZoom
-
-                function resetView() {
-                    userZoom = 1.0
-                    panX = 0
-                    panY = 0
-                }
-
-                // Scales about (mx, my) in viewport coords: the point under the
-                // cursor keeps its position, so zooming into a crop corner keeps
-                // that corner in place instead of drifting off screen.
-                function zoomAt(mx, my, factor) {
-                    const next = Math.max(0.25, Math.min(12.0, userZoom * factor))
-                    if (next === userZoom)
-                        return
-                    const w = fitWidth
-                    const h = fitHeight
-                    const fx = w > 0 ? (mx - ((width - w) / 2 + panX)) / w : 0.5
-                    const fy = h > 0 ? (my - ((height - h) / 2 + panY)) / h : 0.5
-                    const nw = baseWidth * cropZoom * next
-                    const nh = baseHeight * cropZoom * next
-                    userZoom = next
-                    panX = (mx - fx * nw) - (width - nw) / 2
-                    panY = (my - fy * nh) - (height - nh) / 2
-                }
-
-                Behavior on cropZoom {
-                    NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easingInOut }
-                }
-
-                // 3D view keys, Blender's: F frames the selection, Home resets, Numpad 0 looks
-                // through the camera, Numpad 1/3/7 look from the front/right/top (Ctrl: the
-                // opposite side). Reached by bubbling from whatever in the preview has focus.
-                Keys.onPressed: (event) => {
-                    if (!root.mode3d)
-                        return
-                    const keypad = (event.modifiers & Qt.KeypadModifier) !== 0
-                    const opposite = (event.modifiers & Qt.ControlModifier) !== 0
-                    if (event.key === Qt.Key_F && !opposite) {
-                        EditorState.editorFrameSelection()
-                    } else if (event.key === Qt.Key_Home) {
-                        EditorState.editorResetView()
-                    } else if (keypad && event.key === Qt.Key_0) {
-                        EditorState.editorToggleLookThrough()
-                    } else if (keypad && event.key === Qt.Key_1) {
-                        EditorState.editorSetAxisView(opposite ? "back" : "front")
-                    } else if (keypad && event.key === Qt.Key_3) {
-                        EditorState.editorSetAxisView(opposite ? "left" : "right")
-                    } else if (keypad && event.key === Qt.Key_7) {
-                        EditorState.editorSetAxisView(opposite ? "bottom" : "top")
-                    } else {
-                        return
-                    }
-                    event.accepted = true
-                }
-
-                // Zoom and pan for normal preview. Declared first so it sits
-                // under the canvas and the transform grips, and takes only the
-                // middle button, so left-drags still reach the clip handles.
-                // In crop mode CropOverlay (z: 200) has the same gestures and
-                // takes them first.
-                //
-                // In 3D mode the same surface moves the viewpoint instead: middle- or right-drag
-                // orbits, with Shift it pans, and the wheel dollies.
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: root.mode3d ? (Qt.MiddleButton | Qt.RightButton) : Qt.MiddleButton
-                    cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
-
-                    property real lastX: 0
-                    property real lastY: 0
-
-                    onPressed: (mouse) => {
-                        lastX = mouse.x
-                        lastY = mouse.y
-                        if (root.mode3d) {
-                            viewport.forceActiveFocus()
-                            EditorState.editorSetNavigating(true)
-                        }
-                    }
-                    onReleased: EditorState.editorSetNavigating(false)
-                    onCanceled: EditorState.editorSetNavigating(false)
-                    onPositionChanged: (mouse) => {
-                        if (!pressed)
-                            return
-                        const dx = mouse.x - lastX
-                        const dy = mouse.y - lastY
-                        lastX = mouse.x
-                        lastY = mouse.y
-                        if (root.mode3d) {
-                            if (mouse.modifiers & Qt.ShiftModifier) {
-                                const perCanvas = canvasRect.width / Math.max(1, EditorState.projectWidth())
-                                EditorState.editorPan(dx / perCanvas, dy / perCanvas)
-                            } else {
-                                EditorState.editorOrbit(dx * 0.4, dy * 0.4)
-                            }
-                            return
-                        }
-                        viewport.panX += dx
-                        viewport.panY += dy
-                    }
-
-                    // Ctrl-less scrolls are explicitly rejected so they keep
-                    // propagating: a MouseArea accepts wheel events even with
-                    // no onWheel bound.
-                    onWheel: (wheel) => {
-                        if (root.mode3d && wheel.angleDelta.y !== 0) {
-                            EditorState.editorDolly(wheel.angleDelta.y / 120)
-                            wheel.accepted = true
-                            return
-                        }
-                        if (!(wheel.modifiers & Qt.ControlModifier)
-                                || wheel.angleDelta.y === 0) {
-                            wheel.accepted = false
-                            return
-                        }
-                        viewport.zoomAt(wheel.x, wheel.y,
-                                        wheel.angleDelta.y > 0 ? 1.15 : 1 / 1.15)
-                        wheel.accepted = true
-                    }
-                }
-
-                Rectangle {
-                    id: canvasRect
-                    width: viewport.fitWidth
-                    height: viewport.fitHeight
-                    x: (viewport.width - width) / 2 + viewport.panX
-                    y: (viewport.height - height) / 2 + viewport.panY
-                    // The 3D view draws the whole panel, with its own outline of the stage; this rect
-                    // only keeps the project frame's place for the overlays.
-                    color: root.mode3d || (EditorState.background && EditorState.background.kind === "transparent")
-                           ? "transparent" : Theme.overlayColor
-                    border.width: root.mode3d ? 0 : Theme.borderWidth
-                    border.color: Theme.border
-                    clip: !root.mode3d
-
-                    Checkerboard {
-                        anchors.fill: parent
-                        visible: !root.mode3d
-                    }
-
-                    PreviewItem {
-                        id: preview
-                        // In 3D the picture fills the whole panel around the project frame.
-                        x: root.mode3d ? -canvasRect.x : 0
-                        y: root.mode3d ? -canvasRect.y : 0
-                        width: root.mode3d ? viewport.width : canvasRect.width
-                        height: root.mode3d ? viewport.height : canvasRect.height
-                        // Not decoration: the engine only binds the window's frame cadence —
-                        // afterAnimating, frameSwapped and the screen's refresh rate — once a
-                        // preview names it, and it is what pulls each composited frame across.
-                        playback: EditorState.playback
-
-                        // Canvas size is derived from this, so it has to be real
-                        // screen pixels: item geometry is in logical units, and
-                        // on a scaled display a canvas built from those is upscaled
-                        // by the ratio before it ever reaches the screen.
-                        readonly property real pixelRatio: Screen.devicePixelRatio
-
-                        function updateRenderSize() {
-                            EditorState.playback.setPreviewRenderSize(Math.round(width * pixelRatio),
-                                                                      Math.round(height * pixelRatio))
-                            EditorState.notifyPreviewResized()
-                        }
-
-                        Component.onCompleted: updateRenderSize()
-                        onWidthChanged: updateRenderSize()
-                        onHeightChanged: updateRenderSize()
-                        onPixelRatioChanged: updateRenderSize()
-                    }
-
-                    // Top-left so it never covers the transport controls or the bottom-right
-                    // resolution readout. Only visible while the diagnostics dialog has the
-                    // counters armed.
-                    Loader {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.margins: Theme.spacingLg
-                        z: 10
-                        active: !!EditorState.playback.stats && EditorState.playback.stats.active
-                        sourceComponent: Component { PlaybackStatsOverlay { } }
-                    }
-
-                    // Voiceover recording indicator overlay
-                    Rectangle {
-                        id: voiceoverRecordBadge
-                        visible: EditorState.isRecordingAudio
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.margins: Theme.spacingLg
-                        height: 28
-                        radius: Theme.radiusSm
-                        color: Qt.rgba(0, 0, 0, 0.75)
-                        border.color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
-                        border.width: 1
-                        z: 11
-                        width: recordRow.implicitWidth + 16
-
-                        Row {
-                            id: recordRow
-                            anchors.centerIn: parent
-                            spacing: 6
-
-                            Rectangle {
-                                width: 8
-                                height: 8
-                                radius: 4
-                                color: EditorState.isAudioRecordingPaused ? "#eab308" : Theme.destructive
-                                anchors.verticalCenter: parent.verticalCenter
-                                SequentialAnimation on opacity {
-                                    running: voiceoverRecordBadge.visible && !EditorState.isAudioRecordingPaused
-                                    loops: Animation.Infinite
-                                    NumberAnimation { to: 0.2; duration: 400 }
-                                    NumberAnimation { to: 1.0; duration: 400 }
-                                }
-                            }
-
-                            Text {
-                                text: (EditorState.isAudioRecordingPaused ? qsTr("PAUSED %1s") : qsTr("REC %1s")).arg(EditorState.audioRecordSeconds.toFixed(1))
-                                font.pixelSize: 11
-                                font.bold: true
-                                color: Theme.panelForeground
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                        }
-                    }
-
-                    GuideLayer {
-                        anchors.fill: parent
-                        visible: !root.mode3d
-                    }
-
-                    // On a brand-new project this — the largest, most central panel —
-                    // said nothing at all, while the timeline below it explained what
-                    // to do. The terse gap message below is right when a project has
-                    // content and the playhead is simply over a gap; it is not an
-                    // answer to "what do I do first".
-                    EmptyState {
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width - Theme.spacing3xl, 280)
-                        visible: EditorState.trackCount === 0
-                        glyph: Theme.icons.film
-                        title: qsTr("Nothing to preview yet")
-                        // No CTA: importing and adding tracks both live in the panels
-                        // either side, and this one should not compete with them.
-                        hint: qsTr("Import media and drag it onto the timeline below to see it here.")
-                    }
-
-                    // A dead GPU compositor produces no frame at any playhead position,
-                    // which for a long time read as "No clip at the current time" and sent
-                    // people hunting through their timeline. Say what actually happened,
-                    // and where the details are. Held back until the first probe answers,
-                    // so a slow driver does not flash a failure during startup.
-                    EmptyState {
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width - Theme.spacing3xl, 280)
-                        visible: EditorState.trackCount > 0
-                                 && EditorState.playback.gpuCompositorStatus !== "unknown"
-                                 && !EditorState.playback.gpuCompositorReady
-                        glyph: Theme.icons.warning
-                        title: qsTr("GPU preview unavailable")
-                        hint: EditorState.playback.gpuCompositorStatus === "version-too-low"
-                              && EditorState.playback.gpuCompositorDetail
-                              ? qsTr("Your graphics driver only provides %1. Drift's preview needs OpenGL 3.3.")
-                                    .arg(EditorState.playback.gpuCompositorDetail)
-                              : qsTr("Drift could not start its GPU renderer, so the preview cannot draw.")
-                        actionText: qsTr("Debug info")
-                        onActionTriggered: root.Window.window.openDebugInfo()
-                    }
-
-                    // Fades rather than popping, so scrubbing across a gap no
-                    // longer flickers this text on and off.
-                    Text {
-                        anchors.centerIn: parent
-                        visible: opacity > 0
-                        // Only ever a gap message now: when the compositor is down the
-                        // state above explains that instead.
-                        opacity: EditorState.playback.hasFrame
-                                 || EditorState.trackCount === 0
-                                 || !EditorState.playback.gpuCompositorReady ? 0 : 1
-                        text: EditorState.activeAudioClipAtPlayhead().path
-                              ? qsTr("Audio only") : qsTr("No clip at the current time")
-                        // Drawn on the letterbox scrim, not a panel surface, so it
-                        // follows the on-media tokens in both themes.
-                        color: Theme.guideMedium
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeSm
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easing }
-                        }
-                    }
-                }
-
-                // Mask editing claims the same grips and pointer as the transform gizmo, so the
-                // two are mutually exclusive rather than stacked.
-                Loader {
-                    x: canvasRect.x
-                    y: canvasRect.y
-                    width: canvasRect.width
-                    height: canvasRect.height
-                    z: 150
-                    active: !root.playing && EditorState.projectWidth() > 0 && !root.mode3d
-                            && EditorState.maskEditActive && !EditorState.canvasCropMode
-                            && EditorState.guideEditSetId === ""
-                    sourceComponent: Component { MaskOverlay { } }
-                }
-
-                // Light and focus handles for the depth effects. Above the transform gizmo, but
-                // only the handles take the pointer, so the clip itself can still be dragged.
-                DepthEffectOverlay {
-                    id: depthOverlay
-                    x: canvasRect.x
-                    y: canvasRect.y
-                    width: canvasRect.width
-                    height: canvasRect.height
-                    z: 120
-                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
-                             && !EditorState.canvasCropMode && !EditorState.maskEditActive
-                             && EditorState.guideEditSetId === "" && !root.mode3d
-                }
-
-                // Which way the world's axes point, and a click away from looking down one.
-                ViewAxisWidget {
-                    visible: root.mode3d
-                    x: canvasRect.x + canvasRect.width - width - Theme.spacingLg
-                    y: canvasRect.y + Theme.spacingLg
-                    z: 160
-                }
-
-                // In 3D mode a click on the camera's drawn body selects it, so its gizmo shows.
-                // Below the clip overlay, so a clip's box still wins the pointer.
-                TapHandler {
-                    enabled: root.mode3d && !root.playing
-                    onTapped: (eventPoint) => {
-                        viewport.forceActiveFocus()
-                        const p = canvasRect.mapFromItem(viewport, eventPoint.position.x, eventPoint.position.y)
-                        const perCanvas = canvasRect.width / Math.max(1, EditorState.projectWidth())
-                        EditorState.editorPickCamera(p.x / perCanvas, p.y / perCanvas, 14 / perCanvas)
-                    }
-                }
-
-                TransformOverlay {
-                    id: transformOverlay
-                    // Sits outside the (clipped) canvas rect, mirroring its
-                    // geometry, so resize and rotate grips on a clip that runs
-                    // past a canvas edge stay drawn and grabbable instead of
-                    // being cut away with the frame.
-                    x: canvasRect.x
-                    y: canvasRect.y
-                    width: canvasRect.width
-                    height: canvasRect.height
-                    z: 100
-                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
-                             && !EditorState.canvasCropMode && !EditorState.maskEditActive
-                             && EditorState.guideEditSetId === ""
-                }
-
-                // Assets dragged from the browsers land here as overlays at the playhead, or onto
-                // the clip under the pointer. Above the transform handles so a drag passing over a
-                // selected clip still reaches it.
-                PreviewDropOverlay {
-                    id: previewDrop
-                    x: canvasRect.x
-                    y: canvasRect.y
-                    width: canvasRect.width
-                    height: canvasRect.height
-                    z: 150
-                    enabled: EditorState.projectWidth() > 0 && !EditorState.canvasCropMode
-                             && !EditorState.maskEditActive && EditorState.guideEditSetId === ""
-                             && !root.mode3d
-
-                    DropArea {
-                        anchors.fill: parent
-                        enabled: previewDrop.enabled
-                        keys: AssetDrag.allKeys()
-
-                        function kindOf(drop) {
-                            return AssetDrag.kindFromKeys(drop.keys)
-                        }
-                        function payloadOf(drop, kind) {
-                            if (kind === "media" && EditorState.draggingAssetIndex >= 0)
-                                return EditorState.draggingAssetIndex
-                            return AssetDrag.payloadFromDrop(drop, kind)
-                        }
-
-                        onEntered: (drop) => {
-                            const kind = kindOf(drop)
-                            previewDrop.hover(kind, payloadOf(drop, kind), drop.x, drop.y)
-                        }
-                        onPositionChanged: (drop) => {
-                            const kind = kindOf(drop)
-                            previewDrop.hover(kind, payloadOf(drop, kind), drop.x, drop.y)
-                        }
-                        onExited: previewDrop.clear()
-                        onDropped: (drop) => {
-                            drop.accept(Qt.CopyAction)
-                            const kind = kindOf(drop)
-                            previewDrop.drop(kind, payloadOf(drop, kind), AssetDrag.labelFromDrop(drop, kind),
-                                             drop.x, drop.y)
-                        }
-                    }
-                }
-
-                // Canvas crop tool. Lives outside the (clipped) canvas rect so the
-                // crop frame can be dragged past the current edges to grow the
-                // output. Values are kept in project pixels; committing hands the
-                // rect to AppController, which rebases clip layout so nothing
-                // moves or rescales — content outside the new frame is simply lost.
-                // Built fresh each crop session, so what its show/hide used to do (reset the
-                // frame, reset the view) happens on load and unload instead.
-                Loader {
-                    anchors.fill: parent
-                    z: 200
-                    active: EditorState.canvasCropMode
-                    sourceComponent: Component {
-                        CropOverlay {
-                            previewViewport: viewport
-                            previewCanvas: canvasRect
-                            hintDismissed: root.cropHintDismissed
-                            onHintDismissedChanged: root.cropHintDismissed = hintDismissed
-                        }
-                    }
-                    onLoaded: viewport.resetView()
-                    onActiveChanged: if (!active) viewport.resetView()
-                }
-
-                Loader {
-                    anchors.fill: parent
-                    z: 200
-                    active: EditorState.guideEditSetId !== ""
-                    sourceComponent: Component {
-                        GuideEditOverlay {
-                            previewCanvas: canvasRect
-                        }
-                    }
-                }
+                z: -1
+                sourceComponent: root.mode3d ? mode3dView : mode2dView
             }
         }
+
+        PreviewOsd {
+            id: osd
+            anchors.fill: parent
+            z: 1
+            viewport: panelViewport
+            interacting: panelViewport.toolHost.interacting
+            held: root.previewFullscreen && (bottomHover.hovered || scrubSlider.pressed)
+        }
+    }
+
+    // In fullscreen the bar sits over the picture, so it needs a surface of its own.
+    Rectangle {
+        anchors.fill: bottomBar
+        z: 1
+        visible: root.previewFullscreen && bottomBar.visible
+        opacity: bottomBar.opacity
+        color: Qt.rgba(Theme.panelBackground.r, Theme.panelBackground.g, Theme.panelBackground.b, 0.9)
+    }
+
+    // In fullscreen this is part of the OSD: it fades with it, and holds it up while in use.
+    Column {
+        id: bottomBar
+        anchors.bottom: parent.bottom
+        width: parent.width
+        z: 1
+        opacity: !root.previewFullscreen || osd.shown ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: osd.shown ? Theme.durationFast : Theme.durationSlow
+                easing.type: Theme.easing
+            }
+        }
+
+        HoverHandler { id: bottomHover }
 
         // Scrub bar. Only in fullscreen: the timeline panel is the seek surface
         // everywhere else, and it is hidden in this mode.
@@ -569,10 +161,113 @@ PanelFrame {
             }
         }
 
-        PreviewToolbar {
-            id: toolbar
-            panel: root
-            previewViewport: viewport
+        PreviewTransportBar {
+            id: transportBar
+            width: parent.width
+            height: implicitHeight
+            projectFps: root.projectFps
+            currentSeconds: root.currentSeconds
+            durationSeconds: root.durationSeconds
+            fullscreen: root.previewFullscreen
+            formatTimecode: root.formatTimecode
+            onFullscreenRequested: root.fullscreenRequested()
+        }
+    }
+
+    Component {
+        id: mode2dView
+        Preview2DMode { viewport: panelViewport }
+    }
+
+    Component {
+        id: mode3dView
+        Preview3DMode { viewport: panelViewport }
+    }
+
+    Component {
+        id: transformTool
+        TransformOverlay { }
+    }
+
+    Component {
+        id: maskTool
+        MaskOverlay { }
+    }
+
+    // Built fresh each crop session, so the frame starts from the whole canvas every time.
+    Component {
+        id: cropTool
+        CropOverlay {
+            previewViewport: panelViewport
+            previewCanvas: panelViewport.canvas
+            hintDismissed: root.cropHintDismissed
+            onHintDismissedChanged: root.cropHintDismissed = hintDismissed
+        }
+    }
+
+    Component {
+        id: guideEditTool
+        GuideEditOverlay {
+            previewCanvas: panelViewport.canvas
+        }
+    }
+
+    Component {
+        id: transformCompanion
+
+        Item {
+            // Light and focus handles for the depth effects. Above the transform gizmo, but only
+            // the handles take the pointer, so the clip itself can still be dragged.
+            DepthEffectOverlay {
+                x: panelViewport.canvas.x
+                y: panelViewport.canvas.y
+                width: panelViewport.canvas.width
+                height: panelViewport.canvas.height
+                visible: EditorState.preview.handlesVisible && !root.mode3d
+            }
+
+            // Assets dragged from the browsers land here as overlays at the playhead, or onto the
+            // clip under the pointer. Above the transform handles so a drag passing over a
+            // selected clip still reaches it.
+            PreviewDropOverlay {
+                id: previewDrop
+                x: panelViewport.canvas.x
+                y: panelViewport.canvas.y
+                width: panelViewport.canvas.width
+                height: panelViewport.canvas.height
+                enabled: EditorState.projectWidth() > 0 && !root.mode3d
+
+                DropArea {
+                    anchors.fill: parent
+                    enabled: previewDrop.enabled
+                    keys: AssetDrag.allKeys()
+
+                    function kindOf(drop) {
+                        return AssetDrag.kindFromKeys(drop.keys)
+                    }
+                    function payloadOf(drop, kind) {
+                        if (kind === "media" && EditorState.draggingAssetIndex >= 0)
+                            return EditorState.draggingAssetIndex
+                        return AssetDrag.payloadFromDrop(drop, kind)
+                    }
+
+                    onEntered: (drop) => {
+                        const kind = kindOf(drop)
+                        previewDrop.hover(kind, payloadOf(drop, kind), drop.x, drop.y)
+                    }
+                    onPositionChanged: (drop) => {
+                        const kind = kindOf(drop)
+                        previewDrop.hover(kind, payloadOf(drop, kind), drop.x, drop.y)
+                    }
+                    onExited: previewDrop.clear()
+                    onDropped: (drop) => {
+                        drop.accept(Qt.CopyAction)
+                        const kind = kindOf(drop)
+                        previewDrop.drop(kind, payloadOf(drop, kind), AssetDrag.labelFromDrop(drop, kind),
+                                         drop.x, drop.y)
+                    }
+                }
+            }
         }
     }
 
@@ -582,16 +277,6 @@ PanelFrame {
         function onPlayingChanged() {
             if (!EditorState.playing)
                 EditorState.playback.refreshFrame()
-        }
-        // The 2D zoom and pan mean nothing to the 3D view, and cropping is a 2D tool.
-        function onPreviewModeChanged() {
-            viewport.resetView()
-            if (EditorState.previewMode === "3d" && EditorState.canvasCropMode)
-                EditorState.previewMode = "2d"
-        }
-        function onCanvasCropModeChanged() {
-            if (EditorState.canvasCropMode)
-                EditorState.previewMode = "2d"
         }
     }
 

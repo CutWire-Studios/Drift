@@ -1488,18 +1488,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation>Chỉ âm thanh</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>Hiện tại chưa có clip</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>Xem trước GPU không có sẵn</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>Toàn màn hình</translation>
     </message>
@@ -9897,34 +9885,10 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -9968,125 +9932,65 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>REC %1s</source>
-        <translation>GHI %1s</translation>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>PAUSED %1s</source>
-        <translation>ĐÃ TẠM DỪNG %1s</translation>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing to preview yet</source>
-        <translation>Chưa có gì để xem trước</translation>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>Nhập phương tiện và kéo nó vào dòng thời gian bên dưới để xem tại đây.</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>Xem trước GPU không có sẵn</translation>
-    </message>
-    <message>
-        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation>Driver đồ họa của bạn chỉ cung cấp %1. Bản xem trước của Drift cần OpenGL 3.3.</translation>
-    </message>
-    <message>
-        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>Drift không thể khởi động trình kết xuất GPU của nó nên bản xem trước không thể vẽ.</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>Thông tin gỡ lỗi</translation>
-    </message>
-    <message>
-        <source>Audio only</source>
-        <translation>Chỉ âm thanh</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>Hiện tại chưa có clip</translation>
-    </message>
-    <message>
-        <source>Seek</source>
-        <translation>Tua</translation>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewOptionsMenu</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Current time / total · %1 frames per second</source>
-        <translation>Thời gian hiện tại / tổng cộng · %1 khung hình mỗi giây</translation>
-    </message>
-    <message>
-        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>Quay lại 1 giây · Nhấn Shift cho 5 giây · Nhấn Ctrl cho 10 giây</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>Khung hình trước</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>Tạm dừng</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>Phát</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>Khung hình kế</translation>
-    </message>
-    <message>
-        <source>Loop work area on — click to turn off</source>
-        <translation>Bật lặp lại vùng làm việc — nhấp để tắt</translation>
-    </message>
-    <message>
-        <source>Loop work area off — click to turn on</source>
-        <translation>Tắt lặp lại vùng làm việc — nhấp để bật</translation>
-    </message>
-    <message>
-        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>Tiến lên 1 giây · Nhấn Shift cho 5 giây · Nhấn Ctrl cho 10 giây</translation>
-    </message>
-    <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>Thu phóng xem trước — Ctrl+cuộn qua phần xem trước để thu phóng, kéo giữa để xoay. Nhấp vào để đặt lại về 100%.</translation>
+        <source>Quality</source>
+        <translation type="unfinished">Chất lượng</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation>Toàn màn hình</translation>
+        <translation type="unfinished">Toàn màn hình</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation>Phân nửa</translation>
+        <translation type="unfinished">Phân nửa</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>Một phần tư</translation>
+        <translation type="unfinished">Một phần tư</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Tự động</translation>
+        <translation type="unfinished">Tự động</translation>
     </message>
     <message>
         <source>Preview quality — lower is smoother while editing.
 Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>Chất lượng xem trước - thấp hơn sẽ mượt mà hơn khi chỉnh sửa.
+        <translation type="unfinished">Chất lượng xem trước - thấp hơn sẽ mượt mà hơn khi chỉnh sửa.
 Toàn bộ, Một nửa và Một phần tư là các phần cố định của độ phân giải dự án: Tổng hợp đầy đủ chính xác những gì xuất sẽ làm.
 Tự động chỉ hiển thị số lượng pixel mà bản xem trước thực sự hiển thị và giảm số lượng pixel đó hơn nữa trong khi quá trình phát lại không thể theo kịp.</translation>
     </message>
     <message>
+        <source>Speed</source>
+        <translation type="unfinished">Tốc độ</translation>
+    </message>
+    <message>
         <source>Playback speed</source>
-        <translation>Tốc độ phát lại</translation>
+        <translation type="unfinished">Tốc độ phát lại</translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished">Giải mã</translation>
     </message>
     <message>
         <source>How video is decoded for preview.
@@ -10094,59 +9998,167 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>Cách giải mã video để xem trước.
+        <translation type="unfinished">Cách giải mã video để xem trước.
 Tự động chọn mỗi clip: phần cứng cho 4K chất lượng cao, phần mềm khác.
 Phần mềm mượt mà hơn đối với hầu hết các clip. Nó sử dụng nhiều CPU hơn.
 Phần cứng tốt hơn cho 4K chất lượng cao và buộc phải có một bộ giải mã GPU.
 Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
-        <source>Toggle guides</source>
-        <translation>Bật tắt đường kẻ</translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation>Bộ đường kẻ</translation>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>Giữ các tay cầm mặt nạ trên bản xem trước trong khi một clip khác được chọn</translation>
-    </message>
-    <message>
-        <source>Exit fullscreen preview (Esc)</source>
-        <translation>Thoát chế độ xem trước toàn màn hình (Esc)</translation>
-    </message>
-    <message>
-        <source>Fullscreen preview</source>
-        <translation>Xem trước toàn màn hình</translation>
+        <translation type="unfinished">Giữ các tay cầm mặt nạ trên bản xem trước trong khi một clip khác được chọn</translation>
     </message>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>Đang giải mã trên một card đồ họa khác</translation>
+        <translation type="unfinished">Đang giải mã trên một card đồ họa khác</translation>
     </message>
     <message>
         <source>Use anyway</source>
-        <translation>Vẫn sử dụng</translation>
+        <translation type="unfinished">Vẫn sử dụng</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Hủy bỏ</translation>
+        <translation type="unfinished">Hủy bỏ</translation>
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>Việc khởi chạy Drift với chế độ chạy chính (hoặc DRI_PRIME=1) sẽ đặt OpenGL trên cùng một card với bộ giải mã.</translation>
+        <translation type="unfinished">Việc khởi chạy Drift với chế độ chạy chính (hoặc DRI_PRIME=1) sẽ đặt OpenGL trên cùng một card với bộ giải mã.</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>Chạy Drift trên card đồ họa hiệu năng cao</translation>
+        <translation type="unfinished">Chạy Drift trên card đồ họa hiệu năng cao</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
-        <translation>Đặt Drift ở chế độ Hiệu năng cao trong Cài đặt Windows &gt; Hiển thị &gt; Đồ họa, sau đó khởi động lại Drift.</translation>
+        <translation type="unfinished">Đặt Drift ở chế độ Hiệu năng cao trong Cài đặt Windows &gt; Hiển thị &gt; Đồ họa, sau đó khởi động lại Drift.</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation>Mở cài đặt đồ họa</translation>
+        <translation type="unfinished">Mở cài đặt đồ họa</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished">Thu phóng xem trước — Ctrl+cuộn qua phần xem trước để thu phóng, kéo giữa để xoay. Nhấp vào để đặt lại về 100%.</translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished">Bật tắt đường kẻ</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished">Bộ đường kẻ</translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation>Tua</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished">ĐÃ TẠM DỪNG %1s</translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
+        <translation type="unfinished">GHI %1s</translation>
+    </message>
+    <message>
+        <source>Nothing to preview yet</source>
+        <translation type="unfinished">Chưa có gì để xem trước</translation>
+    </message>
+    <message>
+        <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished">Nhập phương tiện và kéo nó vào dòng thời gian bên dưới để xem tại đây.</translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished">Xem trước GPU không có sẵn</translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished">Driver đồ họa của bạn chỉ cung cấp %1. Bản xem trước của Drift cần OpenGL 3.3.</translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished">Drift không thể khởi động trình kết xuất GPU của nó nên bản xem trước không thể vẽ.</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">Thông tin gỡ lỗi</translation>
+    </message>
+    <message>
+        <source>Audio only</source>
+        <translation type="unfinished">Chỉ âm thanh</translation>
+    </message>
+    <message>
+        <source>No clip at the current time</source>
+        <translation type="unfinished">Hiện tại chưa có clip</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewTransportBar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Current time / total · %1 frames per second</source>
+        <translation type="unfinished">Thời gian hiện tại / tổng cộng · %1 khung hình mỗi giây</translation>
+    </message>
+    <message>
+        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">Quay lại 1 giây · Nhấn Shift cho 5 giây · Nhấn Ctrl cho 10 giây</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation type="unfinished">Khung hình trước</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Tạm dừng</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Phát</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation type="unfinished">Khung hình kế</translation>
+    </message>
+    <message>
+        <source>Loop work area on — click to turn off</source>
+        <translation type="unfinished">Bật lặp lại vùng làm việc — nhấp để tắt</translation>
+    </message>
+    <message>
+        <source>Loop work area off — click to turn on</source>
+        <translation type="unfinished">Tắt lặp lại vùng làm việc — nhấp để bật</translation>
+    </message>
+    <message>
+        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">Tiến lên 1 giây · Nhấn Shift cho 5 giây · Nhấn Ctrl cho 10 giây</translation>
+    </message>
+    <message>
+        <source>Exit fullscreen preview (Esc)</source>
+        <translation type="unfinished">Thoát chế độ xem trước toàn màn hình (Esc)</translation>
+    </message>
+    <message>
+        <source>Fullscreen preview</source>
+        <translation type="unfinished">Xem trước toàn màn hình</translation>
     </message>
 </context>
 <context>

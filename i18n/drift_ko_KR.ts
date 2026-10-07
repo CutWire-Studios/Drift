@@ -1488,18 +1488,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation>오디오만</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>현재 시점에 클립이 없습니다</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>GPU 미리보기를 사용할 수 없음</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>전체</translation>
     </message>
@@ -9897,34 +9885,10 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished">%1(%2)</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -9968,123 +9932,63 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>REC %1s</source>
-        <translation>REC %1초</translation>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>PAUSED %1s</source>
-        <translation>일시정지 %1초</translation>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing to preview yet</source>
-        <translation>아직 미리볼 항목이 없습니다</translation>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>미디어를 가져와 아래 타임라인으로 드래그하면 여기에 표시됩니다.</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>GPU 미리보기를 사용할 수 없음</translation>
-    </message>
-    <message>
-        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation>그래픽 드라이버가 %1만 제공합니다. Drift의 미리보기에는 OpenGL 3.3이 필요합니다.</translation>
-    </message>
-    <message>
-        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>Drift에서 GPU 렌더러를 시작할 수 없어 미리보기를 표시할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>디버그 정보</translation>
-    </message>
-    <message>
-        <source>Audio only</source>
-        <translation>오디오만</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>현재 시점에 클립이 없습니다</translation>
-    </message>
-    <message>
-        <source>Seek</source>
-        <translation>이동</translation>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewOptionsMenu</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1(%2)</translation>
-    </message>
-    <message>
-        <source>Current time / total · %1 frames per second</source>
-        <translation>현재 시간/전체 · 초당 %1프레임</translation>
-    </message>
-    <message>
-        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>1초 뒤로 · Shift: 5초 · Ctrl: 10초</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>이전 프레임</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>일시정지</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>재생</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>다음 프레임</translation>
-    </message>
-    <message>
-        <source>Loop work area on — click to turn off</source>
-        <translation>작업 영역 반복 재생 켜짐 — 클릭하여 끄기</translation>
-    </message>
-    <message>
-        <source>Loop work area off — click to turn on</source>
-        <translation>작업 영역 반복 재생 꺼짐 — 클릭하여 켜기</translation>
-    </message>
-    <message>
-        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>1초 앞으로 · Shift: 5초 · Ctrl: 10초</translation>
-    </message>
-    <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>미리보기 확대/축소 — 미리보기 위에서 Ctrl+스크롤로 확대/축소하고 가운데 버튼 드래그로 패닝합니다. 클릭하면 100%로 초기화됩니다.</translation>
+        <source>Quality</source>
+        <translation type="unfinished">화질</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation>전체</translation>
+        <translation type="unfinished">전체</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation>절반</translation>
+        <translation type="unfinished">절반</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>1/4</translation>
+        <translation type="unfinished">1/4</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>자동</translation>
+        <translation type="unfinished">자동</translation>
     </message>
     <message>
         <source>Preview quality — lower is smoother while editing.
 Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>미리보기 화질 — 낮을수록 편집 중 더 부드럽습니다.\n전체, 절반 및 1/4은 프로젝트 해상도의 고정 비율입니다. 전체는 내보내기와 동일한 픽셀을 정확히 합성합니다.\n자동은 미리보기에 실제로 표시되는 픽셀 수만큼만 렌더링하며, 재생이 따라가지 못하면 더 낮춥니다.</translation>
+        <translation type="unfinished">미리보기 화질 — 낮을수록 편집 중 더 부드럽습니다.\n전체, 절반 및 1/4은 프로젝트 해상도의 고정 비율입니다. 전체는 내보내기와 동일한 픽셀을 정확히 합성합니다.\n자동은 미리보기에 실제로 표시되는 픽셀 수만큼만 렌더링하며, 재생이 따라가지 못하면 더 낮춥니다.</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">속도</translation>
     </message>
     <message>
         <source>Playback speed</source>
-        <translation>재생 속도</translation>
+        <translation type="unfinished">재생 속도</translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished">디코딩</translation>
     </message>
     <message>
         <source>How video is decoded for preview.
@@ -10092,47 +9996,35 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>미리보기를 위해 동영상을 디코딩하는 방식입니다.\n자동은 클립마다 선택합니다: 고화질 4K에는 하드웨어, 그 외에는 소프트웨어를 사용합니다.\n소프트웨어는 대부분의 클립에서 더 부드럽지만 CPU를 더 사용합니다.\n하드웨어는 고화질 4K에 적합하며 GPU 디코더 하나를 사용합니다.\n재생이 끊기면 다른 옵션을 사용해 보세요.</translation>
+        <translation type="unfinished">미리보기를 위해 동영상을 디코딩하는 방식입니다.\n자동은 클립마다 선택합니다: 고화질 4K에는 하드웨어, 그 외에는 소프트웨어를 사용합니다.\n소프트웨어는 대부분의 클립에서 더 부드럽지만 CPU를 더 사용합니다.\n하드웨어는 고화질 4K에 적합하며 GPU 디코더 하나를 사용합니다.\n재생이 끊기면 다른 옵션을 사용해 보세요.</translation>
     </message>
     <message>
-        <source>Toggle guides</source>
-        <translation>안내선 전환</translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation>안내선 세트</translation>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>다른 클립을 선택한 상태에서도 미리보기에 마스크 핸들을 유지</translation>
-    </message>
-    <message>
-        <source>Exit fullscreen preview (Esc)</source>
-        <translation>전체 화면 미리보기 종료(Esc)</translation>
-    </message>
-    <message>
-        <source>Fullscreen preview</source>
-        <translation>전체 화면 미리보기</translation>
+        <translation type="unfinished">다른 클립을 선택한 상태에서도 미리보기에 마스크 핸들을 유지</translation>
     </message>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>다른 그래픽 카드에서 디코딩 중</translation>
+        <translation type="unfinished">다른 그래픽 카드에서 디코딩 중</translation>
     </message>
     <message>
         <source>Use anyway</source>
-        <translation>그래도 사용</translation>
+        <translation type="unfinished">그래도 사용</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>취소</translation>
+        <translation type="unfinished">취소</translation>
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>prime-run(또는 DRI_PRIME=1)으로 Drift를 실행하면 OpenGL이 디코더와 같은 그래픽 카드를 사용합니다.</translation>
+        <translation type="unfinished">prime-run(또는 DRI_PRIME=1)으로 Drift를 실행하면 OpenGL이 디코더와 같은 그래픽 카드를 사용합니다.</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>고성능 그래픽 카드에서 Drift 실행</translation>
+        <translation type="unfinished">고성능 그래픽 카드에서 Drift 실행</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
@@ -10141,6 +10033,126 @@ If playback stutters, try another.</source>
     <message>
         <source>Open graphics settings</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished">미리보기 확대/축소 — 미리보기 위에서 Ctrl+스크롤로 확대/축소하고 가운데 버튼 드래그로 패닝합니다. 클릭하면 100%로 초기화됩니다.</translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished">안내선 전환</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished">안내선 세트</translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation>이동</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished">일시정지 %1초</translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
+        <translation type="unfinished">REC %1초</translation>
+    </message>
+    <message>
+        <source>Nothing to preview yet</source>
+        <translation type="unfinished">아직 미리볼 항목이 없습니다</translation>
+    </message>
+    <message>
+        <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished">미디어를 가져와 아래 타임라인으로 드래그하면 여기에 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished">GPU 미리보기를 사용할 수 없음</translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished">그래픽 드라이버가 %1만 제공합니다. Drift의 미리보기에는 OpenGL 3.3이 필요합니다.</translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished">Drift에서 GPU 렌더러를 시작할 수 없어 미리보기를 표시할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">디버그 정보</translation>
+    </message>
+    <message>
+        <source>Audio only</source>
+        <translation type="unfinished">오디오만</translation>
+    </message>
+    <message>
+        <source>No clip at the current time</source>
+        <translation type="unfinished">현재 시점에 클립이 없습니다</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewTransportBar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1(%2)</translation>
+    </message>
+    <message>
+        <source>Current time / total · %1 frames per second</source>
+        <translation type="unfinished">현재 시간/전체 · 초당 %1프레임</translation>
+    </message>
+    <message>
+        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">1초 뒤로 · Shift: 5초 · Ctrl: 10초</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation type="unfinished">이전 프레임</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">일시정지</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">재생</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation type="unfinished">다음 프레임</translation>
+    </message>
+    <message>
+        <source>Loop work area on — click to turn off</source>
+        <translation type="unfinished">작업 영역 반복 재생 켜짐 — 클릭하여 끄기</translation>
+    </message>
+    <message>
+        <source>Loop work area off — click to turn on</source>
+        <translation type="unfinished">작업 영역 반복 재생 꺼짐 — 클릭하여 켜기</translation>
+    </message>
+    <message>
+        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">1초 앞으로 · Shift: 5초 · Ctrl: 10초</translation>
+    </message>
+    <message>
+        <source>Exit fullscreen preview (Esc)</source>
+        <translation type="unfinished">전체 화면 미리보기 종료(Esc)</translation>
+    </message>
+    <message>
+        <source>Fullscreen preview</source>
+        <translation type="unfinished">전체 화면 미리보기</translation>
     </message>
 </context>
 <context>

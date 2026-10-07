@@ -1361,8 +1361,8 @@ ApplicationWindow {
     // Escape (clearSelection): CapCut-style — if a timeline cut tool is active,
     // first press returns to Select; only then does Escape clear the selection.
     function dispatchAction(id) {
-        if (id === "clearSelection" && EditorState.guideEditSetId !== "") {
-            EditorState.guideEditSetId = ""
+        if (id === "clearSelection" && EditorState.preview.guideEditSetId !== "") {
+            EditorState.preview.guideEditSetId = ""
             return
         }
         if (id === "clearSelection"
@@ -1615,13 +1615,13 @@ ApplicationWindow {
                             // the stack is hidden and the preview is all there is.
                             SplitView.fillWidth: !window.portraitWorkspace || window.previewFullscreen
                             // Portrait default: wide enough for the tall frame once
-                            // the panel's toolbar and transport rows are discounted,
+                            // the panel's transport row and gutters are discounted,
                             // capped so the libraries and timeline keep a usable
                             // share. Ignored while fillWidth is set, and replaced
                             // outright once the user drags the handle — SplitView
                             // writes this attached property, which drops the binding.
                             SplitView.preferredWidth: Math.max(0, Math.min(rootSplit.width * 0.4,
-                                                                           (rootSplit.height - 120) * 9 / 16))
+                                                                           (rootSplit.height - 72) * 9 / 16))
                             SplitView.minimumWidth: window.portraitWorkspace
                                                     ? Math.min(260, Math.max(0, rootSplit.width * 0.2))
                                                     : Math.min(320, Math.max(0, innerSplit.width * 0.3))

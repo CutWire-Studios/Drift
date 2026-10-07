@@ -1488,18 +1488,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation>オーディオのみ</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>現在の時間にクリップがありません</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>GPUプレビューは利用できません</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>フル</translation>
     </message>
@@ -9897,34 +9885,10 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -9968,125 +9932,65 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>REC %1s</source>
-        <translation>録画中 %1s</translation>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>PAUSED %1s</source>
-        <translation>一時停止中 %1s</translation>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing to preview yet</source>
-        <translation>プレビューするものはまだありません</translation>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>メディアをインポートし、下のタイムラインにドラッグしてここで表示します。</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>GPUプレビューは利用できません</translation>
-    </message>
-    <message>
-        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation>お使いのグラフィックスドライバーは %1 にしか対応していません。プレビューには OpenGL 3.3 が必要です。</translation>
-    </message>
-    <message>
-        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>Drift は GPU レンダラーを起動できなかったため、プレビューを描画できません。</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>デバッグ情報</translation>
-    </message>
-    <message>
-        <source>Audio only</source>
-        <translation>オーディオのみ</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>現在の時間にクリップがありません</translation>
-    </message>
-    <message>
-        <source>Seek</source>
-        <translation>シーク</translation>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewOptionsMenu</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Current time / total · %1 frames per second</source>
-        <translation>現在の時間 / 合計 · %1 フレーム/秒</translation>
-    </message>
-    <message>
-        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>1秒戻る · Shiftキーで5秒 · Ctrlキーで10秒</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>前のフレーム</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>一時停止</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>再生</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>次のフレーム</translation>
-    </message>
-    <message>
-        <source>Loop work area on — click to turn off</source>
-        <translation>ワークエリアループオン — クリックでオフ</translation>
-    </message>
-    <message>
-        <source>Loop work area off — click to turn on</source>
-        <translation>ワークエリアループオフ — クリックでオン</translation>
-    </message>
-    <message>
-        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>1秒進む · Shiftキーで5秒 · Ctrlキーで10秒</translation>
-    </message>
-    <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>プレビューズーム — プレビュー上で Ctrl+スクロールでズーム、中ボタンドラッグでパン。クリックで 100% にリセット。</translation>
+        <source>Quality</source>
+        <translation type="unfinished">品質</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation>フル</translation>
+        <translation type="unfinished">フル</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation>半分</translation>
+        <translation type="unfinished">半分</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>4分の1</translation>
+        <translation type="unfinished">4分の1</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>自動</translation>
+        <translation type="unfinished">自動</translation>
     </message>
     <message>
         <source>Preview quality — lower is smoother while editing.
 Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>プレビュー品質 — 低いほど編集中は滑らかです。
+        <translation type="unfinished">プレビュー品質 — 低いほど編集中は滑らかです。
 フル、半分、4分の1はプロジェクト解像度に対する固定比率です : フルはエクスポートとまったく同じように合成します。
 自動はプレビューに実際に表示されるピクセル数だけをレンダリングし、再生が追いつかない場合はさらに解像度を下げます。</translation>
     </message>
     <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
         <source>Playback speed</source>
-        <translation>再生速度</translation>
+        <translation type="unfinished">再生速度</translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished">デコード</translation>
     </message>
     <message>
         <source>How video is decoded for preview.
@@ -10094,59 +9998,167 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>プレビュー用のビデオデコード方法。
+        <translation type="unfinished">プレビュー用のビデオデコード方法。
 自動はクリップごとに選択 : 高品質 4K にはハードウェア、それ以外はソフトウェア。
 ソフトウェアはほとんどのクリップで滑らかです。CPU をより多く使用します。
 高品質な 4K 映像にはハードウェア処理の方が適しており、GPU デコーダーの使用が強制されます。
 再生がカクつく場合は、別の設定を試してください。</translation>
     </message>
     <message>
-        <source>Toggle guides</source>
-        <translation>ガイドの切り替え</translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation>ガイドセット</translation>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>別のクリップが選択されている間も、プレビュー上にマスクのハンドルを表示したままにする</translation>
-    </message>
-    <message>
-        <source>Exit fullscreen preview (Esc)</source>
-        <translation>フルスクリーンプレビューを終了 (Esc)</translation>
-    </message>
-    <message>
-        <source>Fullscreen preview</source>
-        <translation>フルスクリーンプレビュー</translation>
+        <translation type="unfinished">別のクリップが選択されている間も、プレビュー上にマスクのハンドルを表示したままにする</translation>
     </message>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>別のグラフィックカードでデコード</translation>
+        <translation type="unfinished">別のグラフィックカードでデコード</translation>
     </message>
     <message>
         <source>Use anyway</source>
-        <translation>とにかく使用する</translation>
+        <translation type="unfinished">とにかく使用する</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>キャンセル</translation>
+        <translation type="unfinished">キャンセル</translation>
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>prime-run (または DRI_PRIME=1) を指定して Drift を起動すると、OpenGL がデコーダーと同じグラフィックカード上で動作するようになります。</translation>
+        <translation type="unfinished">prime-run (または DRI_PRIME=1) を指定して Drift を起動すると、OpenGL がデコーダーと同じグラフィックカード上で動作するようになります。</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>高性能グラフィックスカードで Drift を実行する</translation>
+        <translation type="unfinished">高性能グラフィックスカードで Drift を実行する</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
-        <translation>Windows の設定 &gt; ディスプレイ &gt; グラフィックス で Drift を「ハイパフォーマンス」に設定し、Drift を再起動してください。</translation>
+        <translation type="unfinished">Windows の設定 &gt; ディスプレイ &gt; グラフィックス で Drift を「ハイパフォーマンス」に設定し、Drift を再起動してください。</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation>グラフィック設定を開く</translation>
+        <translation type="unfinished">グラフィック設定を開く</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished">プレビューズーム — プレビュー上で Ctrl+スクロールでズーム、中ボタンドラッグでパン。クリックで 100% にリセット。</translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished">ガイドの切り替え</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished">ガイドセット</translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation>シーク</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished">一時停止中 %1s</translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
+        <translation type="unfinished">録画中 %1s</translation>
+    </message>
+    <message>
+        <source>Nothing to preview yet</source>
+        <translation type="unfinished">プレビューするものはまだありません</translation>
+    </message>
+    <message>
+        <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished">メディアをインポートし、下のタイムラインにドラッグしてここで表示します。</translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished">GPUプレビューは利用できません</translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished">お使いのグラフィックスドライバーは %1 にしか対応していません。プレビューには OpenGL 3.3 が必要です。</translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished">Drift は GPU レンダラーを起動できなかったため、プレビューを描画できません。</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">デバッグ情報</translation>
+    </message>
+    <message>
+        <source>Audio only</source>
+        <translation type="unfinished">オーディオのみ</translation>
+    </message>
+    <message>
+        <source>No clip at the current time</source>
+        <translation type="unfinished">現在の時間にクリップがありません</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewTransportBar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Current time / total · %1 frames per second</source>
+        <translation type="unfinished">現在の時間 / 合計 · %1 フレーム/秒</translation>
+    </message>
+    <message>
+        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">1秒戻る · Shiftキーで5秒 · Ctrlキーで10秒</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation type="unfinished">前のフレーム</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">一時停止</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">再生</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation type="unfinished">次のフレーム</translation>
+    </message>
+    <message>
+        <source>Loop work area on — click to turn off</source>
+        <translation type="unfinished">ワークエリアループオン — クリックでオフ</translation>
+    </message>
+    <message>
+        <source>Loop work area off — click to turn on</source>
+        <translation type="unfinished">ワークエリアループオフ — クリックでオン</translation>
+    </message>
+    <message>
+        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">1秒進む · Shiftキーで5秒 · Ctrlキーで10秒</translation>
+    </message>
+    <message>
+        <source>Exit fullscreen preview (Esc)</source>
+        <translation type="unfinished">フルスクリーンプレビューを終了 (Esc)</translation>
+    </message>
+    <message>
+        <source>Fullscreen preview</source>
+        <translation type="unfinished">フルスクリーンプレビュー</translation>
     </message>
 </context>
 <context>

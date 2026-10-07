@@ -8,8 +8,8 @@ Item {
 
     readonly property real radius: 34
     readonly property var axes: {
-        void EditorState.editorViewRevision
-        return EditorState.editorAxes()
+        void EditorState.preview.viewRevision
+        return EditorState.preview.axes()
     }
     // Axis ends drawn back to front, so the ones toward the viewer sit on top.
     readonly property var ends: {
@@ -88,7 +88,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: EditorState.editorSetAxisView(end.modelData.view)
+                    onClicked: EditorState.preview.setAxisView(end.modelData.view)
                 }
             }
         }

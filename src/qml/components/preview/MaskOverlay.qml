@@ -2,9 +2,9 @@ import QtQuick
 import Drift
 import ".."
 
-// Mask editor: direct manipulation of the selected clip's mask layers. Geometry is driven by the
-// owning PreviewPanel, which mirrors the canvas rect here so grips on a mask that runs past a
-// canvas edge stay drawn and grabbable.
+// Mask editor: direct manipulation of the selected clip's mask layers. Geometry is driven by
+// PreviewToolHost, which mirrors the canvas rect here so grips on a mask that runs past a canvas
+// edge stay drawn and grabbable.
 //
 // Mask coordinates are normalized to the *host clip's* frame, not the canvas: the coverage map is
 // rasterized at the layer's size and sampled at the layer's UV, so a mask travels with the clip's
@@ -39,7 +39,7 @@ Item {
         // Playhead ticks ~60 Hz; rebuilding grips every tick during playback is wasted work.
         if (EditorState.playing)
             return
-        const next = EditorState.maskEditorState()
+        const next = EditorState.preview.maskEditorState()
         editorState = next
         const layers = next.layers || []
         // Delegates read their values from here by index; the models below are only swapped
@@ -135,7 +135,7 @@ Item {
         rotation: is3d || hasParent ? 0 : (root.editorState.rotation || 0)
         transform: Matrix4x4 {
             matrix: clipFrame.is3d || clipFrame.hasParent
-                    ? EditorState.previewClipPoseMatrix(root.editorState, root.editorState.x || 0,
+                    ? EditorState.preview.clipPoseMatrix(root.editorState, root.editorState.x || 0,
                                                         root.editorState.y || 0,
                                                         root.editorState.width || root.canvasW,
                                                         root.editorState.height || root.canvasH,

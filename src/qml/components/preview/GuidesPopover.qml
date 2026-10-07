@@ -228,8 +228,8 @@ Popup {
         ThemedSwitch {
             width: parent.width
             text: qsTr("Show guides")
-            checked: EditorState.guidesEnabled
-            onToggled: EditorState.guidesEnabled = checked
+            checked: EditorState.preview.guidesEnabled
+            onToggled: EditorState.preview.guidesEnabled = checked
         }
 
         SectionLabel { text: qsTr("Guide sets") }
@@ -357,7 +357,7 @@ Popup {
             glyph: Theme.icons.pencil
             text: qsTr("Edit on preview")
             onClicked: {
-                EditorState.guideEditSetId = root.selectedId
+                EditorState.preview.guideEditSetId = root.selectedId
                 root.close()
             }
         }

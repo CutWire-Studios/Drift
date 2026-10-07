@@ -28,7 +28,7 @@ Item {
             return false
         }
         const p = toCanvas(localX, localY)
-        plan = EditorState.planPreviewDrop(kind, String(payload), p.x, p.y)
+        plan = EditorState.preview.planDrop(kind, String(payload), p.x, p.y)
         return plan.accepted
     }
 
@@ -38,7 +38,7 @@ Item {
             return false
         const p = toCanvas(localX, localY)
         const run = function() {
-            const result = EditorState.dropAssetOnPreview(kind, String(payload), label || "", p.x, p.y)
+            const result = EditorState.preview.dropAsset(kind, String(payload), label || "", p.x, p.y)
             if (!result.accepted && result.message)
                 Toasts.info(result.message)
         }

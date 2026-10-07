@@ -9,7 +9,7 @@ import ".."
 // properties panel owns text editing until the editor matches the render.) Sits outside the (clipped) canvas rect,
 // mirroring its geometry, so grips on a clip that runs past a canvas edge stay
 // drawn and grabbable instead of being cut away with the frame. Geometry
-// (x/y/width/height/z/visible) is driven by the owning PreviewPanel.
+// and visibility are driven by PreviewToolHost.
 Item {
     id: root
 
@@ -26,7 +26,7 @@ Item {
 
     // The two views edit differently: the camera output takes the flat grips (move, resize,
     // rotate) on every clip, the 3D scene only the 3D gizmo, and only on 3D layers and the camera.
-    readonly property bool mode3d: EditorState.previewMode === "3d"
+    readonly property bool mode3d: EditorState.preview.mode === "3d"
 
     // The selected clip's gizmo, when it is a 3D layer, and its pose while a handle is dragged.
     readonly property var gizmoBox: {
@@ -122,9 +122,9 @@ Item {
         // is wasted work and stalls the UI on long timelines.
         if (EditorState.playing)
             return
-        const camera = EditorState.previewCameraBox()
+        const camera = EditorState.preview.cameraBox()
         cameraBox = camera && camera.kind === "camera" ? camera : null
-        const next = EditorState.previewClipsAtPlayhead()
+        const next = EditorState.preview.clipsAtPlayhead()
         if (clipsOverlayEqual(overlayClips, next))
             return
         const sameClips = sameOverlayClips(overlayClips, next)
@@ -194,7 +194,6 @@ Item {
             }
         }
         function onSelectionChanged() { root.refreshOverlay() }
-        function onEditorViewChanged() { root.refreshOverlay() }
         // A scrub moves the playhead per scroll event; catch up once when it ends.
         function onPlayheadSecondsChanged() {
             if (!EditorState.scrubbing)
@@ -208,6 +207,11 @@ Item {
             if (!EditorState.playing)
                 root.refreshOverlay()
         }
+    }
+
+    Connections {
+        target: EditorState.preview
+        function onViewChanged() { root.refreshOverlay() }
     }
 
     Repeater {
@@ -228,7 +232,7 @@ Item {
             // Moved by a transform layer: drawn and read through that parent.
             readonly property bool hasParent: box.parentActive === true
             readonly property var parentInverse: hasParent
-                ? EditorState.previewParentOverlayMatrix(box, handle.sx).inverted() : null
+                ? EditorState.preview.parentOverlayMatrix(box, handle.sx).inverted() : null
             // Overlay point (in the parented frame) -> the box's own overlay frame.
             function toParentLocal(p) {
                 if (!handle.hasParent)
@@ -384,8 +388,8 @@ Item {
             rotation: is3d || hasParent || viaCamera ? 0 : layoutRotation
             transform: Matrix4x4 {
                 id: poseTransform
-                matrix: (void EditorState.editorViewRevision, handle.is3d || handle.hasParent || handle.viaCamera)
-                        ? EditorState.previewClipPoseMatrix({
+                matrix: (void EditorState.preview.viewRevision, handle.is3d || handle.hasParent || handle.viaCamera)
+                        ? EditorState.preview.clipPoseMatrix({
                                                                 "canvasWidth": handle.box.canvasWidth,
                                                                 "canvasHeight": handle.box.canvasHeight,
                                                                 "rotationX": handle.poseRotX,
@@ -429,7 +433,7 @@ Item {
             // do not run along the screen axes.
             // The 3D view's screen is not the canvas, so there is nothing there to snap to.
             readonly property bool canSnap: Math.abs(handle.layoutRotation) < 0.01
-                                            && EditorState.previewMode !== "3d"
+                                            && EditorState.preview.mode !== "3d"
 
             // The box as it stood at the grab, in the shape the snapping calls take.
             function grabBox() {
@@ -564,7 +568,7 @@ Item {
                     if (handle.isTransform) {
                         const p = root.mapFromItem(null, eventPoint.scenePosition.x,
                                                    eventPoint.scenePosition.y)
-                        const hit = EditorState.previewClipAtCanvasPoint(p.x / handle.sx, p.y / handle.sy)
+                        const hit = EditorState.preview.clipAtCanvasPoint(p.x / handle.sx, p.y / handle.sy)
                         if (hit && hit.track !== undefined) {
                             EditorState.selectClip(hit.track, hit.clip)
                             return
@@ -652,7 +656,7 @@ Item {
                     // straight through (Alt is the window drag on most Linux desktops, so it is
                     // not usable here).
                     const snap = handle.canSnap && !(bodyDrag.centroid.modifiers & Qt.ControlModifier)
-                    const moved = EditorState.previewSnapMove(bodyDrag.startBox, bodyDrag.pressPx, bodyDrag.pressPy,
+                    const moved = EditorState.preview.snapMove(bodyDrag.startBox, bodyDrag.pressPx, bodyDrag.pressPy,
                                                               p.x / handle.sx, p.y / handle.sy,
                                                               root.snapTolPx / handle.sx, snap)
                     // Seen edge-on, the plane has no point under the pointer: hold still.
@@ -785,7 +789,7 @@ Item {
                         if (handle.canSnap && !(modifiers & Qt.ControlModifier)) {
                             // Each moving edge is snapped as it projects, through the pose,
                             // parents and camera.
-                            const snapped = EditorState.previewSnapResize(grip.startBox, w, h, dxSign, dySign,
+                            const snapped = EditorState.preview.snapResize(grip.startBox, w, h, dxSign, dySign,
                                                                           handle.is3d,
                                                                           root.snapTolPx / handle.sx)
                             if (locked) {

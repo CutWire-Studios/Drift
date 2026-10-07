@@ -796,7 +796,7 @@ void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
     };
     // The centre of the quad the overlay reports for the clip.
     const auto overlayBox = [&]() {
-        for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+        for (const QVariant &entry : state.preview()->clipsAtPlayhead()) {
             const QVariantMap box = entry.toMap();
             if (box.value(QStringLiteral("kind")).toString() == QStringLiteral("image"))
                 return box;
@@ -830,7 +830,7 @@ void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
     const int cameraTrack = 0;
     QVERIFY(state.project()->tracks().at(cameraTrack).isCameraLayer());
     QCOMPARE(state.project()->tracks().at(cameraTrack).clips.size(), 1);
-    QVERIFY(state.previewCameraActive());
+    QVERIFY(state.preview()->cameraActive());
 
     // Pan the camera 60 px right; the picture must go left, and the overlay with it.
     state.previewSetClipPosition(cameraTrack, 0, 60, 0);
@@ -843,7 +843,7 @@ void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
 
     // The clip is now on track 1, below the camera.
     QVariantMap moved;
-    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+    for (const QVariant &entry : state.preview()->clipsAtPlayhead()) {
         const QVariantMap candidate = entry.toMap();
         if (candidate.value(QStringLiteral("kind")).toString() == QStringLiteral("image"))
             moved = candidate;
@@ -858,11 +858,11 @@ void EditorStateTest::cameraMovesThePreviewOverlayWithThePicture()
                                 .arg(movedRendered.x()).arg(movedRendered.y())));
 
     // Picking by canvas point has to follow it too, or clicking the clip would miss.
-    const QVariantMap hit = state.previewClipAtCanvasPoint(movedRendered.x(), movedRendered.y());
+    const QVariantMap hit = state.preview()->clipAtCanvasPoint(movedRendered.x(), movedRendered.y());
     QVERIFY(!hit.isEmpty());
     QCOMPARE(hit.value(QStringLiteral("kind")).toString(), QStringLiteral("image"));
     // And where it used to be is now empty canvas.
-    QVERIFY(state.previewClipAtCanvasPoint(restRendered.x(), restRendered.y()).isEmpty());
+    QVERIFY(state.preview()->clipAtCanvasPoint(restRendered.x(), restRendered.y()).isEmpty());
 }
 
 void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
@@ -875,11 +875,11 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     QVERIFY(!state.cameraStateAtPlayhead().value(QStringLiteral("active")).toBool());
     state.addCameraTrack();
     state.setPlayheadSeconds(0.0);
-    QVERIFY(state.previewCameraBox().isEmpty());
+    QVERIFY(state.preview()->cameraBox().isEmpty());
 
-    state.setPreviewMode(QStringLiteral("3d"));
-    QCOMPARE(state.previewMode(), QStringLiteral("3d"));
-    const QVariantMap start = state.previewCameraBox();
+    state.preview()->setMode(QStringLiteral("3d"));
+    QCOMPARE(state.preview()->mode(), QStringLiteral("3d"));
+    const QVariantMap start = state.preview()->cameraBox();
     QCOMPARE(start.value(QStringLiteral("kind")).toString(), QStringLiteral("camera"));
     // The box stands at the eye: 2000 px in front of the canvas centre.
     QCOMPARE(start.value(QStringLiteral("x")).toDouble() + 0.5, 500.0);
@@ -888,12 +888,12 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     const int clip = start.value(QStringLiteral("clip")).toInt();
 
     // A click on the drawn body picks the camera; one far away does not.
-    QVERIFY(!state.editorPickCamera(-5000.0, -5000.0, 10.0));
-    QVariantList axes = state.editorAxes();
+    QVERIFY(!state.preview()->pickCamera(-5000.0, -5000.0, 10.0));
+    QVariantList axes = state.preview()->axes();
     QCOMPARE(axes.size(), 3);
-    state.editorToggleLookThrough();
-    QVERIFY(state.editorLookThrough());
-    state.editorToggleLookThrough();
+    state.preview()->toggleLookThrough();
+    QVERIFY(state.preview()->lookThrough());
+    state.preview()->toggleLookThrough();
 
     // Move along X through the 3D view: the eye goes right, so the camera's position does too
     // (unturned, position and eye differ only by the lens along z).
@@ -904,12 +904,12 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
         return QPointF(h.x() / h.w(), h.y() / h.w());
     };
     const QVector3D eye(0, 0, 2000);
-    state.setGizmoTool(QStringLiteral("move"));
-    state.setGizmoOrientation(QStringLiteral("global"));
+    state.preview()->setGizmoTool(QStringLiteral("move"));
+    state.preview()->setGizmoOrientation(QStringLiteral("global"));
     state.beginPreviewDrag();
     const QPointF press = onOverlay(eye);
     const QPointF now = onOverlay(eye + QVector3D(150, 0, 0));
-    const QVariantMap moved = state.previewApplyGizmoDrag(start, QStringLiteral("x"), press.x(), press.y(),
+    const QVariantMap moved = state.preview()->applyGizmoDrag(start, QStringLiteral("x"), press.x(), press.y(),
                                                           now.x(), now.y(), false, 1.0);
     state.commitPreviewDrag();
     const drift::Clip &camera = state.project()->tracks().at(track).clips.at(clip);
@@ -919,33 +919,33 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     QVERIFY(std::abs(moved.value(QStringLiteral("x")).toDouble() + 0.5 - 650.0) < 0.5);
 
     // Turning keeps the eye where it is: a yaw about the eye moves the stored position, not the eye.
-    const QVariantMap before = state.previewCameraBox();
-    state.setGizmoTool(QStringLiteral("rotate"));
+    const QVariantMap before = state.preview()->cameraBox();
+    state.preview()->setGizmoTool(QStringLiteral("rotate"));
     const QVector3D eyeNow(150, 0, 2000);
     state.beginPreviewDrag();
     const QPointF a = onOverlay(eyeNow + QVector3D(60, 0, 0));
     const QPointF b = onOverlay(eyeNow + QVector3D(0, 0, -60));
-    state.previewApplyGizmoDrag(before, QStringLiteral("y"), a.x(), a.y(), b.x(), b.y(), false, 1.0);
+    state.preview()->applyGizmoDrag(before, QStringLiteral("y"), a.x(), a.y(), b.x(), b.y(), false, 1.0);
     state.commitPreviewDrag();
-    const QVariantMap after = state.previewCameraBox();
+    const QVariantMap after = state.preview()->cameraBox();
     QVERIFY(std::abs(after.value(QStringLiteral("rotationY")).toDouble()) > 1.0);
     QVERIFY(std::abs(after.value(QStringLiteral("x")).toDouble() - before.value(QStringLiteral("x")).toDouble()) < 0.5);
     QVERIFY(std::abs(after.value(QStringLiteral("z")).toDouble() - before.value(QStringLiteral("z")).toDouble()) < 0.5);
 
     // A camera has nothing to scale.
-    state.setGizmoTool(QStringLiteral("scale"));
-    QVERIFY(!state.previewGizmoGeometry(after, 1.0, 1.0).value(QStringLiteral("valid")).toBool());
+    state.preview()->setGizmoTool(QStringLiteral("scale"));
+    QVERIFY(!state.preview()->gizmoGeometry(after, 1.0, 1.0).value(QStringLiteral("valid")).toBool());
 
     // Reset puts it back at rest, keeping the lens, in one undo step.
     state.project()->tracks()[track].clips[clip].perspective.setKeyframe(0, 1500.0);
-    QVERIFY(state.resetSceneCamera());
-    const QVariantMap rest = state.previewCameraBox();
+    QVERIFY(state.preview()->resetSceneCamera());
+    const QVariantMap rest = state.preview()->cameraBox();
     QCOMPARE(rest.value(QStringLiteral("x")).toDouble() + 0.5, 500.0);
     QCOMPARE(rest.value(QStringLiteral("z")).toDouble(), 1500.0);
     QCOMPARE(rest.value(QStringLiteral("rotationY")).toDouble(), 0.0);
     state.undo();
-    QVERIFY(std::abs(state.previewCameraBox().value(QStringLiteral("rotationY")).toDouble()) > 1.0);
-    QVERIFY(!state.resetSceneCamera(0, 99));
+    QVERIFY(std::abs(state.preview()->cameraBox().value(QStringLiteral("rotationY")).toDouble()) > 1.0);
+    QVERIFY(!state.preview()->resetSceneCamera(0, 99));
 
     // Adding a camera again makes a new shot on the same lane, never one on top of another.
     state.addCameraTrack();
@@ -963,8 +963,8 @@ void EditorStateTest::cameraGizmoMovesAndTurnsTheEye()
     }
     state.setPlayheadSeconds(0.0);
 
-    state.setPreviewMode(QStringLiteral("2d"));
-    QVERIFY(state.previewCameraBox().isEmpty());
+    state.preview()->setMode(QStringLiteral("2d"));
+    QVERIFY(state.preview()->cameraBox().isEmpty());
 }
 
 void EditorStateTest::compositeClipGetsAPreviewBox()
@@ -976,7 +976,7 @@ void EditorStateTest::compositeClipGetsAPreviewBox()
     state.setPlayheadSeconds(2.0);
 
     bool found = false;
-    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+    for (const QVariant &entry : state.preview()->clipsAtPlayhead()) {
         const QVariantMap box = entry.toMap();
         if (box.value(QStringLiteral("kind")).toString() == QStringLiteral("composite"))
             found = true;
@@ -1082,7 +1082,7 @@ void setUpTransformTracks(AppController &state)
 
 QVariantMap previewBoxFor(AppController &state, const QString &name)
 {
-    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+    for (const QVariant &entry : state.preview()->clipsAtPlayhead()) {
         const QVariantMap box = entry.toMap();
         if (box.value(QStringLiteral("name")).toString() == name)
             return box;
@@ -1141,7 +1141,7 @@ void EditorStateTest::transformLayerParentsPreviewBoxes()
     QVERIFY(child.value(QStringLiteral("parentAffine")).toBool());
     // The box stays in the child's own pixels; the parent carries the offset.
     QCOMPARE(child.value(QStringLiteral("x")).toDouble(), 100.0);
-    QCOMPARE(state.previewMapFromClipSpace(child, 100, 100), QPointF(150, 120));
+    QCOMPARE(state.preview()->mapFromClipSpace(child, 100, 100), QPointF(150, 120));
     const QVariantList quad = child.value(QStringLiteral("quad")).toList();
     QCOMPARE(quad.size(), 4);
     QCOMPARE(quad.at(0).toPointF(), QPointF(150, 120));
@@ -1152,9 +1152,9 @@ void EditorStateTest::transformLayerParentsPreviewBoxes()
     QCOMPARE(frame.value(QStringLiteral("childCount")).toInt(), 1);
 
     // Picking goes through the parent and never lands on the layer's own frame.
-    QCOMPARE(state.previewClipAtCanvasPoint(160, 130).value(QStringLiteral("name")).toString(),
+    QCOMPARE(state.preview()->clipAtCanvasPoint(160, 130).value(QStringLiteral("name")).toString(),
              QStringLiteral("a"));
-    QVERIFY(state.previewClipAtCanvasPoint(110, 105).isEmpty());
+    QVERIFY(state.preview()->clipAtCanvasPoint(110, 105).isEmpty());
 }
 
 void EditorStateTest::transformSpanOptionsAndValidation()
@@ -2779,7 +2779,7 @@ void EditorStateTest::guidesTravelWithProject()
     state.setGuideSetActive(QStringLiteral("thirds"), true);
     state.setGuideSetActive(QStringLiteral("safe"), true);
     state.setGuideSetActive(QStringLiteral("no-such-set"), true);
-    state.setGuidesEnabled(true);
+    state.preview()->setGuidesEnabled(true);
     QVERIFY(state.hasUnsavedChanges());
     QCOMPARE(state.guideItems().size(), 6);
 
@@ -2817,9 +2817,9 @@ void EditorStateTest::guidesTravelWithProject()
         file.write(QJsonDocument(root).toJson());
     }
 
-    state.setGuidesEnabled(false);
+    state.preview()->setGuidesEnabled(false);
     state.loadProjectJson(QUrl::fromLocalFile(jsonPath));
-    QVERIFY(state.guidesEnabled());
+    QVERIFY(state.preview()->guidesEnabled());
     const QVariantList items = state.guideItems();
     QCOMPARE(items.size(), 1);
     QCOMPARE(items.first().toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("h"));
@@ -2905,25 +2905,25 @@ void EditorStateTest::guideLibraryEditing()
     QCOMPARE(findSet(state, copy).value(QStringLiteral("items")).toList().size(), 4);
 
     // Edit mode: library sets only, shows the set, and shares the preview with crop and mask modes.
-    state.setGuideEditSetId(QStringLiteral("thirds"));
-    QVERIFY(state.guideEditSetId().isEmpty());
-    state.setGuidesEnabled(false);
+    state.preview()->setGuideEditSetId(QStringLiteral("thirds"));
+    QVERIFY(state.preview()->guideEditSetId().isEmpty());
+    state.preview()->setGuidesEnabled(false);
     state.setGuideSetActive(copy, false);
-    state.setGuideEditSetId(copy);
-    QCOMPARE(state.guideEditSetId(), copy);
-    QVERIFY(state.guidesEnabled());
+    state.preview()->setGuideEditSetId(copy);
+    QCOMPARE(state.preview()->guideEditSetId(), copy);
+    QVERIFY(state.preview()->guidesEnabled());
     QVERIFY(findSet(state, copy).value(QStringLiteral("active")).toBool());
-    state.setCanvasCropMode(true);
-    QVERIFY(state.guideEditSetId().isEmpty());
-    state.setGuideEditSetId(copy);
-    QVERIFY(!state.canvasCropMode());
-    state.setGuidesEnabled(false);
-    QVERIFY(state.guideEditSetId().isEmpty());
-    state.setGuideEditSetId(copy);
+    state.preview()->setCanvasCropMode(true);
+    QVERIFY(state.preview()->guideEditSetId().isEmpty());
+    state.preview()->setGuideEditSetId(copy);
+    QVERIFY(!state.preview()->canvasCropMode());
+    state.preview()->setGuidesEnabled(false);
+    QVERIFY(state.preview()->guideEditSetId().isEmpty());
+    state.preview()->setGuideEditSetId(copy);
 
     state.deleteGuideSet(copy);
     QVERIFY(findSet(state, copy).isEmpty());
-    QVERIFY(state.guideEditSetId().isEmpty());
+    QVERIFY(state.preview()->guideEditSetId().isEmpty());
     QVERIFY(state.guideItems().isEmpty());
 
     const QString fresh = state.createGuideSet(QString());
@@ -4042,14 +4042,14 @@ void EditorStateTest::depthEffectEditorStateResolvesHandles()
     state.addTextClip(QStringLiteral("Lit"), 0.0);
     const int track = state.selectedTrack();
     const int clip = state.selectedClip();
-    QVERIFY(state.depthEffectEditorState().isEmpty());
+    QVERIFY(state.preview()->depthEffectEditorState().isEmpty());
 
     state.addEffect(track, clip, QStringLiteral("adjust.contrast"));
     state.addEffect(track, clip, QStringLiteral("depth.relight"));
     state.addEffect(track, clip, QStringLiteral("depth.focus"));
     state.setPlayheadSeconds(1.0);
 
-    QVariantMap editor = state.depthEffectEditorState();
+    QVariantMap editor = state.preview()->depthEffectEditorState();
     QVERIFY(editor.value(QStringLiteral("hasFrame")).toBool());
     QVariantList effects = editor.value(QStringLiteral("effects")).toList();
     QCOMPARE(effects.size(), 2);
@@ -4066,20 +4066,20 @@ void EditorStateTest::depthEffectEditorStateResolvesHandles()
     state.beginPreviewDrag(QStringLiteral("Move light"));
     state.previewSetClipKeyframe(track, clip, QStringLiteral("fx.1.light1_x"), 1.0, 0.6);
     state.commitPreviewDrag();
-    relight = state.depthEffectEditorState().value(QStringLiteral("effects")).toList()
+    relight = state.preview()->depthEffectEditorState().value(QStringLiteral("effects")).toList()
                   .at(0).toMap().value(QStringLiteral("params")).toMap();
     QCOMPARE(relight.value(QStringLiteral("light1_x")).toDouble(), 0.6);
 
     // ...and once it is, the handle sits where the animation puts it at the playhead.
     state.setClipKeyframe(track, clip, QStringLiteral("fx.1.light1_x"), 0.0, 0.0);
     state.setClipKeyframe(track, clip, QStringLiteral("fx.1.light1_x"), 2.0, 1.0);
-    relight = state.depthEffectEditorState().value(QStringLiteral("effects")).toList()
+    relight = state.preview()->depthEffectEditorState().value(QStringLiteral("effects")).toList()
                   .at(0).toMap().value(QStringLiteral("params")).toMap();
     QVERIFY(std::abs(relight.value(QStringLiteral("light1_x")).toDouble() - 0.5) < 1e-6);
 
     // A disabled effect draws no handles.
     state.setEffectEnabled(track, clip, 1, false);
-    effects = state.depthEffectEditorState().value(QStringLiteral("effects")).toList();
+    effects = state.preview()->depthEffectEditorState().value(QStringLiteral("effects")).toList();
     QCOMPARE(effects.size(), 1);
     QCOMPARE(effects.at(0).toMap().value(QStringLiteral("catalogId")).toString(),
              QStringLiteral("depth.focus"));
@@ -4352,8 +4352,8 @@ void EditorStateTest::multiSelectClipboardGuidesAndShortcuts()
     QVERIFY(state.tracks().at(track).toMap().value(QStringLiteral("clips")).toList().size() <= 2);
 
     // Guides state is writable.
-    state.setGuidesEnabled(true);
-    QCOMPARE(state.guidesEnabled(), true);
+    state.preview()->setGuidesEnabled(true);
+    QCOMPARE(state.preview()->guidesEnabled(), true);
     state.setGuideSetActive(QStringLiteral("safe"), true);
     QVERIFY(!state.guideItems().isEmpty());
 
@@ -4372,7 +4372,7 @@ void EditorStateTest::multiSelectClipboardGuidesAndShortcuts()
     QVERIFY(found);
 
     state.triggerAction(QStringLiteral("toggleGuides"));
-    QCOMPARE(state.guidesEnabled(), false);
+    QCOMPARE(state.preview()->guidesEnabled(), false);
 }
 
 static void appendAdjacentShapeClips(drift::Project &project, drift::TimeUs gapUs = 0)
@@ -5395,7 +5395,7 @@ void EditorStateTest::previewDropCentresOverlayInOneUndo()
     const int undoBefore = state.m_undoStack.count();
     const int tracksBefore = state.project()->tracks().size();
 
-    const QVariantMap plan = state.dropAssetOnPreview(QStringLiteral("shape"), shape, QString(), 500.0, 400.0);
+    const QVariantMap plan = state.preview()->dropAsset(QStringLiteral("shape"), shape, QString(), 500.0, 400.0);
     QVERIFY(plan.value(QStringLiteral("accepted")).toBool());
     QCOMPARE(state.m_undoStack.count(), undoBefore + 1);
 
@@ -5415,13 +5415,13 @@ void EditorStateTest::previewClipAtCanvasPointPicksTopmost()
     AppController state(&library);
     const QString shape = firstShapeId(state);
     state.project()->tracks().clear();
-    state.dropAssetOnPreview(QStringLiteral("shape"), shape, QString(), 500.0, 400.0);
-    state.dropAssetOnPreview(QStringLiteral("shape"), shape, QString(), 520.0, 410.0);
+    state.preview()->dropAsset(QStringLiteral("shape"), shape, QString(), 500.0, 400.0);
+    state.preview()->dropAsset(QStringLiteral("shape"), shape, QString(), 520.0, 410.0);
 
-    const QVariantMap hit = state.previewClipAtCanvasPoint(510.0, 405.0);
+    const QVariantMap hit = state.preview()->clipAtCanvasPoint(510.0, 405.0);
     QVERIFY(!hit.isEmpty());
     QCOMPARE(hit.value(QStringLiteral("track")).toInt(), 0);
-    QVERIFY(state.previewClipAtCanvasPoint(-500.0, -500.0).isEmpty());
+    QVERIFY(state.preview()->clipAtCanvasPoint(-500.0, -500.0).isEmpty());
 }
 
 // The compositor used to rebuild each request from four fields and drop the rest, so proxies and
@@ -8466,7 +8466,7 @@ void EditorStateTest::maskEditorStateResolvesTheHostFrame()
 
     // Selected via the media clip.
     state.selectClip(0, 0);
-    const QVariantMap viaClip = state.maskEditorState();
+    const QVariantMap viaClip = state.preview()->maskEditorState();
     QCOMPARE(viaClip.value(QStringLiteral("hostTrack")).toInt(), 0);
     QCOMPARE(viaClip.value(QStringLiteral("hostClip")).toInt(), 0);
     QCOMPARE(viaClip.value(QStringLiteral("layers")).toList().size(), 1);
@@ -8480,7 +8480,7 @@ void EditorStateTest::maskEditorStateResolvesTheHostFrame()
     const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
     QCOMPARE(pinned.size(), 1);
     state.selectClip(pinned.constFirst().trackIndex, pinned.constFirst().clipIndex);
-    const QVariantMap viaLane = state.maskEditorState();
+    const QVariantMap viaLane = state.preview()->maskEditorState();
     QCOMPARE(viaLane.value(QStringLiteral("hostTrack")).toInt(), 0);
     QCOMPARE(viaLane.value(QStringLiteral("hostClip")).toInt(), 0);
     QVERIFY(viaLane.value(QStringLiteral("layers")).toList().constFirst().toMap()
@@ -8577,7 +8577,7 @@ void EditorStateTest::droppingAMaskOnAClipStacksAndSelectsIt()
     QCOMPARE(state.selectedClipData().value(QStringLiteral("adjustmentKind")).toString(),
              QStringLiteral("mask"));
     // Selecting the mask clip is what arms the preview handles, with no toolbar toggle.
-    QVERIFY(state.maskEditActive());
+    QVERIFY(state.preview()->maskEditActive());
 
     // A second drop stacks rather than replacing.
     state.addMaskToClip(0, 0, QStringLiteral("star"));
@@ -8640,26 +8640,26 @@ void EditorStateTest::selectingAMaskClipTurnsOnThePreviewHandles()
 
     // A media clip alone does not: the transform gizmo owns the preview there.
     state.selectClip(0, 0);
-    QVERIFY(!state.maskEditActive());
+    QVERIFY(!state.preview()->maskEditActive());
 
     const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
     QCOMPARE(pinned.size(), 1);
 
-    QSignalSpy activeSpy(&state, &AppController::maskEditActiveChanged);
+    QSignalSpy activeSpy(state.preview(), &PreviewController::maskEditActiveChanged);
     state.selectClip(pinned.constFirst().trackIndex, pinned.constFirst().clipIndex);
-    QVERIFY2(state.maskEditActive(), "selecting the mask clip must show its handles");
+    QVERIFY2(state.preview()->maskEditActive(), "selecting the mask clip must show its handles");
     QVERIFY(activeSpy.count() > 0);
 
     // The toolbar toggle still forces them on while something else is selected, which is how you
     // edit a mask without leaving the clip it masks.
     state.selectClip(0, 0);
-    QVERIFY(!state.maskEditActive());
-    state.setMaskEditMode(true);
-    QVERIFY(state.maskEditActive());
+    QVERIFY(!state.preview()->maskEditActive());
+    state.preview()->setMaskEditMode(true);
+    QVERIFY(state.preview()->maskEditActive());
 
     // Entering canvas crop takes the preview back, since both claim the same grips.
-    state.setCanvasCropMode(true);
-    QVERIFY(!state.maskEditMode());
+    state.preview()->setCanvasCropMode(true);
+    QVERIFY(!state.preview()->maskEditMode());
 }
 
 // A mask on a standalone adjustment track masks the canvas composited so far, so its frame is the
@@ -8686,9 +8686,9 @@ void EditorStateTest::standaloneMaskAdjustmentGetsAnEditorFrame()
 
     state.setPlayheadSeconds(0.5);
     state.selectClip(0, 0);
-    QVERIFY(state.maskEditActive());
+    QVERIFY(state.preview()->maskEditActive());
 
-    const QVariantMap editor = state.maskEditorState();
+    const QVariantMap editor = state.preview()->maskEditorState();
     QVERIFY2(editor.value(QStringLiteral("hasFrame")).toBool(),
              "a standalone mask still needs a frame to place handles against");
     QCOMPARE(editor.value(QStringLiteral("width")).toInt(), state.project()->width());

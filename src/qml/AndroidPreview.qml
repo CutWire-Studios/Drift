@@ -97,65 +97,33 @@ Item {
                 color: Theme.previewLetterbox
             }
 
-            Item {
+            PreviewViewport {
                 id: viewport
                 anchors.fill: parent
                 // The inset is also the gutter the transform grips overflow into
                 // when a clip sits flush against a canvas edge — viewportOuter
                 // clips, so a zero margin would shear the outer handles away.
                 anchors.margins: Theme.spacing2xl
+                pixelRatio: 1
+                compactStatus: true
 
-                property real aspect: {
-                    void EditorState.tracksRevision
-                    const w = EditorState.projectWidth()
-                    const h = EditorState.projectHeight()
-                    return (w > 0 && h > 0) ? (w / h) : (16 / 9)
-                }
-                // Crop mode pulls the canvas in so there is room around it to drag
-                // an edge outward and grow the frame.
-                property real cropZoom: EditorState.canvasCropMode ? 0.72 : 1.0
-                property real userZoom: 1.0
-                property real panX: 0
-                property real panY: 0
+                // Masks have no touch editor, so a selected mask keeps the clip grips.
+                toolHost.tools: ({
+                    transform: transformTool,
+                    mask: transformTool,
+                    crop: cropTool
+                })
+                toolHost.companion: dropCompanion
+                toolHost.companionTools: ["transform", "mask"]
+                // Disables every DragHandler / TapHandler / MouseArea in the tools:
+                // PointerHandler::wantsEvent walks isEnabled() on ancestors. Hiding
+                // would also work, but the boxes should stay drawn under the scrim so
+                // the project does not appear to jump.
+                toolHost.enabled: !root.overlayBlocksPreview
 
-                readonly property real baseWidth: Math.min(width, height * aspect)
-                readonly property real baseHeight: baseWidth / aspect
-                readonly property real fitWidth: baseWidth * cropZoom * userZoom
-                readonly property real fitHeight: baseHeight * cropZoom * userZoom
-
-                readonly property bool viewMoved: userZoom !== 1.0 || panX !== 0 || panY !== 0
-
-                function resetView() {
-                    userZoom = 1.0
-                    panX = 0
-                    panY = 0
-                }
-
-                // Scales about (mx, my) in viewport coords: the point under the
-                // pinch centroid keeps its position, so zooming into a corner keeps
-                // that corner in place instead of drifting off screen.
-                function zoomAt(mx, my, factor) {
-                    const next = Math.max(0.25, Math.min(12.0, userZoom * factor))
-                    if (next === userZoom)
-                        return
-                    const w = fitWidth
-                    const h = fitHeight
-                    const fx = w > 0 ? (mx - ((width - w) / 2 + panX)) / w : 0.5
-                    const fy = h > 0 ? (my - ((height - h) / 2 + panY)) / h : 0.5
-                    const nw = baseWidth * cropZoom * next
-                    const nh = baseHeight * cropZoom * next
-                    userZoom = next
-                    panX = (mx - fx * nw) - (width - nw) / 2
-                    panY = (my - fy * nh) - (height - nh) / 2
-                }
-
-                Behavior on cropZoom {
-                    NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easingInOut }
-                }
-
-                // Two-finger zoom + pan. Declared on the viewport rather than on the
+                // Two-finger zoom + pan. On the viewport itself rather than on the
                 // canvas so it keeps working once the canvas has been zoomed past the
-                // edges, and so it outlives whichever overlay is on top.
+                // edges, and so it outlives whichever tool is on top.
                 PinchHandler {
                     id: viewPinch
                     target: null
@@ -198,137 +166,11 @@ Item {
                     onCentroidChanged: viewPinch.step()
                 }
 
-                Rectangle {
-                    id: canvasRect
-                    width: viewport.fitWidth
-                    height: viewport.fitHeight
-                    x: (viewport.width - width) / 2 + viewport.panX
-                    y: (viewport.height - height) / 2 + viewport.panY
-                    color: (EditorState.background && EditorState.background.kind === "transparent")
-                           ? "transparent" : Theme.overlayColor
-                    border.width: Theme.borderWidth
-                    border.color: Theme.border
-                    clip: true
-
-                    Checkerboard {
-                        anchors.fill: parent
-                    }
-
-                    PreviewItem {
-                        id: preview
-                        anchors.fill: parent
-                        playback: EditorState.playback
-
-                        function updateRenderSize() {
-                            EditorState.playback.setPreviewRenderSize(
-                                Math.round(width), Math.round(height))
-                        }
-
-                        Component.onCompleted: updateRenderSize()
-                        onWidthChanged: updateRenderSize()
-                        onHeightChanged: updateRenderSize()
-                    }
-
-                    // Composition guides. Which sets are active lives in the
-                    // Settings tab; this is the layer that draws them.
-                    GuideLayer {
-                        anchors.fill: parent
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        visible: opacity > 0
-                        // Only a gap message: a compositor that never came up shows
-                        // the explanation below instead of blaming the timeline.
-                        opacity: EditorState.playback.hasFrame
-                                 || !EditorState.playback.gpuCompositorReady ? 0 : 1
-                        text: EditorState.activeAudioClipAtPlayhead().path
-                              ? qsTr("Audio only") : qsTr("No clip at the current time")
-                        color: Theme.guideMedium
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeSm
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easing }
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        width: parent.width - Theme.spacingXl
-                        visible: EditorState.playback.gpuCompositorStatus !== "unknown"
-                                 && !EditorState.playback.gpuCompositorReady
-                        text: qsTr("GPU preview unavailable")
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.Wrap
-                        color: Theme.guideMedium
-                        font.family: Theme.fontFamily
-                        font.pixelSize: Theme.fontSizeSm
-                    }
-                }
-
-                AndroidTransformOverlay {
-                    id: transformOverlay
-                    // Sits outside the (clipped) canvas rect, mirroring its geometry,
-                    // so resize and rotate grips on a clip that runs past a canvas
-                    // edge stay drawn and grabbable instead of being cut away.
-                    x: canvasRect.x
-                    y: canvasRect.y
-                    width: canvasRect.width
-                    height: canvasRect.height
-                    z: 100
-                    visible: !root.playing && !EditorState.scrubbing && EditorState.projectWidth() > 0
-                             && !EditorState.canvasCropMode
-                    // Disables every DragHandler / TapHandler / MouseArea in the
-                    // overlay: PointerHandler::wantsEvent walks isEnabled() on
-                    // ancestors. Hiding would also work, but the boxes should stay
-                    // drawn under the scrim so the project does not appear to jump.
-                    enabled: !root.overlayBlocksPreview
-                }
-
-                // Lifted asset cards can be dropped on the preview as well as on the timeline:
-                // overlays land at the playhead where the finger lets go, effects and masks on the
-                // clip under it.
-                PreviewDropOverlay {
-                    id: previewDrop
-                    x: canvasRect.x
-                    y: canvasRect.y
-                    width: canvasRect.width
-                    height: canvasRect.height
-                    z: 150
-                    visible: EditorState.projectWidth() > 0 && !EditorState.canvasCropMode
-
-                    function local(sceneX, sceneY) {
-                        return previewDrop.mapFromItem(null, sceneX, sceneY)
-                    }
-                    function touchDropContains(sceneX, sceneY) {
-                        const p = local(sceneX, sceneY)
-                        return previewDrop.containsLocal(p.x, p.y)
-                    }
-                    function updateTouchDrop(kind, payload, sceneX, sceneY) {
-                        const p = local(sceneX, sceneY)
-                        return previewDrop.hover(kind, payload, p.x, p.y)
-                    }
-                    function performTouchDrop(kind, payload, sceneX, sceneY) {
-                        const p = local(sceneX, sceneY)
-                        previewDrop.drop(kind, payload, TouchDrag.label, p.x, p.y)
-                    }
-                    function clearTouchDrop() {
-                        previewDrop.clear()
-                    }
-
-                    Component.onCompleted: TouchDrag.registerTarget(previewDrop)
-                    Component.onDestruction: TouchDrag.unregisterTarget(previewDrop)
-                }
-
-                AndroidCropOverlay {
-                    id: cropOverlay
+                // Composition guides. Which sets are active lives in the
+                // Settings tab; this is the layer that draws them.
+                GuideLayer {
+                    parent: viewport.canvas
                     anchors.fill: parent
-                    visible: EditorState.canvasCropMode
-                    enabled: visible && !root.overlayBlocksPreview
-                    z: 200
-                    previewViewport: viewport
-                    previewCanvas: canvasRect
                 }
             }
 
@@ -344,7 +186,7 @@ Item {
                 color: Theme.scrimStrong
                 z: 300
                 visible: opacity > 0
-                opacity: root.optionsOpen && !EditorState.canvasCropMode ? 1 : 0
+                opacity: root.optionsOpen && !EditorState.preview.canvasCropMode ? 1 : 0
 
                 Behavior on opacity {
                     NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -408,9 +250,9 @@ Item {
                     }
 
                     ThemedChip {
-                        selected: EditorState.guidesEnabled
+                        selected: EditorState.preview.guidesEnabled
                         text: qsTr("Guides")
-                        onClicked: EditorState.guidesEnabled = !EditorState.guidesEnabled
+                        onClicked: EditorState.preview.guidesEnabled = !EditorState.preview.guidesEnabled
                     }
                 }
             }
@@ -614,6 +456,58 @@ Item {
                     // so the toggle is requested rather than performed here.
                     onClicked: root.fullscreenToggleRequested()
                 }
+            }
+        }
+    }
+
+    Component {
+        id: transformTool
+        AndroidTransformOverlay { }
+    }
+
+    Component {
+        id: cropTool
+        AndroidCropOverlay {
+            previewCanvas: viewport.canvas
+        }
+    }
+
+    // Lifted asset cards can be dropped on the preview as well as on the timeline: overlays land
+    // at the playhead where the finger lets go, effects and masks on the clip under it.
+    Component {
+        id: dropCompanion
+
+        // A wrapper, because the host sizes what it loads to the whole viewport.
+        Item {
+            PreviewDropOverlay {
+                id: previewDrop
+                x: viewport.canvas.x
+                y: viewport.canvas.y
+                width: viewport.canvas.width
+                height: viewport.canvas.height
+                visible: EditorState.projectWidth() > 0
+
+                function local(sceneX, sceneY) {
+                    return previewDrop.mapFromItem(null, sceneX, sceneY)
+                }
+                function touchDropContains(sceneX, sceneY) {
+                    const p = local(sceneX, sceneY)
+                    return previewDrop.containsLocal(p.x, p.y)
+                }
+                function updateTouchDrop(kind, payload, sceneX, sceneY) {
+                    const p = local(sceneX, sceneY)
+                    return previewDrop.hover(kind, payload, p.x, p.y)
+                }
+                function performTouchDrop(kind, payload, sceneX, sceneY) {
+                    const p = local(sceneX, sceneY)
+                    previewDrop.drop(kind, payload, TouchDrag.label, p.x, p.y)
+                }
+                function clearTouchDrop() {
+                    previewDrop.clear()
+                }
+
+                Component.onCompleted: TouchDrag.registerTarget(previewDrop)
+                Component.onDestruction: TouchDrag.unregisterTarget(previewDrop)
             }
         }
     }

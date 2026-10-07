@@ -3044,7 +3044,7 @@ void McpTest::importGlbBecomesModel3dAsset()
     QCOMPARE(clip.value(QStringLiteral("duration")).toDouble(), drift::usToSeconds(drift::kImageClipDurationUs));
     // The overlay box is the model's bounding-box front face, centred on the canvas.
     bool found = false;
-    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+    for (const QVariant &entry : state.preview()->clipsAtPlayhead()) {
         const QVariantMap m = entry.toMap();
         if (m.value(QStringLiteral("kind")).toString() != QLatin1String("model3d"))
             continue;
@@ -3161,7 +3161,7 @@ void McpTest::model3dKeyframesAndOptions()
 
     // The overlay box is the clip's rect, as for any 3D layer.
     bool found = false;
-    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+    for (const QVariant &entry : state.preview()->clipsAtPlayhead()) {
         const QVariantMap m = entry.toMap();
         if (m.value(QStringLiteral("track")).toInt() != track || m.value(QStringLiteral("clip")).toInt() != clip)
             continue;
@@ -3849,7 +3849,7 @@ void McpTest::setTransformWrites3dPose()
 
     const QPair<int, int> loc = state.mcpLocateClip(clip);
     QVariantMap box;
-    for (const QVariant &entry : state.previewClipsAtPlayhead()) {
+    for (const QVariant &entry : state.preview()->clipsAtPlayhead()) {
         const QVariantMap m = entry.toMap();
         if (m.value(QStringLiteral("track")).toInt() == loc.first
             && m.value(QStringLiteral("clip")).toInt() == loc.second)
@@ -3860,9 +3860,9 @@ void McpTest::setTransformWrites3dPose()
     // Hit-testing goes through the projection: the flat box's own edge is outside the tilted quad.
     const double cx = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() / 2;
     const double cy = box.value(QStringLiteral("y")).toDouble() + box.value(QStringLiteral("height")).toDouble() / 2;
-    QCOMPARE(state.previewClipAtCanvasPoint(cx, cy).value(QStringLiteral("clip")).toInt(), loc.second);
+    QCOMPARE(state.preview()->clipAtCanvasPoint(cx, cy).value(QStringLiteral("clip")).toInt(), loc.second);
     const double flatRight = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() - 1;
-    QVERIFY(state.previewClipAtCanvasPoint(flatRight, cy).isEmpty());
+    QVERIFY(state.preview()->clipAtCanvasPoint(flatRight, cy).isEmpty());
 
     const QJsonObject pushed = dispatcher.applyOne(
         QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("z"), -500.0}});
@@ -3873,7 +3873,7 @@ void McpTest::setTransformWrites3dPose()
         QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("layer3d"), false}});
     QVERIFY(flat.value(QStringLiteral("ok")).toBool());
     QVERIFY(!flat.contains(QStringLiteral("rotationY")));
-    QVERIFY(!state.previewClipAtCanvasPoint(flatRight, cy).isEmpty());
+    QVERIFY(!state.preview()->clipAtCanvasPoint(flatRight, cy).isEmpty());
     QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotationY"), 0.0, 0.0), 0.0);
     QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("z"), 0.0, 0.0), 0.0);
 
@@ -3890,9 +3890,9 @@ void McpTest::setTransformWrites3dPose()
     // A quarter turn on the gizmo's screen-plane ring writes the spin to the clip.
     box.insert(QStringLiteral("rotationY"), 0.0);
     box.insert(QStringLiteral("z"), 0.0);
-    state.setGizmoTool(QStringLiteral("rotate"));
-    state.setGizmoOrientation(QStringLiteral("global"));
-    const QVariantMap rings = state.previewGizmoGeometry(box, 1.0, 1.0);
+    state.preview()->setGizmoTool(QStringLiteral("rotate"));
+    state.preview()->setGizmoOrientation(QStringLiteral("global"));
+    const QVariantMap rings = state.preview()->gizmoGeometry(box, 1.0, 1.0);
     const QPointF origin = rings.value(QStringLiteral("origin")).toPointF();
     QPointF ringStart;
     for (const QVariant &h : rings.value(QStringLiteral("handles")).toList()) {
@@ -3903,7 +3903,7 @@ void McpTest::setTransformWrites3dPose()
     const double radius = QLineF(origin, ringStart).length();
     QVERIFY(radius > 10);
     state.previewSetClipKeyframe(loc.first, loc.second, QStringLiteral("rotationY"), 0.0, 0.0);
-    const QVariantMap turned = state.previewApplyGizmoDrag(box, QStringLiteral("z"), origin.x() + radius,
+    const QVariantMap turned = state.preview()->applyGizmoDrag(box, QStringLiteral("z"), origin.x() + radius,
                                                            origin.y(), origin.x(), origin.y() + radius,
                                                            true, 1.0);
     state.commitPreviewDrag();

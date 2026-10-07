@@ -1490,18 +1490,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation>Только аудио</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>В текущей точке нет клипа</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>Предпросмотр на видеокарте недоступен</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>Полное</translation>
     </message>
@@ -9987,34 +9975,10 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -10058,125 +10022,65 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>REC %1s</source>
-        <translation>ЗАПИСЬ %1 с</translation>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>PAUSED %1s</source>
-        <translation>ПАУЗА %1 с</translation>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing to preview yet</source>
-        <translation>Пока нечего просматривать</translation>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>Импортируйте медиафайлы и перетащите их на таймлайн ниже, чтобы увидеть здесь.</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>Предпросмотр через GPU недоступен</translation>
-    </message>
-    <message>
-        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation>Ваш графический драйвер поддерживает только %1. Для предпросмотра Drift требуется OpenGL 3.3.</translation>
-    </message>
-    <message>
-        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>Drift не удалось запустить рендерер GPU, поэтому предпросмотр недоступен.</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>Отладочная информация</translation>
-    </message>
-    <message>
-        <source>Audio only</source>
-        <translation>Только аудио</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>В текущий момент нет клипа</translation>
-    </message>
-    <message>
-        <source>Seek</source>
-        <translation>Перейти к моменту</translation>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewOptionsMenu</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Current time / total · %1 frames per second</source>
-        <translation>Текущее время / всего · %1 кадров в секунду</translation>
-    </message>
-    <message>
-        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>Назад на 1 с · Shift — на 5 с · Ctrl — на 10 с</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>Предыдущий кадр</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>Пауза</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>Воспроизвести</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>Следующий кадр</translation>
-    </message>
-    <message>
-        <source>Loop work area on — click to turn off</source>
-        <translation>Повтор рабочей области включён — нажмите, чтобы выключить</translation>
-    </message>
-    <message>
-        <source>Loop work area off — click to turn on</source>
-        <translation>Повтор рабочей области выключен — нажмите, чтобы включить</translation>
-    </message>
-    <message>
-        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>Вперёд на 1 с · Shift — на 5 с · Ctrl — на 10 с</translation>
-    </message>
-    <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>Масштаб предпросмотра — Ctrl+прокрутка над окном для изменения масштаба, перетаскивание средней кнопкой для перемещения. Нажмите, чтобы вернуть 100%.</translation>
+        <source>Quality</source>
+        <translation type="unfinished">Качество</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation>Полное</translation>
+        <translation type="unfinished">Полное</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation>Половина</translation>
+        <translation type="unfinished">Половина</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>Четверть</translation>
+        <translation type="unfinished">Четверть</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Авто</translation>
+        <translation type="unfinished">Авто</translation>
     </message>
     <message>
         <source>Preview quality — lower is smoother while editing.
 Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>Качество предпросмотра — более низкое качество повышает плавность при редактировании.
+        <translation type="unfinished">Качество предпросмотра — более низкое качество повышает плавность при редактировании.
 «Полное», «Половина» и «Четверть» — фиксированные доли разрешения проекта. «Полное» обрабатывает кадр точно как при экспорте.
 «Авто» использует только столько пикселей, сколько показывает предпросмотр, и уменьшает их число ещё сильнее, если воспроизведение замедляется.</translation>
     </message>
     <message>
+        <source>Speed</source>
+        <translation type="unfinished">Скорость</translation>
+    </message>
+    <message>
         <source>Playback speed</source>
-        <translation>Скорость воспроизведения</translation>
+        <translation type="unfinished">Скорость воспроизведения</translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished">Декодирование</translation>
     </message>
     <message>
         <source>How video is decoded for preview.
@@ -10184,51 +10088,39 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>Способ декодирования видео для предпросмотра.
+        <translation type="unfinished">Способ декодирования видео для предпросмотра.
 «Авто» выбирает способ для каждого клипа: аппаратный для качественного 4K, иначе программный.
 Программный способ плавнее для большинства клипов, но сильнее нагружает ЦП.
 Аппаратный лучше для качественного 4K и принудительно использует один декодер GPU.
 Если видео воспроизводится рывками, попробуйте другой способ.</translation>
     </message>
     <message>
-        <source>Toggle guides</source>
-        <translation>Переключить направляющие</translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation>Наборы направляющих</translation>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>Оставлять маркеры маски в предпросмотре при выборе другого клипа</translation>
-    </message>
-    <message>
-        <source>Exit fullscreen preview (Esc)</source>
-        <translation>Выйти из полноэкранного предпросмотра (Esc)</translation>
-    </message>
-    <message>
-        <source>Fullscreen preview</source>
-        <translation>Полноэкранный предпросмотр</translation>
+        <translation type="unfinished">Оставлять маркеры маски в предпросмотре при выборе другого клипа</translation>
     </message>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>Декодирование на другой видеокарте</translation>
+        <translation type="unfinished">Декодирование на другой видеокарте</translation>
     </message>
     <message>
         <source>Use anyway</source>
-        <translation>Всё равно использовать</translation>
+        <translation type="unfinished">Всё равно использовать</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Отмена</translation>
+        <translation type="unfinished">Отмена</translation>
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>Запуск Drift через prime-run (или с DRI_PRIME=1) позволяет использовать одну видеокарту для OpenGL и декодирования.</translation>
+        <translation type="unfinished">Запуск Drift через prime-run (или с DRI_PRIME=1) позволяет использовать одну видеокарту для OpenGL и декодирования.</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>Запустить Drift на высокопроизводительной видеокарте</translation>
+        <translation type="unfinished">Запустить Drift на высокопроизводительной видеокарте</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
@@ -10237,6 +10129,126 @@ If playback stutters, try another.</source>
     <message>
         <source>Open graphics settings</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished">Масштаб предпросмотра — Ctrl+прокрутка над окном для изменения масштаба, перетаскивание средней кнопкой для перемещения. Нажмите, чтобы вернуть 100%.</translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished">Показать или скрыть направляющие</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished">Наборы направляющих</translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation>Перейти к моменту</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished">ПАУЗА %1 с</translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
+        <translation type="unfinished">ЗАПИСЬ %1 с</translation>
+    </message>
+    <message>
+        <source>Nothing to preview yet</source>
+        <translation type="unfinished">Пока нечего просматривать</translation>
+    </message>
+    <message>
+        <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished">Импортируйте медиафайлы и перетащите их на таймлайн ниже, чтобы увидеть здесь.</translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished">Ваш графический драйвер поддерживает только %1. Для предпросмотра Drift требуется OpenGL 3.3.</translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished">Drift не удалось запустить рендерер GPU, поэтому предпросмотр недоступен.</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">Отладочная информация</translation>
+    </message>
+    <message>
+        <source>Audio only</source>
+        <translation type="unfinished">Только аудио</translation>
+    </message>
+    <message>
+        <source>No clip at the current time</source>
+        <translation type="unfinished">В текущий момент нет клипа</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewTransportBar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Current time / total · %1 frames per second</source>
+        <translation type="unfinished">Текущее время / всего · %1 кадров в секунду</translation>
+    </message>
+    <message>
+        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">Назад на 1 с · Shift — на 5 с · Ctrl — на 10 с</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation type="unfinished">Предыдущий кадр</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Пауза</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Воспроизвести</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation type="unfinished">Следующий кадр</translation>
+    </message>
+    <message>
+        <source>Loop work area on — click to turn off</source>
+        <translation type="unfinished">Повтор рабочей области включён — нажмите, чтобы выключить</translation>
+    </message>
+    <message>
+        <source>Loop work area off — click to turn on</source>
+        <translation type="unfinished">Повтор рабочей области выключен — нажмите, чтобы включить</translation>
+    </message>
+    <message>
+        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">Вперёд на 1 с · Shift — на 5 с · Ctrl — на 10 с</translation>
+    </message>
+    <message>
+        <source>Exit fullscreen preview (Esc)</source>
+        <translation type="unfinished">Выйти из полноэкранного предпросмотра (Esc)</translation>
+    </message>
+    <message>
+        <source>Fullscreen preview</source>
+        <translation type="unfinished">Полноэкранный просмотр</translation>
     </message>
 </context>
 <context>

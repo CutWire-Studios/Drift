@@ -14,9 +14,7 @@ import ".."
 Item {
     id: root
 
-    // Owning AndroidPreview viewport (zoom/pan reset) and the canvas rectangle
-    // whose on-screen geometry the crop frame maps against.
-    property var previewViewport
+    // The canvas rectangle whose on-screen geometry the crop frame maps against.
     property var previewCanvas
 
     readonly property int projW: { void EditorState.tracksRevision; return Math.max(1, EditorState.projectWidth()) }
@@ -50,7 +48,7 @@ Item {
     function apply() {
         if (changed)
             EditorState.applyCanvasCrop(cropX, cropY, cropW, cropH)
-        EditorState.canvasCropMode = false
+        EditorState.preview.canvasCropMode = false
     }
 
     // Screen-space crop frame, relative to the viewport.
@@ -58,14 +56,6 @@ Item {
     readonly property real frameY: root.previewCanvas.y + cropY * pxScale
     readonly property real frameW: cropW * pxScale
     readonly property real frameH: cropH * pxScale
-
-    onVisibleChanged: {
-        root.previewViewport.resetView()
-        if (visible) {
-            reset()
-            didResize = false
-        }
-    }
 
     // Everything outside the crop frame is discarded, so dim it. Four bands
     // rather than a mask: no shader, no clipping cost.
@@ -301,7 +291,7 @@ Item {
         ThemedButton {
             variant: "secondary"
             text: qsTr("Cancel")
-            onClicked: EditorState.canvasCropMode = false
+            onClicked: EditorState.preview.canvasCropMode = false
         }
 
         ThemedButton {

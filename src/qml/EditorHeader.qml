@@ -431,7 +431,7 @@ Rectangle {
                 glyph: Theme.icons.ratio
                 variant: "ghost"
                 text: qsTr("Video")
-                active: videoSizeDialogLoader.shown || EditorState.canvasCropMode
+                active: videoSizeDialogLoader.shown || EditorState.preview.canvasCropMode
                 tooltip: qsTr("Video size and layout")
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: videoSizeDialogLoader.ensure().openDialog()

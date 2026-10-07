@@ -1489,18 +1489,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation>ශ්‍රව්‍ය පමණි</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>වත්මන් වේලාවේ ක්ලිප් එකක් නොමැත</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>GPU පෙරදසුන ලබාගත නොහැක</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>සම්පූර්ණ (Full)</translation>
     </message>
@@ -9942,34 +9930,10 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -10013,125 +9977,65 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>REC %1s</source>
-        <translation>REC %1s</translation>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>PAUSED %1s</source>
-        <translation>විරාම කෙරිණි %1s</translation>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing to preview yet</source>
-        <translation>පෙරදසුන් කිරීමට කිසිවක් නැත</translation>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>මෙහි බලාගැනීම සඳහා මාධ්‍ය ආයාත කර පහත කාලරේඛාව වෙත අදින්න.</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>GPU පෙරදසුන ලබාගත නොහැක</translation>
-    </message>
-    <message>
-        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation>ඔබගේ ග්‍රැෆික් ධාවකය සපයන්නේ %1 පමණි. Drift හි පෙරදසුන සඳහා OpenGL 3.3 අවශ්‍ය වේ.</translation>
-    </message>
-    <message>
-        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>Drift හට එහි GPU රෙන්ඩරකය ආරම්භ කිරීමට නොහැකි විය, එබැවින් පෙරදසුන ඇඳීමට නොහැක.</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>දෝෂහරණ තොරතුරු</translation>
-    </message>
-    <message>
-        <source>Audio only</source>
-        <translation>ශ්‍රව්‍ය පමණි</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>වත්මන් වේලාවේ ක්ලිපයක් නැත</translation>
-    </message>
-    <message>
-        <source>Seek</source>
-        <translation>සොයන්න (Seek)</translation>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewOptionsMenu</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Current time / total · %1 frames per second</source>
-        <translation>වත්මන් වේලාව / මුළු කාලය · තත්පරයට රාමු %1</translation>
-    </message>
-    <message>
-        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>තත් 1ක් ආපසු පනින්න · තත් 5ක් සඳහා Shift · තත් 10ක් සඳහා Ctrl</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>පෙර රාමුව</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>විරාමය</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>ධාවනය කරන්න</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>ඊළඟ රාමුව</translation>
-    </message>
-    <message>
-        <source>Loop work area on — click to turn off</source>
-        <translation>වැඩ කලාපය ලූප කිරීම ක්‍රියාත්මකයි — අක්‍රිය කිරීමට ක්ලික් කරන්න</translation>
-    </message>
-    <message>
-        <source>Loop work area off — click to turn on</source>
-        <translation>වැඩ කලාපය ලූප කිරීම අක්‍රියයි — ක්‍රියාත්මක කිරීමට ක්ලික් කරන්න</translation>
-    </message>
-    <message>
-        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>තත් 1ක් ඉදිරියට පනින්න · තත් 5ක් සඳහා Shift · තත් 10ක් සඳහා Ctrl</translation>
-    </message>
-    <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>පෙරදසුන් විශාලනය — විශාලනය කිරීමට පෙරදසුන මත Ctrl+scroll කරන්න, දසුන චලනය කිරීමට මැද බොත්තමෙන් අදින්න. 100% වෙත යළි සැකසීමට ක්ලික් කරන්න.</translation>
+        <source>Quality</source>
+        <translation type="unfinished">ගුණාත්මකභාවය</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation>සම්පූර්ණ (Full)</translation>
+        <translation type="unfinished">සම්පූර්ණ (Full)</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation>අඩක් (Half)</translation>
+        <translation type="unfinished">අඩක් (Half)</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>හතරෙන් පංගුවක් (Quarter)</translation>
+        <translation type="unfinished">කාර්තුවක් (Quarter)</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>ස්වයංක්‍රීය (Auto)</translation>
+        <translation type="unfinished">ස්වයංක්‍රීය</translation>
     </message>
     <message>
         <source>Preview quality — lower is smoother while editing.
 Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>පෙරදසුන් ගුණාත්මකභාවය — සංස්කරණයේදී අඩු අගයක් වඩාත් සුමට වේ.
+        <translation type="unfinished">පෙරදසුන් ගුණාත්මකභාවය — සංස්කරණයේදී අඩු අගයක් වඩාත් සුමට වේ.
 Full, Half සහ Quarter යනු ව්‍යාපෘති විභේදනයේ නියත කොටස් වේ: Full මඟින් නිර්යාතයකදී ලැබෙන ආකාරයටම පෙන්වයි.
 Auto මඟින් පෙරදසුනේ සත්‍ය වශයෙන්ම පෙන්වන පික්සල ප්‍රමාණය පමණක් රෙන්ඩර් කරන අතර, ධාවනය ප්‍රමාද වන විට එය තවත් අඩු කරයි.</translation>
     </message>
     <message>
+        <source>Speed</source>
+        <translation type="unfinished">වේගය</translation>
+    </message>
+    <message>
         <source>Playback speed</source>
-        <translation>ධාවන වේගය</translation>
+        <translation type="unfinished">ධාවන වේගය</translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished">විකේතනය (Decode)</translation>
     </message>
     <message>
         <source>How video is decoded for preview.
@@ -10139,51 +10043,39 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>පෙරදසුන සඳහා වීඩියෝ විකේතනය කරන ආකාරය.
+        <translation type="unfinished">පෙරදසුන සඳහා වීඩියෝ විකේතනය කරන ආකාරය.
 ස්වයංක්‍රීය (Auto) මඟින් එක් එක් ක්ලිප් එක අනුව තෝරයි: උසස් තත්ත්වයේ 4K සඳහා දෘඪාංග, එසේ නොමැති නම් මෘදුකාංග.
 බොහෝ ක්ලිප් සඳහා මෘදුකාංග වඩාත් සුමට වේ. එය වැඩිපුර CPU භාවිත කරයි.
 උසස් තත්ත්වයේ 4K සඳහා දෘඪාංග වඩා හොඳ වන අතර, එක් GPU විකේතකයක් බල කරයි.
 ධාවනය ඇනහිටින්නේ නම්, වෙනත් එකක් උත්සාහ කරන්න.</translation>
     </message>
     <message>
-        <source>Toggle guides</source>
-        <translation>මඟපෙන්වුම් රේඛා ක්‍රියාත්මක/අක්‍රිය කරන්න</translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation>මඟපෙන්වුම් කට්ටල</translation>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>වෙනත් ක්ලිපයක් තෝරාගෙන ඇති විටද පෙරදසුන මත ආවරණ හැන්ඩල තබාගන්න</translation>
-    </message>
-    <message>
-        <source>Exit fullscreen preview (Esc)</source>
-        <translation>සම්පූර්ණ තිර පෙරදසුනෙන් පිටවන්න (Esc)</translation>
-    </message>
-    <message>
-        <source>Fullscreen preview</source>
-        <translation>සම්පූර්ණ තිර පෙරදසුන</translation>
+        <translation type="unfinished">වෙනත් ක්ලිපයක් තෝරාගෙන ඇති විටද පෙරදසුන මත ආවරණ හැන්ඩල තබාගන්න</translation>
     </message>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>වෙනස් ග්‍රැෆික් කාඩ්පතක් මත විකේතනය වේ</translation>
+        <translation type="unfinished">වෙනස් ග්‍රැෆික් කාඩ්පතක් මත විකේතනය වේ</translation>
     </message>
     <message>
         <source>Use anyway</source>
-        <translation>කෙසේ හෝ භාවිත කරන්න</translation>
+        <translation type="unfinished">කෙසේ හෝ භාවිත කරන්න</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>අවලංගු කරන්න</translation>
+        <translation type="unfinished">අවලංගු කරන්න</translation>
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>prime-run (හෝ DRI_PRIME=1) සමඟ Drift දියත් කිරීමෙන් OpenGL විකේතකය ඇති කාඩ්පත මතම තබයි.</translation>
+        <translation type="unfinished">prime-run (හෝ DRI_PRIME=1) සමඟ Drift දියත් කිරීමෙන් OpenGL විකේතකය ඇති කාඩ්පත මතම තබයි.</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>Drift ඉහළ කාර්යසාධනයක් සහිත ග්‍රැෆික් කාඩ්පත මත ධාවනය කරන්න</translation>
+        <translation type="unfinished">Drift ඉහළ කාර්යසාධනයක් සහිත ග්‍රැෆික් කාඩ්පත මත ධාවනය කරන්න</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
@@ -10192,6 +10084,126 @@ If playback stutters, try another.</source>
     <message>
         <source>Open graphics settings</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished">පෙරදසුන් විශාලනය — විශාලනය කිරීමට පෙරදසුන මත Ctrl+scroll කරන්න, දසුන චලනය කිරීමට මැද බොත්තමෙන් අදින්න. 100% වෙත යළි සැකසීමට ක්ලික් කරන්න.</translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished">මඟපෙන්වුම් රේඛා ක්‍රියාත්මක/අක්‍රිය කරන්න</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished">මඟපෙන්වුම් කට්ටල</translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation>සොයන්න (Seek)</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished">විරාම කෙරිණි %1s</translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
+        <translation type="unfinished">REC %1s</translation>
+    </message>
+    <message>
+        <source>Nothing to preview yet</source>
+        <translation type="unfinished">පෙරදසුන් කිරීමට කිසිවක් නැත</translation>
+    </message>
+    <message>
+        <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished">මෙහි බලාගැනීම සඳහා මාධ්‍ය ආයාත කර පහත කාලරේඛාව වෙත අදින්න.</translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished">GPU පෙරදසුන ලබාගත නොහැක</translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished">ඔබගේ ග්‍රැෆික් ධාවකය සපයන්නේ %1 පමණි. Drift හි පෙරදසුන සඳහා OpenGL 3.3 අවශ්‍ය වේ.</translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished">Drift හට එහි GPU රෙන්ඩරකය ආරම්භ කිරීමට නොහැකි විය, එබැවින් පෙරදසුන ඇඳීමට නොහැක.</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">දෝෂහරණ තොරතුරු</translation>
+    </message>
+    <message>
+        <source>Audio only</source>
+        <translation type="unfinished">ශ්‍රව්‍ය පමණි</translation>
+    </message>
+    <message>
+        <source>No clip at the current time</source>
+        <translation type="unfinished">වත්මන් වේලාවේ ක්ලිප් එකක් නොමැත</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewTransportBar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Current time / total · %1 frames per second</source>
+        <translation type="unfinished">වත්මන් වේලාව / මුළු කාලය · තත්පරයට රාමු %1</translation>
+    </message>
+    <message>
+        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">තත් 1ක් ආපසු පනින්න · තත් 5ක් සඳහා Shift · තත් 10ක් සඳහා Ctrl</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation type="unfinished">පෙර රූපරාමුව</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">විරාමය</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">ධාවනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation type="unfinished">මීළඟ රූපරාමුව</translation>
+    </message>
+    <message>
+        <source>Loop work area on — click to turn off</source>
+        <translation type="unfinished">වැඩ කලාපය ලූප කිරීම ක්‍රියාත්මකයි — අක්‍රිය කිරීමට ක්ලික් කරන්න</translation>
+    </message>
+    <message>
+        <source>Loop work area off — click to turn on</source>
+        <translation type="unfinished">වැඩ කලාපය ලූප කිරීම අක්‍රියයි — ක්‍රියාත්මක කිරීමට ක්ලික් කරන්න</translation>
+    </message>
+    <message>
+        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">තත් 1ක් ඉදිරියට පනින්න · තත් 5ක් සඳහා Shift · තත් 10ක් සඳහා Ctrl</translation>
+    </message>
+    <message>
+        <source>Exit fullscreen preview (Esc)</source>
+        <translation type="unfinished">සම්පූර්ණ තිර පෙරදසුනෙන් පිටවන්න (Esc)</translation>
+    </message>
+    <message>
+        <source>Fullscreen preview</source>
+        <translation type="unfinished">සම්පූර්ණ තිර පෙරදසුන</translation>
     </message>
 </context>
 <context>

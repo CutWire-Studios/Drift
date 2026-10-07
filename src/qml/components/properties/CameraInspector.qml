@@ -151,7 +151,7 @@ Item {
             ThemedButton {
                 text: qsTr("Reset camera position")
                 tooltip: qsTr("Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.")
-                onClicked: EditorState.resetSceneCamera(EditorState.selectedTrack, EditorState.selectedClip)
+                onClicked: EditorState.preview.resetSceneCamera(EditorState.selectedTrack, EditorState.selectedClip)
             }
         }
     }

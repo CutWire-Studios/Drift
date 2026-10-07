@@ -14,7 +14,7 @@ Item {
 
     property var previewCanvas
 
-    readonly property string setId: EditorState.guideEditSetId
+    readonly property string setId: EditorState.preview.guideEditSetId
     readonly property var editedSet: {
         const sets = EditorState.guideSets
         for (let i = 0; i < sets.length; ++i) {
@@ -268,7 +268,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 variant: "primary"
                 text: qsTr("Done")
-                onClicked: EditorState.guideEditSetId = ""
+                onClicked: EditorState.preview.guideEditSetId = ""
             }
         }
     }

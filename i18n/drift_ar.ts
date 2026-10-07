@@ -1493,18 +1493,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation>صوت فقط</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>لا يوجد مقطع عند الوقت الحالي</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>معاينة GPU غير متوفرة</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>كاملة</translation>
     </message>
@@ -10122,34 +10110,10 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -10193,125 +10157,65 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>PAUSED %1s</source>
-        <translation>متوقف مؤقتًا %1s</translation>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>REC %1s</source>
-        <translation>تسجيل %1s</translation>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing to preview yet</source>
-        <translation>لا يوجد شيء للمعاينة بعد</translation>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>استورد الوسائط واسحبها إلى المخطط الزمني أدناه لرؤيتها هنا.</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>معاينة GPU غير متوفرة</translation>
-    </message>
-    <message>
-        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation>يوفر برنامج تشغيل الرسومات لديك %1 فقط. تحتاج معاينة Drift إلى OpenGL 3.3.</translation>
-    </message>
-    <message>
-        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>تعذر على Drift تشغيل عارض GPU الخاص به، لذا لا يمكن رسم المعاينة.</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>معلومات تصحيح الأخطاء</translation>
-    </message>
-    <message>
-        <source>Audio only</source>
-        <translation>صوت فقط</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>لا يوجد مقطع في الوقت الحالي</translation>
-    </message>
-    <message>
-        <source>Seek</source>
-        <translation>تمرير</translation>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewOptionsMenu</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Current time / total · %1 frames per second</source>
-        <translation>الوقت الحالي / الإجمالي · %1 إطار في الثانية</translation>
-    </message>
-    <message>
-        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>القفز للخلف 1s · Shift لمدة 5s · Ctrl لمدة 10s</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>الإطار السابق</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>إيقاف مؤقت</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>تشغيل</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>الإطار التالي</translation>
-    </message>
-    <message>
-        <source>Loop work area on — click to turn off</source>
-        <translation>تكرار مساحة العمل مفعّل — انقر للإيقاف</translation>
-    </message>
-    <message>
-        <source>Loop work area off — click to turn on</source>
-        <translation>تكرار مساحة العمل معطّل — انقر للتشغيل</translation>
-    </message>
-    <message>
-        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>القفز للأمام 1s · Shift لمدة 5s · Ctrl لمدة 10s</translation>
-    </message>
-    <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>تكبير/تصغير المعاينة — Ctrl+التمرير فوق المعاينة للتكبير/التصغير، والسحب بالزر الأوسط للتحريك. انقر لإعادة التعيين إلى 100%.</translation>
+        <source>Quality</source>
+        <translation type="unfinished">الجودة</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation>كاملة</translation>
+        <translation type="unfinished">كاملة</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation>نصف</translation>
+        <translation type="unfinished">نصف</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>ربع</translation>
+        <translation type="unfinished">ربع</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>تلقائي</translation>
+        <translation type="unfinished">تلقائي</translation>
     </message>
     <message>
         <source>Preview quality — lower is smoother while editing.
 Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>جودة المعاينة — الجودة الأقل تكون أكثر سلاسة أثناء التحرير.
+        <translation type="unfinished">جودة المعاينة — الجودة الأقل تكون أكثر سلاسة أثناء التحرير.
 تعد Full وHalf وQuarter أجزاءً ثابتة من دقة المشروع: يركب Full تمامًا ما سينتجه التصدير.
 يعرض Auto فقط عدد وحدات البكسل التي تعرضها المعاينة فعليًا، ويخفض ذلك أكثر عندما يتعذر على التشغيل مواكبة السرعة.</translation>
     </message>
     <message>
+        <source>Speed</source>
+        <translation type="unfinished">السرعة</translation>
+    </message>
+    <message>
         <source>Playback speed</source>
-        <translation>سرعة التشغيل</translation>
+        <translation type="unfinished">سرعة التشغيل</translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished">فك الترميز</translation>
     </message>
     <message>
         <source>How video is decoded for preview.
@@ -10319,51 +10223,39 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>كيفية فك ترميز الفيديو للمعاينة.
+        <translation type="unfinished">كيفية فك ترميز الفيديو للمعاينة.
 يختار Auto لكل مقطع: عتادي لـ 4K عالي الجودة، وبرمجي في الحالات الأخرى.
 البرمجي أكثر سلاسة لمعظم المقاطع. ويستخدم قدرًا أكبر من CPU.
 العتادي أفضل لـ 4K عالي الجودة، ويفرض وحدة فك ترميز GPU واحدة.
 إذا تعثر التشغيل، فجرب خيارًا آخر.</translation>
     </message>
     <message>
-        <source>Toggle guides</source>
-        <translation>تبديل الخطوط الإرشادية</translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation>مجموعات الخطوط الإرشادية</translation>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>الإبقاء على مقابض القناع في المعاينة أثناء تحديد مقطع آخر</translation>
-    </message>
-    <message>
-        <source>Exit fullscreen preview (Esc)</source>
-        <translation>الخروج من معاينة ملء الشاشة (Esc)</translation>
-    </message>
-    <message>
-        <source>Fullscreen preview</source>
-        <translation>معاينة ملء الشاشة</translation>
+        <translation type="unfinished">الإبقاء على مقابض القناع في المعاينة أثناء تحديد مقطع آخر</translation>
     </message>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>فك الترميز على بطاقة رسومات مختلفة</translation>
+        <translation type="unfinished">فك الترميز على بطاقة رسومات مختلفة</translation>
     </message>
     <message>
         <source>Use anyway</source>
-        <translation>استخدام على أي حال</translation>
+        <translation type="unfinished">استخدام على أي حال</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>إلغاء</translation>
+        <translation type="unfinished">إلغاء</translation>
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>تشغيل Drift باستخدام prime-run (أو DRI_PRIME=1) يضع OpenGL على نفس بطاقة وحدة فك الترميز.</translation>
+        <translation type="unfinished">تشغيل Drift باستخدام prime-run (أو DRI_PRIME=1) يضع OpenGL على نفس بطاقة وحدة فك الترميز.</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>تشغيل Drift على بطاقة الرسومات عالية الأداء</translation>
+        <translation type="unfinished">تشغيل Drift على بطاقة الرسومات عالية الأداء</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
@@ -10372,6 +10264,126 @@ If playback stutters, try another.</source>
     <message>
         <source>Open graphics settings</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished">تكبير/تصغير المعاينة — Ctrl+التمرير فوق المعاينة للتكبير/التصغير، والسحب بالزر الأوسط للتحريك. انقر لإعادة التعيين إلى 100%.</translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished">تبديل الخطوط الإرشادية</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished">مجموعات الخطوط الإرشادية</translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation>تمرير</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished">متوقف مؤقتًا %1s</translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
+        <translation type="unfinished">تسجيل %1s</translation>
+    </message>
+    <message>
+        <source>Nothing to preview yet</source>
+        <translation type="unfinished">لا يوجد شيء للمعاينة بعد</translation>
+    </message>
+    <message>
+        <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished">استورد الوسائط واسحبها إلى المخطط الزمني أدناه لرؤيتها هنا.</translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished">معاينة GPU غير متوفرة</translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished">يوفر برنامج تشغيل الرسومات لديك %1 فقط. تحتاج معاينة Drift إلى OpenGL 3.3.</translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished">تعذر على Drift تشغيل عارض GPU الخاص به، لذا لا يمكن رسم المعاينة.</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">معلومات تصحيح الأخطاء</translation>
+    </message>
+    <message>
+        <source>Audio only</source>
+        <translation type="unfinished">الصوت فقط</translation>
+    </message>
+    <message>
+        <source>No clip at the current time</source>
+        <translation type="unfinished">لا يوجد مقطع في الوقت الحالي</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewTransportBar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Current time / total · %1 frames per second</source>
+        <translation type="unfinished">الوقت الحالي / الإجمالي · %1 إطار في الثانية</translation>
+    </message>
+    <message>
+        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">القفز للخلف 1s · Shift لمدة 5s · Ctrl لمدة 10s</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation type="unfinished">الإطار السابق</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">إيقاف مؤقت</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">تشغيل</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation type="unfinished">الإطار التالي</translation>
+    </message>
+    <message>
+        <source>Loop work area on — click to turn off</source>
+        <translation type="unfinished">تكرار مساحة العمل مفعّل — انقر للإيقاف</translation>
+    </message>
+    <message>
+        <source>Loop work area off — click to turn on</source>
+        <translation type="unfinished">تكرار مساحة العمل معطّل — انقر للتشغيل</translation>
+    </message>
+    <message>
+        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">القفز للأمام 1s · Shift لمدة 5s · Ctrl لمدة 10s</translation>
+    </message>
+    <message>
+        <source>Exit fullscreen preview (Esc)</source>
+        <translation type="unfinished">الخروج من معاينة ملء الشاشة (Esc)</translation>
+    </message>
+    <message>
+        <source>Fullscreen preview</source>
+        <translation type="unfinished">معاينة ملء الشاشة</translation>
     </message>
 </context>
 <context>

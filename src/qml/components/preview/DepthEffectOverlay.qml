@@ -3,8 +3,8 @@ import Drift
 import ".."
 
 // Handles for the depth effects on the selected clip: a knob per enabled 3D Relight light (plus an
-// aim ring when it is a spot), and a reticle for Depth of Field's focus point. Geometry is driven
-// by the owning PreviewPanel, which mirrors the canvas rect here.
+// aim ring when it is a spot), and a reticle for Depth of Field's focus point. The desktop preview's
+// transform companion, laid over the canvas rect.
 //
 // Like MaskOverlay, everything hangs off `clipFrame`: effect coordinates are 0..1 across the
 // clip's own frame, so the handles have to travel with the clip's transform.
@@ -36,7 +36,7 @@ Item {
         // Hidden: onVisibleChanged catches up when shown.
         if (!visible || interacting || EditorState.playing)
             return
-        const next = EditorState.depthEffectEditorState()
+        const next = EditorState.preview.depthEffectEditorState()
         editorState = next
         const handles = handlesFor(next)
         const signature = handles.map(h => h.kind + ":" + h.effect + ":" + (h.light || 0)).join("|")
@@ -146,7 +146,7 @@ Item {
         rotation: is3d ? 0 : (root.editorState.rotation || 0)
         transform: Matrix4x4 {
             matrix: clipFrame.is3d
-                    ? EditorState.previewClipPoseMatrix(root.editorState, root.editorState.x || 0,
+                    ? EditorState.preview.clipPoseMatrix(root.editorState, root.editorState.x || 0,
                                                         root.editorState.y || 0,
                                                         root.editorState.width || root.canvasW,
                                                         root.editorState.height || root.canvasH,

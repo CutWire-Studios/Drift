@@ -3,8 +3,8 @@ import QtQuick.Shapes
 import Drift
 
 // The 3D transform gizmo for the selected clip when it is a 3D layer: arrows (move), rings
-// (rotate) or square-tipped handles (scale), per EditorState.gizmoTool, along the camera's axes or
-// the clip's own per EditorState.gizmoOrientation. Geometry, hit-testing and the drag maths all
+// (rotate) or square-tipped handles (scale), per EditorState.preview.gizmoTool, along the camera's axes or
+// the clip's own per EditorState.preview.gizmoOrientation. Geometry, hit-testing and the drag maths all
 // come from the engine (engine/ClipGizmo), so this only draws and forwards the pointer.
 //
 // Fills the overlay it sits in, whose coordinates are canvas px times sx. Presses anywhere off a
@@ -31,18 +31,18 @@ Item {
     readonly property real tolerance: touch ? 22 : 8
     readonly property var pose: livePose || box
     readonly property var geometry: {
-        void EditorState.gizmoTool
-        void EditorState.gizmoOrientation
-        void EditorState.editorViewRevision
-        return pose ? EditorState.previewGizmoGeometry(pose, sx, handleSize) : null
+        void EditorState.preview.gizmoTool
+        void EditorState.preview.gizmoOrientation
+        void EditorState.preview.viewRevision
+        return pose ? EditorState.preview.gizmoGeometry(pose, sx, handleSize) : null
     }
 
     function pickAt(x, y) {
         if (!pose || !geometry || !geometry.valid)
             return ""
-        void EditorState.gizmoTool
-        void EditorState.gizmoOrientation
-        return EditorState.previewGizmoPick(pose, sx, handleSize, x, y, tolerance)
+        void EditorState.preview.gizmoTool
+        void EditorState.preview.gizmoOrientation
+        return EditorState.preview.gizmoPick(pose, sx, handleSize, x, y, tolerance)
     }
 
     function colorFor(id) {
@@ -151,7 +151,7 @@ Item {
             if (gizmo.dragging === "")
                 return
             // Ctrl passes straight through the 15° steps, as it does for the 2D snaps.
-            gizmo.livePose = EditorState.previewApplyGizmoDrag(
+            gizmo.livePose = EditorState.preview.applyGizmoDrag(
                         startPose, gizmo.dragging, press.x, press.y, mouse.x, mouse.y,
                         !(mouse.modifiers & Qt.ControlModifier), gizmo.sx)
         }

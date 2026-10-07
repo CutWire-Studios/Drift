@@ -1489,18 +1489,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9942,33 +9930,9 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10013,13 +9977,143 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>REC %1s</source>
+        <source>Camera Output</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOptionsMenu</name>
+    <message>
+        <source>Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Half</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quarter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview quality — lower is smoother while editing.
+Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
+Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How video is decoded for preview.
+Auto picks per clip: hardware for high-quality 4K, software otherwise.
+Software is smoother for most clips. It uses more CPU.
+Hardware is better for high-quality 4K, and forces one GPU decoder.
+If playback stutters, try another.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep mask handles on the preview while another clip is selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decoding on a different graphics card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use anyway</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run Drift on the high-performance graphics card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open graphics settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
         <source>PAUSED %1s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10054,13 +10148,9 @@
         <source>No clip at the current time</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Seek</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewTransportBar</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished"></translation>
@@ -10102,89 +10192,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Full</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Half</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Quarter</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Auto</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Preview quality — lower is smoother while editing.
-Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
-Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Playback speed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>How video is decoded for preview.
-Auto picks per clip: hardware for high-quality 4K, software otherwise.
-Software is smoother for most clips. It uses more CPU.
-Hardware is better for high-quality 4K, and forces one GPU decoder.
-If playback stutters, try another.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Toggle guides</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Exit fullscreen preview (Esc)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fullscreen preview</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Decoding on a different graphics card</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Use anyway</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Run Drift on the high-performance graphics card</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open graphics settings</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

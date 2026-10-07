@@ -421,8 +421,8 @@ Item {
                         tooltip: (key.length > 0 ? qsTr("%1 (%2)").arg(modelData.label).arg(key)
                                                  : modelData.label) + "\n" + modelData.tip
                         Accessible.name: modelData.label
-                        active: EditorState.gizmoTool === modelData.value
-                        onClicked: EditorState.gizmoTool = modelData.value
+                        active: EditorState.preview.gizmoTool === modelData.value
+                        onClicked: EditorState.preview.gizmoTool = modelData.value
                     }
                 }
             }
@@ -443,8 +443,8 @@ Item {
                         required property var modelData
                         text: modelData.label
                         tooltip: modelData.tip
-                        selected: EditorState.gizmoOrientation === modelData.value
-                        onClicked: EditorState.gizmoOrientation = modelData.value
+                        selected: EditorState.preview.gizmoOrientation === modelData.value
+                        onClicked: EditorState.preview.gizmoOrientation = modelData.value
                     }
                 }
             }

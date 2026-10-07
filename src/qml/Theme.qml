@@ -485,8 +485,8 @@ QtObject {
     }
 
     // --- Layout: preview panel -----------------------------------------------
-    readonly property real previewToolbarPaddingTop: 20
-    readonly property real previewToolbarPaddingBottom: 12
+    // Above and below the transport bar's buttons.
+    readonly property real previewTransportPadding: 6
 
     // --- Layout: timeline ------------------------------------------------------
     readonly property real timelineToolbarHeight: 40

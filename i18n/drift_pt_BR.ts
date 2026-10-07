@@ -1489,18 +1489,6 @@
 <context>
     <name>AndroidPreview</name>
     <message>
-        <source>Audio only</source>
-        <translation>Somente áudio</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>Nenhum clipe no tempo atual</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>Pré-visualização por GPU indisponível</translation>
-    </message>
-    <message>
         <source>Full</source>
         <translation>Completo</translation>
     </message>
@@ -9942,34 +9930,10 @@
     </message>
 </context>
 <context>
-    <name>PreviewHeader</name>
+    <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
         <translation type="unfinished">%1 (%2)</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looking through the camera</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Free view</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Camera Output</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move</source>
@@ -10013,125 +9977,65 @@
     </message>
 </context>
 <context>
-    <name>PreviewPanel</name>
+    <name>PreviewModeSwitch</name>
     <message>
-        <source>REC %1s</source>
-        <translation>REC %1s</translation>
+        <source>Camera Output</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>PAUSED %1s</source>
-        <translation>PAUSED %1s</translation>
+        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing to preview yet</source>
-        <translation>Nada para pré-visualizar ainda</translation>
+        <source>3D Scene</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>Importe mídia e arraste-a para a linha do tempo abaixo para vê-la aqui.</translation>
-    </message>
-    <message>
-        <source>GPU preview unavailable</source>
-        <translation>Pré-visualização por GPU não disponível</translation>
-    </message>
-    <message>
-        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
-        <translation>Seu driver de vídeo fornece apenas %1. A pré-visualização do Drift precisa de OpenGL 3.3.</translation>
-    </message>
-    <message>
-        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>O Drift não conseguiu iniciar seu renderizador por GPU, então a pré-visualização não pode ser desenhada.</translation>
-    </message>
-    <message>
-        <source>Debug info</source>
-        <translation>Informações de depuração</translation>
-    </message>
-    <message>
-        <source>Audio only</source>
-        <translation>Somente áudio</translation>
-    </message>
-    <message>
-        <source>No clip at the current time</source>
-        <translation>Nenhum clipe no tempo atual</translation>
-    </message>
-    <message>
-        <source>Seek</source>
-        <translation>Buscar</translation>
+        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>PreviewToolbar</name>
+    <name>PreviewOptionsMenu</name>
     <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Current time / total · %1 frames per second</source>
-        <translation>Tempo atual / total · %1 quadros por segundo</translation>
-    </message>
-    <message>
-        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>Voltar 1s · Shift para 5s · Ctrl para 10s</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>Quadro anterior</translation>
-    </message>
-    <message>
-        <source>Pause</source>
-        <translation>Pausar</translation>
-    </message>
-    <message>
-        <source>Play</source>
-        <translation>Reproduzir</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>Próximo quadro</translation>
-    </message>
-    <message>
-        <source>Loop work area on — click to turn off</source>
-        <translation>Loop da área de trabalho ativado — clique para desativar</translation>
-    </message>
-    <message>
-        <source>Loop work area off — click to turn on</source>
-        <translation>Loop da área de trabalho desativado — clique para ativar</translation>
-    </message>
-    <message>
-        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>Avançar 1s · Shift para 5s · Ctrl para 10s</translation>
-    </message>
-    <message>
-        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>Zoom da pré-visualização — Ctrl+rolagem sobre a pré-visualização para dar zoom, arraste com o botão do meio para deslocar. Clique para redefinir para 100%.</translation>
+        <source>Quality</source>
+        <translation type="unfinished">Qualidade</translation>
     </message>
     <message>
         <source>Full</source>
-        <translation>Total</translation>
+        <translation type="unfinished">Completo</translation>
     </message>
     <message>
         <source>Half</source>
-        <translation>Metade</translation>
+        <translation type="unfinished">Metade</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>Um quarto</translation>
+        <translation type="unfinished">Um quarto</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation>Automático</translation>
+        <translation type="unfinished">Automático</translation>
     </message>
     <message>
         <source>Preview quality — lower is smoother while editing.
 Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>Qualidade da pré-visualização — mais baixa fica mais fluida durante a edição.
+        <translation type="unfinished">Qualidade da pré-visualização — mais baixa fica mais fluida durante a edição.
 Total, Metade e Um quarto são frações fixas da resolução do projeto: Total compõe exatamente o que uma exportação faria.
 Automático renderiza só os pixels que a pré-visualização realmente mostra, e reduz ainda mais enquanto a reprodução não consegue acompanhar.</translation>
     </message>
     <message>
+        <source>Speed</source>
+        <translation type="unfinished">Velocidade</translation>
+    </message>
+    <message>
         <source>Playback speed</source>
-        <translation>Velocidade de reprodução</translation>
+        <translation type="unfinished">Velocidade de reprodução</translation>
+    </message>
+    <message>
+        <source>Decode</source>
+        <translation type="unfinished">Decodificação</translation>
     </message>
     <message>
         <source>How video is decoded for preview.
@@ -10139,51 +10043,39 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>Como o vídeo é decodificado para a pré-visualização.
+        <translation type="unfinished">Como o vídeo é decodificado para a pré-visualização.
 Automático escolhe por clipe: hardware para 4K de alta qualidade, software nos demais casos.
 Software é mais fluido para a maioria dos clipes. Usa mais CPU.
 Hardware é melhor para 4K de alta qualidade e força um único decodificador de GPU.
 Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
-        <source>Toggle guides</source>
-        <translation>Alternar guias</translation>
-    </message>
-    <message>
-        <source>Guide sets</source>
-        <translation>Conjuntos de guias</translation>
+        <source>Keep mask handles up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>Manter as alças da máscara na pré-visualização enquanto outro clipe estiver selecionado</translation>
-    </message>
-    <message>
-        <source>Exit fullscreen preview (Esc)</source>
-        <translation>Sair da pré-visualização em tela cheia (Esc)</translation>
-    </message>
-    <message>
-        <source>Fullscreen preview</source>
-        <translation>Pré-visualização em tela cheia</translation>
+        <translation type="unfinished">Manter as alças da máscara na pré-visualização enquanto outro clipe estiver selecionado</translation>
     </message>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>Decodificando em uma placa de vídeo diferente</translation>
+        <translation type="unfinished">Decodificando em uma placa de vídeo diferente</translation>
     </message>
     <message>
         <source>Use anyway</source>
-        <translation>Usar mesmo assim</translation>
+        <translation type="unfinished">Usar mesmo assim</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>Cancelar</translation>
+        <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>Iniciar o Drift com prime-run (ou DRI_PRIME=1) coloca o OpenGL na mesma placa que o decodificador.</translation>
+        <translation type="unfinished">Iniciar o Drift com prime-run (ou DRI_PRIME=1) coloca o OpenGL na mesma placa que o decodificador.</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>Executar o Drift na placa de vídeo de alto desempenho</translation>
+        <translation type="unfinished">Executar o Drift na placa de vídeo de alto desempenho</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
@@ -10192,6 +10084,126 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Open graphics settings</source>
         <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewOsd</name>
+    <message>
+        <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
+        <translation type="unfinished">Zoom da pré-visualização — Ctrl+rolagem sobre a pré-visualização para dar zoom, arraste com o botão do meio para deslocar. Clique para redefinir para 100%.</translation>
+    </message>
+    <message>
+        <source>Toggle guides</source>
+        <translation type="unfinished">Alternar guias</translation>
+    </message>
+    <message>
+        <source>Guide sets</source>
+        <translation type="unfinished">Conjuntos de guias</translation>
+    </message>
+    <message>
+        <source>Preview options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreviewPanel</name>
+    <message>
+        <source>Seek</source>
+        <translation>Buscar</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewStatusLayer</name>
+    <message>
+        <source>PAUSED %1s</source>
+        <translation type="unfinished">PAUSED %1s</translation>
+    </message>
+    <message>
+        <source>REC %1s</source>
+        <translation type="unfinished">REC %1s</translation>
+    </message>
+    <message>
+        <source>Nothing to preview yet</source>
+        <translation type="unfinished">Nada para pré-visualizar ainda</translation>
+    </message>
+    <message>
+        <source>Import media and drag it onto the timeline below to see it here.</source>
+        <translation type="unfinished">Importe mídia e arraste-a para a linha do tempo abaixo para vê-la aqui.</translation>
+    </message>
+    <message>
+        <source>GPU preview unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
+        <translation type="unfinished">Seu driver de vídeo fornece apenas %1. A pré-visualização do Drift precisa de OpenGL 3.3.</translation>
+    </message>
+    <message>
+        <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
+        <translation type="unfinished">O Drift não conseguiu iniciar seu renderizador por GPU, então a pré-visualização não pode ser desenhada.</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">Informações de depuração</translation>
+    </message>
+    <message>
+        <source>Audio only</source>
+        <translation type="unfinished">Somente áudio</translation>
+    </message>
+    <message>
+        <source>No clip at the current time</source>
+        <translation type="unfinished">Nenhum clipe no tempo atual</translation>
+    </message>
+</context>
+<context>
+    <name>PreviewTransportBar</name>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Current time / total · %1 frames per second</source>
+        <translation type="unfinished">Tempo atual / total · %1 quadros por segundo</translation>
+    </message>
+    <message>
+        <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">Voltar 1s · Shift para 5s · Ctrl para 10s</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation type="unfinished">Quadro anterior</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Pausar</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Reproduzir</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation type="unfinished">Próximo quadro</translation>
+    </message>
+    <message>
+        <source>Loop work area on — click to turn off</source>
+        <translation type="unfinished">Loop da área de trabalho ativado — clique para desativar</translation>
+    </message>
+    <message>
+        <source>Loop work area off — click to turn on</source>
+        <translation type="unfinished">Loop da área de trabalho desativado — clique para ativar</translation>
+    </message>
+    <message>
+        <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
+        <translation type="unfinished">Avançar 1s · Shift para 5s · Ctrl para 10s</translation>
+    </message>
+    <message>
+        <source>Exit fullscreen preview (Esc)</source>
+        <translation type="unfinished">Sair da pré-visualização em tela cheia (Esc)</translation>
+    </message>
+    <message>
+        <source>Fullscreen preview</source>
+        <translation type="unfinished">Pré-visualização em tela cheia</translation>
     </message>
 </context>
 <context>

@@ -82,14 +82,14 @@ Item {
                 title: qsTr("Preview")
 
                 ThemedSwitch {
-                    checked: EditorState.guidesEnabled
+                    checked: EditorState.preview.guidesEnabled
                     text: qsTr("Show guides")
                     tooltip: qsTr("Show alignment guides over the preview")
-                    onToggled: EditorState.guidesEnabled = checked
+                    onToggled: EditorState.preview.guidesEnabled = checked
                 }
 
                 Repeater {
-                    model: EditorState.guidesEnabled ? EditorState.guideSets : []
+                    model: EditorState.preview.guidesEnabled ? EditorState.guideSets : []
 
                     ThemedCheckBox {
                         required property var modelData

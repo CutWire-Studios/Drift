@@ -136,8 +136,8 @@ Item {
             root.closeSheets()
             return true
         }
-        if (EditorState.canvasCropMode) {
-            EditorState.canvasCropMode = false
+        if (EditorState.preview.canvasCropMode) {
+            EditorState.preview.canvasCropMode = false
             return true
         }
         if (root.previewFullscreen) {
@@ -224,7 +224,7 @@ Item {
         case "crop":
             // The overlay carries its own Cancel/Apply, and the preview goes
             // fullscreen for it, so this only has to start the mode.
-            EditorState.canvasCropMode = true
+            EditorState.preview.canvasCropMode = true
             break
         case "properties":
             Window.window.openProjectProperties()
@@ -561,14 +561,6 @@ Item {
                 exportProgressDialog.openDialog()
             }
         }
-        // The crop frame is dragged on the preview, and the Settings tab it is
-        // started from covers most of the screen. Cropping therefore takes the page
-        // for as long as it is on, and hands it back when it ends.
-        function onCanvasCropModeChanged() {
-            if (EditorState.canvasCropMode)
-                root.closeSheets()
-            root.previewFullscreen = EditorState.canvasCropMode
-        }
         // Selection must not auto-open the Edit sheet: that ran on press (before
         // release), stole the gesture so clips could not drag, and blocked long-press
         // menus. Open via the Edit rail; an already-open sheet still updates via
@@ -577,6 +569,18 @@ Item {
         function onSaveAsRequested() { root.saveProjectAs() }
         function onOpenRequested() { root.openProject() }
         function onNewProjectRequested() { root.requestNewProject() }
+    }
+
+    // The crop frame is dragged on the preview, and the Settings tab it is
+    // started from covers most of the screen. Cropping therefore takes the page
+    // for as long as it is on, and hands it back when it ends.
+    Connections {
+        target: EditorState.preview
+        function onCanvasCropModeChanged() {
+            if (EditorState.preview.canvasCropMode)
+                root.closeSheets()
+            root.previewFullscreen = EditorState.preview.canvasCropMode
+        }
     }
 
     Component.onCompleted: AssetLibrary.ensureAllMedia()

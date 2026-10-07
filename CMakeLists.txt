@@ -877,6 +877,7 @@ qt_add_executable(drift
     src/models/UpdateAsset.cpp
     src/models/AppController.h
     src/models/AppController.cpp
+    src/models/AppControllerDetail.h
     src/models/EditorState.h
     src/models/LayoutStore.h
     src/models/LayoutStore.cpp
@@ -908,6 +909,8 @@ qt_add_executable(drift
     src/playback/PerfLog.cpp
     src/preview/PreviewItem.h
     src/preview/PreviewItem.cpp
+    src/preview/PreviewController.h
+    src/preview/PreviewController.cpp
     src/timeline/ClipThumbnailStore.h
     src/timeline/ClipThumbnailStore.cpp
     src/timeline/TimelineLayout.h
@@ -1072,8 +1075,17 @@ qt_add_qml_module(drift
         src/qml/EditorHeader.qml
         src/qml/AssetsPanel.qml
         src/qml/PreviewPanel.qml
-        src/qml/components/preview/PreviewHeader.qml
         src/qml/components/preview/ViewAxisWidget.qml
+        src/qml/components/preview/PreviewViewport.qml
+        src/qml/components/preview/PreviewStatusLayer.qml
+        src/qml/components/preview/PreviewToolHost.qml
+        src/qml/components/preview/PreviewOsd.qml
+        src/qml/components/preview/PreviewModeSwitch.qml
+        src/qml/components/preview/Preview3DTools.qml
+        src/qml/components/preview/PreviewOptionsMenu.qml
+        src/qml/components/preview/PreviewTransportBar.qml
+        src/qml/components/preview/modes/Preview2DMode.qml
+        src/qml/components/preview/modes/Preview3DMode.qml
         src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
@@ -1083,7 +1095,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
         src/qml/components/preview/DepthEffectOverlay.qml
-        src/qml/components/preview/PreviewToolbar.qml
         src/qml/components/preview/Checkerboard.qml
         src/qml/components/preview/AndroidTransformOverlay.qml
         src/qml/components/preview/AndroidCropOverlay.qml
