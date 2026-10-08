@@ -2346,22 +2346,6 @@
         <translation>Wybierz klip wideo do wycięcia</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>Niestandardowa prędkość działa na klipach wideo i audio</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>Ten klip nie ma mediów do przyspieszenia lub spowolnienia</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>Ten klip został przeniesiony — otwórz ponownie Niestandardową prędkość</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>Zastosowano niestandardową prędkość</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Usunięto krzywą prędkości</translation>
     </message>
@@ -12408,6 +12392,25 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>Zresetowano skróty do domyślnych.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">Niestandardowa prędkość działa na klipach wideo i audio</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">Ten klip nie ma mediów do przyspieszenia lub spowolnienia</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">Ten klip został przeniesiony — otwórz ponownie Niestandardową prędkość</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">Zastosowano niestandardową prędkość</translation>
     </message>
 </context>
 <context>

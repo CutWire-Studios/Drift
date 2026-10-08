@@ -587,6 +587,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // Before the preview: its constructor asks projectFile()->projectWidth().
     m_projectFile = new ProjectFileController(this, this);
     m_assetPreview = new AssetPreviewController(this, this);
+    m_speedCurve = new SpeedCurveController(this, this);
     m_preview = new PreviewController(*this, this);
     m_preferences = new PreferencesController(this);
     connect(m_preferences, &PreferencesController::restartNoticeRequested, this,
@@ -657,27 +658,12 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         emit m_projectFile->backgroundChanged();
     });
 
-    // The speed-curve window's player is independent of the timeline; it only ever reports on
-    // the one clip being retimed.
-    connect(&m_speedCurvePlayer, &ClipPreviewPlayer::frameChanged, this, [this] {
-        ++m_speedCurveRevision;
-        emit speedCurveFrameChanged();
-    });
-    connect(&m_speedCurvePlayer, &ClipPreviewPlayer::frameSizeChanged, this,
-            &AppController::speedCurveFrameChanged);
-    connect(&m_speedCurvePlayer, &ClipPreviewPlayer::positionChanged, this,
-            &AppController::speedCurvePositionChanged);
-    connect(&m_speedCurvePlayer, &ClipPreviewPlayer::playingChanged, this,
-            &AppController::speedCurvePlayingChanged);
-    connect(&m_speedCurvePlayer, &ClipPreviewPlayer::durationChanged, this,
-            &AppController::speedCurveChanged);
-
     m_audioOutputDeviceId =
         QSettings().value(QStringLiteral("audio/outputDeviceId")).toString();
     if (!m_audioOutputDeviceId.isEmpty()) {
         const QByteArray id = m_audioOutputDeviceId.toUtf8();
         m_playback.setAudioDeviceId(id);
-        m_speedCurvePlayer.setAudioDeviceId(id);
+        m_speedCurve->setAudioDeviceId(id);
         m_assetPreview->setAudioDeviceId(id);
     }
     connect(&m_mediaDevices, &QMediaDevices::audioOutputsChanged, this,
@@ -3223,6 +3209,30 @@ drift::KeyframeTrack<T> rescaleKeyframeTrackTimes(const drift::KeyframeTrack<T> 
     return out;
 }
 
+// How much source a trim of `delta` timeline µs eats into the clip's edge.
+//
+// A ramp is normalised over the clip's source range, so a trim rescales it and the duration has
+// to be re-derived afterwards (syncDurationFromSpeedCurve) rather than simply shifted by delta.
+// Extending past an edge is outside anything the curve describes, so the rate at that end stands
+// in for it.
+drift::TimeUs trimSourceDelta(const drift::Clip &clip, drift::TimeUs delta, bool extending,
+                              bool atTail)
+{
+    if (!clip.hasSpeedCurve())
+        return clip.sourceDeltaForTimelineDelta(delta);
+
+    const drift::TimeUs span = clip.srcOut - clip.srcIn;
+    if (extending) {
+        const double edgeSpeed = clip.speedCurve.speedAt(atTail ? 1.0 : 0.0);
+        return static_cast<drift::TimeUs>(llround(static_cast<double>(delta) * edgeSpeed));
+    }
+    return clip.speedCurve.sourceOffsetForTimelineOffset(delta, span);
+}
+
+} // namespace
+
+namespace drift::appdetail {
+
 // Keyframe times are clip-relative, so a clip that changes duration would leave its animation
 // sliding against the picture. Both clips cover the same source range, so each key is carried
 // across through the moment of source it was sitting on.
@@ -3245,26 +3255,6 @@ void remapKeyframeTrack(drift::KeyframeTrack<T> &dst, const drift::KeyframeTrack
         out.setKeyframe(to.speedCurve.timelineOffsetForSourceOffset(sourceOffset, span), it.value());
     }
     dst = out;
-}
-
-// How much source a trim of `delta` timeline µs eats into the clip's edge.
-//
-// A ramp is normalised over the clip's source range, so a trim rescales it and the duration has
-// to be re-derived afterwards (syncDurationFromSpeedCurve) rather than simply shifted by delta.
-// Extending past an edge is outside anything the curve describes, so the rate at that end stands
-// in for it.
-drift::TimeUs trimSourceDelta(const drift::Clip &clip, drift::TimeUs delta, bool extending,
-                              bool atTail)
-{
-    if (!clip.hasSpeedCurve())
-        return clip.sourceDeltaForTimelineDelta(delta);
-
-    const drift::TimeUs span = clip.srcOut - clip.srcIn;
-    if (extending) {
-        const double edgeSpeed = clip.speedCurve.speedAt(atTail ? 1.0 : 0.0);
-        return static_cast<drift::TimeUs>(llround(static_cast<double>(delta) * edgeSpeed));
-    }
-    return clip.speedCurve.sourceOffsetForTimelineOffset(delta, span);
 }
 
 void remapKeyframesForRetime(drift::Clip &dst, const drift::Clip &src)
@@ -3293,7 +3283,7 @@ void remapKeyframesForRetime(drift::Clip &dst, const drift::Clip &src)
     }
 }
 
-} // namespace
+} // namespace drift::appdetail
 
 bool AppController::writeClipProp(drift::Clip &clip, const QString &prop, drift::TimeUs relative,
                                   double value, bool autoKey, bool force)
@@ -6465,7 +6455,7 @@ void AppController::setAudioOutputDeviceId(const QString &id)
     // default and pick the chosen one back up when it reappears.
     const QByteArray bytes = id.toUtf8();
     m_playback.setAudioDeviceId(bytes);
-    m_speedCurvePlayer.setAudioDeviceId(bytes);
+    m_speedCurve->setAudioDeviceId(bytes);
     m_assetPreview->setAudioDeviceId(bytes);
     emit audioOutputDeviceIdChanged();
 }
@@ -9790,235 +9780,6 @@ void AppController::refreshMulticamTiles()
             emit multicamFramesChanged();
         }, Qt::QueuedConnection);
     });
-}
-
-void AppController::beginSpeedCurveSession(int trackIndex, int clipIndex, bool allowNested)
-{
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
-    const drift::Track &track = m_project.tracks().at(trackIndex);
-    if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
-
-    const drift::Clip &clip = track.clips.at(clipIndex);
-    // A composite reads its nested timeline, which the preview player cannot decode, so only
-    // callers that never show the preview (MCP) may open a session on one.
-    const bool nested = !clip.sequenceId.isEmpty();
-    if ((clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Audio
-         && clip.type != drift::ClipType::Composite)
-        || (nested && !allowNested)) {
-        setLastMessage(tr("Custom speed works on video and audio clips"), QStringLiteral("warning"));
-        return;
-    }
-    if ((clip.path.isEmpty() && !nested) || clip.srcOut <= clip.srcIn) {
-        setLastMessage(tr("This clip has no media to speed up or slow down"), QStringLiteral("warning"));
-        return;
-    }
-
-    // The preview drives ClipReaderPool from its own threads; leaving timeline playback running
-    // would have both walking the same decode workers.
-    setPlaying(false);
-
-    m_speedCurveTrack = trackIndex;
-    m_speedCurveClipIndex = clipIndex;
-    m_speedCurveClip = clip;
-    // An existing ramp is what the editor should open on; otherwise start flat at the clip's
-    // current constant speed so the graph begins where the clip already plays.
-    m_speedCurve = clip.hasSpeedCurve() ? clip.speedCurve : drift::SpeedCurve::flat(clip.effectiveSpeed());
-    m_speedCurveClip.speedCurve = m_speedCurve;
-    m_speedCurveActive = true;
-
-    m_speedCurvePlayer.setClip(m_speedCurveClip, m_project.sampleRate(), m_project.fps());
-
-    emit speedCurveSessionChanged();
-    emit speedCurveChanged();
-}
-
-void AppController::endSpeedCurveSession()
-{
-    if (!m_speedCurveActive)
-        return;
-
-    m_speedCurvePlayer.clear();
-    m_speedCurveActive = false;
-    m_speedCurveTrack = -1;
-    m_speedCurveClipIndex = -1;
-    m_speedCurveClip = drift::Clip{};
-    m_speedCurve.clear();
-    emit speedCurveSessionChanged();
-    emit speedCurveChanged();
-}
-
-QVariantList AppController::speedCurvePoints() const
-{
-    QVariantList out;
-    for (const drift::SpeedPoint &point : m_speedCurve.points()) {
-        out.append(QVariantMap{
-            {QStringLiteral("pos"), point.pos},
-            {QStringLiteral("speed"), point.speed},
-            {QStringLiteral("inDx"), point.inDx},
-            {QStringLiteral("inDy"), point.inDy},
-            {QStringLiteral("outDx"), point.outDx},
-            {QStringLiteral("outDy"), point.outDy},
-            {QStringLiteral("corner"), point.corner},
-        });
-    }
-    return out;
-}
-
-void AppController::setSpeedCurvePoints(const QVariantList &points)
-{
-    if (!m_speedCurveActive)
-        return;
-
-    QList<drift::SpeedPoint> parsed;
-    parsed.reserve(points.size());
-    for (const QVariant &entry : points) {
-        const QVariantMap map = entry.toMap();
-        drift::SpeedPoint point;
-        point.pos = map.value(QStringLiteral("pos")).toDouble();
-        point.speed = map.value(QStringLiteral("speed"), 1.0).toDouble();
-        point.inDx = map.value(QStringLiteral("inDx")).toDouble();
-        point.inDy = map.value(QStringLiteral("inDy")).toDouble();
-        point.outDx = map.value(QStringLiteral("outDx")).toDouble();
-        point.outDy = map.value(QStringLiteral("outDy")).toDouble();
-        point.corner = map.value(QStringLiteral("corner")).toBool();
-        parsed.append(point);
-    }
-
-    m_speedCurve.setPoints(parsed);
-    m_speedCurveClip.speedCurve = m_speedCurve;
-    m_speedCurvePlayer.setSpeedCurve(m_speedCurve);
-    emit speedCurveChanged();
-}
-
-double AppController::speedCurveSourceStart() const
-{
-    return drift::usToSeconds(m_speedCurveClip.srcIn);
-}
-
-double AppController::speedCurveMediaDuration() const
-{
-    return drift::usToSeconds(sourceDurationForClip(m_speedCurveClip));
-}
-
-double AppController::speedCurveSourceDuration() const
-{
-    return drift::usToSeconds(m_speedCurveClip.srcOut - m_speedCurveClip.srcIn);
-}
-
-double AppController::speedCurveRetimedDuration() const
-{
-    return drift::usToSeconds(m_speedCurvePlayer.durationUs());
-}
-
-double AppController::speedCurvePosition() const
-{
-    return drift::usToSeconds(m_speedCurvePlayer.positionUs());
-}
-
-void AppController::playSpeedCurvePreview()
-{
-    if (!m_speedCurveActive)
-        return;
-    setPlaying(false);
-    m_speedCurvePlayer.play();
-}
-
-void AppController::pauseSpeedCurvePreview()
-{
-    m_speedCurvePlayer.pause();
-}
-
-void AppController::seekSpeedCurvePreview(double seconds)
-{
-    if (!m_speedCurveActive)
-        return;
-    m_speedCurvePlayer.seek(drift::secondsToUs(seconds));
-}
-
-double AppController::speedCurveSourcePosition() const
-{
-    const drift::TimeUs span = m_speedCurveClip.srcOut - m_speedCurveClip.srcIn;
-    if (span <= 0)
-        return 0.0;
-    const drift::TimeUs offset =
-        m_speedCurve.sourceOffsetForTimelineOffset(m_speedCurvePlayer.positionUs(), span);
-    return static_cast<double>(offset) / span;
-}
-
-void AppController::seekSpeedCurvePreviewAtSource(double position)
-{
-    if (!m_speedCurveActive)
-        return;
-    const drift::TimeUs span = m_speedCurveClip.srcOut - m_speedCurveClip.srcIn;
-    if (span <= 0)
-        return;
-    const drift::TimeUs offset = static_cast<drift::TimeUs>(qBound(0.0, position, 1.0) * span);
-    m_speedCurvePlayer.seek(m_speedCurve.timelineOffsetForSourceOffset(offset, span));
-}
-
-void AppController::applySpeedCurve()
-{
-    if (!m_speedCurveActive)
-        return;
-    if (m_speedCurveTrack < 0 || m_speedCurveTrack >= m_project.tracks().size())
-        return;
-    const drift::Track &track = m_project.tracks().at(m_speedCurveTrack);
-    if (m_speedCurveClipIndex < 0 || m_speedCurveClipIndex >= track.clips.size())
-        return;
-
-    m_speedCurvePlayer.pause();
-
-    const drift::Clip source = track.clips.at(m_speedCurveClipIndex);
-    // The timeline stays editable while the window is open, so the indices captured at the start
-    // of the session can point at a different clip by now.
-    if (source.id != m_speedCurveClip.id) {
-        setLastMessage(tr("That clip moved — open Custom speed again"), QStringLiteral("warning"));
-        return;
-    }
-
-    const drift::Project before = m_project;
-    drift::Clip retimed = source;
-    retimed.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    retimed.speedCurve = m_speedCurve;
-    retimed.syncDurationFromSpeedCurve();
-    // The copy stands on its own: it carries its own retimed audio rather than staying paired
-    // with a companion clip that is still playing at the original rate.
-    retimed.linkId.clear();
-    retimed.suppressEmbeddedAudio = false;
-    retimed.name = (source.name.isEmpty() ? QStringLiteral("Clip") : source.name)
-                   + QStringLiteral(" (retimed)");
-    remapKeyframesForRetime(retimed, source);
-
-    // The retimed copy replaces the clip it was made from rather than joining it. Left in place the
-    // original keeps playing underneath at the original rate: its audio sums into the mix, and it
-    // shows through wherever the retimed duration differs. A detached audio companion goes with it
-    // for the same reason — the copy carries its own audio.
-    QSet<QString> replacedIds{source.id};
-    for (const drift::ClipRef &ref : drift::linkedPartners(m_project, source))
-        replacedIds.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
-
-    const int newTrack =
-        drift::insertTrackAboveForClipType(m_project, m_speedCurveTrack, source.type);
-    m_project.tracks()[newTrack].clips.append(retimed);
-
-    for (drift::Track &t : m_project.tracks()) {
-        for (int i = t.clips.size() - 1; i >= 0; --i) {
-            if (replacedIds.contains(t.clips.at(i).id))
-                t.clips.removeAt(i);
-        }
-        for (int i = t.transitions.size() - 1; i >= 0; --i) {
-            const drift::Transition &transition = t.transitions.at(i);
-            if (replacedIds.contains(transition.fromClipId) || replacedIds.contains(transition.toClipId))
-                t.transitions.removeAt(i);
-        }
-    }
-
-    pushProjectEdit(before, tr("Custom speed applied"));
-    finishEdit(tr("Custom speed applied"));
-    selectClip(newTrack, m_project.tracks().at(newTrack).clips.size() - 1);
-    emit speedCurveApplied();
 }
 
 void AppController::clearClipSpeedCurve(int trackIndex, int clipIndex)
@@ -23973,7 +23734,7 @@ void AppController::resetSessionState()
 {
     // These end up editing the project, so they have to run while it is still the one they were
     // opened against.
-    endSpeedCurveSession();
+    m_speedCurve->end();
     endFadeCurveSession();
     endSegmentationSession();
     endMulticamSession();

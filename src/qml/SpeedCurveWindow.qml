@@ -38,18 +38,18 @@ Window {
         root.trackIndex = track
         root.clipIndex = clip
         root.selectedPoint = -1
-        EditorState.beginSpeedCurveSession(track, clip)
-        root.points = EditorState.speedCurvePoints
+        EditorState.speedCurve.begin(track, clip)
+        root.points = EditorState.speedCurve.points
         root.show()
         root.raise()
         root.requestActivate()
     }
 
-    onClosing: EditorState.endSpeedCurveSession()
+    onClosing: EditorState.speedCurve.end()
 
     Connections {
-        target: EditorState
-        function onSpeedCurveApplied() { root.close() }
+        target: EditorState.speedCurve
+        function onApplied() { root.close() }
     }
 
     // ----- Curve maths ----------------------------------------------------------------------
@@ -67,8 +67,8 @@ Window {
     // reading its result straight back is what keeps the local mirror honest — but doing it
     // mid-drag would fight the drag for the same values.
     function commit() {
-        EditorState.setSpeedCurvePoints(root.points)
-        root.points = EditorState.speedCurvePoints
+        EditorState.speedCurve.setPoints(root.points)
+        root.points = EditorState.speedCurve.points
         curveCanvas.requestPaint()
     }
 
@@ -199,19 +199,19 @@ Window {
                 cache: false
                 // The revision defeats QML's URL-keyed cache; the pixels behind this URL change
                 // on every pump tick.
-                source: EditorState.speedCurveSessionActive
-                        ? "image://clippreview/frame?rev=" + EditorState.speedCurveRevision
+                source: EditorState.speedCurve.active
+                        ? "image://clippreview/frame?rev=" + EditorState.speedCurve.revision
                         : ""
             }
 
-            readonly property real aspect: EditorState.speedCurveFrameSize.height > 0
-                ? EditorState.speedCurveFrameSize.width / EditorState.speedCurveFrameSize.height
+            readonly property real aspect: EditorState.speedCurve.frameSize.height > 0
+                ? EditorState.speedCurve.frameSize.width / EditorState.speedCurve.frameSize.height
                 : 16 / 9
 
             ThemedLabel {
                 anchors.centerIn: parent
                 tone: "muted"
-                visible: EditorState.speedCurveFrameSize.width <= 0
+                visible: EditorState.speedCurve.frameSize.width <= 0
                 text: qsTr("Audio only")
             }
         }
@@ -224,24 +224,24 @@ Window {
 
             IconButton {
                 anchors.verticalCenter: parent.verticalCenter
-                glyph: EditorState.speedCurvePlaying ? Theme.icons.pause : Theme.icons.play
-                tooltip: EditorState.speedCurvePlaying ? qsTr("Pause") : qsTr("Play")
-                onClicked: EditorState.speedCurvePlaying
-                           ? EditorState.pauseSpeedCurvePreview()
-                           : EditorState.playSpeedCurvePreview()
+                glyph: EditorState.speedCurve.playing ? Theme.icons.pause : Theme.icons.play
+                tooltip: EditorState.speedCurve.playing ? qsTr("Pause") : qsTr("Play")
+                onClicked: EditorState.speedCurve.playing
+                           ? EditorState.speedCurve.pause()
+                           : EditorState.speedCurve.play()
             }
 
             ThemedLabel {
                 anchors.verticalCenter: parent.verticalCenter
-                text: EditorState.speedCurvePosition.toFixed(2) + qsTr("s / ")
-                      + EditorState.speedCurveRetimedDuration.toFixed(2) + qsTr("s")
+                text: EditorState.speedCurve.position.toFixed(2) + qsTr("s / ")
+                      + EditorState.speedCurve.retimedDuration.toFixed(2) + qsTr("s")
             }
 
             ThemedLabel {
                 anchors.verticalCenter: parent.verticalCenter
                 tone: "muted"
-                text: EditorState.speedCurveSourceDuration.toFixed(2) + qsTr("s → ")
-                      + EditorState.speedCurveRetimedDuration.toFixed(2) + qsTr("s")
+                text: EditorState.speedCurve.sourceDuration.toFixed(2) + qsTr("s → ")
+                      + EditorState.speedCurve.retimedDuration.toFixed(2) + qsTr("s")
             }
         }
 
@@ -259,34 +259,34 @@ Window {
             ClipFilmstrip {
                 anchors.fill: parent
                 anchors.margins: Theme.borderWidth
-                filmstripPath: EditorState.speedCurveFilmstripPath
+                filmstripPath: EditorState.speedCurve.filmstripPath
                 // One pass of the strip's eight frames across the clip, rather than the repeating
                 // tile the timeline draws — here the x axis *is* the source.
                 frameWidth: width / frameCount
                 // The strip's frames are sampled across the whole media file, but this axis covers
                 // only the clip's trimmed window, which is what the curve is plotted over. Without
                 // the mapping a trimmed clip shows the wrong frames under the ramp.
-                inPoint: EditorState.speedCurveSourceStart
-                outPoint: EditorState.speedCurveSourceStart + EditorState.speedCurveSourceDuration
-                sourceDuration: EditorState.speedCurveMediaDuration
+                inPoint: EditorState.speedCurve.sourceStart
+                outPoint: EditorState.speedCurve.sourceStart + EditorState.speedCurve.sourceDuration
+                sourceDuration: EditorState.speedCurve.mediaDuration
             }
 
             Canvas {
                 id: waveCanvas
                 anchors.fill: parent
                 anchors.margins: Theme.borderWidth
-                visible: !EditorState.speedCurveFilmstripPath
+                visible: !EditorState.speedCurve.filmstripPath
 
                 // The x axis here is the clip's trimmed source window, the same one the filmstrip
                 // above spans and the same one the curve is plotted over — not the whole file.
                 function sourcePeaks(path) {
                     return EditorState.waveformPeaksForSourceRange(
-                               path, EditorState.speedCurveSourceStart,
-                               EditorState.speedCurveSourceDuration)
+                               path, EditorState.speedCurve.sourceStart,
+                               EditorState.speedCurve.sourceDuration)
                 }
 
-                property var peaks: EditorState.speedCurveClipPath
-                                    ? sourcePeaks(EditorState.speedCurveClipPath) : []
+                property var peaks: EditorState.speedCurve.clipPath
+                                    ? sourcePeaks(EditorState.speedCurve.clipPath) : []
 
                 onPeaksChanged: requestPaint()
                 onWidthChanged: requestPaint()
@@ -294,7 +294,7 @@ Window {
                 Connections {
                     target: EditorState
                     function onWaveformReady(path) {
-                        if (path === EditorState.speedCurveClipPath)
+                        if (path === EditorState.speedCurve.clipPath)
                             waveCanvas.peaks = waveCanvas.sourcePeaks(path)
                     }
                 }
@@ -324,17 +324,17 @@ Window {
                 width: Theme.playheadLineWidth
                 height: parent.height
                 color: Theme.primary
-                x: EditorState.speedCurveSourcePosition * parent.width
+                x: EditorState.speedCurve.sourcePosition * parent.width
             }
 
             MouseArea {
                 anchors.fill: parent
                 onPressed: function (mouse) {
-                    EditorState.seekSpeedCurvePreviewAtSource(mouse.x / width)
+                    EditorState.speedCurve.seekAtSource(mouse.x / width)
                 }
                 onPositionChanged: function (mouse) {
                     if (pressed)
-                        EditorState.seekSpeedCurvePreviewAtSource(mouse.x / width)
+                        EditorState.speedCurve.seekAtSource(mouse.x / width)
                 }
             }
         }
@@ -348,7 +348,7 @@ Window {
             ThemedButton {
                 variant: "secondary"
                 text: qsTr("Add point")
-                onClicked: root.addPointAt(EditorState.speedCurveSourcePosition)
+                onClicked: root.addPointAt(EditorState.speedCurve.sourcePosition)
             }
 
             ThemedToggleButton {
@@ -497,14 +497,14 @@ Window {
                     Binding {
                         target: graphPlayhead
                         property: "x"
-                        value: EditorState.speedCurveSourcePosition * plot.width
+                        value: EditorState.speedCurve.sourcePosition * plot.width
                         when: !graphPlayheadDrag.drag.active
                     }
 
                     // Scrub live rather than only on release, so the preview follows the drag.
                     onXChanged: {
                         if (graphPlayheadDrag.drag.active)
-                            EditorState.seekSpeedCurvePreviewAtSource(graphPlayhead.x / plot.width)
+                            EditorState.speedCurve.seekAtSource(graphPlayhead.x / plot.width)
                     }
 
                     Rectangle {
@@ -703,7 +703,7 @@ Window {
         ThemedButton {
             variant: "primary"
             text: qsTr("Apply")
-            onClicked: EditorState.applySpeedCurve()
+            onClicked: EditorState.speedCurve.apply()
         }
     }
 }

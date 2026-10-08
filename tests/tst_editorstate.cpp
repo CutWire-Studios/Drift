@@ -1001,11 +1001,11 @@ void EditorStateTest::compositeClipSpeedRetimesToFit()
     state.undo();
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(14.0));
 
-    state.beginSpeedCurveSession(0, 0);
-    QVERIFY(!state.speedCurveSessionActive());
-    state.beginSpeedCurveSession(0, 0, true);
-    QVERIFY(state.speedCurveSessionActive());
-    state.endSpeedCurveSession();
+    state.speedCurve()->begin(0, 0);
+    QVERIFY(!state.speedCurve()->active());
+    state.speedCurve()->begin(0, 0, true);
+    QVERIFY(state.speedCurve()->active());
+    state.speedCurve()->end();
 }
 
 void EditorStateTest::importedMediaIsCentredAndResetsToItsFit()
@@ -6495,24 +6495,24 @@ void EditorStateTest::speedCurveOnAudioClipRetimesAndReplaces()
     project.tracks().append(track);
     const int sourceTrack = 1;
 
-    state.beginSpeedCurveSession(sourceTrack, 0);
-    QVERIFY2(state.speedCurveSessionActive(), qPrintable(state.lastMessage()));
-    QCOMPARE(state.speedCurveClipPath(), clip.path);
+    state.speedCurve()->begin(sourceTrack, 0);
+    QVERIFY2(state.speedCurve()->active(), qPrintable(state.lastMessage()));
+    QCOMPARE(state.speedCurve()->clipPath(), clip.path);
     // No filmstrip on an audio clip, which is what makes the editor fall back to the waveform.
-    QVERIFY(state.speedCurveFilmstripPath().isEmpty());
+    QVERIFY(state.speedCurve()->filmstripPath().isEmpty());
 
     // Ramp from half speed up to double, so the retimed duration is neither the source length nor
     // a simple scale of it.
-    state.setSpeedCurvePoints(QVariantList{
+    state.speedCurve()->setPoints(QVariantList{
         QVariantMap{{QStringLiteral("pos"), 0.0}, {QStringLiteral("speed"), 0.5}},
         QVariantMap{{QStringLiteral("pos"), 1.0}, {QStringLiteral("speed"), 2.0}},
     });
     // Timeline length is the integral of 1/speed over the source, (2/3)·ln4 ≈ 0.924 of it here —
     // not the endpoint speed and not the average of the two.
-    const double retimedSeconds = state.speedCurveRetimedDuration();
+    const double retimedSeconds = state.speedCurve()->retimedDuration();
     QVERIFY2(std::fabs(retimedSeconds - 3.697) < 0.12, qPrintable(QString::number(retimedSeconds)));
 
-    state.applySpeedCurve();
+    state.speedCurve()->apply();
 
     // The retimed copy lands on a new audio track directly above the source track.
     QCOMPARE(project.tracks().size(), 3);
@@ -6639,28 +6639,28 @@ void EditorStateTest::speedCurveSessionExposesTrimmedSourceWindow()
     project.tracks().clear();
     project.tracks().append(track);
 
-    state.beginSpeedCurveSession(0, 0);
-    QVERIFY2(state.speedCurveSessionActive(), qPrintable(state.lastMessage()));
+    state.speedCurve()->begin(0, 0);
+    QVERIFY2(state.speedCurve()->active(), qPrintable(state.lastMessage()));
 
-    QVERIFY(std::fabs(state.speedCurveSourceStart() - 5.0) < 1e-6);
-    QVERIFY(std::fabs(state.speedCurveSourceDuration() - 7.0) < 1e-6);
-    QVERIFY(std::fabs(state.speedCurveMediaDuration() - 20.0) < 1e-6);
+    QVERIFY(std::fabs(state.speedCurve()->sourceStart() - 5.0) < 1e-6);
+    QVERIFY(std::fabs(state.speedCurve()->sourceDuration() - 7.0) < 1e-6);
+    QVERIFY(std::fabs(state.speedCurve()->mediaDuration() - 20.0) < 1e-6);
 
     // What ClipFilmstrip.sourceMapped needs: a real source length and a non-empty window inside it.
-    QVERIFY(state.speedCurveMediaDuration() > 0.0);
-    QVERIFY(state.speedCurveSourceDuration() > 0.0);
-    QVERIFY(state.speedCurveSourceStart() + state.speedCurveSourceDuration()
-            <= state.speedCurveMediaDuration());
+    QVERIFY(state.speedCurve()->mediaDuration() > 0.0);
+    QVERIFY(state.speedCurve()->sourceDuration() > 0.0);
+    QVERIFY(state.speedCurve()->sourceStart() + state.speedCurve()->sourceDuration()
+            <= state.speedCurve()->mediaDuration());
 
     // With no asset entry the length still has to come out positive, or the strip silently falls
     // back to spreading the whole file across the clip.
     project.assets().clear();
     project.assetOrder().clear();
-    state.endSpeedCurveSession();
-    state.beginSpeedCurveSession(0, 0);
-    QVERIFY(state.speedCurveSessionActive());
-    QVERIFY(state.speedCurveMediaDuration() >= state.speedCurveSourceStart()
-                                                  + state.speedCurveSourceDuration());
+    state.speedCurve()->end();
+    state.speedCurve()->begin(0, 0);
+    QVERIFY(state.speedCurve()->active());
+    QVERIFY(state.speedCurve()->mediaDuration() >= state.speedCurve()->sourceStart()
+                                                  + state.speedCurve()->sourceDuration());
 }
 
 namespace {
@@ -7263,13 +7263,13 @@ void EditorStateTest::retimeKeepsDisabledKeyframeTrackDisabled()
     state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("opacity"), false);
     QVERIFY(!state.clipPropertyKeyframesEnabled(0, 0, QStringLiteral("opacity")));
 
-    state.beginSpeedCurveSession(0, 0);
-    QVERIFY2(state.speedCurveSessionActive(), qPrintable(state.lastMessage()));
-    state.setSpeedCurvePoints(QVariantList{
+    state.speedCurve()->begin(0, 0);
+    QVERIFY2(state.speedCurve()->active(), qPrintable(state.lastMessage()));
+    state.speedCurve()->setPoints(QVariantList{
         QVariantMap{{QStringLiteral("x"), 0.0}, {QStringLiteral("y"), 0.5}},
         QVariantMap{{QStringLiteral("x"), 1.0}, {QStringLiteral("y"), 0.5}},
     });
-    state.applySpeedCurve();
+    state.speedCurve()->apply();
 
     QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
     state.selectClip(0, 0);

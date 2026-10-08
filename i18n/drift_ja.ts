@@ -2340,22 +2340,6 @@
         <translation>切り抜くビデオクリップを選択してください</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>カスタムスピードはビデオおよびオーディオクリップで機能します</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>このクリップには速度を変更するメディアがありません</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>クリップが移動しました — カスタムスピードを再度開いてください</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>カスタムスピードを適用しました</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>スピードカーブを削除しました</translation>
     </message>
@@ -12318,6 +12302,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>ショートカットをデフォルトにリセットしました。</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">カスタムスピードはビデオおよびオーディオクリップで機能します</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">このクリップには速度を変更するメディアがありません</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">クリップが移動しました — カスタムスピードを再度開いてください</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">カスタムスピードを適用しました</translation>
     </message>
 </context>
 <context>

@@ -885,6 +885,8 @@ qt_add_executable(drift
     src/models/ProjectFileController.cpp
     src/models/AssetPreviewController.h
     src/models/AssetPreviewController.cpp
+    src/models/SpeedCurveController.h
+    src/models/SpeedCurveController.cpp
     src/models/McpDetail.h
     src/models/AppControllerDetail.h
     src/models/EditorState.h

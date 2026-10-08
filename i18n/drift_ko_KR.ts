@@ -2340,22 +2340,6 @@
         <translation>분리할 동영상 클립을 선택하세요</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>사용자 지정 속도는 동영상 및 오디오 클립에서 작동합니다</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>이 클립에는 속도를 높이거나 낮출 미디어가 없습니다</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>클립이 이동했습니다 — 사용자 지정 속도를 다시 열어주세요</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>사용자 지정 속도가 적용됨</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>속도 곡선이 제거됨</translation>
     </message>
@@ -12311,6 +12295,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>단축키가 기본값으로 초기화되었습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">사용자 지정 속도는 동영상 및 오디오 클립에서 작동합니다</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">이 클립에는 속도를 높이거나 낮출 미디어가 없습니다</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">클립이 이동했습니다 — 사용자 지정 속도를 다시 열어주세요</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">사용자 지정 속도가 적용됨</translation>
     </message>
 </context>
 <context>

@@ -2343,22 +2343,6 @@
         <translation>Selecciona un clip de vídeo para recortar</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>La velocidad personalizada funciona en clips de vídeo y audio</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>Este clip no tiene medios para acelerar o ralentizar</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>Ese clip se ha movido — abre la velocidad personalizada de nuevo</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>Velocidad personalizada aplicada</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Curva de velocidad eliminada</translation>
     </message>
@@ -12363,6 +12347,25 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>Atajos restablecidos a los valores predeterminados.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">La velocidad personalizada funciona en clips de vídeo y audio</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">Este clip no tiene medios para acelerar o ralentizar</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">Ese clip se ha movido — abre la velocidad personalizada de nuevo</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">Velocidad personalizada aplicada</translation>
     </message>
 </context>
 <context>

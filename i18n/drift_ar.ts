@@ -2351,22 +2351,6 @@
         <translation>حدد مقطع فيديو لعزله</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>تعمل السرعة المخصصة على مقاطع الفيديو والصوت</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>لا يحتوي هذا المقطع على وسائط لتسريعها أو إبطائها</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>تم نقل ذلك المقطع — افتح السرعة المخصصة مجددًا</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>تم تطبيق السرعة المخصصة</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>تمت إزالة منحنى السرعة</translation>
     </message>
@@ -12543,6 +12527,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>تمت إعادة تعيين الاختصارات إلى الإعدادات الافتراضية.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">تعمل السرعة المخصصة على مقاطع الفيديو والصوت</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">لا يحتوي هذا المقطع على وسائط لتسريعها أو إبطائها</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">تم نقل ذلك المقطع — افتح السرعة المخصصة مجددًا</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">تم تطبيق السرعة المخصصة</translation>
     </message>
 </context>
 <context>

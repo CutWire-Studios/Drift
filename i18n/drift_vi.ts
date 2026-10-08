@@ -2340,22 +2340,6 @@
         <translation>Chọn một video clip để cắt ra</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>Tốc độ tùy chỉnh hoạt động trên các clip video và âm thanh</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>Clip này không có phương tiện để tăng tốc hoặc giảm tốc độ</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>Clip đó đã được di chuyển — mở lại Tốc độ tùy chỉnh</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>Đã áp dụng tốc độ tùy chỉnh</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Đã xóa đường cong tốc độ</translation>
     </message>
@@ -12318,6 +12302,25 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>Phím tắt đặt lại về mặc định.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">Tốc độ tùy chỉnh hoạt động trên các clip video và âm thanh</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">Clip này không có phương tiện để tăng tốc hoặc giảm tốc độ</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">Clip đó đã được di chuyển — mở lại Tốc độ tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">Đã áp dụng tốc độ tùy chỉnh</translation>
     </message>
 </context>
 <context>

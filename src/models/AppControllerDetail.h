@@ -27,5 +27,7 @@ QTransform previewBoxParent(const QVariantMap &box);
 std::optional<drift::ClipType> placeableClipType(const QString &kind);
 bool isClipTargetedKind(const QString &kind);
 QVariantMap rejectDrop(const QString &message = QString());
+// Carry keyframe times from a clip onto the retimed copy through the source moment each key sits on.
+void remapKeyframesForRetime(drift::Clip &dst, const drift::Clip &src);
 
 } // namespace drift::appdetail

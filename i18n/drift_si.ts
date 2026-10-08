@@ -2343,22 +2343,6 @@
         <translation>වෙන් කිරීමට වීඩියෝ ක්ලිපයක් තෝරන්න</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>අභිරුචි වේගය ක්‍රියා කරන්නේ වීඩියෝ සහ ශ්‍රව්‍ය ක්ලිප් සඳහා පමණි</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>වේගවත් කිරීමට හෝ මන්දගාමී කිරීමට මෙම ක්ලිපයේ මාධ්‍ය නොමැත</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>එම ක්ලිපය චලනය වී ඇත — අභිරුචි වේගය නැවත විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>අභිරුචි වේගය යොදන ලදී</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>වේග වක්‍රය ඉවත් කරන ලදී</translation>
     </message>
@@ -12363,6 +12347,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>කෙටිමං පෙරනිමි වෙත යළි සකසන ලදී.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">අභිරුචි වේගය ක්‍රියා කරන්නේ වීඩියෝ සහ ශ්‍රව්‍ය ක්ලිප් සඳහා පමණි</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">වේගවත් කිරීමට හෝ මන්දගාමී කිරීමට මෙම ක්ලිපයේ මාධ්‍ය නොමැත</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">එම ක්ලිපය චලනය වී ඇත — අභිරුචි වේගය නැවත විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">අභිරුචි වේගය යොදන ලදී</translation>
     </message>
 </context>
 <context>

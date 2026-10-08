@@ -913,7 +913,7 @@ ApplicationWindow {
                 EditorState.playback.pause()
             // The two audition players are separate transports with their own audio sinks and
             // decode timers; pausing only the main one left them playing to nobody.
-            EditorState.pauseSpeedCurvePreview()
+            EditorState.speedCurve.pause()
             if (denoiseWindowLoader.item)
                 denoiseWindowLoader.item.stopPlayback()
             // Losing the foreground is the last moment guaranteed to run: the OS can reclaim the

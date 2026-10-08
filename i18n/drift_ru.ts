@@ -2346,22 +2346,6 @@
         <translation>Выберите видеоклип для вырезания объекта</translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation>Настраиваемая скорость доступна для видео- и аудиоклипов</translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation>В этом клипе нет медиафайла для изменения скорости</translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation>Клип переместился — откройте настройку скорости заново</translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation>Настраиваемая скорость применена</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Кривая скорости удалена</translation>
     </message>
@@ -12408,6 +12392,25 @@ If playback stutters, try another.</source>
     <message>
         <source>Shortcuts reset to defaults.</source>
         <translation>Сочетания клавиш восстановлены по умолчанию.</translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished">Настраиваемая скорость доступна для видео- и аудиоклипов</translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished">В этом клипе нет медиафайла для изменения скорости</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished">Клип переместился — откройте настройку скорости заново</translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
+        <translation type="unfinished">Настраиваемая скорость применена</translation>
     </message>
 </context>
 <context>

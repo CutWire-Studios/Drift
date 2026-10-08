@@ -60,11 +60,11 @@ struct MediaEditSpec;
 }
 
 #include "engine/AudioRecorder.h"
-#include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 #include "preview/PreviewController.h"
 #include "AssetPreviewController.h"
 #include "McpController.h"
+#include "SpeedCurveController.h"
 #include "PreferencesController.h"
 #include "ProjectFileController.h"
 
@@ -80,6 +80,7 @@ class AppController : public QObject
     friend class McpController;
     friend class ProjectFileController;
     friend class AssetPreviewController;
+    friend class SpeedCurveController;
 
     Q_OBJECT
 
@@ -102,6 +103,8 @@ class AppController : public QObject
     Q_PROPERTY(ProjectFileController *projectFile READ projectFile CONSTANT)
     // Media-bin preview session. QML: EditorState.assetPreview.
     Q_PROPERTY(AssetPreviewController *assetPreview READ assetPreview CONSTANT)
+    // Speed-curve editing session. QML: EditorState.speedCurve.
+    Q_PROPERTY(SpeedCurveController *speedCurve READ speedCurve CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
@@ -238,23 +241,6 @@ class AppController : public QObject
     // There is enough imported video to build a rig from, and no visual clips that building one
     // would disturb. Drives the window's "set this up for me" offer.
     Q_PROPERTY(bool multicamCanSetUp READ multicamCanSetUp NOTIFY multicamChanged)
-    Q_PROPERTY(bool speedCurveSessionActive READ speedCurveSessionActive NOTIFY speedCurveSessionChanged)
-    Q_PROPERTY(QVariantList speedCurvePoints READ speedCurvePoints NOTIFY speedCurveChanged)
-    Q_PROPERTY(int speedCurveRevision READ speedCurveRevision NOTIFY speedCurveFrameChanged)
-    Q_PROPERTY(QSize speedCurveFrameSize READ speedCurveFrameSize NOTIFY speedCurveFrameChanged)
-    Q_PROPERTY(double speedCurveSourceStart READ speedCurveSourceStart NOTIFY speedCurveSessionChanged)
-    // Whole media length, not the clip's trimmed span — the filmstrip's frames are sampled across
-    // the source file, so placing them needs both.
-    Q_PROPERTY(double speedCurveMediaDuration READ speedCurveMediaDuration NOTIFY speedCurveSessionChanged)
-    Q_PROPERTY(double speedCurveSourceDuration READ speedCurveSourceDuration NOTIFY speedCurveSessionChanged)
-    Q_PROPERTY(double speedCurveRetimedDuration READ speedCurveRetimedDuration NOTIFY speedCurveChanged)
-    Q_PROPERTY(double speedCurvePosition READ speedCurvePosition NOTIFY speedCurvePositionChanged)
-    // Where the playhead sits along the *source*, 0..1 — the graph's own axis.
-    Q_PROPERTY(double speedCurveSourcePosition READ speedCurveSourcePosition NOTIFY speedCurvePositionChanged)
-    Q_PROPERTY(bool speedCurvePlaying READ speedCurvePlaying NOTIFY speedCurvePlayingChanged)
-    Q_PROPERTY(QString speedCurveClipName READ speedCurveClipName NOTIFY speedCurveSessionChanged)
-    Q_PROPERTY(QString speedCurveClipPath READ speedCurveClipPath NOTIFY speedCurveSessionChanged)
-    Q_PROPERTY(QString speedCurveFilmstripPath READ speedCurveFilmstripPath NOTIFY speedCurveSessionChanged)
 
     // Custom fade-shape session for FadeCurveWindow. Candidate is auditioned on the live clip
     // until applyFadeCurve commits it (or endFadeCurveSession restores the prior shape).
@@ -351,6 +337,7 @@ public:
     PreferencesController *preferences() const { return m_preferences; }
     ProjectFileController *projectFile() const { return m_projectFile; }
     AssetPreviewController *assetPreview() const { return m_assetPreview; }
+    SpeedCurveController *speedCurve() const { return m_speedCurve; }
     McpController *mcp() const { return m_mcpController; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
@@ -719,33 +706,6 @@ public:
     Q_INVOKABLE void saveMulticamAsSeparateTracks();
     Q_INVOKABLE void saveMulticamCombined();
 
-    // Speed-curve editing session driving SpeedCurveWindow. The curve is held here as a
-    // candidate and auditioned through a private single-clip player; the project is not touched
-    // until applySpeedCurve mints the retimed copy.
-    Q_INVOKABLE void beginSpeedCurveSession(int trackIndex, int clipIndex, bool allowNested = false);
-    Q_INVOKABLE void endSpeedCurveSession();
-    bool speedCurveSessionActive() const { return m_speedCurveActive; }
-    QVariantList speedCurvePoints() const;
-    Q_INVOKABLE void setSpeedCurvePoints(const QVariantList &points);
-    int speedCurveRevision() const { return m_speedCurveRevision; }
-    QSize speedCurveFrameSize() const { return m_speedCurvePlayer.frameSize(); }
-    double speedCurveSourceStart() const;
-    double speedCurveMediaDuration() const;
-    double speedCurveSourceDuration() const;
-    double speedCurveRetimedDuration() const;
-    double speedCurvePosition() const;
-    bool speedCurvePlaying() const { return m_speedCurvePlayer.isPlaying(); }
-    QString speedCurveClipName() const { return m_speedCurveClip.name; }
-    QString speedCurveClipPath() const { return m_speedCurveClip.path; }
-    QString speedCurveFilmstripPath() const { return m_speedCurveClip.filmstripPath; }
-    Q_INVOKABLE void playSpeedCurvePreview();
-    Q_INVOKABLE void pauseSpeedCurvePreview();
-    Q_INVOKABLE void seekSpeedCurvePreview(double seconds);
-    double speedCurveSourcePosition() const;
-    // Seeks by graph position rather than by retimed time, so clicking the strip lands on the
-    // frame under the cursor.
-    Q_INVOKABLE void seekSpeedCurvePreviewAtSource(double position);
-    Q_INVOKABLE void applySpeedCurve();
     Q_INVOKABLE void clearClipSpeedCurve(int trackIndex, int clipIndex);
 
     Q_INVOKABLE void beginFadeCurveSession(int trackIndex, int clipIndex);
@@ -1759,12 +1719,6 @@ signals:
     void multicamFramesChanged();
     // Raised by the "multicam" shortcut/action. QML owns the window, as with the file actions.
     void openMulticamWindowRequested();
-    void speedCurveSessionChanged();
-    void speedCurveChanged();
-    void speedCurveFrameChanged();
-    void speedCurvePositionChanged();
-    void speedCurvePlayingChanged();
-    void speedCurveApplied();
     void fadeCurveSessionChanged();
     void fadeCurveChanged();
     void fadeCurveApplied();
@@ -2280,15 +2234,6 @@ protected:
     QString m_segmentStatus;
     QAtomicInt m_segmentCancel = 0;
 
-    // Speed-curve session: the clip being retimed, the candidate ramp, and the player auditioning it.
-    ClipPreviewPlayer m_speedCurvePlayer;
-    drift::Clip m_speedCurveClip;
-    drift::SpeedCurve m_speedCurve;
-    int m_speedCurveTrack = -1;
-    int m_speedCurveClipIndex = -1;
-    int m_speedCurveRevision = 0;
-    bool m_speedCurveActive = false;
-
     struct MulticamAngleSnap {
         int trackIndex = -1;
         QString clipId;
@@ -2422,6 +2367,7 @@ protected:
     PreferencesController *m_preferences = nullptr;
     ProjectFileController *m_projectFile = nullptr;
     AssetPreviewController *m_assetPreview = nullptr;
+    SpeedCurveController *m_speedCurve = nullptr;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};
     // App-wide custom sets.
     QList<drift::GuideSet> m_guideLibrary;

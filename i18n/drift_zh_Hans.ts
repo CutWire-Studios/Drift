@@ -2340,22 +2340,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Custom speed works on video and audio clips</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This clip has no media to speed up or slow down</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That clip moved — open Custom speed again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom speed applied</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12310,6 +12294,25 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shortcuts reset to defaults.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SpeedCurveController</name>
+    <message>
+        <source>Custom speed works on video and audio clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip has no media to speed up or slow down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom speed again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom speed applied</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

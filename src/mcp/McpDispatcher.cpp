@@ -2094,16 +2094,16 @@ QJsonObject McpDispatcher::opListSpeedCurve(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
-    if (m_controller->speedCurveSessionActive())
-        m_controller->endSpeedCurveSession();
-    m_controller->beginSpeedCurveSession(ref.track, ref.clip, true);
-    if (!m_controller->speedCurveSessionActive())
+    if (m_controller->speedCurve()->active())
+        m_controller->speedCurve()->end();
+    m_controller->speedCurve()->begin(ref.track, ref.clip, true);
+    if (!m_controller->speedCurve()->active())
         return err("bad_args", QStringLiteral("Clip cannot use a speed curve"));
     const QVariantMap clipMap = m_controller->clipAt(ref.track, ref.clip);
     const bool hasCurve = clipMap.value(QStringLiteral("hasSpeedCurve")).toBool();
-    const QJsonArray points = speedPointsToJson(m_controller->speedCurvePoints());
-    const double retimed = m_controller->speedCurveRetimedDuration();
-    m_controller->endSpeedCurveSession();
+    const QJsonArray points = speedPointsToJson(m_controller->speedCurve()->points());
+    const double retimed = m_controller->speedCurve()->retimedDuration();
+    m_controller->speedCurve()->end();
     return ok({{QStringLiteral("hasCurve"), hasCurve},
                {QStringLiteral("points"), points},
                {QStringLiteral("retimedDuration"), retimed}});
@@ -2117,17 +2117,17 @@ QJsonObject McpDispatcher::opSetSpeedCurve(const QJsonObject &args)
     const QJsonArray pointArray = args.value(QStringLiteral("points")).toArray();
     if (pointArray.size() < 2)
         return err("bad_args", QStringLiteral("points needs at least two entries"));
-    if (m_controller->speedCurveSessionActive())
-        m_controller->endSpeedCurveSession();
-    m_controller->beginSpeedCurveSession(ref.track, ref.clip, true);
-    if (!m_controller->speedCurveSessionActive())
+    if (m_controller->speedCurve()->active())
+        m_controller->speedCurve()->end();
+    m_controller->speedCurve()->begin(ref.track, ref.clip, true);
+    if (!m_controller->speedCurve()->active())
         return err("bad_args", QStringLiteral("Clip cannot use a speed curve"));
-    m_controller->setSpeedCurvePoints(speedPointsFromJson(pointArray));
-    m_controller->applySpeedCurve();
+    m_controller->speedCurve()->setPoints(speedPointsFromJson(pointArray));
+    m_controller->speedCurve()->apply();
     const int track = m_controller->selectedTrack();
     const int clip = m_controller->selectedClip();
     const QString newId = m_controller->mcp()->clipId(track, clip);
-    m_controller->endSpeedCurveSession();
+    m_controller->speedCurve()->end();
     if (newId.isEmpty())
         return err("bad_args", QStringLiteral("Speed curve was not applied"));
     return ok({{QStringLiteral("id"), newId},
