@@ -2179,10 +2179,6 @@
         <translation>Ferramenta de corte</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>A pré-visualização mais rápida entra em vigor após reiniciar o Drift.</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>Padrão do sistema</translation>
     </message>
@@ -2813,10 +2809,6 @@
     <message>
         <source>Zoom out</source>
         <translation>Reduzir</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>A escolha da placa de vídeo entra em vigor após reiniciar o Drift.</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
@@ -9939,6 +9931,21 @@
     <message>
         <source>Samples</source>
         <translation>Amostras</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>A pré-visualização mais rápida entra em vigor após reiniciar o Drift.</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>A escolha da placa de vídeo entra em vigor após reiniciar o Drift.</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Padrão do sistema</translation>
     </message>
 </context>
 <context>

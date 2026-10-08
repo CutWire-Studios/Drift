@@ -2150,11 +2150,11 @@ QJsonObject McpDispatcher::opGetUiPreferences() const
 {
     return ok({
         {QStringLiteral("theme"),
-         QJsonObject{{QStringLiteral("overridden"), m_controller->darkModeOverridden()},
-                     {QStringLiteral("dark"), m_controller->darkModePreferred()}}},
+         QJsonObject{{QStringLiteral("overridden"), m_controller->preferences()->darkModeOverridden()},
+                     {QStringLiteral("dark"), m_controller->preferences()->darkModePreferred()}}},
         {QStringLiteral("autoKey"), m_controller->autoKeyEnabled()},
         {QStringLiteral("mediaGrid"), m_controller->mediaGridMode()},
-        {QStringLiteral("reopenLastProject"), m_controller->reopenLastProject()},
+        {QStringLiteral("reopenLastProject"), m_controller->preferences()->reopenLastProject()},
     });
 }
 
@@ -2162,10 +2162,10 @@ QJsonObject McpDispatcher::opSetTheme(const QJsonObject &args)
 {
     if (!args.contains(QStringLiteral("dark")))
         return err("bad_args", QStringLiteral("dark required"));
-    m_controller->setDarkModePreference(jsonBool(args.value(QStringLiteral("dark"))));
+    m_controller->preferences()->setDarkModePreference(jsonBool(args.value(QStringLiteral("dark"))));
     return ok({
-        {QStringLiteral("overridden"), m_controller->darkModeOverridden()},
-        {QStringLiteral("dark"), m_controller->darkModePreferred()},
+        {QStringLiteral("overridden"), m_controller->preferences()->darkModeOverridden()},
+        {QStringLiteral("dark"), m_controller->preferences()->darkModePreferred()},
     });
 }
 

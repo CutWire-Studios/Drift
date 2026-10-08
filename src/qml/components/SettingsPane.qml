@@ -185,30 +185,30 @@ Item {
                 }
 
                 ThemedSwitch {
-                    visible: EditorState.vaapiZeroCopySupported
-                    checked: EditorState.vaapiZeroCopy
+                    visible: EditorState.preferences.vaapiZeroCopySupported
+                    checked: EditorState.preferences.vaapiZeroCopy
                     text: qsTr("Faster preview (experimental)")
                     tooltip: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
-                    onToggled: EditorState.vaapiZeroCopy = checked
+                    onToggled: EditorState.preferences.vaapiZeroCopy = checked
                 }
 
                 // Same wording as the VAAPI switch above: only one of the two is ever visible,
                 // since each is supported on exactly the platform the other is not.
                 ThemedSwitch {
-                    visible: EditorState.mediaCodecZeroCopySupported
-                    checked: EditorState.mediaCodecZeroCopy
+                    visible: EditorState.preferences.mediaCodecZeroCopySupported
+                    checked: EditorState.preferences.mediaCodecZeroCopy
                     text: qsTr("Faster preview (experimental)")
                     tooltip: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
-                    onToggled: EditorState.mediaCodecZeroCopy = checked
+                    onToggled: EditorState.preferences.mediaCodecZeroCopy = checked
                 }
 
                 ThemedLabel {
-                    visible: EditorState.gpuPreferenceSupported
+                    visible: EditorState.preferences.gpuPreferenceSupported
                     text: qsTr("Graphics card")
                 }
 
                 ThemedComboBox {
-                    visible: EditorState.gpuPreferenceSupported
+                    visible: EditorState.preferences.gpuPreferenceSupported
                     width: parent.width
                     textRole: "label"
                     valueRole: "id"
@@ -220,28 +220,28 @@ Item {
                     tooltip: qsTr("Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.")
                     currentIndex: {
                         for (var i = 0; i < model.length; ++i) {
-                            if (model[i].id === EditorState.preferredGpu)
+                            if (model[i].id === EditorState.preferences.preferredGpu)
                                 return i
                         }
                         return 0
                     }
-                    onActivated: EditorState.preferredGpu = model[currentIndex].id
+                    onActivated: EditorState.preferences.preferredGpu = model[currentIndex].id
                 }
 
                 ThemedLabel {
-                    visible: EditorState.gpuPreferenceInSystemSettings
+                    visible: EditorState.preferences.gpuPreferenceInSystemSettings
                     text: qsTr("Graphics card")
                 }
 
                 ThemedLabel {
-                    visible: EditorState.gpuPreferenceInSystemSettings
+                    visible: EditorState.preferences.gpuPreferenceInSystemSettings
                     width: parent.width
                     text: qsTr("Choose which graphics card Drift runs on in Windows Settings, under "
                                + "Display > Graphics. Takes effect after restart.")
                 }
 
                 ThemedButton {
-                    visible: EditorState.gpuPreferenceInSystemSettings
+                    visible: EditorState.preferences.gpuPreferenceInSystemSettings
                     variant: "secondary"
                     text: qsTr("Open graphics settings")
                     onClicked: Qt.openUrlExternally("ms-settings:display-advancedgraphics")
@@ -316,30 +316,30 @@ Item {
                     currentIndex: {
                         const opts = model
                         for (var i = 0; i < opts.length; ++i) {
-                            if (Math.abs(opts[i].id - EditorState.uiScale) < 0.001)
+                            if (Math.abs(opts[i].id - EditorState.preferences.uiScale) < 0.001)
                                 return i
                         }
                         return 0
                     }
                     onActivated: {
                         if (currentIndex >= 0 && currentIndex < model.length)
-                            EditorState.uiScale = model[currentIndex].id
+                            EditorState.preferences.uiScale = model[currentIndex].id
                     }
                 }
 
                 ThemedLabel {
                     width: parent.width
-                    visible: EditorState.uiScaleNeedsRestart
+                    visible: EditorState.preferences.uiScaleNeedsRestart
                     text: qsTr("Restart Drift to apply this size.")
                     color: Theme.panelSecondaryForeground
                 }
 
                 ThemedSwitch {
                     visible: !Theme.touchUi
-                    checked: EditorState.invertTimelineScroll
+                    checked: EditorState.preferences.invertTimelineScroll
                     text: qsTr("Horizontal mouse-wheel pan")
                     tooltip: qsTr("Scroll pans left and right along the timeline. Shift+scroll moves between tracks. Middle-click drag also pans.")
-                    onToggled: EditorState.invertTimelineScroll = checked
+                    onToggled: EditorState.preferences.invertTimelineScroll = checked
                 }
 
                 ThemedSwitch {
@@ -360,20 +360,20 @@ Item {
                     visible: Theme.touchUi
                     textRole: "label"
                     valueRole: "id"
-                    model: EditorState.uiLanguages
+                    model: EditorState.preferences.uiLanguages
                     tooltip: qsTr("Language for menus and labels. Takes effect immediately.")
                     currentIndex: {
-                        const langs = EditorState.uiLanguages
+                        const langs = EditorState.preferences.uiLanguages
                         for (var i = 0; i < langs.length; ++i) {
-                            if (langs[i].id === EditorState.uiLanguage)
+                            if (langs[i].id === EditorState.preferences.uiLanguage)
                                 return i
                         }
                         return 0
                     }
                     onActivated: {
-                        const langs = EditorState.uiLanguages
+                        const langs = EditorState.preferences.uiLanguages
                         if (currentIndex >= 0 && currentIndex < langs.length)
-                            EditorState.uiLanguage = langs[currentIndex].id
+                            EditorState.preferences.uiLanguage = langs[currentIndex].id
                     }
                 }
             }
@@ -382,10 +382,10 @@ Item {
                 title: qsTr("App")
 
                 ThemedSwitch {
-                    checked: EditorState.reopenLastProject
+                    checked: EditorState.preferences.reopenLastProject
                     text: qsTr("Reopen last project on startup")
                     tooltip: qsTr("Automatically restore the last open project on startup. Closing still asks you to save; a crash snapshot never overwrites your save file.")
-                    onToggled: EditorState.reopenLastProject = checked
+                    onToggled: EditorState.preferences.reopenLastProject = checked
                 }
 
                 Column {

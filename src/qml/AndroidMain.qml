@@ -330,7 +330,7 @@ ApplicationWindow {
     onClosing: function (close) {
         // Opting in to reopening the last project means the autosave is restored on the
         // next launch, so asking to save on the way out is a question already answered.
-        if (window.forceClose || !EditorState.hasUnsavedChanges || EditorState.reopenLastProject)
+        if (window.forceClose || !EditorState.hasUnsavedChanges || EditorState.preferences.reopenLastProject)
             return
         close.accepted = false
         confirmIfDirty(function () {
@@ -712,9 +712,9 @@ ApplicationWindow {
         onTriggered: {
             // Opting in to reopening the last project already restores the autosave, so
             // asking about it as well is a question the user has answered once already.
-            if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
+            if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
                 return
-            if (!EditorState.recoveryAvailable || EditorState.reopenLastProject) {
+            if (!EditorState.recoveryAvailable || EditorState.preferences.reopenLastProject) {
                 stop()
                 attempts = 0
                 return
@@ -731,7 +731,7 @@ ApplicationWindow {
         // Independent of the language/recovery/launch-intent branching below — it
         // neither gates nor is gated by any of it.
         EditorState.mcp.applyStartOnLaunch()
-        if (EditorState.needsUiLanguagePrompt) {
+        if (EditorState.preferences.needsUiLanguagePrompt) {
             languageChooserDialogLoader.ensure().openChooser()
             return
         }
@@ -761,7 +761,7 @@ ApplicationWindow {
         if (launched !== "" && !Market.handleIncomingUrl(launched)) {
             // Unless the previous session left a snapshot: loading the launched project
             // deletes it unasked, so park the URL and let the recovery prompt run first.
-            if (EditorState.recoveryAvailable && !EditorState.reopenLastProject) {
+            if (EditorState.recoveryAvailable && !EditorState.preferences.reopenLastProject) {
                 window._pendingLaunchUrl = launched
                 recoveryOpenTimer.start()
                 return
@@ -787,9 +787,9 @@ ApplicationWindow {
     Connections {
         target: EditorState
         function onRecoveryChanged() {
-            if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
+            if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
                 return
-            if (EditorState.reopenLastProject)
+            if (EditorState.preferences.reopenLastProject)
                 return
             if (EditorState.recoveryAvailable)
                 recoveryOpenTimer.start()

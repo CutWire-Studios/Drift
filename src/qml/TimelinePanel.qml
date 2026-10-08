@@ -958,7 +958,7 @@ PanelFrame {
 
         const dy = wheel.angleDelta.y
         const dx = wheel.angleDelta.x
-        const invert = EditorState.invertTimelineScroll
+        const invert = EditorState.preferences.invertTimelineScroll
 
         // Invert (Kdenlive-style): wheel pans along time, Shift+wheel moves
         // between tracks. Trackpad horizontal motion always pans time.
@@ -1141,7 +1141,7 @@ PanelFrame {
         Loader {
             id: overviewStrip
             width: parent.width
-            active: EditorState.timelineOverviewVisible
+            active: EditorState.preferences.timelineOverviewVisible
             visible: active
             height: active ? Theme.timelineOverviewHeight : 0
             sourceComponent: Component {
@@ -1166,7 +1166,7 @@ PanelFrame {
                 sourceComponent: Component {
                     KeyframeGraph {
                         pxPerSecond: root.pxPerSecond
-                        labelsWidth: EditorState.trackLabelsWidth
+                        labelsWidth: EditorState.preferences.trackLabelsWidth
                         propertiesTab: root.propertiesTab
                         // Keep keys/playhead lined up with the track scroll view below.
                         contentX: flick.contentX
@@ -1185,7 +1185,7 @@ PanelFrame {
                 sourceComponent: Component {
                     SubtitleCueLane {
                         pxPerSecond: root.pxPerSecond
-                        labelsWidth: EditorState.trackLabelsWidth
+                        labelsWidth: EditorState.preferences.trackLabelsWidth
                         contentX: flick.contentX
                         contentWidth: flick.contentWidth
                     }
@@ -1200,7 +1200,7 @@ PanelFrame {
             // --- fixed left label column --------------------------------------------
             Column {
                 id: labelsColumn
-                width: EditorState.trackLabelsWidth
+                width: EditorState.preferences.trackLabelsWidth
                 height: parent.height
 
                 // CapCut-style: add-track sits at the timeline origin, above the
@@ -1247,7 +1247,7 @@ PanelFrame {
                     // the absolutely-positioned label rows out of the column.
                     height: Math.max(0, parent.height - Theme.timelineRulerHeight
                                         - Theme.timelineBookmarkRowHeight)
-                    labelsWidth: EditorState.trackLabelsWidth
+                    labelsWidth: EditorState.preferences.trackLabelsWidth
                     resizable: true
                     tracks: root.tracks
                     contentY: flick.contentY
@@ -1261,7 +1261,7 @@ PanelFrame {
             // --- scrollable ruler + tracks --------------------------------------------
             Flickable {
                 id: flick
-                width: parent.width - EditorState.trackLabelsWidth - (audioMixer.visible ? audioMixer.width : 0)
+                width: parent.width - EditorState.preferences.trackLabelsWidth - (audioMixer.visible ? audioMixer.width : 0)
                 height: parent.height
 
                 // Height of the pinned ruler + bookmark strip at the top.

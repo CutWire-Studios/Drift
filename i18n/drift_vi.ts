@@ -2176,10 +2176,6 @@
         <translation>Công cụ cắt</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>Bản xem trước nhanh hơn sẽ có hiệu lực sau khi bạn khởi động lại Drift.</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>Mặc định hệ thống</translation>
     </message>
@@ -2806,10 +2802,6 @@
     <message>
         <source>Zoom out</source>
         <translation>Thu nhỏ</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>Lựa chọn card đồ họa có hiệu lực sau khi bạn khởi động lại Drift.</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
@@ -9894,6 +9886,21 @@
     <message>
         <source>Samples</source>
         <translation>Mẫu</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>Bản xem trước nhanh hơn sẽ có hiệu lực sau khi bạn khởi động lại Drift.</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>Lựa chọn card đồ họa có hiệu lực sau khi bạn khởi động lại Drift.</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Mặc định hệ thống</translation>
     </message>
 </context>
 <context>

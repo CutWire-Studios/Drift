@@ -317,20 +317,20 @@ ApplicationWindow {
                 Platform.MenuItem {
                     text: qsTr("Landscape Workspace")
                     checkable: true
-                    checked: !EditorState.workspaceLayoutOverridden || EditorState.workspaceLayoutPreferred === "landscape"
-                    onTriggered: EditorState.setWorkspaceLayoutPreference("landscape")
+                    checked: !EditorState.preferences.workspaceLayoutOverridden || EditorState.preferences.workspaceLayoutPreferred === "landscape"
+                    onTriggered: EditorState.preferences.setWorkspaceLayoutPreference("landscape")
                 }
                 Platform.MenuItem {
                     text: qsTr("Portrait Workspace")
                     checkable: true
-                    checked: EditorState.workspaceLayoutOverridden && EditorState.workspaceLayoutPreferred === "portrait"
-                    onTriggered: EditorState.setWorkspaceLayoutPreference("portrait")
+                    checked: EditorState.preferences.workspaceLayoutOverridden && EditorState.preferences.workspaceLayoutPreferred === "portrait"
+                    onTriggered: EditorState.preferences.setWorkspaceLayoutPreference("portrait")
                 }
                 Platform.MenuItem {
                     text: qsTr("Auto Workspace (Follow Canvas)")
                     checkable: true
-                    checked: !EditorState.workspaceLayoutOverridden
-                    onTriggered: EditorState.clearWorkspaceLayoutPreference()
+                    checked: !EditorState.preferences.workspaceLayoutOverridden
+                    onTriggered: EditorState.preferences.clearWorkspaceLayoutPreference()
                 }
                 Platform.MenuSeparator {}
                 Platform.MenuItem {
@@ -605,8 +605,8 @@ ApplicationWindow {
     // the canvas can keep driving it until the user takes the decision away — the
     // effective value is resolved here because it depends on both preference and
     // canvas, which are separate notifiers on the C++ side.
-    readonly property string workspaceLayout: EditorState.workspaceLayoutOverridden
-                                              ? EditorState.workspaceLayoutPreferred
+    readonly property string workspaceLayout: EditorState.preferences.workspaceLayoutOverridden
+                                              ? EditorState.preferences.workspaceLayoutPreferred
                                               : (EditorState.projectPortrait ? "portrait" : "landscape")
     readonly property bool portraitWorkspace: workspaceLayout === "portrait"
 
@@ -644,7 +644,7 @@ ApplicationWindow {
     readonly property alias addonAttentionNeeded: addonStartupDialog.needsAttention
 
     function promptLanguageChooserIfNeeded() {
-        if (!EditorState.needsUiLanguagePrompt)
+        if (!EditorState.preferences.needsUiLanguagePrompt)
             return false
         if (languageChooserDialogLoader.shown)
             return true
@@ -653,7 +653,7 @@ ApplicationWindow {
     }
 
     function promptLayoutChooserIfNeeded() {
-        if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
+        if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
             return
         if (EditorState.recoveryAvailable || EditorState.projectLayoutChosen)
             return
@@ -1096,12 +1096,12 @@ ApplicationWindow {
     }
 
     function promptRecoveryIfNeeded() {
-        if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
+        if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
             return
         if (!EditorState.recoveryAvailable || recoveryDialogLoader.shown)
             return
         // Opt-in reopen handles recovery (and last .drift) without asking.
-        if (EditorState.reopenLastProject)
+        if (EditorState.preferences.reopenLastProject)
             return
         recoveryDialogLoader.ensure().open()
     }
@@ -1166,7 +1166,7 @@ ApplicationWindow {
         }
         // Reopen is off (or the last project could not be restored): rather than land in a
         // fresh empty project, ask which project to work on.
-        if (!EditorState.reopenLastProject) {
+        if (!EditorState.preferences.reopenLastProject) {
             window.showStartScreen = true
             return
         }
@@ -1177,7 +1177,7 @@ ApplicationWindow {
         // Maximizing does not have to change the window size (a window already filling
         // the work area does not), so the geometry sampler alone can miss the switch.
         window.persistWindowState()
-        if (visible && EditorState.recoveryAvailable && !EditorState.reopenLastProject)
+        if (visible && EditorState.recoveryAvailable && !EditorState.preferences.reopenLastProject)
             recoveryOpenTimer.start()
     }
 
@@ -1191,9 +1191,9 @@ ApplicationWindow {
             })
         }
         function onRecoveryChanged() {
-            if (EditorState.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
+            if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
                 return
-            if (EditorState.reopenLastProject)
+            if (EditorState.preferences.reopenLastProject)
                 return
             if (EditorState.recoveryAvailable) {
                 recoveryOpenTimer.start()

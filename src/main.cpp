@@ -554,7 +554,7 @@ int main(int argc, char *argv[])
     // must be in the environment before QApplication is constructed.
     QCoreApplication::setApplicationName("CutWire Drift");
     QCoreApplication::setOrganizationName("CutWire Drift");
-    AppController::applyStoredUiScale();
+    PreferencesController::applyStoredUiScale();
     // Qt's xcb plugin defaults to GLX, so eglGetCurrentDisplay() is null and
     // zero-copy sticky-disables. Only force EGL when the user opted in — default
     // X11 behaviour stays byte-identical. An explicit QT_XCB_GL_INTEGRATION still wins.
@@ -613,7 +613,7 @@ int main(int argc, char *argv[])
 
     // qsTr/tr resolve when the QML engine loads, so translators must be installed first.
     // Protocol strings under src/mcp/ are excluded from the catalog; they stay English.
-    AppController::installUiTranslators();
+    PreferencesController::installUiTranslators();
 
 #ifndef Q_OS_ANDROID
     // The whole UI is a Qt Quick scene graph on OpenGL, so with no OpenGL at all
@@ -711,7 +711,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     static CachedNetworkAccessManagerFactory networkFactory;
     engine.setNetworkAccessManagerFactory(&networkFactory);
-    QObject::connect(&editorState, &AppController::uiLanguageChanged,
+    QObject::connect(editorState.preferences(), &PreferencesController::uiLanguageChanged,
                      &engine, &QQmlEngine::retranslate);
     engine.addImageProvider(QStringLiteral("drift"), new DriftImageProvider());
     engine.addImageProvider(QStringLiteral("segment"), new SegmentImageProvider());

@@ -85,8 +85,8 @@ Item {
     // The stored layout, cleaned: unknown or repeated ids are dropped and any action missing
     // from both lists (one added in a later version) lands at the end of the menu.
     readonly property var layout: {
-        const storedToolbar = EditorState.timelineToolbarItems
-        const storedMenu = EditorState.timelineMenuItems
+        const storedToolbar = EditorState.preferences.timelineToolbarItems
+        const storedMenu = EditorState.preferences.timelineMenuItems
         if (storedToolbar.length === 0 && storedMenu.length === 0)
             return { toolbar: defaultToolbarItems, menu: defaultMenuItems }
         const seen = {}
@@ -575,16 +575,16 @@ Item {
             glyph: Theme.icons.slidersVertical
             variant: "text"
             tooltip: qsTr("Toggle audio mixer strip")
-            active: EditorState.audioMixerVisible
-            onClicked: EditorState.audioMixerVisible = !EditorState.audioMixerVisible
+            active: EditorState.preferences.audioMixerVisible
+            onClicked: EditorState.preferences.audioMixerVisible = !EditorState.preferences.audioMixerVisible
         }
 
         IconButton {
             glyph: Theme.icons.panelTop
             variant: "text"
             tooltip: qsTr("Timeline overview — a minimap of the whole project; click or drag it to jump the view")
-            active: EditorState.timelineOverviewVisible
-            onClicked: EditorState.timelineOverviewVisible = !EditorState.timelineOverviewVisible
+            active: EditorState.preferences.timelineOverviewVisible
+            onClicked: EditorState.preferences.timelineOverviewVisible = !EditorState.preferences.timelineOverviewVisible
         }
     }
 }

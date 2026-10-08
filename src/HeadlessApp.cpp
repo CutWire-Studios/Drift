@@ -134,7 +134,7 @@ int runHeadless(int argc, char *argv[])
     QCoreApplication::setOrganizationName("CutWire Drift");
 
     QApplication app(argc, argv);
-    AppController::installUiTranslators();
+    PreferencesController::installUiTranslators();
 
     // Text and caption clips resolve their faces through these, so they are needed even
     // with nothing on screen.

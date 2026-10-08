@@ -2179,10 +2179,6 @@
         <translation>කැපුම් මෙවලම</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>වේගවත් පෙරදසුන Drift නැවත ආරම්භ කිරීමෙන් පසුව ක්‍රියාත්මක වේ.</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>පද්ධති පෙරනිමිය</translation>
     </message>
@@ -2813,10 +2809,6 @@
     <message>
         <source>Zoom out</source>
         <translation>කුඩා කරන්න</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>ග්‍රැෆික් කාඩ්පත් තේරීම Drift නැවත ආරම්භ කළ පසු ක්‍රියාත්මක වේ.</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
@@ -9939,6 +9931,21 @@
     <message>
         <source>Samples</source>
         <translation>සාම්පල</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>වේගවත් පෙරදසුන Drift නැවත ආරම්භ කිරීමෙන් පසුව ක්‍රියාත්මක වේ.</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>ග්‍රැෆික් කාඩ්පත් තේරීම Drift නැවත ආරම්භ කළ පසු ක්‍රියාත්මක වේ.</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>පද්ධති පෙරනිමිය</translation>
     </message>
 </context>
 <context>

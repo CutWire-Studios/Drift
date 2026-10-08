@@ -879,6 +879,8 @@ qt_add_executable(drift
     src/models/AppController.cpp
     src/models/McpController.h
     src/models/McpController.cpp
+    src/models/PreferencesController.h
+    src/models/PreferencesController.cpp
     src/models/McpDetail.h
     src/models/AppControllerDetail.h
     src/models/EditorState.h

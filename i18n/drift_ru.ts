@@ -2182,10 +2182,6 @@
         <translation>Инструмент разрезания</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>Ускоренный предпросмотр включится после перезапуска Drift.</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>Системное значение</translation>
     </message>
@@ -2820,10 +2816,6 @@
     <message>
         <source>Zoom out</source>
         <translation>Уменьшить масштаб</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>Выбор видеокарты вступит в силу после перезапуска Drift.</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
@@ -9984,6 +9976,21 @@
     <message>
         <source>Samples</source>
         <translation>Замеры</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>Ускоренный предпросмотр включится после перезапуска Drift.</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>Выбор видеокарты вступит в силу после перезапуска Drift.</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Системное значение</translation>
     </message>
 </context>
 <context>

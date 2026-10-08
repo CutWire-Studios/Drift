@@ -2187,10 +2187,6 @@
         <translation>أداة القطع</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>يسري مفعول المعاينة الأسرع بعد إعادة تشغيل Drift.</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>افتراضي النظام</translation>
     </message>
@@ -2813,10 +2809,6 @@
     <message>
         <source>Zoom out</source>
         <translation>تصغير</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>يسري اختيار بطاقة الرسومات بعد إعادة تشغيل Drift.</translation>
     </message>
     <message>
         <source>Clips moved</source>
@@ -10119,6 +10111,21 @@
     <message>
         <source>Samples</source>
         <translation>العينات</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>يسري مفعول المعاينة الأسرع بعد إعادة تشغيل Drift.</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>يسري اختيار بطاقة الرسومات بعد إعادة تشغيل Drift.</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>افتراضي النظام</translation>
     </message>
 </context>
 <context>

@@ -3589,18 +3589,18 @@ void EditorStateTest::darkModePreferencePersistsAcrossSessions()
     {
         AppController state(&library);
         // Never toggled: no override, so the UI is free to follow the OS scheme.
-        QVERIFY(!state.darkModeOverridden());
+        QVERIFY(!state.preferences()->darkModeOverridden());
 
-        QSignalSpy spy(&state, &AppController::darkModePreferenceChanged);
-        state.setDarkModePreference(false);
+        QSignalSpy spy(state.preferences(), &PreferencesController::darkModePreferenceChanged);
+        state.preferences()->setDarkModePreference(false);
         QCOMPARE(spy.count(), 1);
-        QVERIFY(state.darkModeOverridden());
-        QCOMPARE(state.darkModePreferred(), false);
+        QVERIFY(state.preferences()->darkModeOverridden());
+        QCOMPARE(state.preferences()->darkModePreferred(), false);
     }
 
     AppController relaunched(&library);
-    QVERIFY(relaunched.darkModeOverridden());
-    QCOMPARE(relaunched.darkModePreferred(), false);
+    QVERIFY(relaunched.preferences()->darkModeOverridden());
+    QCOMPARE(relaunched.preferences()->darkModePreferred(), false);
 }
 
 void EditorStateTest::uiScalePersistsAcrossSessions()
@@ -3626,32 +3626,32 @@ void EditorStateTest::uiScalePersistsAcrossSessions()
     AssetLibrary library;
     {
         AppController state(&library);
-        QCOMPARE(state.uiScale(), 1.0);
+        QCOMPARE(state.preferences()->uiScale(), 1.0);
 
-        QSignalSpy spy(&state, &AppController::uiScaleChanged);
-        state.setUiScale(1.3);
+        QSignalSpy spy(state.preferences(), &PreferencesController::uiScaleChanged);
+        state.preferences()->setUiScale(1.3);
         QCOMPARE(spy.count(), 1);
-        QCOMPARE(state.uiScale(), 1.25);
+        QCOMPARE(state.preferences()->uiScale(), 1.25);
 
-        state.setUiScale(9.0);
-        QCOMPARE(state.uiScale(), 2.0);
-        state.setUiScale(0.1);
-        QCOMPARE(state.uiScale(), 1.0);
+        state.preferences()->setUiScale(9.0);
+        QCOMPARE(state.preferences()->uiScale(), 2.0);
+        state.preferences()->setUiScale(0.1);
+        QCOMPARE(state.preferences()->uiScale(), 1.0);
         QVERIFY(!QSettings().contains(QStringLiteral("ui/scale")));
 
-        state.setUiScale(1.5);
-        QCOMPARE(state.uiScale(), 1.5);
+        state.preferences()->setUiScale(1.5);
+        QCOMPARE(state.preferences()->uiScale(), 1.5);
     }
 
     AppController relaunched(&library);
-    QCOMPARE(relaunched.uiScale(), 1.5);
+    QCOMPARE(relaunched.preferences()->uiScale(), 1.5);
 
     qunsetenv("QT_SCALE_FACTOR");
-    AppController::applyStoredUiScale();
+    PreferencesController::applyStoredUiScale();
     QCOMPARE(qgetenv("QT_SCALE_FACTOR"), QByteArray("1.5"));
 
     qputenv("QT_SCALE_FACTOR", "3");
-    AppController::applyStoredUiScale();
+    PreferencesController::applyStoredUiScale();
     QCOMPARE(qgetenv("QT_SCALE_FACTOR"), QByteArray("3"));
 }
 
@@ -3684,30 +3684,30 @@ void EditorStateTest::uiLanguagePersistsAcrossSessions()
     {
         AppController state(&library);
         // Brand-new install: no session history, so the first-launch chooser should ask.
-        QVERIFY(state.needsUiLanguagePrompt());
-        QCOMPARE(state.uiLanguage(), QString());
+        QVERIFY(state.preferences()->needsUiLanguagePrompt());
+        QCOMPARE(state.preferences()->uiLanguage(), QString());
 
-        QSignalSpy spy(&state, &AppController::uiLanguageChanged);
-        state.chooseUiLanguage(QStringLiteral("en"));
+        QSignalSpy spy(state.preferences(), &PreferencesController::uiLanguageChanged);
+        state.preferences()->chooseUiLanguage(QStringLiteral("en"));
         QVERIFY(spy.count() >= 1);
-        QCOMPARE(state.uiLanguage(), QStringLiteral("en"));
-        QVERIFY(!state.needsUiLanguagePrompt());
+        QCOMPARE(state.preferences()->uiLanguage(), QStringLiteral("en"));
+        QVERIFY(!state.preferences()->needsUiLanguagePrompt());
         QCOMPARE(QSettings().value(QStringLiteral("ui/language")).toString(), QStringLiteral("en"));
         QVERIFY(QSettings().value(QStringLiteral("ui/languageChosen")).toBool());
     }
 
     {
         AppController relaunched(&library);
-        QCOMPARE(relaunched.uiLanguage(), QStringLiteral("en"));
-        QVERIFY(!relaunched.needsUiLanguagePrompt());
+        QCOMPARE(relaunched.preferences()->uiLanguage(), QStringLiteral("en"));
+        QVERIFY(!relaunched.preferences()->needsUiLanguagePrompt());
 
-        relaunched.setUiLanguage(QStringLiteral("es"));
-        QCOMPARE(relaunched.uiLanguage(), QStringLiteral("es"));
+        relaunched.preferences()->setUiLanguage(QStringLiteral("es"));
+        QCOMPARE(relaunched.preferences()->uiLanguage(), QStringLiteral("es"));
     }
 
     AppController afterSettingsChange(&library);
-    QCOMPARE(afterSettingsChange.uiLanguage(), QStringLiteral("es"));
-    QVERIFY(!afterSettingsChange.needsUiLanguagePrompt());
+    QCOMPARE(afterSettingsChange.preferences()->uiLanguage(), QStringLiteral("es"));
+    QVERIFY(!afterSettingsChange.preferences()->needsUiLanguagePrompt());
 
     {
         QSettings settings;
@@ -3716,7 +3716,7 @@ void EditorStateTest::uiLanguagePersistsAcrossSessions()
         settings.setValue(QStringLiteral("lastSessionPath"), QStringLiteral("/tmp/used.drift"));
     }
     AppController returningUser(&library);
-    QVERIFY(!returningUser.needsUiLanguagePrompt());
+    QVERIFY(!returningUser.preferences()->needsUiLanguagePrompt());
 }
 
 void EditorStateTest::invertTimelineScrollPersistsAcrossSessions()
@@ -3737,18 +3737,18 @@ void EditorStateTest::invertTimelineScrollPersistsAcrossSessions()
     AssetLibrary library;
     {
         AppController state(&library);
-        QVERIFY(!state.invertTimelineScroll());
+        QVERIFY(!state.preferences()->invertTimelineScroll());
 
-        QSignalSpy spy(&state, &AppController::invertTimelineScrollChanged);
-        state.setInvertTimelineScroll(true);
+        QSignalSpy spy(state.preferences(), &PreferencesController::invertTimelineScrollChanged);
+        state.preferences()->setInvertTimelineScroll(true);
         QCOMPARE(spy.count(), 1);
-        QVERIFY(state.invertTimelineScroll());
-        state.setInvertTimelineScroll(true);
+        QVERIFY(state.preferences()->invertTimelineScroll());
+        state.preferences()->setInvertTimelineScroll(true);
         QCOMPARE(spy.count(), 1);
     }
 
     AppController relaunched(&library);
-    QVERIFY(relaunched.invertTimelineScroll());
+    QVERIFY(relaunched.preferences()->invertTimelineScroll());
 }
 
 void EditorStateTest::exportFrameRatePersistsAcrossSessions()
@@ -6251,11 +6251,11 @@ void EditorStateTest::audioMixerTrackControlsAndMetering()
     AppController state(&library);
 
     // Initial state
-    QCOMPARE(state.audioMixerVisible(), false);
-    state.setAudioMixerVisible(true);
-    QCOMPARE(state.audioMixerVisible(), true);
-    state.setAudioMixerVisible(false);
-    QCOMPARE(state.audioMixerVisible(), false);
+    QCOMPARE(state.preferences()->audioMixerVisible(), false);
+    state.preferences()->setAudioMixerVisible(true);
+    QCOMPARE(state.preferences()->audioMixerVisible(), true);
+    state.preferences()->setAudioMixerVisible(false);
+    QCOMPARE(state.preferences()->audioMixerVisible(), false);
 
     // Master volume & mute
     QCOMPARE(state.masterVolume(), 1.0);

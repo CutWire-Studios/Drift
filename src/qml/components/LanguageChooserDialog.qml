@@ -43,14 +43,14 @@ ThemedDialog {
 
     function openFromHeader() {
         fromHeader = true
-        selectId(EditorState.uiLanguage)
+        selectId(EditorState.preferences.uiLanguage)
         open()
     }
 
     // Concrete languages only — "System default" is a later choice from the header
     // (desktop) or Settings (Android). First launch always writes an explicit code.
     readonly property var chooserLanguages: {
-        const all = EditorState.uiLanguages
+        const all = EditorState.preferences.uiLanguages
         const out = []
         for (let i = 0; i < all.length; ++i) {
             if (all[i].id !== "")
@@ -59,12 +59,12 @@ ThemedDialog {
         return out
     }
 
-    readonly property var pickerLanguages: fromHeader ? EditorState.uiLanguages
+    readonly property var pickerLanguages: fromHeader ? EditorState.preferences.uiLanguages
                                                        : chooserLanguages
 
     onAccepted: {
         if (!fromHeader)
-            EditorState.chooseUiLanguage(selectedId)
+            EditorState.preferences.chooseUiLanguage(selectedId)
     }
 
     contentItem: Column {
@@ -154,7 +154,7 @@ ThemedDialog {
                         root.selectedId = modelData.id
                         // Apply now so the dialog (and the rest of the UI) switches
                         // before Continue — same live retranslate as the header.
-                        EditorState.uiLanguage = modelData.id
+                        EditorState.preferences.uiLanguage = modelData.id
                         if (root.fromHeader)
                             root.close()
                     }

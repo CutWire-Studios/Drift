@@ -552,25 +552,25 @@ Rectangle {
                     // labels stay aligned.
                     ThemedMenuItem {
                         text: qsTr("Auto (follow canvas)")
-                        icon.name: EditorState.workspaceLayoutOverridden ? Theme.icons.grid
+                        icon.name: EditorState.preferences.workspaceLayoutOverridden ? Theme.icons.grid
                                                                          : Theme.icons.check
-                        onTriggered: EditorState.clearWorkspaceLayoutPreference()
+                        onTriggered: EditorState.preferences.clearWorkspaceLayoutPreference()
                     }
 
                     ThemedMenuItem {
                         text: qsTr("Landscape")
-                        icon.name: EditorState.workspaceLayoutOverridden
-                                   && EditorState.workspaceLayoutPreferred === "landscape"
+                        icon.name: EditorState.preferences.workspaceLayoutOverridden
+                                   && EditorState.preferences.workspaceLayoutPreferred === "landscape"
                                    ? Theme.icons.check : Theme.icons.monitor
-                        onTriggered: EditorState.setWorkspaceLayoutPreference("landscape")
+                        onTriggered: EditorState.preferences.setWorkspaceLayoutPreference("landscape")
                     }
 
                     ThemedMenuItem {
                         text: qsTr("Portrait")
-                        icon.name: EditorState.workspaceLayoutOverridden
-                                   && EditorState.workspaceLayoutPreferred === "portrait"
+                        icon.name: EditorState.preferences.workspaceLayoutOverridden
+                                   && EditorState.preferences.workspaceLayoutPreferred === "portrait"
                                    ? Theme.icons.check : Theme.icons.smartphone
-                        onTriggered: EditorState.setWorkspaceLayoutPreference("portrait")
+                        onTriggered: EditorState.preferences.setWorkspaceLayoutPreference("portrait")
                     }
 
                     ThemedMenuSeparator { }

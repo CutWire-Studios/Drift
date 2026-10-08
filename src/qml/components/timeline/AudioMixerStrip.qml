@@ -11,17 +11,17 @@ Rectangle {
     id: root
 
     readonly property bool isRecording: EditorState.isRecordingAudio
-    readonly property bool mixerVisible: EditorState.audioMixerVisible || isRecording
+    readonly property bool mixerVisible: EditorState.preferences.audioMixerVisible || isRecording
 
     readonly property real baseStripWidth: 96
     readonly property real minMixerWidth: isRecording ? 250 : 160
     // Keep enough of the timeline visible that the mixer can never swallow it.
     readonly property real maxMixerWidth: parent
-        ? Math.max(minMixerWidth, parent.width - EditorState.trackLabelsWidth - 240)
+        ? Math.max(minMixerWidth, parent.width - EditorState.preferences.trackLabelsWidth - 240)
         : 2000
     readonly property int columnCount: Math.max(1, mixerLoader.item ? mixerLoader.item.audioTracksList.length : 0) + 1
     readonly property real fitWidth: columnCount * baseStripWidth + 1
-    readonly property real preferredWidth: EditorState.audioMixerWidth > 0 ? EditorState.audioMixerWidth : fitWidth
+    readonly property real preferredWidth: EditorState.preferences.audioMixerWidth > 0 ? EditorState.preferences.audioMixerWidth : fitWidth
     readonly property real stripWidth: baseStripWidth
 
     width: mixerVisible ? Math.max(minMixerWidth, Math.min(maxMixerWidth, preferredWidth)) : 0
@@ -894,7 +894,7 @@ Rectangle {
                         glyph: Theme.icons.x
                         variant: "text"
                         tooltip: qsTr("Close audio mixer")
-                        onClicked: EditorState.audioMixerVisible = false
+                        onClicked: EditorState.preferences.audioMixerVisible = false
                     }
 
                     Rectangle {
@@ -1306,10 +1306,10 @@ Rectangle {
                     if (!pressed)
                         return
                     const dx = mapToItem(null, mouse.x, 0).x - pressGlobalX
-                    EditorState.audioMixerWidth = Math.max(root.minMixerWidth, Math.min(root.maxMixerWidth, pressWidth - dx))
+                    EditorState.preferences.audioMixerWidth = Math.max(root.minMixerWidth, Math.min(root.maxMixerWidth, pressWidth - dx))
                 }
                 onReleased: Haptics.drop()
-                onDoubleClicked: EditorState.audioMixerWidth = 0
+                onDoubleClicked: EditorState.preferences.audioMixerWidth = 0
 
                 // Resting edge line; turns amber while the handle is hovered or dragged.
                 Rectangle {

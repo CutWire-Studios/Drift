@@ -13,14 +13,14 @@ Item {
     // so headers stay aligned with their rows.
     property var tracks: []
     property real contentY: 0
-    // Desktop passes EditorState.trackLabelsWidth; Android a narrower fixed value.
+    // Desktop passes EditorState.preferences.trackLabelsWidth; Android a narrower fixed value.
     property real labelsWidth: Theme.trackLabelsWidth
     // Phone: grip + mute/hide only (no type glyph / waveform / name band).
     property bool compact: false
     // Touch shell: reorder has to be asked for, and the context menu needs a
     // route that is not the right mouse button.
     property bool touchMode: false
-    // Desktop: a handle on the right edge drags EditorState.trackLabelsWidth.
+    // Desktop: a handle on the right edge drags EditorState.preferences.trackLabelsWidth.
     property bool resizable: false
 
     // Transform layer brackets. Desktop reserves a gutter on the left for them (one indent per
@@ -1118,9 +1118,9 @@ Item {
         preventStealing: true
         onPositionChanged: (mouse) => {
             if (pressed)
-                EditorState.trackLabelsWidth = x + mouse.x + width / 2
+                EditorState.preferences.trackLabelsWidth = x + mouse.x + width / 2
         }
-        onDoubleClicked: EditorState.trackLabelsWidth = Theme.trackLabelsWidth
+        onDoubleClicked: EditorState.preferences.trackLabelsWidth = Theme.trackLabelsWidth
 
         Rectangle {
             anchors.right: parent.right

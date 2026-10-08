@@ -2176,10 +2176,6 @@
         <translation>자르기 도구</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>더 빠른 미리보기는 Drift를 다시 시작한 후 적용됩니다.</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>시스템 기본값</translation>
     </message>
@@ -2806,10 +2802,6 @@
     <message>
         <source>Zoom out</source>
         <translation>축소</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>그래픽 카드 선택은 Drift를 다시 시작한 후 적용됩니다.</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
@@ -9894,6 +9886,21 @@
     <message>
         <source>Samples</source>
         <translation>샘플</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>더 빠른 미리보기는 Drift를 다시 시작한 후 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>그래픽 카드 선택은 Drift를 다시 시작한 후 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>시스템 기본값</translation>
     </message>
 </context>
 <context>

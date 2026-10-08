@@ -55,7 +55,7 @@ ThemedDialog {
             else if (i > split)
                 menuItems.push(id)
         }
-        EditorState.setTimelineToolbarLayout(toolbarItems, menuItems)
+        EditorState.preferences.setTimelineToolbarLayout(toolbarItems, menuItems)
     }
 
     contentItem: Column {

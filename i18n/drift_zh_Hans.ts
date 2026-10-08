@@ -2176,10 +2176,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2805,10 +2801,6 @@
     </message>
     <message>
         <source>Zoom out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9893,6 +9885,21 @@
     </message>
     <message>
         <source>Samples</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System default</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

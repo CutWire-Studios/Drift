@@ -2179,10 +2179,6 @@
         <translation>Strumento Taglierina</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>L&apos;anteprima più veloce diventerà effettiva dopo aver riavviato Drift.</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>Predefinito di sistema</translation>
     </message>
@@ -2813,10 +2809,6 @@
     <message>
         <source>Zoom out</source>
         <translation>Riduci</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>La scelta della scheda grafica diventerà effettiva dopo aver riavviato Drift.</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
@@ -9939,6 +9931,21 @@
     <message>
         <source>Samples</source>
         <translation>Campioni</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>L&apos;anteprima più veloce diventerà effettiva dopo aver riavviato Drift.</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>La scelta della scheda grafica diventerà effettiva dopo aver riavviato Drift.</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Predefinito di sistema</translation>
     </message>
 </context>
 <context>

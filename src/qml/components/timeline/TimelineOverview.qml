@@ -7,7 +7,7 @@ import ".."
 // currently shows. Click or drag anywhere to recenter that view on the
 // clicked point — the equivalent of dragging the minimap in Resolve/Premiere.
 //
-// Can be switched off (EditorState.timelineOverviewVisible) on a timeline long
+// Can be switched off (EditorState.preferences.timelineOverviewVisible) on a timeline long
 // enough that repainting every clip on every edit is felt.
 Item {
     id: overview

@@ -135,18 +135,18 @@ QtObject {
 
     // --- Light/dark mode: follows the OS until the user picks a side -----------
     // Qt.styleHints.colorScheme is live-updated by the platform theme (Qt 6.5+).
-    // Once toggled, the choice lives in QSettings via EditorState and survives
+    // Once toggled, the choice lives in QSettings via EditorState.preferences and survives
     // restarts; it is app-wide, not stored per project.
     readonly property bool systemPrefersDark: Qt.styleHints.colorScheme !== Qt.Light
-    readonly property bool darkMode: EditorState.darkModeOverridden ? EditorState.darkModePreferred
+    readonly property bool darkMode: EditorState.preferences.darkModeOverridden ? EditorState.preferences.darkModePreferred
                                                                     : systemPrefersDark
 
     function toggleDarkMode() {
-        EditorState.setDarkModePreference(!darkMode);
+        EditorState.preferences.setDarkModePreference(!darkMode);
     }
 
     function setDarkMode(enabled) {
-        EditorState.setDarkModePreference(enabled);
+        EditorState.preferences.setDarkModePreference(enabled);
     }
 
     // --- Color palettes: app shell vs. panel surfaces, light and dark ------------

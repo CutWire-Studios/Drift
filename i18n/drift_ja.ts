@@ -2176,10 +2176,6 @@
         <translation>切り取りツール</translation>
     </message>
     <message>
-        <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>高速プレビューは Drift 再起動後に有効になります。</translation>
-    </message>
-    <message>
         <source>System default</source>
         <translation>システムデフォルト</translation>
     </message>
@@ -2806,10 +2802,6 @@
     <message>
         <source>Zoom out</source>
         <translation>ズームアウト</translation>
-    </message>
-    <message>
-        <source>The graphics card choice takes effect after you restart Drift.</source>
-        <translation>グラフィックカードの選択は、Driftを再起動した後に反映されます。</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
@@ -9894,6 +9886,21 @@
     <message>
         <source>Samples</source>
         <translation>サンプル数</translation>
+    </message>
+</context>
+<context>
+    <name>PreferencesController</name>
+    <message>
+        <source>Faster preview takes effect after you restart Drift.</source>
+        <translation>高速プレビューは Drift 再起動後に有効になります。</translation>
+    </message>
+    <message>
+        <source>The graphics card choice takes effect after you restart Drift.</source>
+        <translation>グラフィックカードの選択は、Driftを再起動した後に反映されます。</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>システムデフォルト</translation>
     </message>
 </context>
 <context>
