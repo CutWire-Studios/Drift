@@ -317,11 +317,24 @@ Item {
         return false
     }
 
-    // Drag the bottom edge to grow the lane. Session-only by design: it is a working
-    // preference, not something worth persisting into settings or the project file.
+    // Drag the bottom edge or wheel over the header to grow the lane.
     property real laneHeight: 88
     readonly property real minLaneHeight: 60
     readonly property real maxLaneHeight: 460
+    readonly property real compactHeight: 88
+    readonly property real expandedHeight: 180
+
+    Behavior on laneHeight {
+        enabled: !resizeDrag.active
+        NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+    }
+
+    function toggleExpanded() {
+        if (curveEditing)
+            laneHeight = compactHeight
+        else
+            laneHeight = expandedHeight
+    }
 
     height: visible ? laneHeight : 0
     // Open whenever the clip has an animation to show, even if every curve is currently folded
@@ -399,8 +412,35 @@ Item {
 
         // Left gutter — same width as track labels so the graph lines up.
         Item {
+            id: leftGutter
             width: root.labelsWidth
             height: parent.height
+
+            // DAW-style lane zoom: wheel over this header grows/shrinks the keyframe lane
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.NoButton
+                z: 30
+                onWheel: (wheel) => {
+                    // Modified wheel belongs to the timeline's zoom/pan.
+                    if (wheel.modifiers & (Qt.ControlModifier | Qt.ShiftModifier)) {
+                        wheel.accepted = false
+                        return
+                    }
+                    const dy = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y
+                                                        : wheel.pixelDelta.y
+                    if (dy === 0)
+                        return
+                    const step = 20
+                    const next = root.laneHeight + (dy > 0 ? step : -step)
+                    root.laneHeight = Math.max(root.minLaneHeight,
+                                               Math.min(root.maxLaneHeight, next))
+                }
+            }
+
+            TapHandler {
+                onDoubleTapped: root.toggleExpanded()
+            }
 
             Column {
                 anchors.fill: parent
@@ -418,6 +458,18 @@ Item {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeXs
                         font.weight: Font.Medium
+                    }
+
+                    IconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        glyph: root.curveEditing ? Theme.icons.minimize : Theme.icons.maximize
+                        variant: "text"
+                        buttonSize: 20
+                        iconSize: 14
+                        tooltip: root.curveEditing
+                                 ? qsTr("Collapse curve editor to compact view (88px)")
+                                 : qsTr("Expand curve editor to view and edit Bezier handles (180px)")
+                        onClicked: root.toggleExpanded()
                     }
 
                     // Beat grid / tempo.
@@ -506,17 +558,27 @@ Item {
                     text: {
                         const keys = root.keyCount === 0 ? qsTr("No keyframes")
                                                          : qsTr("%n keyframes", "", root.keyCount)
+                        let hint = ""
+                        if (!root.curveEditing && root.keyCount > 0)
+                            hint = " · " + qsTr("Expand for handles")
                         if (!EditorState.beatGridVisible || !root.analyzed)
-                            return keys
+                            return keys + hint
                         // The detector publishes no bpm when the tempo estimate was not
                         // confident — say so, rather than leaving the grid button lit over
                         // an empty lane. Onsets may still be perfectly usable.
-                        return root.bpm > 0 ? keys + " · " + Math.round(root.bpm) + qsTr(" BPM")
-                                            : keys + qsTr(" · no beat found")
+                        return (root.bpm > 0 ? keys + " · " + Math.round(root.bpm) + qsTr(" BPM")
+                                             : keys + qsTr(" · no beat found")) + hint
                     }
-                    color: Theme.mutedForeground
+                    color: (!root.curveEditing && root.keyCount > 0) ? Theme.primary : Theme.mutedForeground
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: !root.curveEditing && root.keyCount > 0
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: root.toggleExpanded()
+                    }
                 }
             }
 
@@ -1071,6 +1133,9 @@ Item {
         HoverHandler {
             id: resizeHover
             cursorShape: Qt.SizeVerCursor
+        }
+        TapHandler {
+            onDoubleTapped: root.toggleExpanded()
         }
         DragHandler {
             id: resizeDrag

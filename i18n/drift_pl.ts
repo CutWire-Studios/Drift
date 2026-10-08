@@ -8015,6 +8015,14 @@
         <translation>Klatki kluczowe</translation>
     </message>
     <message>
+        <source>Collapse curve editor to compact view (88px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand curve editor to view and edit Bezier handles (180px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Analyzing…</source>
         <translation>Analizowanie…</translation>
     </message>
@@ -8057,6 +8065,10 @@
             <numerusform>% klatki kluczowe</numerusform>
             <numerusform>% klatek kluczowych</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Expand for handles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source> BPM</source>
