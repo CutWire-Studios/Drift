@@ -664,7 +664,7 @@ jobs:
   macos:
     name: macOS disk image
     # Apple Silicon only: Homebrew bottles are single-architecture.
-    runs-on: macos-15
+    runs-on: macos-26
     if: inputs.platforms == 'all' || inputs.platforms == 'macos'
     timeout-minutes: 120
     steps:

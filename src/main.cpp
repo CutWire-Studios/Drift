@@ -609,7 +609,9 @@ int main(int argc, char *argv[])
     // Title bar / taskbar icon when no desktop entry is available (Windows, and
     // Linux runs from the build tree). The .exe still needs the Windows .rc icon
     // for Explorer and pinned-taskbar identity.
+#ifndef Q_OS_MACOS
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/app/drift.png")));
+#endif
 
     // qsTr/tr resolve when the QML engine loads, so translators must be installed first.
     // Protocol strings under src/mcp/ are excluded from the catalog; they stay English.

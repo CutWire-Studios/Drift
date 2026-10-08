@@ -1,27 +1,35 @@
 #!/usr/bin/env bash
-# Regenerate resources/macos/Drift.icns from Drift_icon.png, then commit the result.
-# Checked in like resources/windows/drift.ico: sips and iconutil are macOS-only.
+# Regenerate the static fallback icon from the Icon Composer document.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-SRC="$ROOT/Drift_icon.png"
 OUT="$ROOT/resources/macos/Drift.icns"
+ICON="$ROOT/resources/macos/Drift.icon"
+DEVELOPER_DIR="${DEVELOPER_DIR:-$(/usr/bin/xcode-select -p 2>/dev/null || true)}"
 
-if [[ ! -f "$SRC" ]]; then
-  echo "Icon source not found at: $SRC" >&2
+if [[ ! -x "$DEVELOPER_DIR/usr/bin/actool" \
+   && -x "/Applications/Xcode.app/Contents/Developer/usr/bin/actool" ]]; then
+  DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+fi
+
+ACTOOL="$DEVELOPER_DIR/usr/bin/actool"
+if [[ ! -x "$ACTOOL" ]]; then
+  echo "actool not found; select Xcode 26 or newer with xcode-select." >&2
   exit 1
 fi
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-ICONSET="$WORK/Drift.iconset"
-mkdir -p "$ICONSET"
 
-# Each size needs a 2x file too, or Finder upscales the 1x on Retina.
-for PT in 16 32 128 256 512; do
-  sips -z "$PT" "$PT" "$SRC" --out "$ICONSET/icon_${PT}x${PT}.png" >/dev/null
-  sips -z "$((PT * 2))" "$((PT * 2))" "$SRC" --out "$ICONSET/icon_${PT}x${PT}@2x.png" >/dev/null
-done
-
-iconutil --convert icns --output "$OUT" "$ICONSET"
+"$ACTOOL" "$ICON" \
+  --compile "$WORK" \
+  --app-icon Drift \
+  --enable-on-demand-resources NO \
+  --target-device mac \
+  --platform macosx \
+  --minimum-deployment-target 12.0 \
+  --output-partial-info-plist "$WORK/partial-info.plist" \
+  --output-format human-readable-text \
+  --errors --warnings
+cp "$WORK/Drift.icns" "$OUT"
 echo "Wrote $OUT"
