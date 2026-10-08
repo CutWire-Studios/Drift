@@ -2339,56 +2339,16 @@
         <translation>Sottotitoli generati</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>Seleziona una clip video da ritagliare</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Curva di velocità rimossa</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>Il ritaglio del soggetto è già in esecuzione</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>Questa clip non contiene video da ritagliare</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>Fai prima clic sul soggetto</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>Preparazione in corso…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>La clip è troppo breve per il ritaglio</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>Impossibile creare un file di ritaglio</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>Ritaglio annullato</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>Impossibile decodificare il fotogramma %1</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>Elaborazione fotogramma %1 di %2…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>Ritaglio completato — soggetto ritagliato su %1 di %2 fotogrammi</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>Ritaglio completato</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2441,14 +2401,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>Rileva volti</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>Quella clip non esiste più</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>Ritaglia soggetto</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2567,10 +2519,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>Salva multicam combinato</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>Ritaglio del soggetto in corso…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2925,10 +2873,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>Modifica modalità di stabilizzazione</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>Ritaglio</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11313,6 +11257,77 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2  ·  %3s</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">Seleziona una clip video da ritagliare</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">Il ritaglio del soggetto è già in esecuzione</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">Questa clip non contiene video da ritagliare</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">Fai prima clic sul soggetto</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">Preparazione in corso…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">Ritaglio del soggetto in corso…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Fatto</translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">La clip è troppo breve per il ritaglio</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">Impossibile creare un file di ritaglio</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">Ritaglio annullato</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">Impossibile decodificare il fotogramma %1</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">Elaborazione fotogramma %1 di %2…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">Ritaglio completato — soggetto ritagliato su %1 di %2 fotogrammi</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">Ritaglio completato</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">Quella clip non esiste più</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">Ritaglio</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">Ritaglia soggetto</translation>
     </message>
 </context>
 <context>

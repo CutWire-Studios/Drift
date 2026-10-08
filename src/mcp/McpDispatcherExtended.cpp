@@ -2016,10 +2016,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
 
     // --- segmentation ---
     if (tool == QLatin1String("segmentation_status")) {
-        return ok({{QStringLiteral("available"), m_controller->segmentationAvailable()},
-                   {QStringLiteral("model"), m_controller->segmentationModelVariant()},
+        return ok({{QStringLiteral("available"), m_controller->segmentation()->available()},
+                   {QStringLiteral("model"), m_controller->segmentation()->modelVariant()},
                    {QStringLiteral("backends"),
-                    QJsonArray::fromStringList(m_controller->segmentationBackends())}});
+                    QJsonArray::fromStringList(m_controller->segmentation()->backends())}});
     }
 
     if (tool == QLatin1String("begin_segmentation_session")) {
@@ -2030,12 +2030,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                               ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
                               : m_controller->playheadSeconds();
         const bool forTemplate = jsonBool(args.value(QStringLiteral("forTemplate")));
-        m_controller->beginSegmentationSession(ref.track, ref.clip, at, forTemplate);
+        m_controller->segmentation()->beginSession(ref.track, ref.clip, at, forTemplate);
         return ok(clipFeedback(ref, {{QStringLiteral("at"), at}, {QStringLiteral("forTemplate"), forTemplate}}));
     }
 
     if (tool == QLatin1String("end_segmentation_session")) {
-        m_controller->endSegmentationSession();
+        m_controller->segmentation()->endSession();
         return ok({});
     }
 
@@ -2043,7 +2043,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!args.contains(QStringLiteral("at")))
             return err("bad_args", QStringLiteral("at required"));
         const double at = jsonNumber(args.value(QStringLiteral("at")), 0);
-        m_controller->setSegmentationFrame(at);
+        m_controller->segmentation()->setFrame(at);
         return ok({{QStringLiteral("at"), at}});
     }
 
@@ -2053,7 +2053,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const double x = jsonNumber(args.value(QStringLiteral("x")), 0);
         const double y = jsonNumber(args.value(QStringLiteral("y")), 0);
         const bool include = jsonBool(args.value(QStringLiteral("include")), true);
-        m_controller->addSegmentationPoint(x, y, include);
+        m_controller->segmentation()->addPoint(x, y, include);
         return ok({{QStringLiteral("x"), x}, {QStringLiteral("y"), y}, {QStringLiteral("include"), include}});
     }
 
@@ -2061,12 +2061,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const int index = jsonInt(args.value(QStringLiteral("index")));
         if (index < 0)
             return err("bad_args", QStringLiteral("index required"));
-        m_controller->removeSegmentationPoint(index);
+        m_controller->segmentation()->removePoint(index);
         return ok({{QStringLiteral("removed"), index}});
     }
 
     if (tool == QLatin1String("clear_segmentation_points")) {
-        m_controller->clearSegmentationPoints();
+        m_controller->segmentation()->clearPoints();
         return ok({});
     }
 
@@ -2074,10 +2074,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString output = argString(args, QStringLiteral("output"));
         const QString backend = argString(args, QStringLiteral("backend"));
         if (!backend.isEmpty())
-            m_controller->setSegmentationBackend(backend);
-        m_controller->runSegmentationSession(output.isEmpty() ? QStringLiteral("adjustment") : output);
+            m_controller->segmentation()->setBackend(backend);
+        m_controller->segmentation()->runSession(output.isEmpty() ? QStringLiteral("adjustment") : output);
         return ok({{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("adjustment") : output},
-                   {QStringLiteral("backend"), m_controller->segmentBackend()}});
+                   {QStringLiteral("backend"), m_controller->segmentation()->backend()}});
     }
 
     if (tool == QLatin1String("segment_clip")) {
@@ -2091,14 +2091,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!rvm && pointArray.isEmpty())
             return err("bad_args", QStringLiteral("points required for the sam2 backend"));
         const QString output = argString(args, QStringLiteral("output"));
-        m_controller->segmentClip(ref.track, ref.clip, segmentationPointsFromJson(pointArray),
+        m_controller->segmentation()->segmentClip(ref.track, ref.clip, segmentationPointsFromJson(pointArray),
                                   output.isEmpty() ? QStringLiteral("adjustment") : output, backend);
         return ok(clipFeedback(ref, {{QStringLiteral("output"), output.isEmpty() ? QStringLiteral("adjustment") : output},
                                      {QStringLiteral("backend"), rvm ? QStringLiteral("rvm") : QStringLiteral("sam2")}}));
     }
 
     if (tool == QLatin1String("cancel_segmentation")) {
-        m_controller->cancelSegmentation();
+        m_controller->segmentation()->cancel();
         return ok({{QStringLiteral("cancelled"), true}});
     }
 

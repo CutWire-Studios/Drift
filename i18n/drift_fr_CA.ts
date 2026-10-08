@@ -2341,56 +2341,16 @@
         <translation>Sous-titres générés</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>Sélectionnez un clip vidéo à découper</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Courbe de vitesse supprimée</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>Le découpage est déjà en cours</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>Ce clip ne contient pas de vidéo à découper</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>Cliquez d&apos;abord sur le sujet</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>Préparation en cours…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>Le clip est trop court pour être découpé</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>Impossible de créer un fichier de découpage</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>Découpage annulé</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>Impossible de décoder le cadre %1</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>Traitement du cadre %1 sur %2…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>Découpage terminé — sujet découpé sur %1 de %2 cadres</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>Découpage terminé</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2443,14 +2403,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>Détecter les visages</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>Ce clip n&apos;existe plus</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>Découper le sujet</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2573,10 +2525,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>Enregistrer le multicam combiné</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>Découpage du sujet…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2931,10 +2879,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>Changer le mode de stabilisation</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>Détourer</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11316,6 +11260,77 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 - %2  ·  %3s</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">Sélectionnez un clip vidéo à découper</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">Le découpage est déjà en cours</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">Ce clip ne contient pas de vidéo à découper</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">Cliquez d&apos;abord sur le sujet</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">Préparation en cours…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">Découpage du sujet…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Terminé</translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">Le clip est trop court pour être découpé</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">Impossible de créer un fichier de découpage</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">Découpage annulé</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">Impossible de décoder le cadre %1</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">Traitement du cadre %1 sur %2…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">Découpage terminé — sujet découpé sur %1 de %2 cadres</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">Découpage terminé</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">Ce clip n&apos;existe plus</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">Détourer</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">Découper le sujet</translation>
     </message>
 </context>
 <context>

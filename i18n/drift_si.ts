@@ -2339,56 +2339,16 @@
         <translation>උපසිරැසි ජනනය කරන ලදී</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>වෙන් කිරීමට වීඩියෝ ක්ලිපයක් තෝරන්න</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>වේග වක්‍රය ඉවත් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>විෂය වෙන් කිරීම දැනටමත් ක්‍රියාත්මක වේ</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>වෙන් කිරීමට මෙම ක්ලිපයේ වීඩියෝ නොමැත</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>පළමුව විෂයය මත ක්ලික් කරන්න</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>සූදානම් වෙමින්…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>වෙන් කිරීමට ක්ලිපය කෙටි වැඩිය</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>Cutout ගොනුවක් සෑදීමට නොහැකි විය</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>විෂය වෙන් කිරීම අවලංගු කෙරිණි</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>%1 රාමුව විකේතනය කිරීමට නොහැකි විය</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>%1/%2 රාමුව සකසමින්…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>විෂය වෙන් කිරීම සම්පූර්ණයි — රාමු %2කින් %1ක විෂය වෙන් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>විෂය වෙන් කිරීම සම්පූර්ණයි</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2441,14 +2401,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>මුහුණු හඳුනාගන්න</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>එම ක්ලිපය තවදුරටත් නොපවතී</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>විෂයය වෙන් කරන්න</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2567,10 +2519,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>ඒකාබද්ධ බහු කැමරාව සුරකින්න</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>විෂයය වෙන් කරමින්…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2925,10 +2873,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>ස්ථාවර කිරීමේ ප්‍රකාරය වෙනස් කරන්න</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>විෂය වෙන් කිරීම (Cutout)</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11313,6 +11257,77 @@ If playback stutters, try another.</source>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2  ·  %3s</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">වෙන් කිරීමට වීඩියෝ ක්ලිපයක් තෝරන්න</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">විෂය වෙන් කිරීම දැනටමත් ක්‍රියාත්මක වේ</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">වෙන් කිරීමට මෙම ක්ලිපයේ වීඩියෝ නොමැත</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">පළමුව විෂයය මත ක්ලික් කරන්න</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">සූදානම් වෙමින්…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">විෂයය වෙන් කරමින්…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">වෙන් කිරීමට ක්ලිපය කෙටි වැඩිය</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">Cutout ගොනුවක් සෑදීමට නොහැකි විය</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">විෂය වෙන් කිරීම අවලංගු කෙරිණි</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">%1/%2 රාමුව සකසමින්…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">විෂය වෙන් කිරීම සම්පූර්ණයි — රාමු %2කින් %1ක විෂය වෙන් කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">විෂය වෙන් කිරීම සම්පූර්ණයි</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">එම ක්ලිපය තවදුරටත් නොපවතී</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">විෂය වෙන් කිරීම (Cutout)</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">විෂයය වෙන් කරන්න</translation>
     </message>
 </context>
 <context>

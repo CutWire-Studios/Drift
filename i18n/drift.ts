@@ -2339,23 +2339,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2363,31 +2347,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2440,14 +2400,6 @@
     </message>
     <message>
         <source>Detect Faces</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2566,10 +2518,6 @@
     </message>
     <message>
         <source>Save combined multicam</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2924,10 +2872,6 @@
     </message>
     <message>
         <source>Change Stabilization Mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cutout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11305,6 +11249,77 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 – %2  ·  %3s</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

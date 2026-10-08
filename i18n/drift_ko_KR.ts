@@ -2336,56 +2336,16 @@
         <translation>자막이 생성되었습니다</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>분리할 동영상 클립을 선택하세요</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>속도 곡선이 제거됨</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>피사체 분리가 이미 실행 중입니다</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>이 클립에는 분리할 동영상이 없습니다</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>먼저 피사체를 클릭하세요</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>준비 중…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>클립이 너무 짧아 피사체를 분리할 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>피사체 분리 파일을 만들 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>피사체 분리가 취소됨</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>프레임 %1을(를) 디코딩할 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>%2개 중 %1번째 프레임 처리 중…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>피사체 분리 완료 — %2개 프레임 중 %1개에서 피사체가 분리됨</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>피사체 분리 완료</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2438,14 +2398,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>얼굴 감지</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>해당 클립이 더 이상 존재하지 않습니다</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>피사체 분리</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2562,10 +2514,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>통합 멀티캠 저장</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>피사체 분리 중…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2918,10 +2866,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>안정화 모드 변경</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>피사체 분리</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11261,6 +11205,77 @@ If playback stutters, try another.</source>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2 · %3초</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">분리할 동영상 클립을 선택하세요</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">피사체 분리가 이미 실행 중입니다</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">이 클립에는 분리할 동영상이 없습니다</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">먼저 피사체를 클릭하세요</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">준비 중…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">피사체 분리 중…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">완료</translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">클립이 너무 짧아 피사체를 분리할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">피사체 분리 파일을 만들 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">피사체 분리가 취소됨</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">프레임 %1을(를) 디코딩할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">%2개 중 %1번째 프레임 처리 중…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">피사체 분리 완료 — %2개 프레임 중 %1개에서 피사체가 분리됨</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">피사체 분리 완료</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">해당 클립이 더 이상 존재하지 않습니다</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">피사체 분리</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">피사체 분리</translation>
     </message>
 </context>
 <context>

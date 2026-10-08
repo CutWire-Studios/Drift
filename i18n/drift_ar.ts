@@ -2347,56 +2347,16 @@
         <translation>تم إنشاء الترجمة</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>حدد مقطع فيديو لعزله</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>تمت إزالة منحنى السرعة</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>عملية العزل قيد التشغيل بالفعل</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>لا يحتوي هذا المقطع على فيديو لعزله</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>انقر على العنصر أولًا</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>جارٍ التحضير…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>المقطع قصير جدًا لعزله</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>تعذر إنشاء ملف العزل</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>تم إلغاء العزل</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>تعذر فك ترميز الإطار %1</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>جارٍ معالجة الإطار %1 من %2…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>اكتمل العزل — تم عزل العنصر في %1 من %2 إطارًا</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>اكتمل العزل</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2449,14 +2409,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>اكتشاف الوجوه</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>ذلك المقطع لم يعد موجودًا</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>عزل العنصر</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2583,10 +2535,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>حفظ الكاميرات المتعددة المجمعة</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>جارٍ عزل العنصر…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2833,10 +2781,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>تغيير وضع تثبيت الصورة</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>استقطاع</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11493,6 +11437,77 @@ If playback stutters, try another.</source>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2  ·  %3s</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">حدد مقطع فيديو لعزله</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">عملية العزل قيد التشغيل بالفعل</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">لا يحتوي هذا المقطع على فيديو لعزله</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">انقر على العنصر أولًا</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">جارٍ التحضير…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">جارٍ عزل العنصر…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">تم</translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">المقطع قصير جدًا لعزله</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">تعذر إنشاء ملف العزل</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">تم إلغاء العزل</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">تعذر فك ترميز الإطار %1</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">جارٍ معالجة الإطار %1 من %2…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">اكتمل العزل — تم عزل العنصر في %1 من %2 إطارًا</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">اكتمل العزل</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">ذلك المقطع لم يعد موجودًا</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">استقطاع</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">عزل العنصر</translation>
     </message>
 </context>
 <context>

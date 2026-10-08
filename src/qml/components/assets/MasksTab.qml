@@ -79,18 +79,18 @@ Item {
             // or a DRIFT_*_MODEL_DIR override, so ask the engine rather than the addon registry.
             // That answer is not a binding, hence the reset below when an addon of either kind
             // appears.
-            property bool segmentReady: EditorState.segmentationAvailable()
+            property bool segmentReady: EditorState.segmentation.available()
             property bool runtimeReady: Addons.runtimeAvailable()
             // Either cutout model unlocks the window, so the download prompt below points at
             // RVM — the smaller one — and SAM2 is offered separately as an extra capability.
-            property bool hasSam2: EditorState.segmentationBackends().indexOf("sam2") >= 0
+            property bool hasSam2: EditorState.segmentation.backends().indexOf("sam2") >= 0
 
             Connections {
                 target: Addons
                 function onKindChanged(kind) {
                     if (kind === "sam2-model" || kind === "rvm-model") {
-                        segmentSection.segmentReady = EditorState.segmentationAvailable()
-                        segmentSection.hasSam2 = EditorState.segmentationBackends().indexOf("sam2") >= 0
+                        segmentSection.segmentReady = EditorState.segmentation.available()
+                        segmentSection.hasSam2 = EditorState.segmentation.backends().indexOf("sam2") >= 0
                     } else if (kind === "onnxruntime") {
                         segmentSection.runtimeReady = Addons.runtimeAvailable()
                     }
@@ -109,7 +109,7 @@ Item {
                 visible: segmentSection.segmentReady && segmentSection.runtimeReady
                 width: parent.width
                 text: qsTr("Cut out subject…")
-                enabled: !EditorState.segmenting && root.clipKind === "video"
+                enabled: !EditorState.segmentation.running && root.clipKind === "video"
                 tooltip: root.clipKind === "video"
                          ? qsTr("Trace the subject and pin the result as a mask layer")
                          : qsTr("Select a video clip first")

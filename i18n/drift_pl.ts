@@ -2342,56 +2342,16 @@
         <translation>Wygenerowano napisy</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>Wybierz klip wideo do wycięcia</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Usunięto krzywą prędkości</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>Wycinanie już trwa</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>Ten klip nie ma wideo do wycięcia</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>Najpierw kliknij obiekt</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>Przygotowywanie…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>Klip jest za krótki do wycięcia</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>Nie udało się utworzyć pliku wycięcia</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>Anulowano wycinanie</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>Nie udało się zdekodować klatki %1</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>Przetwarzanie klatki %1 z %2…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>Wycinanie zakończone — obiekt wycięty na %1 z %2 klatek</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>Wycinanie zakończone</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2444,14 +2404,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>Wykryj twarze</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>Ten klip już nie istnieje</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>Wytnij obiekt</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2572,10 +2524,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>Zapisz połączony multicam</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>Wycinanie obiektu…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2932,10 +2880,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>Zmień tryb stabilizacji</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>Wycinanie</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11358,6 +11302,77 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2  ·  %3s</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">Wybierz klip wideo do wycięcia</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">Wycinanie już trwa</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">Ten klip nie ma wideo do wycięcia</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">Najpierw kliknij obiekt</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">Przygotowywanie…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">Wycinanie obiektu…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Gotowe</translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">Klip jest za krótki do wycięcia</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">Nie udało się utworzyć pliku wycięcia</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">Anulowano wycinanie</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">Nie udało się zdekodować klatki %1</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">Przetwarzanie klatki %1 z %2…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">Wycinanie zakończone — obiekt wycięty na %1 z %2 klatek</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">Wycinanie zakończone</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">Ten klip już nie istnieje</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">Wycinanie</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">Wytnij obiekt</translation>
     </message>
 </context>
 <context>

@@ -12,8 +12,6 @@
 #include "engine/MediaWaveform.h"
 #include "engine/WaveformBlockCache.h"
 #include "engine/ProjectBundle.h"
-#include "engine/RvmMatter.h"
-#include "engine/Sam2Segmenter.h"
 #include "TimelineClipsModel.h"
 #include "models/AssetLibrary.h"
 #include "models/BinFolderListModel.h"
@@ -65,6 +63,7 @@ struct MediaEditSpec;
 #include "AssetPreviewController.h"
 #include "CurveEditorController.h"
 #include "McpController.h"
+#include "SegmentationController.h"
 #include "SpeedCurveController.h"
 #include "PreferencesController.h"
 #include "ProjectFileController.h"
@@ -83,6 +82,7 @@ class AppController : public QObject
     friend class AssetPreviewController;
     friend class SpeedCurveController;
     friend class CurveEditorController;
+    friend class SegmentationController;
 
     Q_OBJECT
 
@@ -109,6 +109,8 @@ class AppController : public QObject
     Q_PROPERTY(SpeedCurveController *speedCurve READ speedCurve CONSTANT)
     // Fade and transition curve sessions. QML: EditorState.curves.
     Q_PROPERTY(CurveEditorController *curves READ curves CONSTANT)
+    // Cutout pipeline and prompting session. QML: EditorState.segmentation.
+    Q_PROPERTY(SegmentationController *segmentation READ segmentation CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
@@ -212,23 +214,12 @@ class AppController : public QObject
     Q_PROPERTY(QString assetEditName READ assetEditName NOTIFY assetEditChanged)
     Q_PROPERTY(double subtitleGenProgress READ subtitleGenProgress NOTIFY subtitleGenProgressChanged)
     Q_PROPERTY(QString subtitleGenStatus READ subtitleGenStatus NOTIFY subtitleGenStatusChanged)
-    Q_PROPERTY(bool segmenting READ segmenting NOTIFY segmentingChanged)
-    Q_PROPERTY(double segmentProgress READ segmentProgress NOTIFY segmentProgressChanged)
-    Q_PROPERTY(QString segmentStatus READ segmentStatus NOTIFY segmentStatusChanged)
     Q_PROPERTY(bool reverseRendering READ reverseRendering NOTIFY reverseRenderingChanged)
     Q_PROPERTY(double reverseRenderProgress READ reverseRenderProgress NOTIFY reverseRenderProgressChanged)
     Q_PROPERTY(QString reverseRenderStatus READ reverseRenderStatus NOTIFY reverseRenderStatusChanged)
     Q_PROPERTY(bool denoising READ denoising NOTIFY denoisingChanged)
     Q_PROPERTY(double denoiseProgress READ denoiseProgress NOTIFY denoiseProgressChanged)
     Q_PROPERTY(QString denoiseStatus READ denoiseStatus NOTIFY denoiseStatusChanged)
-    Q_PROPERTY(bool segmentSessionActive READ segmentSessionActive NOTIFY segmentSessionChanged)
-    Q_PROPERTY(bool segmentationForTemplate READ segmentationForTemplate NOTIFY segmentSessionChanged)
-    Q_PROPERTY(bool segmentEncoding READ segmentEncoding NOTIFY segmentSessionChanged)
-    Q_PROPERTY(int segmentRevision READ segmentRevision NOTIFY segmentSessionChanged)
-    Q_PROPERTY(QVariantList segmentPoints READ segmentPoints NOTIFY segmentSessionChanged)
-    Q_PROPERTY(QString segmentBackend READ segmentBackend NOTIFY segmentSessionChanged)
-    Q_PROPERTY(bool segmentBackendUsesPoints READ segmentBackendUsesPoints NOTIFY segmentSessionChanged)
-    Q_PROPERTY(QSize segmentFrameSize READ segmentFrameSize NOTIFY segmentSessionChanged)
     // Multicam punching session. The live project is not touched until Save; switches rewrite a
     // staged copy that playback is pointed at so the program monitor shows the mix.
     Q_PROPERTY(bool multicamActive READ multicamActive NOTIFY multicamChanged)
@@ -322,6 +313,7 @@ public:
     AssetPreviewController *assetPreview() const { return m_assetPreview; }
     SpeedCurveController *speedCurve() const { return m_speedCurve; }
     CurveEditorController *curves() const { return m_curves; }
+    SegmentationController *segmentation() const { return m_segmentation; }
     McpController *mcp() const { return m_mcpController; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
@@ -410,24 +402,12 @@ public:
     QString assetEditName() const { return m_assetEditKeepName; }
     double subtitleGenProgress() const { return m_subtitleGenProgress; }
     QString subtitleGenStatus() const { return m_subtitleGenStatus; }
-    bool segmenting() const { return m_segmenting; }
-    double segmentProgress() const { return m_segmentProgress; }
-    QString segmentStatus() const { return m_segmentStatus; }
     bool reverseRendering() const { return m_reverseRendering; }
     double reverseRenderProgress() const { return m_reverseProgress; }
     QString reverseRenderStatus() const { return m_reverseStatus; }
     bool denoising() const { return m_denoising; }
     double denoiseProgress() const { return m_denoiseProgress; }
     QString denoiseStatus() const { return m_denoiseStatus; }
-    bool segmentSessionActive() const { return m_segSessionActive; }
-    bool segmentationForTemplate() const { return m_segForTemplate; }
-    bool segmentEncoding() const { return m_segEncoding; }
-    int segmentRevision() const { return m_segRevision; }
-    QVariantList segmentPoints() const { return m_segPoints; }
-    QString segmentBackend() const { return m_segBackend; }
-    // SAM2 is prompted; RVM finds people on its own and has nothing to click.
-    bool segmentBackendUsesPoints() const { return m_segBackend == QLatin1String("sam2"); }
-    QSize segmentFrameSize() const { return m_segFrame.size(); }
     bool faceDetecting() const { return m_faceDetecting; }
     double faceDetectProgress() const { return m_faceDetectProgress; }
     QString faceDetectStatus() const { return m_faceDetectStatus; }
@@ -648,27 +628,6 @@ public:
                                    const QString &language = QString(), int maxWordsPerCue = 0);
     Q_INVOKABLE void cancelSubtitleGeneration();
     Q_INVOKABLE QVariantList whisperLanguages();
-    // points: [{x, y, include}] with x/y normalized to the source frame.
-    // outputMode: "clips" (foreground + background on two new tracks) or "mask" (in place).
-    // Which cutout models are installed: "sam2" (click to pick anything) and/or "rvm" (people,
-    // automatic). Empty when neither is.
-    Q_INVOKABLE QStringList segmentationBackends();
-    // Installed RVM model variants, best first: "mobilenetv3", "resnet50".
-    Q_INVOKABLE QStringList rvmQualities();
-    Q_INVOKABLE void setSegmentationBackend(const QString &backend, const QString &quality = {});
-    Q_INVOKABLE void segmentClip(int trackIndex, int clipIndex, const QVariantList &points,
-                                 const QString &outputMode, const QString &backend = {},
-                                 const QString &quality = {});
-    Q_INVOKABLE void cancelSegmentation();
-    Q_INVOKABLE bool segmentationAvailable();
-    Q_INVOKABLE QString segmentationModelVariant();
-    // Interactive prompting session driving the segmentation window. beginSegmentationSession
-    // encodes the reference frame off the GUI thread; point edits after that only re-run the
-    // cheap decoder.
-    Q_INVOKABLE void beginSegmentationSession(int trackIndex, int clipIndex, double seconds,
-                                              bool forTemplate = false);
-    Q_INVOKABLE void endSegmentationSession();
-    void openSegmentationForTemplate(int trackIndex, int clipIndex);
 
     // Starts a punching session from the current video selection (two or more clips on
     // distinct tracks). Returns false when there is nothing to punch and no empty-timeline
@@ -694,14 +653,6 @@ public:
 
     Q_INVOKABLE void setTransitionEasing(int trackIndex, const QString &transitionId,
                                          const QString &curve);
-    Q_INVOKABLE void setSegmentationFrame(double seconds);
-    // Shows the frame at `seconds` while the frame slider is dragged, without the model pass that
-    // setSegmentationFrame runs on release. Requests made while one decodes collapse into the newest.
-    Q_INVOKABLE void scrubSegmentationFrame(double seconds);
-    Q_INVOKABLE void addSegmentationPoint(double x, double y, bool include);
-    Q_INVOKABLE void removeSegmentationPoint(int index);
-    Q_INVOKABLE void clearSegmentationPoints();
-    Q_INVOKABLE void runSegmentationSession(const QString &outputMode);
 
     // Noise removal (DeepFilterNet3). previewDenoise renders a short window either side of the
     // model — original and cleaned — so the denoise window can A/B them before anything is
@@ -1659,23 +1610,16 @@ signals:
     void subtitleGenProgressChanged();
     void subtitleGenStatusChanged();
     void subtitleGenerationFinished(bool ok, const QString &message);
-    void segmentingChanged();
-    void segmentProgressChanged();
-    void segmentStatusChanged();
     void reverseRenderingChanged();
     void reverseRenderProgressChanged();
     void reverseRenderStatusChanged();
     void reverseRenderFinished(bool ok, const QString &message);
     void reverseConfirmRequested(int trackIndex, int clipIndex, double seconds);
-    void segmentationFinished(bool ok, const QString &message);
     void denoisingChanged();
     void denoiseProgressChanged();
     void denoiseStatusChanged();
     void denoisePreviewReady(const QString &originalPath, const QString &cleanPath);
     void denoiseFinished(bool ok, const QString &message);
-    void segmentSessionChanged();
-    void openSegmentationWindowRequested(int trackIndex, int clipIndex, double startSeconds,
-                                         double durationSeconds);
     void multicamChanged();
     void multicamFramesChanged();
     // Raised by the "multicam" shortcut/action. QML owns the window, as with the file actions.
@@ -1858,8 +1802,6 @@ protected:
     bool startMulticamPunching(const QList<QPair<int, int>> &videoClips);
     void rebuildMulticamStaged();
     void applyMulticamSlicesToProject(drift::Project &project, bool combined);
-    void refreshSegmentationPreview();
-    void runSegmentationSeed(int generation);
     void finalizeDepth(const QString &clipId, const QString &path);
     void finalizeFaceDetection(const QString &clipId, const QString &trackPath,
                                drift::TimeUs srcOffsetUs);
@@ -1877,12 +1819,6 @@ protected:
     // Publishes a finished scene analysis into m_scenes, shaped for QML.
     void applySceneAnalysis(const drift::SceneAnalysis &analysis, const QString &clipId,
                             const QString &clipPath, int rotationCorrection);
-    // Completes a segmentation job: pins the matte to the clip as a Mask adjustment on its own
-    // lane. `outputMode` is kept only so the older "clips"/"mask" spellings stay accepted; all
-    // three now produce the same mask layer.
-    void finalizeSegmentation(const QString &clipId, const QString &mattePath,
-                              const QString &matteFgrPath,
-                              drift::TimeUs matteSrcOffsetUs, const QString &outputMode);
     struct SubtitleSource
     {
         QString path;
@@ -2184,10 +2120,6 @@ protected:
     double m_subtitleGenProgress = 0.0;
     QString m_subtitleGenStatus;
     QAtomicInt m_subtitleGenCancel = 0;
-    bool m_segmenting = false;
-    double m_segmentProgress = 0.0;
-    QString m_segmentStatus;
-    QAtomicInt m_segmentCancel = 0;
 
     struct MulticamAngleSnap {
         int trackIndex = -1;
@@ -2255,15 +2187,6 @@ protected:
     QMap<QString, qint64> m_stabilizeLastProgressEmit;
     QSet<QString> m_stabilizeCancelRequested;
     quint64 m_sceneGeneration = 0;
-    bool m_segSessionActive = false;
-    bool m_segForTemplate = false;
-    bool m_segEncoding = false;
-    int m_segTrack = -1;
-    int m_segClip = -1;
-    double m_segSeconds = 0.0;
-    int m_segRevision = 0;
-    bool m_segScrubBusy = false;
-    std::optional<double> m_segScrubPending;
     // Enhance window preview. The generation drops a frame decode or model run that finishes
     // after the frame has moved on.
     int m_restorePreviewRevision = 0;
@@ -2273,15 +2196,6 @@ protected:
     QSize m_restoreEnhancedSize;
     bool m_restoreDecodeBusy = false;
     std::optional<std::pair<QString, double>> m_restorePendingFrame;
-    int m_segGeneration = 0; // bumped per encode request; stale results are dropped
-    int m_segSeedGeneration = 0; // bumped per seed preview; stale masks are dropped
-    bool m_segSeedRunning = false;
-    QImage m_segFrame;
-    drift::Sam2Embedding m_segEmbedding;
-    // "sam2" or "rvm". Persists across sessions so the window reopens on the last choice.
-    QString m_segBackend = QStringLiteral("sam2");
-    QString m_segQuality; // RVM variant; empty means the best installed
-    QVariantList m_segPoints;
     int m_selectedTrack = -1;
     int m_selectedClip = -1;
     int m_selectedTransitionTrack = -1;
@@ -2303,6 +2217,7 @@ protected:
     AssetPreviewController *m_assetPreview = nullptr;
     SpeedCurveController *m_speedCurve = nullptr;
     CurveEditorController *m_curves = nullptr;
+    SegmentationController *m_segmentation = nullptr;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};
     // App-wide custom sets.
     QList<drift::GuideSet> m_guideLibrary;

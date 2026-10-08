@@ -8325,7 +8325,7 @@ void EditorStateTest::cutoutLandsAsAMaskLayerOnTheClipsOwnLane()
     const int tracksBefore = state.project()->tracks().size();
     const drift::Clip source = state.project()->tracks().at(0).clips.at(0);
 
-    state.finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/subject.mkv"),
+    state.segmentation()->finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/subject.mkv"),
                                QStringLiteral("/tmp/mattes/subject.fgr.mkv"),
                                drift::secondsToUs(0.5), QStringLiteral("adjustment"));
 
@@ -8376,7 +8376,7 @@ void EditorStateTest::maskRoundTripsThroughTheInspectorMap()
     appendTwoVideoClips(*state.project());
 
     const drift::Clip source = state.project()->tracks().at(0).clips.at(0);
-    state.finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/subject.mkv"),
+    state.segmentation()->finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/subject.mkv"),
                                QStringLiteral("/tmp/mattes/subject.fgr.mkv"),
                                drift::secondsToUs(0.5), QStringLiteral("adjustment"));
 

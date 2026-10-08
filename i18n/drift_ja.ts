@@ -2336,56 +2336,16 @@
         <translation>字幕を生成しました</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>切り抜くビデオクリップを選択してください</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>スピードカーブを削除しました</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>切り抜きは既に実行中です</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>このクリップには切り抜くビデオがありません</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>まず被写体をクリックしてください</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>準備中…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>クリップが短すぎて切り抜けません</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>切り抜きファイルを作成できませんでした</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>切り抜きをキャンセルしました</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>フレーム %1 をデコードできませんでした</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>フレーム %1 / %2 を処理中…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>切り抜き完了 — %2 フレーム中 %1 フレームで被写体を切り抜きました</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>切り抜き完了</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2438,14 +2398,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>顔を検出</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>そのクリップは存在しなくなりました</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>被写体を切り抜く</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2562,10 +2514,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>マルチカムを結合して保存</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>被写体を切り抜き中…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2918,10 +2866,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>手ぶれ補正モードを変更</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>切り抜き</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11268,6 +11212,77 @@ If playback stutters, try another.</source>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2  ·  %3秒</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">切り抜くビデオクリップを選択してください</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">切り抜きは既に実行中です</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">このクリップには切り抜くビデオがありません</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">まず被写体をクリックしてください</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">準備中…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">被写体を切り抜き中…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">完了</translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">クリップが短すぎて切り抜けません</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">切り抜きファイルを作成できませんでした</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">切り抜きをキャンセルしました</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">フレーム %1 をデコードできませんでした</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">フレーム %1 / %2 を処理中…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">切り抜き完了 — %2 フレーム中 %1 フレームで被写体を切り抜きました</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">切り抜き完了</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">そのクリップは存在しなくなりました</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">切り抜き</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">被写体を切り抜く</translation>
     </message>
 </context>
 <context>

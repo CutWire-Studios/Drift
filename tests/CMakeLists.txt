@@ -24,6 +24,7 @@ qt_add_executable(tst_editorstate
     ../src/models/AssetPreviewController.cpp
     ../src/models/SpeedCurveController.cpp
     ../src/models/CurveEditorController.cpp
+    ../src/models/SegmentationController.cpp
     ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp
@@ -196,6 +197,7 @@ qt_add_executable(tst_mcp
     ../src/models/AssetPreviewController.cpp
     ../src/models/SpeedCurveController.cpp
     ../src/models/CurveEditorController.cpp
+    ../src/models/SegmentationController.cpp
     ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp

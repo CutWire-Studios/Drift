@@ -2336,56 +2336,16 @@
         <translation>Phụ đề đã được tạo</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>Chọn một video clip để cắt ra</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Đã xóa đường cong tốc độ</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>Phần cắt ra đang chạy</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>Clip này không có video để cắt</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>Nhấn vào chủ đề đầu tiên</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>Đang chuẩn bị…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>Clip quá ngắn để cắt ra</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>Không thể tạo tệp cắt</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>Cắt đã bị hủy</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>Không thể giải mã khung %1</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>Đang xử lý khung %1 của %2…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>Quá trình cắt hoàn tất - chủ đề bị cắt trên %1 của %2 khung</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>Cắt hoàn tất</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2438,14 +2398,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>Nhận diện khuôn mặt</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>Clip đó không còn tồn tại</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>Cắt bỏ chủ đề</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2562,10 +2514,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>Lưu hợp nhất đa góc quay</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>Đang cắt bỏ chủ đề…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2918,10 +2866,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>Thay đổi chế độ ổn định</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>Tách nền</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11268,6 +11212,77 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2  ·  %3s</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">Chọn một video clip để cắt ra</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">Phần cắt ra đang chạy</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">Clip này không có video để cắt</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">Nhấn vào chủ đề đầu tiên</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">Đang chuẩn bị…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">Đang cắt bỏ chủ đề…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">Clip quá ngắn để cắt ra</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">Không thể tạo tệp cắt</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">Cắt đã bị hủy</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">Không thể giải mã khung %1</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">Đang xử lý khung %1 của %2…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">Quá trình cắt hoàn tất - chủ đề bị cắt trên %1 của %2 khung</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">Cắt hoàn tất</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">Clip đó không còn tồn tại</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">Tách nền</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">Cắt bỏ chủ đề</translation>
     </message>
 </context>
 <context>

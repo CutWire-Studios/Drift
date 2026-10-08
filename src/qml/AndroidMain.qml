@@ -785,11 +785,15 @@ ApplicationWindow {
     }
 
     Connections {
-        target: EditorState
-
-        function onOpenSegmentationWindowRequested(track, clip, startSeconds, durationSeconds) {
+        target: EditorState.segmentation
+        function onOpenWindowRequested(track, clip, startSeconds, durationSeconds) {
             segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds, true)
         }
+    }
+
+    Connections {
+        target: EditorState
+
         function onOpenMulticamWindowRequested() {
             multicamWindowLoader.ensure().openSession()
         }

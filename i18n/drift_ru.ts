@@ -2342,56 +2342,16 @@
         <translation>Субтитры созданы</translation>
     </message>
     <message>
-        <source>Select a video clip to cut out</source>
-        <translation>Выберите видеоклип для вырезания объекта</translation>
-    </message>
-    <message>
         <source>Speed curve removed</source>
         <translation>Кривая скорости удалена</translation>
-    </message>
-    <message>
-        <source>Cutout is already running</source>
-        <translation>Вырезание объекта уже выполняется</translation>
-    </message>
-    <message>
-        <source>This clip has no video to cut out</source>
-        <translation>В этом клипе нет видео для вырезания объекта</translation>
-    </message>
-    <message>
-        <source>Click the subject first</source>
-        <translation>Сначала нажмите на объект</translation>
     </message>
     <message>
         <source>Getting ready…</source>
         <translation>Подготовка…</translation>
     </message>
     <message>
-        <source>Clip is too short to cut out</source>
-        <translation>Клип слишком короткий для вырезания объекта</translation>
-    </message>
-    <message>
-        <source>Could not create a cutout file</source>
-        <translation>Не удалось создать файл с вырезанным объектом</translation>
-    </message>
-    <message>
-        <source>Cutout cancelled</source>
-        <translation>Вырезание объекта отменено</translation>
-    </message>
-    <message>
         <source>Could not decode frame %1</source>
         <translation>Не удалось декодировать кадр %1</translation>
-    </message>
-    <message>
-        <source>Processing frame %1 of %2…</source>
-        <translation>Обработка кадра %1 из %2…</translation>
-    </message>
-    <message>
-        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>Готово: объект вырезан в %1 из %2 кадров</translation>
-    </message>
-    <message>
-        <source>Cutout complete</source>
-        <translation>Вырезание объекта завершено</translation>
     </message>
     <message>
         <source>Clear Face Track</source>
@@ -2444,14 +2404,6 @@
     <message>
         <source>Detect Faces</source>
         <translation>Найти лица</translation>
-    </message>
-    <message>
-        <source>That clip no longer exists</source>
-        <translation>Этого клипа больше нет</translation>
-    </message>
-    <message>
-        <source>Cut out subject</source>
-        <translation>Вырезать объект</translation>
     </message>
     <message>
         <source>Clip</source>
@@ -2572,10 +2524,6 @@
     <message>
         <source>Save combined multicam</source>
         <translation>Сохранить объединённый мультикамерный монтаж</translation>
-    </message>
-    <message>
-        <source>Cutting out subject…</source>
-        <translation>Вырезание объекта…</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -2932,10 +2880,6 @@
     <message>
         <source>Change Stabilization Mode</source>
         <translation>Изменить режим стабилизации</translation>
-    </message>
-    <message>
-        <source>Cutout</source>
-        <translation>Вырезанный объект</translation>
     </message>
     <message>
         <source> (denoised)</source>
@@ -11358,6 +11302,77 @@ If playback stutters, try another.</source>
     <message>
         <source>%1 – %2  ·  %3s</source>
         <translation>%1 – %2  ·  %3 с</translation>
+    </message>
+</context>
+<context>
+    <name>SegmentationController</name>
+    <message>
+        <source>Select a video clip to cut out</source>
+        <translation type="unfinished">Выберите видеоклип для вырезания объекта</translation>
+    </message>
+    <message>
+        <source>Cutout is already running</source>
+        <translation type="unfinished">Вырезание объекта уже выполняется</translation>
+    </message>
+    <message>
+        <source>This clip has no video to cut out</source>
+        <translation type="unfinished">В этом клипе нет видео для вырезания объекта</translation>
+    </message>
+    <message>
+        <source>Click the subject first</source>
+        <translation type="unfinished">Сначала нажмите на объект</translation>
+    </message>
+    <message>
+        <source>Getting ready…</source>
+        <translation type="unfinished">Подготовка…</translation>
+    </message>
+    <message>
+        <source>Cutting out subject…</source>
+        <translation type="unfinished">Вырезание объекта…</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished">Готово</translation>
+    </message>
+    <message>
+        <source>Clip is too short to cut out</source>
+        <translation type="unfinished">Клип слишком короткий для вырезания объекта</translation>
+    </message>
+    <message>
+        <source>Could not create a cutout file</source>
+        <translation type="unfinished">Не удалось создать файл с вырезанным объектом</translation>
+    </message>
+    <message>
+        <source>Cutout cancelled</source>
+        <translation type="unfinished">Вырезание объекта отменено</translation>
+    </message>
+    <message>
+        <source>Could not decode frame %1</source>
+        <translation type="unfinished">Не удалось декодировать кадр %1</translation>
+    </message>
+    <message>
+        <source>Processing frame %1 of %2…</source>
+        <translation type="unfinished">Обработка кадра %1 из %2…</translation>
+    </message>
+    <message>
+        <source>Cutout complete — subject cut out on %1 of %2 frames</source>
+        <translation type="unfinished">Готово: объект вырезан в %1 из %2 кадров</translation>
+    </message>
+    <message>
+        <source>Cutout complete</source>
+        <translation type="unfinished">Вырезание объекта завершено</translation>
+    </message>
+    <message>
+        <source>That clip no longer exists</source>
+        <translation type="unfinished">Этого клипа больше нет</translation>
+    </message>
+    <message>
+        <source>Cutout</source>
+        <translation type="unfinished">Вырезанный объект</translation>
+    </message>
+    <message>
+        <source>Cut out subject</source>
+        <translation type="unfinished">Вырезать объект</translation>
     </message>
 </context>
 <context>

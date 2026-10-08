@@ -889,6 +889,8 @@ qt_add_executable(drift
     src/models/SpeedCurveController.cpp
     src/models/CurveEditorController.h
     src/models/CurveEditorController.cpp
+    src/models/SegmentationController.h
+    src/models/SegmentationController.cpp
     src/models/McpDetail.h
     src/models/AppControllerDetail.h
     src/models/EditorState.h
