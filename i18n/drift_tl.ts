@@ -2347,14 +2347,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2868,18 +2860,6 @@
     </message>
     <message>
         <source>Transition curve updated</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5507,6 +5487,29 @@
     <message>
         <source>Apply</source>
         <translation type="unfinished">Gamitin</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

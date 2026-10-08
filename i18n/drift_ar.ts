@@ -2355,14 +2355,6 @@
         <translation>تمت إزالة منحنى السرعة</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation>تم نقل ذلك المقطع — افتح التلاشي المخصص مجددًا</translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation>تم تطبيق التلاشي المخصص</translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation>عملية العزل قيد التشغيل بالفعل</translation>
     </message>
@@ -2805,18 +2797,6 @@
     <message>
         <source>Transition curve updated</source>
         <translation>تم تحديث منحنى الانتقال</translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation>لم يعد هذا الانتقال موجودًا — افتح المنحنى المخصص مرة أخرى</translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation>منحنى انتقال مخصص</translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
-        <translation>تم تطبيق منحنى الانتقال المخصص</translation>
     </message>
     <message>
         <source>Building keyframes…</source>
@@ -5595,6 +5575,29 @@
     <message>
         <source>Apply</source>
         <translation>تطبيق</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished">لم يعد هذا الانتقال موجودًا — افتح المنحنى المخصص مرة أخرى</translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished">منحنى انتقال مخصص</translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished">تم تطبيق منحنى الانتقال المخصص</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished">تم نقل ذلك المقطع — افتح التلاشي المخصص مجددًا</translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished">تم تطبيق التلاشي المخصص</translation>
     </message>
 </context>
 <context>

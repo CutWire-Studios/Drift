@@ -2347,14 +2347,6 @@
         <translation>Curva di velocità rimossa</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation>La clip è stata spostata: riapri Dissolvenza personalizzata</translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation>Dissolvenza personalizzata applicata</translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation>Il ritaglio del soggetto è già in esecuzione</translation>
     </message>
@@ -2865,18 +2857,6 @@
     <message>
         <source>Transition curve updated</source>
         <translation>Curva di transizione aggiornata</translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation>Quella transizione non è più presente — apri di nuovo la curva personalizzata</translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation>Curva di transizione personalizzata</translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
-        <translation>Curva di transizione personalizzata applicata</translation>
     </message>
     <message>
         <source>Select a video or image clip to estimate depth for</source>
@@ -5507,6 +5487,29 @@
     <message>
         <source>Apply</source>
         <translation>Applica</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished">Quella transizione non è più presente — apri di nuovo la curva personalizzata</translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished">Curva di transizione personalizzata</translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished">Curva di transizione personalizzata applicata</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished">La clip è stata spostata: riapri Dissolvenza personalizzata</translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished">Dissolvenza personalizzata applicata</translation>
     </message>
 </context>
 <context>

@@ -23,6 +23,7 @@ qt_add_executable(tst_editorstate
     ../src/models/ProjectFileController.cpp
     ../src/models/AssetPreviewController.cpp
     ../src/models/SpeedCurveController.cpp
+    ../src/models/CurveEditorController.cpp
     ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp
@@ -194,6 +195,7 @@ qt_add_executable(tst_mcp
     ../src/models/ProjectFileController.cpp
     ../src/models/AssetPreviewController.cpp
     ../src/models/SpeedCurveController.cpp
+    ../src/models/CurveEditorController.cpp
     ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp

@@ -2350,14 +2350,6 @@
         <translation>Usunięto krzywą prędkości</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation>Ten klip został przeniesiony — otwórz ponownie Niestandardowe zanikanie</translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation>Zastosowano niestandardowe zanikanie</translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation>Wycinanie już trwa</translation>
     </message>
@@ -2872,18 +2864,6 @@
     <message>
         <source>Transition curve updated</source>
         <translation>Zaktualizowano krzywą przejścia</translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation>To przejście zniknęło — otwórz ponownie niestandardową krzywą</translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation>Niestandardowa krzywa przejścia</translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
-        <translation>Zastosowano niestandardową krzywą przejścia</translation>
     </message>
     <message>
         <source>Select a video or image clip to estimate depth for</source>
@@ -5529,6 +5509,29 @@
     <message>
         <source>Apply</source>
         <translation>Zastosuj</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished">To przejście zniknęło — otwórz ponownie niestandardową krzywą</translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished">Niestandardowa krzywa przejścia</translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished">Zastosowano niestandardową krzywą przejścia</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished">Ten klip został przeniesiony — otwórz ponownie Niestandardowe zanikanie</translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished">Zastosowano niestandardowe zanikanie</translation>
     </message>
 </context>
 <context>

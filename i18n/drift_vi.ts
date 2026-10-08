@@ -2344,14 +2344,6 @@
         <translation>Đã xóa đường cong tốc độ</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation>Đã di chuyển clip — Hãy mở lại Tùy chỉnh làm mờ</translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation>Đã áp dụng độ mờ tùy chỉnh</translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation>Phần cắt ra đang chạy</translation>
     </message>
@@ -2858,18 +2850,6 @@
     <message>
         <source>Transition curve updated</source>
         <translation>Đã cập nhật đường cong chuyển cảnh</translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation>Hiệu ứng chuyển cảnh đó đã bị mất — hãy mở lại đường cong tùy chỉnh</translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation>Đường cong chuyển cảnh tùy chỉnh</translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
-        <translation>Đã áp dụng đường cong chuyển cảnh tùy chỉnh</translation>
     </message>
     <message>
         <source>Select a video or image clip to estimate depth for</source>
@@ -5485,6 +5465,29 @@
     <message>
         <source>Apply</source>
         <translation>Áp dụng</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished">Hiệu ứng chuyển cảnh đó đã bị mất — hãy mở lại đường cong tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished">Đường cong chuyển cảnh tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished">Đã áp dụng đường cong chuyển cảnh tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished">Đã di chuyển clip — Hãy mở lại Tùy chỉnh làm mờ</translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished">Đã áp dụng độ mờ tùy chỉnh</translation>
     </message>
 </context>
 <context>

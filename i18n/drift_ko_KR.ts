@@ -2344,14 +2344,6 @@
         <translation>속도 곡선이 제거됨</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation>클립이 이동했습니다 — 사용자 지정 페이드를 다시 열어주세요</translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation>사용자 지정 페이드가 적용됨</translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation>피사체 분리가 이미 실행 중입니다</translation>
     </message>
@@ -2858,18 +2850,6 @@
     <message>
         <source>Transition curve updated</source>
         <translation>전환 곡선이 업데이트됨</translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation>해당 전환이 사라졌습니다 — 사용자 지정 곡선을 다시 여세요</translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation>사용자 지정 전환 곡선</translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
-        <translation>사용자 지정 전환 곡선이 적용됨</translation>
     </message>
     <message>
         <source>Select a video or image clip to estimate depth for</source>
@@ -5485,6 +5465,29 @@
     <message>
         <source>Apply</source>
         <translation>적용</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished">해당 전환이 사라졌습니다 — 사용자 지정 곡선을 다시 여세요</translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished">사용자 지정 전환 곡선</translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished">사용자 지정 전환 곡선이 적용됨</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished">클립이 이동했습니다 — 사용자 지정 페이드를 다시 열어주세요</translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished">사용자 지정 페이드가 적용됨</translation>
     </message>
 </context>
 <context>

@@ -4816,11 +4816,11 @@ void EditorStateTest::customFadeCurveSessionApplyAndCancel()
     state.setClipFade(0, 0, 1.0, 0.0);
     state.setClipFadeCurve(0, 0, QStringLiteral("linear"));
 
-    state.beginFadeCurveSession(0, 0);
-    QVERIFY(state.fadeCurveSessionActive());
+    state.curves()->beginFade(0, 0);
+    QVERIFY(state.curves()->fadeActive());
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeCurve, drift::FadeCurve::Custom);
 
-    state.setFadeCurvePoints(QVariantList{
+    state.curves()->setFadePoints(QVariantList{
         QVariantMap{{QStringLiteral("t"), 0.0}, {QStringLiteral("g"), 0.0}},
         QVariantMap{{QStringLiteral("t"), 0.5}, {QStringLiteral("g"), 0.2}},
         QVariantMap{{QStringLiteral("t"), 1.0}, {QStringLiteral("g"), 1.0}},
@@ -4828,18 +4828,18 @@ void EditorStateTest::customFadeCurveSessionApplyAndCancel()
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeCurve, drift::FadeCurve::Custom);
     QVERIFY(qAbs(state.project()->tracks().at(0).clips.at(0).fadeShape.gainAt(0.5) - 0.2) < 1e-6);
 
-    state.endFadeCurveSession();
-    QVERIFY(!state.fadeCurveSessionActive());
+    state.curves()->endFade();
+    QVERIFY(!state.curves()->fadeActive());
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeCurve, drift::FadeCurve::Linear);
 
-    state.beginFadeCurveSession(0, 0);
-    state.setFadeCurvePoints(QVariantList{
+    state.curves()->beginFade(0, 0);
+    state.curves()->setFadePoints(QVariantList{
         QVariantMap{{QStringLiteral("t"), 0.0}, {QStringLiteral("g"), 0.0}},
         QVariantMap{{QStringLiteral("t"), 0.5}, {QStringLiteral("g"), 0.75}},
         QVariantMap{{QStringLiteral("t"), 1.0}, {QStringLiteral("g"), 1.0}},
     });
-    state.applyFadeCurve();
-    QVERIFY(!state.fadeCurveSessionActive());
+    state.curves()->applyFade();
+    QVERIFY(!state.curves()->fadeActive());
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeCurve, drift::FadeCurve::Custom);
     QVERIFY(qAbs(state.project()->tracks().at(0).clips.at(0).fadeShape.gainAt(0.5) - 0.75) < 1e-6);
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeCurve, drift::FadeCurve::Custom);
@@ -5032,14 +5032,14 @@ void EditorStateTest::bezierFadeCurveSessionKeepsItsMode()
     state.setClipFade(0, 0, 1.0, 0.0);
     state.setClipFadeCurve(0, 0, QStringLiteral("linear"));
 
-    state.beginFadeCurveSession(0, 0);
-    QCOMPARE(state.fadeCurveMode(), QStringLiteral("points"));
+    state.curves()->beginFade(0, 0);
+    QCOMPARE(state.curves()->fadeMode(), QStringLiteral("points"));
 
-    state.setFadeCurveHandles(0.42, 0.0, 1.0, 1.0);
-    QCOMPARE(state.fadeCurveMode(), QStringLiteral("bezier"));
+    state.curves()->setFadeHandles(0.42, 0.0, 1.0, 1.0);
+    QCOMPARE(state.curves()->fadeMode(), QStringLiteral("bezier"));
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeCurve, drift::FadeCurve::Bezier);
-    state.applyFadeCurve();
-    QVERIFY(!state.fadeCurveSessionActive());
+    state.curves()->applyFade();
+    QVERIFY(!state.curves()->fadeActive());
 
     const drift::Clip &clip = state.project()->tracks().at(0).clips.at(0);
     QCOMPARE(clip.fadeCurve, drift::FadeCurve::Bezier);
@@ -5050,18 +5050,18 @@ void EditorStateTest::bezierFadeCurveSessionKeepsItsMode()
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).fadeCurve, drift::FadeCurve::Bezier);
 
     // Reopening lands back in bezier rather than silently converting to a polyline.
-    state.beginFadeCurveSession(0, 0);
-    QCOMPARE(state.fadeCurveMode(), QStringLiteral("bezier"));
-    QCOMPARE(state.fadeCurveHandles().at(0).toDouble(), 0.42);
+    state.curves()->beginFade(0, 0);
+    QCOMPARE(state.curves()->fadeMode(), QStringLiteral("bezier"));
+    QCOMPARE(state.curves()->fadeHandles().at(0).toDouble(), 0.42);
 
     // Switching to points inside the same session commits the polyline instead.
-    state.setFadeCurvePoints(QVariantList{
+    state.curves()->setFadePoints(QVariantList{
         QVariantMap{{QStringLiteral("t"), 0.0}, {QStringLiteral("g"), 0.0}},
         QVariantMap{{QStringLiteral("t"), 0.5}, {QStringLiteral("g"), 0.9}},
         QVariantMap{{QStringLiteral("t"), 1.0}, {QStringLiteral("g"), 1.0}},
     });
-    QCOMPARE(state.fadeCurveMode(), QStringLiteral("points"));
-    state.applyFadeCurve();
+    QCOMPARE(state.curves()->fadeMode(), QStringLiteral("points"));
+    state.curves()->applyFade();
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).fadeCurve, drift::FadeCurve::Custom);
 }
 
@@ -5078,20 +5078,20 @@ void EditorStateTest::transitionCurveSessionApplyAndCancel()
              drift::FadeCurve::Linear);
 
     // Cancelling puts the previous curve back.
-    state.beginTransitionCurveSession(0, id);
-    QVERIFY(state.transitionCurveSessionActive());
-    state.setTransitionCurveHandles(0.0, 0.0, 0.58, 1.0);
+    state.curves()->beginTransition(0, id);
+    QVERIFY(state.curves()->transitionActive());
+    state.curves()->setTransitionHandles(0.0, 0.0, 0.58, 1.0);
     QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve,
              drift::FadeCurve::Bezier);
-    state.endTransitionCurveSession();
+    state.curves()->endTransition();
     QCOMPARE(state.project()->tracks().at(0).transitions.at(0).easingCurve,
              drift::FadeCurve::Linear);
 
     // Applying keeps it, and the remap actually reaches transitionProgress.
-    state.beginTransitionCurveSession(0, id);
-    state.setTransitionCurveHandles(0.0, 0.0, 0.58, 1.0);
-    state.applyTransitionCurve();
-    QVERIFY(!state.transitionCurveSessionActive());
+    state.curves()->beginTransition(0, id);
+    state.curves()->setTransitionHandles(0.0, 0.0, 0.58, 1.0);
+    state.curves()->applyTransition();
+    QVERIFY(!state.curves()->transitionActive());
 
     const drift::Transition &t = state.project()->tracks().at(0).transitions.at(0);
     QCOMPARE(t.easingCurve, drift::FadeCurve::Bezier);

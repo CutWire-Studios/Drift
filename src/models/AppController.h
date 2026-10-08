@@ -63,6 +63,7 @@ struct MediaEditSpec;
 #include "playback/PlaybackEngine.h"
 #include "preview/PreviewController.h"
 #include "AssetPreviewController.h"
+#include "CurveEditorController.h"
 #include "McpController.h"
 #include "SpeedCurveController.h"
 #include "PreferencesController.h"
@@ -81,6 +82,7 @@ class AppController : public QObject
     friend class ProjectFileController;
     friend class AssetPreviewController;
     friend class SpeedCurveController;
+    friend class CurveEditorController;
 
     Q_OBJECT
 
@@ -105,6 +107,8 @@ class AppController : public QObject
     Q_PROPERTY(AssetPreviewController *assetPreview READ assetPreview CONSTANT)
     // Speed-curve editing session. QML: EditorState.speedCurve.
     Q_PROPERTY(SpeedCurveController *speedCurve READ speedCurve CONSTANT)
+    // Fade and transition curve sessions. QML: EditorState.curves.
+    Q_PROPERTY(CurveEditorController *curves READ curves CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
@@ -241,27 +245,6 @@ class AppController : public QObject
     // There is enough imported video to build a rig from, and no visual clips that building one
     // would disturb. Drives the window's "set this up for me" offer.
     Q_PROPERTY(bool multicamCanSetUp READ multicamCanSetUp NOTIFY multicamChanged)
-
-    // Custom fade-shape session for FadeCurveWindow. Candidate is auditioned on the live clip
-    // until applyFadeCurve commits it (or endFadeCurveSession restores the prior shape).
-    Q_PROPERTY(bool fadeCurveSessionActive READ fadeCurveSessionActive NOTIFY fadeCurveSessionChanged)
-    Q_PROPERTY(QVariantList fadeCurvePoints READ fadeCurvePoints NOTIFY fadeCurveChanged)
-    Q_PROPERTY(QString fadeCurveClipName READ fadeCurveClipName NOTIFY fadeCurveSessionChanged)
-    // Cubic handles for FadeCurve::Bezier, as {c1x, c1y, c2x, c2y}. Separate from the point list
-    // because the two modes edit different shapes, not two views of one.
-    Q_PROPERTY(QVariantList fadeCurveHandles READ fadeCurveHandles NOTIFY fadeCurveChanged)
-    // "points" (polyline) or "bezier" (cubic). The editor opens on whichever the clip already
-    // uses, so reopening Custom does not silently convert a bezier fade into a polyline.
-    Q_PROPERTY(QString fadeCurveMode READ fadeCurveMode NOTIFY fadeCurveChanged)
-
-    // The same editor, scoped to a transition's progress curve rather than a clip's fade. Kept
-    // separate from the clip session above because that one also drives animIn/animOut and the
-    // linked-partner sync, none of which a transition has.
-    Q_PROPERTY(bool transitionCurveSessionActive READ transitionCurveSessionActive NOTIFY transitionCurveSessionChanged)
-    Q_PROPERTY(QVariantList transitionCurvePoints READ transitionCurvePoints NOTIFY transitionCurveChanged)
-    Q_PROPERTY(QString transitionCurveName READ transitionCurveName NOTIFY transitionCurveSessionChanged)
-    Q_PROPERTY(QVariantList transitionCurveHandles READ transitionCurveHandles NOTIFY transitionCurveChanged)
-    Q_PROPERTY(QString transitionCurveMode READ transitionCurveMode NOTIFY transitionCurveChanged)
     Q_PROPERTY(bool faceDetecting READ faceDetecting NOTIFY faceDetectingChanged)
     Q_PROPERTY(double faceDetectProgress READ faceDetectProgress NOTIFY faceDetectProgressChanged)
     Q_PROPERTY(QString faceDetectStatus READ faceDetectStatus NOTIFY faceDetectStatusChanged)
@@ -338,6 +321,7 @@ public:
     ProjectFileController *projectFile() const { return m_projectFile; }
     AssetPreviewController *assetPreview() const { return m_assetPreview; }
     SpeedCurveController *speedCurve() const { return m_speedCurve; }
+    CurveEditorController *curves() const { return m_curves; }
     McpController *mcp() const { return m_mcpController; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
@@ -708,31 +692,8 @@ public:
 
     Q_INVOKABLE void clearClipSpeedCurve(int trackIndex, int clipIndex);
 
-    Q_INVOKABLE void beginFadeCurveSession(int trackIndex, int clipIndex);
-    Q_INVOKABLE void endFadeCurveSession();
-    bool fadeCurveSessionActive() const { return m_fadeCurveActive; }
-    QVariantList fadeCurvePoints() const;
-    Q_INVOKABLE void setFadeCurvePoints(const QVariantList &points);
-    QString fadeCurveClipName() const { return m_fadeCurveClipName; }
-    Q_INVOKABLE void applyFadeCurve();
-    Q_INVOKABLE void resetFadeCurvePreset(const QString &preset);
-    QVariantList fadeCurveHandles() const;
-    QString fadeCurveMode() const;
-    Q_INVOKABLE void setFadeCurveHandles(double c1x, double c1y, double c2x, double c2y);
-
     Q_INVOKABLE void setTransitionEasing(int trackIndex, const QString &transitionId,
                                          const QString &curve);
-    Q_INVOKABLE void beginTransitionCurveSession(int trackIndex, const QString &transitionId);
-    Q_INVOKABLE void endTransitionCurveSession();
-    bool transitionCurveSessionActive() const { return m_transitionCurveActive; }
-    QVariantList transitionCurvePoints() const;
-    QString transitionCurveName() const { return m_transitionCurveName; }
-    Q_INVOKABLE void setTransitionCurvePoints(const QVariantList &points);
-    Q_INVOKABLE void applyTransitionCurve();
-    Q_INVOKABLE void resetTransitionCurvePreset(const QString &preset);
-    QVariantList transitionCurveHandles() const;
-    QString transitionCurveMode() const;
-    Q_INVOKABLE void setTransitionCurveHandles(double c1x, double c1y, double c2x, double c2y);
     Q_INVOKABLE void setSegmentationFrame(double seconds);
     // Shows the frame at `seconds` while the frame slider is dragged, without the model pass that
     // setSegmentationFrame runs on release. Requests made while one decodes collapse into the newest.
@@ -1719,12 +1680,6 @@ signals:
     void multicamFramesChanged();
     // Raised by the "multicam" shortcut/action. QML owns the window, as with the file actions.
     void openMulticamWindowRequested();
-    void fadeCurveSessionChanged();
-    void fadeCurveChanged();
-    void fadeCurveApplied();
-    void transitionCurveSessionChanged();
-    void transitionCurveChanged();
-    void transitionCurveApplied();
     void faceDetectingChanged();
     void depthJobChanged(const QString &clipId);
     void restoreJobChanged(const QString &clipId);
@@ -2262,27 +2217,6 @@ protected:
     // off the signal that caused them.
     QTimer *m_multicamTimer = nullptr;
 
-    bool m_fadeCurveActive = false;
-    int m_fadeCurveTrack = -1;
-    int m_fadeCurveClipIndex = -1;
-    QString m_fadeCurveClipId;
-    QString m_fadeCurveClipName;
-    drift::FadeShape m_fadeShape;
-    drift::FadeCurve m_fadeCurveBefore = drift::FadeCurve::Smooth;
-    drift::FadeShape m_fadeShapeBefore;
-    // Which shape the live session is editing; committed as-is by applyFadeCurve.
-    drift::FadeCurve m_fadeCurveMode = drift::FadeCurve::Custom;
-    bool m_transitionCurveActive = false;
-    int m_transitionCurveTrack = -1;
-    QString m_transitionCurveId;
-    QString m_transitionCurveName;
-    drift::FadeShape m_transitionShape;
-    drift::FadeCurve m_transitionCurveBefore = drift::FadeCurve::Linear;
-    drift::FadeShape m_transitionShapeBefore;
-    drift::FadeCurve m_transitionCurveMode = drift::FadeCurve::Custom;
-    bool m_transitionCurveApplied = false;
-    bool m_fadeCurveApplied = false;
-
     bool m_reverseRendering = false;
     double m_reverseProgress = 0.0;
     QString m_reverseStatus;
@@ -2368,6 +2302,7 @@ protected:
     ProjectFileController *m_projectFile = nullptr;
     AssetPreviewController *m_assetPreview = nullptr;
     SpeedCurveController *m_speedCurve = nullptr;
+    CurveEditorController *m_curves = nullptr;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};
     // App-wide custom sets.
     QList<drift::GuideSet> m_guideLibrary;

@@ -34,23 +34,23 @@ Window {
 
     // Which session the editor is driving. Everything below goes through these four.
     function sessionPoints() {
-        return root.isTransition ? EditorState.transitionCurvePoints : EditorState.fadeCurvePoints
+        return root.isTransition ? EditorState.curves.transitionPoints : EditorState.curves.fadePoints
     }
 
     function sessionHandles() {
-        return root.isTransition ? EditorState.transitionCurveHandles : EditorState.fadeCurveHandles
+        return root.isTransition ? EditorState.curves.transitionHandles : EditorState.curves.fadeHandles
     }
 
     function sessionMode() {
-        return root.isTransition ? EditorState.transitionCurveMode : EditorState.fadeCurveMode
+        return root.isTransition ? EditorState.curves.transitionMode : EditorState.curves.fadeMode
     }
 
     function commitHandles(resync) {
         const h = root.handles
         if (root.isTransition)
-            EditorState.setTransitionCurveHandles(h[0], h[1], h[2], h[3])
+            EditorState.curves.setTransitionHandles(h[0], h[1], h[2], h[3])
         else
-            EditorState.setFadeCurveHandles(h[0], h[1], h[2], h[3])
+            EditorState.curves.setFadeHandles(h[0], h[1], h[2], h[3])
         if (resync !== false) {
             root.handles = root.sessionHandles()
             curveCanvas.requestPaint()
@@ -90,23 +90,23 @@ Window {
 
     function sessionPreset(preset) {
         if (root.isTransition)
-            EditorState.resetTransitionCurvePreset(preset)
+            EditorState.curves.resetTransitionPreset(preset)
         else
-            EditorState.resetFadeCurvePreset(preset)
+            EditorState.curves.resetFadePreset(preset)
     }
 
     function sessionApply() {
         if (root.isTransition)
-            EditorState.applyTransitionCurve()
+            EditorState.curves.applyTransition()
         else
-            EditorState.applyFadeCurve()
+            EditorState.curves.applyFade()
     }
 
     function sessionEnd() {
         if (root.isTransition)
-            EditorState.endTransitionCurveSession()
+            EditorState.curves.endTransition()
         else
-            EditorState.endFadeCurveSession()
+            EditorState.curves.endFade()
     }
 
     function applyPreset(preset) {
@@ -133,7 +133,7 @@ Window {
         root.trackIndex = track
         root.clipIndex = clip
         root.closingAfterApply = false
-        EditorState.beginFadeCurveSession(track, clip)
+        EditorState.curves.beginFade(track, clip)
         root.syncFromSession()
         root.ensureEditable()
         root.show()
@@ -148,7 +148,7 @@ Window {
         root.trackIndex = track
         root.clipIndex = -1
         root.closingAfterApply = false
-        EditorState.beginTransitionCurveSession(track, transitionId)
+        EditorState.curves.beginTransition(track, transitionId)
         root.syncFromSession()
         root.ensureEditable()
         root.show()
@@ -163,14 +163,14 @@ Window {
     }
 
     Connections {
-        target: EditorState
-        function onFadeCurveApplied() {
+        target: EditorState.curves
+        function onFadeApplied() {
             if (root.isTransition)
                 return
             root.closingAfterApply = true
             root.close()
         }
-        function onTransitionCurveApplied() {
+        function onTransitionApplied() {
             if (!root.isTransition)
                 return
             root.closingAfterApply = true
@@ -212,9 +212,9 @@ Window {
     // controller for the same values mid-drag.
     function commit(resync) {
         if (root.isTransition)
-            EditorState.setTransitionCurvePoints(root.points)
+            EditorState.curves.setTransitionPoints(root.points)
         else
-            EditorState.setFadeCurvePoints(root.points)
+            EditorState.curves.setFadePoints(root.points)
         if (resync !== false) {
             root.points = root.sessionPoints()
             curveCanvas.requestPaint()
@@ -272,11 +272,11 @@ Window {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.isTransition
-                      ? (EditorState.transitionCurveName.length
-                         ? qsTr("Progress curve — %1").arg(EditorState.transitionCurveName)
+                      ? (EditorState.curves.transitionName.length
+                         ? qsTr("Progress curve — %1").arg(EditorState.curves.transitionName)
                          : qsTr("Progress curve"))
-                      : (EditorState.fadeCurveClipName.length
-                         ? qsTr("Fade shape — %1").arg(EditorState.fadeCurveClipName)
+                      : (EditorState.curves.fadeClipName.length
+                         ? qsTr("Fade shape — %1").arg(EditorState.curves.fadeClipName)
                          : qsTr("Fade shape"))
                 color: Theme.panelForeground
                 font.family: Theme.fontFamily

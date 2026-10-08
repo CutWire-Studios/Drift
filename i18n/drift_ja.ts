@@ -2344,14 +2344,6 @@
         <translation>スピードカーブを削除しました</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation>クリップが移動しました — カスタムフェードを再度開いてください</translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation>カスタムフェードを適用しました</translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation>切り抜きは既に実行中です</translation>
     </message>
@@ -2858,18 +2850,6 @@
     <message>
         <source>Transition curve updated</source>
         <translation>トランジションカーブを更新しました</translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation>対象のトランジションが存在しません — カスタムカーブを再度開いてください</translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation>カスタムトランジションカーブ</translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
-        <translation>カスタムトランジションカーブを適用しました</translation>
     </message>
     <message>
         <source>Select a video or image clip to estimate depth for</source>
@@ -5485,6 +5465,29 @@
     <message>
         <source>Apply</source>
         <translation>適用</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished">対象のトランジションが存在しません — カスタムカーブを再度開いてください</translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished">カスタムトランジションカーブ</translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished">カスタムトランジションカーブを適用しました</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished">クリップが移動しました — カスタムフェードを再度開いてください</translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished">カスタムフェードを適用しました</translation>
     </message>
 </context>
 <context>

@@ -2350,14 +2350,6 @@
         <translation>Кривая скорости удалена</translation>
     </message>
     <message>
-        <source>That clip moved — open Custom fade again</source>
-        <translation>Клип переместился — откройте настройку плавного перехода заново</translation>
-    </message>
-    <message>
-        <source>Custom fade applied</source>
-        <translation>Настраиваемый плавный переход применён</translation>
-    </message>
-    <message>
         <source>Cutout is already running</source>
         <translation>Вырезание объекта уже выполняется</translation>
     </message>
@@ -2872,18 +2864,6 @@
     <message>
         <source>Transition curve updated</source>
         <translation>Кривая перехода изменена</translation>
-    </message>
-    <message>
-        <source>That transition is gone — open the custom curve again</source>
-        <translation>Этого перехода больше нет — откройте настройку кривой заново</translation>
-    </message>
-    <message>
-        <source>Custom transition curve</source>
-        <translation>Настраиваемая кривая перехода</translation>
-    </message>
-    <message>
-        <source>Custom transition curve applied</source>
-        <translation>Настраиваемая кривая перехода применена</translation>
     </message>
     <message>
         <source>Select a video or image clip to estimate depth for</source>
@@ -5529,6 +5509,29 @@
     <message>
         <source>Apply</source>
         <translation>Применить</translation>
+    </message>
+</context>
+<context>
+    <name>CurveEditorController</name>
+    <message>
+        <source>That transition is gone — open the custom curve again</source>
+        <translation type="unfinished">Этого перехода больше нет — откройте настройку кривой заново</translation>
+    </message>
+    <message>
+        <source>Custom transition curve</source>
+        <translation type="unfinished">Настраиваемая кривая перехода</translation>
+    </message>
+    <message>
+        <source>Custom transition curve applied</source>
+        <translation type="unfinished">Настраиваемая кривая перехода применена</translation>
+    </message>
+    <message>
+        <source>That clip moved — open Custom fade again</source>
+        <translation type="unfinished">Клип переместился — откройте настройку плавного перехода заново</translation>
+    </message>
+    <message>
+        <source>Custom fade applied</source>
+        <translation type="unfinished">Настраиваемый плавный переход применён</translation>
     </message>
 </context>
 <context>

@@ -981,14 +981,14 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             const QJsonArray pointArray = args.value(QStringLiteral("points")).toArray();
             if (pointArray.size() < 2)
                 return err("bad_args", QStringLiteral("points needs at least two entries"));
-            if (m_controller->fadeCurveSessionActive())
-                m_controller->endFadeCurveSession();
-            m_controller->beginFadeCurveSession(ref.track, ref.clip);
-            if (!m_controller->fadeCurveSessionActive())
+            if (m_controller->curves()->fadeActive())
+                m_controller->curves()->endFade();
+            m_controller->curves()->beginFade(ref.track, ref.clip);
+            if (!m_controller->curves()->fadeActive())
                 return err("bad_args", QStringLiteral("Clip cannot use a custom fade curve"));
-            m_controller->setFadeCurvePoints(fadeCurvePointsFromJson(pointArray));
-            m_controller->applyFadeCurve();
-            m_controller->endFadeCurveSession();
+            m_controller->curves()->setFadePoints(fadeCurvePointsFromJson(pointArray));
+            m_controller->curves()->applyFade();
+            m_controller->curves()->endFade();
             return ok(clipFeedback(ref));
         }
         const QString curve = args.value(QStringLiteral("curve")).toString().trimmed();
@@ -2004,13 +2004,13 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
-        if (m_controller->fadeCurveSessionActive())
-            m_controller->endFadeCurveSession();
-        m_controller->beginFadeCurveSession(ref.track, ref.clip);
-        if (!m_controller->fadeCurveSessionActive())
+        if (m_controller->curves()->fadeActive())
+            m_controller->curves()->endFade();
+        m_controller->curves()->beginFade(ref.track, ref.clip);
+        if (!m_controller->curves()->fadeActive())
             return err("bad_args", QStringLiteral("Clip cannot use a custom fade curve"));
-        const QJsonArray points = fadeCurvePointsToJson(m_controller->fadeCurvePoints());
-        m_controller->endFadeCurveSession();
+        const QJsonArray points = fadeCurvePointsToJson(m_controller->curves()->fadePoints());
+        m_controller->curves()->endFade();
         return ok({{QStringLiteral("points"), points}});
     }
 

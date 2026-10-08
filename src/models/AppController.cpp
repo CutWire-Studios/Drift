@@ -588,6 +588,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_projectFile = new ProjectFileController(this, this);
     m_assetPreview = new AssetPreviewController(this, this);
     m_speedCurve = new SpeedCurveController(this, this);
+    m_curves = new CurveEditorController(this, this);
     m_preview = new PreviewController(*this, this);
     m_preferences = new PreferencesController(this);
     connect(m_preferences, &PreferencesController::restartNoticeRequested, this,
@@ -946,15 +947,6 @@ int faceTrackFaceCount(const QString &path)
 QVariantMap transitionToMap(const drift::Project &project, const drift::Track &track, const drift::Transition &t);
 drift::Mask maskFromMap(const QVariantMap &m);
 
-drift::Transition *findTransition(drift::Track &track, const QString &transitionId)
-{
-    for (drift::Transition &transition : track.transitions) {
-        if (transition.id == transitionId)
-            return &transition;
-    }
-    return nullptr;
-}
-
 int findTransitionPartnerIndex(const drift::Track &track, int fromIndex)
 {
     if (fromIndex < 0 || fromIndex >= track.clips.size())
@@ -993,58 +985,6 @@ bool transitionKindFitsTrack(drift::TrackType type, const QString &kindId)
         return true;
     const TransitionPresetEntry *def = transitionDefForId(kindId);
     return !def || def->audioCurve != QLatin1String("hold");
-}
-
-// The clips a video transition's two clips are linked to, when those sit back to back on one audio
-// track: where the same transition's sound belongs once the audio has been separated out. Found by
-// linkId each time rather than stored, so it survives any edit that keeps the pair adjacent.
-struct LinkedAudioPair
-{
-    int track = -1;
-    QString fromId;
-    QString toId;
-    bool valid() const { return track >= 0; }
-};
-
-LinkedAudioPair linkedAudioPairFor(const drift::Project &project, const drift::Track &track,
-                                   const QString &fromClipId, const QString &toClipId)
-{
-    if (track.type == drift::TrackType::Audio)
-        return {};
-    const drift::Clip *from = drift::clipById(track, fromClipId);
-    const drift::Clip *to = drift::clipById(track, toClipId);
-    if (!from || !to || from->linkId.isEmpty() || to->linkId.isEmpty())
-        return {};
-    for (const drift::ClipRef &pf : drift::linkedPartners(project, *from)) {
-        if (project.tracks().at(pf.trackIndex).type != drift::TrackType::Audio)
-            continue;
-        const drift::Track &audio = project.tracks().at(pf.trackIndex);
-        for (const drift::ClipRef &pt : drift::linkedPartners(project, *to)) {
-            if (pt.trackIndex != pf.trackIndex)
-                continue;
-            const drift::Clip &a = audio.clips.at(pf.clipIndex);
-            const drift::Clip &b = audio.clips.at(pt.clipIndex);
-            if (drift::clipsEligibleForTransition(a, b))
-                return {pf.trackIndex, a.id, b.id};
-        }
-    }
-    return {};
-}
-
-drift::Transition *findTransitionBetween(drift::Track &track, const QString &fromId, const QString &toId)
-{
-    for (drift::Transition &t : track.transitions) {
-        if (t.fromClipId == fromId && t.toClipId == toId)
-            return &t;
-    }
-    return nullptr;
-}
-
-// The audio-track twin of a video transition, or null.
-drift::Transition *mirroredAudioTransition(drift::Project &project, int trackIndex, const drift::Transition &t)
-{
-    const LinkedAudioPair pair = linkedAudioPairFor(project, project.tracks().at(trackIndex), t.fromClipId, t.toClipId);
-    return pair.valid() ? findTransitionBetween(project.tracks()[pair.track], pair.fromId, pair.toId) : nullptr;
 }
 
 void syncOverlapTransitionsOnTrack(drift::Track &track)
@@ -3233,6 +3173,71 @@ drift::TimeUs trimSourceDelta(const drift::Clip &clip, drift::TimeUs delta, bool
 
 namespace drift::appdetail {
 
+drift::Transition *findTransition(drift::Track &track, const QString &transitionId)
+{
+    for (drift::Transition &transition : track.transitions) {
+        if (transition.id == transitionId)
+            return &transition;
+    }
+    return nullptr;
+}
+
+LinkedAudioPair linkedAudioPairFor(const drift::Project &project, const drift::Track &track,
+                                   const QString &fromClipId, const QString &toClipId)
+{
+    if (track.type == drift::TrackType::Audio)
+        return {};
+    const drift::Clip *from = drift::clipById(track, fromClipId);
+    const drift::Clip *to = drift::clipById(track, toClipId);
+    if (!from || !to || from->linkId.isEmpty() || to->linkId.isEmpty())
+        return {};
+    for (const drift::ClipRef &pf : drift::linkedPartners(project, *from)) {
+        if (project.tracks().at(pf.trackIndex).type != drift::TrackType::Audio)
+            continue;
+        const drift::Track &audio = project.tracks().at(pf.trackIndex);
+        for (const drift::ClipRef &pt : drift::linkedPartners(project, *to)) {
+            if (pt.trackIndex != pf.trackIndex)
+                continue;
+            const drift::Clip &a = audio.clips.at(pf.clipIndex);
+            const drift::Clip &b = audio.clips.at(pt.clipIndex);
+            if (drift::clipsEligibleForTransition(a, b))
+                return {pf.trackIndex, a.id, b.id};
+        }
+    }
+    return {};
+}
+
+drift::Transition *findTransitionBetween(drift::Track &track, const QString &fromId, const QString &toId)
+{
+    for (drift::Transition &t : track.transitions) {
+        if (t.fromClipId == fromId && t.toClipId == toId)
+            return &t;
+    }
+    return nullptr;
+}
+
+// The audio-track twin of a video transition, or null.
+drift::Transition *mirroredAudioTransition(drift::Project &project, int trackIndex, const drift::Transition &t)
+{
+    const LinkedAudioPair pair = linkedAudioPairFor(project, project.tracks().at(trackIndex), t.fromClipId, t.toClipId);
+    return pair.valid() ? findTransitionBetween(project.tracks()[pair.track], pair.fromId, pair.toId) : nullptr;
+}
+
+void syncLinkedPartnersFrom(drift::Project &project, const drift::Clip &source,
+                            const QSet<QString> &skipClipIds)
+{
+    for (const drift::ClipRef &ref : drift::linkedPartners(project, source)) {
+        const drift::Clip &partner = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+        if (skipClipIds.contains(partner.id))
+            continue;
+        drift::syncLinkedTiming(project.tracks()[ref.trackIndex].clips[ref.clipIndex], source);
+    }
+}
+
+} // namespace drift::appdetail
+
+namespace drift::appdetail {
+
 // Keyframe times are clip-relative, so a clip that changes duration would leave its animation
 // sliding against the picture. Both clips cover the same source range, so each key is carried
 // across through the moment of source it was sitting on.
@@ -3908,17 +3913,6 @@ QList<QPair<int, int>> selectionWithLinkedPartners(const drift::Project &project
             pairs.append(linked);
     }
     return pairs;
-}
-
-void syncLinkedPartnersFrom(drift::Project &project, const drift::Clip &source,
-                            const QSet<QString> &skipClipIds = {})
-{
-    for (const drift::ClipRef &ref : drift::linkedPartners(project, source)) {
-        const drift::Clip &partner = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
-        if (skipClipIds.contains(partner.id))
-            continue;
-        drift::syncLinkedTiming(project.tracks()[ref.trackIndex].clips[ref.clipIndex], source);
-    }
 }
 
 // Ripple by time rather than by index, over several tracks at once: every clip on those tracks
@@ -9804,134 +9798,6 @@ void AppController::clearClipSpeedCurve(int trackIndex, int clipIndex)
     finishEdit(tr("Speed curve removed"));
 }
 
-void AppController::beginFadeCurveSession(int trackIndex, int clipIndex)
-{
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
-    const drift::Track &track = m_project.tracks().at(trackIndex);
-    if (clipIndex < 0 || clipIndex >= track.clips.size())
-        return;
-
-    if (m_fadeCurveActive)
-        endFadeCurveSession();
-
-    drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
-    m_fadeCurveTrack = trackIndex;
-    m_fadeCurveClipIndex = clipIndex;
-    m_fadeCurveClipId = clip.id;
-    m_fadeCurveClipName = clip.name;
-    m_fadeCurveBefore = clip.fadeCurve;
-    m_fadeShapeBefore = clip.fadeShape;
-    m_fadeCurveApplied = false;
-
-    m_fadeCurveMode = clip.fadeCurve == drift::FadeCurve::Bezier ? drift::FadeCurve::Bezier
-                                                                 : drift::FadeCurve::Custom;
-    if (clip.fadeCurve == drift::FadeCurve::Bezier)
-        m_fadeShape = clip.fadeShape.hasHandles() ? clip.fadeShape
-                                                  : drift::FadeShape::bezierPreset(QString());
-    else if (clip.fadeCurve == drift::FadeCurve::Custom && !clip.fadeShape.isEmpty())
-        m_fadeShape = clip.fadeShape;
-    else if (clip.fadeCurve == drift::FadeCurve::Linear)
-        m_fadeShape = drift::FadeShape::linearPreset();
-    else if (clip.fadeCurve == drift::FadeCurve::EqualPower)
-        m_fadeShape = drift::FadeShape::equalPowerPreset();
-    else
-        m_fadeShape = drift::FadeShape::smoothPreset();
-
-    clip.fadeCurve = m_fadeCurveMode;
-    clip.fadeShape = m_fadeShape;
-    syncLinkedPartnersFrom(m_project, clip);
-    m_fadeCurveActive = true;
-    emit fadeCurveSessionChanged();
-    emit fadeCurveChanged();
-    emitPreviewFrame();
-}
-
-void AppController::endFadeCurveSession()
-{
-    if (!m_fadeCurveActive)
-        return;
-
-    if (!m_fadeCurveApplied
-        && m_fadeCurveTrack >= 0 && m_fadeCurveTrack < m_project.tracks().size()) {
-        drift::Track &track = m_project.tracks()[m_fadeCurveTrack];
-        if (m_fadeCurveClipIndex >= 0 && m_fadeCurveClipIndex < track.clips.size()
-            && track.clips.at(m_fadeCurveClipIndex).id == m_fadeCurveClipId) {
-            drift::Clip &clip = track.clips[m_fadeCurveClipIndex];
-            clip.fadeCurve = m_fadeCurveBefore;
-            clip.fadeShape = m_fadeShapeBefore;
-            syncLinkedPartnersFrom(m_project, clip);
-            emitPreviewFrame();
-        }
-    }
-
-    m_fadeCurveActive = false;
-    m_fadeCurveTrack = -1;
-    m_fadeCurveClipIndex = -1;
-    m_fadeCurveClipId.clear();
-    m_fadeCurveClipName.clear();
-    m_fadeShape.clear();
-    m_fadeShapeBefore.clear();
-    m_fadeCurveApplied = false;
-    emit fadeCurveSessionChanged();
-    emit fadeCurveChanged();
-}
-
-QVariantList AppController::fadeCurvePoints() const
-{
-    QVariantList out;
-    for (const QPointF &pt : m_fadeShape.points()) {
-        out.append(QVariantMap{
-            {QStringLiteral("t"), pt.x()},
-            {QStringLiteral("g"), pt.y()},
-        });
-    }
-    return out;
-}
-
-void AppController::setFadeCurvePoints(const QVariantList &points)
-{
-    if (!m_fadeCurveActive)
-        return;
-    if (m_fadeCurveTrack < 0 || m_fadeCurveTrack >= m_project.tracks().size())
-        return;
-    drift::Track &track = m_project.tracks()[m_fadeCurveTrack];
-    if (m_fadeCurveClipIndex < 0 || m_fadeCurveClipIndex >= track.clips.size())
-        return;
-    drift::Clip &clip = track.clips[m_fadeCurveClipIndex];
-    if (clip.id != m_fadeCurveClipId)
-        return;
-
-    QList<QPointF> parsed;
-    parsed.reserve(points.size());
-    for (const QVariant &entry : points) {
-        const QVariantMap map = entry.toMap();
-        parsed.append(QPointF(map.value(QStringLiteral("t")).toDouble(),
-                              map.value(QStringLiteral("g")).toDouble()));
-    }
-    m_fadeShape.setPoints(parsed);
-    m_fadeCurveMode = drift::FadeCurve::Custom;
-    clip.fadeCurve = drift::FadeCurve::Custom;
-    clip.fadeShape = m_fadeShape;
-    if (clip.animIn.kind == drift::ClipAnimKind::Fade || clip.animIn.curve == drift::FadeCurve::Custom) {
-        clip.animIn.curve = drift::FadeCurve::Custom;
-        clip.animIn.shape = m_fadeShape;
-    }
-    if (clip.animOut.kind == drift::ClipAnimKind::Fade || clip.animOut.curve == drift::FadeCurve::Custom) {
-        clip.animOut.curve = drift::FadeCurve::Custom;
-        clip.animOut.shape = m_fadeShape;
-    }
-    syncLinkedPartnersFrom(m_project, clip);
-    emit fadeCurveChanged();
-    emitPreviewFrame();
-}
-
-// --- transition progress curve -------------------------------------------------------------
-//
-// Mirrors the clip fade-curve session: the candidate shape is auditioned on the live transition
-// so the preview updates as the curve is dragged, and either applyTransitionCurve() commits it
-// or endTransitionCurveSession() puts the previous curve back.
-
 void AppController::setTransitionEasing(int trackIndex, const QString &transitionId,
                                         const QString &curve)
 {
@@ -9957,331 +9823,6 @@ void AppController::setTransitionEasing(int trackIndex, const QString &transitio
     finishEdit(tr("Transition curve updated"));
     emit selectedTransitionDataChanged();
     emitPreviewFrame();
-}
-
-void AppController::beginTransitionCurveSession(int trackIndex, const QString &transitionId)
-{
-    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
-        return;
-    drift::Transition *transition = findTransition(m_project.tracks()[trackIndex], transitionId);
-    if (!transition)
-        return;
-
-    if (m_transitionCurveActive)
-        endTransitionCurveSession();
-
-    m_transitionCurveTrack = trackIndex;
-    m_transitionCurveId = transitionId;
-    const TransitionPresetEntry *def = transitionDefForId(transition->kindId);
-    m_transitionCurveName = def ? def->meta.displayName : transition->kindId;
-    m_transitionCurveBefore = transition->easingCurve;
-    m_transitionShapeBefore = transition->easingShape;
-    m_transitionCurveApplied = false;
-
-    // Seed the editor from whatever the transition is using now, so opening Custom on a Smooth
-    // transition starts from that shape rather than snapping to a straight line.
-    m_transitionCurveMode = transition->easingCurve == drift::FadeCurve::Bezier
-        ? drift::FadeCurve::Bezier
-        : drift::FadeCurve::Custom;
-    if (transition->easingCurve == drift::FadeCurve::Bezier)
-        m_transitionShape = transition->easingShape.hasHandles()
-            ? transition->easingShape
-            : drift::FadeShape::bezierPreset(QString());
-    else if (transition->easingCurve == drift::FadeCurve::Custom && !transition->easingShape.isEmpty())
-        m_transitionShape = transition->easingShape;
-    else if (transition->easingCurve == drift::FadeCurve::Smooth)
-        m_transitionShape = drift::FadeShape::smoothPreset();
-    else if (transition->easingCurve == drift::FadeCurve::EqualPower)
-        m_transitionShape = drift::FadeShape::equalPowerPreset();
-    else
-        m_transitionShape = drift::FadeShape::linearPreset();
-
-    transition->easingCurve = m_transitionCurveMode;
-    transition->easingShape = m_transitionShape;
-    m_transitionCurveActive = true;
-    emit transitionCurveSessionChanged();
-    emit transitionCurveChanged();
-    emitPreviewFrame();
-}
-
-void AppController::endTransitionCurveSession()
-{
-    if (!m_transitionCurveActive)
-        return;
-
-    if (!m_transitionCurveApplied && m_transitionCurveTrack >= 0
-        && m_transitionCurveTrack < m_project.tracks().size()) {
-        drift::Transition *transition =
-            findTransition(m_project.tracks()[m_transitionCurveTrack], m_transitionCurveId);
-        if (transition) {
-            transition->easingCurve = m_transitionCurveBefore;
-            transition->easingShape = m_transitionShapeBefore;
-            emitPreviewFrame();
-        }
-    }
-
-    m_transitionCurveActive = false;
-    m_transitionCurveTrack = -1;
-    m_transitionCurveId.clear();
-    m_transitionCurveName.clear();
-    m_transitionShape.clear();
-    m_transitionShapeBefore.clear();
-    m_transitionCurveApplied = false;
-    emit transitionCurveSessionChanged();
-    emit transitionCurveChanged();
-}
-
-QVariantList AppController::transitionCurvePoints() const
-{
-    QVariantList out;
-    for (const QPointF &pt : m_transitionShape.points()) {
-        out.append(QVariantMap{
-            {QStringLiteral("t"), pt.x()},
-            {QStringLiteral("g"), pt.y()},
-        });
-    }
-    return out;
-}
-
-void AppController::setTransitionCurvePoints(const QVariantList &points)
-{
-    if (!m_transitionCurveActive)
-        return;
-    if (m_transitionCurveTrack < 0 || m_transitionCurveTrack >= m_project.tracks().size())
-        return;
-    drift::Transition *transition =
-        findTransition(m_project.tracks()[m_transitionCurveTrack], m_transitionCurveId);
-    if (!transition)
-        return;
-
-    QList<QPointF> parsed;
-    parsed.reserve(points.size());
-    for (const QVariant &entry : points) {
-        const QVariantMap map = entry.toMap();
-        parsed.append(QPointF(map.value(QStringLiteral("t")).toDouble(),
-                              map.value(QStringLiteral("g")).toDouble()));
-    }
-    m_transitionShape.setPoints(parsed);
-    m_transitionCurveMode = drift::FadeCurve::Custom;
-    transition->easingCurve = drift::FadeCurve::Custom;
-    transition->easingShape = m_transitionShape;
-    emit transitionCurveChanged();
-    emitPreviewFrame();
-}
-
-QString AppController::transitionCurveMode() const
-{
-    return m_transitionCurveMode == drift::FadeCurve::Bezier ? QStringLiteral("bezier")
-                                                             : QStringLiteral("points");
-}
-
-QVariantList AppController::transitionCurveHandles() const
-{
-    return {m_transitionShape.handle1().x(), m_transitionShape.handle1().y(),
-            m_transitionShape.handle2().x(), m_transitionShape.handle2().y()};
-}
-
-void AppController::setTransitionCurveHandles(double c1x, double c1y, double c2x, double c2y)
-{
-    if (!m_transitionCurveActive)
-        return;
-    if (m_transitionCurveTrack < 0 || m_transitionCurveTrack >= m_project.tracks().size())
-        return;
-    drift::Transition *transition =
-        findTransition(m_project.tracks()[m_transitionCurveTrack], m_transitionCurveId);
-    if (!transition)
-        return;
-
-    m_transitionShape.setHandles(QPointF(c1x, c1y), QPointF(c2x, c2y));
-    m_transitionCurveMode = drift::FadeCurve::Bezier;
-    transition->easingCurve = drift::FadeCurve::Bezier;
-    transition->easingShape = m_transitionShape;
-    emit transitionCurveChanged();
-    emitPreviewFrame();
-}
-
-void AppController::resetTransitionCurvePreset(const QString &preset)
-{
-    if (!m_transitionCurveActive)
-        return;
-    if (preset.startsWith(QLatin1String("bezier:"))) {
-        const drift::FadeShape seed = drift::FadeShape::bezierPreset(preset.mid(7));
-        setTransitionCurveHandles(seed.handle1().x(), seed.handle1().y(),
-                                  seed.handle2().x(), seed.handle2().y());
-        return;
-    }
-    if (preset == QLatin1String("linear"))
-        m_transitionShape = drift::FadeShape::linearPreset();
-    else if (preset == QLatin1String("equalPower") || preset == QLatin1String("natural"))
-        m_transitionShape = drift::FadeShape::equalPowerPreset();
-    else
-        m_transitionShape = drift::FadeShape::smoothPreset();
-
-    QVariantList points;
-    for (const QPointF &pt : m_transitionShape.points()) {
-        points.append(QVariantMap{
-            {QStringLiteral("t"), pt.x()},
-            {QStringLiteral("g"), pt.y()},
-        });
-    }
-    setTransitionCurvePoints(points);
-}
-
-void AppController::applyTransitionCurve()
-{
-    if (!m_transitionCurveActive)
-        return;
-    if (m_transitionCurveTrack < 0 || m_transitionCurveTrack >= m_project.tracks().size())
-        return;
-    drift::Transition *transition =
-        findTransition(m_project.tracks()[m_transitionCurveTrack], m_transitionCurveId);
-    if (!transition) {
-        setLastMessage(tr("That transition is gone — open the custom curve again"),
-                       QStringLiteral("warning"));
-        endTransitionCurveSession();
-        return;
-    }
-
-    // Rebuild the "before" snapshot so undo restores the curve the session started from, not the
-    // audition state the live project is currently holding.
-    drift::Project before = m_project;
-    if (m_transitionCurveTrack < before.tracks().size()) {
-        if (drift::Transition *beforeTransition =
-                findTransition(before.tracks()[m_transitionCurveTrack], m_transitionCurveId)) {
-            beforeTransition->easingCurve = m_transitionCurveBefore;
-            beforeTransition->easingShape = m_transitionShapeBefore;
-        }
-    }
-
-    transition->easingCurve = m_transitionCurveMode;
-    transition->easingShape = m_transitionShape;
-    pushProjectEdit(before, tr("Custom transition curve"));
-    m_transitionCurveApplied = true;
-    finishEdit(tr("Custom transition curve applied"));
-    emit selectedTransitionDataChanged();
-    emit transitionCurveApplied();
-    endTransitionCurveSession();
-}
-
-QString AppController::fadeCurveMode() const
-{
-    return m_fadeCurveMode == drift::FadeCurve::Bezier ? QStringLiteral("bezier")
-                                                       : QStringLiteral("points");
-}
-
-QVariantList AppController::fadeCurveHandles() const
-{
-    return {m_fadeShape.handle1().x(), m_fadeShape.handle1().y(),
-            m_fadeShape.handle2().x(), m_fadeShape.handle2().y()};
-}
-
-void AppController::setFadeCurveHandles(double c1x, double c1y, double c2x, double c2y)
-{
-    if (!m_fadeCurveActive)
-        return;
-    if (m_fadeCurveTrack < 0 || m_fadeCurveTrack >= m_project.tracks().size())
-        return;
-    drift::Track &track = m_project.tracks()[m_fadeCurveTrack];
-    if (m_fadeCurveClipIndex < 0 || m_fadeCurveClipIndex >= track.clips.size())
-        return;
-    drift::Clip &clip = track.clips[m_fadeCurveClipIndex];
-    if (clip.id != m_fadeCurveClipId)
-        return;
-
-    m_fadeShape.setHandles(QPointF(c1x, c1y), QPointF(c2x, c2y));
-    m_fadeCurveMode = drift::FadeCurve::Bezier;
-    clip.fadeCurve = drift::FadeCurve::Bezier;
-    clip.fadeShape = m_fadeShape;
-    if (clip.animIn.kind == drift::ClipAnimKind::Fade
-        || clip.animIn.curve == drift::FadeCurve::Bezier) {
-        clip.animIn.curve = drift::FadeCurve::Bezier;
-        clip.animIn.shape = m_fadeShape;
-    }
-    if (clip.animOut.kind == drift::ClipAnimKind::Fade
-        || clip.animOut.curve == drift::FadeCurve::Bezier) {
-        clip.animOut.curve = drift::FadeCurve::Bezier;
-        clip.animOut.shape = m_fadeShape;
-    }
-    syncLinkedPartnersFrom(m_project, clip);
-    emit fadeCurveChanged();
-    emitPreviewFrame();
-}
-
-void AppController::resetFadeCurvePreset(const QString &preset)
-{
-    if (!m_fadeCurveActive)
-        return;
-    if (preset.startsWith(QLatin1String("bezier:"))) {
-        const drift::FadeShape seed = drift::FadeShape::bezierPreset(preset.mid(7));
-        setFadeCurveHandles(seed.handle1().x(), seed.handle1().y(),
-                            seed.handle2().x(), seed.handle2().y());
-        return;
-    }
-    if (preset == QLatin1String("linear"))
-        m_fadeShape = drift::FadeShape::linearPreset();
-    else if (preset == QLatin1String("equalPower") || preset == QLatin1String("natural"))
-        m_fadeShape = drift::FadeShape::equalPowerPreset();
-    else
-        m_fadeShape = drift::FadeShape::smoothPreset();
-
-    QVariantList points;
-    for (const QPointF &pt : m_fadeShape.points()) {
-        points.append(QVariantMap{
-            {QStringLiteral("t"), pt.x()},
-            {QStringLiteral("g"), pt.y()},
-        });
-    }
-    setFadeCurvePoints(points);
-}
-
-void AppController::applyFadeCurve()
-{
-    if (!m_fadeCurveActive)
-        return;
-    if (m_fadeCurveTrack < 0 || m_fadeCurveTrack >= m_project.tracks().size())
-        return;
-    drift::Track &track = m_project.tracks()[m_fadeCurveTrack];
-    if (m_fadeCurveClipIndex < 0 || m_fadeCurveClipIndex >= track.clips.size())
-        return;
-    drift::Clip &clip = track.clips[m_fadeCurveClipIndex];
-    if (clip.id != m_fadeCurveClipId) {
-        setLastMessage(tr("That clip moved — open Custom fade again"), QStringLiteral("warning"));
-        return;
-    }
-
-    // Rebuild the "before" snapshot: restore prior fade fields on a copy of the current project.
-    drift::Project before = m_project;
-    if (m_fadeCurveTrack < before.tracks().size()
-        && m_fadeCurveClipIndex < before.tracks().at(m_fadeCurveTrack).clips.size()) {
-        drift::Clip &beforeClip = before.tracks()[m_fadeCurveTrack].clips[m_fadeCurveClipIndex];
-        beforeClip.fadeCurve = m_fadeCurveBefore;
-        beforeClip.fadeShape = m_fadeShapeBefore;
-        syncLinkedPartnersFrom(before, beforeClip);
-    }
-
-    clip.fadeCurve = m_fadeCurveMode;
-    clip.fadeShape = m_fadeShape;
-    if (clip.animIn.kind == drift::ClipAnimKind::Fade) {
-        clip.animIn.curve = m_fadeCurveMode;
-        clip.animIn.shape = m_fadeShape;
-        clip.animIn.ease = drift::clipAnimCurveToEase(m_fadeCurveMode);
-    }
-    if (clip.animOut.kind == drift::ClipAnimKind::Fade) {
-        clip.animOut.curve = m_fadeCurveMode;
-        clip.animOut.shape = m_fadeShape;
-        clip.animOut.ease = drift::clipAnimCurveToEase(m_fadeCurveMode);
-    }
-    // Motion styles that share this editor session track whichever shape it is editing.
-    if (clip.animIn.curve == drift::FadeCurve::Custom || clip.animIn.curve == drift::FadeCurve::Bezier)
-        clip.animIn.shape = m_fadeShape;
-    if (clip.animOut.curve == drift::FadeCurve::Custom || clip.animOut.curve == drift::FadeCurve::Bezier)
-        clip.animOut.shape = m_fadeShape;
-    syncLinkedPartnersFrom(m_project, clip);
-    pushProjectEdit(before, tr("Custom fade applied"));
-    m_fadeCurveApplied = true;
-    finishEdit(tr("Custom fade applied"));
-    emit fadeCurveApplied();
-    endFadeCurveSession();
 }
 
 void AppController::endSegmentationSession()
@@ -23735,7 +23276,7 @@ void AppController::resetSessionState()
     // These end up editing the project, so they have to run while it is still the one they were
     // opened against.
     m_speedCurve->end();
-    endFadeCurveSession();
+    m_curves->endFade();
     endSegmentationSession();
     endMulticamSession();
 
