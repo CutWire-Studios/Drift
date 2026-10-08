@@ -160,6 +160,7 @@ class AppController : public QObject
     Q_PROPERTY(QString workspaceLayoutPreferred READ workspaceLayoutPreferred
                    NOTIFY workspaceLayoutPreferenceChanged)
     Q_PROPERTY(bool autoKeyEnabled READ autoKeyEnabled WRITE setAutoKeyEnabled NOTIFY autoKeyEnabledChanged)
+    Q_PROPERTY(bool positionLinked READ positionLinked WRITE setPositionLinked NOTIFY positionLinkedChanged)
     // On by default. Worth turning off on a very long timeline: the strip repaints every clip
     // in the project on every edit.
     Q_PROPERTY(bool timelineOverviewVisible READ timelineOverviewVisible
@@ -497,6 +498,8 @@ public:
     bool mediaGridMode() const { return m_mediaViewMode == QLatin1String("grid"); }
     QString mediaViewMode() const { return m_mediaViewMode; }
     bool autoKeyEnabled() const { return m_autoKeyEnabled; }
+    bool positionLinked() const { return m_positionLinked; }
+    void setPositionLinked(bool linked);
     bool timelineOverviewVisible() const { return m_timelineOverviewVisible; }
     void setTimelineOverviewVisible(bool visible);
     bool audioMixerVisible() const { return m_audioMixerVisible; }
@@ -1960,6 +1963,7 @@ signals:
     void mediaGridModeChanged();
     void mediaViewModeChanged();
     void autoKeyEnabledChanged();
+    void positionLinkedChanged();
     void timelineOverviewVisibleChanged();
     void audioMixerVisibleChanged();
     void audioMixerWidthChanged();
@@ -2213,6 +2217,8 @@ protected:
                                         double atSeconds);
     static void applyTangents(drift::Keyframe<double> &key, double inDx, double inDy, double outDx,
                               double outDy, bool corner);
+    void syncLinkedTangents(int trackIndex, int clipIndex, const QString &prop, double atSeconds,
+                            double inDx, double inDy, double outDx, double outDy, bool corner);
     // Recollects m_beatSnapTargets from whichever layers are currently visible.
     void rebuildBeatSnapTargets();
     // Beat onsets plus project bookmarks — anything clips should magnet to when snap is on.
@@ -2582,6 +2588,7 @@ protected:
     QString m_workspaceLayoutPreferred = QStringLiteral("landscape");
     QString m_mediaViewMode = QStringLiteral("grid");
     bool m_autoKeyEnabled = false;
+    bool m_positionLinked = true;
     bool m_timelineOverviewVisible = false;
     bool m_audioMixerVisible = false;
     qreal m_audioMixerWidth = 0;

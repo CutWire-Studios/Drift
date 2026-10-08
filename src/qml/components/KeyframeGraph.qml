@@ -674,26 +674,66 @@ Item {
 
                             for (let s = 0; s < root.series.length; ++s) {
                                 const entry = root.series[s]
+                                const isLinkedPartner = EditorState.positionLinked
+                                    && ((root.dragProp === "x" && entry.prop === "y") || (root.dragProp === "y" && entry.prop === "x"))
+
                                 const live = entry.points.map(function (p, i) {
-                                    if (entry.prop !== root.dragProp)
-                                        return p
-                                    if (i === root.dragTangentIndex) {
-                                        // Handle being dragged: same key, reshaped.
-                                        return {
-                                            seconds: p.seconds, value: p.value, hold: p.hold,
-                                            inDx: root.dragTangentInDx, inDy: root.dragTangentInDy,
-                                            outDx: root.dragTangentOutDx, outDy: root.dragTangentOutDy
+                                    if (entry.prop === root.dragProp) {
+                                        if (i === root.dragTangentIndex) {
+                                            // Handle being dragged: same key, reshaped.
+                                            return {
+                                                seconds: p.seconds, value: p.value, hold: p.hold,
+                                                inDx: root.dragTangentInDx, inDy: root.dragTangentInDy,
+                                                outDx: root.dragTangentOutDx, outDy: root.dragTangentOutDy
+                                            }
+                                        }
+                                        if (i === root.dragIndex) {
+                                            // Key being moved: carry its tangents through, so the
+                                            // curve shape does not snap back to linear mid-drag.
+                                            return {
+                                                seconds: root.dragSeconds, value: root.dragValue,
+                                                inDx: p.inDx, inDy: p.inDy,
+                                                outDx: p.outDx, outDy: p.outDy, hold: p.hold
+                                            }
+                                        }
+                                    } else if (isLinkedPartner) {
+                                        if (root.dragTangentIndex >= 0 && root.focusedIndex >= 0 && root.focusedIndex < root.series.length) {
+                                            const masterPts = root.series[root.focusedIndex].points
+                                            const masterP = masterPts ? masterPts[root.dragTangentIndex] : null
+                                            if (masterP && Math.abs(masterP.seconds - p.seconds) < (1 / 30)) {
+                                                let partnerInDy = 0.0
+                                                let partnerOutDy = 0.0
+                                                if (i + 1 < entry.points.length && root.dragTangentIndex + 1 < masterPts.length) {
+                                                    const mSpan = masterPts[root.dragTangentIndex + 1].value - masterP.value
+                                                    const sSpan = entry.points[i + 1].value - p.value
+                                                    if (Math.abs(mSpan) > 1e-6)
+                                                        partnerOutDy = root.dragTangentOutDy * (sSpan / mSpan)
+                                                }
+                                                if (i > 0 && root.dragTangentIndex > 0) {
+                                                    const mSpan = masterP.value - masterPts[root.dragTangentIndex - 1].value
+                                                    const sSpan = p.value - entry.points[i - 1].value
+                                                    if (Math.abs(mSpan) > 1e-6)
+                                                        partnerInDy = root.dragTangentInDy * (sSpan / mSpan)
+                                                }
+                                                return {
+                                                    seconds: p.seconds, value: p.value, hold: p.hold,
+                                                    inDx: root.dragTangentInDx, inDy: partnerInDy,
+                                                    outDx: root.dragTangentOutDx, outDy: partnerOutDy
+                                                }
+                                            }
+                                        } else if (root.dragIndex >= 0 && root.focusedIndex >= 0 && root.focusedIndex < root.series.length) {
+                                            const masterPts = root.series[root.focusedIndex].points
+                                            const masterP = masterPts ? masterPts[root.dragIndex] : null
+                                            if (masterP && Math.abs(masterP.seconds - p.seconds) < (1 / 30)) {
+                                                return {
+                                                    seconds: root.dragSeconds, value: p.value,
+                                                    inDx: p.inDx, inDy: p.inDy,
+                                                    outDx: p.outDx, outDy: p.outDy, hold: p.hold
+                                                }
+                                            }
                                         }
                                     }
-                                    if (i !== root.dragIndex)
-                                        return p
-                                    // Key being moved: carry its tangents through, so the
-                                    // curve shape does not snap back to linear mid-drag.
-                                    return {
-                                        seconds: root.dragSeconds, value: root.dragValue,
-                                        inDx: p.inDx, inDy: p.inDy,
-                                        outDx: p.outDx, outDy: p.outDy, hold: p.hold
-                                    }
+                                    return p
                                 })
                                 const sorted = live.sort((a, b) => a.seconds - b.seconds)
 
@@ -797,7 +837,11 @@ Item {
                             border.color: "#ffffff"
                             opacity: (root.curveEditing && !root.isFocused(modelData.seriesIndex))
                                      ? 0.4 : 1.0
-                            x: root.xForSeconds(modelData.seconds) - width / 2 + dragDx
+                            readonly property bool isLinkedPartnerKey: EditorState.positionLinked
+                                && ((root.dragProp === "x" && modelData.prop === "y") || (root.dragProp === "y" && modelData.prop === "x"))
+                                && root.dragIndex >= 0 && root.focusedIndex >= 0 && root.focusedIndex < root.series.length
+                                && Math.abs((root.series[root.focusedIndex].points[root.dragIndex] ? root.series[root.focusedIndex].points[root.dragIndex].seconds : -999) - modelData.seconds) < (1 / 30)
+                            x: root.xForSeconds(modelData.seconds) - width / 2 + (isLinkedPartnerKey ? (root.xForSeconds(root.dragSeconds) - root.xForSeconds(modelData.seconds)) : dragDx)
                             y: root.yForValue(modelData.value, entry) - height / 2 + dragDy
                             z: 2
 
@@ -858,7 +902,8 @@ Item {
                                         root.clipStart,
                                         Math.min(root.clipStart + root.clipDuration,
                                                  EditorState.snapTime(rawSec)))
-                                    const newVal = Math.max(
+                                    const isShift = (EditorState.keyboardModifiers() & Qt.ShiftModifier) !== 0
+                                    const newVal = isShift ? baseVal : Math.max(
                                         entry.valueMin,
                                         Math.min(entry.valueMax,
                                                  root.valueForY(
@@ -964,13 +1009,14 @@ Item {
                                         const p = tangent.modelData.point
                                         const outgoing = tangent.modelData.outgoing
 
+                                        const isShift = (EditorState.keyboardModifiers() & Qt.ShiftModifier) !== 0
                                         const newX = tangent.tipX + translation.x
-                                        const newY = tangent.tipY + translation.y
+                                        const newY = isShift ? tangent.keyY : (tangent.tipY + translation.y)
                                         // dx keeps its sign: an out-handle may not reach back
                                         // past its key, nor an in-handle forward past its own.
                                         let dx = root.secondsForX(newX - tangent.keyX)
                                         dx = outgoing ? Math.max(0, dx) : Math.min(0, dx)
-                                        const dy = root.valueForY(newY, tangent.entry) - p.value
+                                        const dy = isShift ? 0.0 : (root.valueForY(newY, tangent.entry) - p.value)
 
                                         const inDx = outgoing ? (p.inDx || 0) : dx
                                         const outDx = outgoing ? dx : (p.outDx || 0)
@@ -998,7 +1044,7 @@ Item {
                                         root.dragTangentOutDx = outDx
                                         root.dragTangentOutDy = outDy
                                         tangent.dragDx = newX - tangent.tipX
-                                        tangent.dragDy = newY - tangent.tipY
+                                        tangent.dragDy = isShift ? (tangent.keyY - tangent.tipY) : (newY - tangent.tipY)
                                     }
                                 }
                             }

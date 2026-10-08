@@ -230,6 +230,7 @@ private slots:
     void transitionCurveSessionApplyAndCancel();
     void keyframeGraphPropertySelection();
     void keyframesCanBeDisabledPerProperty();
+    void linkedPositionKeyframesAndTangents();
     void effectParamKeyframes();
     void depthEffectEditorStateResolvesHandles();
     void behindSubjectTargetsAChosenClip();
@@ -5888,6 +5889,82 @@ void EditorStateTest::keyframesCanBeDisabledPerProperty()
     QVERIFY(!state.clipPropertyKeyframesEnabled(track, clip, QStringLiteral("rotation")));
     state.toggleClipPropertyKeyframesEnabled(track, clip, QStringLiteral("rotation"));
     QVERIFY(state.clipPropertyKeyframesEnabled(track, clip, QStringLiteral("rotation")));
+}
+
+void EditorStateTest::linkedPositionKeyframesAndTangents()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Motion test"), 0.0);
+
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+
+    QVERIFY(state.positionLinked());
+
+    // Initially position keyframes on x and y
+    state.setClipKeyframe(track, clip, QStringLiteral("x"), 0.0, 100.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("y"), 0.0, 200.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("x"), 2.0, 500.0); // +400 span
+    state.setClipKeyframe(track, clip, QStringLiteral("y"), 2.0, 400.0); // +200 span
+
+    // 1. Setting keyframe at 1.0 on x automatically generates keyframe on y
+    state.setClipKeyframe(track, clip, QStringLiteral("x"), 1.0, 300.0);
+    const QVariantList yKeys = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    bool foundYAt1 = false;
+    for (const auto &item : yKeys) {
+        if (qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 1.0) < 0.05)
+            foundYAt1 = true;
+    }
+    QVERIFY(foundYAt1);
+
+    // 2. Setting easing to Ease at playhead syncs both x and y
+    state.setPlayheadSeconds(0.0);
+    state.setKeyframeInterpolation(track, clip, QStringLiteral("x"), QStringLiteral("ease"));
+    const QVariantList xKeysAt0 = state.clipKeyframes(track, clip, QStringLiteral("x"));
+    const QVariantList yKeysAt0 = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    QCOMPARE(xKeysAt0.first().toMap().value(QStringLiteral("easing")).toString(), QStringLiteral("ease"));
+    QCOMPARE(yKeysAt0.first().toMap().value(QStringLiteral("easing")).toString(), QStringLiteral("ease"));
+
+    // 3. Tangents synchronization: setting tangents on x scales dy on y proportionally to deltaY / deltaX (200 / 400 = 0.5)
+    // outDx = 0.5s, outDy = 50.0 on x -> on y: outDx = 0.5s, outDy = 25.0
+    state.setKeyframeTangents(track, clip, QStringLiteral("x"), 0.0, 0.0, 0.0, 0.5, 50.0, false);
+    const QVariantList xTangents = state.clipKeyframes(track, clip, QStringLiteral("x"));
+    const QVariantList yTangents = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    QCOMPARE(xTangents.first().toMap().value(QStringLiteral("outDy")).toDouble(), 50.0);
+    QCOMPARE(yTangents.first().toMap().value(QStringLiteral("outDy")).toDouble(), 25.0);
+
+    // 4. Moving keyframe at 1.0s to 1.2s moves both
+    state.previewMoveClipKeyframe(track, clip, QStringLiteral("x"), 1.0, 1.2, 320.0);
+    state.commitPreviewDrag();
+    const QVariantList movedYKeys = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    bool foundYAt1_2 = false;
+    for (const auto &item : movedYKeys) {
+        if (qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 1.2) < 0.05)
+            foundYAt1_2 = true;
+    }
+    QVERIFY(foundYAt1_2);
+
+    // 5. Removing keyframe at 1.2s on x removes both
+    state.removeClipKeyframe(track, clip, QStringLiteral("x"), 1.2);
+    const QVariantList afterRemoveX = state.clipKeyframes(track, clip, QStringLiteral("x"));
+    const QVariantList afterRemoveY = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    for (const auto &item : afterRemoveX)
+        QVERIFY(qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 1.2) > 0.05);
+    for (const auto &item : afterRemoveY)
+        QVERIFY(qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 1.2) > 0.05);
+
+    // 6. Unlinking decoupling
+    state.setPositionLinked(false);
+    QVERIFY(!state.positionLinked());
+    state.setClipKeyframe(track, clip, QStringLiteral("x"), 0.5, 150.0);
+    const QVariantList unlinkedYKeys = state.clipKeyframes(track, clip, QStringLiteral("y"));
+    bool foundYAt0_5 = false;
+    for (const auto &item : unlinkedYKeys) {
+        if (qAbs(item.toMap().value(QStringLiteral("seconds")).toDouble() - 0.5) < 0.05)
+            foundYAt0_5 = true;
+    }
+    QVERIFY(!foundYAt0_5);
 }
 
 // End-to-end noise removal through the controller: the whole clip is rendered on a worker thread

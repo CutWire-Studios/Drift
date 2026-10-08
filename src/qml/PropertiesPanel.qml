@@ -726,6 +726,8 @@ PanelFrame {
                             width: tabColumn.width
                             sizeLinked: inspectorUi.sizeLinked
                             onSizeLinkedChanged: inspectorUi.sizeLinked = sizeLinked
+                            positionLinked: EditorState.positionLinked
+                            onPositionLinkedChanged: EditorState.positionLinked = positionLinked
                         }
                     }
                 }

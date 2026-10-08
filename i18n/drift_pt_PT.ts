@@ -14755,6 +14755,18 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Posição (px)</translation>
     </message>
     <message>
+        <source>Position (px, linked)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separate X and Y keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link X and Y keyframes and motion curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Measured inside %1&apos;s frame</source>
         <translation>Medido dentro do quadro de %1</translation>
     </message>

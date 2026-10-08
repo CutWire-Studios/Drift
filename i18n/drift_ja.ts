@@ -14706,6 +14706,18 @@ If playback stutters, try another.</source>
         <translation>位置 (px)</translation>
     </message>
     <message>
+        <source>Position (px, linked)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separate X and Y keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link X and Y keyframes and motion curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Measured inside %1&apos;s frame</source>
         <translation>%1 のフレーム内で測定</translation>
     </message>

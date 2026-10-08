@@ -6366,6 +6366,14 @@ void AppController::setAutoKeyEnabled(bool enabled)
     emit autoKeyEnabledChanged();
 }
 
+void AppController::setPositionLinked(bool linked)
+{
+    if (m_positionLinked == linked)
+        return;
+    m_positionLinked = linked;
+    emit positionLinkedChanged();
+}
+
 void AppController::setTimelineOverviewVisible(bool visible)
 {
     if (m_timelineOverviewVisible == visible)
@@ -15736,7 +15744,21 @@ void AppController::previewSetClipKeyframe(int trackIndex, int clipIndex, const 
         return;
     }
 
-    emitPreviewEdit(announceTrack, announceClip, {prop});
+    QStringList affected = {prop};
+    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
+        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+        drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, false);
+        if (otherKt && !otherKt->isEmpty()) {
+            const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
+            if (otherNearest < 0 && m_autoKeyEnabled) {
+                const double otherVal = otherKt->evaluateAt(rel);
+                if (writeClipPropValue(clip, otherProp, rel, otherVal, m_autoKeyEnabled, /*force=*/false))
+                    affected.append(otherProp);
+            }
+        }
+    }
+
+    emitPreviewEdit(announceTrack, announceClip, affected);
 }
 
 void AppController::previewSetEffectParam(int trackIndex, int clipIndex, int effectIndex,
@@ -19780,6 +19802,21 @@ void AppController::setClipKeyframe(int trackIndex, int clipIndex, const QString
     } else if (!writeClipPropValue(clip, prop, rel, value, m_autoKeyEnabled, /*force=*/true)) {
         return;
     }
+
+    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
+        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+        drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/true);
+        if (otherKt) {
+            const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
+            if (otherNearest < 0) {
+                const double otherVal = otherKt->evaluateAt(rel);
+                writeClipPropValue(clip, otherProp, rel, otherVal, m_autoKeyEnabled, /*force=*/true);
+                drift::KeyframeTrack<double> *srcKt = keyframeTrackForProp(clip, prop, false);
+                if (srcKt)
+                    otherKt->setEasing(rel, srcKt->easingAt(rel));
+            }
+        }
+    }
     pushProjectEdit(before, tr("Add keyframe"));
     finishEdit(tr("Keyframe set"));
 }
@@ -19879,6 +19916,15 @@ void AppController::removeClipKeyframe(int trackIndex, int clipIndex, const QStr
     if (nearest < 0)
         return;
     kt->removeKeyframe(nearest);
+    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
+        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+        drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, false);
+        if (otherKt) {
+            const drift::TimeUs otherNearest = otherKt->nearestKeyframe(rel, kKeyframeToleranceUs);
+            if (otherNearest >= 0)
+                otherKt->removeKeyframe(otherNearest);
+        }
+    }
     pushProjectEdit(before, tr("Remove keyframe"));
     finishEdit(tr("Keyframe removed"));
 }
@@ -19910,6 +19956,19 @@ void AppController::previewMoveClipKeyframe(int trackIndex, int clipIndex, const
     if (nearest >= 0)
         kt->removeKeyframe(nearest);
     kt->setKeyframe(toRel, value);
+
+    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
+        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+        drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, false);
+        if (otherKt && !otherKt->isEmpty()) {
+            const drift::TimeUs otherNearest = otherKt->nearestKeyframe(fromRel, kKeyframeToleranceUs);
+            if (otherNearest >= 0) {
+                const auto otherKey = otherKt->keyframes().value(otherNearest);
+                otherKt->removeKeyframe(otherNearest);
+                otherKt->setKeyframe(toRel, otherKey);
+            }
+        }
+    }
     emitPreviewFrame();
 }
 
@@ -20118,7 +20177,15 @@ void AppController::setClipPropertyKeyframesEnabled(int trackIndex, int clipInde
     // leave undo with nothing to restore.
     const drift::Project before = m_project;
     drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
-    keyframeTrackForProp(clip, prop, /*createIfMissing=*/false)->setEnabled(enabled);
+    drift::KeyframeTrack<double> *kt = keyframeTrackForProp(clip, prop, /*createIfMissing=*/false);
+    if (kt)
+        kt->setEnabled(enabled);
+    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
+        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+        drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/false);
+        if (otherKt)
+            otherKt->setEnabled(enabled);
+    }
     pushProjectEdit(before, enabled ? tr("Enable keyframes")
                                     : tr("Disable keyframes"));
     finishEdit(enabled ? tr("Keyframes enabled") : tr("Keyframes disabled"));
@@ -20259,8 +20326,87 @@ void AppController::setKeyframeInterpolation(int trackIndex, int clipIndex, cons
 
     const drift::Project before = m_project;
     kt->setEasing(at, drift::interpolationFromString(mode));
+
+    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
+        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+        drift::KeyframeTrack<double> *otherKt = keyframeTrackForProp(clip, otherProp, /*createIfMissing=*/false);
+        if (otherKt && !otherKt->isEmpty()) {
+            const drift::TimeUs otherAt = otherKt->nearestKeyframe(local, drift::kUsPerSecond / 30);
+            if (otherAt >= 0)
+                otherKt->setEasing(otherAt, drift::interpolationFromString(mode));
+        }
+    }
+
     pushProjectEdit(before, tr("Keyframe easing changed"));
     finishEdit(tr("Keyframe easing updated"));
+}
+
+void AppController::syncLinkedTangents(int trackIndex, int clipIndex, const QString &prop,
+                                       double atSeconds, double inDx, double inDy,
+                                       double outDx, double outDy, bool corner)
+{
+    if (!m_positionLinked || (prop != QLatin1String("x") && prop != QLatin1String("y")))
+        return;
+
+    const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+    drift::Keyframe<double> *otherKey = keyframeAt(trackIndex, clipIndex, otherProp, atSeconds);
+    if (!otherKey)
+        return;
+
+    redirectToKeyframeHost(&trackIndex, &clipIndex, prop);
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    drift::Track &track = m_project.tracks()[trackIndex];
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return;
+    drift::Clip &clip = track.clips[clipIndex];
+
+    const drift::KeyframeTrack<double> *masterTrack = keyframeTrackForProp(clip, prop);
+    const drift::KeyframeTrack<double> *slaveTrack = keyframeTrackForProp(clip, otherProp);
+    if (!masterTrack || !slaveTrack)
+        return;
+
+    const drift::TimeUs local = drift::secondsToUs(atSeconds) - clip.timelineStart;
+    const drift::TimeUs masterTime = masterTrack->nearestKeyframe(local, drift::kUsPerSecond / 60);
+    const drift::TimeUs slaveTime = slaveTrack->nearestKeyframe(local, drift::kUsPerSecond / 60);
+    if (masterTime < 0 || slaveTime < 0)
+        return;
+
+    const auto &masterKeys = masterTrack->keyframes();
+    const auto &slaveKeys = slaveTrack->keyframes();
+    auto masterIt = masterKeys.constFind(masterTime);
+    auto slaveIt = slaveKeys.constFind(slaveTime);
+    if (masterIt == masterKeys.constEnd() || slaveIt == slaveKeys.constEnd())
+        return;
+
+    double otherInDx = inDx;
+    double otherOutDx = outDx;
+
+    double otherOutDy = 0.0;
+    auto nextMaster = std::next(masterIt);
+    auto nextSlave = std::next(slaveIt);
+    if (nextMaster != masterKeys.constEnd() && nextSlave != slaveKeys.constEnd()) {
+        const double spanMaster = nextMaster.value().value - masterIt.value().value;
+        const double spanSlave = nextSlave.value().value - slaveIt.value().value;
+        if (std::abs(spanMaster) > 1e-6)
+            otherOutDy = outDy * (spanSlave / spanMaster);
+        else if (std::abs(outDy) < 1e-6)
+            otherOutDy = 0.0;
+    }
+
+    double otherInDy = 0.0;
+    if (masterIt != masterKeys.constBegin() && slaveIt != slaveKeys.constBegin()) {
+        auto prevMaster = std::prev(masterIt);
+        auto prevSlave = std::prev(slaveIt);
+        const double spanMaster = masterIt.value().value - prevMaster.value().value;
+        const double spanSlave = slaveIt.value().value - prevSlave.value().value;
+        if (std::abs(spanMaster) > 1e-6)
+            otherInDy = inDy * (spanSlave / spanMaster);
+        else if (std::abs(inDy) < 1e-6)
+            otherInDy = 0.0;
+    }
+
+    applyTangents(*otherKey, otherInDx, otherInDy, otherOutDx, otherOutDy, corner);
 }
 
 void AppController::setKeyframeTangents(int trackIndex, int clipIndex, const QString &prop,
@@ -20273,6 +20419,7 @@ void AppController::setKeyframeTangents(int trackIndex, int clipIndex, const QSt
 
     const drift::Project before = m_project;
     applyTangents(*key, inDx, inDy, outDx, outDy, corner);
+    syncLinkedTangents(trackIndex, clipIndex, prop, atSeconds, inDx, inDy, outDx, outDy, corner);
     pushProjectEdit(before, tr("Keyframe curve changed"));
     finishEdit(tr("Keyframe curve updated"));
 }
@@ -20286,6 +20433,7 @@ void AppController::previewSetKeyframeTangents(int trackIndex, int clipIndex, co
         return;
 
     applyTangents(*key, inDx, inDy, outDx, outDy, corner);
+    syncLinkedTangents(trackIndex, clipIndex, prop, atSeconds, inDx, inDy, outDx, outDy, corner);
     notifyTracksChanged();
     emit selectedClipDataChanged();
     emit projectMutated();
@@ -20300,6 +20448,12 @@ void AppController::setKeyframeHold(int trackIndex, int clipIndex, const QString
 
     const drift::Project before = m_project;
     key->hold = hold;
+    if (m_positionLinked && (prop == QLatin1String("x") || prop == QLatin1String("y"))) {
+        const QString otherProp = (prop == QLatin1String("x")) ? QStringLiteral("y") : QStringLiteral("x");
+        drift::Keyframe<double> *otherKey = keyframeAt(trackIndex, clipIndex, otherProp, atSeconds);
+        if (otherKey)
+            otherKey->hold = hold;
+    }
     pushProjectEdit(before, tr("Keyframe hold changed"));
     finishEdit(hold ? tr("Keyframe holds") : tr("Keyframe interpolates"));
 }

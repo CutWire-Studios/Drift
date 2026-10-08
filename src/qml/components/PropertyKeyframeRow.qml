@@ -10,6 +10,7 @@ Column {
 
     required property var propDef       // {key, label, def, decimals}
     required property var keyframeList  // [{seconds, value}, ...] for this property
+    property string linkedPropKey: ""   // partner property whose keyframes stay in lockstep (e.g. x with y)
     // Easing is a property of the key at the playhead, not of the whole track. Hand-dragged
     // tangents match no preset, which is what leaves every chip unlit.
     readonly property string interpolationMode:
@@ -171,6 +172,10 @@ Column {
         EditorState.showKeyframeGraphProperty(root.propDef.key)
         EditorState.setKeyframeInterpolation(
             EditorState.selectedTrack, EditorState.selectedClip, root.propDef.key, mode)
+        if (root.linkedPropKey.length > 0 && EditorState.positionLinked) {
+            EditorState.setKeyframeInterpolation(
+                EditorState.selectedTrack, EditorState.selectedClip, root.linkedPropKey, mode)
+        }
     }
 
     readonly property bool hasPrevKeyframe: {

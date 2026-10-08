@@ -45,6 +45,13 @@ Item {
     readonly property var propZ: { "key": "z", "label": qsTr("Depth"), "def": 0.0, "decimals": 0 }
     readonly property var propPerspective: { "key": "perspective", "label": qsTr("Perspective"), "def": 2000.0, "decimals": 0 }
 
+    // Link X and Y keyframes and motion curves together for synchronized 2D paths
+    property bool positionLinked: EditorState.positionLinked
+    onPositionLinkedChanged: {
+        if (EditorState.positionLinked !== positionLinked)
+            EditorState.positionLinked = positionLinked
+    }
+
     // One slider that scales width and height together about the box centre; the link button
     // swaps it for the separate Width/Height rows.
     property bool sizeLinked: true
@@ -176,12 +183,32 @@ Item {
                 onClicked: EditorState.autoKeyEnabled = !EditorState.autoKeyEnabled
             }
 
-            Text {
-                text: qsTr("Position (px)")
-                color: Theme.mutedForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-                font.weight: Font.Medium
+            Item {
+                width: parent.width
+                height: posLinkButton.height
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.positionLinked ? qsTr("Position (px, linked)") : qsTr("Position (px)")
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                    font.weight: Font.Medium
+                }
+
+                IconButton {
+                    id: posLinkButton
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    buttonSize: 24
+                    iconSize: 14
+                    glyph: root.positionLinked ? Theme.icons.linkTwo : Theme.icons.unlink
+                    active: root.positionLinked
+                    tooltip: root.positionLinked ? qsTr("Separate X and Y keyframes")
+                                                 : qsTr("Link X and Y keyframes and motion curves")
+                    onClicked: root.positionLinked = !root.positionLinked
+                }
             }
 
             Text {
@@ -198,6 +225,7 @@ Item {
                 width: parent.width
                 propDef: root.propX
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.x && root.clipData.keyframes.x.points) || []
+                linkedPropKey: root.positionLinked ? "y" : ""
                 useSlider: true
                 sliderFrom: -root.canvasW
                 sliderTo: root.canvasW * 2
@@ -207,6 +235,7 @@ Item {
                 width: parent.width
                 propDef: root.propY
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.y && root.clipData.keyframes.y.points) || []
+                linkedPropKey: root.positionLinked ? "x" : ""
                 useSlider: true
                 sliderFrom: -root.canvasH
                 sliderTo: root.canvasH * 2
