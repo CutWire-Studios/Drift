@@ -2986,18 +2986,6 @@
         <translation>Шум удалён</translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>В этом проекте используется дополнение «%1», но оно не установлено и не будет отображаться. Установите его в разделе «Дополнения».</translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>В этом проекте используются эффекты или переходы %1, которые не установлены (%2%3) и не будут отображаться. Установите их в разделе «Дополнения».</translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation>, …</translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation>Фигура добавлена</translation>
     </message>
@@ -3068,34 +3056,6 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>Установите пакет стикеров эмодзи, чтобы добавлять эмодзи</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>Частота кадров</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation>Настройки проекта</translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation>Настройки проекта изменены</translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation>Кадрировать холст</translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation>Размер видео кадрирован до %1×%2</translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation>Изменить фон</translation>
-    </message>
-    <message>
-        <source>Background updated</source>
-        <translation>Фон изменён</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4362,118 +4322,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation>Копия сохранена</translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation>Не удалось записать %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation>JSON проекта сохранён</translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation>Проект всё ещё открывается — повторите попытку чуть позже.</translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation>Не удалось прочитать %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation>JSON проекта загружен</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>Не удалось открыть проект Premiere Pro</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>Проект Premiere Pro импортирован: %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>Недопустимое расположение шаблона</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>Не удалось распаковать шаблон Motion Graphics</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>Не удалось применить шаблон к проекту</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>Импорт шаблона: %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>Шаблон импортирован: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>Не удалось открыть проект Kdenlive / MLT</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Проект Kdenlive импортирован: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>Не удалось открыть проект или таймлайн DaVinci Resolve</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>Проект DaVinci Resolve импортирован: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>Не удалось открыть список монтажных решений (.edl)</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>Список EDL импортирован: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>Не удалось открыть последовательность OpenTimelineIO (.otio)</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>Последовательность OpenTimelineIO импортирована: %1</translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation>Эта папка недопустима</translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation>Все медиафайлы уже в этой папке</translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation>Собрать медиафайлы</translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
-            <numerusform>Медиафайлы собраны, но не удалось удалить %n оригинал</numerusform>
-            <numerusform>Медиафайлы собраны, но не удалось удалить %n оригинала</numerusform>
-            <numerusform>Медиафайлы собраны, но не удалось удалить %n оригиналов</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation>Медиафайлы перемещены и перепривязаны</translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation>Медиафайлы скопированы и перепривязаны</translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation>Экспорт…</translation>
     </message>
@@ -4646,42 +4494,6 @@
         <translation>Недопустимое место сохранения</translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation>Сохранение уже выполняется</translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation>Проект сохранён</translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation>Копия для передачи готова</translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation>Недопустимое расположение проекта</translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation>Проект загружен</translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation>Распаковка медиафайлов проекта…</translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation>Файл восстановления не найден</translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation>Несохранённая работа восстановлена</translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation>Начат новый сеанс</translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation>Экспорт уже выполняется</translation>
     </message>
@@ -4744,6 +4556,14 @@
     <message>
         <source>Clip orientation set to %1°</source>
         <translation>Угол ориентации клипа: %1°</translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation>Кадрировать холст</translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
+        <translation>Размер видео кадрирован до %1×%2</translation>
     </message>
 </context>
 <context>
@@ -10410,6 +10230,197 @@ If playback stutters, try another.</source>
     <message>
         <source>Couldn’t create %1</source>
         <translation>Не удалось создать %1</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation>Новый проект</translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation>В этом проекте используется дополнение «%1», но оно не установлено и не будет отображаться. Установите его в разделе «Дополнения».</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation>В этом проекте используются эффекты или переходы %1, которые не установлены (%2%3) и не будут отображаться. Установите их в разделе «Дополнения».</translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation>, …</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Частота кадров</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation>Настройки проекта</translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation>Настройки проекта изменены</translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation>Изменить фон</translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation>Фон изменён</translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation>Копия сохранена</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>Не удалось записать %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation>JSON проекта сохранён</translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation>Проект всё ещё открывается — повторите попытку чуть позже.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation>Не удалось прочитать %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation>JSON проекта загружен</translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation>Не удалось открыть проект Premiere Pro</translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation>Проект Premiere Pro импортирован: %1</translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation>Недопустимое расположение шаблона</translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation>Не удалось распаковать шаблон Motion Graphics</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation>Не удалось применить шаблон к проекту</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation>Импорт шаблона: %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation>Шаблон импортирован: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation>Не удалось открыть проект Kdenlive / MLT</translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation>Проект Kdenlive импортирован: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation>Не удалось открыть проект или таймлайн DaVinci Resolve</translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation>Проект DaVinci Resolve импортирован: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation>Не удалось открыть список монтажных решений (.edl)</translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation>Список EDL импортирован: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation>Не удалось открыть последовательность OpenTimelineIO (.otio)</translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation>Последовательность OpenTimelineIO импортирована: %1</translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation>Эта папка недопустима</translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation>Все медиафайлы уже в этой папке</translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation>Собрать медиафайлы</translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation>
+            <numerusform>Медиафайлы собраны, но не удалось удалить %n оригинал</numerusform>
+            <numerusform>Медиафайлы собраны, но не удалось удалить %n оригинала</numerusform>
+            <numerusform>Медиафайлы собраны, но не удалось удалить %n оригиналов</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation>Медиафайлы перемещены и перепривязаны</translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation>Медиафайлы скопированы и перепривязаны</translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation>Недопустимое место сохранения</translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation>Сохранение уже выполняется</translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation>Проект сохранён</translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation>Копия для передачи готова</translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation>Недопустимое расположение проекта</translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation>Проект загружен</translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation>Распаковка медиафайлов проекта…</translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation>Файл восстановления не найден</translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation>Несохранённая работа восстановлена</translation>
+    </message>
+    <message>
+        <source>Started new session</source>
+        <translation>Начат новый сеанс</translation>
     </message>
 </context>
 <context>

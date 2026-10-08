@@ -13,7 +13,7 @@ Item {
     property PreviewViewport viewport
 
     readonly property Item canvas: viewport ? viewport.canvas : null
-    readonly property real perCanvas: (canvas ? canvas.width : 0) / Math.max(1, EditorState.projectWidth())
+    readonly property real perCanvas: (canvas ? canvas.width : 0) / Math.max(1, EditorState.projectFile.projectWidth())
 
     // Blender's view keys: F frames the selection, Home resets, Numpad 0 looks through the camera,
     // Numpad 1/3/7 look from the front/right/top (Ctrl: the opposite side). The owner forwards key

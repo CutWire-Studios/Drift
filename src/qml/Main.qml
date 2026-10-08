@@ -374,7 +374,7 @@ ApplicationWindow {
         // Before any of the branches below, so a quit that is cancelled at the
         // unsaved prompt still records where the window was.
         window.persistLayout()
-        if (window.forceClose || !EditorState.hasUnsavedChanges)
+        if (window.forceClose || !EditorState.projectFile.hasUnsavedChanges)
             return
         close.accepted = false
         // Leave preview fullscreen so the save prompt isn't sitting on a blank
@@ -384,7 +384,7 @@ ApplicationWindow {
         editorHeader.confirmIfDirty(function () {
             // Don't Save leaves dirty true; clear it so aboutToQuit does not
             // write a recovery the user just declined. Harmless after Save.
-            EditorState.discardUnsavedChanges()
+            EditorState.projectFile.discardUnsavedChanges()
             window.forceClose = true
             window.close()
         })
@@ -655,7 +655,7 @@ ApplicationWindow {
     function promptLayoutChooserIfNeeded() {
         if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
             return
-        if (EditorState.recoveryAvailable || EditorState.projectLayoutChosen)
+        if (EditorState.projectFile.recoveryAvailable || EditorState.projectLayoutChosen)
             return
         if (window.layoutPromptDismissed)
             return
@@ -984,7 +984,7 @@ ApplicationWindow {
     // on top of a *newer* one, but nothing invalidates one that is discarded by New/Close.
     // Simplest correct fix: only one project action in flight at a time.
     function rejectIfProjectOpenPending() {
-        if (!EditorState.projectLoadPending)
+        if (!EditorState.projectFile.projectLoadPending)
             return false
         Toasts.info(qsTr("Still opening a project — try again in a moment."))
         return true
@@ -994,7 +994,7 @@ ApplicationWindow {
         if (window.rejectIfProjectOpenPending())
             return
         editorHeader.confirmIfDirty(function () {
-            EditorState.newProject()
+            EditorState.projectFile.newProject()
             window.showStartScreen = false
             window.promptLayoutChooserIfNeeded()
         })
@@ -1008,7 +1008,7 @@ ApplicationWindow {
                                            editorHeader.projectMimeTypes)
             if (url == "")
                 return
-            EditorState.loadProject(url)
+            EditorState.projectFile.loadProject(url)
         })
     }
 
@@ -1018,7 +1018,7 @@ ApplicationWindow {
         if (!path || path.length === 0)
             return
         editorHeader.confirmIfDirty(function () {
-            EditorState.openRecentProject(path)
+            EditorState.projectFile.openRecentProject(path)
         })
     }
 
@@ -1037,7 +1037,7 @@ ApplicationWindow {
             // silent: newProject()'s own "New project" toast is right for the header's
             // New Project action, wrong here — setting lastMessage again afterwards
             // would not replace it, since every change queues its own toast.
-            EditorState.newProject(true)
+            EditorState.projectFile.newProject(true)
             EditorState.setLastMessage(qsTr("Project closed"))
         })
     }
@@ -1098,7 +1098,7 @@ ApplicationWindow {
     function promptRecoveryIfNeeded() {
         if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
             return
-        if (!EditorState.recoveryAvailable || recoveryDialogLoader.shown)
+        if (!EditorState.projectFile.recoveryAvailable || recoveryDialogLoader.shown)
             return
         // Opt-in reopen handles recovery (and last .drift) without asking.
         if (EditorState.preferences.reopenLastProject)
@@ -1115,7 +1115,7 @@ ApplicationWindow {
         triggeredOnStart: false
         property int attempts: 0
         onTriggered: {
-            if (!EditorState.recoveryAvailable) {
+            if (!EditorState.projectFile.recoveryAvailable) {
                 stop()
                 attempts = 0
                 Qt.callLater(window.promptLayoutChooserIfNeeded)
@@ -1155,12 +1155,12 @@ ApplicationWindow {
     function continueStartupAfterLanguage() {
         // A document the shell asked us to open (argv / QFileOpenEvent) wins over last-session
         // reopen and the recovery prompt.
-        if (EditorState.consumeStartupProject())
+        if (EditorState.projectFile.consumeStartupProject())
             return
         // Opt-in: restore unsaved recovery or the last clean project silently.
-        if (EditorState.restoreLastSessionIfEnabled())
+        if (EditorState.projectFile.restoreLastSessionIfEnabled())
             return
-        if (EditorState.recoveryAvailable) {
+        if (EditorState.projectFile.recoveryAvailable) {
             recoveryOpenTimer.start()
             return
         }
@@ -1177,7 +1177,7 @@ ApplicationWindow {
         // Maximizing does not have to change the window size (a window already filling
         // the work area does not), so the geometry sampler alone can miss the switch.
         window.persistWindowState()
-        if (visible && EditorState.recoveryAvailable && !EditorState.preferences.reopenLastProject)
+        if (visible && EditorState.projectFile.recoveryAvailable && !EditorState.preferences.reopenLastProject)
             recoveryOpenTimer.start()
     }
 
@@ -1187,19 +1187,8 @@ ApplicationWindow {
             if (window.rejectIfProjectOpenPending())
                 return
             editorHeader.confirmIfDirty(function () {
-                EditorState.loadProject(url)
+                EditorState.projectFile.loadProject(url)
             })
-        }
-        function onRecoveryChanged() {
-            if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
-                return
-            if (EditorState.preferences.reopenLastProject)
-                return
-            if (EditorState.recoveryAvailable) {
-                recoveryOpenTimer.start()
-            } else {
-                Qt.callLater(window.promptLayoutChooserIfNeeded)
-            }
         }
 
         // Each of these edits one clip of the project that was just discarded, so there is
@@ -1222,17 +1211,6 @@ ApplicationWindow {
 
         function onOpenMulticamWindowRequested() {
             multicamWindowLoader.ensure().openSession()
-        }
-
-        // Terminal result of a loadProject()/loadProjectJson() call, from any source —
-        // unlike lastMessageChanged, this does not also fire for the "Unpacking project
-        // media…" progress message a bundle with embedded media raises first, so it's
-        // safe to treat as "the open is done" rather than mistaking progress for success.
-        // rejectIfProjectOpenPending() keeps at most one load in flight at a time, so
-        // whichever request this is, it's the one the start screen (if up) is waiting on.
-        function onProjectLoadFinished(ok) {
-            if (ok)
-                window.showStartScreen = false
         }
 
         function onProjectLayoutChosenChanged() {
@@ -1259,17 +1237,6 @@ ApplicationWindow {
                 Toasts.info(qsTr("Export cancelled."))
             else
                 Toasts.error(qsTr("Export failed. Check the save location and free space on your disk."))
-        }
-
-        function onMissingAddons(addons) {
-            missingAddonsDialogLoader.ensure().openFor(addons)
-        }
-
-        function onPackageFinished(ok, message) {
-            if (ok)
-                Toasts.success(message)
-            else
-                Toasts.error(qsTr("Couldn't create the shareable copy: %1").arg(message))
         }
 
         function onSubtitleGenerationFinished(ok, message) {
@@ -1305,6 +1272,44 @@ ApplicationWindow {
         // the timeline was silent.
         function onTransformBlocked(reason) {
             Toasts.warning(reason)
+        }
+    }
+
+    Connections {
+        target: EditorState.projectFile
+
+        function onRecoveryChanged() {
+            if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
+                return
+            if (EditorState.preferences.reopenLastProject)
+                return
+            if (EditorState.projectFile.recoveryAvailable) {
+                recoveryOpenTimer.start()
+            } else {
+                Qt.callLater(window.promptLayoutChooserIfNeeded)
+            }
+        }
+
+        // Terminal result of a loadProject()/loadProjectJson() call, from any source —
+        // unlike lastMessageChanged, this does not also fire for the "Unpacking project
+        // media…" progress message a bundle with embedded media raises first, so it's
+        // safe to treat as "the open is done" rather than mistaking progress for success.
+        // rejectIfProjectOpenPending() keeps at most one load in flight at a time, so
+        // whichever request this is, it's the one the start screen (if up) is waiting on.
+        function onProjectLoadFinished(ok) {
+            if (ok)
+                window.showStartScreen = false
+        }
+
+        function onMissingAddons(addons) {
+            missingAddonsDialogLoader.ensure().openFor(addons)
+        }
+
+        function onPackageFinished(ok, message) {
+            if (ok)
+                Toasts.success(message)
+            else
+                Toasts.error(qsTr("Couldn't create the shareable copy: %1").arg(message))
         }
     }
 

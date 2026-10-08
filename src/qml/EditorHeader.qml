@@ -14,7 +14,7 @@ Rectangle {
     height: Theme.headerHeight
     color: Theme.appBackground
 
-    property string projectName: EditorState.projectName
+    property string projectName: EditorState.projectFile.projectName
 
     // Disabled: external project imports (Premiere Pro, DaVinci Resolve/FCPXML, Kdenlive/Shotcut,
     // .mogrt, EDL, OTIO) need more fixing before shipping. Uncomment these entries, the open*()
@@ -38,7 +38,7 @@ Rectangle {
     // Runs `action` immediately when clean; otherwise opens the unsaved prompt.
     // Used by New / Open / Recent / Quit and the matching shortcuts.
     function confirmIfDirty(action) {
-        if (!EditorState.hasUnsavedChanges) {
+        if (!EditorState.projectFile.hasUnsavedChanges) {
             action()
             return
         }
@@ -69,17 +69,17 @@ Rectangle {
     // Returns true when the project is clean after the attempt. False if the
     // user cancelled Save As or the write failed — callers must not continue.
     function saveProject() {
-        if (EditorState.currentProjectPath && EditorState.currentProjectPath.length > 0) {
-            EditorState.saveProject(EditorState.fileUrl(EditorState.currentProjectPath))
-            return !EditorState.hasUnsavedChanges
+        if (EditorState.projectFile.currentProjectPath && EditorState.projectFile.currentProjectPath.length > 0) {
+            EditorState.projectFile.saveProject(EditorState.fileUrl(EditorState.projectFile.currentProjectPath))
+            return !EditorState.projectFile.hasUnsavedChanges
         }
         var url = FileDialogs.saveFile(qsTr("Save Project"), root.projectFilter,
-                                       EditorState.projectName, "drift", "",
+                                       EditorState.projectFile.projectName, "drift", "",
                                        root.projectMimeTypes)
         if (url == "")
             return false
-        EditorState.saveProject(url)
-        return !EditorState.hasUnsavedChanges
+        EditorState.projectFile.saveProject(url)
+        return !EditorState.projectFile.hasUnsavedChanges
     }
 
     // Save As: writes the open project to a new .drift and keeps editing that one, leaving the
@@ -87,12 +87,12 @@ Rectangle {
     // "copy", so accepting the picker's default cannot overwrite the original.
     function saveProjectAs() {
         var url = FileDialogs.saveFile(qsTr("Save Project As"), root.projectFilter,
-                                       qsTr("%1 copy").arg(EditorState.projectName), "drift", "",
+                                       qsTr("%1 copy").arg(EditorState.projectFile.projectName), "drift", "",
                                        root.projectMimeTypes)
         if (url == "")
             return false
-        EditorState.saveProjectAs(url)
-        return !EditorState.hasUnsavedChanges
+        EditorState.projectFile.saveProjectAs(url)
+        return !EditorState.projectFile.hasUnsavedChanges
     }
 
     // Raw document JSON: an export, not a project file. Always asks for a path and leaves the
@@ -100,10 +100,10 @@ Rectangle {
     function saveProjectJson() {
         var url = FileDialogs.saveFile(qsTr("Save Project JSON"),
                                        [qsTr("JSON document (*.json)")],
-                                       EditorState.projectName, "json", "",
+                                       EditorState.projectFile.projectName, "json", "",
                                        ["application/json"])
         if (url != "")
-            EditorState.saveProjectJson(url)
+            EditorState.projectFile.saveProjectJson(url)
     }
 
     // Inverse of saveProjectJson. Confirms unsaved work like Open, because it replaces the
@@ -120,7 +120,7 @@ Rectangle {
                                            [qsTr("JSON document (*.json)")],
                                            ["application/json"])
             if (url != "")
-                EditorState.loadProjectJson(url)
+                EditorState.projectFile.loadProjectJson(url)
         })
     }
 
@@ -136,7 +136,7 @@ Rectangle {
     //                                         qsTr("Final Cut Pro XML (*.xml)")],
     //                                        ["application/xml", "text/xml"])
     //         if (url != "")
-    //             EditorState.loadPremiereProject(url)
+    //             EditorState.projectFile.loadPremiereProject(url)
     //     })
     // }
     //
@@ -146,7 +146,7 @@ Rectangle {
     //                                     qsTr("All Files (*)")],
     //                                    ["application/zip", "application/octet-stream"])
     //     if (url != "")
-    //         EditorState.importMogrt(url)
+    //         EditorState.projectFile.importMogrt(url)
     // }
     //
     // function openKdenliveProject() {
@@ -157,7 +157,7 @@ Rectangle {
     //                                         qsTr("Shotcut project (*.mlt)")],
     //                                        ["application/xml", "text/xml", "application/x-kdenlive"])
     //         if (url != "")
-    //             EditorState.loadKdenliveProject(url)
+    //             EditorState.projectFile.loadKdenliveProject(url)
     //     })
     // }
     //
@@ -169,7 +169,7 @@ Rectangle {
     //                                         qsTr("Final Cut Pro X XML (*.fcpxml)")],
     //                                        ["application/zip", "application/octet-stream", "application/xml", "text/xml"])
     //         if (url != "")
-    //             EditorState.loadResolveProject(url)
+    //             EditorState.projectFile.loadResolveProject(url)
     //     })
     // }
     //
@@ -179,7 +179,7 @@ Rectangle {
     //                                        [qsTr("Edit Decision List (*.edl)")],
     //                                        ["text/plain", "application/octet-stream"])
     //         if (url != "")
-    //             EditorState.loadEdlTimeline(url)
+    //             EditorState.projectFile.loadEdlTimeline(url)
     //     })
     // }
     //
@@ -189,7 +189,7 @@ Rectangle {
     //                                        [qsTr("OpenTimelineIO sequence (*.otio)")],
     //                                        ["application/json", "text/plain", "application/octet-stream"])
     //         if (url != "")
-    //             EditorState.loadOtioTimeline(url)
+    //             EditorState.projectFile.loadOtioTimeline(url)
     //     })
     // }
 
@@ -197,10 +197,10 @@ Rectangle {
     // the media. Always asks for a path: it is a different artefact from the working save.
     function packageProject() {
         var url = FileDialogs.saveFile(qsTr("Save Shareable Copy"), root.projectFilter,
-                                       EditorState.projectName, "drift", "",
+                                       EditorState.projectFile.projectName, "drift", "",
                                        root.projectMimeTypes)
         if (url != "")
-            EditorState.packageProject(url)
+            EditorState.projectFile.packageProject(url)
     }
 
     function exportVideo() {
@@ -213,13 +213,18 @@ Rectangle {
 
     Connections {
         target: EditorState
-        function onProjectNameChanged() { root.projectName = EditorState.projectName }
+
         function onExportInProgressChanged() {
             if (EditorState.exportInProgress) {
                 root.exportProgressDismissed = false
                 exportProgressDialogLoader.ensure().openDialog()
             }
         }
+    }
+
+    Connections {
+        target: EditorState.projectFile
+        function onProjectNameChanged() { root.projectName = EditorState.projectFile.projectName }
         function onSaveRequested() { root.saveProject() }
         function onSaveAsRequested() { root.saveProjectAs() }
         function onOpenRequested() { root.openProject() }
@@ -314,7 +319,7 @@ Rectangle {
                 id: projectsButton
 
                 readonly property bool open: recentPopupLoader.shown
-                readonly property bool saved: !EditorState.hasUnsavedChanges
+                readonly property bool saved: !EditorState.projectFile.hasUnsavedChanges
 
                 // Cap width so a long name does not shove the right-side actions.
                 width: Math.min(projectsRow.implicitWidth + Theme.spacingXl * 2, 260)

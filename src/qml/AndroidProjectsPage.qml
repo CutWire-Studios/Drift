@@ -196,7 +196,7 @@ Item {
 
                 ThemedLabel {
                     width: parent.width
-                    visible: EditorState.recentProjects.length === 0
+                    visible: EditorState.projectFile.recentProjects.length === 0
                     wrapMode: Text.WordWrap
                     text: qsTr("Nothing here yet — projects you save will show up in this list.")
                 }
@@ -206,13 +206,13 @@ Item {
                     width: parent.width
                     columns: 2
                     spacing: Theme.spacingMd
-                    visible: EditorState.recentProjects.length > 0
+                    visible: EditorState.projectFile.recentProjects.length > 0
 
                     readonly property real cellWidth:
                         (width - spacing * (columns - 1)) / columns
 
                     Repeater {
-                        model: EditorState.recentProjects
+                        model: EditorState.projectFile.recentProjects
 
                         delegate: Rectangle {
                             id: card
@@ -331,7 +331,7 @@ Item {
                                 ThemedMenuItem {
                                     text: qsTr("Remove from recents")
                                     icon.name: Theme.icons.trash
-                                    onTriggered: EditorState.removeRecentProject(card.modelData.path)
+                                    onTriggered: EditorState.projectFile.removeRecentProject(card.modelData.path)
                                 }
                             }
                         }

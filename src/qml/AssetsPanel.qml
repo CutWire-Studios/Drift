@@ -1013,7 +1013,7 @@ PanelFrame {
                             ThemedMenuItem {
                                 text: qsTr("Collect Media to Folder…")
                                 icon.name: Theme.icons.folderOutput
-                                enabled: !EditorState.collectingMedia
+                                enabled: !EditorState.projectFile.collectingMedia
                                 onTriggered: root.collectMedia()
                             }
                         }

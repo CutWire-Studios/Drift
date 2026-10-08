@@ -75,8 +75,8 @@ AndroidBottomSheet {
     }
 
     function openSheet() {
-        const w = EditorState.projectWidth()
-        const h = EditorState.projectHeight()
+        const w = EditorState.projectFile.projectWidth()
+        const h = EditorState.projectFile.projectHeight()
         const match = LayoutPresets.matchProject(w, h)
         const nearest = LayoutPresets.sizeFor(match.templateId, match.qualityId, w, h)
         root.customWidth = w
@@ -92,13 +92,13 @@ AndroidBottomSheet {
             root.templateId = LayoutPresets.customTemplate.id
             root.activeCategory = LayoutPresets.customTemplate.category
         }
-        root.fps = EditorState.projectFps()
+        root.fps = EditorState.projectFile.projectFps()
         root.customFps = root.fpsPresets.indexOf(root.fps) < 0
         root.open()
     }
 
     function apply() {
-        EditorState.setProjectSetup(root.outWidth, root.outHeight, root.fps)
+        EditorState.projectFile.setProjectSetup(root.outWidth, root.outHeight, root.fps)
         EditorState.markProjectLayoutChosen()
     }
 

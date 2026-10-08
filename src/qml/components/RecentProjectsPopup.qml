@@ -231,9 +231,9 @@ Popup {
     dim: false
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
-    readonly property var items: EditorState.recentProjects
-    readonly property string currentPath: EditorState.currentProjectPath || ""
-    readonly property bool currentSaved: !EditorState.hasUnsavedChanges
+    readonly property var items: EditorState.projectFile.recentProjects
+    readonly property string currentPath: EditorState.projectFile.currentProjectPath || ""
+    readonly property bool currentSaved: !EditorState.projectFile.hasUnsavedChanges
 
     // Recents excluding the open project — those are the ones you can switch to.
     readonly property var previousItems: {
@@ -298,7 +298,7 @@ Popup {
 
         // --- Current project -------------------------------------------------
         ProjectRow {
-            title: EditorState.projectName
+            title: EditorState.projectFile.projectName
             subtitle: root.currentSaved ? qsTr("All changes saved")
                                         : qsTr("Unsaved changes")
             tip: root.currentPath.length > 0 ? root.currentPath : ""
@@ -378,7 +378,7 @@ Popup {
                 highlighted: previousList.currentIndex === index
 
                 onTriggered: root.openRecentRequested(previousRow.modelData.path)
-                onRemoveRequested: EditorState.removeRecentProject(previousRow.modelData.path)
+                onRemoveRequested: EditorState.projectFile.removeRecentProject(previousRow.modelData.path)
             }
         }
 

@@ -2983,18 +2983,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3064,34 +3052,6 @@
     </message>
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>Mga larawan bawat segundo</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Background updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4357,117 +4317,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4639,42 +4488,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4726,6 +4539,14 @@
     </message>
     <message>
         <source>Clip orientation set to %1°</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -10358,6 +10179,196 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Couldn’t create %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Mga larawan bawat segundo</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Started new session</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

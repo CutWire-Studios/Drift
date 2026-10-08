@@ -14,7 +14,7 @@ ThemedDialog {
     acceptOnReturn: false
 
     function openDialog() {
-        const meta = EditorState.projectMetadata
+        const meta = EditorState.projectFile.projectMetadata
         titleField.text = meta.title
         authorField.text = meta.author
         descriptionField.text = meta.description
@@ -23,7 +23,7 @@ ThemedDialog {
         open()
     }
 
-    onAccepted: EditorState.setProjectMetadata(titleField.text, authorField.text,
+    onAccepted: EditorState.projectFile.setProjectMetadata(titleField.text, authorField.text,
                                                descriptionField.text)
 
     contentItem: Column {

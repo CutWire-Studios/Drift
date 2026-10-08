@@ -2496,7 +2496,7 @@ void McpTest::saveProjectWithoutPathUsesCurrent()
                           {{QStringLiteral("path"), copyPath}, {QStringLiteral("saveAs"), true}})
                 .value(QStringLiteral("ok"))
                 .toBool());
-    QCOMPARE(state.currentProjectPath(), copyPath);
+    QCOMPARE(state.projectFile()->currentProjectPath(), copyPath);
     QCOMPARE(readFile(path), originalBytes);
 }
 
@@ -2854,7 +2854,7 @@ void McpTest::addSvgShowsInCapture()
     AppController state(&library);
     if (!state.vectorSupportAvailable())
         QSKIP("built without Skia");
-    state.setProjectResolution(160, 90);
+    state.projectFile()->setProjectResolution(160, 90);
     drift::mcp::McpDispatcher dispatcher(&state);
     const QJsonObject added = dispatcher.applyOne(
         QStringLiteral("add_svg"),
@@ -3051,10 +3051,10 @@ void McpTest::importGlbBecomesModel3dAsset()
         found = true;
         const double cx = m.value(QStringLiteral("x")).toDouble() + m.value(QStringLiteral("width")).toDouble() / 2.0;
         const double cy = m.value(QStringLiteral("y")).toDouble() + m.value(QStringLiteral("height")).toDouble() / 2.0;
-        QVERIFY(std::abs(cx - state.projectWidth() / 2.0) < 1.0);
-        QVERIFY(std::abs(cy - state.projectHeight() / 2.0) < 1.0);
-        QVERIFY(m.value(QStringLiteral("height")).toDouble() > state.projectHeight() * 0.3);
-        QVERIFY(m.value(QStringLiteral("height")).toDouble() < state.projectHeight() * 0.8);
+        QVERIFY(std::abs(cx - state.projectFile()->projectWidth() / 2.0) < 1.0);
+        QVERIFY(std::abs(cy - state.projectFile()->projectHeight() / 2.0) < 1.0);
+        QVERIFY(m.value(QStringLiteral("height")).toDouble() > state.projectFile()->projectHeight() * 0.3);
+        QVERIFY(m.value(QStringLiteral("height")).toDouble() < state.projectFile()->projectHeight() * 0.8);
     }
     QVERIFY(found);
 
@@ -3096,7 +3096,7 @@ void McpTest::model3dKeyframesAndOptions()
                         state.propertyValueAt(track, clip, QStringLiteral("height"), 0.0, 0.0));
     };
     // Its largest extent starts at half the canvas height.
-    QCOMPARE(boxSpan(), state.projectHeight() * 0.5);
+    QCOMPARE(boxSpan(), state.projectFile()->projectHeight() * 0.5);
 
     QJsonObject r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
                                         {{QStringLiteral("clip"), id}, {QStringLiteral("prop"), QStringLiteral("model3d.rotY")},
@@ -3135,7 +3135,7 @@ void McpTest::model3dKeyframesAndOptions()
     r = dispatcher.applyOne(QStringLiteral("set_model3d_options"),
                             {{QStringLiteral("clip"), id}, {QStringLiteral("scale"), 0.8}, {QStringLiteral("animation"), 5}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
-    QCOMPARE(boxSpan(), state.projectHeight() * 0.8);
+    QCOMPARE(boxSpan(), state.projectFile()->projectHeight() * 0.8);
     QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("x"), 0.0, 0.0)
                  + state.propertyValueAt(track, clip, QStringLiteral("width"), 0.0, 0.0) / 2.0,
              centreX);
@@ -3144,11 +3144,11 @@ void McpTest::model3dKeyframesAndOptions()
     // depth clamps to the old 0..1 and becomes the eye distance.
     QCOMPARE(state.setModel3dOptions(track, clip, {{QStringLiteral("depth"), 3.0}}), QString());
     QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("perspective"), 0.0, 0.0),
-             state.projectHeight() / 2.0);
+             state.projectFile()->projectHeight() / 2.0);
     QVERIFY(!state.setModel3dOptions(track, clip, {{QStringLiteral("nope"), 1.0}}).isEmpty());
     state.undo();
     state.undo();
-    QCOMPARE(boxSpan(), state.projectHeight() * 0.5);
+    QCOMPARE(boxSpan(), state.projectFile()->projectHeight() * 0.5);
 
     // The canvas grips size and spin a model like any clip.
     state.previewSetClipRect(track, clip, 10.0, 20.0, 300.0, 200.0);

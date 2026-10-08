@@ -36,7 +36,7 @@ Item {
 
     readonly property int projectFps: {
         void EditorState.tracksRevision
-        const fps = EditorState.projectFps()
+        const fps = EditorState.projectFile.projectFps()
         return fps > 0 ? fps : 30
     }
 
@@ -485,7 +485,7 @@ Item {
                 y: viewport.canvas.y
                 width: viewport.canvas.width
                 height: viewport.canvas.height
-                visible: EditorState.projectWidth() > 0
+                visible: EditorState.projectFile.projectWidth() > 0
 
                 function local(sceneX, sceneY) {
                     return previewDrop.mapFromItem(null, sceneX, sceneY)

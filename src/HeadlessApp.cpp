@@ -158,8 +158,8 @@ int runHeadless(int argc, char *argv[])
     // here there is no window to wait for. Only positional arguments are considered, so
     // the value of --mcp-port is not mistaken for a project path.
     positional.prepend(app.arguments().value(0));
-    editorState.queueExternalProject(AppController::startupProjectUrlFromArguments(positional));
-    editorState.consumeStartupProject();
+    editorState.projectFile()->queueExternalProject(ProjectFileController::startupProjectUrlFromArguments(positional));
+    editorState.projectFile()->consumeStartupProject();
 
     drift::mcp::McpServer *server = editorState.mcp()->server();
     if (httpPort > 0) {
@@ -187,7 +187,7 @@ int runHeadless(int argc, char *argv[])
     // Whatever is not carrying MCP gets the banner. When stdio is a transport, stdout may
     // hold nothing but MCP messages — a banner there is precisely what breaks clients.
     printBanner(serveStdio ? stderr : stdout, glLine, serveStdio, httpPort > 0 ? server : nullptr,
-                editorState.currentProjectPath());
+                editorState.projectFile()->currentProjectPath());
 
     // Not async-signal-safe in the strictest reading, but quit() only posts an event and
     // this is the usual shape for a Qt daemon.

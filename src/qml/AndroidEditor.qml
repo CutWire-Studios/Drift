@@ -148,16 +148,16 @@ Item {
     }
 
     function saveProject() {
-        if (EditorState.currentProjectPath && EditorState.currentProjectPath.length > 0) {
-            EditorState.saveProject(EditorState.fileUrl(EditorState.currentProjectPath))
-            return !EditorState.hasUnsavedChanges
+        if (EditorState.projectFile.currentProjectPath && EditorState.projectFile.currentProjectPath.length > 0) {
+            EditorState.projectFile.saveProject(EditorState.fileUrl(EditorState.projectFile.currentProjectPath))
+            return !EditorState.projectFile.hasUnsavedChanges
         }
         const url = FileDialogs.saveFile(qsTr("Save Project"), root.projectFilter,
-                                         EditorState.projectName, "drift")
+                                         EditorState.projectFile.projectName, "drift")
         if (url === "")
             return false
-        EditorState.saveProject(url)
-        return !EditorState.hasUnsavedChanges
+        EditorState.projectFile.saveProject(url)
+        return !EditorState.projectFile.hasUnsavedChanges
     }
 
     // Save As: the open project written to a second file, which the session then continues in.
@@ -165,18 +165,18 @@ Item {
     // variation. Suggests "<name> copy" so the default cannot land back on the original.
     function saveProjectAs() {
         const url = FileDialogs.saveFile(qsTr("Save Project As"), root.projectFilter,
-                                         qsTr("%1 copy").arg(EditorState.projectName), "drift")
+                                         qsTr("%1 copy").arg(EditorState.projectFile.projectName), "drift")
         if (url === "")
             return false
-        EditorState.saveProjectAs(url)
-        return !EditorState.hasUnsavedChanges
+        EditorState.projectFile.saveProjectAs(url)
+        return !EditorState.projectFile.hasUnsavedChanges
     }
 
     function packageProject() {
         const url = FileDialogs.saveFile(qsTr("Save Shareable Copy"), root.projectFilter,
-                                         EditorState.projectName, "drift")
+                                         EditorState.projectFile.projectName, "drift")
         if (url !== "")
-            EditorState.packageProject(url)
+            EditorState.projectFile.packageProject(url)
     }
 
     // Reached from EditorState's own signals (desktop menus, launch intents), not from any
@@ -185,13 +185,13 @@ Item {
         Window.window.confirmIfDirty(function () {
             const url = FileDialogs.openFile(qsTr("Open Project"), root.projectFilter)
             if (url !== "")
-                EditorState.loadProject(url)
+                EditorState.projectFile.loadProject(url)
         })
     }
 
     function requestNewProject() {
         Window.window.confirmIfDirty(function () {
-            EditorState.newProject()
+            EditorState.projectFile.newProject()
             Window.window.showHome()
         })
     }
@@ -561,6 +561,11 @@ Item {
                 exportProgressDialog.openDialog()
             }
         }
+    }
+
+    Connections {
+        target: EditorState.projectFile
+
         // Selection must not auto-open the Edit sheet: that ran on press (before
         // release), stole the gesture so clips could not drag, and blocked long-press
         // menus. Open via the Edit rail; an already-open sheet still updates via

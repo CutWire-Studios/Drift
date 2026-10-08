@@ -2979,18 +2979,6 @@
         <translation>ඝෝෂා ඉවත් කරන ලදී</translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>මෙම ව්‍යාපෘතිය ස්ථාපනය කර නොමැති &quot;%1&quot; භාවිත කරයි — එය නොපෙන්වයි. එය ස්ථාපනය කිරීමට අමතර අංග විවෘත කරන්න.</translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>මෙම ව්‍යාපෘතිය ස්ථාපනය කර නොමැති ප්‍රයෝග හෝ සංක්‍රාන්ති %1ක් භාවිත කරයි (%2%3) — ඒවා නොපෙන්වයි. ඒවා ස්ථාපනය කිරීමට අමතර අංග විවෘත කරන්න.</translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation>, …</translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation>හැඩතලය එක් කරන ලදී</translation>
     </message>
@@ -3061,34 +3049,6 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>ඉමෝජි එක් කිරීමට ඉමෝජි ස්ටිකර් පැකේජය ස්ථාපනය කරන්න</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>රාමු අනුපාතය</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation>ව්‍යාපෘති සැකසුම</translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation>ව්‍යාපෘති සැකසුම යාවත්කාලීන විය</translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation>කැන්වසය කප්පාදු කරන්න</translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation>වීඩියෝ ප්‍රමාණය %1×%2 ට කප්පාදු කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation>පසුබිම වෙනස් කරන්න</translation>
-    </message>
-    <message>
-        <source>Background updated</source>
-        <translation>පසුබිම යාවත්කාලීන විය</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4349,117 +4309,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation>පිටපතක් සුරකින ලදී</translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation>%1 ලිවීමට නොහැකි විය: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation>ව්‍යාපෘති JSON සුරකින ලදී</translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation>තවමත් ව්‍යාපෘතියක් විවෘත වෙමින් පවතී — මොහොතකින් නැවත උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation>%1 කියවීමට නොහැකි විය: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation>ව්‍යාපෘති JSON පූරණය විය</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>Premiere Pro ව්‍යාපෘතිය විවෘත කිරීමට අසමත් විය</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>Premiere Pro ව්‍යාපෘතිය ආයාත කරන ලදී: %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>එම ආකෘති ස්ථානය වලංගු නොවේ</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>Motion Graphics ආකෘතිය දිගහැරීමට අසමත් විය</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>ව්‍යාපෘතියට ආකෘතිය යෙදීමට අසමත් විය</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>ආකෘතිය ආයාත කරන්න: %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>ආකෘතිය ආයාත කරන ලදී: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>Kdenlive / MLT ව්‍යාපෘතිය විවෘත කිරීමට අසමත් විය</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Kdenlive ව්‍යාපෘතිය ආයාත කරන ලදී: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>DaVinci Resolve ව්‍යාපෘතිය / කාලරේඛාව විවෘත කිරීමට අසමත් විය</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>DaVinci Resolve ව්‍යාපෘතිය ආයාත කරන ලදී: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>Edit Decision List (.edl) විවෘත කිරීමට අසමත් විය</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>EDL ආයාත කරන ලදී: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>OpenTimelineIO (.otio) අනුක්‍රමය විවෘත කිරීමට අසමත් විය</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>OpenTimelineIO ආයාත කරන ලදී: %1</translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation>එම ෆෝල්ඩරය වලංගු නොවේ</translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation>සියලු මාධ්‍ය දැනටමත් එම ෆෝල්ඩරයේ ඇත</translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation>මාධ්‍ය එක්රැස් කරන්න</translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
-            <numerusform>මාධ්‍ය එක්රැස් කරන ලදී, නමුත් %n මුල් පිටපතක් මැකීමට නොහැකි විය</numerusform>
-            <numerusform>මාධ්‍ය එක්රැස් කරන ලදී, නමුත් මුල් පිටපත් %nක් මැකීමට නොහැකි විය</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation>මාධ්‍ය ගෙනයන ලද අතර නැවත සම්බන්ධ කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation>මාධ්‍ය පිටපත් කරන ලද අතර නැවත සම්බන්ධ කරන ලදී</translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation>නිර්යාත කරමින්…</translation>
     </message>
@@ -4631,42 +4480,6 @@
         <translation>එම සුරැකීමේ ස්ථානය වලංගු නැත</translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation>දැනටමත් සුරකිමින් පවතී</translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation>ව්‍යාපෘතිය සුරකින ලදී</translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation>බෙදාගත හැකි පිටපත සූදානම්</translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation>එම ව්‍යාපෘති ස්ථානය වලංගු නැත</translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation>ව්‍යාපෘතිය පූරණය විය</translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation>ව්‍යාපෘති මාධ්‍ය දිගහරිමින්…</translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation>ප්‍රතිසාධන ගොනුවක් හමු නොවීය</translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation>නොසුරකින ලද කාර්යයන් ප්‍රතිසාධනය කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation>නව සැසියක් ආරම්භ කරන ලදී</translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation>නිර්යාත කිරීම දැනටමත් සිදුවෙමින් පවතී</translation>
     </message>
@@ -4727,6 +4540,14 @@
     <message>
         <source>Clip orientation set to %1°</source>
         <translation>ක්ලිප් දිශානතිය %1° ලෙස සකසන ලදී</translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation>කැන්වසය කප්පාදු කරන්න</translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
+        <translation>වීඩියෝ ප්‍රමාණය %1×%2 ට කප්පාදු කරන ලදී</translation>
     </message>
 </context>
 <context>
@@ -10365,6 +10186,196 @@ If playback stutters, try another.</source>
     <message>
         <source>Couldn’t create %1</source>
         <translation>%1 සෑදීමට නොහැකි විය</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation>නව ව්‍යාපෘතිය</translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation>මෙම ව්‍යාපෘතිය ස්ථාපනය කර නොමැති &quot;%1&quot; භාවිත කරයි — එය නොපෙන්වයි. එය ස්ථාපනය කිරීමට අමතර අංග විවෘත කරන්න.</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation>මෙම ව්‍යාපෘතිය ස්ථාපනය කර නොමැති ප්‍රයෝග හෝ සංක්‍රාන්ති %1ක් භාවිත කරයි (%2%3) — ඒවා නොපෙන්වයි. ඒවා ස්ථාපනය කිරීමට අමතර අංග විවෘත කරන්න.</translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation>, …</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>රාමු අනුපාතය</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation>ව්‍යාපෘති සැකසුම</translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation>ව්‍යාපෘති සැකසුම යාවත්කාලීන විය</translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation>පසුබිම වෙනස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation>පසුබිම යාවත්කාලීන විය</translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation>පිටපතක් සුරකින ලදී</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>%1 ලිවීමට නොහැකි විය: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation>ව්‍යාපෘති JSON සුරකින ලදී</translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation>තවමත් ව්‍යාපෘතියක් විවෘත වෙමින් පවතී — මොහොතකින් නැවත උත්සාහ කරන්න.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation>%1 කියවීමට නොහැකි විය: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation>ව්‍යාපෘති JSON පූරණය විය</translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation>Premiere Pro ව්‍යාපෘතිය විවෘත කිරීමට අසමත් විය</translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation>Premiere Pro ව්‍යාපෘතිය ආයාත කරන ලදී: %1</translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation>එම ආකෘති ස්ථානය වලංගු නොවේ</translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation>Motion Graphics ආකෘතිය දිගහැරීමට අසමත් විය</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation>ව්‍යාපෘතියට ආකෘතිය යෙදීමට අසමත් විය</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation>ආකෘතිය ආයාත කරන්න: %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation>ආකෘතිය ආයාත කරන ලදී: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation>Kdenlive / MLT ව්‍යාපෘතිය විවෘත කිරීමට අසමත් විය</translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation>Kdenlive ව්‍යාපෘතිය ආයාත කරන ලදී: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation>DaVinci Resolve ව්‍යාපෘතිය / කාලරේඛාව විවෘත කිරීමට අසමත් විය</translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation>DaVinci Resolve ව්‍යාපෘතිය ආයාත කරන ලදී: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation>Edit Decision List (.edl) විවෘත කිරීමට අසමත් විය</translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation>EDL ආයාත කරන ලදී: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation>OpenTimelineIO (.otio) අනුක්‍රමය විවෘත කිරීමට අසමත් විය</translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation>OpenTimelineIO ආයාත කරන ලදී: %1</translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation>එම ෆෝල්ඩරය වලංගු නොවේ</translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation>සියලු මාධ්‍ය දැනටමත් එම ෆෝල්ඩරයේ ඇත</translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation>මාධ්‍ය එක්රැස් කරන්න</translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation>
+            <numerusform>මාධ්‍ය එක්රැස් කරන ලදී, නමුත් %n මුල් පිටපතක් මැකීමට නොහැකි විය</numerusform>
+            <numerusform>මාධ්‍ය එක්රැස් කරන ලදී, නමුත් මුල් පිටපත් %nක් මැකීමට නොහැකි විය</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation>මාධ්‍ය ගෙනයන ලද අතර නැවත සම්බන්ධ කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation>මාධ්‍ය පිටපත් කරන ලද අතර නැවත සම්බන්ධ කරන ලදී</translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation>එම සුරැකීමේ ස්ථානය වලංගු නැත</translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation>දැනටමත් සුරකිමින් පවතී</translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation>ව්‍යාපෘතිය සුරකින ලදී</translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation>බෙදාගත හැකි පිටපත සූදානම්</translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation>එම ව්‍යාපෘති ස්ථානය වලංගු නැත</translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation>ව්‍යාපෘතිය පූරණය විය</translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation>ව්‍යාපෘති මාධ්‍ය දිගහරිමින්…</translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation>ප්‍රතිසාධන ගොනුවක් හමු නොවීය</translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation>නොසුරකින ලද කාර්යයන් ප්‍රතිසාධනය කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Started new session</source>
+        <translation>නව සැසියක් ආරම්භ කරන ලදී</translation>
     </message>
 </context>
 <context>

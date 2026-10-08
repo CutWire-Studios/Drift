@@ -2047,7 +2047,7 @@ void EditorStateTest::importFolderMirrorsDirectoryTree()
     // Marks the project dirty like any other bin folder mutation, or a close right after an
     // import silently drops the hierarchy with no prompt — but is not undoable: "undo" for a
     // folder import is deleting the folder by hand, the same as removing an imported asset.
-    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
     QVERIFY(!state.undoAvailable());
 }
 
@@ -2589,7 +2589,7 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
     AssetLibrary library;
     AppController state(&library);
     state.addTextClip(QStringLiteral("Masked"), 0.0);
-    state.setProjectMetadata(QStringLiteral("Packaged"), QStringLiteral("Ada"),
+    state.projectFile()->setProjectMetadata(QStringLiteral("Packaged"), QStringLiteral("Ada"),
                              QStringLiteral("With a matte"));
 
     // No QML-facing setter carries a media path; the segmentation job pins it directly.
@@ -2599,24 +2599,24 @@ void EditorStateTest::packagedProjectCarriesDerivedArtifacts()
     QVERIFY(out.isValid());
     const QString bundlePath = out.filePath(QStringLiteral("packaged.drift"));
 
-    QSignalSpy finished(&state, &AppController::packageFinished);
-    state.packageProject(QUrl::fromLocalFile(bundlePath));
+    QSignalSpy finished(state.projectFile(), &ProjectFileController::packageFinished);
+    state.projectFile()->packageProject(QUrl::fromLocalFile(bundlePath));
     QVERIFY(finished.wait(30000));
     QVERIFY2(finished.first().at(0).toBool(), qPrintable(finished.first().at(1).toString()));
 
     // The matte's own cache is gone, exactly as a sweep would leave it.
     QVERIFY(QFile::remove(mattePath));
 
-    state.newProject();
-    state.loadProject(QUrl::fromLocalFile(bundlePath));
+    state.projectFile()->newProject();
+    state.projectFile()->loadProject(QUrl::fromLocalFile(bundlePath));
     // Opening a bundle extracts its media on a worker thread and only applies the project
     // document once that finishes, so the timeline below is still the empty new project until
     // the load reports in.
     QTRY_COMPARE_WITH_TIMEOUT(state.lastMessage(), QStringLiteral("Project loaded"), 30000);
 
-    QCOMPARE(state.projectMetadata().value(QStringLiteral("title")).toString(),
+    QCOMPARE(state.projectFile()->projectMetadata().value(QStringLiteral("title")).toString(),
              QStringLiteral("Packaged"));
-    QCOMPARE(state.projectMetadata().value(QStringLiteral("author")).toString(),
+    QCOMPARE(state.projectFile()->projectMetadata().value(QStringLiteral("author")).toString(),
              QStringLiteral("Ada"));
 
     const QList<drift::LaneMask> masks = drift::laneMasksAt(*state.project(), 0, 0, state.project()->tracks().at(0).clips.at(0).id);
@@ -2641,8 +2641,8 @@ void EditorStateTest::projectPersistenceRoundTrip()
     QVERIFY(tempFile.open());
     tempFile.close();
 
-    state.saveProject(QUrl::fromLocalFile(tempFile.fileName()));
-    state.loadProject(QUrl::fromLocalFile(tempFile.fileName()));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(tempFile.fileName()));
+    state.projectFile()->loadProject(QUrl::fromLocalFile(tempFile.fileName()));
 
     QVERIFY(state.durationSeconds() > 0.0);
     QCOMPARE(state.tracks().size(), 2);
@@ -2658,7 +2658,7 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
     AssetLibrary library;
     AppController state(&library);
     state.addTextClip(QStringLiteral("Original"), 0.0);
-    state.setProjectMetadata(QStringLiteral("Wedding"), QStringLiteral("Ada"),
+    state.projectFile()->setProjectMetadata(QStringLiteral("Wedding"), QStringLiteral("Ada"),
                              QStringLiteral("First cut"));
 
     QTemporaryDir dir;
@@ -2666,21 +2666,21 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
     const QString originalPath = dir.filePath(QStringLiteral("wedding.drift"));
     const QString copyPath = dir.filePath(QStringLiteral("wedding-short.drift"));
 
-    state.saveProject(QUrl::fromLocalFile(originalPath));
-    QCOMPARE(state.currentProjectPath(), originalPath);
+    state.projectFile()->saveProject(QUrl::fromLocalFile(originalPath));
+    QCOMPARE(state.projectFile()->currentProjectPath(), originalPath);
     const QString originalId = state.project()->id();
     const QByteArray originalBytes = readFile(originalPath);
     QVERIFY(!originalBytes.isEmpty());
 
-    state.saveProjectAs(QUrl::fromLocalFile(copyPath));
+    state.projectFile()->saveProjectAs(QUrl::fromLocalFile(copyPath));
     QCOMPARE(state.lastMessage(), QStringLiteral("Saved a copy"));
-    QVERIFY(!state.hasUnsavedChanges());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
     // The session continues in the copy, and the copy is its own project.
-    QCOMPARE(state.currentProjectPath(), copyPath);
+    QCOMPARE(state.projectFile()->currentProjectPath(), copyPath);
     QVERIFY(state.project()->id() != originalId);
     // Title follows the file name, so the header stops naming the project it came from.
-    QCOMPARE(state.projectName(), QStringLiteral("wedding-short"));
-    QCOMPARE(state.projectMetadata().value(QStringLiteral("author")).toString(),
+    QCOMPARE(state.projectFile()->projectName(), QStringLiteral("wedding-short"));
+    QCOMPARE(state.projectFile()->projectMetadata().value(QStringLiteral("author")).toString(),
              QStringLiteral("Ada"));
 
     // The whole point: the file it was copied from is byte-for-byte what it was.
@@ -2688,7 +2688,7 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
 
     // Editing the copy and saving must still leave the original alone.
     state.addTextClip(QStringLiteral("Only in the copy"), 5.0);
-    state.saveProject(QUrl::fromLocalFile(copyPath));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(copyPath));
     QCOMPARE(readFile(originalPath), originalBytes);
 
     const auto clipCount = [&state]() {
@@ -2699,13 +2699,13 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
     };
 
     // And the original still opens as it was, under its own id and name.
-    state.loadProject(QUrl::fromLocalFile(originalPath));
+    state.projectFile()->loadProject(QUrl::fromLocalFile(originalPath));
     QCOMPARE(state.project()->id(), originalId);
-    QCOMPARE(state.projectName(), QStringLiteral("Wedding"));
+    QCOMPARE(state.projectFile()->projectName(), QStringLiteral("Wedding"));
     QCOMPARE(clipCount(), 1); // without the clip that was only ever added to the copy
 
-    state.loadProject(QUrl::fromLocalFile(copyPath));
-    QCOMPARE(state.projectName(), QStringLiteral("wedding-short"));
+    state.projectFile()->loadProject(QUrl::fromLocalFile(copyPath));
+    QCOMPARE(state.projectFile()->projectName(), QStringLiteral("wedding-short"));
     QCOMPARE(clipCount(), 2);
 }
 
@@ -2717,49 +2717,49 @@ void EditorStateTest::projectJsonExportImportRoundTrip()
     state.setTrackMuted(0, true);
     state.addBookmark(2.0, QStringLiteral("Mark"));
     state.setMediaGridMode(false);
-    state.setProjectMetadata(QStringLiteral("FromJson"), QStringLiteral("Ada"), QString());
+    state.projectFile()->setProjectMetadata(QStringLiteral("FromJson"), QStringLiteral("Ada"), QString());
 
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString jsonPath = dir.filePath(QStringLiteral("project.json"));
     const QString driftPath = dir.filePath(QStringLiteral("project.drift"));
 
-    state.saveProject(QUrl::fromLocalFile(driftPath));
-    QVERIFY(!state.hasUnsavedChanges());
-    QCOMPARE(state.currentProjectPath(), driftPath);
+    state.projectFile()->saveProject(QUrl::fromLocalFile(driftPath));
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.projectFile()->currentProjectPath(), driftPath);
 
-    state.saveProjectJson(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->saveProjectJson(QUrl::fromLocalFile(jsonPath));
     QVERIFY(QFileInfo::exists(jsonPath));
     // Export leaves the .drift association and dirty flag alone.
-    QCOMPARE(state.currentProjectPath(), driftPath);
-    QVERIFY(!state.hasUnsavedChanges());
+    QCOMPARE(state.projectFile()->currentProjectPath(), driftPath);
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
     QCOMPARE(state.lastMessage(), QStringLiteral("Project JSON saved"));
 
-    state.newProject();
-    QVERIFY(state.currentProjectPath().isEmpty());
+    state.projectFile()->newProject();
+    QVERIFY(state.projectFile()->currentProjectPath().isEmpty());
 
-    state.loadProjectJson(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->loadProjectJson(QUrl::fromLocalFile(jsonPath));
     QCOMPARE(state.lastMessage(), QStringLiteral("Project JSON loaded"));
-    QCOMPARE(state.projectMetadata().value(QStringLiteral("title")).toString(),
+    QCOMPARE(state.projectFile()->projectMetadata().value(QStringLiteral("title")).toString(),
              QStringLiteral("FromJson"));
-    QCOMPARE(state.projectMetadata().value(QStringLiteral("author")).toString(),
+    QCOMPARE(state.projectFile()->projectMetadata().value(QStringLiteral("author")).toString(),
              QStringLiteral("Ada"));
     QCOMPARE(state.tracks().size(), 2);
     QVERIFY(state.trackMuted(0));
     QCOMPARE(state.bookmarks().size(), 1);
     QCOMPARE(state.mediaGridMode(), false);
     // Import is not a project of record: Save must ask for a .drift path.
-    QVERIFY(state.currentProjectPath().isEmpty());
-    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.projectFile()->currentProjectPath().isEmpty());
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
 
     // loadProject sniffs JSON so a dropped file, CLI arg or MCP load_project works.
-    state.newProject();
-    state.loadProject(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->newProject();
+    state.projectFile()->loadProject(QUrl::fromLocalFile(jsonPath));
     QCOMPARE(state.lastMessage(), QStringLiteral("Project JSON loaded"));
-    QCOMPARE(state.projectMetadata().value(QStringLiteral("title")).toString(),
+    QCOMPARE(state.projectFile()->projectMetadata().value(QStringLiteral("title")).toString(),
              QStringLiteral("FromJson"));
-    QVERIFY(state.currentProjectPath().isEmpty());
-    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.projectFile()->currentProjectPath().isEmpty());
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
 }
 
 void EditorStateTest::guidesTravelWithProject()
@@ -2781,7 +2781,7 @@ void EditorStateTest::guidesTravelWithProject()
     state.setGuideSetActive(QStringLiteral("safe"), true);
     state.setGuideSetActive(QStringLiteral("no-such-set"), true);
     state.preview()->setGuidesEnabled(true);
-    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
     QCOMPARE(state.guideItems().size(), 6);
 
     state.setGuideSetActive(QStringLiteral("aspect-9x16"), true);
@@ -2797,7 +2797,7 @@ void EditorStateTest::guidesTravelWithProject()
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     const QString jsonPath = dir.filePath(QStringLiteral("project.json"));
-    state.saveProjectJson(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->saveProjectJson(QUrl::fromLocalFile(jsonPath));
 
     // A custom set from another machine's library rides along in the file.
     QJsonObject root = QJsonDocument::fromJson(readFile(jsonPath)).object();
@@ -2819,7 +2819,7 @@ void EditorStateTest::guidesTravelWithProject()
     }
 
     state.preview()->setGuidesEnabled(false);
-    state.loadProjectJson(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->loadProjectJson(QUrl::fromLocalFile(jsonPath));
     QVERIFY(state.preview()->guidesEnabled());
     const QVariantList items = state.guideItems();
     QCOMPARE(items.size(), 1);
@@ -2833,7 +2833,7 @@ void EditorStateTest::guidesTravelWithProject()
     QCOMPARE(active, QStringList{QStringLiteral("custom-1")});
 
     // Saving again keeps the copy, since this library still does not have it.
-    state.saveProjectJson(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->saveProjectJson(QUrl::fromLocalFile(jsonPath));
     guides = QJsonDocument::fromJson(readFile(jsonPath)).object().value(QStringLiteral("guides")).toObject();
     QCOMPARE(guides.value(QStringLiteral("sets")).toArray().size(), 1);
 
@@ -2947,7 +2947,7 @@ void EditorStateTest::projectJsonImportRejectsGarbageAndLeavesTimeline()
         file.write("{ \"hello\": true }");
     }
 
-    state.loadProjectJson(QUrl::fromLocalFile(path));
+    state.projectFile()->loadProjectJson(QUrl::fromLocalFile(path));
     QCOMPARE(state.lastMessageSeverity(), QStringLiteral("error"));
     QCOMPARE(state.lastMessage(), QStringLiteral("This file isn’t a Drift project."));
     QCOMPARE(state.tracks().size(), 2);
@@ -3015,7 +3015,7 @@ void EditorStateTest::legacyStabilizedRenderBecomesBinAsset()
 
     AssetLibrary library;
     AppController state(&library);
-    state.loadProjectJson(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->loadProjectJson(QUrl::fromLocalFile(jsonPath));
     const drift::Project &loaded = *state.project();
     QCOMPARE(loaded.assetOrder().size(), 2);
 
@@ -3042,7 +3042,7 @@ void EditorStateTest::legacyStabilizedRenderBecomesBinAsset()
     for (const drift::Clip &clip : loadedClips)
         QVERIFY(clip.legacyStabilizePath.isEmpty());
 
-    state.saveProjectJson(QUrl::fromLocalFile(jsonPath));
+    state.projectFile()->saveProjectJson(QUrl::fromLocalFile(jsonPath));
     QVERIFY(!readFile(jsonPath).contains("stabilizePath"));
 }
 
@@ -3364,7 +3364,7 @@ void EditorStateTest::mogrtImportIntoExistingProject()
     state.setPlayheadUs(5000000LL);
 
     // Import into existing project
-    state.importMogrt(QUrl::fromLocalFile(mogrtPath));
+    state.projectFile()->importMogrt(QUrl::fromLocalFile(mogrtPath));
 
     // Existing clip at 0 should be intact
     bool foundExisting = false;
@@ -3409,31 +3409,31 @@ void EditorStateTest::newProjectClearsEverything()
     state.markWorkAreaIn();
     state.setPlayheadSeconds(3.0);
     state.markWorkAreaOut();
-    state.setProjectMetadata(QStringLiteral("Old project"), QStringLiteral("Ada"),
+    state.projectFile()->setProjectMetadata(QStringLiteral("Old project"), QStringLiteral("Ada"),
                              QStringLiteral("Notes"));
-    state.setProjectSetup(1080, 1920, 60);
+    state.projectFile()->setProjectSetup(1080, 1920, 60);
     state.setMediaGridMode(false);
     QVERIFY(state.workAreaActive());
-    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
 
-    state.newProject();
+    state.projectFile()->newProject();
 
     QCOMPARE(library.count(), 0);
     QVERIFY(state.project()->assets().isEmpty());
     QVERIFY(state.project()->assetOrder().isEmpty());
-    QCOMPARE(state.projectName(), QStringLiteral("Untitled Project"));
-    QCOMPARE(state.projectMetadata().value(QStringLiteral("description")).toString(), QString());
+    QCOMPARE(state.projectFile()->projectName(), QStringLiteral("Untitled Project"));
+    QCOMPARE(state.projectFile()->projectMetadata().value(QStringLiteral("description")).toString(), QString());
     QCOMPARE(state.bookmarks().size(), 0);
     QVERIFY(!state.workAreaActive());
-    QCOMPARE(state.projectWidth(), 1920);
-    QCOMPARE(state.projectHeight(), 1080);
-    QCOMPARE(state.projectFps(), 30);
+    QCOMPARE(state.projectFile()->projectWidth(), 1920);
+    QCOMPARE(state.projectFile()->projectHeight(), 1080);
+    QCOMPARE(state.projectFile()->projectFps(), 30);
     QCOMPARE(state.tracks().size(), 1);
     QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("type")).toString(),
              QStringLiteral("video"));
     QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
     QCOMPARE(state.mediaGridMode(), true);
-    QVERIFY(!state.hasUnsavedChanges());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
     QVERIFY(!state.undoAvailable());
 }
 
@@ -3444,22 +3444,22 @@ void EditorStateTest::projectSetupOnPristineProjectStaysClean()
     AssetLibrary library;
     AppController state(&library);
 
-    state.setProjectSetup(1080, 1920, 60);
+    state.projectFile()->setProjectSetup(1080, 1920, 60);
 
-    QCOMPARE(state.projectWidth(), 1080);
-    QCOMPARE(state.projectHeight(), 1920);
-    QCOMPARE(state.projectFps(), 60);
-    QVERIFY(!state.hasUnsavedChanges());
+    QCOMPARE(state.projectFile()->projectWidth(), 1080);
+    QCOMPARE(state.projectFile()->projectHeight(), 1920);
+    QCOMPARE(state.projectFile()->projectFps(), 60);
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
     QVERIFY(!state.undoAvailable());
 
     // Once there is something to undo back to, it is a real edit again.
     state.addTextClip(QStringLiteral("Titled"), 0.0);
-    state.setProjectSetup(1920, 1080, 30);
-    QVERIFY(state.hasUnsavedChanges());
+    state.projectFile()->setProjectSetup(1920, 1080, 30);
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
     QVERIFY(state.undoAvailable());
     state.undo();
-    QCOMPARE(state.projectWidth(), 1080);
-    QCOMPARE(state.projectHeight(), 1920);
+    QCOMPARE(state.projectFile()->projectWidth(), 1080);
+    QCOMPARE(state.projectFile()->projectHeight(), 1920);
 }
 
 void EditorStateTest::projectFpsCanChangeAfterSetup()
@@ -3467,21 +3467,21 @@ void EditorStateTest::projectFpsCanChangeAfterSetup()
     AssetLibrary library;
     AppController state(&library);
 
-    QCOMPARE(state.projectFps(), 30);
-    QCOMPARE(state.projectWidth(), 1920);
-    QCOMPARE(state.projectHeight(), 1080);
+    QCOMPARE(state.projectFile()->projectFps(), 30);
+    QCOMPARE(state.projectFile()->projectWidth(), 1920);
+    QCOMPARE(state.projectFile()->projectHeight(), 1080);
 
-    state.setProjectFps(60);
-    QCOMPARE(state.projectFps(), 60);
-    QCOMPARE(state.projectWidth(), 1920);
-    QCOMPARE(state.projectHeight(), 1080);
+    state.projectFile()->setProjectFps(60);
+    QCOMPARE(state.projectFile()->projectFps(), 60);
+    QCOMPARE(state.projectFile()->projectWidth(), 1920);
+    QCOMPARE(state.projectFile()->projectHeight(), 1080);
 
-    state.setProjectFps(0);
-    QCOMPARE(state.projectFps(), 1);
-    state.setProjectFps(999);
-    QCOMPARE(state.projectFps(), 240);
-    state.setProjectFps(24);
-    QCOMPARE(state.projectFps(), 24);
+    state.projectFile()->setProjectFps(0);
+    QCOMPARE(state.projectFile()->projectFps(), 1);
+    state.projectFile()->setProjectFps(999);
+    QCOMPARE(state.projectFile()->projectFps(), 240);
+    state.projectFile()->setProjectFps(24);
+    QCOMPARE(state.projectFile()->projectFps(), 24);
 }
 
 // The picker offers a backend only when its device opens here, and a mode naming one
@@ -5604,7 +5604,7 @@ void EditorStateTest::commitTrimSendsOneTimelineNotification()
 
     QCOMPARE(spy.count(), 1);
     QCOMPARE(state.m_undoStack.count(), 1);
-    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
     QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 6.0);
 
     // The cache must still be correct after a batched notification, not just eventually.
@@ -5629,7 +5629,7 @@ void EditorStateTest::commitTrimWithoutMovementLeavesNoUndoStep()
     state.commitTrim(0, 0, 1, -1.0);
 
     QCOMPARE(state.m_undoStack.count(), 0);
-    QVERIFY(!state.hasUnsavedChanges());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
     QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 10.0);
 }
 
@@ -5640,7 +5640,7 @@ void EditorStateTest::trimPushesOneUndoStepAndMarksDirty()
     state.setSnapEnabled(false);
     buildOneClipProject(state, 0.0, 10.0);
 
-    QVERIFY(!state.hasUnsavedChanges());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
     QVERIFY(!state.undoAvailable());
 
     // What a drag actually looks like: one begin, a stream of steps, one commit.
@@ -5657,7 +5657,7 @@ void EditorStateTest::trimPushesOneUndoStepAndMarksDirty()
 
     // The whole point: forty mutations, one undo step, and the project knows it is dirty.
     QCOMPARE(state.m_undoStack.count(), 1);
-    QVERIFY(state.hasUnsavedChanges());
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
 
     state.undo();
     QCOMPARE(drift::usToSeconds(state.project()->tracks()[0].clips[0].timelineDuration), 10.0);
@@ -5679,7 +5679,7 @@ void EditorStateTest::trimClickWithoutMovementLeavesNoUndoStep()
     state.cancelPreviewDrag();
 
     QCOMPARE(state.m_undoStack.count(), 0);
-    QVERIFY(!state.hasUnsavedChanges());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
 }
 
 void EditorStateTest::trimClipRightRejectsANoOpMove()
@@ -6871,18 +6871,18 @@ void EditorStateTest::exportAssetImageWritesPngAndJpeg()
 
 void EditorStateTest::startupProjectUrlFromArguments()
 {
-    QCOMPARE(AppController::startupProjectUrlFromArguments({QStringLiteral("drift")}), QUrl());
-    QCOMPARE(AppController::startupProjectUrlFromArguments(
+    QCOMPARE(ProjectFileController::startupProjectUrlFromArguments({QStringLiteral("drift")}), QUrl());
+    QCOMPARE(ProjectFileController::startupProjectUrlFromArguments(
                  {QStringLiteral("drift"), QStringLiteral("--verbose")}),
              QUrl());
 
     const QString spaced = QDir::temp().filePath(QStringLiteral("Untitled Project.drift"));
-    const QUrl fromPath = AppController::startupProjectUrlFromArguments(
+    const QUrl fromPath = ProjectFileController::startupProjectUrlFromArguments(
         {QStringLiteral("drift"), QStringLiteral("--verbose"), spaced});
     QCOMPARE(fromPath, QUrl::fromLocalFile(spaced));
 
     const QUrl fileUrl = QUrl::fromLocalFile(spaced);
-    const QUrl fromFileUrl = AppController::startupProjectUrlFromArguments(
+    const QUrl fromFileUrl = ProjectFileController::startupProjectUrlFromArguments(
         {QStringLiteral("drift"), fileUrl.toString()});
     QCOMPARE(fromFileUrl.toLocalFile(), spaced);
 }
@@ -7033,7 +7033,7 @@ void EditorStateTest::multicamSaveSeparateWritesGappedClips()
     selectStackedCameras(state);
     QVERIFY(state.beginMulticamSession());
 
-    const drift::TimeUs cutUs = frameSnapped(state.projectFps(), 4.0);
+    const drift::TimeUs cutUs = frameSnapped(state.projectFile()->projectFps(), 4.0);
     state.setPlayheadSeconds(4.0);
     state.switchMulticamAngle(1);
     state.saveMulticamAsSeparateTracks();
@@ -7067,7 +7067,7 @@ void EditorStateTest::multicamSaveCombinedFlattensOntoTopmost()
     selectStackedCameras(state);
     QVERIFY(state.beginMulticamSession());
 
-    const drift::TimeUs cutUs = frameSnapped(state.projectFps(), 4.0);
+    const drift::TimeUs cutUs = frameSnapped(state.projectFile()->projectFps(), 4.0);
     state.setPlayheadSeconds(4.0);
     state.switchMulticamAngle(1);
     state.saveMulticamCombined();
@@ -7094,7 +7094,7 @@ void EditorStateTest::multicamSessionEndsWithTheProject()
     QVERIFY(state.beginMulticamSession());
     QVERIFY(state.multicamActive());
 
-    state.newProject();
+    state.projectFile()->newProject();
     QVERIFY(!state.multicamActive());
 }
 

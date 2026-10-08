@@ -24,8 +24,8 @@ Item {
 
     readonly property real aspect: {
         void EditorState.tracksRevision
-        const w = EditorState.projectWidth()
-        const h = EditorState.projectHeight()
+        const w = EditorState.projectFile.projectWidth()
+        const h = EditorState.projectFile.projectHeight()
         return (w > 0 && h > 0) ? (w / h) : (16 / 9)
     }
     // Crop mode pulls the canvas in so there is room around it to drag an edge outward and grow
@@ -86,7 +86,7 @@ Item {
         y: (viewport.height - height) / 2 + viewport.panY
         // The 3D view draws the whole panel, with its own outline of the stage; this rect only
         // keeps the project frame's place for the tools.
-        color: viewport.mode3d || (EditorState.background && EditorState.background.kind === "transparent")
+        color: viewport.mode3d || (EditorState.projectFile.background && EditorState.projectFile.background.kind === "transparent")
                ? "transparent" : Theme.overlayColor
         border.width: viewport.mode3d ? 0 : Theme.borderWidth
         border.color: Theme.border

@@ -14,12 +14,12 @@ ThemedDialog {
     rejectVariant: "destructive"
     closePolicy: Popup.CloseOnEscape
 
-    onRejected: EditorState.cancelPackage()
+    onRejected: EditorState.projectFile.cancelPackage()
 
     Connections {
-        target: EditorState
+        target: EditorState.projectFile
         function onPackagingChanged() {
-            if (EditorState.packaging)
+            if (EditorState.projectFile.packaging)
                 root.open()
             else
                 root.close()
@@ -32,8 +32,8 @@ ThemedDialog {
 
         LabelledProgressRing {
             width: parent.width
-            value: EditorState.packageProgress
-            indeterminate: EditorState.packageProgress <= 0
+            value: EditorState.projectFile.packageProgress
+            indeterminate: EditorState.projectFile.packageProgress <= 0
         }
 
         ThemedLabel {

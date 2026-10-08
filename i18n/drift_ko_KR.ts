@@ -2972,18 +2972,6 @@
         <translation>노이즈가 제거됨</translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>이 프로젝트는 “%1”을 사용하지만 설치되어 있지 않아 표시되지 않습니다. 추가 기능을 열어 설치하세요.</translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>이 프로젝트에는 설치되지 않은 %1개의 효과 또는 전환(%2%3)이 사용되어 표시되지 않습니다. 추가 기능을 열어 설치하세요.</translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation>, …</translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation>도형이 추가됨</translation>
     </message>
@@ -3054,34 +3042,6 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>이모지 스티커 팩을 설치하여 이모지를 추가하세요</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>프레임 속도</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation>프로젝트 설정</translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation>프로젝트 설정이 업데이트됨</translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation>캔버스 크롭</translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation>동영상 크기가 %1×%2로 크롭됨</translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation>배경 변경</translation>
-    </message>
-    <message>
-        <source>Background updated</source>
-        <translation>배경이 업데이트됨</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4336,116 +4296,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation>복사본이 저장됨</translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation>%1을(를) 쓸 수 없습니다: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation>프로젝트 JSON 저장됨</translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation>아직 프로젝트를 여는 중입니다 — 잠시 후 다시 시도하세요.</translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation>%1을(를) 읽을 수 없습니다: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation>프로젝트 JSON이 로드됨</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>Premiere Pro 프로젝트를 열지 못했습니다</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>Premiere Pro 프로젝트 가져옴: %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>해당 템플릿 위치가 올바르지 않습니다</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>Motion Graphics Template 압축을 풀지 못했습니다</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>프로젝트에 템플릿을 적용하지 못했습니다</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>템플릿 가져오기: %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>템플릿 가져옴: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>Kdenlive / MLT 프로젝트를 열지 못했습니다</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Kdenlive 프로젝트 가져옴: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>DaVinci Resolve 프로젝트/타임라인을 열지 못했습니다</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>DaVinci Resolve 프로젝트 가져옴: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>Edit Decision List(.edl)을 열지 못했습니다</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>EDL 가져옴: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>OpenTimelineIO(.otio) 시퀀스를 열지 못했습니다</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>OpenTimelineIO 가져옴: %1</translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation>해당 폴더가 올바르지 않습니다</translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation>모든 미디어가 이미 해당 폴더에 있습니다</translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation>미디어 수집</translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
-            <numerusform>미디어가 수집되었지만 원본 %n개를 삭제하지 못했습니다</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation>미디어를 이동하고 링크를 다시 설정함</translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation>미디어를 복사하고 링크를 다시 설정함</translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation>내보내는 중…</translation>
     </message>
@@ -4616,42 +4466,6 @@
         <translation>해당 저장 위치가 올바르지 않습니다</translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation>이미 저장 중입니다</translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation>프로젝트가 저장됨</translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation>공유 가능한 복사본이 준비됨</translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation>해당 프로젝트 위치가 올바르지 않습니다</translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation>프로젝트가 로드됨</translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation>프로젝트 미디어 압축을 푸는 중…</translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation>복구 파일을 찾을 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation>저장되지 않은 작업이 복구됨</translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation>새 세션 시작됨</translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation>내보내기가 이미 진행 중입니다</translation>
     </message>
@@ -4710,6 +4524,14 @@
     <message>
         <source>Clip orientation set to %1°</source>
         <translation>클립 방향을 %1°로 설정</translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation>캔버스 크롭</translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
+        <translation>동영상 크기가 %1×%2로 크롭됨</translation>
     </message>
 </context>
 <context>
@@ -10314,6 +10136,195 @@ If playback stutters, try another.</source>
     <message>
         <source>Couldn’t create %1</source>
         <translation>%1을(를) 만들 수 없습니다</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation>새 프로젝트</translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation>이 프로젝트는 “%1”을 사용하지만 설치되어 있지 않아 표시되지 않습니다. 추가 기능을 열어 설치하세요.</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation>이 프로젝트에는 설치되지 않은 %1개의 효과 또는 전환(%2%3)이 사용되어 표시되지 않습니다. 추가 기능을 열어 설치하세요.</translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation>, …</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>프레임 속도</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation>프로젝트 설정</translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation>프로젝트 설정이 업데이트됨</translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation>배경 변경</translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation>배경이 업데이트됨</translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation>복사본이 저장됨</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>%1을(를) 쓸 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation>프로젝트 JSON 저장됨</translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation>아직 프로젝트를 여는 중입니다 — 잠시 후 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation>%1을(를) 읽을 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation>프로젝트 JSON이 로드됨</translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation>Premiere Pro 프로젝트를 열지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation>Premiere Pro 프로젝트 가져옴: %1</translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation>해당 템플릿 위치가 올바르지 않습니다</translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation>Motion Graphics Template 압축을 풀지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation>프로젝트에 템플릿을 적용하지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation>템플릿 가져오기: %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation>템플릿 가져옴: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation>Kdenlive / MLT 프로젝트를 열지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation>Kdenlive 프로젝트 가져옴: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation>DaVinci Resolve 프로젝트/타임라인을 열지 못했습니다</translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation>DaVinci Resolve 프로젝트 가져옴: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation>Edit Decision List(.edl)을 열지 못했습니다</translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation>EDL 가져옴: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation>OpenTimelineIO(.otio) 시퀀스를 열지 못했습니다</translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation>OpenTimelineIO 가져옴: %1</translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation>해당 폴더가 올바르지 않습니다</translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation>모든 미디어가 이미 해당 폴더에 있습니다</translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation>미디어 수집</translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation>
+            <numerusform>미디어가 수집되었지만 원본 %n개를 삭제하지 못했습니다</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation>미디어를 이동하고 링크를 다시 설정함</translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation>미디어를 복사하고 링크를 다시 설정함</translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation>해당 저장 위치가 올바르지 않습니다</translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation>이미 저장 중입니다</translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation>프로젝트가 저장됨</translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation>공유 가능한 복사본이 준비됨</translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation>해당 프로젝트 위치가 올바르지 않습니다</translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation>프로젝트가 로드됨</translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation>프로젝트 미디어 압축을 푸는 중…</translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation>복구 파일을 찾을 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation>저장되지 않은 작업이 복구됨</translation>
+    </message>
+    <message>
+        <source>Started new session</source>
+        <translation>새 세션 시작됨</translation>
     </message>
 </context>
 <context>

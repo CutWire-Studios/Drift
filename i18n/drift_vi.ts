@@ -2972,18 +2972,6 @@
         <translation>Đã khử tiếng ồn</translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>Dự án này sử dụng &quot;%1&quot;, chưa được cài đặt — nó sẽ không hiển thị. Mở Bổ trợ để cài đặt nó.</translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>Dự án này sử dụng các hiệu ứng hoặc chuyển cảnh %1 chưa được cài đặt (%2%3) — chúng sẽ không hiển thị. Mở Bổ trợ để cài đặt chúng.</translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation>, …</translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation>Đã thêm hình dạng</translation>
     </message>
@@ -3054,34 +3042,6 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>Cài đặt gói nhãn dán biểu tượng cảm xúc để thêm biểu tượng cảm xúc</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>Tốc độ khung hình</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation>Cài đặt dự án</translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation>Đã cập nhật cài đặt dự án</translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation>Xén khung hình</translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation>Kích thước video được cắt thành %1×%2</translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation>Thay đổi nền</translation>
-    </message>
-    <message>
-        <source>Background updated</source>
-        <translation>Đã cập nhật nền</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4344,116 +4304,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation>Đã lưu một bản sao</translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation>Không thể ghi %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation>Đã lưu dự án JSON</translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation>Vẫn đang mở một dự án — hãy thử lại sau giây lát.</translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation>Không thể đọc %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation>Đã tải dự án JSON</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>Không mở được dự án Premiere Pro</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>Dự án Premiere Pro đã nhập: %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>Vị trí mẫu đó không hợp lệ</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>Không thể giải nén Mẫu đồ họa chuyển động</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>Không thể áp dụng mẫu cho dự án</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>Nhập mẫu: %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>Mẫu đã nhập: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>Không mở được dự án Kdenlive / MLT</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Dự án Kdenlive đã nhập: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>Không thể mở dự án / dòng thời gian DaVinci Resolve</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>Dự án DaVinci Resolve đã được nhập: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>Không mở được Danh sách Quyết định Chỉnh sửa (.edl)</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>EDL đã nhập: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>Không mở được chuỗi OpenTimelineIO (.otio)</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>OpenTimelineIO đã nhập: %1</translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation>Thư mục đó không hợp lệ</translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation>Tất cả phương tiện đã có trong thư mục đó</translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation>Thu thập phương tiện</translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
-            <numerusform>Phương tiện đã được thu thập, nhưng không thể xóa bản gốc %n</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation>Phương tiện đã được di chuyển và liên kết lại</translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation>Phương tiện được sao chép và liên kết lại</translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation>Đang xuất…</translation>
     </message>
@@ -4624,42 +4474,6 @@
         <translation>Vị trí lưu đó không hợp lệ</translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation>Đã được lưu</translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation>Đã lưu dự án</translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation>Bản sao có thể chia sẻ đã sẵn sàng</translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation>Vị trí dự án đó không hợp lệ</translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation>Đã tải dự án</translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation>Đang giải nén phương tiện dự án…</translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation>Không tìm thấy tệp khôi phục</translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation>Đã khôi phục công việc chưa lưu</translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation>Bắt đầu phiên mới</translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation>Đang trong tiến trình xuất</translation>
     </message>
@@ -4710,6 +4524,14 @@
     <message>
         <source>Track renamed</source>
         <translation>Đã đổi tên track</translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation>Xén khung hình</translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
+        <translation>Kích thước video được cắt thành %1×%2</translation>
     </message>
 </context>
 <context>
@@ -10320,6 +10142,195 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>Couldn’t create %1</source>
         <translation>Không thể tạo %1</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation>Dự án mới</translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation>Dự án này sử dụng &quot;%1&quot;, chưa được cài đặt — nó sẽ không hiển thị. Mở Bổ trợ để cài đặt nó.</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation>Dự án này sử dụng các hiệu ứng hoặc chuyển cảnh %1 chưa được cài đặt (%2%3) — chúng sẽ không hiển thị. Mở Bổ trợ để cài đặt chúng.</translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation>, …</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Tốc độ khung hình</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation>Cài đặt dự án</translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation>Đã cập nhật cài đặt dự án</translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation>Thay đổi nền</translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation>Đã cập nhật nền</translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation>Đã lưu một bản sao</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>Không thể ghi %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation>Đã lưu dự án JSON</translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation>Vẫn đang mở một dự án — hãy thử lại sau giây lát.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation>Không thể đọc %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation>Đã tải dự án JSON</translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation>Không mở được dự án Premiere Pro</translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation>Dự án Premiere Pro đã nhập: %1</translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation>Vị trí mẫu đó không hợp lệ</translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation>Không thể giải nén Mẫu đồ họa chuyển động</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation>Không thể áp dụng mẫu cho dự án</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation>Nhập mẫu: %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation>Mẫu đã nhập: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation>Không mở được dự án Kdenlive / MLT</translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation>Dự án Kdenlive đã nhập: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation>Không thể mở dự án / dòng thời gian DaVinci Resolve</translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation>Dự án DaVinci Resolve đã được nhập: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation>Không mở được Danh sách Quyết định Chỉnh sửa (.edl)</translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation>EDL đã nhập: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation>Không mở được chuỗi OpenTimelineIO (.otio)</translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation>OpenTimelineIO đã nhập: %1</translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation>Thư mục đó không hợp lệ</translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation>Tất cả phương tiện đã có trong thư mục đó</translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation>Thu thập phương tiện</translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation>
+            <numerusform>Phương tiện đã được thu thập, nhưng không thể xóa bản gốc %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation>Phương tiện đã được di chuyển và liên kết lại</translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation>Phương tiện được sao chép và liên kết lại</translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation>Vị trí lưu đó không hợp lệ</translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation>Đã được lưu</translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation>Đã lưu dự án</translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation>Bản sao có thể chia sẻ đã sẵn sàng</translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation>Vị trí dự án đó không hợp lệ</translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation>Đã tải dự án</translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation>Đang giải nén phương tiện dự án…</translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation>Không tìm thấy tệp khôi phục</translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation>Đã khôi phục công việc chưa lưu</translation>
+    </message>
+    <message>
+        <source>Started new session</source>
+        <translation>Bắt đầu phiên mới</translation>
     </message>
 </context>
 <context>

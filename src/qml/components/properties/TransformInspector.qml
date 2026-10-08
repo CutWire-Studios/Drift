@@ -27,11 +27,11 @@ Item {
                                          ? (transformParents[0].name || qsTr("Transform")) : ""
     readonly property int canvasW: {
         void EditorState.tracksRevision
-        return Math.max(1, EditorState.projectWidth())
+        return Math.max(1, EditorState.projectFile.projectWidth())
     }
     readonly property int canvasH: {
         void EditorState.tracksRevision
-        return Math.max(1, EditorState.projectHeight())
+        return Math.max(1, EditorState.projectFile.projectHeight())
     }
 
     readonly property var propOpacity: { "key": "opacity", "label": qsTr("Opacity"), "def": 1.0, "decimals": 2 }

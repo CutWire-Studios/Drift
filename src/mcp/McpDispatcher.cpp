@@ -1720,7 +1720,7 @@ QJsonObject McpDispatcher::opSetProjectSetup(const QJsonObject &args)
     const int fps = jsonInt(args.value(QStringLiteral("fps")));
     if (width <= 0 || height <= 0 || fps <= 0)
         return err("bad_args", QStringLiteral("width, height, fps required"));
-    m_controller->setProjectSetup(width, height, fps);
+    m_controller->projectFile()->setProjectSetup(width, height, fps);
     return ok({{QStringLiteral("w"), width},
                {QStringLiteral("h"), height},
                {QStringLiteral("fps"), fps}});
@@ -1737,13 +1737,13 @@ QJsonObject McpDispatcher::opSetBackground(const QJsonObject &args)
         patch.insert(QStringLiteral("blurStrength"), jsonNumber(args.value(QStringLiteral("blurStrength")), 0));
     if (patch.isEmpty())
         return err("bad_args", QStringLiteral("At least one of kind, color, blurStrength required"));
-    m_controller->setBackground(patch);
-    return ok(QJsonObject::fromVariantMap(m_controller->background()));
+    m_controller->projectFile()->setBackground(patch);
+    return ok(QJsonObject::fromVariantMap(m_controller->projectFile()->background()));
 }
 
 QJsonObject McpDispatcher::opSetMetadata(const QJsonObject &args)
 {
-    const QVariantMap current = m_controller->projectMetadata();
+    const QVariantMap current = m_controller->projectFile()->projectMetadata();
     const QString title =
         args.contains(QStringLiteral("title")) ? args.value(QStringLiteral("title")).toString()
                                                : current.value(QStringLiteral("title")).toString();
@@ -1753,7 +1753,7 @@ QJsonObject McpDispatcher::opSetMetadata(const QJsonObject &args)
     const QString description = args.contains(QStringLiteral("description"))
                                     ? args.value(QStringLiteral("description")).toString()
                                     : current.value(QStringLiteral("description")).toString();
-    m_controller->setProjectMetadata(title, author, description);
+    m_controller->projectFile()->setProjectMetadata(title, author, description);
     return ok({{QStringLiteral("title"), title},
                {QStringLiteral("author"), author},
                {QStringLiteral("description"), description}});
@@ -1764,7 +1764,7 @@ QJsonObject McpDispatcher::opSaveProject(const QJsonObject &args)
     const bool saveAs = args.value(QStringLiteral("saveAs")).toBool();
     QString path = args.value(QStringLiteral("path")).toString();
     if (path.isEmpty() && !saveAs)
-        path = m_controller->currentProjectPath();
+        path = m_controller->projectFile()->currentProjectPath();
     if (path.isEmpty())
         return err("bad_args",
                    saveAs ? QStringLiteral("path required with saveAs — it names the copy")
@@ -1774,12 +1774,12 @@ QJsonObject McpDispatcher::opSaveProject(const QJsonObject &args)
         return err("bad_args", QStringLiteral("Could not create parent folder"));
     // Save As onto the open project would be a plain Save that also re-ids and renames it, which
     // is the opposite of what the caller asked for.
-    if (saveAs && info.absoluteFilePath() == QFileInfo(m_controller->currentProjectPath()).absoluteFilePath())
+    if (saveAs && info.absoluteFilePath() == QFileInfo(m_controller->projectFile()->currentProjectPath()).absoluteFilePath())
         return err("bad_args", QStringLiteral("saveAs path is the open project — pick another"));
     if (saveAs)
-        m_controller->saveProjectAs(QUrl::fromLocalFile(path));
+        m_controller->projectFile()->saveProjectAs(QUrl::fromLocalFile(path));
     else
-        m_controller->saveProject(QUrl::fromLocalFile(path));
+        m_controller->projectFile()->saveProject(QUrl::fromLocalFile(path));
     return ok({{QStringLiteral("path"), path}});
 }
 
@@ -1835,9 +1835,9 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
     const QString suffix = compact.value(QStringLiteral("suffix")).toString();
     QFileInfo info(path);
     if (info.isDir() || path.endsWith(QLatin1Char('/')) || path.endsWith(QLatin1Char('\\'))) {
-        const QString name = m_controller->projectName().isEmpty()
+        const QString name = m_controller->projectFile()->projectName().isEmpty()
                                  ? QStringLiteral("export")
-                                 : m_controller->projectName();
+                                 : m_controller->projectFile()->projectName();
         path = QDir(path).filePath(name + QLatin1Char('.') + suffix);
         info.setFile(path);
     } else if (info.suffix().isEmpty() && !suffix.isEmpty()) {

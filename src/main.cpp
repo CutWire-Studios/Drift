@@ -193,7 +193,7 @@ protected:
             const auto *open = static_cast<QFileOpenEvent *>(event);
             if (m_market && m_market->handleIncomingUrl(open->url()))
                 return true;
-            m_controller->queueExternalProject(open->url());
+            m_controller->projectFile()->queueExternalProject(open->url());
             return true;
         }
         return QObject::eventFilter(watched, event);
@@ -705,7 +705,7 @@ int main(int argc, char *argv[])
                 continue;
             forwarded.append(arg);
         }
-        editorState.queueExternalProject(AppController::startupProjectUrlFromArguments(forwarded));
+        editorState.projectFile()->queueExternalProject(ProjectFileController::startupProjectUrlFromArguments(forwarded));
     }
 
     QQmlApplicationEngine engine;

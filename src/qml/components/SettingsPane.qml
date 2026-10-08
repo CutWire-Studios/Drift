@@ -117,25 +117,25 @@ Item {
                     tooltip: qsTr("Fill behind clips that don’t cover the whole screen")
                     currentIndex: {
                         for (var i = 0; i < model.length; ++i) {
-                            if (model[i].id === EditorState.background.kind)
+                            if (model[i].id === EditorState.projectFile.background.kind)
                                 return i
                         }
                         return 0
                     }
-                    onActivated: EditorState.setBackground({ kind: model[currentIndex].id })
+                    onActivated: EditorState.projectFile.setBackground({ kind: model[currentIndex].id })
                 }
 
                 ColorSwatchField {
-                    visible: EditorState.background.kind === "color"
-                    hex: EditorState.background.color || "#ff000000"
+                    visible: EditorState.projectFile.background.kind === "color"
+                    hex: EditorState.projectFile.background.color || "#ff000000"
                     tooltip: qsTr("Choose background colour")
-                    onEdited: value => EditorState.setBackground({ kind: "color", color: value })
+                    onEdited: value => EditorState.projectFile.setBackground({ kind: "color", color: value })
                 }
 
                 Column {
                     width: parent.width
                     spacing: Theme.spacingSm
-                    visible: EditorState.background.kind === "blur"
+                    visible: EditorState.projectFile.background.kind === "blur"
 
                     ThemedSlider {
                         width: parent.width
@@ -144,10 +144,10 @@ Item {
                         to: 100
                         stepSize: 1
                         valueFormatter: function (v) { return Math.round(v) }
-                        value: EditorState.background.blurStrength || 20
+                        value: EditorState.projectFile.background.blurStrength || 20
                         onPressedChanged: {
                             if (!pressed)
-                                EditorState.setBackground({ kind: "blur", blurStrength: value })
+                                EditorState.projectFile.setBackground({ kind: "blur", blurStrength: value })
                         }
                     }
                 }

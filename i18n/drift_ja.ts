@@ -2972,18 +2972,6 @@
         <translation>ノイズを除去しました</translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>このプロジェクトはインストールされていない「%1」を使用しています — 表示されません。拡張機能を開いてインストールしてください。</translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>このプロジェクトはインストールされていない %1 個のエフェクトまたはトランジションを使用しています (%2%3) — 表示されません。拡張機能を開いてインストールしてください。</translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation>、…</translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation>シェイプを追加しました</translation>
     </message>
@@ -3054,34 +3042,6 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>絵文字を追加するには絵文字スタンプパックをインストールしてください</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>フレームレート</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation>プロジェクト設定</translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation>プロジェクト設定を更新しました</translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation>キャンバスをクロップ</translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation>ビデオサイズを %1×%2 にクロップしました</translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation>背景を変更</translation>
-    </message>
-    <message>
-        <source>Background updated</source>
-        <translation>背景を更新しました</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4336,116 +4296,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation>コピーを保存しました</translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation>%1 に書き込めませんでした : %2</translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation>プロジェクト JSON を保存しました</translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation>プロジェクトの読み込み中です — しばらくしてからもう一度試してください。</translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation>%1 を読み取れませんでした : %2</translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation>プロジェクト JSON を読み込みました</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>Premiere Pro プロジェクトを開けません</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>インポートされたPremiere Proプロジェクト : %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>そのテンプレートの場所は無効です</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>モーショングラフィックス テンプレートの展開に失敗しました</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>プロジェクトへのテンプレートの適用に失敗しました</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>テンプレートをインポート : %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>テンプレートをインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>Kdenlive / MLT プロジェクトのオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Kdenlive プロジェクトをインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>DaVinci Resolve プロジェクト / タイムラインのオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>DaVinci Resolve プロジェクトをインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>Edit Decision List (.edl) のオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>EDL をインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>OpenTimelineIO (.otio) シーケンスのオープンに失敗しました</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>OpenTimelineIO をインポートしました : %1</translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation>そのフォルダーは無効です</translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation>すべてのメディアはすでにそのフォルダーにあります</translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation>メディアを収集</translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
-            <numerusform>メディアを収集しましたが、%n 個の元ファイルを削除できませんでした</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation>メディアを移動して再リンクしました</translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation>メディアをコピーして再リンクしました</translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation>エクスポート中…</translation>
     </message>
@@ -4616,42 +4466,6 @@
         <translation>その保存先は無効です</translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation>既に保存中です</translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation>プロジェクトを保存しました</translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation>共有可能なコピーの準備ができました</translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation>そのプロジェクトの場所は無効です</translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation>プロジェクトを読み込みました</translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation>プロジェクトメディアを展開中…</translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation>リカバリファイルが見つかりません</translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation>未保存の作業を復元しました</translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation>新しいセッションを開始しました</translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation>エクスポートは既に実行中です</translation>
     </message>
@@ -4710,6 +4524,14 @@
     <message>
         <source>Clip orientation set to %1°</source>
         <translation>クリップの向きを %1° に設定しました</translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation>キャンバスをクロップ</translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
+        <translation>ビデオサイズを %1×%2 にクロップしました</translation>
     </message>
 </context>
 <context>
@@ -10320,6 +10142,195 @@ If playback stutters, try another.</source>
     <message>
         <source>Couldn’t create %1</source>
         <translation>%1 を作成できませんでした</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation>新規プロジェクト</translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation>このプロジェクトはインストールされていない「%1」を使用しています — 表示されません。拡張機能を開いてインストールしてください。</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation>このプロジェクトはインストールされていない %1 個のエフェクトまたはトランジションを使用しています (%2%3) — 表示されません。拡張機能を開いてインストールしてください。</translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation>、…</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>フレームレート</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation>プロジェクト設定</translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation>プロジェクト設定を更新しました</translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation>背景を変更</translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation>背景を更新しました</translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation>コピーを保存しました</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>%1 に書き込めませんでした : %2</translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation>プロジェクト JSON を保存しました</translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation>プロジェクトの読み込み中です — しばらくしてからもう一度試してください。</translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation>%1 を読み取れませんでした : %2</translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation>プロジェクト JSON を読み込みました</translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation>Premiere Pro プロジェクトを開けません</translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation>インポートされたPremiere Proプロジェクト : %1</translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation>そのテンプレートの場所は無効です</translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation>モーショングラフィックス テンプレートの展開に失敗しました</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation>プロジェクトへのテンプレートの適用に失敗しました</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation>テンプレートをインポート : %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation>テンプレートをインポートしました : %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation>Kdenlive / MLT プロジェクトのオープンに失敗しました</translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation>Kdenlive プロジェクトをインポートしました : %1</translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation>DaVinci Resolve プロジェクト / タイムラインのオープンに失敗しました</translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation>DaVinci Resolve プロジェクトをインポートしました : %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation>Edit Decision List (.edl) のオープンに失敗しました</translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation>EDL をインポートしました : %1</translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation>OpenTimelineIO (.otio) シーケンスのオープンに失敗しました</translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation>OpenTimelineIO をインポートしました : %1</translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation>そのフォルダーは無効です</translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation>すべてのメディアはすでにそのフォルダーにあります</translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation>メディアを収集</translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation>
+            <numerusform>メディアを収集しましたが、%n 個の元ファイルを削除できませんでした</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation>メディアを移動して再リンクしました</translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation>メディアをコピーして再リンクしました</translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation>その保存先は無効です</translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation>既に保存中です</translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation>プロジェクトを保存しました</translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation>共有可能なコピーの準備ができました</translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation>そのプロジェクトの場所は無効です</translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation>プロジェクトを読み込みました</translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation>プロジェクトメディアを展開中…</translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation>リカバリファイルが見つかりません</translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation>未保存の作業を復元しました</translation>
+    </message>
+    <message>
+        <source>Started new session</source>
+        <translation>新しいセッションを開始しました</translation>
     </message>
 </context>
 <context>

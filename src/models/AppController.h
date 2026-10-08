@@ -65,6 +65,7 @@ struct MediaEditSpec;
 #include "preview/PreviewController.h"
 #include "McpController.h"
 #include "PreferencesController.h"
+#include "ProjectFileController.h"
 
 // QML-facing controller over the core project model and undo stack.
 class AppController : public QObject
@@ -76,6 +77,7 @@ class AppController : public QObject
     friend class PreviewController;
     // Owns the agent server. Still reaches the timeline helpers that have not moved yet.
     friend class McpController;
+    friend class ProjectFileController;
 
     Q_OBJECT
 
@@ -94,6 +96,8 @@ class AppController : public QObject
     Q_PROPERTY(PreviewController *preview READ preview CONSTANT)
     // App-wide preferences and persisted UI layout. QML: EditorState.preferences.
     Q_PROPERTY(PreferencesController *preferences READ preferences CONSTANT)
+    // Project file lifecycle and project setup. QML: EditorState.projectFile.
+    Q_PROPERTY(ProjectFileController *projectFile READ projectFile CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
@@ -312,7 +316,6 @@ class AppController : public QObject
     Q_PROPERTY(QVariantList guideSets READ guideSets NOTIFY guidesChanged)
     // The items of every active set, flattened for drawing.
     Q_PROPERTY(QVariantList guideItems READ guideItems NOTIFY guidesChanged)
-    Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(bool inlineTextEditing READ inlineTextEditing NOTIFY inlineTextEditingChanged)
     Q_PROPERTY(QVariantList actions READ actions NOTIFY shortcutsChanged)
     Q_PROPERTY(QVariantList bookmarks READ bookmarks NOTIFY bookmarksChanged)
@@ -321,34 +324,17 @@ class AppController : public QObject
     Q_PROPERTY(double workAreaOutSeconds READ workAreaOutSeconds NOTIFY workAreaChanged)
     Q_PROPERTY(bool loopWorkAreaEnabled READ loopWorkAreaEnabled WRITE setLoopWorkAreaEnabled
                    NOTIFY loopWorkAreaEnabledChanged)
-    Q_PROPERTY(QString projectName READ projectName WRITE setProjectName NOTIFY projectNameChanged)
-    Q_PROPERTY(QVariantMap projectMetadata READ projectMetadata NOTIFY projectMetadataChanged)
-    Q_PROPERTY(bool packaging READ packaging NOTIFY packagingChanged)
-    Q_PROPERTY(double packageProgress READ packageProgress NOTIFY packageProgressChanged)
-    Q_PROPERTY(bool collectingMedia READ collectingMedia NOTIFY collectingMediaChanged)
-    Q_PROPERTY(double collectMediaProgress READ collectMediaProgress NOTIFY collectMediaProgressChanged)
     Q_PROPERTY(QString lastMessage READ lastMessage NOTIFY lastMessageChanged)
     // Severity of lastMessage: "info" | "success" | "warning" | "error". Exists so
     // the QML toast host does not have to guess from the message wording — it used
     // to regex the prose, and none of the real failure strings matched, so a
     // corrupt-project open rendered as a neutral info toast.
     Q_PROPERTY(QString lastMessageSeverity READ lastMessageSeverity NOTIFY lastMessageChanged)
-    // True from the moment loadProject()/loadProjectJson() is called — by the header,
-    // the start screen, an external open, or a startup restore — until projectLoadFinished
-    // fires. Tracked here rather than by each QML call site so a load kicked off from C++
-    // (consumeStartupProject, restoreLastSessionIfEnabled) is just as visible as one QML
-    // started itself; nothing else may replace the document while this is true.
-    Q_PROPERTY(bool projectLoadPending READ projectLoadPending NOTIFY projectLoadPendingChanged)
     Q_PROPERTY(int draggingAssetIndex READ draggingAssetIndex WRITE setDraggingAssetIndex NOTIFY draggingAssetIndexChanged)
     // Set by MediaPreviewWindow.qml/AndroidMediaPreview.qml while open, so the bin grid can defer
     // rebuilding its delegate array (and the scroll-position flicker that causes) until the
     // window closes rather than on every metadata change (rotate, trim, a probe landing) it emits.
     Q_PROPERTY(bool assetPreviewWindowOpen READ assetPreviewWindowOpen WRITE setAssetPreviewWindowOpen NOTIFY assetPreviewWindowOpenChanged)
-    Q_PROPERTY(bool hasUnsavedChanges READ hasUnsavedChanges NOTIFY dirtyChanged)
-    Q_PROPERTY(QString currentProjectPath READ currentProjectPath NOTIFY currentProjectPathChanged)
-    Q_PROPERTY(bool recoveryAvailable READ recoveryAvailable NOTIFY recoveryChanged)
-    Q_PROPERTY(QVariantMap recoveryInfo READ recoveryInfo NOTIFY recoveryChanged)
-    Q_PROPERTY(QVariantList recentProjects READ recentProjects NOTIFY recentProjectsChanged)
     Q_PROPERTY(bool separateAudioAvailable READ canSeparateAudioSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool makeCompositeAvailable READ canMakeCompositeFromSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool transformTogetherAvailable READ canTransformSelectionTogether NOTIFY editCapabilitiesChanged)
@@ -373,6 +359,7 @@ public:
     PlaybackEngine *playback() { return &m_playback; }
     PreviewController *preview() const { return m_preview; }
     PreferencesController *preferences() const { return m_preferences; }
+    ProjectFileController *projectFile() const { return m_projectFile; }
     McpController *mcp() const { return m_mcpController; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
@@ -525,7 +512,6 @@ public:
     Q_INVOKABLE void setGuideItemProperty(const QString &setId, const QString &itemId,
                                           const QString &key, const QVariant &value);
     Q_INVOKABLE void removeGuideItem(const QString &setId, const QString &itemId);
-    QVariantMap background() const;
     QVariantList actions() const;
     QVariantList bookmarks() const;
     bool workAreaActive() const { return m_project.hasWorkArea(); }
@@ -533,19 +519,12 @@ public:
     double workAreaOutSeconds() const;
     bool loopWorkAreaEnabled() const { return m_loopWorkAreaEnabled; }
     void setLoopWorkAreaEnabled(bool enabled);
-    QString projectName() const;
     QString lastMessage() const { return m_lastMessage; }
     QString lastMessageSeverity() const { return m_lastMessageSeverity; }
-    bool projectLoadPending() const { return m_projectLoadPending; }
     int draggingAssetIndex() const { return m_draggingAssetIndex; }
     void setDraggingAssetIndex(int index);
     bool assetPreviewWindowOpen() const { return m_assetPreviewWindowOpen; }
     void setAssetPreviewWindowOpen(bool open);
-    bool hasUnsavedChanges() const { return m_dirty; }
-    QString currentProjectPath() const { return m_currentProjectPath; }
-    bool recoveryAvailable() const { return m_recoveryAvailable; }
-    QVariantMap recoveryInfo() const { return m_recoveryInfo; }
-    QVariantList recentProjects() const;
 
     void setPlayheadSeconds(double seconds);
     void setPlaying(bool playing);
@@ -1011,14 +990,7 @@ public:
     Q_INVOKABLE void previewSetClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
     Q_INVOKABLE void commitPreviewDrag();
     Q_INVOKABLE void cancelPreviewDrag();
-    Q_INVOKABLE int projectWidth() const;
-    Q_INVOKABLE int projectHeight() const;
-    Q_INVOKABLE int projectFps() const;
-    Q_INVOKABLE void setProjectResolution(int width, int height);
-    Q_INVOKABLE void setProjectFps(int fps);
-    Q_INVOKABLE void setProjectSetup(int width, int height, int fps);
     Q_INVOKABLE void applyCanvasCrop(double x, double y, double width, double height);
-    Q_INVOKABLE void setBackground(const QVariantMap &background);
     Q_INVOKABLE bool timelineHasVisualClips() const;
     Q_INVOKABLE bool shouldConfigureProjectForAsset(int assetIndex) const;
     Q_INVOKABLE QVariantMap suggestedProjectSetupForAsset(int assetIndex) const;
@@ -1668,14 +1640,6 @@ public:
     Q_INVOKABLE int waveformChannelCount(const QString &path, int audioStreamIndex = 0) const;
     // Widest channel count over a track's clips, for sizing the row when the lanes turn on.
     Q_INVOKABLE int trackMaxChannelCount(int trackIndex) const;
-    // title / author / description / createdAt / modifiedAt, for the properties dialog.
-    QVariantMap projectMetadata() const;
-    Q_INVOKABLE void setProjectMetadata(const QString &title, const QString &author,
-                                        const QString &description);
-    bool packaging() const { return m_packaging; }
-    double packageProgress() const { return m_packageProgress; }
-    bool collectingMedia() const { return m_collectingMedia; }
-    double collectMediaProgress() const { return m_collectMediaProgress; }
     Q_INVOKABLE QVariantList subtitleWaveformPeaks(double startSeconds, double durSeconds,
                                                    int sampleCount = 240) const;
     // Beat / onset detection over the mixed timeline audio in [startSeconds, +durSeconds).
@@ -1689,81 +1653,12 @@ public:
     void setBeatGridVisible(bool visible);
     bool onsetsVisible() const { return m_onsetsVisible; }
     void setOnsetsVisible(bool visible);
-    // Writes a .drift bundle keeping each asset's current storage mode, so a referencing project
-    // stays instant to save and a packaged one stays self-contained.
-    Q_INVOKABLE void saveProject(const QUrl &url);
-    // Save As: the same write, but the copy gets its own project id and takes its title from the
-    // chosen file name, and the open document only adopts that identity once the write lands. The
-    // file it was opened from is never touched, so the original stays as it was on disk and the
-    // session carries on in the duplicate — which is the point of the command.
-    Q_INVOKABLE void saveProjectAs(const QUrl &url);
-    // Same container, every source asset embedded. Runs off the GUI thread — it copies the media.
-    Q_INVOKABLE void packageProject(const QUrl &url);
-    // Export-only: the raw document JSON, no container and no media. Leaves the open project's
-    // path, dirty flag and recents alone — the .drift stays the project of record.
-    Q_INVOKABLE void saveProjectJson(const QUrl &url);
-    // Inverse of saveProjectJson. Replaces the open timeline from that document; media stays as
-    // referenced paths. Does not become the project of record (no recents, empty path, dirty) so
-    // Save cannot overwrite the .json with a .drift bundle. loadProject routes here when the file
-    // is JSON, so a dropped / CLI / MCP path works without a second entry point.
-    Q_INVOKABLE void loadProjectJson(const QUrl &url);
-    // Imports an Adobe Premiere Pro project (.prproj) or Final Cut Pro XML (.xml),
-    // mapping sequences, video/audio tracks, clips, in/out trimming, and media assets.
-    Q_INVOKABLE void loadPremiereProject(const QUrl &url);
-    // Unpacks and imports a Motion Graphics Template (.mogrt), extracting assets and mapping
-    // editable text, colors, and media overlays onto the timeline and media library.
-    Q_INVOKABLE void importMogrt(const QUrl &url);
-    // Imports a Kdenlive (.kdenlive) or Shotcut MLT (.mlt) project, mapping
-    // multitrack playlists, video/audio cuts, title text clips, and bin folders.
-    Q_INVOKABLE void loadKdenliveProject(const QUrl &url);
-    // Imports a DaVinci Resolve project (.drp) or Final Cut Pro X XML (.fcpxml).
-    Q_INVOKABLE void loadResolveProject(const QUrl &url);
-    // Imports a CMX 3600 Edit Decision List (.edl).
-    Q_INVOKABLE void loadEdlTimeline(const QUrl &url);
-    // Imports an OpenTimelineIO (.otio) sequence.
-    Q_INVOKABLE void loadOtioTimeline(const QUrl &url);
-    Q_INVOKABLE void cancelPackage();
-    // Copies (or moves) every file the project uses — bin media, the images Lottie/SVG documents
-    // load, textures and the derived mattes, face tracks, depth maps and stabilized renders — into
-    // Video/Audio/Images/Derived/Other under the chosen folder, then relinks the project to them.
-    // Runs off the GUI thread. A move leaves the undo history pointing at files that are gone, so
-    // it clears it; a copy is one undoable edit.
-    Q_INVOKABLE void collectMediaToFolder(const QUrl &folder, bool move);
-    Q_INVOKABLE void cancelCollectMedia();
-    Q_INVOKABLE void loadProject(const QUrl &url);
-    // silent skips the "New project" status message — used by Close Project, which
-    // reuses this reset but reports its own "Project closed" message instead; setting
-    // lastMessage twice would queue two toasts, since each change is its own toast.
-    Q_INVOKABLE void newProject(bool silent = false);
-    Q_INVOKABLE void openRecentProject(const QString &path);
-    Q_INVOKABLE void clearRecentProjects();
-    // Removes one path from the recents list without deleting the file on disk.
-    Q_INVOKABLE void removeRecentProject(const QString &path);
-    Q_INVOKABLE void restoreAutosave();
-    Q_INVOKABLE void discardAutosave();
-    // Clears dirty + recovery without mutating the timeline. Used when the user
-    // chooses Don't Save before quitting so the next launch does not offer restore.
-    Q_INVOKABLE void discardUnsavedChanges();
-    // When reopenLastProject is on: restore recovery silently, else load lastSessionPath.
-    // Returns true if a restore/load was started (caller should skip RecoveryDialog).
-    Q_INVOKABLE bool restoreLastSessionIfEnabled();
-    // The autosave timer and aboutToQuit cover desktop, but Android never emits aboutToQuit when
-    // the OS reclaims a backgrounded process — and backgrounding is how a phone app normally ends.
-    // The shell calls this on the way out so the floor is the last edit, not the last 15s tick.
-    Q_INVOKABLE void flushRecoverySnapshot();
     // Drops every cache that exists only to make the next composite faster — decoder workers,
     // still images, rasterised text, uploaded textures and the FBO pool. All of it is rebuilt on
     // demand, and a backgrounded app that hangs on to it is the one the OS picks to kill first.
     // Only for the leaving-foreground handler: calling it while active throws away exactly what
     // the current composite is about to reuse.
     Q_INVOKABLE void releaseTransientCaches();
-    // First non-flag positional argument as a local file URL (paths, file://, portal URIs).
-    static QUrl startupProjectUrlFromArguments(const QStringList &args);
-    // argv / QFileOpenEvent. Queued until consumeStartupProject(); after that, emits
-    // externalProjectOpenRequested so QML can confirm unsaved work.
-    void queueExternalProject(const QUrl &url);
-    // Load a queued startup document. True if a load started (skip recovery / last session).
-    Q_INVOKABLE bool consumeStartupProject();
     Q_INVOKABLE QVariantList exportPresets() const; // legacy scale ids/labels
     Q_INVOKABLE QVariantList exportScaleOptions() const;
     // Frame rate choices; the "project" entry is labelled with the current project fps.
@@ -1926,27 +1821,6 @@ signals:
     void bookmarksChanged();
     void workAreaChanged();
     void loopWorkAreaEnabledChanged();
-    void projectNameChanged();
-    void projectMetadataChanged();
-    void packagingChanged();
-    void packageProgressChanged();
-    void packageFinished(bool ok, const QString &message);
-    void collectingMediaChanged();
-    void collectMediaProgressChanged();
-    // Save completion when saveProject took the Android streaming path (see saveProject). Never
-    // emitted on desktop or for a plain, synchronous save — setLastMessage already covers those.
-    void projectSaved(bool ok);
-    // Addons the freshly opened project needs but that are not installed. Each entry is
-    // id / name / version / kinds, for MissingAddonsDialog.
-    void missingAddons(const QVariantList &addons);
-    // Terminal result of loadProject()/loadProjectJson(): exactly one per call that
-    // reaches a load generation still current when it finishes. A bundle with embedded
-    // media raises the "Unpacking project media…" lastMessage first and this only once
-    // extraction and apply are done — QML waiting to know whether an open landed (e.g.
-    // to dismiss a "pick a project" screen) needs this rather than lastMessageChanged,
-    // which fires for that progress message too.
-    void projectLoadFinished(bool ok, const QString &message);
-    void projectLoadPendingChanged();
     void lastMessageChanged();
     void draggingAssetIndexChanged();
     void assetPreviewWindowOpenChanged();
@@ -1965,11 +1839,6 @@ signals:
     void userTextPresetsChanged();
     void userEffectPresetsChanged();
     void facePropsChanged();
-    void backgroundChanged();
-    void dirtyChanged();
-    void currentProjectPathChanged();
-    void recoveryChanged();
-    void recentProjectsChanged();
     void projectLayoutChosenChanged();
     // The document has been swapped wholesale (New Project, or opening another one). The
     // auxiliary windows edit one clip each, so they have nothing left to act on and close.
@@ -1989,11 +1858,6 @@ signals:
     void assetEditFinished(bool ok, const QString &message);
     void assetCopyRendered(const QString &assetId);
     void assetSaveFinished(bool ok, const QString &name);
-    // File actions from the shortcut layer — QML owns dialogs and unsaved prompts.
-    void newProjectRequested();
-    void openRequested();
-    void saveRequested();
-    void saveAsRequested();
     void openPasteAttributesRequested();
 
 protected:
@@ -2338,59 +2202,10 @@ protected:
 
     QByteArray serializeProjectJson() const;
     bool applyProjectJson(const QByteArray &data, QString *error);
-    // Bracket every loadProject()/loadProjectJson() call, sync or async, success or
-    // failure, so projectLoadPending is accurate regardless of what triggered the load.
-    // beginProjectLoad() returns false (and acquires nothing) when a load already owns
-    // the flag — the caller must bail out without touching m_projectLoadPending itself,
-    // so a second, unrelated request can never clear the first one's pending state.
-    bool beginProjectLoad();
-    void finishProjectLoad(bool ok, const QString &message);
-    // The actual body of loadProjectJson(), run once beginProjectLoad() has succeeded.
-    // loadProject() delegates here directly for a JSON file — it already owns the
-    // pending flag from its own beginProjectLoad(), so the JSON path must not try to
-    // acquire it again (that would just no-op) nor release it early on failure.
-    void loadProjectJsonInternal(const QUrl &url);
-    // Shared by saveProject and packageProject. `embedSource` forces every source asset into the
-    // bundle; otherwise each keeps whatever mode it had, tracked in m_embeddedSources. GUI thread
-    // only — packageProject builds the request here and hands the finished copy to its worker.
-    drift::bundle::WriteRequest buildWriteRequest(bool embedSource) const;
-    // Who the document becomes when a Save As write succeeds. A fresh id keeps the copy from
-    // sharing the original's extraction and derived-media directory, both of which are keyed on it.
-    struct ProjectIdentity {
-        QString id;
-        QString name;
-    };
-    // Body of saveProject / saveProjectAs. `adopt` is empty for a plain Save; when set, the copy is
-    // written under that identity and the open project only takes it on once the bytes are down.
-    void writeProjectBundle(const QUrl &url, const std::optional<ProjectIdentity> &adopt);
-    void adoptProjectIdentity(const std::optional<ProjectIdentity> &adopt);
-    void rememberEmbeddedSources(const QList<drift::bundle::MediaEntry> &media);
     // Persist the save-picker folder and encode/scale choices for the next Export dialog.
     // Empty `outputPath` updates settings only and leaves lastExportFolder unchanged.
     void rememberExportChoice(const QString &outputPath, const QVariantMap &settings);
-    // Repoint every path field the extraction moved. Clips duplicate their asset's path, so this
-    // matches on the value rather than walking by id.
-    void remapProjectPaths(const QHash<QString, QString> &remap);
-    // Android: re-copy assets whose app-storage file is gone but whose originating SAF document is
-    // still recorded and still granted. Cheap when nothing is missing — one stat per asset — and
-    // the copies themselves run off-thread, so a project with gigabytes to restore still opens at
-    // once and repoints its rows as they land. No-op on desktop.
-    void rehydrateMissingSources();
-    // Drops <AppData>/projects/<id> directories no project in the recents list still refers to.
-    void sweepExtractionDirs();
-    // Effects and transitions render as no-ops when their package is absent, which is silent and
-    // looks like the project is simply wrong. Called after a load to say so instead.
-    void reportMissingCatalogEntries();
-    void reportMissingAddons(const QList<drift::bundle::AddonRef> &addons);
-    void setDirty(bool dirty);
-    void setCurrentProjectPath(const QString &path);
-    void addRecentProject(const QString &path);
-    // Off the GUI thread unless `synchronous` (quitting), which waits out any write in flight.
-    void writeRecoveryFile(bool synchronous = false);
     QJsonObject sessionJson() const;
-    void deleteRecoveryFile();
-    void detectRecoveryFile();
-    static QString recoveryFilePath();
     QString historyHashAt(int stackIndex) const;
     int historyIndexForHash(const QString &prefix) const;
     QByteArray historyJsonAt(int stackIndex) const;
@@ -2571,20 +2386,8 @@ protected:
     // repeatedly, so each pair is deleted as the next supersedes it.
     QString m_denoisePreviewClean;
     QString m_denoisePreviewOriginal;
-    // Source paths that were embedded when this project was last read or written, so a plain Save
-    // keeps a packaged project packaged instead of quietly making it depend on the cache dir.
-    QSet<QString> m_embeddedSources;
-    // Handed to applyProjectJson by loadProject, applied alongside the other load-time path
-    // migrations and cleared there.
-    QHash<QString, QString> m_pendingPathRemap;
     // Playhead per timeline, so switching tabs returns to where each was left. "" = main.
     QHash<QString, drift::TimeUs> m_sequencePlayheads;
-    bool m_packaging = false;
-    double m_packageProgress = 0.0;
-    QAtomicInt m_packageCancel = 0;
-    bool m_collectingMedia = false;
-    double m_collectMediaProgress = 0.0;
-    QAtomicInt m_collectMediaCancel = 0;
     bool m_faceDetecting = false;
     double m_faceDetectProgress = 0.0;
     QString m_faceDetectStatus;
@@ -2629,8 +2432,6 @@ protected:
     int m_segGeneration = 0; // bumped per encode request; stale results are dropped
     int m_segSeedGeneration = 0; // bumped per seed preview; stale masks are dropped
     bool m_segSeedRunning = false;
-    int m_loadGeneration = 0; // bumped per loadProject; stale extracts are dropped
-    bool m_projectLoadPending = false;
     QImage m_segFrame;
     drift::Sam2Embedding m_segEmbedding;
     // "sam2" or "rvm". Persists across sessions so the window reopens on the last choice.
@@ -2654,6 +2455,7 @@ protected:
     QCursor trimCursorFor(int side, int heightPx) const;
     PreviewController *m_preview = nullptr;
     PreferencesController *m_preferences = nullptr;
+    ProjectFileController *m_projectFile = nullptr;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};
     // App-wide custom sets.
     QList<drift::GuideSet> m_guideLibrary;
@@ -2738,19 +2540,6 @@ protected:
     // position on the timeline snap to something. Only the visible layers contribute.
     QList<drift::TimeUs> m_beatSnapTargets;
 
-    // Save state / autosave / crash recovery.
-    QString m_currentProjectPath;
-    bool m_dirty = false;
-    QTimer *m_autosaveTimer = nullptr;
-    // The recovery write running on a worker, and a counter that deleteRecoveryFile() bumps so a
-    // write that finishes after the file was meant to be gone does not bring it back.
-    QFuture<QString> m_recoveryWrite;
-    quint64 m_recoveryGeneration = 0;
-    bool m_recoveryAvailable = false;
-    QVariantMap m_recoveryInfo;
-    QUrl m_pendingStartupProject;
-    QUrl m_lastExternalProject;
-    bool m_uiReady = false;
     // Launch layout picker / first-clip setup completed for this empty project.
     bool m_projectLayoutChosen = false;
 
@@ -2766,6 +2555,4 @@ protected:
     void setProjectLayoutChosen(bool chosen);
 
     static constexpr int kMaxUndoSteps = 50;
-    static constexpr int kAutosaveIntervalMs = 15000;
-    static constexpr int kMaxRecentProjects = 10;
 };

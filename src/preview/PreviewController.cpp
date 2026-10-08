@@ -129,7 +129,7 @@ void PreviewController::updateActiveTool()
 
 void PreviewController::updateHandlesVisible()
 {
-    const bool visible = !m_app.playing() && !m_app.scrubbing() && m_app.projectWidth() > 0;
+    const bool visible = !m_app.playing() && !m_app.scrubbing() && m_app.projectFile()->projectWidth() > 0;
     if (visible == m_handlesVisible)
         return;
     m_handlesVisible = visible;
@@ -145,7 +145,7 @@ void PreviewController::setGuidesEnabled(bool enabled)
         setGuideEditSetId(QString());
     QSettings settings;
     settings.setValue(QStringLiteral("preview/guidesEnabled"), m_guidesEnabled);
-    m_app.setDirty(true);
+    m_app.projectFile()->setDirty(true);
     emit guidesEnabledChanged();
 }
 

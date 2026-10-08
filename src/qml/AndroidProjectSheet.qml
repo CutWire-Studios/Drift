@@ -106,7 +106,7 @@ AndroidBottomSheet {
                 glyph: modelData.icon
                 sideInset: root.safeLeft
                 sideInsetRight: root.safeRight
-                marked: modelData.id === "save" && EditorState.hasUnsavedChanges
+                marked: modelData.id === "save" && EditorState.projectFile.hasUnsavedChanges
 
                 onClicked: {
                     Haptics.select()

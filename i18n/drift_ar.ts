@@ -2887,18 +2887,6 @@
         <translation>تمت إزالة الضوضاء</translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>يستخدم هذا المشروع &quot;%1&quot;، وهو غير مثبت — فلن يظهر. افتح الإضافات لتثبيته.</translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>يستخدم هذا المشروع %1 من التأثيرات أو الانتقالات غير المثبتة (%2%3) — فلن تظهر. افتح الإضافات لتثبيتها.</translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation>, …</translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation>تمت إضافة الشكل</translation>
     </message>
@@ -2969,34 +2957,6 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>ثبّت حزمة ملصقات الرموز التعبيرية لإضافة الرموز التعبيرية</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>معدل الإطارات</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation>إعداد المشروع</translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation>تم تحديث إعداد المشروع</translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation>اقتصاص اللوحة</translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation>تم اقتصاص حجم الفيديو إلى %1×%2</translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation>تغيير الخلفية</translation>
-    </message>
-    <message>
-        <source>Background updated</source>
-        <translation>تم تحديث الخلفية</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4389,121 +4349,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation>تم حفظ نسخة</translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation>تعذر كتابة %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation>تم حفظ JSON المشروع</translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation>ما زال فتح المشروع جاريًا — حاول مرة أخرى بعد قليل.</translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation>تعذر قراءة %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation>تم تحميل JSON المشروع</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>فشل فتح مشروع Premiere Pro</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>تم استيراد مشروع Premiere Pro: %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>موقع القالب هذا غير صالح</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>فشل فك حزمة Motion Graphics Template</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>فشل تطبيق القالب على المشروع</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>استيراد القالب: %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>تم استيراد القالب: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>فشل فتح مشروع Kdenlive / MLT</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>تم استيراد مشروع Kdenlive: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>فشل فتح مشروع / مخطط زمني DaVinci Resolve</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>تم استيراد مشروع DaVinci Resolve: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>فشل فتح Edit Decision List (.edl)</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>تم استيراد EDL: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>فشل فتح تسلسل OpenTimelineIO (.otio)</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>تم استيراد OpenTimelineIO: %1</translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation>ذلك المجلد غير صالح</translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation>جميع الوسائط موجودة بالفعل في ذلك المجلد</translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation>تجميع الوسائط</translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
-            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملف أصلي</numerusform>
-            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملف أصلي</numerusform>
-            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملفين أصليين</numerusform>
-            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملفات أصلية</numerusform>
-            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملفًا أصليًا</numerusform>
-            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملف أصلي</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation>تم نقل الوسائط وإعادة ربطها</translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation>تم نسخ الوسائط وإعادة ربطها</translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation>جارٍ التصدير…</translation>
     </message>
@@ -4691,42 +4536,6 @@
         <translation>موقع الحفظ هذا غير صالح</translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation>جارٍ الحفظ بالفعل</translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation>تم حفظ المشروع</translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation>النسخة القابلة للمشاركة جاهزة</translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation>موقع المشروع هذا غير صالح</translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation>تم تحميل المشروع</translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation>جارٍ فك وسائط المشروع…</translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation>لم يتم العثور على ملف استرداد</translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation>تمت استعادة العمل غير المحفوظ</translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation>تم بدء جلسة جديدة</translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation>التصدير قيد التنفيذ بالفعل</translation>
     </message>
@@ -4795,6 +4604,14 @@
     <message>
         <source>Clip orientation set to %1°</source>
         <translation>تم ضبط اتجاه المقطع على %1°</translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation>اقتصاص اللوحة</translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
+        <translation>تم اقتصاص حجم الفيديو إلى %1×%2</translation>
     </message>
 </context>
 <context>
@@ -10545,6 +10362,200 @@ If playback stutters, try another.</source>
     <message>
         <source>Couldn’t create %1</source>
         <translation>تعذر إنشاء %1</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation>مشروع جديد</translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation>يستخدم هذا المشروع &quot;%1&quot;، وهو غير مثبت — فلن يظهر. افتح الإضافات لتثبيته.</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation>يستخدم هذا المشروع %1 من التأثيرات أو الانتقالات غير المثبتة (%2%3) — فلن تظهر. افتح الإضافات لتثبيتها.</translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation>, …</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>معدل الإطارات</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation>إعداد المشروع</translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation>تم تحديث إعداد المشروع</translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation>تغيير الخلفية</translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation>تم تحديث الخلفية</translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation>تم حفظ نسخة</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>تعذر كتابة %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation>تم حفظ JSON المشروع</translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation>ما زال فتح المشروع جاريًا — حاول مرة أخرى بعد قليل.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation>تعذر قراءة %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation>تم تحميل JSON المشروع</translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation>فشل فتح مشروع Premiere Pro</translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation>تم استيراد مشروع Premiere Pro: %1</translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation>موقع القالب هذا غير صالح</translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation>فشل فك حزمة Motion Graphics Template</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation>فشل تطبيق القالب على المشروع</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation>استيراد القالب: %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation>تم استيراد القالب: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation>فشل فتح مشروع Kdenlive / MLT</translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation>تم استيراد مشروع Kdenlive: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation>فشل فتح مشروع / مخطط زمني DaVinci Resolve</translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation>تم استيراد مشروع DaVinci Resolve: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation>فشل فتح Edit Decision List (.edl)</translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation>تم استيراد EDL: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation>فشل فتح تسلسل OpenTimelineIO (.otio)</translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation>تم استيراد OpenTimelineIO: %1</translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation>ذلك المجلد غير صالح</translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation>جميع الوسائط موجودة بالفعل في ذلك المجلد</translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation>تجميع الوسائط</translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation>
+            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملف أصلي</numerusform>
+            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملف أصلي</numerusform>
+            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملفين أصليين</numerusform>
+            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملفات أصلية</numerusform>
+            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملفًا أصليًا</numerusform>
+            <numerusform>تم تجميع الوسائط، ولكن تعذر حذف %n ملف أصلي</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation>تم نقل الوسائط وإعادة ربطها</translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation>تم نسخ الوسائط وإعادة ربطها</translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation>موقع الحفظ هذا غير صالح</translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation>جارٍ الحفظ بالفعل</translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation>تم حفظ المشروع</translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation>النسخة القابلة للمشاركة جاهزة</translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation>موقع المشروع هذا غير صالح</translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation>تم تحميل المشروع</translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation>جارٍ فك وسائط المشروع…</translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation>لم يتم العثور على ملف استرداد</translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation>تمت استعادة العمل غير المحفوظ</translation>
+    </message>
+    <message>
+        <source>Started new session</source>
+        <translation>تم بدء جلسة جديدة</translation>
     </message>
 </context>
 <context>

@@ -2979,18 +2979,6 @@
         <translation>Ruido eliminado</translation>
     </message>
     <message>
-        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>Este proyecto usa &quot;%1&quot;, que no está instalado — no se mostrará. Abre Extras para instalarlo.</translation>
-    </message>
-    <message>
-        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>Este proyecto usa %1 efectos o transiciones que no están instalados (%2%3) — no se mostrarán. Abre Extras para instalarlos.</translation>
-    </message>
-    <message>
-        <source>, …</source>
-        <translation>, …</translation>
-    </message>
-    <message>
         <source>Shape added</source>
         <translation>Forma añadida</translation>
     </message>
@@ -3061,34 +3049,6 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>Instala el paquete de pegatinas de emojis para añadir emojis</translation>
-    </message>
-    <message>
-        <source>Frame rate</source>
-        <translation>Velocidad de fotogramas</translation>
-    </message>
-    <message>
-        <source>Project setup</source>
-        <translation>Configuración del proyecto</translation>
-    </message>
-    <message>
-        <source>Project setup updated</source>
-        <translation>Configuración del proyecto actualizada</translation>
-    </message>
-    <message>
-        <source>Crop canvas</source>
-        <translation>Recortar lienzo</translation>
-    </message>
-    <message>
-        <source>Video size cropped to %1×%2</source>
-        <translation>Tamaño de vídeo recortado a %1×%2</translation>
-    </message>
-    <message>
-        <source>Change background</source>
-        <translation>Cambiar fondo</translation>
-    </message>
-    <message>
-        <source>Background updated</source>
-        <translation>Fondo actualizado</translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -4357,117 +4317,6 @@
         </translation>
     </message>
     <message>
-        <source>Saved a copy</source>
-        <translation>Copia guardada</translation>
-    </message>
-    <message>
-        <source>Couldn’t write %1: %2</source>
-        <translation>No se pudo escribir %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON saved</source>
-        <translation>JSON del proyecto guardado</translation>
-    </message>
-    <message>
-        <source>Still opening a project — try again in a moment.</source>
-        <translation>Aún se está abriendo un proyecto — inténtalo de nuevo en un momento.</translation>
-    </message>
-    <message>
-        <source>Couldn’t read %1: %2</source>
-        <translation>No se pudo leer %1: %2</translation>
-    </message>
-    <message>
-        <source>Project JSON loaded</source>
-        <translation>JSON del proyecto cargado</translation>
-    </message>
-    <message>
-        <source>Failed to open Premiere Pro project</source>
-        <translation>Error al abrir el proyecto de Premiere Pro</translation>
-    </message>
-    <message>
-        <source>Premiere Pro project imported: %1</source>
-        <translation>Proyecto de Premiere Pro importado: %1</translation>
-    </message>
-    <message>
-        <source>That template location isn’t valid</source>
-        <translation>Esa ubicación de plantilla no es válida</translation>
-    </message>
-    <message>
-        <source>Failed to unpack Motion Graphics Template</source>
-        <translation>Error al descomprimir Motion Graphics Template</translation>
-    </message>
-    <message>
-        <source>Failed to apply template to project</source>
-        <translation>Error al aplicar la plantilla al proyecto</translation>
-    </message>
-    <message>
-        <source>Import template: %1</source>
-        <translation>Importar plantilla: %1</translation>
-    </message>
-    <message>
-        <source>Template imported: %1</source>
-        <translation>Plantilla importada: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Kdenlive / MLT project</source>
-        <translation>Error al abrir el proyecto de Kdenlive / MLT</translation>
-    </message>
-    <message>
-        <source>Kdenlive project imported: %1</source>
-        <translation>Proyecto de Kdenlive importado: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open DaVinci Resolve project / timeline</source>
-        <translation>Error al abrir el proyecto / línea de tiempo de DaVinci Resolve</translation>
-    </message>
-    <message>
-        <source>DaVinci Resolve project imported: %1</source>
-        <translation>Proyecto de DaVinci Resolve importado: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>Error al abrir Edit Decision List (.edl)</translation>
-    </message>
-    <message>
-        <source>EDL imported: %1</source>
-        <translation>EDL importado: %1</translation>
-    </message>
-    <message>
-        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>Error al abrir la secuencia de OpenTimelineIO (.otio)</translation>
-    </message>
-    <message>
-        <source>OpenTimelineIO imported: %1</source>
-        <translation>OpenTimelineIO importado: %1</translation>
-    </message>
-    <message>
-        <source>That folder isn’t valid</source>
-        <translation>Esa carpeta no es válida</translation>
-    </message>
-    <message>
-        <source>All media is already in that folder</source>
-        <translation>Todos los medios ya están en esa carpeta</translation>
-    </message>
-    <message>
-        <source>Collect media</source>
-        <translation>Recopilar medios</translation>
-    </message>
-    <message numerus="yes">
-        <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
-            <numerusform>Medios recopilados, pero no se pudo eliminar %n original</numerusform>
-            <numerusform>Medios recopilados, pero no se pudieron eliminar %n originales</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Media moved and relinked</source>
-        <translation>Medios movidos y revinculados</translation>
-    </message>
-    <message>
-        <source>Media copied and relinked</source>
-        <translation>Medios copiados y revinculados</translation>
-    </message>
-    <message>
         <source>Exporting…</source>
         <translation>Exportando…</translation>
     </message>
@@ -4639,42 +4488,6 @@
         <translation>Esa ubicación de guardado no es válida</translation>
     </message>
     <message>
-        <source>Already saving</source>
-        <translation>Ya se está guardando</translation>
-    </message>
-    <message>
-        <source>Project saved</source>
-        <translation>Proyecto guardado</translation>
-    </message>
-    <message>
-        <source>Shareable copy ready</source>
-        <translation>Copia para compartir lista</translation>
-    </message>
-    <message>
-        <source>That project location isn’t valid</source>
-        <translation>Esa ubicación de proyecto no es válida</translation>
-    </message>
-    <message>
-        <source>Project loaded</source>
-        <translation>Proyecto cargado</translation>
-    </message>
-    <message>
-        <source>Unpacking project media…</source>
-        <translation>Desempaquetando medios del proyecto…</translation>
-    </message>
-    <message>
-        <source>No recovery file found</source>
-        <translation>No se encontró ningún archivo de recuperación</translation>
-    </message>
-    <message>
-        <source>Recovered unsaved work</source>
-        <translation>Trabajo no guardado recuperado</translation>
-    </message>
-    <message>
-        <source>Started new session</source>
-        <translation>Nueva sesión iniciada</translation>
-    </message>
-    <message>
         <source>Export already in progress</source>
         <translation>La exportación ya está en curso</translation>
     </message>
@@ -4727,6 +4540,14 @@
     <message>
         <source>Track renamed</source>
         <translation>Pista renombrada</translation>
+    </message>
+    <message>
+        <source>Crop canvas</source>
+        <translation>Recortar lienzo</translation>
+    </message>
+    <message>
+        <source>Video size cropped to %1×%2</source>
+        <translation>Tamaño de vídeo recortado a %1×%2</translation>
     </message>
 </context>
 <context>
@@ -10365,6 +10186,196 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Couldn’t create %1</source>
         <translation>No se pudo crear %1</translation>
+    </message>
+</context>
+<context>
+    <name>ProjectFileController</name>
+    <message>
+        <source>New project</source>
+        <translation>Nuevo proyecto</translation>
+    </message>
+    <message>
+        <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
+        <translation>Este proyecto usa &quot;%1&quot;, que no está instalado — no se mostrará. Abre Extras para instalarlo.</translation>
+    </message>
+    <message>
+        <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
+        <translation>Este proyecto usa %1 efectos o transiciones que no están instalados (%2%3) — no se mostrarán. Abre Extras para instalarlos.</translation>
+    </message>
+    <message>
+        <source>, …</source>
+        <translation>, …</translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation>Velocidad de fotogramas</translation>
+    </message>
+    <message>
+        <source>Project setup</source>
+        <translation>Configuración del proyecto</translation>
+    </message>
+    <message>
+        <source>Project setup updated</source>
+        <translation>Configuración del proyecto actualizada</translation>
+    </message>
+    <message>
+        <source>Change background</source>
+        <translation>Cambiar fondo</translation>
+    </message>
+    <message>
+        <source>Background updated</source>
+        <translation>Fondo actualizado</translation>
+    </message>
+    <message>
+        <source>Saved a copy</source>
+        <translation>Copia guardada</translation>
+    </message>
+    <message>
+        <source>Couldn’t write %1: %2</source>
+        <translation>No se pudo escribir %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON saved</source>
+        <translation>JSON del proyecto guardado</translation>
+    </message>
+    <message>
+        <source>Still opening a project — try again in a moment.</source>
+        <translation>Aún se está abriendo un proyecto — inténtalo de nuevo en un momento.</translation>
+    </message>
+    <message>
+        <source>Couldn’t read %1: %2</source>
+        <translation>No se pudo leer %1: %2</translation>
+    </message>
+    <message>
+        <source>Project JSON loaded</source>
+        <translation>JSON del proyecto cargado</translation>
+    </message>
+    <message>
+        <source>Failed to open Premiere Pro project</source>
+        <translation>Error al abrir el proyecto de Premiere Pro</translation>
+    </message>
+    <message>
+        <source>Premiere Pro project imported: %1</source>
+        <translation>Proyecto de Premiere Pro importado: %1</translation>
+    </message>
+    <message>
+        <source>That template location isn’t valid</source>
+        <translation>Esa ubicación de plantilla no es válida</translation>
+    </message>
+    <message>
+        <source>Failed to unpack Motion Graphics Template</source>
+        <translation>Error al descomprimir Motion Graphics Template</translation>
+    </message>
+    <message>
+        <source>Failed to apply template to project</source>
+        <translation>Error al aplicar la plantilla al proyecto</translation>
+    </message>
+    <message>
+        <source>Import template: %1</source>
+        <translation>Importar plantilla: %1</translation>
+    </message>
+    <message>
+        <source>Template imported: %1</source>
+        <translation>Plantilla importada: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Kdenlive / MLT project</source>
+        <translation>Error al abrir el proyecto de Kdenlive / MLT</translation>
+    </message>
+    <message>
+        <source>Kdenlive project imported: %1</source>
+        <translation>Proyecto de Kdenlive importado: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open DaVinci Resolve project / timeline</source>
+        <translation>Error al abrir el proyecto / línea de tiempo de DaVinci Resolve</translation>
+    </message>
+    <message>
+        <source>DaVinci Resolve project imported: %1</source>
+        <translation>Proyecto de DaVinci Resolve importado: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open Edit Decision List (.edl)</source>
+        <translation>Error al abrir Edit Decision List (.edl)</translation>
+    </message>
+    <message>
+        <source>EDL imported: %1</source>
+        <translation>EDL importado: %1</translation>
+    </message>
+    <message>
+        <source>Failed to open OpenTimelineIO (.otio) sequence</source>
+        <translation>Error al abrir la secuencia de OpenTimelineIO (.otio)</translation>
+    </message>
+    <message>
+        <source>OpenTimelineIO imported: %1</source>
+        <translation>OpenTimelineIO importado: %1</translation>
+    </message>
+    <message>
+        <source>That folder isn’t valid</source>
+        <translation>Esa carpeta no es válida</translation>
+    </message>
+    <message>
+        <source>All media is already in that folder</source>
+        <translation>Todos los medios ya están en esa carpeta</translation>
+    </message>
+    <message>
+        <source>Collect media</source>
+        <translation>Recopilar medios</translation>
+    </message>
+    <message numerus="yes">
+        <source>Media collected, but %n original(s) couldn’t be deleted</source>
+        <translation>
+            <numerusform>Medios recopilados, pero no se pudo eliminar %n original</numerusform>
+            <numerusform>Medios recopilados, pero no se pudieron eliminar %n originales</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Media moved and relinked</source>
+        <translation>Medios movidos y revinculados</translation>
+    </message>
+    <message>
+        <source>Media copied and relinked</source>
+        <translation>Medios copiados y revinculados</translation>
+    </message>
+    <message>
+        <source>That save location isn’t valid</source>
+        <translation>Esa ubicación de guardado no es válida</translation>
+    </message>
+    <message>
+        <source>Already saving</source>
+        <translation>Ya se está guardando</translation>
+    </message>
+    <message>
+        <source>Project saved</source>
+        <translation>Proyecto guardado</translation>
+    </message>
+    <message>
+        <source>Shareable copy ready</source>
+        <translation>Copia para compartir lista</translation>
+    </message>
+    <message>
+        <source>That project location isn’t valid</source>
+        <translation>Esa ubicación de proyecto no es válida</translation>
+    </message>
+    <message>
+        <source>Project loaded</source>
+        <translation>Proyecto cargado</translation>
+    </message>
+    <message>
+        <source>Unpacking project media…</source>
+        <translation>Desempaquetando medios del proyecto…</translation>
+    </message>
+    <message>
+        <source>No recovery file found</source>
+        <translation>No se encontró ningún archivo de recuperación</translation>
+    </message>
+    <message>
+        <source>Recovered unsaved work</source>
+        <translation>Trabajo no guardado recuperado</translation>
+    </message>
+    <message>
+        <source>Started new session</source>
+        <translation>Nueva sesión iniciada</translation>
     </message>
 </context>
 <context>

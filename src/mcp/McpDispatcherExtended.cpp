@@ -649,12 +649,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString path = localPath(argString(args, QStringLiteral("path")));
         if (path.isEmpty())
             return err("bad_args", QStringLiteral("path required"));
-        m_controller->loadProject(QUrl::fromLocalFile(path));
+        m_controller->projectFile()->loadProject(QUrl::fromLocalFile(path));
         return ok({{QStringLiteral("path"), path}});
     }
 
     if (tool == QLatin1String("new_project")) {
-        m_controller->newProject();
+        m_controller->projectFile()->newProject();
         return ok({});
     }
 
@@ -662,12 +662,12 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const QString path = localPath(argString(args, QStringLiteral("path")));
         if (path.isEmpty())
             return err("bad_args", QStringLiteral("path required"));
-        m_controller->packageProject(QUrl::fromLocalFile(path));
+        m_controller->projectFile()->packageProject(QUrl::fromLocalFile(path));
         return ok({{QStringLiteral("started"), true}, {QStringLiteral("path"), path}});
     }
 
     if (tool == QLatin1String("cancel_package")) {
-        m_controller->cancelPackage();
+        m_controller->projectFile()->cancelPackage();
         return ok({{QStringLiteral("cancelled"), true}});
     }
 

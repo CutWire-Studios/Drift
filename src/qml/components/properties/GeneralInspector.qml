@@ -17,11 +17,11 @@ Item {
     readonly property string clipKind: hasSelection ? (clipData.kind || "") : ""
     readonly property int projectW: {
         void EditorState.tracks
-        return Math.max(1, EditorState.projectWidth())
+        return Math.max(1, EditorState.projectFile.projectWidth())
     }
     readonly property int projectH: {
         void EditorState.tracks
-        return Math.max(1, EditorState.projectHeight())
+        return Math.max(1, EditorState.projectFile.projectHeight())
     }
     readonly property int sourceDisplayW: {
         if (!root.hasSelection)

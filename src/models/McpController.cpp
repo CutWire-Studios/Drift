@@ -582,9 +582,9 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
         {QStringLiteral("clips"), clipCount},
         {QStringLiteral("tracks"), trackRows},
         {QStringLiteral("assets"), assets},
-        {QStringLiteral("path"), m_app->m_currentProjectPath},
-        {QStringLiteral("dirty"), m_app->m_dirty},
-        {QStringLiteral("background"), QJsonObject::fromVariantMap(m_app->background())},
+        {QStringLiteral("path"), m_app->projectFile()->currentProjectPath()},
+        {QStringLiteral("dirty"), m_app->projectFile()->hasUnsavedChanges()},
+        {QStringLiteral("background"), QJsonObject::fromVariantMap(m_app->projectFile()->background())},
         {QStringLiteral("export"),
          QJsonObject{{QStringLiteral("active"), m_app->m_exportInProgress},
                      {QStringLiteral("progress"), m_app->m_exportProgress}}},
@@ -600,10 +600,10 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
         }
         extra.insert(QStringLiteral("bookmarks"), marks);
         QJsonObject jobs;
-        if (m_app->packaging()) {
+        if (m_app->projectFile()->packaging()) {
             jobs.insert(QStringLiteral("package"),
                         QJsonObject{{QStringLiteral("active"), true},
-                                    {QStringLiteral("progress"), m_app->packageProgress()}});
+                                    {QStringLiteral("progress"), m_app->projectFile()->packageProgress()}});
         }
         if (m_app->subtitleGenerating()) {
             jobs.insert(QStringLiteral("subtitleGen"),
@@ -3440,7 +3440,7 @@ void McpController::storeTranscript(const QString &assetId, std::shared_ptr<drif
         return;
     m_app->m_project.setTranscript(assetId, std::move(transcript));
     bumpEditRevision();
-    m_app->setDirty(true);
+    m_app->projectFile()->setDirty(true);
 }
 
 QJsonObject McpController::transcribe(const QStringList &assetIds, const QJsonObject &options)
@@ -3868,7 +3868,7 @@ QJsonObject McpController::importGeneratedAudio(const QString &path, const QJson
     }
     if (drift::MediaAsset *asset = m_app->m_project.asset(assetId)) {
         asset->generator = generator;
-        m_app->setDirty(true);
+        m_app->projectFile()->setDirty(true);
     }
     QJsonObject result{{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), path}};
     if (const drift::MediaAsset *asset = m_app->m_project.asset(assetId))

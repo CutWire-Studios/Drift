@@ -19,10 +19,10 @@ ThemedDialog {
     // leaving this startup-blocking modal mouse-only.
     closePolicy: Popup.NoAutoClose
 
-    readonly property var info: EditorState.recoveryInfo
+    readonly property var info: EditorState.projectFile.recoveryInfo
 
-    onAccepted: EditorState.restoreAutosave()
-    onRejected: EditorState.discardAutosave()
+    onAccepted: EditorState.projectFile.restoreAutosave()
+    onRejected: EditorState.projectFile.discardAutosave()
 
     contentItem: Column {
         spacing: Theme.spacingXl

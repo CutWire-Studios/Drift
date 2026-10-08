@@ -20,6 +20,7 @@ qt_add_executable(tst_editorstate
     ../src/models/AppController.cpp
     ../src/models/McpController.cpp
     ../src/models/PreferencesController.cpp
+    ../src/models/ProjectFileController.cpp
     ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp
@@ -188,6 +189,7 @@ qt_add_executable(tst_mcp
     ../src/models/AppController.cpp
     ../src/models/McpController.cpp
     ../src/models/PreferencesController.cpp
+    ../src/models/ProjectFileController.cpp
     ../src/preview/PreviewController.cpp
     ../src/models/AddonManager.cpp
     ../src/models/JobRegistry.cpp

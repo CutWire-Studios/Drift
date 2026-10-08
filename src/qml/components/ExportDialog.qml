@@ -107,7 +107,7 @@ ThemedDialog {
         if (entry.id === "custom") {
             // Keep whatever rate was showing; only fall back when following the project.
             if (!(fpsNum > 0)) {
-                fpsNum = EditorState.projectFps()
+                fpsNum = EditorState.projectFile.projectFps()
                 fpsDen = 1
             }
         } else {
@@ -223,8 +223,8 @@ ThemedDialog {
         exportWorkAreaOnly = EditorState.workAreaActive
                 && (remembered.exportWorkAreaOnly === true)
 
-        var meta = EditorState.projectMetadata || {}
-        tagTitleField.text = meta.title || EditorState.projectName || ""
+        var meta = EditorState.projectFile.projectMetadata || {}
+        tagTitleField.text = meta.title || EditorState.projectFile.projectName || ""
         tagArtistField.text = meta.author || ""
         tagAlbumField.text = ""
         tagCommentField.text = meta.description || ""
@@ -333,8 +333,8 @@ ThemedDialog {
                 : isAudioOnly ? qsTr("Export Audio") : qsTr("Export Video")
         // SAF offers no overwrite, so a repeated default name would only ever pick up " (1)".
         var suggestedName = Qt.platform.os === "android"
-                ? EditorState.projectName + " " + Qt.formatDateTime(new Date(), "yyyyMMdd_HHmmss")
-                : EditorState.projectName
+                ? EditorState.projectFile.projectName + " " + Qt.formatDateTime(new Date(), "yyyyMMdd_HHmmss")
+                : EditorState.projectFile.projectName
         var url = FileDialogs.saveFile(dialogTitle, filters,
                                        suggestedName, suffix,
                                        EditorState.lastExportFolder())
@@ -495,7 +495,7 @@ ThemedDialog {
                             to: 480
                             step: 1
                             unit: qsTr("fps")
-                            value: root.fpsNum > 0 ? root.fpsNum : EditorState.projectFps()
+                            value: root.fpsNum > 0 ? root.fpsNum : EditorState.projectFile.projectFps()
                             // Whole numbers only here; every fractional rate worth
                             // delivering (23.976 / 29.97 / 59.94) is already a preset.
                             onEdited: function (v) {

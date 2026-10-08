@@ -26,7 +26,7 @@ PanelFrame {
     // wrong frame numbers for every project that was not 30fps.
     readonly property int projectFps: {
         void EditorState.tracksRevision
-        const fps = EditorState.projectFps()
+        const fps = EditorState.projectFile.projectFps()
         return fps > 0 ? fps : 30
     }
 
@@ -235,7 +235,7 @@ PanelFrame {
                 y: panelViewport.canvas.y
                 width: panelViewport.canvas.width
                 height: panelViewport.canvas.height
-                enabled: EditorState.projectWidth() > 0 && !root.mode3d
+                enabled: EditorState.projectFile.projectWidth() > 0 && !root.mode3d
 
                 DropArea {
                     anchors.fill: parent

@@ -5,7 +5,7 @@ import Drift
 // would bake them into export; this is preview chrome only.
 Item {
     id: root
-    visible: EditorState.background && EditorState.background.kind === "transparent"
+    visible: EditorState.projectFile.background && EditorState.projectFile.background.kind === "transparent"
     clip: true
 
     readonly property int cell: 8

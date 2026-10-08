@@ -11,9 +11,9 @@ Column {
     signal cropStarted()
     signal layoutChooserOpened()
 
-    property int canvasW: { void EditorState.tracksRevision; return EditorState.projectWidth() }
-    property int canvasH: { void EditorState.tracksRevision; return EditorState.projectHeight() }
-    property int canvasFps: { void EditorState.tracksRevision; return EditorState.projectFps() }
+    property int canvasW: { void EditorState.tracksRevision; return EditorState.projectFile.projectWidth() }
+    property int canvasH: { void EditorState.tracksRevision; return EditorState.projectFile.projectHeight() }
+    property int canvasFps: { void EditorState.tracksRevision; return EditorState.projectFile.projectFps() }
 
     readonly property var canvasPresets: [
         { label: qsTr("Custom"), w: 0, h: 0 },
@@ -54,7 +54,7 @@ Column {
         onActivated: {
             const preset = root.canvasPresets[currentIndex]
             if (preset.w > 0)
-                EditorState.setProjectResolution(preset.w, preset.h)
+                EditorState.projectFile.setProjectResolution(preset.w, preset.h)
         }
     }
 
@@ -74,7 +74,7 @@ Column {
                 step: 2
                 unit: "px"
                 value: root.canvasW
-                onEdited: v => EditorState.setProjectResolution(v, root.canvasH)
+                onEdited: v => EditorState.projectFile.setProjectResolution(v, root.canvasH)
             }
         }
 
@@ -90,7 +90,7 @@ Column {
                 step: 2
                 unit: "px"
                 value: root.canvasH
-                onEdited: v => EditorState.setProjectResolution(root.canvasW, v)
+                onEdited: v => EditorState.projectFile.setProjectResolution(root.canvasW, v)
             }
         }
     }
@@ -106,7 +106,7 @@ Column {
             to: 240
             unit: "fps"
             value: root.canvasFps
-            onEdited: v => EditorState.setProjectFps(v)
+            onEdited: v => EditorState.projectFile.setProjectFps(v)
         }
     }
 

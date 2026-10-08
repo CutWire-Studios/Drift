@@ -338,7 +338,7 @@ Item {
                     const url = FileDialogs.saveFile(
                         qsTr("Export Subtitles"),
                         [qsTr("SubRip subtitles (*.srt)")],
-                        (root.clip && root.clip.name) ? root.clip.name : EditorState.projectName,
+                        (root.clip && root.clip.name) ? root.clip.name : EditorState.projectFile.projectName,
                         "srt")
                     if (url != "")
                         EditorState.exportSubtitleFile(

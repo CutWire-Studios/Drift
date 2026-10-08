@@ -76,7 +76,7 @@ ApplicationWindow {
     property var mediaPreviewPage: null
 
     function confirmIfDirty(action) {
-        if (!EditorState.hasUnsavedChanges) {
+        if (!EditorState.projectFile.hasUnsavedChanges) {
             action()
             return
         }
@@ -85,16 +85,16 @@ ApplicationWindow {
     }
 
     function saveProject() {
-        if (EditorState.currentProjectPath && EditorState.currentProjectPath.length > 0) {
-            EditorState.saveProject(EditorState.fileUrl(EditorState.currentProjectPath))
-            return !EditorState.hasUnsavedChanges
+        if (EditorState.projectFile.currentProjectPath && EditorState.projectFile.currentProjectPath.length > 0) {
+            EditorState.projectFile.saveProject(EditorState.fileUrl(EditorState.projectFile.currentProjectPath))
+            return !EditorState.projectFile.hasUnsavedChanges
         }
         const url = FileDialogs.saveFile(qsTr("Save Project"), window.projectFilter,
-                                         EditorState.projectName, "drift")
+                                         EditorState.projectFile.projectName, "drift")
         if (url === "")
             return false
-        EditorState.saveProject(url)
-        return !EditorState.hasUnsavedChanges
+        EditorState.projectFile.saveProject(url)
+        return !EditorState.projectFile.hasUnsavedChanges
     }
 
     // The canvas is inferred from the first clip instead of asked about. shouldConfigure...()
@@ -115,7 +115,7 @@ ApplicationWindow {
         const setup = EditorState.suggestedProjectSetupForAsset(assetIndex)
         if (!setup || !setup.width || !setup.height)
             return false
-        EditorState.setProjectSetup(setup.width, setup.height, setup.fps)
+        EditorState.projectFile.setProjectSetup(setup.width, setup.height, setup.fps)
         EditorState.markProjectLayoutChosen()
         Toasts.info(qsTr("Canvas set to %1×%2 at %3 fps from your first clip.")
                     .arg(setup.width).arg(setup.height).arg(setup.fps))
@@ -137,7 +137,7 @@ ApplicationWindow {
     // not care about.
     function startNewProject() {
         window.confirmIfDirty(function() {
-            EditorState.newProject()
+            EditorState.projectFile.newProject()
             window._afterLayoutChosen = function() { window.showEditor() }
             layoutSheet.openSheet()
         })
@@ -154,7 +154,7 @@ ApplicationWindow {
     // only hand over something that survives it. Pass nothing to open the picker.
     function beginQuickEdit(urls) {
         window.confirmIfDirty(function() {
-            EditorState.newProject()
+            EditorState.projectFile.newProject()
             const landed = function(added) {
                 if (added > 0) {
                     const index = AssetLibrary.count - added
@@ -196,9 +196,9 @@ ApplicationWindow {
             })
             return
         }
-        if (EditorState.hasUnsavedChanges) {
+        if (EditorState.projectFile.hasUnsavedChanges) {
             confirmIfDirty(function () {
-                EditorState.discardUnsavedChanges()
+                EditorState.projectFile.discardUnsavedChanges()
                 window.forceClose = true
                 window.close()
             })
@@ -222,7 +222,7 @@ ApplicationWindow {
                 return
             }
             window.confirmIfDirty(function () {
-                EditorState.loadProject(url)
+                EditorState.projectFile.loadProject(url)
                 Qt.callLater(window.showEditor)
             })
             return
@@ -314,7 +314,7 @@ ApplicationWindow {
         confirmIfDirty(function () {
             const url = FileDialogs.openFile(qsTr("Open Project"), window.projectFilter)
             if (url !== "") {
-                EditorState.loadProject(url)
+                EditorState.projectFile.loadProject(url)
                 showEditor()
             }
         })
@@ -322,7 +322,7 @@ ApplicationWindow {
 
     function openRecent(path) {
         confirmIfDirty(function () {
-            EditorState.openRecentProject(path)
+            EditorState.projectFile.openRecentProject(path)
             showEditor()
         })
     }
@@ -330,11 +330,11 @@ ApplicationWindow {
     onClosing: function (close) {
         // Opting in to reopening the last project means the autosave is restored on the
         // next launch, so asking to save on the way out is a question already answered.
-        if (window.forceClose || !EditorState.hasUnsavedChanges || EditorState.preferences.reopenLastProject)
+        if (window.forceClose || !EditorState.projectFile.hasUnsavedChanges || EditorState.preferences.reopenLastProject)
             return
         close.accepted = false
         confirmIfDirty(function () {
-            EditorState.discardUnsavedChanges()
+            EditorState.projectFile.discardUnsavedChanges()
             window.forceClose = true
             window.close()
         })
@@ -548,7 +548,7 @@ ApplicationWindow {
         const url = window._pendingLaunchUrl
         window._pendingLaunchUrl = ""
         window.confirmIfDirty(function () {
-            EditorState.loadProject(url)
+            EditorState.projectFile.loadProject(url)
             Qt.callLater(window.showEditor)
         })
         return true
@@ -572,7 +572,7 @@ ApplicationWindow {
             const action = window._pendingAfterUnsaved
             window._pendingAfterUnsaved = null
             close()
-            EditorState.discardUnsavedChanges()
+            EditorState.projectFile.discardUnsavedChanges()
             if (action)
                 action()
         }
@@ -714,7 +714,7 @@ ApplicationWindow {
             // asking about it as well is a question the user has answered once already.
             if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
                 return
-            if (!EditorState.recoveryAvailable || EditorState.preferences.reopenLastProject) {
+            if (!EditorState.projectFile.recoveryAvailable || EditorState.preferences.reopenLastProject) {
                 stop()
                 attempts = 0
                 return
@@ -761,24 +761,24 @@ ApplicationWindow {
         if (launched !== "" && !Market.handleIncomingUrl(launched)) {
             // Unless the previous session left a snapshot: loading the launched project
             // deletes it unasked, so park the URL and let the recovery prompt run first.
-            if (EditorState.recoveryAvailable && !EditorState.preferences.reopenLastProject) {
+            if (EditorState.projectFile.recoveryAvailable && !EditorState.preferences.reopenLastProject) {
                 window._pendingLaunchUrl = launched
                 recoveryOpenTimer.start()
                 return
             }
             window.confirmIfDirty(function () {
-                EditorState.loadProject(launched)
+                EditorState.projectFile.loadProject(launched)
                 Qt.callLater(window.showEditor)
             })
             return
         }
         // "Reopen last project" restores the autosave or the last clean .drift silently and
         // lands straight in the editor; the home page would be a step backwards from it.
-        if (EditorState.restoreLastSessionIfEnabled()) {
+        if (EditorState.projectFile.restoreLastSessionIfEnabled()) {
             Qt.callLater(window.showEditor)
             return
         }
-        if (EditorState.recoveryAvailable)
+        if (EditorState.projectFile.recoveryAvailable)
             recoveryOpenTimer.start()
         else
             Qt.callLater(window.refreshAddonAttention)
@@ -786,22 +786,12 @@ ApplicationWindow {
 
     Connections {
         target: EditorState
-        function onRecoveryChanged() {
-            if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
-                return
-            if (EditorState.preferences.reopenLastProject)
-                return
-            if (EditorState.recoveryAvailable)
-                recoveryOpenTimer.start()
-        }
+
         function onOpenSegmentationWindowRequested(track, clip, startSeconds, durationSeconds) {
             segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds, true)
         }
         function onOpenMulticamWindowRequested() {
             multicamWindowLoader.ensure().openSession()
-        }
-        function onMissingAddons(addons) {
-            missingAddonsDialogLoader.ensure().openFor(addons)
         }
         // These two dialogs open themselves from the same signals, but only once they exist.
         function onSubtitleGeneratingChanged() {
@@ -824,28 +814,6 @@ ApplicationWindow {
                 Toasts.info(qsTr("Export cancelled."))
             else
                 Toasts.error(qsTr("Export failed. Check the save location and free space."))
-        }
-        // Saving a project whose media is embedded runs on a worker, so saveProject() returns
-        // before the result exists and the action queued behind the unsaved-changes dialog
-        // cannot ride on its return value. The synchronous path emits this too, while
-        // _pendingAfterUnsaved is still set, so the action still runs exactly once.
-        function onProjectSaved(ok) {
-            // unsavedDialog.visible is the guard that keeps this tied to a save the dialog asked
-            // for. Back dismisses that dialog with close(), which emits neither accepted nor
-            // rejected, so the parked action survives — and without this an ordinary Save minutes
-            // later would fire it and navigate away from under the user.
-            if (!ok || !unsavedDialog.visible || !window._pendingAfterUnsaved)
-                return
-            const action = window._pendingAfterUnsaved
-            window._pendingAfterUnsaved = null
-            unsavedDialog.close()
-            action()
-        }
-        function onPackageFinished(ok, message) {
-            if (ok)
-                Toasts.success(message)
-            else
-                Toasts.error(qsTr("Couldn't create the shareable copy: %1").arg(message))
         }
         function onSubtitleGenerationFinished(ok, message) {
             if (ok)
@@ -874,6 +842,43 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: EditorState.projectFile
+        function onRecoveryChanged() {
+            if (EditorState.preferences.needsUiLanguagePrompt || languageChooserDialogLoader.shown)
+                return
+            if (EditorState.preferences.reopenLastProject)
+                return
+            if (EditorState.projectFile.recoveryAvailable)
+                recoveryOpenTimer.start()
+        }
+        function onMissingAddons(addons) {
+            missingAddonsDialogLoader.ensure().openFor(addons)
+        }
+        // Saving a project whose media is embedded runs on a worker, so saveProject() returns
+        // before the result exists and the action queued behind the unsaved-changes dialog
+        // cannot ride on its return value. The synchronous path emits this too, while
+        // _pendingAfterUnsaved is still set, so the action still runs exactly once.
+        function onProjectSaved(ok) {
+            // unsavedDialog.visible is the guard that keeps this tied to a save the dialog asked
+            // for. Back dismisses that dialog with close(), which emits neither accepted nor
+            // rejected, so the parked action survives — and without this an ordinary Save minutes
+            // later would fire it and navigate away from under the user.
+            if (!ok || !unsavedDialog.visible || !window._pendingAfterUnsaved)
+                return
+            const action = window._pendingAfterUnsaved
+            window._pendingAfterUnsaved = null
+            unsavedDialog.close()
+            action()
+        }
+        function onPackageFinished(ok, message) {
+            if (ok)
+                Toasts.success(message)
+            else
+                Toasts.error(qsTr("Couldn't create the shareable copy: %1").arg(message))
+        }
+    }
+
     // Tapping a .drift while we are already running arrives through onNewIntent, which
     // Component.onCompleted above is long past. Same handling as the cold start.
     Connections {
@@ -890,7 +895,7 @@ ApplicationWindow {
                 return
             }
             window.confirmIfDirty(function () {
-                EditorState.loadProject(url)
+                EditorState.projectFile.loadProject(url)
                 Qt.callLater(window.showEditor)
             })
         }
@@ -913,7 +918,7 @@ ApplicationWindow {
                 denoiseWindowLoader.item.stopPlayback()
             // Losing the foreground is the last moment guaranteed to run: the OS can reclaim the
             // process from here without another callback, and aboutToQuit does not fire when it does.
-            EditorState.flushRecoverySnapshot()
+            EditorState.projectFile.flushRecoverySnapshot()
             // Decoder buffers, GL targets and image caches are all rebuildable; holding them
             // while backgrounded is what gets the process killed instead of resumed. Only for a
             // real backgrounding though: Android reports Inactive for every SAF picker, share
@@ -921,7 +926,7 @@ ApplicationWindow {
             // cost a full rebuild on the way back. A job still running needs its decoders.
             if (Qt.application.state === Qt.ApplicationSuspended
                     || Qt.application.state === Qt.ApplicationHidden) {
-                if (!EditorState.exportInProgress && !EditorState.packaging)
+                if (!EditorState.exportInProgress && !EditorState.projectFile.packaging)
                     EditorState.releaseTransientCaches()
             }
         }
