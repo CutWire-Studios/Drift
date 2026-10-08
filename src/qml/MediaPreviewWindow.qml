@@ -101,7 +101,7 @@ Window {
         const asset = AssetLibrary.assetAt(index)
         if (!asset || Object.keys(asset).length === 0)
             return
-        EditorState.assetPreviewWindowOpen = true
+        EditorState.assetPreview.windowOpen = true
         player.stop()
         // QMediaPlayer::setSource() is a silent no-op when the new source compares equal to the
         // one it already has (confirmed against Qt 6.8.3), so reopening the same file below would
@@ -297,7 +297,7 @@ Window {
         player.stop()
         if (root.saving)
             EditorState.cancelAssetEdit()
-        EditorState.assetPreviewWindowOpen = false
+        EditorState.assetPreview.windowOpen = false
     }
 
     Connections {

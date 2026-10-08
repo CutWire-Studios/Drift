@@ -586,6 +586,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_binFolderModel.setProject(&m_project);
     // Before the preview: its constructor asks projectFile()->projectWidth().
     m_projectFile = new ProjectFileController(this, this);
+    m_assetPreview = new AssetPreviewController(this, this);
     m_preview = new PreviewController(*this, this);
     m_preferences = new PreferencesController(this);
     connect(m_preferences, &PreferencesController::restartNoticeRequested, this,
@@ -671,27 +672,13 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     connect(&m_speedCurvePlayer, &ClipPreviewPlayer::durationChanged, this,
             &AppController::speedCurveChanged);
 
-    // The media-bin preview's player, on the same terms.
-    connect(&m_assetPreviewPlayer, &ClipPreviewPlayer::frameChanged, this, [this] {
-        ++m_assetPreviewRevision;
-        emit assetPreviewFrameChanged();
-    });
-    connect(&m_assetPreviewPlayer, &ClipPreviewPlayer::frameSizeChanged, this,
-            &AppController::assetPreviewFrameChanged);
-    connect(&m_assetPreviewPlayer, &ClipPreviewPlayer::positionChanged, this,
-            &AppController::assetPreviewPositionChanged);
-    connect(&m_assetPreviewPlayer, &ClipPreviewPlayer::playingChanged, this,
-            &AppController::assetPreviewPlayingChanged);
-    connect(&m_assetPreviewPlayer, &ClipPreviewPlayer::durationChanged, this,
-            &AppController::assetPreviewSessionChanged);
-
     m_audioOutputDeviceId =
         QSettings().value(QStringLiteral("audio/outputDeviceId")).toString();
     if (!m_audioOutputDeviceId.isEmpty()) {
         const QByteArray id = m_audioOutputDeviceId.toUtf8();
         m_playback.setAudioDeviceId(id);
         m_speedCurvePlayer.setAudioDeviceId(id);
-        m_assetPreviewPlayer.setAudioDeviceId(id);
+        m_assetPreview->setAudioDeviceId(id);
     }
     connect(&m_mediaDevices, &QMediaDevices::audioOutputsChanged, this,
             &AppController::audioOutputDevicesChanged);
@@ -6172,15 +6159,6 @@ void AppController::setDraggingAssetIndex(int index)
     emit draggingAssetIndexChanged();
 }
 
-void AppController::setAssetPreviewWindowOpen(bool open)
-{
-    if (m_assetPreviewWindowOpen == open)
-        return;
-    m_assetPreviewWindowOpen = open;
-    emit assetPreviewWindowOpenChanged();
-}
-
-
 const drift::GuideSet *AppController::findGuideSet(const QString &id) const
 {
     for (const QList<drift::GuideSet> *list : {&drift::builtInGuideSets(), &m_guideLibrary, &m_projectGuideSets}) {
@@ -6488,7 +6466,7 @@ void AppController::setAudioOutputDeviceId(const QString &id)
     const QByteArray bytes = id.toUtf8();
     m_playback.setAudioDeviceId(bytes);
     m_speedCurvePlayer.setAudioDeviceId(bytes);
-    m_assetPreviewPlayer.setAudioDeviceId(bytes);
+    m_assetPreview->setAudioDeviceId(bytes);
     emit audioOutputDeviceIdChanged();
 }
 
@@ -9812,90 +9790,6 @@ void AppController::refreshMulticamTiles()
             emit multicamFramesChanged();
         }, Qt::QueuedConnection);
     });
-}
-
-void AppController::beginAssetPreview(int assetIndex)
-{
-    if (!m_assetLibrary)
-        return;
-
-    const QString assetId = m_assetLibrary->assetIdAt(assetIndex);
-    const drift::MediaAsset *asset = assetId.isEmpty() ? nullptr : m_project.asset(assetId);
-    if (!asset || asset->path.isEmpty())
-        return;
-
-    // Images have nothing to play; the page shows the file itself through the image provider.
-    if (asset->kind != drift::MediaKind::Video && asset->kind != drift::MediaKind::Audio) {
-        m_assetPreviewIndex = assetIndex;
-        m_assetPreviewActive = true;
-        emit assetPreviewSessionChanged();
-        return;
-    }
-
-    // Same rule the speed-curve session follows: ClipReaderPool's workers are shared, so the
-    // timeline must not be walking them while this player does.
-    setPlaying(false);
-
-    drift::Clip clip;
-    clip.type = asset->kind == drift::MediaKind::Audio ? drift::ClipType::Audio
-                                                       : drift::ClipType::Video;
-    clip.assetId = asset->id;
-    clip.name = asset->name;
-    clip.path = asset->path;
-    clip.thumbnailPath = asset->thumbnailPath;
-    clip.filmstripPath = asset->filmstripPath;
-    clip.srcIn = 0;
-    clip.srcOut = asset->durationUs;
-    clip.timelineStart = 0;
-    clip.timelineDuration = asset->durationUs;
-    clip.rotationCorrection = drift::rotationCorrectionOf(*asset);
-
-    m_assetPreviewIndex = assetIndex;
-    m_assetPreviewActive = true;
-    m_assetPreviewPlayer.setClip(clip, m_project.sampleRate(), m_project.fps());
-
-    emit assetPreviewSessionChanged();
-}
-
-void AppController::endAssetPreview()
-{
-    if (!m_assetPreviewActive)
-        return;
-
-    m_assetPreviewPlayer.clear();
-    m_assetPreviewActive = false;
-    m_assetPreviewIndex = -1;
-    emit assetPreviewSessionChanged();
-}
-
-double AppController::assetPreviewDuration() const
-{
-    return drift::usToSeconds(m_assetPreviewPlayer.durationUs());
-}
-
-double AppController::assetPreviewPosition() const
-{
-    return drift::usToSeconds(m_assetPreviewPlayer.positionUs());
-}
-
-void AppController::playAssetPreview()
-{
-    if (!m_assetPreviewActive)
-        return;
-    setPlaying(false);
-    m_assetPreviewPlayer.play();
-}
-
-void AppController::pauseAssetPreview()
-{
-    m_assetPreviewPlayer.pause();
-}
-
-void AppController::seekAssetPreview(double seconds)
-{
-    if (!m_assetPreviewActive)
-        return;
-    m_assetPreviewPlayer.seek(drift::secondsToUs(std::max(0.0, seconds)));
 }
 
 void AppController::beginSpeedCurveSession(int trackIndex, int clipIndex, bool allowNested)

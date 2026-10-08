@@ -63,6 +63,7 @@ struct MediaEditSpec;
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 #include "preview/PreviewController.h"
+#include "AssetPreviewController.h"
 #include "McpController.h"
 #include "PreferencesController.h"
 #include "ProjectFileController.h"
@@ -78,6 +79,7 @@ class AppController : public QObject
     // Owns the agent server. Still reaches the timeline helpers that have not moved yet.
     friend class McpController;
     friend class ProjectFileController;
+    friend class AssetPreviewController;
 
     Q_OBJECT
 
@@ -98,6 +100,8 @@ class AppController : public QObject
     Q_PROPERTY(PreferencesController *preferences READ preferences CONSTANT)
     // Project file lifecycle and project setup. QML: EditorState.projectFile.
     Q_PROPERTY(ProjectFileController *projectFile READ projectFile CONSTANT)
+    // Media-bin preview session. QML: EditorState.assetPreview.
+    Q_PROPERTY(AssetPreviewController *assetPreview READ assetPreview CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
@@ -251,16 +255,6 @@ class AppController : public QObject
     Q_PROPERTY(QString speedCurveClipName READ speedCurveClipName NOTIFY speedCurveSessionChanged)
     Q_PROPERTY(QString speedCurveClipPath READ speedCurveClipPath NOTIFY speedCurveSessionChanged)
     Q_PROPERTY(QString speedCurveFilmstripPath READ speedCurveFilmstripPath NOTIFY speedCurveSessionChanged)
-    // Media-bin preview session driving the phone's preview-and-edit page. The asset is
-    // auditioned through its own single-clip player rather than QtMultimedia: a VideoOutput in a
-    // secondary window paints black on Android, and this decodes through the same FFmpeg the
-    // timeline uses, so whatever the editor plays the preview plays.
-    Q_PROPERTY(bool assetPreviewActive READ assetPreviewActive NOTIFY assetPreviewSessionChanged)
-    Q_PROPERTY(int assetPreviewRevision READ assetPreviewRevision NOTIFY assetPreviewFrameChanged)
-    Q_PROPERTY(QSize assetPreviewFrameSize READ assetPreviewFrameSize NOTIFY assetPreviewFrameChanged)
-    Q_PROPERTY(double assetPreviewDuration READ assetPreviewDuration NOTIFY assetPreviewSessionChanged)
-    Q_PROPERTY(double assetPreviewPosition READ assetPreviewPosition NOTIFY assetPreviewPositionChanged)
-    Q_PROPERTY(bool assetPreviewPlaying READ assetPreviewPlaying NOTIFY assetPreviewPlayingChanged)
 
     // Custom fade-shape session for FadeCurveWindow. Candidate is auditioned on the live clip
     // until applyFadeCurve commits it (or endFadeCurveSession restores the prior shape).
@@ -331,10 +325,6 @@ class AppController : public QObject
     // corrupt-project open rendered as a neutral info toast.
     Q_PROPERTY(QString lastMessageSeverity READ lastMessageSeverity NOTIFY lastMessageChanged)
     Q_PROPERTY(int draggingAssetIndex READ draggingAssetIndex WRITE setDraggingAssetIndex NOTIFY draggingAssetIndexChanged)
-    // Set by MediaPreviewWindow.qml/AndroidMediaPreview.qml while open, so the bin grid can defer
-    // rebuilding its delegate array (and the scroll-position flicker that causes) until the
-    // window closes rather than on every metadata change (rotate, trim, a probe landing) it emits.
-    Q_PROPERTY(bool assetPreviewWindowOpen READ assetPreviewWindowOpen WRITE setAssetPreviewWindowOpen NOTIFY assetPreviewWindowOpenChanged)
     Q_PROPERTY(bool separateAudioAvailable READ canSeparateAudioSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool makeCompositeAvailable READ canMakeCompositeFromSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool transformTogetherAvailable READ canTransformSelectionTogether NOTIFY editCapabilitiesChanged)
@@ -360,6 +350,7 @@ public:
     PreviewController *preview() const { return m_preview; }
     PreferencesController *preferences() const { return m_preferences; }
     ProjectFileController *projectFile() const { return m_projectFile; }
+    AssetPreviewController *assetPreview() const { return m_assetPreview; }
     McpController *mcp() const { return m_mcpController; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
@@ -523,8 +514,6 @@ public:
     QString lastMessageSeverity() const { return m_lastMessageSeverity; }
     int draggingAssetIndex() const { return m_draggingAssetIndex; }
     void setDraggingAssetIndex(int index);
-    bool assetPreviewWindowOpen() const { return m_assetPreviewWindowOpen; }
-    void setAssetPreviewWindowOpen(bool open);
 
     void setPlayheadSeconds(double seconds);
     void setPlaying(bool playing);
@@ -758,20 +747,6 @@ public:
     Q_INVOKABLE void seekSpeedCurvePreviewAtSource(double position);
     Q_INVOKABLE void applySpeedCurve();
     Q_INVOKABLE void clearClipSpeedCurve(int trackIndex, int clipIndex);
-
-    // Media-bin preview session. beginAssetPreview auditions the bin row; the page owns the
-    // trim and crop values and hands them to saveAssetEdit itself.
-    Q_INVOKABLE void beginAssetPreview(int assetIndex);
-    Q_INVOKABLE void endAssetPreview();
-    bool assetPreviewActive() const { return m_assetPreviewActive; }
-    int assetPreviewRevision() const { return m_assetPreviewRevision; }
-    QSize assetPreviewFrameSize() const { return m_assetPreviewPlayer.frameSize(); }
-    double assetPreviewDuration() const;
-    double assetPreviewPosition() const;
-    bool assetPreviewPlaying() const { return m_assetPreviewPlayer.isPlaying(); }
-    Q_INVOKABLE void playAssetPreview();
-    Q_INVOKABLE void pauseAssetPreview();
-    Q_INVOKABLE void seekAssetPreview(double seconds);
 
     Q_INVOKABLE void beginFadeCurveSession(int trackIndex, int clipIndex);
     Q_INVOKABLE void endFadeCurveSession();
@@ -1785,10 +1760,6 @@ signals:
     // Raised by the "multicam" shortcut/action. QML owns the window, as with the file actions.
     void openMulticamWindowRequested();
     void speedCurveSessionChanged();
-    void assetPreviewSessionChanged();
-    void assetPreviewFrameChanged();
-    void assetPreviewPositionChanged();
-    void assetPreviewPlayingChanged();
     void speedCurveChanged();
     void speedCurveFrameChanged();
     void speedCurvePositionChanged();
@@ -1823,7 +1794,6 @@ signals:
     void loopWorkAreaEnabledChanged();
     void lastMessageChanged();
     void draggingAssetIndexChanged();
-    void assetPreviewWindowOpenChanged();
     void exportFinished(bool success);
     void projectMutated();
     void waveformReady(const QString &path);
@@ -2309,11 +2279,6 @@ protected:
     double m_segmentProgress = 0.0;
     QString m_segmentStatus;
     QAtomicInt m_segmentCancel = 0;
-    // Media-bin preview session: the synthetic whole-source clip the bin row is auditioned as.
-    ClipPreviewPlayer m_assetPreviewPlayer;
-    int m_assetPreviewIndex = -1;
-    int m_assetPreviewRevision = 0;
-    bool m_assetPreviewActive = false;
 
     // Speed-curve session: the clip being retimed, the candidate ramp, and the player auditioning it.
     ClipPreviewPlayer m_speedCurvePlayer;
@@ -2456,6 +2421,7 @@ protected:
     PreviewController *m_preview = nullptr;
     PreferencesController *m_preferences = nullptr;
     ProjectFileController *m_projectFile = nullptr;
+    AssetPreviewController *m_assetPreview = nullptr;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};
     // App-wide custom sets.
     QList<drift::GuideSet> m_guideLibrary;
@@ -2468,7 +2434,6 @@ protected:
     QHash<QString, QString> m_shortcuts;
     QHash<QString, QSet<QString>> m_assetFavorites;
     int m_draggingAssetIndex = -1;
-    bool m_assetPreviewWindowOpen = false;
     QString m_lastMessage;
     QString m_lastMessageSeverity = QStringLiteral("info");
     bool m_inlineTextEditing = false;

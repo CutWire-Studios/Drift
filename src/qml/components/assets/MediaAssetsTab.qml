@@ -275,7 +275,7 @@ Item {
         }
     }
     function _requestRefresh() {
-        if (EditorState.assetPreviewWindowOpen)
+        if (EditorState.assetPreview.windowOpen)
             root._refreshPending = true
         else
             refreshCoalesceTimer.restart()
@@ -283,8 +283,11 @@ Item {
     Connections {
         target: EditorState
         function onUndoStackChanged() { root._requestRefresh() }
-        function onAssetPreviewWindowOpenChanged() {
-            if (!EditorState.assetPreviewWindowOpen && root._refreshPending) {
+    }
+    Connections {
+        target: EditorState.assetPreview
+        function onWindowOpenChanged() {
+            if (!EditorState.assetPreview.windowOpen && root._refreshPending) {
                 root._refreshPending = false
                 refreshCoalesceTimer.restart()
             }
