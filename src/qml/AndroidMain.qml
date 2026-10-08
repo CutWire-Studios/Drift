@@ -730,7 +730,7 @@ ApplicationWindow {
         Theme.windowWidth = window.width
         // Independent of the language/recovery/launch-intent branching below — it
         // neither gates nor is gated by any of it.
-        EditorState.applyMcpStartOnLaunch()
+        EditorState.mcp.applyStartOnLaunch()
         if (EditorState.needsUiLanguagePrompt) {
             languageChooserDialogLoader.ensure().openChooser()
             return

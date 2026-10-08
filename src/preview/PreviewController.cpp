@@ -880,7 +880,7 @@ QVariantMap PreviewController::dropAsset(const QString &kind, const QString &pay
 
     // Overlays land on top, centred where they were dropped: the add and the placement are one
     // edit, so a single undo removes the clip rather than first moving it back to the default.
-    m_app.mcpBeginBatch();
+    m_app.mcp()->beginBatch();
     if (kind == QLatin1String("shape"))
         m_app.addShapeClipAt(payload, -1, at);
     else if (kind == QLatin1String("sticker"))
@@ -901,7 +901,7 @@ QVariantMap PreviewController::dropAsset(const QString &kind, const QString &pay
         const double y = qBound(-h / 2.0, canvasY - h / 2.0, m_app.m_project.height() - h / 2.0);
         setClipLayoutPixels(added, x, y, w, h);
     }
-    m_app.mcpEndBatch(AppController::tr("Add to preview"), true);
+    m_app.mcp()->endBatch(AppController::tr("Add to preview"), true);
     return plan;
 }
 

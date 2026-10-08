@@ -747,8 +747,8 @@ Rectangle {
                 glyph: Theme.icons.bot
                 variant: "ghost"
                 text: qsTr("Agent")
-                active: EditorState.mcpRunning
-                tooltip: EditorState.mcpRunning
+                active: EditorState.mcp.running
+                tooltip: EditorState.mcp.running
                          ? qsTr("Agent access is on")
                          : qsTr("Agent access")
                 anchors.verticalCenter: parent.verticalCenter

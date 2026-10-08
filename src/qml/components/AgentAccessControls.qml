@@ -30,34 +30,34 @@ Column {
     }
 
     ThemedSwitch {
-        checked: EditorState.mcpEnabled
+        checked: EditorState.mcp.enabled
         text: qsTr("Allow for this session")
         tooltip: qsTr("Let an assistant on this device edit this project until you turn it off or quit.")
-        onToggled: EditorState.mcpEnabled = checked
+        onToggled: EditorState.mcp.enabled = checked
     }
 
     // Visible whenever there is something to act on: normally that means access is
-    // currently on, but a start-on-launch attempt that failed leaves mcpStartOnLaunch
-    // set and mcpRunning false — the switch has to stay reachable then too, or turning
+    // currently on, but a start-on-launch attempt that failed leaves startOnLaunch
+    // set and running false — the switch has to stay reachable then too, or turning
     // it back off (to stop the next launch from trying again) has nowhere to happen.
     ThemedSwitch {
-        visible: EditorState.mcpRunning || EditorState.mcpStartOnLaunch
-        checked: EditorState.mcpStartOnLaunch
+        visible: EditorState.mcp.running || EditorState.mcp.startOnLaunch
+        checked: EditorState.mcp.startOnLaunch
         text: qsTr("Start agent on startup")
         tooltip: qsTr("Skip the manual toggle next time you open Drift. Turning access off resets this.")
-        onToggled: EditorState.mcpStartOnLaunch = checked
+        onToggled: EditorState.mcp.startOnLaunch = checked
     }
 
     ThemedLabel {
         width: parent.width
-        visible: EditorState.mcpError.length > 0
-        text: EditorState.mcpError
+        visible: EditorState.mcp.error.length > 0
+        text: EditorState.mcp.error
         color: Theme.destructive
     }
 
     ThemedLabel {
         width: parent.width
-        visible: !EditorState.mcpRunning
+        visible: !EditorState.mcp.running
         wrapMode: Text.WordWrap
         text: qsTr("Turn this on, then copy the setup for Cursor or Claude and paste it into that app.")
     }
@@ -65,7 +65,7 @@ Column {
     Column {
         width: parent.width
         spacing: Theme.spacingLg
-        visible: EditorState.mcpRunning
+        visible: EditorState.mcp.running
 
         Row {
             spacing: Theme.spacingMd
@@ -92,9 +92,9 @@ Column {
         ThemedLabel {
             width: parent.width
             wrapMode: Text.WordWrap
-            visible: EditorState.mcpUrl.length > 0
+            visible: EditorState.mcp.url.length > 0
             size: "sm"
-            text: qsTr("Listening on %1").arg(EditorState.mcpUrl)
+            text: qsTr("Listening on %1").arg(EditorState.mcp.url)
         }
 
         ThemedButton {
@@ -103,7 +103,7 @@ Column {
             text: qsTr("New key")
             tooltip: qsTr("Replace the key. Every assistant set up with the old one stops working until you copy the setup again.")
             onClicked: {
-                EditorState.rotateMcpToken()
+                EditorState.mcp.rotateToken()
                 Toasts.success(qsTr("New key made — copy the setup again"))
             }
         }
@@ -121,7 +121,7 @@ Column {
             text: qsTr("Copy for Cursor")
             tooltip: qsTr("Copy a setup snippet to paste into Cursor")
             onClicked: {
-                EditorState.copyMcpCursorSnippet()
+                EditorState.mcp.copyCursorSnippet()
                 Toasts.success(qsTr("Copied for Cursor"))
             }
         }
@@ -133,7 +133,7 @@ Column {
             text: qsTr("Copy for Claude")
             tooltip: qsTr("Copy a command to paste into Claude Code")
             onClicked: {
-                EditorState.copyMcpClaudeCommand()
+                EditorState.mcp.copyClaudeCommand()
                 Toasts.success(qsTr("Copied for Claude"))
             }
         }
@@ -151,7 +151,7 @@ Column {
             text: qsTr("Copy a how-to for the agent")
             tooltip: qsTr("A short list of what the agent can do here — paste it into the chat")
             onClicked: {
-                EditorState.copyMcpAgentGuide()
+                EditorState.mcp.copyAgentGuide()
                 Toasts.success(qsTr("Copied how-to"))
             }
         }
@@ -181,7 +181,7 @@ Column {
                 text: qsTr("Copy one-time setup")
                 tooltip: qsTr("Add this once to the assistant’s config. Access still has to be turned on here.")
                 onClicked: {
-                    EditorState.copyMcpStdioSnippet()
+                    EditorState.mcp.copyStdioSnippet()
                     Toasts.success(qsTr("Copied one-time setup"))
                 }
             }

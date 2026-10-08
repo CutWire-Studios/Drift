@@ -55,9 +55,6 @@ class AddonManager;
 class MarketClient;
 class JobRegistry;
 
-namespace drift::mcp {
-class McpServer;
-}
 namespace drift {
 struct MediaEditSpec;
 }
@@ -66,6 +63,7 @@ struct MediaEditSpec;
 #include "playback/ClipPreviewPlayer.h"
 #include "playback/PlaybackEngine.h"
 #include "preview/PreviewController.h"
+#include "McpController.h"
 
 // QML-facing controller over the core project model and undo stack.
 class AppController : public QObject
@@ -75,6 +73,8 @@ class AppController : public QObject
     friend class EditorStateTest;
     // Moved out of this class with the preview area; it still reads the timeline and selection.
     friend class PreviewController;
+    // Owns the agent server. Still reaches the timeline helpers that have not moved yet.
+    friend class McpController;
 
     Q_OBJECT
 
@@ -202,23 +202,9 @@ class AppController : public QObject
     Q_PROPERTY(bool gpuPreferenceInSystemSettings READ gpuPreferenceInSystemSettings CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
-    // Session-only localhost MCP for agents. Off at every launch, unless mcpStartOnLaunch
-    // opts back in.
-    Q_PROPERTY(bool mcpEnabled READ mcpEnabled WRITE setMcpEnabled NOTIFY mcpRunningChanged)
-    Q_PROPERTY(bool mcpRunning READ mcpRunning NOTIFY mcpRunningChanged)
-    Q_PROPERTY(QString mcpUrl READ mcpUrl NOTIFY mcpRunningChanged)
-    Q_PROPERTY(QString mcpToken READ mcpToken NOTIFY mcpRunningChanged)
-    Q_PROPERTY(int mcpPort READ mcpPort NOTIFY mcpRunningChanged)
-    Q_PROPERTY(QString mcpError READ mcpError NOTIFY mcpErrorChanged)
-    Q_PROPERTY(QString mcpCursorSnippet READ mcpCursorSnippet NOTIFY mcpRunningChanged)
-    Q_PROPERTY(QString mcpClaudeCommand READ mcpClaudeCommand NOTIFY mcpRunningChanged)
-    Q_PROPERTY(QString mcpStdioSnippet READ mcpStdioSnippet NOTIFY mcpRunningChanged)
-    // Persisted opt-in: start the MCP server at launch instead of leaving it off.
-    // setMcpEnabled(false) — a manual "turn access off" — clears this, so re-enabling
-    // access always starts from an explicit, un-opted-in state rather than quietly
-    // carrying an old intent to auto-start past the point the user turned access off.
-    Q_PROPERTY(bool mcpStartOnLaunch READ mcpStartOnLaunch WRITE setMcpStartOnLaunch
-                   NOTIFY mcpStartOnLaunchChanged)
+    // Session-only localhost MCP for agents. Off at every launch, unless startOnLaunch
+    // opts back in. QML: EditorState.mcp.running, EditorState.mcp.url, and the rest.
+    Q_PROPERTY(McpController *mcp READ mcp CONSTANT)
     // App-wide interface language, QSettings("ui/language"). Empty means follow the OS locale.
     // "en" is the source catalog (no .qm). Other codes match i18n/drift_<code>.qm.
     // needsUiLanguagePrompt is true only on a brand-new install, before the first-launch chooser
@@ -445,6 +431,7 @@ public:
     void setCurrentBinFolderId(const QString &folderId);
     PlaybackEngine *playback() { return &m_playback; }
     PreviewController *preview() const { return m_preview; }
+    McpController *mcp() const { return m_mcpController; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
     void setAudioOutputDeviceId(const QString &id);
@@ -674,31 +661,6 @@ public:
     void setMediaCodecZeroCopy(bool enabled);
     void setPreferredGpu(const QString &id);
     void setInvertTimelineScroll(bool enabled);
-    Q_INVOKABLE void setMcpEnabled(bool enabled);
-    // Headless wires transports onto the server itself, which the on/off switch above
-    // does not expose.
-    drift::mcp::McpServer *mcpServer() const { return m_mcp.get(); }
-    bool mcpEnabled() const { return mcpRunning(); }
-    bool mcpRunning() const;
-    QString mcpUrl() const;
-    QString mcpToken() const;
-    int mcpPort() const;
-    QString mcpError() const;
-    QString mcpCursorSnippet() const;
-    QString mcpClaudeCommand() const;
-    QString mcpStdioSnippet() const;
-    Q_INVOKABLE void copyMcpCursorSnippet();
-    Q_INVOKABLE void copyMcpClaudeCommand();
-    Q_INVOKABLE void copyMcpStdioSnippet();
-    Q_INVOKABLE void copyMcpAgentGuide();
-    Q_INVOKABLE void rotateMcpToken();
-    bool mcpStartOnLaunch() const { return m_mcpStartOnLaunch; }
-    Q_INVOKABLE void setMcpStartOnLaunch(bool enabled);
-    // Starts the server if mcpStartOnLaunch is set. GUI-only — called once from
-    // Main.qml's startup sequence; headless mode never calls this, since it configures
-    // and starts the server itself from --mcp-port/--mcp-token/--mcp-stdio.
-    Q_INVOKABLE void applyMcpStartOnLaunch();
-    QString mcpAgentGuide() const;
     Q_INVOKABLE QVariantMap debugInfo() const;
     Q_INVOKABLE QString debugInfoText() const;
     Q_INVOKABLE void copyDebugInfo();
@@ -720,146 +682,9 @@ public:
     // other, for the same machine, in the same paste.
     Q_INVOKABLE void copyDiagnosticsReport(const QVariantMap &benchmarkInfo);
 
-    // MCP helpers (GUI thread). Used by src/mcp, not QML.
-    QPair<int, int> mcpLocateClip(const QString &id) const;
-    QString mcpClipId(int trackIndex, int clipIndex) const;
-    QVariantMap mcpCompactClip(int trackIndex, int clipIndex, bool includeCanvas = true) const;
-    struct McpInspectOptions {
-        bool clips = false;
-        bool detail = false;
-        bool cues = false;
-        bool verbose = false;
-        int since = -1;
-        int track = -1;
-        QString clip;
-    };
-    QJsonObject mcpInspect(const McpInspectOptions &options) const;
-    QJsonObject mcpInspect(bool includeClips, int sinceRevision = -1, bool detail = false,
-                           bool includeCues = false) const
-    {
-        return mcpInspect(McpInspectOptions{includeClips, detail, includeCues, false, sinceRevision});
-    }
-    int mcpRevision() const { return m_mcpEditRevision; }
-    bool mcpSetClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch);
-    QJsonObject mcpCaptureFrame(double atSeconds, bool full);
 
-    // Perception for agents: a labelled contact sheet, a text profile of change over time, and a
-    // waveform rendered as an image. All block on the mcpCaptureFrame pattern.
-    struct McpFrameSheetRequest {
-        double start = -1.0;
-        double end = -1.0;
-        QList<double> at;
-        QString sample = QStringLiteral("changes");
-        int n = 12;
-        int cols = 0;
-        int tileWidth = 0;
-        int minChange = 12;
-        bool label = true;
-        bool toPath = false;
-        int track = -1;
-        int clip = -1;
-    };
-    QJsonObject mcpFrameSheet(const McpFrameSheetRequest &request);
-
-    struct McpActivityRequest {
-        double start = -1.0;
-        double end = -1.0;
-        int samples = 200;
-        int peaks = 8;
-        bool audio = true;
-        int track = -1;
-        int clip = -1;
-    };
-    QJsonObject mcpActivity(const McpActivityRequest &request);
-
-    QJsonObject mcpWaveformImage(const QString &mode, int trackIndex, int clipIndex,
-                                 const QString &assetId, double startSeconds, double durSeconds,
-                                 int width, int height, bool spectrogram,
-                                 int summaryBuckets, bool words = true) const;
-    bool mcpSetWorkArea(double inSeconds, double outSeconds);
-
-    // Audio for agents. All of these block: the QML-facing waveform getters return empty on the
-    // first call and repaint on a signal, which works for a binding and not at all for a caller
-    // that gets one reply. These decode/mix inline instead, on the mcpCaptureFrame pattern.
-    QJsonObject mcpWaveformForClip(int trackIndex, int clipIndex, int buckets) const;
-    QJsonObject mcpWaveformForAsset(const QString &assetId, double startSeconds,
-                                    double durSeconds, int buckets) const;
-    QJsonObject mcpWaveformForTimeline(double startSeconds, double durSeconds, int buckets) const;
-    QJsonObject mcpDetectBeats(double startSeconds, double durSeconds, bool force);
-    QJsonObject mcpBeatPayload() const;
-    QJsonObject mcpAudioSummary() const;
-    // Grid times from the current analysis. `unit` is beat, bar or onset; `minStrength` filters
-    // onsets only. Empty when nothing has been analysed yet.
-    QList<double> mcpBeatTimes(const QString &unit, double minStrength) const;
-    // --- scene toolbox ---
-    QJsonObject mcpDetectScenes(int trackIndex, int clipIndex, double threshold, double minScene,
-                                bool withObjects);
-    // The live analysis, filtered and shaped for MCP. Times are reported in both source and
-    // timeline space so an agent never has to redo the trim/speed/reverse mapping itself.
-    QJsonObject mcpListScenes(const QString &label, double minScore, const QString &sort,
-                              int limit, int trackIndex = -1, int clipIndex = -1) const;
-    // Rows for a clip's scene analysis: the live one when it is the last scanned clip, else the
-    // on-disk cache. Empty when it was never scanned.
-    QVariantList mcpSceneRows(int trackIndex, int clipIndex, const drift::Clip **clip) const;
-    QJsonObject mcpDescribeClip(int topCount, int trackIndex = -1, int clipIndex = -1) const;
-    QJsonObject mcpFindScenes(const QString &label, double minScore, int trackIndex,
-                              int limit) const;
-    // Timeline seconds of every detected boundary inside the clip that was analysed.
-    QList<double> mcpSceneCutTimes(double minScore, const QString &label) const;
-    int mcpBookmarkScenes(double minScore, const QString &label, const QString &labelPrefix);
-    // Which model addons are installed, so an agent can say what to install rather than
-    // retrying blindly.
-    QJsonObject mcpAiCapabilities() const;
-    // Transcript-first editing. Transcripts live on the asset (Project::transcript) in source time.
-    QJsonObject mcpTranscribe(const QStringList &assetIds, const QJsonObject &options);
-    QJsonObject mcpGetTranscript(const QString &assetId, int trackIndex, int clipIndex,
-                                 double startSeconds, double endSeconds, const QJsonObject &options) const;
-    QJsonObject mcpDiarize(const QString &assetId, const QJsonObject &options);
-    QJsonObject mcpKeepRanges(int trackIndex, int clipIndex, const QJsonArray &ranges, double padding,
-                              double declick, bool ripple);
-    QJsonObject mcpAssemble(const QJsonArray &edl, int trackIndex, bool atGiven, double atSeconds,
-                            double padding, double declick);
-    QJsonObject mcpCutWords(int trackIndex, int clipIndex, const QJsonObject &args);
-    QJsonObject mcpTtsGenerate(const QJsonObject &args);
-    QJsonObject mcpSfxGenerate(const QJsonObject &args);
-    QJsonObject mcpListVoices(const QJsonObject &args) const;
-    QJsonObject mcpCloudProviderStatus() const;
-    QJsonObject mcpGetJob(const QString &id) const;
-    QJsonObject mcpCancelJob(const QString &id);
     JobRegistry *jobRegistry() const { return m_jobs; }
 
-    int mcpBookmarkBeats(double startSeconds, double durSeconds, const QString &unit,
-                         double minStrength, const QString &labelPrefix);
-    QJsonObject mcpSetBeatLayers(bool grid, bool onsets);
-    QJsonObject mcpSetClipVolume(int trackIndex, int clipIndex, double value, bool atGiven,
-                                 double atSeconds);
-    void mcpRememberExportSettings(const QVariantMap &settings);
-    QVariantMap mcpLastExportSettings() const;
-    void mcpBeginBatch();
-    void mcpEndBatch(const QString &text, bool pushUndo);
-    QJsonObject mcpListHistory(int limit = 20) const;
-    QJsonObject mcpUndoTo(int index, const QString &hash);
-    QJsonObject mcpTakeSnapshot(const QString &label);
-    QJsonObject mcpListSnapshots() const;
-    QJsonObject mcpRestoreSnapshot(const QString &hash);
-    QJsonObject mcpDetectSilence(int trackIndex, int clipIndex, double startSeconds,
-                                 double durSeconds, double threshold, double minDuration,
-                                 double padding, const QString &method = QStringLiteral("energy")) const;
-    QJsonObject mcpRemoveSilence(int trackIndex, int clipIndex, double threshold,
-                                 double minDuration, double padding, double declick = 0.03,
-                                 const QString &method = QStringLiteral("energy"));
-    QJsonObject mcpAnalyzeLoudness(int trackIndex, int clipIndex, double startSeconds,
-                                   double durSeconds) const;
-    QJsonObject mcpNormalizeVolume(int trackIndex, int clipIndex, double targetLufs);
-    QJsonObject mcpDuckUnder(int musicTrack, int musicClip, int overTrack,
-                             const QStringList &overClips, double amount, double attack,
-                             double release);
-    QJsonObject mcpListFaceTrack(int trackIndex, int clipIndex) const;
-    QJsonObject mcpAutoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode);
-    QJsonObject mcpListAddons() const;
-    QJsonObject mcpInstallAddon(const QString &id);
-    QJsonObject mcpCancelAddonInstall(const QString &id);
-    QJsonObject mcpSetAcceleration(const QString &variant);
     void setAddonManager(AddonManager *manager) { m_addonManager = manager; }
     void setMarketClient(MarketClient *client) { m_marketClient = client; }
     MarketClient *marketClient() const { return m_marketClient; }
@@ -2069,7 +1894,7 @@ public:
     Q_INVOKABLE void exportProject(const QUrl &outputUrl);
     Q_INVOKABLE void exportWithPreset(const QUrl &outputUrl, const QString &presetId);
     // `rememberChoice` is what keeps an agent export out of the export dialog's memory: the GUI
-    // stores what the user picked, an MCP export keeps its own (see mcpRememberExportSettings), and
+    // stores what the user picked, an MCP export keeps its own (see McpController::rememberExportSettings), and
     // neither reaches into the other's.
     Q_INVOKABLE void exportWithSettings(const QUrl &outputUrl, const QVariantMap &settings,
                                         bool rememberChoice = true);
@@ -2150,9 +1975,6 @@ signals:
     void playbackBenchmarkFinished(const QVariantMap &info);
     void playbackBenchmarkRunningChanged();
     void invertTimelineScrollChanged();
-    void mcpRunningChanged();
-    void mcpErrorChanged();
-    void mcpStartOnLaunchChanged();
     void uiLanguageChanged();
     void uiScaleChanged();
     void keyframeGraphVisibilityChanged();
@@ -2701,12 +2523,6 @@ protected:
     MarketClient *m_marketClient = nullptr;
     JobRegistry *m_jobs = nullptr;
     CloudProviders *m_cloud = nullptr;
-    // An error object when `provider` can't be used yet (no key, no consent); empty when it can.
-    QJsonObject cloudUnavailable(const QString &provider) const;
-    // Imports a generated file into the bin, records what made it, optionally places it.
-    QJsonObject importGeneratedAudio(const QString &path, const QJsonObject &generator, const QJsonValue &place);
-    // Lands a finished transcript on its asset, unless the asset is gone or its file changed.
-    void storeTranscript(const QString &assetId, std::shared_ptr<drift::Transcript> transcript);
     BinFolderListModel m_binFolderModel;
     QString m_currentBinFolderId;
     bool m_importingFolder = false;
@@ -3075,15 +2891,14 @@ protected:
     // Launch layout picker / first-clip setup completed for this empty project.
     bool m_projectLayoutChosen = false;
 
-    std::unique_ptr<drift::mcp::McpServer> m_mcp;
-    bool m_mcpStartOnLaunch = false;
-    bool m_mcpUndoSuspended = false;
-    int m_mcpBatchDepth = 0;
-    drift::Project m_mcpBatchBefore;
-    int m_mcpEditRevision = 0;
-    mutable QHash<QString, QPair<int, int>> m_mcpClipIndex;
-    mutable int m_mcpClipIndexRevision = -1;
-    void rebuildMcpClipIndexIfNeeded() const;
+    McpController *m_mcpController = nullptr;
+    // Protected wrappers for this TU's file-local clip writers. McpController calls them.
+    bool writeClipProp(drift::Clip &clip, const QString &prop, drift::TimeUs relative, double value,
+                       bool autoKey, bool force);
+    drift::KeyframeTrack<double> *transformTrack(drift::Clip &clip, const QString &prop);
+    void clearPose3d(drift::Clip &clip);
+    // Freeze frames and full-size MCP captures share one media path.
+    static QString newFreezeFramePath(const QString &projectId);
 
     void setProjectLayoutChosen(bool chosen);
 

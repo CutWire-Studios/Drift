@@ -276,7 +276,7 @@ QJsonArray compactAvailableCodecs(const QVariantList &list)
 QVariantMap mergedExportSettings(AppController *c)
 {
     QVariantMap merged = c->exportDefaultSettings();
-    const QVariantMap last = c->mcpLastExportSettings();
+    const QVariantMap last = c->mcp()->lastExportSettings();
     for (auto it = last.begin(); it != last.end(); ++it) {
         // Carrying a codec or a bitrate over is a convenience. Carrying a *mode* over is a trap:
         // one build asked for a video export, left audio_only out of the args, inherited the true
@@ -537,7 +537,7 @@ McpDispatcher::ClipRef McpDispatcher::resolveClip(const QJsonObject &args) const
     ClipRef ref;
     const QString id = args.value(QStringLiteral("clip")).toString().trimmed();
     if (!id.isEmpty()) {
-        const QPair<int, int> loc = m_controller->mcpLocateClip(id);
+        const QPair<int, int> loc = m_controller->mcp()->locateClip(id);
         ref.track = loc.first;
         ref.clip = loc.second;
         ref.id = id;
@@ -546,7 +546,7 @@ McpDispatcher::ClipRef McpDispatcher::resolveClip(const QJsonObject &args) const
     ref.track = jsonInt(args.value(QStringLiteral("track")));
     ref.clip = jsonInt(args.value(QStringLiteral("index")));
     if (ref.valid()) {
-        ref.id = m_controller->mcpClipId(ref.track, ref.clip);
+        ref.id = m_controller->mcp()->clipId(ref.track, ref.clip);
         if (ref.id.isEmpty())
             return {};
     }
@@ -585,7 +585,7 @@ QJsonObject McpDispatcher::clipFeedback(const ClipRef &ref, const QJsonObject &e
 {
     if (!ref.valid())
         return extra;
-    const QVariantMap clip = m_controller->mcpCompactClip(ref.track, ref.clip);
+    const QVariantMap clip = m_controller->mcp()->compactClip(ref.track, ref.clip);
     QJsonObject out = extra;
     out.insert(QStringLiteral("id"), clip.value(QStringLiteral("id")).toString());
     out.insert(QStringLiteral("track"), ref.track);
@@ -619,7 +619,7 @@ void McpDispatcher::moveClipToRequested(const ClipRef &ref, double at)
 {
     if (!ref.valid() || !m_controller->allowClipOverlap())
         return;
-    const QVariantMap clip = m_controller->mcpCompactClip(ref.track, ref.clip);
+    const QVariantMap clip = m_controller->mcp()->compactClip(ref.track, ref.clip);
     if (qAbs(clip.value(QStringLiteral("start")).toDouble() - at) <= 0.001)
         return;
     m_controller->selectClip(ref.track, ref.clip);
@@ -631,7 +631,7 @@ QJsonObject McpDispatcher::inspect(const QJsonObject &args) const
     const int since = args.contains(QStringLiteral("since"))
                           ? jsonInt(args.value(QStringLiteral("since")), -1)
                           : -1;
-    AppController::McpInspectOptions options;
+    McpController::InspectOptions options;
     options.clips = jsonBool(args.value(QStringLiteral("clips")));
     options.detail = jsonBool(args.value(QStringLiteral("detail")));
     options.cues = jsonBool(args.value(QStringLiteral("cues")));
@@ -641,7 +641,7 @@ QJsonObject McpDispatcher::inspect(const QJsonObject &args) const
                         ? jsonInt(args.value(QStringLiteral("track")), -1)
                         : -1;
     options.clip = args.value(QStringLiteral("clip")).toString();
-    return m_controller->mcpInspect(options);
+    return m_controller->mcp()->inspect(options);
 }
 
 bool McpDispatcher::isUndoable(const QString &tool) const
@@ -667,7 +667,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         return label;
     };
 
-    m_controller->mcpBeginBatch();
+    m_controller->mcp()->beginBatch();
     bool hadUndoable = false;
     QJsonArray results;
     int i = 0;
@@ -680,7 +680,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
                 ? err("bad_args", QStringLiteral("image:true cannot be batched — call get_waveform directly"))
                 : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
-            m_controller->mcpEndBatch(batchLabel(i),
+            m_controller->mcp()->endBatch(batchLabel(i),
                                       hadUndoable && i > 0);
             return {{QStringLiteral("ok"), false},
                     {QStringLiteral("error"), QStringLiteral("apply_failed")},
@@ -693,7 +693,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         if (isUndoable(tool))
             hadUndoable = true;
     }
-    m_controller->mcpEndBatch(batchLabel(ops.size()), hadUndoable);
+    m_controller->mcp()->endBatch(batchLabel(ops.size()), hadUndoable);
     return ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}});
 }
 
@@ -852,12 +852,12 @@ QJsonObject McpDispatcher::capture(const QJsonObject &args)
                           ? jsonNumber(args.value(QStringLiteral("at")), -1.0)
                           : -1.0;
     const bool full = jsonBool(args.value(QStringLiteral("full")));
-    return m_controller->mcpCaptureFrame(at, full);
+    return m_controller->mcp()->captureFrame(at, full);
 }
 
 QJsonObject McpDispatcher::frames(const QJsonObject &args)
 {
-    AppController::McpFrameSheetRequest req;
+    McpController::FrameSheetRequest req;
     req.start = jsonNumber(args.value(QStringLiteral("start")), -1.0);
     req.end = jsonNumber(args.value(QStringLiteral("end")), -1.0);
     for (const QJsonValue &v : args.value(QStringLiteral("at")).toArray())
@@ -878,13 +878,13 @@ QJsonObject McpDispatcher::frames(const QJsonObject &args)
         req.track = ref.track;
         req.clip = ref.clip;
     }
-    const QJsonObject result = m_controller->mcpFrameSheet(req);
+    const QJsonObject result = m_controller->mcp()->frameSheet(req);
     return isRawResult(result) ? result : textResult(result);
 }
 
 QJsonObject McpDispatcher::activity(const QJsonObject &args)
 {
-    AppController::McpActivityRequest req;
+    McpController::ActivityRequest req;
     req.start = jsonNumber(args.value(QStringLiteral("start")), -1.0);
     req.end = jsonNumber(args.value(QStringLiteral("end")), -1.0);
     req.samples = jsonInt(args.value(QStringLiteral("samples")), 200);
@@ -898,7 +898,7 @@ QJsonObject McpDispatcher::activity(const QJsonObject &args)
         req.track = ref.track;
         req.clip = ref.clip;
     }
-    return m_controller->mcpActivity(req);
+    return m_controller->mcp()->activity(req);
 }
 
 QJsonObject McpDispatcher::waitImport(const QStringList &ids)
@@ -1037,7 +1037,7 @@ QJsonObject McpDispatcher::opMakeTransformLayer(const QJsonObject &args)
     QStringList ids;
     for (const QJsonValue &v : args.value(QStringLiteral("clips")).toArray()) {
         const QString id = v.toString().trimmed();
-        if (m_controller->mcpLocateClip(id).first < 0)
+        if (m_controller->mcp()->locateClip(id).first < 0)
             return err("not_found", QStringLiteral("Unknown clip %1").arg(id));
         ids << id;
     }
@@ -1098,7 +1098,7 @@ QJsonObject McpDispatcher::opSetTransformSpan(const QJsonObject &args)
         return err("not_found", QStringLiteral("track %1 is not a transform layer").arg(track));
     int end = -1;
     if (args.contains(QStringLiteral("end_clip"))) {
-        end = m_controller->mcpLocateClip(args.value(QStringLiteral("end_clip")).toString().trimmed()).first;
+        end = m_controller->mcp()->locateClip(args.value(QStringLiteral("end_clip")).toString().trimmed()).first;
         if (end < 0)
             return err("not_found", QStringLiteral("Unknown end_clip"));
     } else if (args.contains(QStringLiteral("end"))) {
@@ -1214,11 +1214,11 @@ QJsonObject McpDispatcher::opPlaceClip(const QJsonObject &args)
     const QString newId = findNewClipId(before, after);
     if (newId.isEmpty())
         return err("type_mismatch", QStringLiteral("Clip was not placed"));
-    const QPair<int, int> loc = m_controller->mcpLocateClip(newId);
+    const QPair<int, int> loc = m_controller->mcp()->locateClip(newId);
     ClipRef ref{loc.first, loc.second, newId};
     moveClipToRequested(ref, at);
     const ClipRef placedRef = resolveClip(QJsonObject{{QStringLiteral("clip"), newId}});
-    const QVariantMap clip = m_controller->mcpCompactClip(placedRef.track, placedRef.clip);
+    const QVariantMap clip = m_controller->mcp()->compactClip(placedRef.track, placedRef.clip);
     const double placed = clip.value(QStringLiteral("start")).toDouble();
     QJsonObject extra{{QStringLiteral("requested"), at}};
     if (qAbs(placed - at) > 0.001)
@@ -1243,7 +1243,7 @@ QJsonObject McpDispatcher::opMoveClip(const QJsonObject &args)
         m_controller->setClipStart(ref.track, ref.clip, requested);
     }
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
-    const QVariantMap clip = m_controller->mcpCompactClip(after.track, after.clip);
+    const QVariantMap clip = m_controller->mcp()->compactClip(after.track, after.clip);
     const double placed = clip.value(QStringLiteral("start")).toDouble();
     QJsonObject extra{{QStringLiteral("requested"), requested}, {QStringLiteral("placed"), placed}};
     if (qAbs(placed - requested) > 0.001)
@@ -1261,7 +1261,7 @@ QJsonObject McpDispatcher::opSetDuration(const QJsonObject &args)
         return err("bad_args", QStringLiteral("duration must be > 0"));
     m_controller->setClipDuration(ref.track, ref.clip, requested);
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
-    const QVariantMap clip = m_controller->mcpCompactClip(after.track, after.clip);
+    const QVariantMap clip = m_controller->mcp()->compactClip(after.track, after.clip);
     QJsonObject extra{{QStringLiteral("requested"), requested},
                       {QStringLiteral("dur"), clip.value(QStringLiteral("duration")).toDouble()}};
     return ok(clipFeedback(after, extra));
@@ -1286,7 +1286,7 @@ QJsonObject McpDispatcher::opMoveToTrack(const QJsonObject &args)
     const int toTrack = jsonInt(args.value(QStringLiteral("to_track")));
     if (toTrack < 0 || toTrack >= m_controller->tracks().size())
         return err("not_found", QStringLiteral("No such track"));
-    const QVariantMap before = m_controller->mcpCompactClip(ref.track, ref.clip);
+    const QVariantMap before = m_controller->mcp()->compactClip(ref.track, ref.clip);
     const double at = args.contains(QStringLiteral("at"))
                           ? jsonNumber(args.value(QStringLiteral("at")), before.value(QStringLiteral("start")).toDouble())
                           : before.value(QStringLiteral("start")).toDouble();
@@ -1307,7 +1307,7 @@ QJsonObject McpDispatcher::opSplitClip(const QJsonObject &args)
     const double at = args.contains(QStringLiteral("at"))
                           ? jsonNumber(args.value(QStringLiteral("at")), m_controller->playheadSeconds())
                           : m_controller->playheadSeconds();
-    const QVariantMap clip = m_controller->mcpCompactClip(ref.track, ref.clip);
+    const QVariantMap clip = m_controller->mcp()->compactClip(ref.track, ref.clip);
     const double clipStart = clip.value(QStringLiteral("start")).toDouble();
     const double clipEnd = clipStart + clip.value(QStringLiteral("duration")).toDouble();
     const QSet<QString> before = clipIdSet(m_controller);
@@ -1331,7 +1331,7 @@ QJsonObject McpDispatcher::opDeleteClip(const QJsonObject &args)
         return clipRefError(args);
     m_controller->selectClip(ref.track, ref.clip);
     m_controller->deleteSelectedClip();
-    if (m_controller->mcpLocateClip(ref.id).first >= 0)
+    if (m_controller->mcp()->locateClip(ref.id).first >= 0)
         return err("bad_args", QStringLiteral("Delete refused"));
     return ok({{QStringLiteral("removed"), ref.id}});
 }
@@ -1347,7 +1347,7 @@ QJsonObject McpDispatcher::opDuplicateClip(const QJsonObject &args)
     const QString newId = findNewClipId(before, clipIdSet(m_controller));
     if (newId.isEmpty())
         return err("bad_args", QStringLiteral("Duplicate refused"));
-    const QPair<int, int> loc = m_controller->mcpLocateClip(newId);
+    const QPair<int, int> loc = m_controller->mcp()->locateClip(newId);
     return ok(clipFeedback({loc.first, loc.second, newId}));
 }
 
@@ -1391,7 +1391,7 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
         patch.insert(QStringLiteral("layer3d"), args.value(QStringLiteral("layer3d")).toBool());
     if (patch.isEmpty())
         return err("bad_args", QStringLiteral("No transform fields"));
-    if (!m_controller->mcpSetClipCanvas(ref.track, ref.clip, patch))
+    if (!m_controller->mcp()->setClipCanvas(ref.track, ref.clip, patch))
         return err("bad_args", QStringLiteral("Transform refused"));
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     QJsonObject extra;
@@ -1441,7 +1441,7 @@ QJsonObject McpDispatcher::opSetWorkArea(const QJsonObject &args)
         return err("bad_args", QStringLiteral("in and out required"));
     const double inSeconds = jsonNumber(args.value(QStringLiteral("in")), -1);
     const double outSeconds = jsonNumber(args.value(QStringLiteral("out")), -1);
-    if (!m_controller->mcpSetWorkArea(inSeconds, outSeconds))
+    if (!m_controller->mcp()->setWorkArea(inSeconds, outSeconds))
         return err("bad_args", QStringLiteral("out must be greater than in"));
     return ok({{QStringLiteral("work_in"), m_controller->workAreaInSeconds()},
                {QStringLiteral("work_out"), m_controller->workAreaOutSeconds()}});
@@ -1487,7 +1487,7 @@ QJsonObject McpDispatcher::opAddText(const QJsonObject &args)
     const QString newId = findNewClipId(before, clipIdSet(m_controller));
     if (newId.isEmpty())
         return err("bad_args", QStringLiteral("Text clip not added"));
-    const QPair<int, int> loc = m_controller->mcpLocateClip(newId);
+    const QPair<int, int> loc = m_controller->mcp()->locateClip(newId);
     const ClipRef ref{loc.first, loc.second, newId};
     moveClipToRequested(ref, at);
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), newId}});
@@ -1628,7 +1628,7 @@ QJsonObject McpDispatcher::effectHost(const ClipRef &ref, QJsonObject extra) con
         extra.insert(QStringLiteral("host"),
                      QJsonObject{{QStringLiteral("track"), hostTrack},
                                  {QStringLiteral("index"), hostClip},
-                                 {QStringLiteral("clip"), m_controller->mcpClipId(hostTrack, hostClip)},
+                                 {QStringLiteral("clip"), m_controller->mcp()->clipId(hostTrack, hostClip)},
                                  {QStringLiteral("kind"), QStringLiteral("adjustment")}});
     }
     return extra;
@@ -1864,7 +1864,7 @@ QJsonObject McpDispatcher::opExport(const QJsonObject &args)
 
     // Remember what the agent chose in the agent's own store, so the export dialog still
     // offers the user what they last picked themselves.
-    m_controller->mcpRememberExportSettings(map);
+    m_controller->mcp()->rememberExportSettings(map);
     m_controller->exportWithSettings(QUrl::fromLocalFile(info.absoluteFilePath()), map,
                                      /*rememberChoice=*/false);
 
@@ -2126,7 +2126,7 @@ QJsonObject McpDispatcher::opSetSpeedCurve(const QJsonObject &args)
     m_controller->applySpeedCurve();
     const int track = m_controller->selectedTrack();
     const int clip = m_controller->selectedClip();
-    const QString newId = m_controller->mcpClipId(track, clip);
+    const QString newId = m_controller->mcp()->clipId(track, clip);
     m_controller->endSpeedCurveSession();
     if (newId.isEmpty())
         return err("bad_args", QStringLiteral("Speed curve was not applied"));

@@ -161,7 +161,7 @@ int runHeadless(int argc, char *argv[])
     editorState.queueExternalProject(AppController::startupProjectUrlFromArguments(positional));
     editorState.consumeStartupProject();
 
-    drift::mcp::McpServer *server = editorState.mcpServer();
+    drift::mcp::McpServer *server = editorState.mcp()->server();
     if (httpPort > 0) {
         if (!httpToken.isEmpty())
             server->setToken(httpToken);

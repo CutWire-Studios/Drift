@@ -7604,7 +7604,7 @@ void EditorStateTest::panAndChannelWaveformsPersistAndUndo()
     state.setClipPan(0, 0, -0.6);
     QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), -0.6);
 
-    // Out of range is clamped rather than rejected, the way mcpSetClipVolume clamps.
+    // Out of range is clamped rather than rejected, the way McpController::setClipVolume clamps.
     state.setClipPan(0, 0, -4.0);
     QCOMPARE(state.clipAt(0, 0).value(QStringLiteral("pan")).toDouble(), -1.0);
 
