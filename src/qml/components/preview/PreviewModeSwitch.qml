@@ -12,7 +12,7 @@ Rectangle {
         { value: "2d", glyph: Theme.icons.monitor, label: qsTr("Camera Output"),
           tip: qsTr("The camera's picture, as it exports. Clips move and snap on the canvas.") },
         { value: "3d", glyph: Theme.icons.box, label: qsTr("3D Scene"),
-          tip: qsTr("The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms.") }
+          tip: qsTr("The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms, and the corner pad steps the view.") }
     ]
     readonly property int current: EditorState.preview.mode === "3d" ? 1 : 0
     readonly property real inset: 2

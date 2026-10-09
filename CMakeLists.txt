@@ -1165,6 +1165,7 @@ qt_add_qml_module(drift
         src/qml/AssetsPanel.qml
         src/qml/PreviewPanel.qml
         src/qml/components/preview/ViewAxisWidget.qml
+        src/qml/components/preview/ViewNavPad.qml
         src/qml/components/preview/PreviewViewport.qml
         src/qml/components/preview/PreviewStatusLayer.qml
         src/qml/components/preview/PreviewToolHost.qml
