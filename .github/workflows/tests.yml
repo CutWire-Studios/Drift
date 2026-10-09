@@ -34,6 +34,53 @@ env:
   CCACHE_MAXSIZE: "1G"
 
 jobs:
+  macos-icon:
+    name: macOS adaptive icon
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # The macos-15 application job also covers the static fallback. Exercise
+      # the adaptive compiler separately without installing the app dependencies.
+      - name: Compile adaptive icon
+        run: |
+          mkdir -p "$RUNNER_TEMP/drift-icon-assets"
+          xcrun actool resources/macos/Drift.icon \
+            --compile "$RUNNER_TEMP/drift-icon-assets" \
+            --app-icon Drift \
+            --enable-on-demand-resources NO \
+            --target-device mac \
+            --platform macosx \
+            --minimum-deployment-target 12.0 \
+            --output-partial-info-plist "$RUNNER_TEMP/drift-icon-assets/partial-info.plist" \
+            --output-format human-readable-text --errors --warnings
+          test -s "$RUNNER_TEMP/drift-icon-assets/Assets.car"
+          test -s "$RUNNER_TEMP/drift-icon-assets/Drift.icns"
+          for key in CFBundleIconFile CFBundleIconName; do
+            test "$(/usr/libexec/PlistBuddy -c "Print :$key" \
+              "$RUNNER_TEMP/drift-icon-assets/partial-info.plist")" = Drift
+          done
+
+      - name: Verify standalone fallback sizes
+        run: |
+          resources/macos/make-icns.sh "$RUNNER_TEMP/Drift-regenerated.icns"
+          iconutil --convert iconset --output "$RUNNER_TEMP/committed.iconset" resources/macos/Drift.icns
+          iconutil --convert iconset --output "$RUNNER_TEMP/regenerated.iconset" "$RUNNER_TEMP/Drift-regenerated.icns"
+          for iconset in "$RUNNER_TEMP/committed.iconset" "$RUNNER_TEMP/regenerated.iconset"; do
+            for pt in 16 32 128 256 512; do
+              for scale in 1 2; do
+                suffix=""
+                if [[ "$scale" -eq 2 ]]; then suffix="@2x"; fi
+                png="$iconset/icon_${pt}x${pt}${suffix}.png"
+                pixels=$((pt * scale))
+                test "$(sips -g pixelWidth "$png" | awk '/pixelWidth:/ {print $2}')" = "$pixels"
+                test "$(sips -g pixelHeight "$png" | awk '/pixelHeight:/ {print $2}')" = "$pixels"
+              done
+            done
+          done
+
   linux:
     name: CTest
     runs-on: ubuntu-22.04
