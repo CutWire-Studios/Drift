@@ -8,6 +8,7 @@
     <string>@DRIFT_MACOS_EXECUTABLE@</string>
     <key>CFBundleIconFile</key>
     <string>@DRIFT_MACOS_ICON_FILE@</string>
+@DRIFT_MACOS_ICON_NAME_ENTRY@
     <key>CFBundleIdentifier</key>
     <string>@DRIFT_MACOS_BUNDLE_ID@</string>
     <key>CFBundleInfoDictionaryVersion</key>

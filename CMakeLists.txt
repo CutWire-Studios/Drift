@@ -996,17 +996,91 @@ if(APPLE)
     set(DRIFT_MACOS_EXECUTABLE "${DRIFT_APP_NAME}")
     set(DRIFT_MACOS_BUNDLE_ID "${DRIFT_APP_ID}")
     set(DRIFT_MACOS_ICON_FILE "Drift.icns")
+    set(DRIFT_MACOS_ICON_NAME_ENTRY "")
+
+    set(_drift_developer_dir "$ENV{DEVELOPER_DIR}")
+    if(NOT _drift_developer_dir)
+        execute_process(
+            COMMAND /usr/bin/xcode-select -p
+            OUTPUT_VARIABLE _drift_developer_dir
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+    endif()
+    if(NOT EXISTS "${_drift_developer_dir}/usr/bin/actool"
+       AND EXISTS "/Applications/Xcode.app/Contents/Developer/usr/bin/actool")
+        set(_drift_developer_dir "/Applications/Xcode.app/Contents/Developer")
+    endif()
+
+    set(_drift_xcode_version "")
+    if(EXISTS "${_drift_developer_dir}/usr/bin/actool"
+       AND EXISTS "${_drift_developer_dir}/usr/bin/xcodebuild")
+        execute_process(
+            COMMAND "${CMAKE_COMMAND}" -E env "DEVELOPER_DIR=${_drift_developer_dir}"
+                "${_drift_developer_dir}/usr/bin/xcodebuild" -version
+            OUTPUT_VARIABLE _drift_xcode_version_output
+            RESULT_VARIABLE _drift_xcodebuild_result
+            ERROR_QUIET)
+        if(_drift_xcodebuild_result EQUAL 0)
+            string(REGEX MATCH "Xcode[ \t]+([0-9]+(\\.[0-9]+)*)"
+                _drift_xcode_version_match "${_drift_xcode_version_output}")
+            set(_drift_xcode_version "${CMAKE_MATCH_1}")
+        endif()
+    endif()
+
+    set(DRIFT_MACOS_ICNS "${CMAKE_SOURCE_DIR}/resources/macos/${DRIFT_MACOS_ICON_FILE}")
+    if(NOT "${_drift_xcode_version}" STREQUAL ""
+       AND "${_drift_xcode_version}" VERSION_GREATER_EQUAL "26.0")
+        set(_drift_icon_assets_dir "${CMAKE_CURRENT_BINARY_DIR}/macos-icon-assets")
+        set(_drift_icon_assets_car "${_drift_icon_assets_dir}/Assets.car")
+        set(_drift_icon_fallback_icns "${_drift_icon_assets_dir}/Drift.icns")
+        set(_drift_icon_partial_plist "${_drift_icon_assets_dir}/partial-info.plist")
+        set(_drift_icon_source "${CMAKE_SOURCE_DIR}/resources/macos/Drift.icon")
+        file(GLOB _drift_icon_inputs CONFIGURE_DEPENDS
+            "${_drift_icon_source}/icon.json"
+            "${_drift_icon_source}/Assets/*.png"
+            "${_drift_icon_source}/Assets/*.svg")
+
+        add_custom_command(
+            OUTPUT "${_drift_icon_assets_car}" "${_drift_icon_fallback_icns}"
+                "${_drift_icon_partial_plist}"
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${_drift_icon_assets_dir}"
+            COMMAND "${_drift_developer_dir}/usr/bin/actool" "${_drift_icon_source}"
+                --compile "${_drift_icon_assets_dir}"
+                --app-icon Drift
+                --enable-on-demand-resources NO
+                --target-device mac
+                --platform macosx
+                --minimum-deployment-target "${CMAKE_OSX_DEPLOYMENT_TARGET}"
+                --output-partial-info-plist "${_drift_icon_partial_plist}"
+                --output-format human-readable-text
+                --errors --warnings
+            # Icon-only rebuilds do not relink the executable or update the bundle's
+            # timestamp. Invalidate its cached Dock appearances on the next launch.
+            COMMAND "${CMAKE_COMMAND}" -E touch_nocreate
+                "$<TARGET_BUNDLE_DIR:drift>/Contents/Info.plist"
+                "$<TARGET_BUNDLE_DIR:drift>"
+            DEPENDS ${_drift_icon_inputs}
+            VERBATIM)
+        set_source_files_properties(
+            "${_drift_icon_assets_car}" "${_drift_icon_fallback_icns}"
+            PROPERTIES GENERATED TRUE HEADER_FILE_ONLY TRUE MACOSX_PACKAGE_LOCATION "Resources")
+        target_sources(drift PRIVATE "${_drift_icon_assets_car}" "${_drift_icon_fallback_icns}")
+        set(DRIFT_MACOS_ICON_FILE "Drift")
+        set(DRIFT_MACOS_ICON_NAME_ENTRY
+            "    <key>CFBundleIconName</key>\n    <string>Drift</string>")
+        message(STATUS "Compiling Drift's macOS icon stack with Xcode ${_drift_xcode_version}")
+    else()
+        target_sources(drift PRIVATE "${DRIFT_MACOS_ICNS}")
+        set_source_files_properties("${DRIFT_MACOS_ICNS}" PROPERTIES
+            MACOSX_PACKAGE_LOCATION "Resources")
+        message(WARNING "Xcode 26 or newer is unavailable; using the static macOS icon")
+    endif()
 
     # Not CMake's MACOSX_BUNDLE_* properties: the NS* and LSMinimumSystemVersion keys have none.
     configure_file(
         "${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in"
         "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
         @ONLY)
-
-    set(DRIFT_MACOS_ICNS "${CMAKE_SOURCE_DIR}/resources/macos/${DRIFT_MACOS_ICON_FILE}")
-    target_sources(drift PRIVATE "${DRIFT_MACOS_ICNS}")
-    set_source_files_properties("${DRIFT_MACOS_ICNS}" PROPERTIES
-        MACOSX_PACKAGE_LOCATION "Resources")
 
     set_target_properties(drift PROPERTIES
         MACOSX_BUNDLE TRUE
