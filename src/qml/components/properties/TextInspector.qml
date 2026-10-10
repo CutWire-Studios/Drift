@@ -725,6 +725,29 @@ Item {
                                        EditorState.selectedTrack, EditorState.selectedClip, "project")
                     }
                 }
+
+                ThemedButton {
+                    visible: root.clipKind === "subtitle"
+                    width: parent.width
+                    variant: "secondary"
+                    glyph: Theme.icons.audioLines
+                    text: qsTr("Generate voiceover")
+                    enabled: EditorState.tts.available
+                    tooltip: EditorState.tts.available
+                             ? qsTr("Speak every caption with a generated voice")
+                             : qsTr("Install the voice model from the add-on manager first")
+                    onClicked: voiceoverDialog.openFor(EditorState.selectedTrack, EditorState.selectedClip)
+                }
+
+                Text {
+                    visible: root.clipKind === "subtitle" && !EditorState.tts.available
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Install the AI engine and the voice model from the add-on manager to generate voiceovers.")
+                    color: Theme.mutedForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
             }
 
             CollapsibleSection {
@@ -1536,5 +1559,9 @@ Item {
         id: saveStyleDialog
         onSubmitted: name => EditorState.saveTextStyleAsPreset(EditorState.selectedTrack,
                                                                EditorState.selectedClip, name)
+    }
+
+    VoiceoverDialog {
+        id: voiceoverDialog
     }
 }

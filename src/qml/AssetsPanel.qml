@@ -607,7 +607,7 @@ PanelFrame {
 
     function assetVisible(kind) {
         const tabId = tabsModel.get(activeTab).tabId
-        if (tabId === "text" || tabId === "subtitles" || tabId === "stickers" || tabId === "shapes"
+        if (tabId === "text" || tabId === "subtitles" || tabId === "speech" || tabId === "stickers" || tabId === "shapes"
                 || tabId === "effects" || tabId === "templates" || tabId === "adjustment"
                 || tabId === "sounds" || tabId === "transitions" || tabId === "masks"
                 || tabId === "shortcuts" || tabId === "scenes" || tabId === "market")
@@ -623,6 +623,7 @@ PanelFrame {
         "market": qsTr("Market"),
         "text": qsTr("Text"),
         "subtitles": qsTr("Subtitles"),
+        "speech": qsTr("Speech"),
         "stickers": qsTr("Stickers"),
         "shapes": qsTr("Shapes"),
         "scenes": qsTr("Scenes"),
@@ -643,6 +644,7 @@ PanelFrame {
         ListElement { tabId: "market"; icon: 12; separatorAfter: true }
         ListElement { tabId: "text"; icon: 1; separatorAfter: false }
         ListElement { tabId: "subtitles"; icon: 2; separatorAfter: false }
+        ListElement { tabId: "speech"; icon: 13; separatorAfter: false }
         ListElement { tabId: "stickers"; icon: 3; separatorAfter: false }
         ListElement { tabId: "shapes"; icon: 4; separatorAfter: false }
         ListElement { tabId: "masks"; icon: 11; separatorAfter: true }
@@ -666,7 +668,8 @@ PanelFrame {
         Theme.icons.keyboard,
         Theme.icons.listVideo,
         Theme.icons.mask,
-        Theme.icons.store
+        Theme.icons.store,
+        Theme.icons.micVocal
     ]
     property int activeTab: 0
     readonly property string currentTabId: tabsModel.get(activeTab).tabId
@@ -1056,6 +1059,17 @@ PanelFrame {
                     SubtitlesTab {
                         onAdded: root.addCompleted()
                     }
+                }
+            }
+
+            Loader {
+                active: root.currentTabId === "speech"
+                visible: active
+                width: parent.width
+                height: parent.height - assetsHeader.height
+                opacity: root.tabOpacity
+                sourceComponent: Component {
+                    SpeechTab { }
                 }
             }
 

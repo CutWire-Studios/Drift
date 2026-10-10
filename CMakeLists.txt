@@ -679,6 +679,10 @@ add_library(driftengine STATIC
     src/engine/WhisperTokenizer.cpp
     src/engine/WhisperTranscriber.h
     src/engine/WhisperTranscriber.cpp
+    src/engine/ChatterboxTokenizer.h
+    src/engine/ChatterboxTokenizer.cpp
+    src/engine/ChatterboxTts.h
+    src/engine/ChatterboxTts.cpp
     src/engine/OrtSupport.h
     src/engine/OrtRuntime.h
     src/engine/OrtRuntime.cpp
@@ -891,6 +895,10 @@ qt_add_executable(drift
     src/models/CurveEditorController.cpp
     src/models/SegmentationController.h
     src/models/SegmentationController.cpp
+    src/models/TtsController.h
+    src/models/TtsController.cpp
+    src/models/VoiceLibrary.h
+    src/models/VoiceLibrary.cpp
     src/models/McpDetail.h
     src/models/AppControllerDetail.h
     src/models/EditorState.h
@@ -1216,6 +1224,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TransitionInspector.qml
         src/qml/components/properties/BlendingInspector.qml
         src/qml/components/properties/ShapeInspector.qml
+        src/qml/components/properties/VoiceoverDialog.qml
         src/qml/components/properties/VectorInspector.qml
         src/qml/components/properties/Model3DInspector.qml
         src/qml/components/properties/MasksInspector.qml
@@ -1224,6 +1233,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/TextAssetsTab.qml
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
+        src/qml/components/assets/SpeechTab.qml
         src/qml/components/assets/StickersTab.qml
         src/qml/components/assets/ShapesTab.qml
         src/qml/components/assets/AssetDragSource.qml

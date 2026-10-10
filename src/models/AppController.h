@@ -64,6 +64,8 @@ struct MediaEditSpec;
 #include "CurveEditorController.h"
 #include "McpController.h"
 #include "SegmentationController.h"
+#include "TtsController.h"
+#include "VoiceLibrary.h"
 #include "SpeedCurveController.h"
 #include "PreferencesController.h"
 #include "ProjectFileController.h"
@@ -83,6 +85,8 @@ class AppController : public QObject
     friend class SpeedCurveController;
     friend class CurveEditorController;
     friend class SegmentationController;
+    friend class TtsController;
+    friend class VoiceLibrary;
 
     Q_OBJECT
 
@@ -111,6 +115,9 @@ class AppController : public QObject
     Q_PROPERTY(CurveEditorController *curves READ curves CONSTANT)
     // Cutout pipeline and prompting session. QML: EditorState.segmentation.
     Q_PROPERTY(SegmentationController *segmentation READ segmentation CONSTANT)
+    // Local text-to-speech and the cloned-voice library. QML: EditorState.tts, EditorState.voices.
+    Q_PROPERTY(TtsController *tts READ tts CONSTANT)
+    Q_PROPERTY(VoiceLibrary *voices READ voices CONSTANT)
     // Output devices to choose between, each {id, label}; the first entry has an empty id and
     // means "whatever the system default is at the time", which is also the default choice.
     Q_PROPERTY(QVariantList audioOutputDevices READ audioOutputDevices NOTIFY audioOutputDevicesChanged)
@@ -314,6 +321,8 @@ public:
     SpeedCurveController *speedCurve() const { return m_speedCurve; }
     CurveEditorController *curves() const { return m_curves; }
     SegmentationController *segmentation() const { return m_segmentation; }
+    TtsController *tts() const { return m_tts; }
+    VoiceLibrary *voices() const { return m_voices; }
     McpController *mcp() const { return m_mcpController; }
     QVariantList audioOutputDevices() const;
     QString audioOutputDeviceId() const { return m_audioOutputDeviceId; }
@@ -498,7 +507,33 @@ public:
 
     JobRegistry *jobRegistry() const { return m_jobs; }
 
-    void setAddonManager(AddonManager *manager) { m_addonManager = manager; }
+    struct GeneratedAudioImport
+    {
+        bool ok = false;
+        QString errorCode; // "not_found" | "import_failed"
+        QString error;
+        QString assetId;
+        double durationSeconds = -1.0; // -1 when the asset has no probed duration yet
+        QString clipId;                // set when a clip was placed
+    };
+    // Imports an audio file the app generated, waits for its probe, records `generator` on the
+    // asset and, with `place`, drops a clip at atSeconds. track < 0 picks the first audio lane with
+    // room for the whole clip, else a new one. Blocks in a nested event loop: GUI thread only.
+    GeneratedAudioImport importGeneratedAudio(const QString &path, const QJsonObject &generator,
+                                              bool place, double atSeconds, int track);
+
+    struct GeneratedAudioPlacement
+    {
+        QString path; // already imported through importGeneratedAudio
+        double atSeconds = 0.0;
+    };
+    // Lays the clips out on new audio tracks as one undo step. A clip that would overlap the
+    // previous one on a lane goes on the next lane that is free, adding lanes as needed. Returns
+    // how many clips were placed.
+    int placeGeneratedAudioOnNewTracks(const QList<GeneratedAudioPlacement> &items,
+                                       const QString &undoText);
+
+    void setAddonManager(AddonManager *manager);
     void setMarketClient(MarketClient *client) { m_marketClient = client; }
     MarketClient *marketClient() const { return m_marketClient; }
     AddonManager *addonManager() const { return m_addonManager; }
@@ -2218,6 +2253,8 @@ protected:
     SpeedCurveController *m_speedCurve = nullptr;
     CurveEditorController *m_curves = nullptr;
     SegmentationController *m_segmentation = nullptr;
+    TtsController *m_tts = nullptr;
+    VoiceLibrary *m_voices = nullptr;
     QStringList m_activeGuideSets{QStringLiteral("thirds")};
     // App-wide custom sets.
     QList<drift::GuideSet> m_guideLibrary;

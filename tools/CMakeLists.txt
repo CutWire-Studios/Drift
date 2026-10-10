@@ -45,6 +45,11 @@ target_include_directories(transcribe PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(transcribe PRIVATE Qt6::Core driftengine driftcore)
 drift_bundle_onnxruntime(transcribe)
 
+add_executable(tts tts.cpp)
+target_include_directories(tts PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(tts PRIVATE Qt6::Core driftengine driftcore)
+drift_bundle_onnxruntime(tts)
+
 add_executable(segment segment.cpp)
 target_include_directories(segment PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(segment PRIVATE Qt6::Core Qt6::Gui driftengine driftcore)

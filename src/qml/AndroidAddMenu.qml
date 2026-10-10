@@ -62,6 +62,12 @@ AndroidBottomSheet {
             icon: Theme.icons.captions
         },
         {
+            id: "speech",
+            label: qsTr("Speech"),
+            detail: qsTr("Turn a script into a voiceover"),
+            icon: Theme.icons.micVocal
+        },
+        {
             id: "stickers",
             label: qsTr("Stickers"),
             detail: qsTr("Emoji and sticker graphics"),
