@@ -134,7 +134,7 @@ smoothly. MP4, GIF, audio-only, or just a range. Pack the media with the edit so
 app.
 
 **Stock, voices, and a small install.** Search stock into the bin. Generate voiceover and sound
-effects. Fonts, stickers, and extra models download when you use them. UI in Arabic, Spanish (Spain
+effects. Fonts, stickers, and extra models download when you use them. UI in Arabic, Bengali, Spanish (Spain
 and Colombia), French (Canada), Italian, Japanese, Portuguese (Brazil and Portugal), Russian,
 Sinhala, Tagalog, Vietnamese, and Simplified Chinese.
 
