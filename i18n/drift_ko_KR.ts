@@ -8662,6 +8662,14 @@
         <translation>3D</translation>
     </message>
     <message>
+        <source>PDF</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PDF (needs the PDF Viewer addon)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search media</source>
         <translation>미디어 검색</translation>
     </message>

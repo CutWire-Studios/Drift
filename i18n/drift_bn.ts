@@ -8692,6 +8692,14 @@
         <translation type="unfinished">3D</translation>
     </message>
     <message>
+        <source>PDF</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PDF (needs the PDF Viewer addon)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search media</source>
         <translation type="unfinished">সার্চ মিডিয়া</translation>
     </message>
