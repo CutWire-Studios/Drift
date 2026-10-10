@@ -2136,6 +2136,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3273,6 +3277,10 @@
     </message>
     <message>
         <source>Audio unlinked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14320,6 +14328,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14567,6 +14579,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Show audio on separate track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

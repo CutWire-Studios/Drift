@@ -2139,6 +2139,10 @@
         <translation type="unfinished">অডিও আনলিঙ্ক করুন</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>নির্বাচন বাতিল করুন</translation>
     </message>
@@ -3281,6 +3285,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation type="unfinished">অডিও লিঙ্কমুক্ত করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14377,6 +14385,10 @@ If playback stutters, try another.</source>
         <translation>সংযোগ বিচ্ছিন্ন করুন</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>সাবটাইটেল ক্লিপগুলো একত্র করুন</translation>
     </message>
@@ -14625,6 +14637,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Show audio on separate track</source>
         <translation>আলাদা ট্র্যাকে অডিও দেখান</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

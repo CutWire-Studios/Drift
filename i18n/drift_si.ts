@@ -2139,6 +2139,10 @@
         <translation>ශ්‍රව්‍ය විසන්ධි කරන්න</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>තේරීම ඉවත් කරන්න</translation>
     </message>
@@ -3281,6 +3285,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>ශ්‍රව්‍ය විසන්ධි කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14377,6 +14385,10 @@ If playback stutters, try another.</source>
         <translation>විසන්ධි කරන්න</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>උපසිරැසි ක්ලිප් ඒකාබද්ධ කරන්න</translation>
     </message>
@@ -14625,6 +14637,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Show audio on separate track</source>
         <translation>ශ්‍රව්‍ය වෙනම ට්‍රැකයක පෙන්වන්න</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

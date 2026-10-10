@@ -2136,6 +2136,10 @@
         <translation>オーディオのリンクを解除</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>選択範囲を解除</translation>
     </message>
@@ -3274,6 +3278,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>オーディオのリンクを解除しました</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14328,6 +14336,10 @@ If playback stutters, try another.</source>
         <translation>リンク解除</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>字幕クリップを結合</translation>
     </message>
@@ -14576,6 +14588,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Show audio on separate track</source>
         <translation>音声を別のトラックに表示する</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

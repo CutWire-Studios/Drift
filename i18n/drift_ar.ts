@@ -2147,6 +2147,10 @@
         <translation>إلغاء ربط الصوت</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>مسح التحديد</translation>
     </message>
@@ -3145,6 +3149,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>تم إلغاء ربط الصوت</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14573,6 +14581,10 @@ If playback stutters, try another.</source>
         <translation>إلغاء الربط</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>دمج مقاطع الترجمة</translation>
     </message>
@@ -14821,6 +14833,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Show audio on separate track</source>
         <translation>إظهار الصوت في مسار منفصل</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

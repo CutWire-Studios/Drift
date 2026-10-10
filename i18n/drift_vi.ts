@@ -2136,6 +2136,10 @@
         <translation>Hủy liên kết âm thanh</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>Xóa lựa chọn</translation>
     </message>
@@ -3282,6 +3286,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>Đã hủy liên kết âm thanh</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14328,6 +14336,10 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
         <translation>Hủy liên kết</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>Gộp các phụ đề clip</translation>
     </message>
@@ -14576,6 +14588,10 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>Show audio on separate track</source>
         <translation>Hiển thị âm thanh trên track riêng biệt</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

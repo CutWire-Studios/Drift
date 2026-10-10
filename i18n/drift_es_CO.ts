@@ -2139,6 +2139,10 @@
         <translation>Desvincular audio</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>Deseleccionar</translation>
     </message>
@@ -3289,6 +3293,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>Audio desvinculado</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14377,6 +14385,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Desvincular</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>Combinar clips de subtítulos</translation>
     </message>
@@ -14625,6 +14637,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Show audio on separate track</source>
         <translation>Mostrar audio en una pista separada</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

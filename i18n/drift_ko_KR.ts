@@ -2136,6 +2136,10 @@
         <translation>오디오 연결 해제</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>선택 해제</translation>
     </message>
@@ -3274,6 +3278,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>오디오 연결이 해제됨</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14320,6 +14328,10 @@ If playback stutters, try another.</source>
         <translation>연결 해제</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>자막 클립 병합</translation>
     </message>
@@ -14568,6 +14580,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Show audio on separate track</source>
         <translation>별도 트랙에 오디오 표시</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

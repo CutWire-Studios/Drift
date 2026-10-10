@@ -2139,6 +2139,10 @@
         <translation>Scollega audio</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>Deseleziona tutto</translation>
     </message>
@@ -3281,6 +3285,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>Audio scollegato</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14377,6 +14385,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Scollega</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>Unisci clip sottotitoli</translation>
     </message>
@@ -14625,6 +14637,10 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Show audio on separate track</source>
         <translation>Mostra audio su traccia separata</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>

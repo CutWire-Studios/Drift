@@ -2142,6 +2142,10 @@
         <translation>Отвязать аудио</translation>
     </message>
     <message>
+        <source>Link clips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear selection</source>
         <translation>Снять выделение</translation>
     </message>
@@ -3288,6 +3292,10 @@
     <message>
         <source>Audio unlinked</source>
         <translation>Аудио отвязано</translation>
+    </message>
+    <message>
+        <source>Clips linked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -14426,6 +14434,10 @@ If playback stutters, try another.</source>
         <translation>Разъединить</translation>
     </message>
     <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Merge subtitle clips</source>
         <translation>Объединить клипы субтитров</translation>
     </message>
@@ -14674,6 +14686,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Show audio on separate track</source>
         <translation>Показать аудио на отдельной дорожке</translation>
+    </message>
+    <message>
+        <source>Link selected clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>
