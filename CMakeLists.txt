@@ -679,6 +679,10 @@ add_library(driftengine STATIC
     src/engine/WhisperTokenizer.cpp
     src/engine/WhisperTranscriber.h
     src/engine/WhisperTranscriber.cpp
+    src/engine/ChatterboxTokenizer.h
+    src/engine/ChatterboxTokenizer.cpp
+    src/engine/ChatterboxTts.h
+    src/engine/ChatterboxTts.cpp
     src/engine/OrtSupport.h
     src/engine/OrtRuntime.h
     src/engine/OrtRuntime.cpp
