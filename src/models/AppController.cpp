@@ -570,6 +570,13 @@ AppController::~AppController()
     m_trimCursorCache.clear();
 }
 
+void AppController::setAddonManager(AddonManager *manager)
+{
+    m_addonManager = manager;
+    if (manager && m_tts)
+        connect(manager, &AddonManager::kindChanged, m_tts, &TtsController::refreshAvailability);
+}
+
 AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     : QObject(parent)
     , m_assetLibrary(assetLibrary)
@@ -587,6 +594,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_speedCurve = new SpeedCurveController(this, this);
     m_curves = new CurveEditorController(this, this);
     m_segmentation = new SegmentationController(this, this);
+    m_tts = new TtsController(this, this);
+    m_voices = new VoiceLibrary(this, m_tts, this);
+    m_tts->setVoices(m_voices);
     m_preview = new PreviewController(*this, this);
     m_preferences = new PreferencesController(this);
     connect(m_preferences, &PreferencesController::restartNoticeRequested, this,
@@ -7316,6 +7326,72 @@ AppController::GeneratedAudioImport AppController::importGeneratedAudio(
             if (!before.contains(c.id))
                 result.clipId = c.id;
     return result;
+}
+
+int AppController::placeGeneratedAudioOnNewTracks(const QList<GeneratedAudioPlacement> &items,
+                                                  const QString &undoText)
+{
+    if (!m_assetLibrary || items.isEmpty())
+        return 0;
+    const drift::Project before = m_project;
+    struct Lane
+    {
+        int track;
+        drift::TimeUs endUs;
+    };
+    QList<Lane> lanes;
+    int placed = 0;
+    int lastTrack = -1;
+    int lastClip = -1;
+    for (const GeneratedAudioPlacement &item : items) {
+        const int assetIndex = m_assetLibrary->indexOfPath(item.path);
+        if (assetIndex < 0)
+            continue;
+        const QVariantMap asset = m_assetLibrary->assetAt(assetIndex);
+        const drift::TimeUs duration = clipDurationForAssetIndex(assetIndex);
+        const drift::TimeUs placementDuration = trimmedClipDurationUs(asset, duration);
+        const drift::TimeUs start = qMax<drift::TimeUs>(0, drift::secondsToUs(item.atSeconds));
+        int lane = -1;
+        for (int i = 0; i < lanes.size(); ++i) {
+            if (lanes.at(i).endUs <= start) {
+                lane = i;
+                break;
+            }
+        }
+        if (lane < 0) {
+            const int track = drift::insertTrackAboveForClipType(m_project, m_project.tracks().size(),
+                                                                 drift::ClipType::Audio);
+            lanes.append({track, 0});
+            lane = lanes.size() - 1;
+        }
+        m_assetLibrary->ensureMedia(assetIndex);
+        drift::Clip clip;
+        clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        clip.assetId = m_assetLibrary->assetIdAt(assetIndex);
+        clip.type = drift::ClipType::Audio;
+        clip.name = asset.value(QStringLiteral("name")).toString();
+        clip.path = asset.value(QStringLiteral("path")).toString();
+        attachAssetSource(clip);
+        clip.thumbnailPath = m_assetLibrary->thumbnailAt(assetIndex);
+        clip.filmstripPath = m_assetLibrary->filmstripAt(assetIndex);
+        clip.timelineStart = start;
+        clip.timelineDuration = placementDuration;
+        clip.srcIn = 0;
+        clip.srcOut = duration;
+        applyAssetLayout(clip, asset, m_project.width(), m_project.height());
+        drift::Track &track = m_project.tracks()[lanes.at(lane).track];
+        track.clips.append(clip);
+        lanes[lane].endUs = start + placementDuration;
+        lastTrack = lanes.at(lane).track;
+        lastClip = track.clips.size() - 1;
+        ++placed;
+    }
+    if (placed == 0)
+        return 0;
+    pushProjectEdit(before, undoText);
+    finishEdit(undoText);
+    selectClip(lastTrack, lastClip);
+    return placed;
 }
 
 void AppController::selectClip(int trackIndex, int clipIndex)

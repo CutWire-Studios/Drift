@@ -672,6 +672,7 @@ QtObject {
         audioLines: "audio-lines",
         mic: "mic",
         micOff: "mic-off",
+        micVocal: "mic-vocal",
         image: "image",
         shapes: "shapes",
         chevronDown: "chevron-down",
