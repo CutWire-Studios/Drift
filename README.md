@@ -150,11 +150,6 @@ timeline, 3D and Lottie, captions, effects, audio, cutouts, and multicam.
 
 [![Translation status](https://hosted.weblate.org/widget/cutwire-drift/drift-desktop/multi-auto.svg)](https://hosted.weblate.org/engage/cutwire-drift/)
 
-The Bengali (`bn`, বাংলা) catalog includes translations for all current UI messages. Messages
-marked unfinished contain machine-translated drafts and need review in context; the standard
-Qt translation build includes these drafts. Please keep placeholders, file extensions, and menu
-accelerators intact when reviewing them.
-
 ## For developers
 
 Build, packaging, architecture, and agent protocol live in `docs/`:
