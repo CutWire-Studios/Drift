@@ -11720,7 +11720,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">다운로드 중…</translation>
     </message>
 </context>
 <context>
@@ -15631,7 +15631,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">다운로드 중…</translation>
     </message>
 </context>
 <context>

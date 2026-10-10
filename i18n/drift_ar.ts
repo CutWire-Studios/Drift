@@ -11952,7 +11952,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
     </message>
 </context>
 <context>
@@ -15914,7 +15914,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
     </message>
 </context>
 <context>
