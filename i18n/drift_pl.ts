@@ -11817,7 +11817,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Pobieranie…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15749,7 +15749,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Pobieranie…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
