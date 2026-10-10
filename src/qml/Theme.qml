@@ -628,6 +628,7 @@ QtObject {
         box: "box",
         split: "split",
         magnet: "magnet",
+        link: "link",
         linkTwo: "link-2",
         unlink: "unlink-2",
         foldHorizontal: "fold-horizontal",

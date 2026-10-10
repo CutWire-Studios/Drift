@@ -456,6 +456,13 @@ Item {
                 onTriggered: EditorState.unlinkSelectedClips()
             }
             ThemedMenuItem {
+                text: qsTr("Link")
+                icon.name: Theme.icons.link
+                // Needs two or more unlinked clips selected (Shift+click to add).
+                visible: EditorState.linkAvailable
+                onTriggered: EditorState.linkSelectedClips()
+            }
+            ThemedMenuItem {
                 text: qsTr("Merge subtitle clips")
                 icon.name: Theme.icons.linkTwo
                 visible: clipItem.trackType === "subtitle"
