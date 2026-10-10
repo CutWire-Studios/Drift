@@ -299,6 +299,7 @@ class AppController : public QObject
     Q_PROPERTY(QVariantList sequenceTabs READ sequenceTabs NOTIFY sequenceTabsChanged)
     Q_PROPERTY(QString activeSequenceId READ activeSequenceId NOTIFY sequenceTabsChanged)
     Q_PROPERTY(bool unlinkAvailable READ canUnlinkSelection NOTIFY editCapabilitiesChanged)
+    Q_PROPERTY(bool linkAvailable READ canLinkSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool mergeAvailable READ canMergeSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool textToSubtitleAvailable READ canConvertSelectionToSubtitle NOTIFY editCapabilitiesChanged)
     // False until the user picks a launch layout (or decides later via first-clip setup / load).
@@ -1141,6 +1142,8 @@ public:
     Q_INVOKABLE void setClipAudioStreamIndex(int trackIndex, int clipIndex, int streamIndex);
     Q_INVOKABLE bool canUnlinkSelection() const;
     Q_INVOKABLE void unlinkSelectedClips();
+    Q_INVOKABLE bool canLinkSelection() const;
+    Q_INVOKABLE void linkSelectedClips();
     Q_INVOKABLE void setClipMask(int trackIndex, int clipIndex, const QVariantMap &mask);
 
     // The mask shapes the assets panel offers as cards: {id, label} per entry. A "media" mask is
@@ -1739,9 +1742,9 @@ protected:
         drift::TimeUs rippleFrom = 0;
         drift::TimeUs rippleDelta = 0;
     };
-    TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart) const;
-    TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd) const;
-    int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed);
+    TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap = true) const;
+    TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap = true) const;
+    int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed, int side);
     QVariantMap trimPreviewToMap(int trackIndex, int clipIndex, const TrimComputation &computed) const;
 
     void notifyTracksChanged();

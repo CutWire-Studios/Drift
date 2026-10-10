@@ -42,6 +42,7 @@ Item {
                            shortcut: "separateAudio" },
         "unlink": { glyph: Theme.icons.unlink, label: qsTr("Unlink video and audio"),
                     shortcut: "unlink" },
+        "link": { glyph: Theme.icons.link, label: qsTr("Link selected clips"), shortcut: "link" },
         "trimStart": { glyph: Theme.icons.trimStart, label: qsTr("Trim start"),
                        tip: qsTr("Trim start — click a clip to drop everything left of the cut") },
         "trimEnd": { glyph: Theme.icons.trimEnd, label: qsTr("Trim end"),
@@ -74,7 +75,7 @@ Item {
 
     readonly property var defaultToolbarItems: [
         "select", "cut", "separator", "undo", "redo", "delete", "separator",
-        "separateAudio", "unlink"
+        "separateAudio", "unlink", "link"
     ]
     readonly property var defaultMenuItems: [
         "trimStart", "trimEnd", "separator", "copy", "paste", "duplicate", "separator",
@@ -121,6 +122,7 @@ Item {
         case "trimEnd": panel.timelineTool = panel.timelineTool === "trimEnd" ? "" : "trimEnd"; break
         case "separateAudio": EditorState.separateAudioFromSelection(); break
         case "unlink": EditorState.unlinkSelectedClips(); break
+        case "link": EditorState.linkSelectedClips(); break
         case "undo": EditorState.undo(); break
         case "redo": EditorState.redo(); break
         case "delete": EditorState.deleteSelectedClip(); break
@@ -144,6 +146,7 @@ Item {
         switch (id) {
         case "separateAudio": return EditorState.separateAudioAvailable
         case "unlink": return EditorState.unlinkAvailable
+        case "link": return EditorState.linkAvailable
         case "undo": return EditorState.undoAvailable
         case "redo": return EditorState.redoAvailable
         case "loop": return EditorState.workAreaActive
@@ -176,6 +179,8 @@ Item {
             return EditorState.separateAudioAvailable
         if (id === "unlink")
             return EditorState.unlinkAvailable
+        if (id === "link")
+            return EditorState.linkAvailable
         return true
     }
 

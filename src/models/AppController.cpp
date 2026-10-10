@@ -3326,9 +3326,12 @@ drift::Transition *mirroredAudioTransition(drift::Project &project, int trackInd
 void syncLinkedPartnersFrom(drift::Project &project, const drift::Clip &source,
                             const QSet<QString> &skipClipIds)
 {
+    // Loose links only travel together; their timing stays independent.
+    if (source.linkLoose)
+        return;
     for (const drift::ClipRef &ref : drift::linkedPartners(project, source)) {
         const drift::Clip &partner = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
-        if (skipClipIds.contains(partner.id))
+        if (skipClipIds.contains(partner.id) || partner.linkLoose)
             continue;
         drift::syncLinkedTiming(project.tracks()[ref.trackIndex].clips[ref.clipIndex], source);
     }
@@ -4204,6 +4207,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("split"), QStringLiteral("S")},
         {QStringLiteral("merge"), QStringLiteral("Ctrl+M")},
         {QStringLiteral("unlink"), QStringLiteral("Ctrl+Shift+U")},
+        {QStringLiteral("link"), QStringLiteral("Ctrl+Shift+L")},
         {QStringLiteral("separateAudio"), QStringLiteral("Ctrl+Shift+S")},
         {QStringLiteral("copy"), QStringLiteral("Ctrl+C")},
         {QStringLiteral("cut"), QStringLiteral("Ctrl+X")},
@@ -5926,6 +5930,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("selectTransformLayer"), tr("Select transform layer")),
         action(QStringLiteral("separateAudio"), tr("Separate audio")),
         action(QStringLiteral("unlink"), tr("Unlink audio")),
+        action(QStringLiteral("link"), tr("Link clips")),
         action(QStringLiteral("clearSelection"), tr("Clear selection")),
         action(QStringLiteral("selectAll"), tr("Select all clips")),
         action(QStringLiteral("nudgeLeft"), tr("Move selection left a little")),
@@ -7641,6 +7646,8 @@ void AppController::moveClip(int trackIndex, int clipIndex, double newStart)
     const QPair<int, int> requested(trackIndex, clipIndex);
     QList<QPair<int, int>> targets = m_selection.contains(requested) ? m_selection
                                                                       : QList<QPair<int, int>>{requested};
+    // Linked partners ride along by the same delta whether or not they are selected.
+    expandSelectionWithLinkedPartners(m_project, targets);
     const drift::Project before = m_project;
     const drift::TimeUs desiredUs = drift::secondsToUs(newStart);
     const drift::TimeUs baseUs = m_project.tracks().at(trackIndex).clips.at(clipIndex).timelineStart;
@@ -8126,7 +8133,7 @@ void AppController::endTrimGesture()
 }
 
 AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, int clipIndex,
-                                                              double newStart) const
+                                                              double newStart, bool snap) const
 {
     TrimComputation out;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -8142,7 +8149,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
     out.clip = clip;
 
     const drift::TimeUs rawUs = drift::secondsToUs(newStart);
-    drift::TimeUs snappedStart = snapTimeForGesture(rawUs);
+    drift::TimeUs snappedStart = snap ? snapTimeForGesture(rawUs) : rawUs;
     // Whether the edge landed where the pointer asked or was pulled onto a snap target is the
     // difference between the two feelings Haptics offers.
     const int movedOutcome = (snappedStart != rawUs) ? TrimSnapped : TrimMoved;
@@ -8258,7 +8265,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
 }
 
 AppController::TrimComputation AppController::computeTrimRight(int trackIndex, int clipIndex,
-                                                               double newEnd) const
+                                                               double newEnd, bool snap) const
 {
     TrimComputation out;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -8273,7 +8280,7 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
     out.clip = clip;
 
     const drift::TimeUs rawUs = drift::secondsToUs(newEnd);
-    drift::TimeUs snappedEnd = snapTimeForGesture(rawUs);
+    drift::TimeUs snappedEnd = snap ? snapTimeForGesture(rawUs) : rawUs;
     // With ripple on, extending pushes the followers along rather than stopping at them.
     if (!m_allowClipOverlap && !m_rippleEnabled && snappedEnd > clip.timelineEnd()) {
         const QSet<QString> exclude{clip.id};
@@ -8383,7 +8390,7 @@ QVariantMap AppController::previewTrimRight(int trackIndex, int clipIndex, doubl
 
 // Writes a computed trim back to the project and brings everything that hangs off the clip with
 // it. Shared by both edges.
-int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed)
+int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed, int side)
 {
     if (!computed.ok)
         return TrimNone;
@@ -8392,7 +8399,26 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
 
     drift::Track &track = m_project.tracks()[trackIndex];
     drift::Clip &clip = track.clips[clipIndex];
+    const drift::TimeUs durationDelta = computed.clip.timelineDuration - clip.timelineDuration;
     clip = computed.clip;
+
+    // A loose partner has its own length, so it gets the same edge moved by the same amount
+    // rather than a copy of this clip's timing. Ripple, when on, keeps every left edge put.
+    QList<QPair<int, TrimComputation>> loosePartners;
+    if (clip.linkLoose && durationDelta != 0) {
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
+            const drift::Clip &partner = m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+            const TrimComputation c =
+                side < 0 ? computeTrimLeft(ref.trackIndex, ref.clipIndex,
+                                           drift::usToSeconds(partner.timelineStart - durationDelta), false)
+                         : computeTrimRight(ref.trackIndex, ref.clipIndex,
+                                            drift::usToSeconds(partner.timelineEnd() + durationDelta), false);
+            if (!c.changed)
+                continue;
+            m_project.tracks()[ref.trackIndex].clips[ref.clipIndex] = c.clip;
+            loosePartners.append(qMakePair(ref.trackIndex, c));
+        }
+    }
 
     // linkId, not linkedClipId: linkId is what symmetrically pairs A/V companions, which is what
     // syncLinkedPartnersFrom walks. linkedClipId is the directional pin used by adjustments, and
@@ -8406,11 +8432,23 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
             tracks.insert(ref.trackIndex);
             ids.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
         }
+        if (clip.linkLoose)
+            tracks = {trackIndex};
         rippleTracksFrom(m_project, tracks, computed.rippleFrom, computed.rippleDelta, ids);
         for (const int t : std::as_const(tracks)) {
             if (t != trackIndex)
                 syncOverlapTransitionsOnTrack(m_project.tracks()[t]);
         }
+    }
+    // Each loose partner ripples its own track from its own end, which need not be this clip's.
+    for (const QPair<int, TrimComputation> &p : std::as_const(loosePartners)) {
+        QSet<QString> ids{clip.id};
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip))
+            ids.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
+        if (p.second.rippleDelta != 0)
+            rippleTracksFrom(m_project, {p.first}, p.second.rippleFrom, p.second.rippleDelta, ids);
+        if (p.first != trackIndex)
+            syncOverlapTransitionsOnTrack(m_project.tracks()[p.first]);
     }
     syncOverlapTransitionsOnTrack(track);
     // A pinned adjustment takes its extent from its clip, so it has to be brought along here --
@@ -8448,7 +8486,7 @@ int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
     if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
         return m_trimGestureLastOutcome;
     m_trimGestureLastInputUs = rawUs;
-    return applyTrim(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart));
+    return applyTrim(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart), -1);
 }
 
 int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
@@ -8458,7 +8496,7 @@ int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
     if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
         return m_trimGestureLastOutcome;
     m_trimGestureLastInputUs = rawUs;
-    return applyTrim(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd));
+    return applyTrim(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd), 1);
 }
 
 void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint)
@@ -8504,6 +8542,9 @@ void AppController::duplicateSelectedClip()
     const drift::Clip original = track.clips.at(m_selectedClip);
     drift::Clip copy = original;
     copy.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    // Sharing the original's linkId would pair the copy with the original's partners.
+    copy.linkId.clear();
+    copy.linkLoose = false;
     copy.timelineStart = drift::resolveClipStart(
         m_project, track, -1, original.timelineEnd(), original.timelineDuration, m_snapEnabled, m_playheadUs);
 
@@ -8687,6 +8728,20 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
             }
         }
         syncLinkedPartnersFrom(m_project, item.clip, movedIds);
+    }
+    for (const ClipToMove &item : toMove) {
+        if (!item.clip.linkLoose)
+            continue;
+        const drift::TimeUs delta = item.newTimelineStart - item.clip.timelineStart;
+        if (delta == 0)
+            continue;
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, item.clip)) {
+            drift::Clip &partner = m_project.tracks()[ref.trackIndex].clips[ref.clipIndex];
+            if (movedIds.contains(partner.id))
+                continue;
+            partner.timelineStart = qMax<drift::TimeUs>(0, partner.timelineStart + delta);
+            movedIds.insert(partner.id);
+        }
     }
 
     m_selection = newSelection;
@@ -16484,15 +16539,18 @@ void AppController::unlinkSelectedClips()
         if (!isValidClipIndex(pair.first, pair.second))
             continue;
 
-        drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
-        if (clip.linkId.isEmpty() || clearedLinkIds.contains(clip.linkId))
+        // A copy: clearing the clip's own linkId mid-loop would stop later partners matching.
+        const QString linkId = m_project.tracks().at(pair.first).clips.at(pair.second).linkId;
+        if (linkId.isEmpty() || clearedLinkIds.contains(linkId))
             continue;
 
-        clearedLinkIds.insert(clip.linkId);
+        clearedLinkIds.insert(linkId);
         for (drift::Track &track : m_project.tracks()) {
             for (drift::Clip &candidate : track.clips) {
-                if (candidate.linkId == clip.linkId)
+                if (candidate.linkId == linkId) {
                     candidate.linkId.clear();
+                    candidate.linkLoose = false;
+                }
             }
         }
         changed = true;
@@ -16506,6 +16564,49 @@ void AppController::unlinkSelectedClips()
 
     pushProjectEdit(before, tr("Clips unlinked"));
     finishEdit(tr("Audio unlinked"));
+}
+
+bool AppController::canLinkSelection() const
+{
+    // Two or more selected clips, none of them already part of a link.
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    int valid = 0;
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        if (!m_project.tracks().at(pair.first).clips.at(pair.second).linkId.isEmpty())
+            return false;
+        ++valid;
+    }
+    return valid >= 2;
+}
+
+void AppController::linkSelectedClips()
+{
+    if (!canLinkSelection())
+        return;
+
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
+        pairs.append(qMakePair(m_selectedTrack, m_selectedClip));
+
+    const drift::Project before = m_project;
+    const QString linkId = newClipId();
+    for (const QPair<int, int> &pair : pairs) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
+        clip.linkId = linkId;
+        // Manually linked clips usually come from different media, so the link is loose: it
+        // never copies one clip's duration, trim or speed onto the other.
+        clip.linkLoose = true;
+    }
+
+    pushProjectEdit(before, tr("Clips linked"));
+    finishEdit(tr("Clips linked"));
 }
 
 void AppController::setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds)
@@ -21742,6 +21843,14 @@ void AppController::pasteAtPlayhead()
     // By id: a later clip can insert a track above an earlier one, and normalizing the edit can
     // reorder tracks, so positions taken here go stale.
     QStringList inserted;
+    // Pasted clips stay linked to each other under a fresh id, never to the clips they were
+    // copied from; one pasted without any of its partners comes in unlinked.
+    QHash<QString, int> linkCounts;
+    for (const ClipboardItem &item : m_clipboard) {
+        if (!item.clip.linkId.isEmpty())
+            ++linkCounts[item.clip.linkId];
+    }
+    QHash<QString, QString> pastedLinkIds;
 
     for (const ClipboardItem &item : m_clipboard) {
         // Composites live on the main timeline only, and never outlive their sequence.
@@ -21751,6 +21860,15 @@ void AppController::pasteAtPlayhead()
         drift::Clip clip = item.clip;
         clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
         clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + shift);
+        if (linkCounts.value(clip.linkId) > 1) {
+            auto it = pastedLinkIds.find(clip.linkId);
+            if (it == pastedLinkIds.end())
+                it = pastedLinkIds.insert(clip.linkId, newClipId());
+            clip.linkId = *it;
+        } else {
+            clip.linkId.clear();
+            clip.linkLoose = false;
+        }
 
         int targetTrack = -1;
         for (int i = 0; i < m_project.tracks().size(); ++i) {
@@ -22187,6 +22305,8 @@ void AppController::triggerAction(const QString &actionId)
         separateAudioFromSelection();
     else if (actionId == QStringLiteral("unlink"))
         unlinkSelectedClips();
+    else if (actionId == QStringLiteral("link"))
+        linkSelectedClips();
     else if (actionId == QStringLiteral("copy"))
         copySelection();
     else if (actionId == QStringLiteral("cut"))

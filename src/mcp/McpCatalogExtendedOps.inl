@@ -87,7 +87,7 @@
                        {QStringLiteral("track"), QStringLiteral("scale")}) },
         { "select_clip", "timeline", "Focus one clip",
           "Select exactly one clip, replacing any previous selection. REQUIRED before the "
-          "selection-based ops, which take no clip argument: separate_audio, unlink_audio, "
+          "selection-based ops, which take no clip argument: separate_audio, unlink_audio, link_clips, "
           "merge_clips, align_clip_left, align_clip_right, copy_selection, cut_selection. "
           "freeze_frame and paste_at_playhead are playhead-based — seek first, do not select.",
           objectSchema(clipRefProps()) },
@@ -119,6 +119,12 @@
           "Break the link between paired audio/video clips in the selection so they can be moved and "
           "trimmed independently. Acts on the current selection — call select_clip first; fails "
           "bad_args when no linked clips are selected.",
+          objectSchema({}) },
+        { "link_clips", "timeline", "Pair clips so they move and trim together",
+          "Link two or more selected, currently unlinked clips (typically a video and an audio from "
+          "different media) so they select, move, split and delete together, and trimming one moves the "
+          "others' matching edge by the same amount, while each keeps its own duration and speed. Acts on the current selection — call select_clips first; fails "
+          "bad_args when fewer than two unlinked clips are selected.",
           objectSchema({}) },
         { "make_composite", "timeline", "Collapse clips into one composite clip",
           "Move the selected clips (with their linked audio and pinned adjustments) into a new nested "

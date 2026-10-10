@@ -52,6 +52,10 @@ struct Clip
     QString assetId;
     // Shared by linked video/audio companions; empty when unlinked.
     QString linkId;
+    // A loose link (created by Link on unrelated clips) moves, splits, selects and deletes
+    // together with its partners, and a trim moves their matching edge by the same amount, but
+    // it keeps its own duration, speed and fades.
+    bool linkLoose = false;
     ClipType type = ClipType::Video;
 
     // Adjustment clips only.

@@ -861,6 +861,13 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok({});
     }
 
+    if (tool == QLatin1String("link_clips")) {
+        if (!m_controller->canLinkSelection())
+            return err("bad_args", QStringLiteral("Select two or more unlinked clips first"));
+        m_controller->linkSelectedClips();
+        return ok({});
+    }
+
     if (tool == QLatin1String("merge_clips")) {
         if (args.contains(QStringLiteral("track"))) {
             const int track = jsonInt(args.value(QStringLiteral("track")));
