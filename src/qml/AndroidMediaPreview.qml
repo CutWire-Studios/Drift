@@ -105,12 +105,10 @@ Item {
                                     ? root.durationSeconds : asset.trimOutSeconds
         root.mode = "trim"
         resetEdits()
-        if (root.isVideo) {
-            const frame = asset.sourceFrame
-            if (frame) {
-                root.cropX = frame.x; root.cropY = frame.y
-                root.cropW = frame.width; root.cropH = frame.height
-            }
+        const frame = asset.sourceFrame
+        if (!root.isAudio && frame) {
+            root.cropX = frame.x; root.cropY = frame.y
+            root.cropW = frame.width; root.cropH = frame.height
         }
         EditorState.assetPreview.begin(index)
     }
@@ -571,11 +569,11 @@ Item {
             anchors.right: parent.right
             anchors.margins: Theme.spacingSm
             z: 4
-            visible: root.isVideo && root.mode === "crop"
+            visible: !root.isAudio && root.mode === "crop"
             glyph: root.cropRatioLocked ? Theme.icons.lock : Theme.icons.lockOpen
             tooltip: root.cropRatioLocked
-                     ? qsTr("Unlock source frame ratio")
-                     : qsTr("Lock source frame ratio")
+                     ? qsTr("Unlock crop ratio")
+                     : qsTr("Lock crop ratio")
             active: root.cropRatioLocked
             buttonSize: 36
             iconSize: Theme.iconSizeSm
@@ -929,7 +927,7 @@ Item {
                   ? (EditorState.assetEditStatus.length > 0
                      ? EditorState.assetEditStatus : qsTr("Saving…"))
                   : root.dirty
-                    ? (root.isVideo ? qsTr("Save keeps the original video and stores this framing.") : qsTr("Save keeps your changes as a new file in this project."))
+                    ? (!root.isAudio ? qsTr("Save keeps the original file and stores this crop.") : qsTr("Save keeps the original file and stores this trim."))
                     : qsTr("Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.")
         }
     }

@@ -434,6 +434,14 @@ Item {
                 onTriggered: EditorState.convertAssetsToConstantFrameRate([clipItem.mediaAssetId])
             }
             ThemedMenuItem {
+                text: qsTr("Crop…")
+                icon.name: Theme.icons.crop
+                // Desktop only: AndroidMain has no crop window for timeline clips.
+                visible: (clipItem.clipData.kind === "video" || clipItem.clipData.kind === "image")
+                         && typeof clipItem.Window.window.openCrop === "function"
+                onTriggered: clipItem.Window.window.openCrop(clipItem.trackIndex, clipItem.clipIndex)
+            }
+            ThemedMenuItem {
                 text: qsTr("Enhance video…")
                 icon.name: Theme.icons.sparkles
                 // Desktop only: AndroidMain has no restore window.

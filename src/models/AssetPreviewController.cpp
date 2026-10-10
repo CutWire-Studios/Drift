@@ -82,6 +82,44 @@ void AssetPreviewController::begin(int index)
     emit sessionChanged();
 }
 
+void AssetPreviewController::beginClip(int track, int index)
+{
+    const auto &tracks = m_app->m_project.tracks();
+    if (track < 0 || track >= tracks.size() || index < 0 || index >= tracks.at(track).clips.size())
+        return;
+    const drift::Clip &placed = tracks.at(track).clips.at(index);
+    if (placed.path.isEmpty())
+        return;
+
+    m_index = -1;
+    m_active = true;
+    if (placed.type != drift::ClipType::Video) {
+        m_player.clear();
+        emit sessionChanged();
+        return;
+    }
+
+    m_app->setPlaying(false);
+
+    // The whole source, so positions are source seconds like the window's in/out points.
+    const drift::MediaAsset *asset = m_app->m_project.asset(placed.assetId);
+    drift::Clip clip;
+    clip.type = drift::ClipType::Video;
+    clip.assetId = placed.assetId;
+    clip.name = placed.name;
+    clip.path = placed.path;
+    clip.thumbnailPath = placed.thumbnailPath;
+    clip.filmstripPath = placed.filmstripPath;
+    clip.srcIn = 0;
+    clip.srcOut = asset && asset->durationUs > 0 ? asset->durationUs : placed.srcOut;
+    clip.timelineStart = 0;
+    clip.timelineDuration = clip.srcOut;
+    clip.rotationCorrection = placed.rotationCorrection;
+    m_player.setClip(clip, m_app->m_project.sampleRate(), m_app->m_project.fps());
+
+    emit sessionChanged();
+}
+
 void AssetPreviewController::end()
 {
     if (!m_active)

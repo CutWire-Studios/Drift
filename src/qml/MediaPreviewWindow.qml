@@ -1,10 +1,11 @@
 import QtQuick
 import QtQuick.Window
-import QtMultimedia
 import Drift 1.0
 import "components"
 
-// Video framing is stored in the project and always previews the original source.
+// Crop is stored in the project and always previews the original source. Frames come from
+// EditorState.assetPreview's single-clip player (the timeline's own FFmpeg decode, paused
+// timeline, capped frame size) rather than a separate QtMultimedia pipeline per window.
 Window {
     id: root
 
@@ -26,18 +27,14 @@ Window {
     property int rotationOverride: -1
     property int effectiveRotation: 0
 
-    // See openFor()/onMediaStatusChanged: the play/pause "first frame" kick must run exactly once
-    // per loaded source, not on every mediaStatus transition an ordinary seek can also cause.
-    property bool _kickedForCurrentSource: false
-
     property real inSeconds: 0
     property real outSeconds: 0
     property real cropX: 0
     property real cropY: 0
     property real cropW: 1
     property real cropH: 1
-    // A full-size frame is normally clean, but Reset must still be savable so it can replace a
-    // previously stored crop with the original source frame.
+    // A full-size crop is normally clean, but Reset must still be savable so it can replace a
+    // previously stored crop with the whole picture.
     property bool frameResetPending: false
     // Crop framing starts constrained to the source video ratio. Turning the lock back on uses
     // the current width and updates height immediately.
@@ -54,10 +51,10 @@ Window {
     readonly property bool isVideo: kind === "video"
     readonly property bool canCrop: !isAudio
     readonly property bool canTrim: clipId.length === 0 && !isImage && durationSeconds > 0.05
-    // Timeline clips cannot be trimmed from this source-frame editor, but they still need the
-    // filmstrip/ruler so the user can scrub to the exact source frame being reframed.
+    // Timeline clips cannot be trimmed from the crop editor, but they still need the
+    // filmstrip/ruler so the user can scrub to the exact frame being cropped.
     readonly property bool canScrub: !isImage && durationSeconds > 0.05
-    // The source-frame editor presents a selected interval, whether it comes from a bin trim or
+    // The crop editor presents a selected interval, whether it comes from a bin trim or
     // a placed timeline clip. Transport time is therefore relative to that interval, never the
     // source file's absolute/project timestamp.
     readonly property real mediaRangeStart: canScrub ? inSeconds : 0
@@ -89,12 +86,16 @@ Window {
     readonly property int outputWidth: Math.max(1, Math.round(displayW * cropW))
     readonly property int outputHeight: Math.max(1, Math.round(displayH * cropH))
     readonly property bool suggestUpscale: Math.min(outputWidth, outputHeight) < 700
+    readonly property real position: EditorState.assetPreview.position
+    readonly property bool playing: EditorState.assetPreview.playing
 
     width: 920
     height: 680
     minimumWidth: 640
     minimumHeight: 480
-    title: assetName.length > 0 ? qsTr("Preview — %1").arg(assetName) : qsTr("Preview")
+    title: clipId.length > 0
+           ? (assetName.length > 0 ? qsTr("Crop — %1").arg(assetName) : qsTr("Crop"))
+           : (assetName.length > 0 ? qsTr("Preview — %1").arg(assetName) : qsTr("Preview"))
     color: Theme.appBackground
 
     function openFor(index) {
@@ -102,19 +103,7 @@ Window {
         if (!asset || Object.keys(asset).length === 0)
             return
         EditorState.assetPreview.windowOpen = true
-        player.stop()
-        // QMediaPlayer::setSource() is a silent no-op when the new source compares equal to the
-        // one it already has (confirmed against Qt 6.8.3), so reopening the same file below would
-        // never re-fire mediaStatusChanged — and with it, never rerun the play/pause kick that
-        // forces this backend to actually push a first frame. Clearing it first guarantees a real
-        // source transition every time, same file or not.
-        player.source = ""
-        // Rearms the one-shot play/pause kick below for this newly loaded file. Without this,
-        // an ordinary seek (dragging the strip, "Set In"/"Set Out") can cycle mediaStatus back
-        // through Buffering/Buffered on its own, and the kick firing again on that would call
-        // seekTo(root.inSeconds) a second time — snapping the position back to the start on every
-        // seek instead of holding wherever the user put it.
-        root._kickedForCurrentSource = false
+        EditorState.assetPreview.pause()
         root.clipId = ""
         root.page = 0
         root.renderingCopy = false
@@ -137,19 +126,17 @@ Window {
                                      || asset.trimOutSeconds < 0)
                                     ? root.durationSeconds : asset.trimOutSeconds
         resetEdits()
-        if (root.isVideo) {
-            const frame = asset.sourceFrame
-            if (frame) {
-                root.cropX = frame.x; root.cropY = frame.y
-                root.cropW = frame.width; root.cropH = frame.height
-            }
+        const frame = asset.sourceFrame
+        if (root.canCrop && frame) {
+            root.cropX = frame.x; root.cropY = frame.y
+            root.cropW = frame.width; root.cropH = frame.height
         }
         root.frameResetPending = false
+        EditorState.assetPreview.begin(index)
         root.show()
         root.raise()
         root.requestActivate()
-        if (!root.isImage)
-            player.source = EditorState.fileUrl(root.sourcePath)
+        root.seekTo(root.inSeconds)
     }
 
     // Steps the bin's rotation correction by 90° and keeps it — independent of crop/trim, which
@@ -162,7 +149,18 @@ Window {
         if (EditorState.setAssetRotation(root.assetIndex, next)) {
             root.rotationOverride = next
             root.effectiveRotation = next
+            root.restartPreview()
         }
+    }
+
+    // The preview clip carries the rotation baked in, so a rotation change re-begins it.
+    function restartPreview() {
+        const wasPlaying = root.playing
+        const at = root.position
+        EditorState.assetPreview.begin(root.assetIndex)
+        root.seekTo(at)
+        if (wasPlaying)
+            EditorState.assetPreview.play()
     }
 
     function resetEdits() {
@@ -189,16 +187,15 @@ Window {
 
     function openClip(track, index) {
         const clip = EditorState.clipAt(track, index)
-        if (!clip || clip.kind !== "video")
+        if (!clip || (clip.kind !== "video" && clip.kind !== "image"))
             return
-        player.stop()
-        player.source = ""
-        root._kickedForCurrentSource = false
+        EditorState.assetPreview.pause()
         root.clipId = clip.id
         root.page = 0
         root.renderingCopy = false
         root.assetIndex = -1
-        root.kind = "video"
+        root.assetId = ""
+        root.kind = clip.kind
         root.sourcePath = clip.path
         root.assetName = clip.name
         root.sourceWidth = clip.sourceWidth
@@ -214,7 +211,7 @@ Window {
         root.cropX = frame.x; root.cropY = frame.y
         root.cropW = frame.width; root.cropH = frame.height
         root.frameResetPending = false
-        player.source = EditorState.fileUrl(root.sourcePath)
+        EditorState.assetPreview.beginClip(track, index)
         root.show()
         root.raise()
         root.requestActivate()
@@ -239,38 +236,19 @@ Window {
         root.outSeconds = Math.max(root.inSeconds + minSpan, Math.min(root.outSeconds, dur))
     }
 
-    // Guards against a genuine crash: the nudge below deliberately writes `position` twice, and
-    // each write fires onPositionChanged synchronously — which, whenever playback is (or still
-    // reports as) active and lands at/past outSeconds, calls back into seekTo to loop to the
-    // start. With no guard that is unbounded recursion (each level's own nudge re-enters again)
-    // and a "Maximum call stack size exceeded" crash, not just a harmless ping-pong. A seek that
-    // happens to re-enter while already seeking is our own nudge, never a real playback position
-    // worth reacting to, so just dropping it here is correct, not merely safe.
-    property bool _seeking: false
-
     function seekTo(seconds) {
-        if (root.isImage || root._seeking)
+        if (root.isImage)
             return
-        root._seeking = true
-        const target = Math.round(Math.max(0, seconds) * 1000)
-        // Assigning the position it already reports is a no-op in Qt Multimedia — no seek is
-        // actually issued, so a freshly loaded player (position 0) asked to show frame 0 never
-        // decodes anything and the video output stays blank until some other, real seek happens.
-        // Nudge off the target first so this always forces an actual seek.
-        if (player.position === target)
-            player.position = target > 0 ? target - 1 : target + 1
-        player.position = target
-        root._seeking = false
+        EditorState.assetPreview.seek(Math.max(0, seconds))
     }
 
     function upscale() {
-        player.pause()
+        EditorState.assetPreview.pause()
         if (AssetLibrary.assetAt(root.assetIndex).id !== root.assetId)
             return
         // Nothing trimmed or cropped: the original is already the video to enhance.
         if (!root.cropDirty && root.inSeconds < 0.02 && root.outSeconds > root.durationSeconds - 0.02) {
             const id = root.assetId
-            player.stop()
             root.close()
             root.host.openRestoreAsset(id)
             return
@@ -283,18 +261,27 @@ Window {
     function togglePlay() {
         if (root.isImage)
             return
-        if (player.playbackState === MediaPlayer.PlayingState)
-            player.pause()
-        else {
-            const at = player.position / 1000
-            if (at < root.inSeconds - 0.02 || at >= root.outSeconds - 0.02)
-                seekTo(root.inSeconds)
-            player.play()
+        if (root.playing) {
+            EditorState.assetPreview.pause()
+            return
         }
+        const at = root.position
+        if (at < root.inSeconds - 0.02 || at >= root.outSeconds - 0.02)
+            seekTo(root.inSeconds)
+        EditorState.assetPreview.play()
+    }
+
+    // Playback stays inside the kept range, so what plays is what a save would keep.
+    onPositionChanged: {
+        if (!root.playing || root.isImage)
+            return
+        if (root.position >= root.outSeconds - 0.01)
+            seekTo(root.inSeconds)
     }
 
     onClosing: {
-        player.stop()
+        EditorState.assetPreview.pause()
+        EditorState.assetPreview.end()
         if (root.saving)
             EditorState.cancelAssetEdit()
         EditorState.assetPreview.windowOpen = false
@@ -306,7 +293,6 @@ Window {
             if (!root.renderingCopy)
                 return
             root.renderingCopy = false
-            player.stop()
             root.close()
             root.host.openRestoreAsset(assetId)
         }
@@ -315,11 +301,9 @@ Window {
             // A background frame-rate conversion is not this window's save.
             if (!ok || EditorState.assetEditIsConversion)
                 return
-            player.stop()
             root.close()
         }
         function onProjectReset() {
-            player.stop()
             root.close()
         }
     }
@@ -336,41 +320,12 @@ Window {
             const asset = AssetLibrary.assetAt(root.assetIndex)
             if (!asset || asset.id !== root.assetId)
                 return
+            if (asset.rotationOverride === root.rotationOverride
+                    && asset.effectiveRotation === root.effectiveRotation)
+                return
             root.rotationOverride = asset.rotationOverride
             root.effectiveRotation = asset.effectiveRotation
-        }
-    }
-
-    MediaPlayer {
-        id: player
-        audioOutput: AudioOutput {}
-        videoOutput: videoOut
-        onMediaStatusChanged: {
-            if (mediaStatus !== MediaPlayer.LoadedMedia && mediaStatus !== MediaPlayer.BufferedMedia)
-                return
-            if (root._kickedForCurrentSource)
-                return
-            root._kickedForCurrentSource = true
-            // This backend only actually decodes/pushes a frame to the video sink once playback
-            // has started at least once — seeking alone, while stopped, leaves it showing nothing.
-            // A play/pause kick forces that first frame, then the real seek lands on the right one.
-            // Guarded to run once per source: an ordinary seek can cycle mediaStatus back through
-            // Buffering/Buffered on its own, and re-running this on that would call
-            // seekTo(root.inSeconds) again — snapping the position back to the start on every
-            // seek instead of holding wherever the user put it.
-            player.play()
-            player.pause()
-            root.seekTo(root.inSeconds)
-        }
-        onPositionChanged: {
-            if (root.isImage || player.playbackState !== MediaPlayer.PlayingState)
-                return
-            const at = position / 1000
-            if (at >= root.outSeconds - 0.01) {
-                seekTo(root.inSeconds)
-                if (player.playbackState !== MediaPlayer.PlayingState)
-                    player.play()
-            }
+            root.restartPreview()
         }
     }
 
@@ -383,7 +338,7 @@ Window {
         sequence: "I"
         enabled: root.canTrim && !root.saving && root.page === 0
         onActivated: {
-            root.inSeconds = Math.max(0, player.position / 1000)
+            root.inSeconds = Math.max(0, root.position)
             root.clampRange()
         }
     }
@@ -391,7 +346,7 @@ Window {
         sequence: "O"
         enabled: root.canTrim && !root.saving && root.page === 0
         onActivated: {
-            root.outSeconds = Math.max(root.inSeconds, player.position / 1000)
+            root.outSeconds = Math.max(root.inSeconds, root.position)
             root.clampRange()
         }
     }
@@ -418,8 +373,8 @@ Window {
             text: root.isAudio
                   ? qsTr("Play the clip and drag the ends to keep only the part you want. Save replaces this item in the media bin.")
                   : root.isImage
-                    ? qsTr("Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.")
-                    : qsTr("Drag the frame to choose the area to use. The original video stays available for reframing.")
+                    ? qsTr("Drag the box to crop. The original image stays available, so the crop can be changed later.")
+                    : qsTr("Drag the box to crop. The original video stays available, so the crop can be changed later.")
         }
 
         Rectangle {
@@ -439,45 +394,28 @@ Window {
             color: Theme.overlayColor
             clip: true
 
-            readonly property var fit: {
-                const srcW = Math.max(1, root.displayW)
-                const srcH = Math.max(1, root.displayH)
-                const scale = Math.min(width / srcW, height / srcH)
-                const w = srcW * scale
-                const h = srcH * scale
-                return { x: (width - w) / 2, y: (height - h) / 2, w: w, h: h }
-            }
-
+            // Stills come straight from the file; video frames arrive already rotated from the
+            // preview player, so both fit the stage the same way.
             Image {
                 id: still
-                visible: root.isImage
+                visible: !root.isAudio
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
-                asynchronous: true
+                asynchronous: root.isImage
+                // Frame pixels change behind one URL, so only a still may be cached.
+                cache: root.isImage
                 // Capped at the screen: a 48 MP photo decoded whole is ~190 MB.
-                sourceSize: Qt.size(Math.ceil(Screen.width * Screen.devicePixelRatio),
-                                    Math.ceil(Screen.height * Screen.devicePixelRatio))
-                source: root.isImage && root.sourcePath.length > 0
-                        ? EditorState.imageUrl(root.sourcePath) : ""
-            }
-
-            VideoOutput {
-                id: videoOut
-                visible: root.isVideo
-                fillMode: VideoOutput.PreserveAspectFit
-
-                // QtMultimedia auto-rotates per the file's own tag (rotationDegrees) regardless of
-                // our override, so the delta between the two is applied here on top of that. A
-                // 90/270 delta also swaps which of stage.fit's box dimensions is this item's own
-                // pre-rotation footprint, so the rotated result still lands exactly on stage.fit
-                // instead of just spinning in place inside its original (wrong-aspect) box.
-                readonly property int rotationDelta: (root.effectiveRotation - root.rotationDegrees + 360) % 360
-                readonly property bool swapped: rotationDelta === 90 || rotationDelta === 270
-                width: swapped ? stage.fit.h : stage.fit.w
-                height: swapped ? stage.fit.w : stage.fit.h
-                x: stage.fit.x + stage.fit.w / 2 - width / 2
-                y: stage.fit.y + stage.fit.h / 2 - height / 2
-                rotation: rotationDelta
+                sourceSize: root.isImage
+                            ? Qt.size(Math.ceil(Screen.width * Screen.devicePixelRatio),
+                                      Math.ceil(Screen.height * Screen.devicePixelRatio))
+                            : Qt.size(0, 0)
+                source: {
+                    if (root.isImage)
+                        return root.sourcePath.length > 0 ? EditorState.imageUrl(root.sourcePath) : ""
+                    if (!root.isVideo || !EditorState.assetPreview.active)
+                        return ""
+                    return "image://clippreview/frame?rev=" + EditorState.assetPreview.revision
+                }
             }
 
             Column {
@@ -502,14 +440,10 @@ Window {
             Item {
                 id: cropHost
                 visible: root.canCrop
-                x: root.isImage
-                   ? (stage.width - still.paintedWidth) / 2
-                   : stage.fit.x
-                y: root.isImage
-                   ? (stage.height - still.paintedHeight) / 2
-                   : stage.fit.y
-                width: root.isImage ? still.paintedWidth : stage.fit.w
-                height: root.isImage ? still.paintedHeight : stage.fit.h
+                x: (stage.width - still.paintedWidth) / 2
+                y: (stage.height - still.paintedHeight) / 2
+                width: still.paintedWidth
+                height: still.paintedHeight
 
                 readonly property real frameX: root.cropX * width
                 readonly property real frameY: root.cropY * height
@@ -676,29 +610,6 @@ Window {
                     }
                 }
             }
-
-            Rectangle {
-                visible: root.canCrop && !root.isVideo
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                anchors.margins: Theme.spacingMd
-                color: Theme.scrimStrong
-                radius: Theme.radiusSm
-                width: cropSizeLabel.implicitWidth + Theme.spacingLg
-                height: cropSizeLabel.implicitHeight + Theme.spacingSm
-                Text {
-                    id: cropSizeLabel
-                    anchors.centerIn: parent
-                    color: Theme.onMedia
-                    font.family: Theme.monoFontFamily
-                    font.pixelSize: Theme.fontSizeXs
-                    text: {
-                        const w = Math.max(1, Math.round(root.displayW * root.cropW))
-                        const h = Math.max(1, Math.round(root.displayH * root.cropH))
-                        return w + "×" + h
-                    }
-                }
-            }
         }
 
         Row {
@@ -711,9 +622,9 @@ Window {
                 visible: !root.isImage
                 width: visible ? implicitWidth : 0
                 anchors.verticalCenter: parent.verticalCenter
-                glyph: player.playbackState === MediaPlayer.PlayingState
+                glyph: root.playing
                        ? Theme.icons.pause : Theme.icons.play
-                tooltip: player.playbackState === MediaPlayer.PlayingState ? qsTr("Pause") : qsTr("Play")
+                tooltip: root.playing ? qsTr("Pause") : qsTr("Play")
                 enabled: !root.saving
                 onClicked: root.togglePlay()
             }
@@ -723,7 +634,7 @@ Window {
                 visible: !root.isImage
                 width: visible ? implicitWidth : 0
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.formatTime(Math.max(0, player.position / 1000 - root.mediaRangeStart))
+                text: root.formatTime(Math.max(0, root.position - root.mediaRangeStart))
                       + "  /  " + root.formatTime(root.mediaRangeDuration)
                 size: "sm"
                 tone: "default"
@@ -738,7 +649,7 @@ Window {
                 glyph: Theme.icons.setStart
                 enabled: !root.saving
                 onClicked: {
-                    root.inSeconds = player.position / 1000
+                    root.inSeconds = root.position
                     root.clampRange()
                 }
             }
@@ -751,7 +662,7 @@ Window {
                 glyph: Theme.icons.setEnd
                 enabled: !root.saving
                 onClicked: {
-                    root.outSeconds = player.position / 1000
+                    root.outSeconds = root.position
                     root.clampRange()
                 }
             }
@@ -777,24 +688,24 @@ Window {
 
             ThemedLabel {
                 id: frameSizeLabel
-                visible: root.isVideo
+                visible: root.canCrop
                 anchors.verticalCenter: parent.verticalCenter
                 font.family: Theme.monoFontFamily
                 size: "xs"
                 tone: "muted"
-                text: qsTr("Original: %1×%2 • Frame: %3×%4")
+                text: qsTr("Original: %1×%2 • Crop: %3×%4")
                       .arg(root.displayW).arg(root.displayH).arg(root.outputWidth).arg(root.outputHeight)
             }
 
             IconButton {
                 id: frameRatioLock
-                visible: root.isVideo
+                visible: root.canCrop
                 width: visible ? buttonSize : 0
                 anchors.verticalCenter: parent.verticalCenter
                 glyph: root.cropRatioLocked ? Theme.icons.lock : Theme.icons.lockOpen
                 tooltip: root.cropRatioLocked
-                         ? qsTr("Unlock source frame ratio")
-                         : qsTr("Lock source frame ratio")
+                         ? qsTr("Unlock crop ratio")
+                         : qsTr("Lock crop ratio")
                 active: root.cropRatioLocked
                 buttonSize: 30
                 iconSize: Theme.iconSizeSm
@@ -827,7 +738,7 @@ Window {
             readonly property real rangeEnd: root.clipId.length > 0 ? root.outSeconds : root.durationSeconds
             readonly property real dur: Math.max(0.001, rangeEnd - rangeStart)
             readonly property real pxPerSecond: width / dur
-            readonly property real playX: ((player.position / 1000) - rangeStart) * pxPerSecond
+            readonly property real playX: ((root.position) - rangeStart) * pxPerSecond
 
             // Ticks stay legible regardless of the clip's length: the smallest "nice" step from
             // this list whose label spacing is still wide enough not to overlap the next one —
@@ -971,8 +882,6 @@ Window {
                     const t = stripBlock.rangeStart
                               + (mouse.x / Math.max(1, width)) * stripBlock.dur
                     root.seekTo(t)
-                    if (player.playbackState !== MediaPlayer.PlayingState)
-                        player.pause()
                 }
                 onPositionChanged: (mouse) => {
                     if (!pressed)
@@ -1115,7 +1024,7 @@ Window {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
-            text: qsTr("Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.")
+            text: qsTr("Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.")
         }
     }
 
@@ -1139,10 +1048,10 @@ Window {
                      ? EditorState.assetEditStatus
                      : qsTr("Saving…"))
                   : root.page === 1 ? ""
-                  : root.hasFinishPage ? qsTr("Choose the part and framing to keep, then Next.")
+                  : root.hasFinishPage ? qsTr("Choose the part and crop to keep, then Next.")
                   : root.dirty
-                    ? (root.isVideo ? qsTr("Save keeps the original video and stores this framing.") : qsTr("Save writes a new file over this item in the bin."))
-                    : (root.clipId.length > 0 ? qsTr("Adjust the frame or Reset to restore the full image.") : qsTr("Nothing to save — drag this item onto the timeline when you are ready."))
+                    ? (root.canCrop ? qsTr("Save keeps the original file and stores this crop.") : qsTr("Save keeps the original file and stores this trim."))
+                    : (root.clipId.length > 0 ? qsTr("Adjust the crop or Reset to restore the full picture.") : qsTr("Nothing to save — drag this item onto the timeline when you are ready."))
         }
 
         ThemedButton {
@@ -1181,13 +1090,12 @@ Window {
             text: !root.hasFinishPage ? qsTr("Save") : root.page === 0 ? qsTr("Next") : qsTr("Done")
             enabled: !root.saving && (root.hasFinishPage || (root.dirty && (root.assetIndex >= 0 || root.clipId.length > 0)))
             onClicked: {
-                player.pause()
+                EditorState.assetPreview.pause()
                 if (root.hasFinishPage && root.page === 0) {
                     root.page = 1
                     return
                 }
                 if (!root.dirty) {
-                    player.stop()
                     root.close()
                     return
                 }

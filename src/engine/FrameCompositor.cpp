@@ -666,8 +666,11 @@ QImage decodedStillImage(const QString &path, int maxWidth, int maxHeight)
     QImage image = drift::decodeStillImage(path);
     if (image.isNull())
         return {};
-    image = image.convertToFormat(QImage::Format_RGBA8888)
-                .scaled(maxWidth, maxHeight, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    image = image.convertToFormat(QImage::Format_RGBA8888);
+    // Downscale only: a cropped clip asks for a bound enlarged by 1/crop, which would otherwise
+    // upscale a small photo many times over just to cut most of it away again.
+    if (image.width() > maxWidth || image.height() > maxHeight)
+        image = image.scaled(maxWidth, maxHeight, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     const qint64 imageBytes = qint64(image.sizeInBytes());
     QMutexLocker lock(&g_stillMutex);
@@ -703,29 +706,29 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
     if (clip.path.isEmpty())
         return {};
 
-    if (clip.type == drift::ClipType::Image)
-        return decodedStillImage(clip.path, maxWidth, maxHeight);
+    if (clip.type != drift::ClipType::Image && clip.type != drift::ClipType::Video)
+        return {};
 
-    if (clip.type == drift::ClipType::Video) {
+    const QRectF crop = clip.sourceFrame;
+    const bool framed = crop != QRectF(0, 0, 1, 1);
+    const int boundW = framed ? qCeil(maxWidth / crop.width()) : maxWidth;
+    const int boundH = framed ? qCeil(maxHeight / crop.height()) : maxHeight;
+    QImage image;
+    if (clip.type == drift::ClipType::Image) {
+        image = decodedStillImage(clip.path, boundW, boundH);
+    } else {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
-        const QRectF crop = clip.sourceFrame;
-        const bool framed = crop != QRectF(0, 0, 1, 1);
-        QImage image = ClipReaderPool::instance().readVideoFrame(
-            read.path, streamIdFor(clip.id), read.sourceUs,
-            framed ? qCeil(maxWidth / crop.width()) : maxWidth,
-            framed ? qCeil(maxHeight / crop.height()) : maxHeight,
-            clip.rotationCorrection);
-        if (framed && !image.isNull()) {
-            const int left = qBound(0, qRound(crop.x() * image.width()), image.width() - 1);
-            const int top = qBound(0, qRound(crop.y() * image.height()), image.height() - 1);
-            image = image.copy(left, top,
-                               qBound(1, qRound(crop.width() * image.width()), image.width() - left),
-                               qBound(1, qRound(crop.height() * image.height()), image.height() - top));
-        }
-        return image;
+        image = ClipReaderPool::instance().readVideoFrame(read.path, streamIdFor(clip.id), read.sourceUs,
+                                                          boundW, boundH, clip.rotationCorrection);
     }
-
-    return {};
+    if (framed && !image.isNull()) {
+        const int left = qBound(0, qRound(crop.x() * image.width()), image.width() - 1);
+        const int top = qBound(0, qRound(crop.y() * image.height()), image.height() - 1);
+        image = image.copy(left, top,
+                           qBound(1, qRound(crop.width() * image.width()), image.width() - left),
+                           qBound(1, qRound(crop.height() * image.height()), image.height() - top));
+    }
+    return image;
 }
 
 // maxWidth/maxHeight bound the decoded frame; the returned image may be smaller

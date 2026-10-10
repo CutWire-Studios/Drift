@@ -954,7 +954,7 @@ ApplicationWindow {
         w.openFor(assetIndex)
     }
 
-    function openSourceFrame(track, clip) {
+    function openCrop(track, clip) {
         mediaPreviewWindowLoader.ensure().openClip(track, clip)
     }
 

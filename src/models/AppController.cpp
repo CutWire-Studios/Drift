@@ -3524,7 +3524,7 @@ void applyAssetLayout(drift::Clip &clip, const QVariantMap &asset, int canvasW, 
     const int rotation = asset.value(QStringLiteral("effectiveRotation")).toInt();
     if (rotation == 90 || rotation == 270)
         std::swap(mediaW, mediaH);
-    if (clip.type == drift::ClipType::Video) {
+    if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image) {
         clip.sourceFrame = asset.value(QStringLiteral("sourceFrame"), QRectF(0, 0, 1, 1)).toRectF();
         if (mediaW > 0 && mediaH > 0) {
             mediaW = qMax(1, qRound(mediaW * clip.sourceFrame.width()));
@@ -5313,7 +5313,8 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
     for (int t = 0; t < m_project.tracks().size(); ++t) {
         for (int c = 0; c < m_project.tracks().at(t).clips.size(); ++c) {
             const auto &old = m_project.tracks().at(t).clips.at(c);
-            if (old.id != clipId || old.type != drift::ClipType::Video)
+            if (old.id != clipId
+                || (old.type != drift::ClipType::Video && old.type != drift::ClipType::Image))
                 continue;
             if (old.sourceFrame == frame)
                 return true;
@@ -5346,8 +5347,8 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
                     scaleTrack(clip.transformH, next.height() / previous.height());
                 }
             }
-            pushProjectEdit(before, tr("Frame video"));
-            finishEdit(tr("Video framing saved"));
+            pushProjectEdit(before, tr("Crop clip"));
+            finishEdit(tr("Crop saved"));
             return true;
         }
     }
@@ -5377,8 +5378,22 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
         return false;
     }
 
-    // Video never re-encodes: the crop is stored as the asset's source frame and the range goes
-    // through the same non-destructive trim as the plain-trim path below.
+    // Video and images never re-encode: the crop is stored as the asset's source frame and a
+    // video's range goes through the same non-destructive trim as the plain-trim path below.
+    if (kind == QStringLiteral("image")) {
+        const QRectF frame = drift::normalizedSourceFrame(cropX, cropY, cropW, cropH);
+        drift::MediaAsset *media = m_project.asset(assetId);
+        if (media->sourceFrame == frame) {
+            emit assetEditFinished(true, QString());
+            return true;
+        }
+        const drift::Project before = m_project.detachedCopy();
+        media->sourceFrame = frame;
+        pushProjectEdit(before, tr("Crop image"));
+        finishEdit(tr("Crop saved"));
+        emit assetEditFinished(true, QString());
+        return true;
+    }
     if (kind == QStringLiteral("video")) {
         if (!std::isfinite(inSeconds) || !std::isfinite(outSeconds))
             return false;
@@ -5396,8 +5411,8 @@ bool AppController::saveAssetEdit(int assetIndex, double inSeconds, double outSe
             emit assetEditFinished(true, QString());
             return true;
         }
-        pushProjectEdit(before, tr("Frame source video"));
-        finishEdit(tr("Video framing saved"));
+        pushProjectEdit(before, tr("Crop video"));
+        finishEdit(tr("Crop saved"));
         emit assetEditFinished(true, QString());
         return true;
     }
