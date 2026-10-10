@@ -91,7 +91,7 @@ bool checkCompatible(const PackageInfo &info, QString *error);
 // .driftpkg metadata, minus the file table: its files are simply whatever is in the folder.
 std::optional<PackageInfo> parseFolderManifest(const QByteArray &json, QString *error);
 
-// True when the package provides an ONNX Runtime or execution provider, i.e. a library Drift loads.
+// True when the package provides a library Drift loads: ONNX Runtime, an execution provider, or PDFium.
 bool hasNativeCode(const PackageInfo &info);
 
 // Official: the digest and the Ed25519 signature against AddonSigningKey.h both check out.

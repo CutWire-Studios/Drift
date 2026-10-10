@@ -1,5 +1,6 @@
 #include "MediaThumbnail.h"
 
+#include "PdfClipRenderer.h"
 #include "VectorClipRenderer.h"
 #include "VectorInspect.h"
 
@@ -335,6 +336,34 @@ QString MediaThumbnail::generate(const QString &sourcePath, const QString &kind,
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
     if (absolutePath.isEmpty() || !QFile::exists(absolutePath))
         return {};
+
+    if (kind == QStringLiteral("pdf")) {
+        // The placeholder drawn without the addon gets its own file, so installing the addon
+        // renders the real page instead of finding the placeholder cached.
+        drift::PdfSource source;
+        source.path = absolutePath;
+        const bool probed = drift::probePdfSource(source);
+        const QString pdfPath = probed ? cachePathFor(absolutePath)
+                                       : cachePathFor(absolutePath).replace(
+                                             QStringLiteral(".jpg"), QStringLiteral("_noaddon.jpg"));
+        if (isValidCacheFile(pdfPath))
+            return pdfPath;
+        source.firstPage = 1;
+        source.lastPage = 1;
+        const QSizeF page = probed && !source.pageSizes.first().isEmpty() ? source.pageSizes.first()
+                                                                          : QSizeF(595.0, 842.0);
+        QSize size = page.toSize();
+        size.scale(kThumbnailMaxEdge, kThumbnailMaxEdge, Qt::KeepAspectRatio);
+        const QImage image = drift::renderPdfViewport(source, size.expandedTo({2, 2}));
+        if (image.isNull())
+            return {};
+        QImage flat(image.size(), QImage::Format_RGB32);
+        flat.fill(QColor(34, 34, 38));
+        QPainter p(&flat);
+        p.drawImage(0, 0, image);
+        p.end();
+        return flat.save(pdfPath, "JPG", 85) ? pdfPath : QString();
+    }
 
     const QString outPath = cachePathFor(absolutePath, rotationOverride, startUs);
     if (isValidCacheFile(outPath))

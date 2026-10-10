@@ -12,6 +12,8 @@
 #include "engine/FontCatalog.h"
 #include "engine/FacePropCatalog.h"
 #include "engine/OrtRuntime.h"
+#include "engine/PdfClipRenderer.h"
+#include "engine/PdfiumRuntime.h"
 #include "engine/StickerCatalog.h"
 #include "engine/TransitionCatalog.h"
 #include "core/ZipArchive.h"
@@ -716,6 +718,12 @@ void AddonManager::reloadForKinds(const QStringList &kinds)
             // life of the process, so an install or removal only lands on the next launch —
             // whereas installing the first one, before anything has loaded, works immediately.
             if (!drift::ort::activeVariant().isEmpty())
+                m_runtimeRestartRequired = true;
+        } else if (kind == QLatin1String(drift::pdfium::kPdfiumKind)) {
+            // Placeholders drawn before the install must not outlive it.
+            drift::clearPdfRenderCaches();
+            // Same as the runtimes: a loaded library stays loaded for the life of the process.
+            if (drift::pdfium::loaded())
                 m_runtimeRestartRequired = true;
         }
         // whisper-model, sam2-model, face-model and object-model need nothing: sessions are

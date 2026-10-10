@@ -481,6 +481,8 @@ add_library(driftcore STATIC
     src/core/VectorSource.cpp
     src/core/Model3dSource.h
     src/core/Model3dSource.cpp
+    src/core/PdfSource.h
+    src/core/PdfSource.cpp
     src/core/ZipArchive.h
     src/core/ZipArchive.cpp
     src/core/DotLottie.h
@@ -686,6 +688,10 @@ add_library(driftengine STATIC
     src/engine/OrtSupport.h
     src/engine/OrtRuntime.h
     src/engine/OrtRuntime.cpp
+    src/engine/PdfClipRenderer.h
+    src/engine/PdfClipRenderer.cpp
+    src/engine/PdfiumRuntime.h
+    src/engine/PdfiumRuntime.cpp
     src/engine/Sam2Segmenter.h
     src/engine/Sam2Segmenter.cpp
     src/engine/RvmMatter.h
@@ -1227,6 +1233,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/VoiceoverDialog.qml
         src/qml/components/properties/VectorInspector.qml
         src/qml/components/properties/Model3DInspector.qml
+        src/qml/components/properties/PdfInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
         src/qml/components/properties/FacePropPicker.qml

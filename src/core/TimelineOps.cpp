@@ -184,6 +184,7 @@ TrackType trackTypeForClipType(ClipType type)
     case ClipType::Shape:
     case ClipType::Vector:
     case ClipType::Model3d:
+    case ClipType::Pdf:
         return TrackType::Shape;
     case ClipType::Adjustment:
         return TrackType::Adjustment;
@@ -1112,7 +1113,8 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
     }
 
     if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Vector
-        || clip.type == ClipType::Model3d || clip.type == ClipType::Adjustment)
+        || clip.type == ClipType::Model3d || clip.type == ClipType::Pdf
+        || clip.type == ClipType::Adjustment)
         return kImageClipDurationUs;
 
     return qMax(clip.srcOut, clip.timelineDuration);
@@ -1549,6 +1551,7 @@ void forEachKeyframeTrack(Clip &clip, Fn &&fn)
     visitMap(clip.textStyle.keyframes);
     visitMap(clip.vector.keyframes);
     visitMap(clip.model3d.keyframes);
+    visitMap(clip.pdf.keyframes);
 }
 
 } // namespace

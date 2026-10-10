@@ -635,6 +635,7 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "pdf" ? Theme.icons.fileText
                             : kind === "model3d" ? Theme.icons.box
                             : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
@@ -835,6 +836,7 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "pdf" ? Theme.icons.fileText
                             : kind === "model3d" ? Theme.icons.box
                             : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film
@@ -1128,6 +1130,7 @@ Item {
                         glyph: listRow.isFolder ? Theme.icons.folder
                                : (kind === "audio" ? Theme.icons.music
                                   : kind === "vector" ? Theme.icons.layers
+                                  : kind === "pdf" ? Theme.icons.fileText
                                   : kind === "model3d" ? Theme.icons.box
                                   : kind === "composite" ? Theme.icons.layers : Theme.icons.film)
                         iconSize: Theme.iconSizeBase
@@ -1302,6 +1305,7 @@ Item {
                     glyph: kind === "audio" ? Theme.icons.music
                             : kind === "image" ? Theme.icons.image
                             : kind === "vector" ? Theme.icons.layers
+                            : kind === "pdf" ? Theme.icons.fileText
                             : kind === "model3d" ? Theme.icons.box
                             : kind === "composite" ? Theme.icons.layers
                             : Theme.icons.film

@@ -1403,6 +1403,8 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
                         clip.vector.path = clip.path;
                     if (clip.type == drift::ClipType::Model3d)
                         clip.model3d.path = clip.path;
+                    if (clip.type == drift::ClipType::Pdf)
+                        clip.pdf.path = clip.path;
                 }
             }
         }

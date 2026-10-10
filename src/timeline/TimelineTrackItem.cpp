@@ -1172,7 +1172,8 @@ void TimelineTrackItem::buildFilmstrip(int index, const QRectF &body, double inP
         return;
 
     const bool singleFrame = row.kind == QLatin1String("image") || row.kind == QLatin1String("vector")
-                             || row.kind == QLatin1String("model3d");
+                             || row.kind == QLatin1String("model3d")
+                             || row.kind == QLatin1String("pdf");
     const int frameCount = singleFrame ? 1 : kFilmstripFrameCount;
     const QString sourcePath = row.kind == QLatin1String("video") ? row.path : QString();
     const qreal dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;

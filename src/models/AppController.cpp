@@ -3,6 +3,8 @@
 #include "preview/PreviewController.h"
 
 #include "AddonManager.h"
+#include "engine/PdfClipRenderer.h"
+#include "engine/PdfiumRuntime.h"
 #include "AssetLibrary.h"
 #include "MarketClient.h"
 #include "FileDialogs.h"
@@ -575,6 +577,29 @@ void AppController::setAddonManager(AddonManager *manager)
     m_addonManager = manager;
     if (manager && m_tts)
         connect(manager, &AddonManager::kindChanged, m_tts, &TtsController::refreshAvailability);
+    if (manager) {
+        connect(manager, &AddonManager::kindChanged, this, [this](const QString &kind) {
+            if (kind != QLatin1String(drift::pdfium::kPdfiumKind))
+                return;
+            drift::clearPdfRenderCaches();
+            // Clips attached before the addon existed have no page list; fill it in place, outside
+            // the undo stack, since the file itself is unchanged.
+            bool probed = false;
+            for (drift::Track &track : m_project.tracks()) {
+                for (drift::Clip &clip : track.clips) {
+                    if (clip.type == drift::ClipType::Pdf && clip.pdf.pageCount == 0)
+                        probed = drift::probePdfSource(clip.pdf) || probed;
+                }
+            }
+            if (m_assetLibrary)
+                m_assetLibrary->refreshPdfThumbnails();
+            if (probed) {
+                notifyTracksChanged();
+                emit selectedClipDataChanged();
+            }
+            m_playback.notifyProjectEdited();
+        });
+    }
 }
 
 AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
@@ -1925,6 +1950,33 @@ QVariantMap vectorSourceToMap(const drift::VectorSource &v, drift::TimeUs timeli
     return map;
 }
 
+QVariantMap pdfSourceToMap(const drift::PdfSource &s, drift::TimeUs timelineStart)
+{
+    QVariantMap keyframes;
+    for (auto it = s.keyframes.cbegin(); it != s.keyframes.cend(); ++it) {
+        if (!it->isEmpty())
+            keyframes.insert(it.key(), keyframeTrackToMap(it.value(), timelineStart));
+    }
+    QVariantMap map{
+        {QStringLiteral("path"), s.path},
+        {QStringLiteral("pageCount"), s.pageCount},
+        {QStringLiteral("firstPage"), s.firstPage},
+        {QStringLiteral("lastPage"), s.lastPage},
+        {QStringLiteral("layout"), drift::pdfLayoutToString(s.layout)},
+        {QStringLiteral("gridColumns"), s.gridColumns},
+        {QStringLiteral("gap"), s.gap},
+        {QStringLiteral("addonAvailable"), drift::pdfium::available()},
+    };
+    for (const QString &key : drift::pdfKeyframeProperties()) {
+        double v = 0.0;
+        drift::pdfScalar(s, key, &v);
+        map.insert(key, v);
+    }
+    if (!keyframes.isEmpty())
+        map.insert(QStringLiteral("keyframes"), keyframes);
+    return map;
+}
+
 QVariantMap model3dSourceToMap(const drift::Model3dSource &m, drift::TimeUs timelineStart)
 {
     QVariantList animations;
@@ -2400,6 +2452,7 @@ bool isSyntheticTimelineClip(drift::ClipType type)
     return type == drift::ClipType::Text || type == drift::ClipType::Subtitle
            || type == drift::ClipType::Shape || type == drift::ClipType::Image
            || type == drift::ClipType::Vector || type == drift::ClipType::Model3d
+           || type == drift::ClipType::Pdf
            || type == drift::ClipType::Adjustment;
 }
 
@@ -2422,6 +2475,7 @@ bool clipAcceptsPreviewTransform(const drift::Clip &clip)
 {
     return clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Image
            || clip.type == drift::ClipType::Vector || clip.type == drift::ClipType::Model3d
+           || clip.type == drift::ClipType::Pdf
            || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle
            || clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite
            || (clip.type == drift::ClipType::Adjustment
@@ -2585,6 +2639,25 @@ bool parseModel3dProp(const drift::Clip &clip, const QString &prop, QString *key
     return true;
 }
 
+// A PDF viewport scalar is addressed as "pdf.<key>" ("pdf.scrollY", "pdf.zoom").
+bool parsePdfProp(const drift::Clip &clip, const QString &prop, QString *key)
+{
+    if (clip.type != drift::ClipType::Pdf || !prop.startsWith(QLatin1String("pdf.")))
+        return false;
+    const QString candidate = prop.mid(4);
+    double probe = 0.0;
+    if (!drift::pdfScalar(clip.pdf, candidate, &probe))
+        return false;
+    *key = candidate;
+    return true;
+}
+
+bool looksLikePdfProp(const QString &prop)
+{
+    double value = 0.0;
+    return prop.startsWith(QLatin1String("pdf.")) && drift::pdfScalar({}, prop.mid(4), &value);
+}
+
 bool looksLikeModel3dProp(const QString &prop)
 {
     if (!prop.startsWith(QLatin1String("model3d.")))
@@ -2672,6 +2745,13 @@ drift::KeyframeTrack<double> *keyframeTrackForProp(drift::Clip &clip, const QStr
         const auto it = clip.model3d.keyframes.find(modelKey);
         return it == clip.model3d.keyframes.end() ? nullptr : &it.value();
     }
+    QString pdfKey;
+    if (parsePdfProp(clip, prop, &pdfKey)) {
+        if (createIfMissing)
+            return &clip.pdf.keyframes[pdfKey];
+        const auto it = clip.pdf.keyframes.find(pdfKey);
+        return it == clip.pdf.keyframes.end() ? nullptr : &it.value();
+    }
 
     int effectIndex = -1;
     QString paramKey;
@@ -2725,7 +2805,7 @@ bool isKnownKeyframeProp(const QString &prop)
     if (parseMaskProp(prop, &maskKey))
         return true;
     if (looksLikeTextProp(prop) || looksLikeShapeProp(prop) || looksLikeVectorProp(prop)
-        || looksLikeModel3dProp(prop))
+        || looksLikeModel3dProp(prop) || looksLikePdfProp(prop))
         return true;
     drift::Clip probe;
     return transformTrackForProp(probe, prop) != nullptr;
@@ -2744,6 +2824,7 @@ QString normalizeKeyframeProp(const QString &prop)
                    || trimmed.startsWith(QLatin1String("text."))
                    || trimmed.startsWith(QLatin1String("shape.")) || trimmed.startsWith(QLatin1String("vector."))
                    || trimmed.startsWith(QLatin1String("model3d."))
+                   || trimmed.startsWith(QLatin1String("pdf."))
                ? trimmed
                : trimmed.toLower();
 }
@@ -2887,6 +2968,17 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
         if (!writeKeyframeValue(clip.model3d.keyframes[modelKey], relative, value, autoKey, force))
             return false;
         drift::setModel3dScalar(clip.model3d, modelKey, value);
+        return true;
+    }
+    QString pdfKey;
+    if (parsePdfProp(clip, prop, &pdfKey)) {
+        const auto existing = clip.pdf.keyframes.constFind(pdfKey);
+        const bool keyed = existing != clip.pdf.keyframes.constEnd() && !existing->isEmpty();
+        if (!keyed && !force && !autoKey)
+            return drift::setPdfScalar(clip.pdf, pdfKey, value);
+        if (!writeKeyframeValue(clip.pdf.keyframes[pdfKey], relative, value, autoKey, force))
+            return false;
+        drift::setPdfScalar(clip.pdf, pdfKey, value);
         return true;
     }
 
@@ -3380,6 +3472,11 @@ void attachAssetSource(drift::Clip &clip)
     if (clip.type == drift::ClipType::Model3d) {
         clip.model3d.path = clip.path;
         probeModel3dSource(clip.model3d);
+        return;
+    }
+    if (clip.type == drift::ClipType::Pdf) {
+        clip.pdf.path = clip.path;
+        drift::probePdfSource(clip.pdf);
         return;
     }
     if (clip.type != drift::ClipType::Vector)
@@ -4311,6 +4408,8 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         map.insert(QStringLiteral("vector"), vectorSourceToMap(clip.vector, clip.timelineStart));
     if (clip.type == drift::ClipType::Model3d)
         map.insert(QStringLiteral("model3d"), model3dSourceToMap(clip.model3d, clip.timelineStart));
+    if (clip.type == drift::ClipType::Pdf)
+        map.insert(QStringLiteral("pdf"), pdfSourceToMap(clip.pdf, clip.timelineStart));
     return map;
 }
 
@@ -17003,6 +17102,46 @@ QString AppController::setVectorOptions(int trackIndex, int clipIndex, const QVa
     return {};
 }
 
+QString AppController::setPdfOptions(int trackIndex, int clipIndex, const QVariantMap &opts)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Pdf)
+        return QStringLiteral("not a PDF clip");
+    static const QStringList kKeys = {QStringLiteral("firstPage"), QStringLiteral("lastPage"),
+                                      QStringLiteral("layout"), QStringLiteral("gridColumns"),
+                                      QStringLiteral("gap")};
+    bool any = false;
+    for (const QString &key : kKeys)
+        any = any || opts.contains(key);
+    if (!any)
+        return QStringLiteral("nothing to change: firstPage, lastPage, layout, gridColumns or gap required");
+
+    const drift::Project before = m_project;
+    drift::PdfSource &pdf = m_project.tracks()[trackIndex].clips[clipIndex].pdf;
+    const int maxPage = pdf.pageCount > 0 ? pdf.pageCount : 9999;
+    if (opts.contains(QStringLiteral("firstPage")))
+        pdf.firstPage = qBound(1, opts.value(QStringLiteral("firstPage")).toInt(), maxPage);
+    if (opts.contains(QStringLiteral("lastPage"))) {
+        const int last = opts.value(QStringLiteral("lastPage")).toInt();
+        pdf.lastPage = last <= 0 ? 0 : qMin(last, maxPage);
+    }
+    if (pdf.lastPage > 0 && pdf.lastPage < pdf.firstPage) {
+        if (opts.contains(QStringLiteral("lastPage")))
+            pdf.firstPage = pdf.lastPage;
+        else
+            pdf.lastPage = pdf.firstPage;
+    }
+    if (opts.contains(QStringLiteral("layout")))
+        pdf.layout = drift::pdfLayoutFromString(opts.value(QStringLiteral("layout")).toString());
+    if (opts.contains(QStringLiteral("gridColumns")))
+        pdf.gridColumns = qBound(1, opts.value(QStringLiteral("gridColumns")).toInt(), 20);
+    if (opts.contains(QStringLiteral("gap")))
+        pdf.gap = qBound(0.0, opts.value(QStringLiteral("gap")).toDouble(), 200.0);
+    pushProjectEdit(before, tr("PDF options"));
+    finishEdit(tr("PDF options updated"));
+    return {};
+}
+
 QString AppController::setVectorSlot(int trackIndex, int clipIndex, const QString &name,
                                      const QVariant &value)
 {
@@ -17940,6 +18079,9 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
             QString modelKey;
             if (parseModel3dProp(clip, prop, &modelKey) && drift::model3dScalar(clip.model3d, modelKey, &scalar))
                 return scalar;
+            QString pdfKey;
+            if (parsePdfProp(clip, prop, &pdfKey) && drift::pdfScalar(clip.pdf, pdfKey, &scalar))
+                return scalar;
         }
     }
     return fallback;
@@ -18137,6 +18279,13 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
                 out.append(QStringLiteral("model3d.%1").arg(key));
         }
     }
+    if (clip.type == drift::ClipType::Pdf) {
+        for (const QString &key : drift::pdfKeyframeProperties()) {
+            const auto it = clip.pdf.keyframes.constFind(key);
+            if (it != clip.pdf.keyframes.constEnd() && !it->isEmpty())
+                out.append(QStringLiteral("pdf.%1").arg(key));
+        }
+    }
     return out;
 }
 
@@ -18329,7 +18478,8 @@ void AppController::resetClipTransform(int trackIndex, int clipIndex)
     if (clip.type == drift::ClipType::Vector) {
         mediaW = clip.vector.width;
         mediaH = clip.vector.height;
-    } else if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image) {
+    } else if (clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Image
+               || clip.type == drift::ClipType::Pdf) {
         if (const drift::MediaAsset *asset = m_project.asset(clip.assetId)) {
             mediaW = asset->width;
             mediaH = asset->height;
@@ -23945,6 +24095,8 @@ QString AppController::keyframePropertyLabel(int trackIndex, int clipIndex, cons
         return drift::shapeKeyframeLabel(prop.mid(6), clip ? clip->shapeStyle : drift::ShapeStyle{});
     if (prop.startsWith(QLatin1String("model3d.")))
         return drift::model3dKeyframeLabel(prop.mid(8));
+    if (prop.startsWith(QLatin1String("pdf.")))
+        return drift::pdfKeyframeLabel(prop.mid(4));
     if (prop.startsWith(QLatin1String("vector."))) {
         QString key = prop.mid(7);
         QString channel;

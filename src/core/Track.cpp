@@ -73,7 +73,8 @@ bool Track::allowsClipType(ClipType clipType) const
         return clipType == ClipType::Subtitle;
     case TrackType::Shape:
         return clipType == ClipType::Image || clipType == ClipType::Shape
-            || clipType == ClipType::Vector || clipType == ClipType::Model3d;
+            || clipType == ClipType::Vector || clipType == ClipType::Model3d
+            || clipType == ClipType::Pdf;
     case TrackType::Video:
         return clipType == ClipType::Video || clipType == ClipType::Composite;
     case TrackType::Adjustment:

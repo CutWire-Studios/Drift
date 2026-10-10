@@ -19,6 +19,7 @@
 #include "ModelAsset.h"
 #include "ModelClipRenderer.h"
 #include "VectorClipRenderer.h"
+#include "PdfClipRenderer.h"
 #include "core/Clip.h"
 #include "core/ClipAnimation.h"
 #include "core/MediaAsset.h"
@@ -312,10 +313,10 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
             if (clip.path.isEmpty())
                 continue;
-            // A vector clip's path is a .json/.svg and a model clip's a .glb the decoders must
-            // never open.
+            // A vector clip's path is a .json/.svg, a model clip's a .glb and a PDF clip's a .pdf
+            // the decoders must never open.
             if (clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Vector
-                || clip.type == drift::ClipType::Model3d)
+                || clip.type == drift::ClipType::Model3d || clip.type == drift::ClipType::Pdf)
                 continue;
 
             if ((track.type == drift::TrackType::Video || track.type == drift::TrackType::Shape)
@@ -1224,6 +1225,11 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         // start offset and folds by the loop mode.
         request.animUs = clip.timelineToSourceUs(timelineUs) - clip.srcIn;
         layer.vector = drift::vec::makePainter(request);
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
+    } else if (clip.type == drift::ClipType::Pdf) {
+        layer.source = drift::renderPdfViewport(
+            clip.pdf.resolvedAt(clip.timelineToSourceUs(timelineUs) - clip.srcIn),
+            QSize(layoutW, layoutH));
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
     } else if (clip.type == drift::ClipType::Model3d) {
         drift::model3d::RenderRequest request;

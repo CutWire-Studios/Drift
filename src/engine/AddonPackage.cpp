@@ -395,7 +395,8 @@ std::optional<PackageInfo> parseFolderManifest(const QByteArray &json, QString *
 bool hasNativeCode(const PackageInfo &info)
 {
     for (const PackageProvide &provide : info.provides) {
-        if (provide.kind == QLatin1String("onnxruntime") || provide.kind == QLatin1String("onnxruntime-ep"))
+        if (provide.kind == QLatin1String("onnxruntime") || provide.kind == QLatin1String("onnxruntime-ep")
+            || provide.kind == QLatin1String("pdfium"))
             return true;
     }
     return false;

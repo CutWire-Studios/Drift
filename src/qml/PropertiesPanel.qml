@@ -107,6 +107,7 @@ PanelFrame {
         "shape": qsTr("Shape"),
         "vector": qsTr("Motion"),
         "model3d": qsTr("3D Model"),
+        "pdf": qsTr("PDF"),
         "subtitles": qsTr("Subtitles"),
         "transform": qsTr("Transform"),
         "camera": qsTr("Camera"),
@@ -132,6 +133,7 @@ PanelFrame {
         ListElement { tabId: "shape"; icon: 2; group: 0 }
         ListElement { tabId: "vector"; icon: 14; group: 0 }
         ListElement { tabId: "model3d"; icon: 15; group: 0 }
+        ListElement { tabId: "pdf"; icon: 17; group: 0 }
         ListElement { tabId: "subtitles"; icon: 3; group: 0 }
         ListElement { tabId: "transform"; icon: 4; group: 1 }
         ListElement { tabId: "camera"; icon: 16; group: 1 }
@@ -162,7 +164,8 @@ PanelFrame {
         Theme.icons.chevronsRight,
         Theme.icons.layers,
         Theme.icons.box,
-        Theme.icons.video
+        Theme.icons.video,
+        Theme.icons.fileText
     ]
 
     function tabVisible(tabId) {
@@ -196,12 +199,14 @@ PanelFrame {
             return root.clipKind === "vector"
         if (tabId === "model3d")
             return root.clipKind === "model3d"
+        if (tabId === "pdf")
+            return root.clipKind === "pdf"
         if (tabId === "text")
             return root.hasTextStyle
         if (tabId === "animation")
             return root.clipKind === "video" || root.clipKind === "image"
                    || root.clipKind === "shape" || root.clipKind === "text"
-                   || root.clipKind === "vector" || root.clipKind === "audio"
+                   || root.clipKind === "vector" || root.clipKind === "pdf" || root.clipKind === "audio"
                    || root.clipKind === "composite"
         if (tabId === "stabilize")
             return root.clipKind === "video"
@@ -798,6 +803,12 @@ PanelFrame {
                     active: root.currentTabId === "model3d"
                     visible: active
                     sourceComponent: Component { Model3DInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "pdf"
+                    visible: active
+                    sourceComponent: Component { PdfInspector { width: tabColumn.width } }
                 }
 
                 Loader {

@@ -5,6 +5,7 @@
 #include "engine/MediaProbe.h"
 #include "engine/MediaThumbnail.h"
 #include "engine/ModelAsset.h"
+#include "engine/PdfClipRenderer.h"
 #include "engine/PreviewProxyRenderer.h"
 #include "engine/ReverseProxyCache.h"
 #include "engine/VectorInspect.h"
@@ -284,6 +285,8 @@ drift::MediaKind provisionalKind(const QString &path)
         return drift::MediaKind::Model3d;
     if (AssetLibrary::isVectorPath(path))
         return drift::MediaKind::Vector;
+    if (AssetLibrary::isPdfPath(path))
+        return drift::MediaKind::Pdf;
     if (AssetLibrary::isImagePath(path))
         return drift::MediaKind::Image;
     if (AssetLibrary::isAudioPath(path))
@@ -447,6 +450,31 @@ std::optional<drift::MediaAsset> buildVectorAsset(const QString &absolutePath, c
     return asset;
 }
 
+// A PDF: sized from its first page when the PDF viewer addon is installed, otherwise A4. The page
+// count is not kept on the asset; the clip probes it when attached.
+std::optional<drift::MediaAsset> buildPdfAsset(const QString &absolutePath, const QString &name)
+{
+    drift::PdfSource source;
+    source.path = absolutePath;
+    QSizeF firstPage(595.0, 842.0);
+    if (drift::probePdfSource(source) && !source.pageSizes.first().isEmpty())
+        firstPage = source.pageSizes.first();
+    const QString thumb =
+        MediaThumbnail::generate(absolutePath, drift::mediaKindToString(drift::MediaKind::Pdf));
+
+    drift::MediaAsset asset;
+    asset.name = name;
+    asset.path = absolutePath;
+    asset.kind = drift::MediaKind::Pdf;
+    asset.width = qRound(firstPage.width() * 2.0);
+    asset.height = qRound(firstPage.height() * 2.0);
+    asset.thumbnailPath = thumb;
+    asset.filmstripPath = thumb;
+    asset.hasAudio = false;
+    asset.hasAudioKnown = true;
+    return asset;
+}
+
 // A glTF binary: parsed by the model loader. No thumbnail — the bin shows a placeholder icon.
 std::optional<drift::MediaAsset> buildModelAsset(const QString &absolutePath, const QString &name)
 {
@@ -477,6 +505,8 @@ std::optional<drift::MediaAsset> probeAsset(const QString &absolutePath, bool im
         return buildModelAsset(absolutePath, name);
     if (AssetLibrary::isVectorPath(absolutePath))
         return buildVectorAsset(absolutePath, name);
+    if (AssetLibrary::isPdfPath(absolutePath))
+        return buildPdfAsset(absolutePath, name);
     if (imageOnly && !isAnimatedImage(absolutePath))
         return buildImageAsset(absolutePath, name);
 
@@ -544,6 +574,11 @@ bool AssetLibrary::isVectorPath(const QString &path)
     return suffix == QLatin1String("json") || suffix == QLatin1String("svg") || drift::isDotLottiePath(path);
 }
 
+bool AssetLibrary::isPdfPath(const QString &path)
+{
+    return QFileInfo(path).suffix().toLower() == QLatin1String("pdf");
+}
+
 // Only the binary container: a .gltf references sidecar .bin/texture files that bundling and
 // relink would not carry along.
 bool AssetLibrary::isModelPath(const QString &path)
@@ -554,7 +589,7 @@ bool AssetLibrary::isModelPath(const QString &path)
 bool AssetLibrary::isMediaPath(const QString &path)
 {
     return isVideoPath(path) || isAudioPath(path) || isImagePath(path) || isVectorPath(path)
-        || isModelPath(path);
+        || isPdfPath(path) || isModelPath(path);
 }
 
 // A picked document's DISPLAY_NAME is whatever its provider chose to report, and the import copy
@@ -622,6 +657,7 @@ QString AssetLibrary::mediaNameFilter() const
         globs.append(QStringLiteral("*.json"));
         globs.append(QStringLiteral("*.lottie"));
         globs.append(QStringLiteral("*.glb"));
+        globs.append(QStringLiteral("*.pdf"));
         return globs.join(QLatin1Char(' '));
     }();
     return tr("Media files (%1)").arg(pattern);
@@ -1537,6 +1573,21 @@ bool AssetLibrary::setAssetRotation(int index, int degrees)
     startThumbJob(asset->id);
     snapshotAssets();
     return true;
+}
+
+void AssetLibrary::refreshPdfThumbnails()
+{
+    if (!m_project)
+        return;
+    for (int i = 0; i < m_project->assetOrder().size(); ++i) {
+        drift::MediaAsset *asset = assetAtIndex(i);
+        if (!asset || asset->kind != drift::MediaKind::Pdf)
+            continue;
+        asset->thumbnailPath.clear();
+        asset->filmstripPath.clear();
+        emitAssetRowChanged(i, {ThumbnailPathRole, FilmstripPathRole});
+        startThumbJob(asset->id);
+    }
 }
 
 bool AssetLibrary::setAssetTrim(int index, qint64 trimInUs, qint64 trimOutUs)

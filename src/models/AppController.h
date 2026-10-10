@@ -1176,6 +1176,8 @@ public:
     Q_INVOKABLE QVariantMap setVectorSource(int trackIndex, int clipIndex, const QString &source,
                                             const QVariantMap &opts = {});
     Q_INVOKABLE QString setVectorOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
+    // Keys: firstPage, lastPage (0 = through the end), layout, gridColumns, gap.
+    Q_INVOKABLE QString setPdfOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
     // A null/invalid value removes the override. Returns an error string, empty on success.
     Q_INVOKABLE QString setVectorSlot(int trackIndex, int clipIndex, const QString &name,
                                       const QVariant &value);

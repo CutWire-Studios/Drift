@@ -80,6 +80,7 @@ public:
     static bool isAudioPath(const QString &path);
     static bool isImagePath(const QString &path);
     static bool isVectorPath(const QString &path);
+    static bool isPdfPath(const QString &path);
     static bool isModelPath(const QString &path);
     static bool isMediaPath(const QString &path);
     // The file name a picked document's copy in app storage should carry. Only used on Android,
@@ -120,6 +121,9 @@ public:
     // invokable from QML on purpose: like setAssetName, the caller owns the undo snapshot
     // (AppController::setAssetRotation).
     bool setAssetRotation(int index, int degrees);
+    // Redraws every PDF's bin thumbnail; used after the PDF viewer addon is installed, when the
+    // ones drawn without it are placeholders.
+    void refreshPdfThumbnails();
     // Non-destructive bin-preview trim (microseconds); trimOutUs < 0 resets to the full duration.
     // Never touches the source file — applied to a clip's srcIn/srcOut when placed on the
     // timeline (see AppController::applyAssetLayout). Undo snapshot is the caller's, as above.

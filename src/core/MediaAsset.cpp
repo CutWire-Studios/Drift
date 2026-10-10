@@ -36,6 +36,8 @@ QString mediaKindToString(MediaKind kind)
         return QStringLiteral("vector");
     case MediaKind::Model3d:
         return QStringLiteral("model3d");
+    case MediaKind::Pdf:
+        return QStringLiteral("pdf");
     case MediaKind::Composite:
         return QStringLiteral("composite");
     case MediaKind::Other:
@@ -56,6 +58,8 @@ MediaKind mediaKindFromString(const QString &kind)
         return MediaKind::Vector;
     if (kind == QStringLiteral("model3d"))
         return MediaKind::Model3d;
+    if (kind == QStringLiteral("pdf"))
+        return MediaKind::Pdf;
     if (kind == QStringLiteral("composite"))
         return MediaKind::Composite;
     return MediaKind::Other;

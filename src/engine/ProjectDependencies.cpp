@@ -267,6 +267,7 @@ QList<AddonRef> collectAddons(const Project &project)
     };
 
     bool usesEmoji = false;
+    bool usesPdf = false;
 
     QList<Track> allTracks;
     project.forEachTrackList([&](const QList<Track> &tracks) { allTracks.append(tracks); });
@@ -296,6 +297,7 @@ QList<AddonRef> collectAddons(const Project &project)
             // media resolves to no addon at all, so this is a cheap miss for ordinary clips.
             addForPath(clip.path, QString());
             usesEmoji = usesEmoji || !clip.emoji.isEmpty();
+            usesPdf = usesPdf || clip.type == ClipType::Pdf;
         }
         for (const Transition &transition : track.transitions) {
             if (const TransitionPresetEntry *def = transitionDefForId(transition.kindId))
@@ -307,6 +309,19 @@ QList<AddonRef> collectAddons(const Project &project)
     if (usesEmoji) {
         for (const QString &root : addon::addonRootsForKind(QStringLiteral("emoji-font")))
             addForPath(root, QStringLiteral("emoji-font"));
+    }
+
+    // The library is not a path any clip points into, so find it by the kind it provides.
+    if (usesPdf) {
+        for (const addon::InstalledAddon &installed : addon::installedAddons()) {
+            const bool provides = std::any_of(
+                installed.provides.cbegin(), installed.provides.cend(),
+                [](const addon::InstalledProvide &p) { return p.kind == QLatin1String("pdfium"); });
+            if (provides) {
+                addAddon(&installed, QStringLiteral("pdfium"), &addons, &seen);
+                break;
+            }
+        }
     }
 
     return addons;

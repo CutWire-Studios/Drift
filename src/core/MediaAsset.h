@@ -32,7 +32,7 @@ inline QRectF sourceFrameFromJson(const QJsonArray &a)
 }
 
 // Composite has no file: it is the bin entry for a nested timeline (sequenceId).
-enum class MediaKind { Video, Audio, Image, Vector, Model3d, Composite, Other };
+enum class MediaKind { Video, Audio, Image, Vector, Model3d, Pdf, Composite, Other };
 
 // Suffixes Drift treats as still images. Lives in core rather than next to the other media lists
 // in AssetLibrary because the engine needs it too — FrameCompositor classifies mask media by it,
