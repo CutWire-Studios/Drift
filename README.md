@@ -21,6 +21,24 @@
   <a href="https://cutwire.org/drift"><strong>cutwire.org/drift</strong></a>
 </p>
 
+<p align="center">
+  Translations:
+  <a href="README-i18n/README.ar.md">العربية</a> ·
+  <a href="README-i18n/README.bn.md">বাংলা</a> ·
+  <a href="README-i18n/README.es.md">Español</a> ·
+  <a href="README-i18n/README.fr.md">Français</a> ·
+  <a href="README-i18n/README.it.md">Italiano</a> ·
+  <a href="README-i18n/README.ja.md">日本語</a> ·
+  <a href="README-i18n/README.ko.md">한국어</a> ·
+  <a href="README-i18n/README.pl.md">Polski</a> ·
+  <a href="README-i18n/README.pt.md">Português</a> ·
+  <a href="README-i18n/README.ru.md">Русский</a> ·
+  <a href="README-i18n/README.si.md">සිංහල</a> ·
+  <a href="README-i18n/README.tl.md">Tagalog</a> ·
+  <a href="README-i18n/README.vi.md">Tiếng Việt</a> ·
+  <a href="README-i18n/README.zh-Hans.md">简体中文</a>
+</p>
+
 Drift is a desktop video editor from CutWire Studios. Drop in clips, add effects, captions, stickers,
 and music, then export a polished video — with **no subscription, no watermark, and no account**.
 
