@@ -8542,6 +8542,9 @@ void AppController::duplicateSelectedClip()
     const drift::Clip original = track.clips.at(m_selectedClip);
     drift::Clip copy = original;
     copy.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    // Sharing the original's linkId would pair the copy with the original's partners.
+    copy.linkId.clear();
+    copy.linkLoose = false;
     copy.timelineStart = drift::resolveClipStart(
         m_project, track, -1, original.timelineEnd(), original.timelineDuration, m_snapEnabled, m_playheadUs);
 
@@ -21840,6 +21843,14 @@ void AppController::pasteAtPlayhead()
     // By id: a later clip can insert a track above an earlier one, and normalizing the edit can
     // reorder tracks, so positions taken here go stale.
     QStringList inserted;
+    // Pasted clips stay linked to each other under a fresh id, never to the clips they were
+    // copied from; one pasted without any of its partners comes in unlinked.
+    QHash<QString, int> linkCounts;
+    for (const ClipboardItem &item : m_clipboard) {
+        if (!item.clip.linkId.isEmpty())
+            ++linkCounts[item.clip.linkId];
+    }
+    QHash<QString, QString> pastedLinkIds;
 
     for (const ClipboardItem &item : m_clipboard) {
         // Composites live on the main timeline only, and never outlive their sequence.
@@ -21849,6 +21860,15 @@ void AppController::pasteAtPlayhead()
         drift::Clip clip = item.clip;
         clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
         clip.timelineStart = qMax<drift::TimeUs>(0, clip.timelineStart + shift);
+        if (linkCounts.value(clip.linkId) > 1) {
+            auto it = pastedLinkIds.find(clip.linkId);
+            if (it == pastedLinkIds.end())
+                it = pastedLinkIds.insert(clip.linkId, newClipId());
+            clip.linkId = *it;
+        } else {
+            clip.linkId.clear();
+            clip.linkLoose = false;
+        }
 
         int targetTrack = -1;
         for (int i = 0; i < m_project.tracks().size(); ++i) {

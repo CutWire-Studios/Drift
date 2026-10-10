@@ -224,6 +224,7 @@ private slots:
     void separatedAudioTracksMirrorVideoHierarchy();
     void linkedAudioUnlinkAndMove();
     void linkUnrelatedClipsMoveTogetherKeepTiming();
+    void pastedAndDuplicatedClipsAreNotLinkedToTheOriginal();
     void deleteLinkedPairTogetherAndUnlinkedClipAlone();
     void linkedFadeCurveSyncsPartner();
     void customFadeCurveSessionApplyAndCancel();
@@ -5086,6 +5087,36 @@ void EditorStateTest::linkUnrelatedClipsMoveTogetherKeepTiming()
     QVERIFY(!state.project()->tracks().at(1).clips.at(0).linkLoose);
     state.moveClip(0, 0, 0.0);
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(4.0));
+}
+
+void EditorStateTest::pastedAndDuplicatedClipsAreNotLinkedToTheOriginal()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+    const QString originalLink = state.project()->tracks().at(0).clips.at(0).linkId;
+
+    // The pasted pair is linked to itself, not to the pair it was copied from.
+    state.selectClip(0, 0);
+    state.copySelection();
+    state.setPlayheadSeconds(10.0);
+    state.pasteAtPlayhead();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    const QString pastedLink = state.project()->tracks().at(0).clips.at(1).linkId;
+    QVERIFY(!pastedLink.isEmpty());
+    QVERIFY(pastedLink != originalLink);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(1).linkId, pastedLink);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).linkId, originalLink);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).linkId, originalLink);
+
+    // A duplicate comes in on its own, and moving it leaves the original's audio alone.
+    state.selectClip(0, 0);
+    state.duplicateSelectedClip();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 3);
+    QVERIFY(state.project()->tracks().at(0).clips.at(2).linkId.isEmpty());
+    state.moveClip(0, 2, 20.0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, 0);
 }
 
 // The editor drives one session for two different shapes, so the mode has to survive begin/apply
