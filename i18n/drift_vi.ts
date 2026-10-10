@@ -11727,7 +11727,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Đang tải xuống…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15639,7 +15639,7 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Đang tải xuống…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
