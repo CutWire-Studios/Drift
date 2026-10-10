@@ -60,15 +60,15 @@
     </message>
     <message>
         <source>Another addon is still installing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolejny dodatek jest nadal instalowany.</translation>
     </message>
     <message>
         <source>This is not a Drift addon file.</source>
-        <translation type="unfinished"></translation>
+        <translation>To nie jest plik dodatku Drift.</translation>
     </message>
     <message>
         <source>Could not use this addon (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można użyć tego dodatku (%1).</translation>
     </message>
 </context>
 <context>
@@ -99,7 +99,7 @@
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalować ten efekt audio?</translation>
     </message>
     <message>
         <source>Install this effect?</source>
@@ -111,19 +111,19 @@
     </message>
     <message>
         <source>Install Addon</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj dodatek</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatki Drift (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalować nieoficjalny dodatek?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj mimo wszystko</translation>
     </message>
     <message>
         <source>“%1”</source>
@@ -131,15 +131,15 @@
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nie jest podpisany przez zespół Drift. Instaluj tylko pliki, którym ufasz.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawiera kod, który działa na Twoim komputerze.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>To zastąpi „%1”.</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
@@ -223,7 +223,7 @@
     </message>
     <message>
         <source>Retry</source>
-        <translation>Spróbuj ponownie</translation>
+        <translation>Ponów</translation>
     </message>
     <message>
         <source>Technical details</source>
@@ -243,11 +243,11 @@
     </message>
     <message>
         <source>Unofficial</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieoficjalny</translation>
     </message>
     <message>
         <source>Installed from file</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalowany z pliku</translation>
     </message>
     <message>
         <source>%1 download</source>
@@ -271,19 +271,19 @@
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>Własny</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj z pliku…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz folder dodatków</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished"></translation>
+        <translation>Umieść tutaj foldery dodatków, a następnie ponownie otwórz Extras</translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>
@@ -487,7 +487,7 @@
     <name>AndroidAddMenu</name>
     <message>
         <source>Add to timeline</source>
-        <translation>Dodaj do osi czsu</translation>
+        <translation>Dodaj do osi czasu</translation>
     </message>
     <message>
         <source>Media</source>
@@ -1886,7 +1886,7 @@
     </message>
     <message>
         <source>Redo</source>
-        <translation>Ponów</translation>
+        <translation>Wykonaj ponownie</translation>
     </message>
     <message>
         <source>Export</source>
@@ -2464,7 +2464,7 @@
     <message numerus="yes">
         <source>Imported %n subtitles</source>
         <translation>
-            <numerusform>Zaimportowano %n napisy</numerusform>
+            <numerusform>Zaimportowano %n napis</numerusform>
             <numerusform>Zaimportowano %n napisy</numerusform>
             <numerusform>Zaimportowano %n napisów</numerusform>
         </translation>
@@ -2492,9 +2492,9 @@
     <message numerus="yes">
         <source>Multicam ready: %n camera(s) lined up at the start. Drag a clip to adjust its sync, then pick a shot.</source>
         <translation>
-            <numerusform>Multicam gotowa: na początku ustawiono %n kamerę. Przeciągnij klip, aby skorygować synchronizację, a następnie wybierz ujęcie.</numerusform>
-            <numerusform>Multicam gotowy: na początku ustawiono %n kamery. Przeciągnij klipy, aby skorygować synchronizację, a następnie wybierz ujęcie.</numerusform>
-            <numerusform>Multicam gotowy: na początku ustawiono %n kamer. Przeciągnij klipy, aby skorygować synchronizację, a następnie wybierz ujęcie.</numerusform>
+            <numerusform>Tryb multicam gotowy: na początku ustawiono %n kamerę. Przeciągnij klip, aby skorygować synchronizację, a następnie wybierz ujęcie.</numerusform>
+            <numerusform>Tryb multicam gotowy: na początku ustawiono %n kamery. Przeciągnij klip, aby skorygować synchronizację, a następnie wybierz ujęcie.</numerusform>
+            <numerusform>Tryb multicam gotowy: na początku ustawiono %n kamer. Przeciągnij klip, aby skorygować synchronizację, a następnie wybierz ujęcie.</numerusform>
         </translation>
     </message>
     <message>
@@ -2608,9 +2608,9 @@
     <message numerus="yes">
         <source>%n media items and referenced clips removed</source>
         <translation>
-            <numerusform>Usunięto %n element multimedialny i powiązany klip</numerusform>
-            <numerusform>Usunięto %n elementy multimedialne i powiązanych klipy</numerusform>
-            <numerusform>Usunięto %n elementów multimedialnych i powiązanych klipów</numerusform>
+            <numerusform>Usunięto %n element multimedialny i powiązany z nim klip</numerusform>
+            <numerusform>Usunięto %n elementy multimedialne i powiązane z nimi klipy</numerusform>
+            <numerusform>Usunięto %n elementów multimedialnych i powiązanych z nimi klipów</numerusform>
         </translation>
     </message>
     <message>
@@ -3519,7 +3519,7 @@
     </message>
     <message>
         <source>%1 (stabilized)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (ustabilizowany)</translation>
     </message>
     <message>
         <source>Select a video clip to enhance</source>
@@ -3559,7 +3559,7 @@
     </message>
     <message>
         <source>The video this clip was stabilized from is no longer in the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo, z którego utworzono ustabilizowany klip, nie znajduje się już w bibliotece multimediów</translation>
     </message>
     <message>
         <source>Stabilization rendering failed.</source>
@@ -3571,7 +3571,7 @@
     </message>
     <message>
         <source>Stabilized video added to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustabilizowane wideo dodano do biblioteki multimediów</translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -3655,19 +3655,19 @@
     </message>
     <message>
         <source>Enable depth occlusion</source>
-        <translation type="unfinished"></translation>
+        <translation>Włącz zasłanianie na podstawie głębi</translation>
     </message>
     <message>
         <source>Disable depth occlusion</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz zasłanianie na podstawie głębi</translation>
     </message>
     <message>
         <source>Clip is occluded by depth</source>
-        <translation type="unfinished"></translation>
+        <translation>Klip jest zasłaniany na podstawie głębi</translation>
     </message>
     <message>
         <source>Clip uses track order</source>
-        <translation type="unfinished"></translation>
+        <translation>Klip korzysta z kolejności ścieżek</translation>
     </message>
     <message>
         <source>Subtitles converted to text</source>
@@ -3703,19 +3703,19 @@
     </message>
     <message>
         <source>Add camera</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj kamerę</translation>
     </message>
     <message>
         <source>Add camera clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj klip kamery</translation>
     </message>
     <message>
         <source>Camera added</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodano kamerę</translation>
     </message>
     <message>
         <source>Camera clip added</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodano klip kamery</translation>
     </message>
     <message>
         <source>Transform together</source>
@@ -3851,7 +3851,7 @@
     </message>
     <message>
         <source>Mask effects read one clip&apos;s masks, so they go on a clip, not on an adjustment layer.</source>
-        <translation type="unfinished"></translation>
+        <translation>Efekty masek korzystają z masek pojedynczego klipu, dlatego należy stosować je do klipu, a nie do warstwy dopasowania.</translation>
     </message>
     <message>
         <source>Face effects follow one clip&apos;s faces, so they go on a clip, not on an adjustment layer.</source>
@@ -4052,8 +4052,8 @@
     <message numerus="yes">
         <source>Pasted attributes onto %n clip(s)</source>
         <translation>
-            <numerusform>Wklejono atrybut do %n klipu</numerusform>
-            <numerusform>Wklejono atrybuty do %n klipy</numerusform>
+            <numerusform>Wklejono atrybuty do %n klipu</numerusform>
+            <numerusform>Wklejono atrybuty do %n klipów</numerusform>
             <numerusform>Wklejono atrybuty do %n klipów</numerusform>
         </translation>
     </message>
@@ -4099,15 +4099,15 @@
     </message>
     <message>
         <source>Only effects you imported can be deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Można usuwać tylko zaimportowane efekty</translation>
     </message>
     <message>
         <source>Could not delete %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można usunąć %1</translation>
     </message>
     <message>
         <source>Deleted %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunięto %1</translation>
     </message>
     <message>
         <source>Could not export the effect preset</source>
@@ -4360,9 +4360,9 @@
     <message numerus="yes">
         <source>Applied to %n caption clip(s)</source>
         <translation>
-            <numerusform>Applied to %n caption clip</numerusform>
-            <numerusform>Applied to %n caption clips</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Zastosowano do %n klipu z napisami</numerusform>
+            <numerusform>Zastosowano do %n klipów z napisami</numerusform>
+            <numerusform>Zastosowano do %n klipów z napisami</numerusform>
         </translation>
     </message>
     <message>
@@ -4440,17 +4440,17 @@
     <message numerus="yes">
         <source>%n items removed</source>
         <translation>
-            <numerusform>%n items removed</numerusform>
-            <numerusform>%n items removed</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Usunięto %n element</numerusform>
+            <numerusform>Usunięto %n elementy</numerusform>
+            <numerusform>Usunięto %n elementów</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n items moved</source>
         <translation>
-            <numerusform>%n items moved</numerusform>
-            <numerusform>%n items moved</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Przeniesiono %n element</numerusform>
+            <numerusform>Przeniesiono %n elementy</numerusform>
+            <numerusform>Przeniesiono %n elementów</numerusform>
         </translation>
     </message>
     <message>
@@ -4486,7 +4486,7 @@
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Moje efekty</translation>
     </message>
     <message>
         <source>Favorites</source>
@@ -4572,9 +4572,9 @@
     <message numerus="yes">
         <source>Replaced with “%1”. %n clips were shortened to fit the new file.</source>
         <translation>
-            <numerusform>Replaced with “%1”. %n clips were shortened to fit the new file.</numerusform>
-            <numerusform>Replaced with “%1”. %n clips were shortened to fit the new file.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Zastąpiono przez „%1”. Skrócono %n klip, aby dopasować go do nowego pliku.</numerusform>
+            <numerusform>Zastąpiono przez „%1”. Skrócono %n klipy, aby dopasować je do nowego pliku.</numerusform>
+            <numerusform>Zastąpiono przez „%1”. Skrócono %n klipów, aby dopasować je do nowego pliku.</numerusform>
         </translation>
     </message>
     <message>
@@ -4607,27 +4607,27 @@
     </message>
     <message>
         <source>%1 file (*.%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 plik (*.%2)</translation>
     </message>
     <message>
         <source>All files (*)</source>
-        <translation type="unfinished">Wszystkie pliki (*)</translation>
+        <translation>Wszystkie pliki (*)</translation>
     </message>
     <message>
         <source>Save As</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz jako</translation>
     </message>
     <message>
         <source>Saving “%1”…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisywanie “%1”…</translation>
     </message>
     <message>
         <source>Couldn’t save “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać “%1”.</translation>
     </message>
     <message>
         <source>Saved “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisano “%1”.</translation>
     </message>
     <message>
         <source>Couldn’t import that folder.</source>
@@ -4636,25 +4636,25 @@
     <message numerus="yes">
         <source>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</source>
         <translation>
-            <numerusform>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</numerusform>
-            <numerusform>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Zaimportowano %n plik do %1 folderów — tyle, ile można zaimportować jednocześnie z jednego folderu. Pozostałe podfoldery zaimportuj osobno.</numerusform>
+            <numerusform>Zaimportowano %n pliki do %1 folderów — tyle, ile można zaimportować jednocześnie z jednego folderu. Pozostałe podfoldery zaimportuj osobno.</numerusform>
+            <numerusform>Zaimportowano %n plików do %1 folderów — tyle, ile można zaimportować jednocześnie z jednego folderu. Pozostałe podfoldery zaimportuj osobno.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.</source>
         <translation>
-            <numerusform>Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.</numerusform>
-            <numerusform>Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Zaimportowano %n plik do %1 folderów. Pominięto %2 plik — Drift nie rozpoznaje jego formatu. Przeciągnij go do panelu multimediów, aby spróbować mimo to.</numerusform>
+            <numerusform>Zaimportowano %n pliki do %1 folderów. Pominięto %2 pliki — Drift nie rozpoznaje ich formatu. Przeciągnij je do panelu multimediów, aby spróbować mimo to.</numerusform>
+            <numerusform>Zaimportowano %n plików do %1 folderów. Pominięto %2 plików — Drift nie rozpoznaje ich formatu. Przeciągnij je do panelu multimediów, aby spróbować mimo to.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders.</source>
         <translation>
-            <numerusform>Imported %n files into %1 folders.</numerusform>
-            <numerusform>Imported %n files into %1 folders.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Zaimportowano %n plik do %1 folderów.</numerusform>
+            <numerusform>Zaimportowano %n pliki do %1 folderów.</numerusform>
+            <numerusform>Zaimportowano %n plików do %1 folderów.</numerusform>
         </translation>
     </message>
     <message>
@@ -4796,9 +4796,9 @@
     <message numerus="yes">
         <source>%n items</source>
         <translation>
-            <numerusform>%n items</numerusform>
-            <numerusform>%n items</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n element</numerusform>
+            <numerusform>%n elementy</numerusform>
+            <numerusform>%n elementów</numerusform>
         </translation>
     </message>
     <message>
@@ -4808,9 +4808,9 @@
     <message numerus="yes">
         <source>Removed %n items.</source>
         <translation>
-            <numerusform>Removed %n items.</numerusform>
-            <numerusform>Removed %n items.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Usunięto %n element.</numerusform>
+            <numerusform>Usunięto %n elementy.</numerusform>
+            <numerusform>Usunięto %n elementów.</numerusform>
         </translation>
     </message>
 </context>
@@ -4842,15 +4842,15 @@
     </message>
     <message>
         <source>Import audio effect</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj efekt audio</translation>
     </message>
     <message>
         <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj niestandardowy efekt dźwiękowy lub efekt z pliku .driftfx utworzonego w Drift Forge</translation>
     </message>
     <message>
         <source>My Audio Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Moje efekty dźwiękowe</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
@@ -4858,7 +4858,7 @@
     </message>
     <message>
         <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic tu jeszcze nie ma. Zaimportuj plik .driftfx, aby dodać swój własny.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -4870,15 +4870,15 @@
     </message>
     <message>
         <source>%1 is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 jest pusty</translation>
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaimportuj plik .driftfx utworzony w Drift Forge, aby dodać swój własny.</translation>
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished">Importuj</translation>
+        <translation>Importuj</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -5302,43 +5302,43 @@
     <name>CameraInspector</name>
     <message>
         <source>Pan X</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesunięcie X</translation>
     </message>
     <message>
         <source>Pan Y</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesunięcie Y</translation>
     </message>
     <message>
         <source>Dolly</source>
-        <translation type="unfinished"></translation>
+        <translation>Najazd</translation>
     </message>
     <message>
         <source>Pitch</source>
-        <translation type="unfinished"></translation>
+        <translation>Pochylenie</translation>
     </message>
     <message>
         <source>Yaw</source>
-        <translation type="unfinished"></translation>
+        <translation>Obrót poziomy</translation>
     </message>
     <message>
         <source>Roll</source>
-        <translation type="unfinished"></translation>
+        <translation>Przechylenie</translation>
     </message>
     <message>
         <source>Lens</source>
-        <translation type="unfinished"></translation>
+        <translation>Obiektyw</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz klip kamery, aby ustawić kadr ujęcia.</translation>
     </message>
     <message>
         <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
-        <translation type="unfinished"></translation>
+        <translation>Podczas trwania klipu wszystko na osi czasu jest widoczne przez tę kamerę. Nieruchoma kamera wygląda dokładnie tak samo jak jej brak, dlatego poniższe wartości są przesunięciami względem normalnego widoku.</translation>
     </message>
     <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation type="unfinished"></translation>
+        <translation>Krótkoogniskowy obiektyw wzmacnia wrażenie głębi, a długoogniskowy je spłaszcza. Podczas działania tej kamery zastępuje ona wartość Perspektywa każdego klipu, ponieważ scena ma jednego obserwatora.</translation>
     </message>
     <message>
         <source>Reset camera position</source>
@@ -5353,11 +5353,11 @@
     <name>ChannelKeyButton</name>
     <message>
         <source>Remove %1 keyframe at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń %1 klatkę kluczową z głowicy odtwarzania</translation>
     </message>
     <message>
         <source>Add %1 keyframe at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj klatkę kluczową %1 na głowicy odtwarzania</translation>
     </message>
 </context>
 <context>
@@ -5764,17 +5764,17 @@
     <message numerus="yes">
         <source>%n second(s) left</source>
         <translation>
-            <numerusform>%n second left</numerusform>
-            <numerusform>%n seconds left</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Pozostała %n sekunda</numerusform>
+            <numerusform>Pozostały %n sekundy</numerusform>
+            <numerusform>Pozostało %n sekund</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s) left</source>
         <translation>
-            <numerusform>%n minute left</numerusform>
-            <numerusform>%n minutes left</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Pozostała %n minuta</numerusform>
+            <numerusform>Pozostały %n minuty</numerusform>
+            <numerusform>Pozostało %n minut</numerusform>
         </translation>
     </message>
     <message>
@@ -5807,9 +5807,9 @@
     <message numerus="yes">
         <source>%n active</source>
         <translation>
-            <numerusform>%n active</numerusform>
-            <numerusform>%n active</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n aktywny</numerusform>
+            <numerusform>%n aktywne</numerusform>
+            <numerusform>%n aktywnych</numerusform>
         </translation>
     </message>
     <message>
@@ -5850,9 +5850,9 @@
     <message numerus="yes">
         <source>%n style(s)</source>
         <translation>
+            <numerusform>%n styl</numerusform>
             <numerusform>%n style</numerusform>
-            <numerusform>%n styles</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n stylów</numerusform>
         </translation>
     </message>
     <message>
@@ -5862,9 +5862,9 @@
     <message numerus="yes">
         <source>%n colour(s)</source>
         <translation>
-            <numerusform>%n colour</numerusform>
-            <numerusform>%n colours</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n kolor</numerusform>
+            <numerusform>%n kolory</numerusform>
+            <numerusform>%n kolorów</numerusform>
         </translation>
     </message>
     <message>
@@ -6134,9 +6134,9 @@
     <message numerus="yes">
         <source>Downloads — %n running</source>
         <translation>
-            <numerusform>Downloads — %n running</numerusform>
-            <numerusform>Downloads — %n running</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Pobieranie — uruchomione %n zadanie</numerusform>
+            <numerusform>Pobieranie — uruchomione %n zadania</numerusform>
+            <numerusform>Pobieranie — uruchomionych %n zadań</numerusform>
         </translation>
     </message>
     <message>
@@ -6288,15 +6288,15 @@
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished">Importuj</translation>
+        <translation>Importuj</translation>
     </message>
     <message>
         <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj niestandardowy efekt lub przejście z pliku .driftfx utworzonego w Drift Forge</translation>
     </message>
     <message>
         <source>My Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Moje efekty</translation>
     </message>
     <message>
         <source>No effects match “%1”.</source>
@@ -6304,7 +6304,7 @@
     </message>
     <message>
         <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic tu jeszcze nie ma. Zaimportuj plik .driftfx, aby dodać swój własny.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -6316,11 +6316,11 @@
     </message>
     <message>
         <source>%1 is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 jest pusty</translation>
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaimportuj plik .driftfx utworzony w Drift Forge, aby dodać swój własny.</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
@@ -6328,7 +6328,7 @@
     </message>
     <message>
         <source>Delete from My Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń z Moich efektów</translation>
     </message>
     <message>
         <source>Built-in</source>
@@ -6336,23 +6336,23 @@
     </message>
     <message>
         <source>Delete effect</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń efekt</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Usuń</translation>
+        <translation>Usuń</translation>
     </message>
     <message numerus="yes">
         <source>Delete “%1” from My Effects? It is used %n time(s) in this project, and those clips will play without it.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Usunąć „%1” z Moich efektów? Jest używany %n raz w tym projekcie, a te klipy będą odtwarzane bez niego.</numerusform>
+            <numerusform>Usunąć „%1” z Moich efektów? Jest używany %n razy w tym projekcie, a te klipy będą odtwarzane bez niego.</numerusform>
+            <numerusform>Usunąć „%1” z Moich efektów? Jest używany %n razy w tym projekcie, a te klipy będą odtwarzane bez niego.</numerusform>
         </translation>
     </message>
     <message>
         <source>Delete “%1” from My Effects? You can import its .driftfx file again later.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunąć „%1” z Moich efektów? Jego plik .driftfx można później ponownie zaimportować.</translation>
     </message>
 </context>
 <context>
@@ -6703,7 +6703,7 @@
     </message>
     <message>
         <source>%1 opacity</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nieprzezroczystość</translation>
     </message>
     <message>
         <source>Automatic (clip beneath)</source>
@@ -7816,9 +7816,9 @@
     <message numerus="yes">
         <source>%n keyframes</source>
         <translation>
-            <numerusform>% klatka kluczowa</numerusform>
-            <numerusform>% klatki kluczowe</numerusform>
-            <numerusform>% klatek kluczowych</numerusform>
+            <numerusform>%n klatka kluczowa</numerusform>
+            <numerusform>%n klatki kluczowe</numerusform>
+            <numerusform>%n klatek kluczowych</numerusform>
         </translation>
     </message>
     <message>
@@ -8027,199 +8027,199 @@
     <name>Main</name>
     <message>
         <source>&amp;File</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Plik</translation>
     </message>
     <message>
         <source>&amp;New Project</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Nowy projekt</translation>
     </message>
     <message>
         <source>&amp;Open Project…</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Otwórz projekt…</translation>
     </message>
     <message>
         <source>&amp;Save Project</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Zapisz projekt</translation>
     </message>
     <message>
         <source>Save Project &amp;As…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz projekt &amp;Jako…</translation>
     </message>
     <message>
         <source>Save Project &amp;JSON…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz projekt &amp;JSON…</translation>
     </message>
     <message>
         <source>Open Project JSON…</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz projekt &amp;JSON…</translation>
     </message>
     <message>
         <source>&amp;Export Video…</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Eksportuj wideo…</translation>
     </message>
     <message>
         <source>&amp;Package Project…</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Pakiet projektu…</translation>
     </message>
     <message>
         <source>&amp;Close Project</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Zamknij projekt</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Edycja</translation>
     </message>
     <message>
         <source>&amp;Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Cofnij</translation>
     </message>
     <message>
         <source>&amp;Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Wykonaj ponownie</translation>
     </message>
     <message>
         <source>Cu&amp;t</source>
-        <translation type="unfinished"></translation>
+        <translation>Cu&amp;t</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Kopiuj</translation>
     </message>
     <message>
         <source>&amp;Paste</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Wklej</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Usuń</translation>
     </message>
     <message>
         <source>Select &amp;All</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz &amp;wszystko</translation>
     </message>
     <message>
         <source>Clear Selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyczyść zaznaczenie</translation>
     </message>
     <message>
         <source>Split Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Podziel klip</translation>
     </message>
     <message>
         <source>Duplicate Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Duplikuj klip</translation>
     </message>
     <message>
         <source>Copy Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj efekty</translation>
     </message>
     <message>
         <source>Paste Effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej efekty</translation>
     </message>
     <message>
         <source>Paste Attributes…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wklej atrybuty…</translation>
     </message>
     <message>
         <source>&amp;Playback</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Odtwarzanie</translation>
     </message>
     <message>
         <source>Play / Pause</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwórz / Pauza</translation>
     </message>
     <message>
         <source>Step Back One Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Cofnij o jedną klatkę</translation>
     </message>
     <message>
         <source>Step Forward One Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Do przodu o jedną klatkę</translation>
     </message>
     <message>
         <source>Previous Cut Point</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzedni punkt odcięcia</translation>
     </message>
     <message>
         <source>Next Cut Point</source>
-        <translation type="unfinished"></translation>
+        <translation>Następny punkt odcięcia</translation>
     </message>
     <message>
         <source>Go to Start of Timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Przejdź do początku osi czasu</translation>
     </message>
     <message>
         <source>Toggle Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Przełącz zakładkę</translation>
     </message>
     <message>
         <source>Next Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Następna zakładka</translation>
     </message>
     <message>
         <source>Previous Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzednia zakładka</translation>
     </message>
     <message>
         <source>&amp;View</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Widok</translation>
     </message>
     <message>
         <source>Zoom &amp;In</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiększ &amp;</translation>
     </message>
     <message>
         <source>Zoom &amp;Out</source>
-        <translation type="unfinished"></translation>
+        <translation>Oddal &amp;</translation>
     </message>
     <message>
         <source>Toggle Fullscreen Preview</source>
-        <translation type="unfinished"></translation>
+        <translation>Przełącz podgląd pełnoekranowy</translation>
     </message>
     <message>
         <source>Toggle Guides</source>
-        <translation type="unfinished"></translation>
+        <translation>Przełącz przewodniki</translation>
     </message>
     <message>
         <source>&amp;Window</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Okno</translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Przestrzeń robocza pozioma</translation>
     </message>
     <message>
         <source>Portrait Workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>Przestrzeń robocza pionowa</translation>
     </message>
     <message>
         <source>Auto Workspace (Follow Canvas)</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczna przestrzeń (Podąża za Canvas)</translation>
     </message>
     <message>
         <source>Downloads</source>
-        <translation type="unfinished">Pobrane</translation>
+        <translation>Pobrane</translation>
     </message>
     <message>
         <source>Multicam</source>
-        <translation type="unfinished">Multicam</translation>
+        <translation>Multicam</translation>
     </message>
     <message>
         <source>&amp;Help</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Pomoc</translation>
     </message>
     <message>
         <source>Keyboard Shortcuts</source>
-        <translation type="unfinished"></translation>
+        <translation>Skróty klawiaturowe</translation>
     </message>
     <message>
         <source>Extras…</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatki…</translation>
     </message>
     <message>
         <source>Check for Updates…</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź czy są aktualizacje…</translation>
     </message>
     <message>
         <source>About Drift</source>
@@ -8231,7 +8231,7 @@
     </message>
     <message>
         <source>Debug Info…</source>
-        <translation type="unfinished"></translation>
+        <translation>Informacje debugowania…</translation>
     </message>
     <message>
         <source>Drift %1 is the latest version.</source>
@@ -8463,7 +8463,7 @@
     </message>
     <message>
         <source>Search sound effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyszukaj efekty dźwiękowe</translation>
     </message>
     <message>
         <source>Search, or paste a link</source>
@@ -8475,7 +8475,7 @@
     </message>
     <message>
         <source>SFX</source>
-        <translation type="unfinished"></translation>
+        <translation>Specjalne efekty dźwiękowe</translation>
     </message>
     <message>
         <source>Stock footage</source>
@@ -8800,9 +8800,9 @@
     <message numerus="yes">
         <source>Create %n proxies</source>
         <translation>
-            <numerusform>Create %n proxies</numerusform>
-            <numerusform>Create %n proxies</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Utwórz %n plik proxy</numerusform>
+            <numerusform>Utwórz %n pliki proxy</numerusform>
+            <numerusform>Utwórz %n plików proxy</numerusform>
         </translation>
     </message>
     <message>
@@ -8812,9 +8812,9 @@
     <message numerus="yes">
         <source>Remove %n proxies</source>
         <translation>
-            <numerusform>Remove %n proxies</numerusform>
-            <numerusform>Remove %n proxies</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Usuń %n plik proxy</numerusform>
+            <numerusform>Usuń %n pliki proxy</numerusform>
+            <numerusform>Usuń %n plików proxy</numerusform>
         </translation>
     </message>
     <message>
@@ -8827,7 +8827,7 @@
     </message>
     <message>
         <source>Save As…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz jako…</translation>
     </message>
     <message>
         <source>Remove from project</source>
@@ -8876,9 +8876,9 @@
     <message numerus="yes">
         <source>Add %n items to timeline</source>
         <translation>
-            <numerusform>Add %n items to timeline</numerusform>
-            <numerusform>Add %n items to timeline</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Dodaj %n element do osi czasu</numerusform>
+            <numerusform>Dodaj %n elementy do osi czasu</numerusform>
+            <numerusform>Dodaj %n elementów do osi czasu</numerusform>
         </translation>
     </message>
     <message>
@@ -8888,9 +8888,9 @@
     <message numerus="yes">
         <source>Move %n items to folder…</source>
         <translation>
-            <numerusform>Move %n items to folder…</numerusform>
-            <numerusform>Move %n items to folder…</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Przenieś %n element do folderu…</numerusform>
+            <numerusform>Przenieś %n elementy do folderu…</numerusform>
+            <numerusform>Przenieś %n elementów do folderu…</numerusform>
         </translation>
     </message>
     <message>
@@ -8900,9 +8900,9 @@
     <message numerus="yes">
         <source>Remove %n items from project</source>
         <translation>
-            <numerusform>Remove %n items from project</numerusform>
-            <numerusform>Remove %n items from project</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Usuń %n element z projektu</numerusform>
+            <numerusform>Usuń %n elementy z projektu</numerusform>
+            <numerusform>Usuń %n elementów z projektu</numerusform>
         </translation>
     </message>
 </context>
@@ -8943,9 +8943,9 @@
     <message numerus="yes">
         <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
         <translation>
-            <numerusform>%n clip may play back slowly. A proxy makes previewing smoother; export still uses the original.</numerusform>
-            <numerusform>%n clips may play back slowly. A proxy makes previewing smoother; export still uses the original.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n klip może odtwarzać się z opóźnieniem. Plik proxy usprawnia podgląd; eksport nadal korzysta z oryginału.</numerusform>
+            <numerusform>%n klipy mogą odtwarzać się z opóźnieniem. Pliki proxy usprawniają podgląd; eksport nadal korzysta z oryginałów.</numerusform>
+            <numerusform>%n klipów może odtwarzać się z opóźnieniem. Pliki proxy usprawniają podgląd; eksport nadal korzysta z oryginałów.</numerusform>
         </translation>
     </message>
     <message>
@@ -8955,9 +8955,9 @@
     <message numerus="yes">
         <source>%n clip(s) have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.</source>
         <translation>
-            <numerusform>%n clip have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.</numerusform>
-            <numerusform>%n clips have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n klip ma zmienną liczbę klatek na sekundę, co może powodować utratę synchronizacji z dźwiękiem. Przekonwertuj go do formatu ułatwiającego edycję, aby rozwiązać ten problem.</numerusform>
+            <numerusform>%n klipy mają zmienną liczbę klatek na sekundę, co może powodować utratę synchronizacji z dźwiękiem. Przekonwertuj je do formatu ułatwiającego edycję, aby rozwiązać ten problem.</numerusform>
+            <numerusform>%n klipów ma zmienną liczbę klatek na sekundę, co może powodować utratę synchronizacji z dźwiękiem. Przekonwertuj je do formatu ułatwiającego edycję, aby rozwiązać ten problem.</numerusform>
         </translation>
     </message>
     <message>
@@ -8975,9 +8975,9 @@
     <message numerus="yes">
         <source>Imported %n files.</source>
         <translation>
-            <numerusform>Imported %n files.</numerusform>
-            <numerusform>Imported %n files.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Zaimportowano %n plik.</numerusform>
+            <numerusform>Zaimportowano %n pliki.</numerusform>
+            <numerusform>Zaimportowano %n plików.</numerusform>
         </translation>
     </message>
     <message>
@@ -8987,9 +8987,9 @@
     <message numerus="yes">
         <source>Could not import any of the %n selected files.</source>
         <translation>
-            <numerusform>Could not import any of the %n selected files.</numerusform>
-            <numerusform>Could not import any of the %n selected files.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Nie można zaimportować żadnego z %n wybranego pliku.</numerusform>
+            <numerusform>Nie można zaimportować żadnego z %n wybranych plików.</numerusform>
+            <numerusform>Nie można zaimportować żadnego z %n wybranych plików.</numerusform>
         </translation>
     </message>
 </context>
@@ -9184,9 +9184,9 @@
     <message numerus="yes">
         <source>%n animation(s)</source>
         <translation>
-            <numerusform>%n animation</numerusform>
-            <numerusform>%n animations</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n animacja</numerusform>
+            <numerusform>%n animacje</numerusform>
+            <numerusform>%n animacji</numerusform>
         </translation>
     </message>
     <message>
@@ -9439,7 +9439,7 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation>Kamera</translation>
     </message>
     <message>
         <source>New track</source>
@@ -9565,9 +9565,9 @@
     <message numerus="yes">
         <source>Pasting from “%1” onto %n selected clip(s):</source>
         <translation>
-            <numerusform>Pasting from “%1” onto %n selected clip:</numerusform>
-            <numerusform>Pasting from “%1” onto %n selected clips:</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Wklejanie z „%1” do %n zaznaczonego klipu:</numerusform>
+            <numerusform>Wklejanie z „%1” do %n zaznaczonych klipów:</numerusform>
+            <numerusform>Wklejanie z „%1” do %n zaznaczonych klipów:</numerusform>
         </translation>
     </message>
     <message>
@@ -9597,9 +9597,9 @@
     <message numerus="yes">
         <source>Video Effects (%n effect(s))</source>
         <translation>
-            <numerusform>Video Effects (%n effect)</numerusform>
-            <numerusform>Video Effects (%n effects)</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Efekty wideo (%n efekt)</numerusform>
+            <numerusform>Efekty wideo (%n efekty)</numerusform>
+            <numerusform>Efekty wideo (%n efektów)</numerusform>
         </translation>
     </message>
     <message>
@@ -9617,9 +9617,9 @@
     <message numerus="yes">
         <source>Audio Effects (%n effect(s))</source>
         <translation>
-            <numerusform>Audio Effects (%n effect)</numerusform>
-            <numerusform>Audio Effects (%n effects)</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Efekty dźwiękowe (%n efekt)</numerusform>
+            <numerusform>Efekty dźwiękowe (%n efekty)</numerusform>
+            <numerusform>Efekty dźwiękowe (%n efektów)</numerusform>
         </translation>
     </message>
     <message>
@@ -9633,9 +9633,9 @@
     <message numerus="yes">
         <source>Transitions (%n transition(s))</source>
         <translation>
-            <numerusform>Transitions (%n transition)</numerusform>
-            <numerusform>Transitions (%n transitions)</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Przejścia (%n przejście)</numerusform>
+            <numerusform>Przejścia (%n przejścia)</numerusform>
+            <numerusform>Przejścia (%n przejść)</numerusform>
         </translation>
     </message>
     <message>
@@ -10496,7 +10496,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation>Kamera</translation>
     </message>
     <message>
         <source>Stabilization</source>
@@ -11817,77 +11817,77 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Pobieranie…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>SfxBrowser</name>
     <message>
         <source>Added to the media bin</source>
-        <translation type="unfinished">Dodano do koszyka mediów</translation>
+        <translation>Dodano do koszyka mediów</translation>
     </message>
     <message>
         <source>Loading sound effects…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ładowanie efektów dźwiękowych…</translation>
     </message>
     <message>
         <source>Couldn’t load sound effects</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się załadować efektów dźwiękowych</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation type="unfinished">Spróbuj ponownie</translation>
+        <translation>Spróbuj ponownie</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">Wszystko</translation>
+        <translation>Wszystko</translation>
     </message>
     <message>
         <source>No sound effects match “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak efektów dźwiękowych pasujących do „%1”.</translation>
     </message>
     <message>
         <source>No sound effects here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tutaj nie ma efektów dźwiękowych.</translation>
     </message>
     <message>
         <source>Pause</source>
-        <translation type="unfinished">Pauza</translation>
+        <translation>Pauza</translation>
     </message>
     <message>
         <source>Play preview</source>
-        <translation type="unfinished">Odtwórz podgląd</translation>
+        <translation>Odtwórz podgląd</translation>
     </message>
     <message>
         <source>Add to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj do kosza multimediów</translation>
     </message>
     <message>
         <source>Add to the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj do osi czasu</translation>
     </message>
 </context>
 <context>
     <name>SfxLibrary</name>
     <message>
         <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się załadować efektów dźwiękowych. Sprawdź połączenie i spróbuj ponownie.</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
-        <translation type="unfinished">Nie udało się zapisać do folderu danych aplikacji.</translation>
+        <translation>Nie udało się zapisać do folderu danych aplikacji.</translation>
     </message>
     <message>
         <source>Could not download that sound. Check your connection and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się pobrać tego dźwięku. Sprawdź połączenie i spróbuj ponownie.</translation>
     </message>
     <message>
         <source>That download was damaged. Try again.</source>
-        <translation type="unfinished">To pobranie było uszkodzone. Spróbuj ponownie.</translation>
+        <translation>To pobranie było uszkodzone. Spróbuj ponownie.</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się dodać tego dźwięku do pojemnika z multimediami.</translation>
     </message>
 </context>
 <context>
@@ -12795,7 +12795,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Render a new video</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyrenderuj nowe wideo</translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -12827,11 +12827,11 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wygładza drgania kamery. Drift analizuje klip, a następnie renderuje jego ustabilizowaną kopię w bibliotece multimediów i przełącza klip na tę kopię. Zmiana płynności lub trybu statywu nie aktualizuje podglądu do momentu zastosowania ustawień.</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyrenderuj ustabilizowaną kopię albo animuj klip za pomocą rzadkich klatek kluczowych przekształcenia</translation>
     </message>
     <message>
         <source>Smoothing</source>
@@ -12971,9 +12971,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>Filters — %n applied</source>
         <translation>
-            <numerusform>Filters — %n applied</numerusform>
-            <numerusform>Filters — %n applied</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Filtry — zastosowano %n filtr</numerusform>
+            <numerusform>Filtry — zastosowano %n filtry</numerusform>
+            <numerusform>Filtry — zastosowano %n filtrów</numerusform>
         </translation>
     </message>
     <message>
@@ -13050,9 +13050,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>%n coin(s)</source>
         <translation>
-            <numerusform>%n coin</numerusform>
-            <numerusform>%n coins</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n moneta</numerusform>
+            <numerusform>%n monety</numerusform>
+            <numerusform>%n monet</numerusform>
         </translation>
     </message>
     <message>
@@ -13115,9 +13115,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>%n captions</source>
         <translation>
-            <numerusform>%n captions</numerusform>
-            <numerusform>%n captions</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n napis</numerusform>
+            <numerusform>%n napisy</numerusform>
+            <numerusform>%n napisów</numerusform>
         </translation>
     </message>
     <message>
@@ -14560,7 +14560,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation>Ponów</translation>
+        <translation>Wykonaj ponownie</translation>
     </message>
     <message>
         <source>Delete clip</source>
@@ -14608,7 +14608,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Add camera</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj kamerę</translation>
     </message>
     <message>
         <source>Main</source>
@@ -14793,9 +14793,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>This removes the track and its %n clips. You can undo afterwards.</source>
         <translation>
-            <numerusform>This removes the track and its %n clips. You can undo afterwards.</numerusform>
-            <numerusform>This removes the track and its %n clips. You can undo afterwards.</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Spowoduje to usunięcie ścieżki i jej %n klipu. Możesz cofnąć tę operację.</numerusform>
+            <numerusform>Spowoduje to usunięcie ścieżki i jej %n klipów. Możesz cofnąć tę operację.</numerusform>
+            <numerusform>Spowoduje to usunięcie ścieżki i jej %n klipów. Możesz cofnąć tę operację.</numerusform>
         </translation>
     </message>
     <message>
@@ -14812,7 +14812,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>CAM</source>
-        <translation type="unfinished"></translation>
+        <translation>KAM</translation>
     </message>
     <message>
         <source>TF</source>
@@ -14844,7 +14844,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <translation>Kamera</translation>
     </message>
     <message>
         <source>Transform</source>
@@ -14884,11 +14884,11 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Turn adjustment on</source>
-        <translation type="unfinished"></translation>
+        <translation>Włącz regulację</translation>
     </message>
     <message>
         <source>Turn adjustment off</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz regulację</translation>
     </message>
     <message>
         <source>Stop recording</source>
@@ -15135,15 +15135,15 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Occlude by depth</source>
-        <translation type="unfinished"></translation>
+        <translation>Zasłaniaj na podstawie głębi</translation>
     </message>
     <message>
         <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozwól głębi decydować, co zasłania ten klip, zamiast korzystać z jego pozycji na ścieżce. Tylko klipy z włączoną tą opcją są sortowane względem siebie; pozostałe nadal są wyświetlane według kolejności ścieżek.</translation>
     </message>
     <message>
         <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wymaga trybu mieszania Normalny — pozostałe tryby odczytują obszar płótna za klipem, którego głębia nie może uporządkować.</translation>
     </message>
     <message>
         <source>Move</source>
@@ -15287,9 +15287,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>+%n more</source>
         <translation>
-            <numerusform>+%n more</numerusform>
-            <numerusform>+%n more</numerusform>
-            <numerusform></numerusform>
+            <numerusform>+%n więcej</numerusform>
+            <numerusform>+%n więcej</numerusform>
+            <numerusform>+%n więcej</numerusform>
         </translation>
     </message>
 </context>
@@ -15298,9 +15298,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>%1 · %n clip(s)</source>
         <translation>
-            <numerusform>%1 · %n clip</numerusform>
-            <numerusform>%1 · %n clips</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%1 · %n klip</numerusform>
+            <numerusform>%1 · %n klipy</numerusform>
+            <numerusform>%1 · %n klipów</numerusform>
         </translation>
     </message>
     <message>
@@ -15321,9 +15321,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>%n track(s)</source>
         <translation>
-            <numerusform>%n track</numerusform>
-            <numerusform>%n tracks</numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n ścieżka</numerusform>
+            <numerusform>%n ścieżki</numerusform>
+            <numerusform>%n ścieżek</numerusform>
         </translation>
     </message>
     <message>
@@ -15333,9 +15333,9 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message numerus="yes">
         <source>Covers %n track(s)</source>
         <translation>
-            <numerusform>Covers %n track</numerusform>
-            <numerusform>Covers %n tracks</numerusform>
-            <numerusform></numerusform>
+            <numerusform>Obejmuje %n ścieżkę</numerusform>
+            <numerusform>Obejmuje %n ścieżki</numerusform>
+            <numerusform>Obejmuje %n ścieżek</numerusform>
         </translation>
     </message>
 </context>
@@ -15461,15 +15461,15 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Import transition</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj przejścia</translation>
     </message>
     <message>
         <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj niestandardowe przejście lub efekt z pliku .driftfx utworzonego w Drift Forge</translation>
     </message>
     <message>
         <source>My Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation>Moje przejścia</translation>
     </message>
     <message>
         <source>No transitions available</source>
@@ -15489,7 +15489,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>No custom transitions yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak niestandardowych przejść</translation>
     </message>
     <message>
         <source>No favorites yet</source>
@@ -15505,7 +15505,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaimportuj plik .driftfx utworzony w Drift Forge, aby dodać swój własny.</translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>
@@ -15517,7 +15517,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished">Importuj</translation>
+        <translation>Importuj</translation>
     </message>
     <message>
         <source>%1 — drag onto an overlap between two clips</source>
@@ -15749,7 +15749,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Pobieranie…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15787,7 +15787,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <name>Vec2Param</name>
     <message>
         <source>Edit %1</source>
-        <translation type="unfinished">Edytuj %1</translation>
+        <translation>Edytuj %1</translation>
     </message>
 </context>
 <context>

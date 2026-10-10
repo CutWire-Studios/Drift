@@ -11775,7 +11775,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Téléchargement en cours…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15699,7 +15699,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Téléchargement en cours…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

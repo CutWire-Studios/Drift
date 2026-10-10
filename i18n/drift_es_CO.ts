@@ -11772,7 +11772,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Descargando…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15694,7 +15694,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Descargando…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

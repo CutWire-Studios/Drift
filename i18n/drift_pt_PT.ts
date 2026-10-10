@@ -11772,7 +11772,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Baixando…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15694,7 +15694,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Baixando…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
