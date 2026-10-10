@@ -11817,7 +11817,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Загрузка…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -15749,7 +15749,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">Загрузка…</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
