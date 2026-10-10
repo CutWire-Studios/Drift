@@ -134,7 +134,7 @@ smoothly. MP4, GIF, audio-only, or just a range. Pack the media with the edit so
 app.
 
 **Stock, voices, and a small install.** Search stock into the bin. Generate voiceover and sound
-effects. Fonts, stickers, and extra models download when you use them. UI in Arabic, Spanish (Spain
+effects. Fonts, stickers, and extra models download when you use them. UI in Arabic, Bengali, Spanish (Spain
 and Colombia), French (Canada), Italian, Japanese, Portuguese (Brazil and Portugal), Russian,
 Sinhala, Tagalog, Vietnamese, and Simplified Chinese.
 
@@ -149,6 +149,11 @@ timeline, 3D and Lottie, captions, effects, audio, cutouts, and multicam.
 ## Help us translate Drift
 
 [![Translation status](https://hosted.weblate.org/widget/cutwire-drift/drift-desktop/multi-auto.svg)](https://hosted.weblate.org/engage/cutwire-drift/)
+
+The Bengali (`bn`, বাংলা) catalog includes translations for all current UI messages. Messages
+marked unfinished contain machine-translated drafts and need review in context; the standard
+Qt translation build includes these drafts. Please keep placeholders, file extensions, and menu
+accelerators intact when reviewing them.
 
 ## For developers
 
