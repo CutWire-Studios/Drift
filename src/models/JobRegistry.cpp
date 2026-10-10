@@ -69,6 +69,8 @@ JobRegistry::~JobRegistry()
 {
     for (const auto &entry : std::as_const(m_jobs))
         entry->context.m_cancel.storeRelaxed(1);
+    m_modelPool.clear();
+    m_networkPool.clear();
     m_modelPool.waitForDone();
     m_networkPool.waitForDone();
 }
