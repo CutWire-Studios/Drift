@@ -654,8 +654,27 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     }
 
     if (tool == QLatin1String("new_project")) {
-        m_controller->projectFile()->newProject();
-        return ok({});
+        // An agent-created project never prompts for a layout: the canvas is either the one passed
+        // here or the project defaults. Validated before anything is discarded.
+        const bool hasSize = args.contains(QStringLiteral("width")) || args.contains(QStringLiteral("height"));
+        const int width = jsonInt(args.value(QStringLiteral("width")));
+        const int height = jsonInt(args.value(QStringLiteral("height")));
+        const bool hasFps = args.contains(QStringLiteral("fps"));
+        const int fps = jsonInt(args.value(QStringLiteral("fps")));
+        if (hasSize && (width <= 0 || height <= 0))
+            return err("bad_args", QStringLiteral("width and height must both be > 0"));
+        if (hasFps && fps <= 0)
+            return err("bad_args", QStringLiteral("fps must be > 0"));
+        ProjectFileController *projectFile = m_controller->projectFile();
+        projectFile->newProject();
+        if (hasSize || hasFps)
+            projectFile->setProjectSetup(hasSize ? width : projectFile->projectWidth(),
+                                         hasSize ? height : projectFile->projectHeight(),
+                                         hasFps ? fps : projectFile->projectFps());
+        m_controller->markProjectLayoutChosen();
+        return ok({{QStringLiteral("w"), projectFile->projectWidth()},
+                   {QStringLiteral("h"), projectFile->projectHeight()},
+                   {QStringLiteral("fps"), projectFile->projectFps()}});
     }
 
     if (tool == QLatin1String("package_project")) {

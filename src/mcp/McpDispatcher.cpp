@@ -1721,6 +1721,9 @@ QJsonObject McpDispatcher::opSetProjectSetup(const QJsonObject &args)
     if (width <= 0 || height <= 0 || fps <= 0)
         return err("bad_args", QStringLiteral("width, height, fps required"));
     m_controller->projectFile()->setProjectSetup(width, height, fps);
+    // The agent has decided the canvas, which is the question the layout chooser asks — mark it
+    // answered so the chooser closes (or never opens) instead of waiting on the user.
+    m_controller->markProjectLayoutChosen();
     return ok({{QStringLiteral("w"), width},
                {QStringLiteral("h"), height},
                {QStringLiteral("fps"), fps}});

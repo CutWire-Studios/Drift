@@ -113,6 +113,8 @@ private slots:
     void exportDoesNotInheritAudioOnlyFromAnEarlierRender();
     void exportVideoRequiresPath();
     void projectSetupRoundTrip();
+    void projectSetupAnswersLayoutChooser();
+    void newProjectWithCanvas();
     void captureDoesNotInsertClip();
     void framesUniformReturnsN();
     void framesChangesDedupesFourShotClip();
@@ -1252,6 +1254,57 @@ void McpTest::projectSetupRoundTrip()
         QStringLiteral("save_project"), {{QStringLiteral("path"), path}});
     QVERIFY(saved.value(QStringLiteral("ok")).toBool());
     QVERIFY(QFile::exists(path));
+}
+
+void McpTest::projectSetupAnswersLayoutChooser()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    state.projectFile()->newProject();
+    QVERIFY(!state.projectLayoutChosen());
+    const QJsonObject setup = dispatcher.applyOne(
+        QStringLiteral("set_project_setup"),
+        {{QStringLiteral("width"), 1080}, {QStringLiteral("height"), 1920}, {QStringLiteral("fps"), 30}});
+    QVERIFY(setup.value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.projectLayoutChosen());
+}
+
+void McpTest::newProjectWithCanvas()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    state.addTextClip(QStringLiteral("Keep"), 0.0);
+    auto clipCount = [](AppController &s) {
+        int n = 0;
+        for (const QVariant &t : s.tracks())
+            n += t.toMap().value(QStringLiteral("clips")).toList().size();
+        return n;
+    };
+
+    // Bad args are rejected before the open timeline is discarded.
+    const QJsonObject bad = dispatcher.applyOne(QStringLiteral("new_project"), {{QStringLiteral("width"), 1080}});
+    QVERIFY(!bad.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipCount(state), 1);
+
+    const QJsonObject created = dispatcher.applyOne(
+        QStringLiteral("new_project"),
+        {{QStringLiteral("width"), 1080}, {QStringLiteral("height"), 1920}, {QStringLiteral("fps"), 25}});
+    QVERIFY(created.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clipCount(state), 0);
+    QCOMPARE(state.projectFile()->projectWidth(), 1080);
+    QCOMPARE(state.projectFile()->projectHeight(), 1920);
+    QCOMPARE(state.projectFile()->projectFps(), 25);
+    QVERIFY(state.projectLayoutChosen());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+
+    // Without a canvas the defaults are used and the user is still not prompted.
+    state.projectFile()->newProject();
+    QVERIFY(!state.projectLayoutChosen());
+    QVERIFY(dispatcher.applyOne(QStringLiteral("new_project"), {}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.projectLayoutChosen());
 }
 
 void McpTest::captureDoesNotInsertClip()

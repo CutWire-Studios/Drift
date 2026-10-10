@@ -38,8 +38,13 @@
           false, true },
         { "new_project", "project", "Throw away the open timeline and start blank",
           "Discard the current timeline and create an empty project. DISCARDS unsaved changes without "
-          "warning and clears the undo stack — check inspect.dirty and save_project first.",
-          objectSchema({}), false, true },
+          "warning and clears the undo stack — check inspect.dirty and save_project first. "
+          "Pass width+height (and optionally fps) to set the canvas in the same call; omitted values keep "
+          "the project defaults. The user is never prompted with the layout chooser.",
+          objectSchema({{QStringLiteral("width"), integerProp(QStringLiteral("Canvas width pixels; requires height"))},
+                        {QStringLiteral("height"), integerProp(QStringLiteral("Canvas height pixels; requires width"))},
+                        {QStringLiteral("fps"), integerProp(QStringLiteral("Frames per second"))}}),
+          false, true },
         { "package_project", "project", "Save bundled copy",
           "Write a copy of the project with all media embedded. Async: returns {started:true, path} "
           "immediately — poll inspect({detail:true}).jobs.package.{active,progress} until active is false.",
