@@ -18,6 +18,12 @@ std::vector<float> readMono16k(const QString &path, TimeUs inUs, TimeUs outUs,
                                const std::function<bool(double)> &progress = {},
                                bool *cancelled = nullptr);
 
+// The same read at an arbitrary rate, for models that want something other than 16 kHz
+// (Chatterbox's speech encoder takes 24 kHz).
+std::vector<float> readMono(const QString &path, TimeUs inUs, TimeUs outUs, int sampleRate,
+                            const std::function<bool(double)> &progress = {},
+                            bool *cancelled = nullptr);
+
 // Writes 16 kHz mono PCM to a FLAC file in the temp directory for upload. Empty on failure.
 QString writeTempFlac16k(const std::vector<float> &pcm, QString *errorOut);
 

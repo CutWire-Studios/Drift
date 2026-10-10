@@ -18,6 +18,12 @@ constexpr quint64 kSpeechScanStreamId = 0xA5'11'5C'A4'00'00'00'08ull;
 std::vector<float> readMono16k(const QString &path, TimeUs inUs, TimeUs outUs,
                                const std::function<bool(double)> &progress, bool *cancelled)
 {
+    return readMono(path, inUs, outUs, kSpeechSampleRate, progress, cancelled);
+}
+
+std::vector<float> readMono(const QString &path, TimeUs inUs, TimeUs outUs, int sampleRate,
+                            const std::function<bool(double)> &progress, bool *cancelled)
+{
     if (cancelled)
         *cancelled = false;
     if (outUs < 0) {
@@ -27,26 +33,26 @@ std::vector<float> readMono16k(const QString &path, TimeUs inUs, TimeUs outUs,
     if (outUs <= inUs)
         return mono;
 
-    const int chunkFrames = 30 * kSpeechSampleRate;
+    const int chunkFrames = 30 * sampleRate;
     const TimeUs spanUs = outUs - inUs;
-    mono.reserve(speechUsToSamples(spanUs) + 16);
+    mono.reserve(static_cast<size_t>((spanUs * sampleRate) / kUsPerSecond) + 16);
     QVector<float> stereo;
     TimeUs pos = inUs;
     while (pos < outUs) {
         const int frames = static_cast<int>(
-            qMin<int64_t>(chunkFrames, ((outUs - pos) * kSpeechSampleRate) / kUsPerSecond + 1));
+            qMin<int64_t>(chunkFrames, ((outUs - pos) * sampleRate) / kUsPerSecond + 1));
         if (frames <= 0)
             break;
         stereo.resize(static_cast<qsizetype>(frames) * 2);
         const int got = ClipReaderPool::instance().readAudioInterleaved(
-            path, kSpeechScanStreamId, pos, frames, kSpeechSampleRate, stereo.data());
+            path, kSpeechScanStreamId, pos, frames, sampleRate, stereo.data());
         if (got <= 0)
             break;
         const size_t base = mono.size();
         mono.resize(base + got);
         for (int i = 0; i < got; ++i)
             mono[base + i] = 0.5f * (stereo[i * 2] + stereo[i * 2 + 1]);
-        pos += speechSamplesToUs(static_cast<size_t>(got));
+        pos += (static_cast<int64_t>(got) * kUsPerSecond) / sampleRate;
         if (progress && !progress(std::min(1.0, static_cast<double>(pos - inUs) / spanUs))) {
             if (cancelled)
                 *cancelled = true;
