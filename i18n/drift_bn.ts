@@ -3992,7 +3992,7 @@
     </message>
     <message>
         <source>This stack uses “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation type="unfinished">এই স্ট্যাকটি " %1 " ব্যবহার করে, যা ইনস্টল করা নেই — এটি দেখাবে না। এটি ইনস্টল করতে অতিরিক্ত খুলুন.</translation>
+        <translation type="unfinished">এই স্ট্যাকটি &quot; %1 &quot; ব্যবহার করে, যা ইনস্টল করা নেই — এটি দেখাবে না। এটি ইনস্টল করতে অতিরিক্ত খুলুন.</translation>
     </message>
     <message>
         <source>This stack uses %1 effects that aren’t installed — they won’t show. Open Extras to install them.</source>
@@ -4039,7 +4039,7 @@
     </message>
     <message>
         <source>Pasted effects use “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation type="unfinished">পেস্ট করা ইফেক্টগুলি " %1 " ব্যবহার করে, যা ইনস্টল করা নেই — এটি দেখাবে না। এটি ইনস্টল করতে অতিরিক্ত খুলুন.</translation>
+        <translation type="unfinished">পেস্ট করা ইফেক্টগুলি &quot; %1 &quot; ব্যবহার করে, যা ইনস্টল করা নেই — এটি দেখাবে না। এটি ইনস্টল করতে অতিরিক্ত খুলুন.</translation>
     </message>
     <message>
         <source>Pasted effects use %1 packs that aren’t installed — they won’t show. Open Extras to install them.</source>
@@ -4503,7 +4503,7 @@
     </message>
     <message>
         <source>Removed “%1”.</source>
-        <translation type="unfinished">" %1 " সরানো হয়েছে.</translation>
+        <translation type="unfinished">&quot; %1 &quot; সরানো হয়েছে.</translation>
     </message>
     <message>
         <source>Rename media</source>
@@ -4562,7 +4562,7 @@
     </message>
     <message>
         <source>Saved “%1”. Drag it onto the timeline.</source>
-        <translation type="unfinished">সংরক্ষিত " %1 "। টাইমলাইনে টেনে আনুন.</translation>
+        <translation type="unfinished">সংরক্ষিত &quot; %1 &quot;। টাইমলাইনে টেনে আনুন.</translation>
     </message>
     <message>
         <source>Import Media</source>
@@ -4598,11 +4598,11 @@
     </message>
     <message>
         <source>Couldn’t save “%1”.</source>
-        <translation type="unfinished">" %1 " সংরক্ষণ করা যায়নি.</translation>
+        <translation type="unfinished">&quot; %1 &quot; সংরক্ষণ করা যায়নি.</translation>
     </message>
     <message>
         <source>Saved “%1”.</source>
-        <translation type="unfinished">সংরক্ষিত " %1 ".</translation>
+        <translation type="unfinished">সংরক্ষিত &quot; %1 &quot;.</translation>
     </message>
     <message>
         <source>Couldn’t import that folder.</source>
@@ -5893,7 +5893,7 @@
     </message>
     <message>
         <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation type="unfinished">লাইসেন্স &lt;a href="%1"&gt; CC BY-NC-SA 4.0 &lt;/a&gt;</translation>
+        <translation type="unfinished">লাইসেন্স &lt;a href=&quot;%1&quot;&gt; CC BY-NC-SA 4.0 &lt;/a&gt;</translation>
     </message>
     <message>
         <source>Licence %1</source>
@@ -6311,7 +6311,7 @@
     </message>
     <message>
         <source>Delete “%1” from My Effects? You can import its .driftfx file again later.</source>
-        <translation type="unfinished">আমার ইফেক্টস থেকে " %1 " মুছবেন? আপনি পরে আবার এর .driftfx ফাইল ইমপোর্ট করতে পারেন.</translation>
+        <translation type="unfinished">আমার ইফেক্টস থেকে &quot; %1 &quot; মুছবেন? আপনি পরে আবার এর .driftfx ফাইল ইমপোর্ট করতে পারেন.</translation>
     </message>
 </context>
 <context>
@@ -6389,7 +6389,7 @@
     </message>
     <message>
         <source>Tune a clip&apos;s effects, then use “Save as preset…” in the properties Effects tab to keep them here.</source>
-        <translation type="unfinished">একটি ক্লিপের ইফেক্টগুলি টিউন করুন, তারপরে সেগুলিকে এখানে রাখতে বৈশিষ্ট্যের ইফেক্ট ট্যাবে "প্রিসেট হিসাবে সংরক্ষণ করুন..." ব্যবহার করুন.</translation>
+        <translation type="unfinished">একটি ক্লিপের ইফেক্টগুলি টিউন করুন, তারপরে সেগুলিকে এখানে রাখতে বৈশিষ্ট্যের ইফেক্ট ট্যাবে &quot;প্রিসেট হিসাবে সংরক্ষণ করুন...&quot; ব্যবহার করুন.</translation>
     </message>
     <message>
         <source>+%1 more</source>
@@ -6421,7 +6421,7 @@
     </message>
     <message>
         <source>Remove “%1” from your saved presets? Clips already using it keep their effects.</source>
-        <translation type="unfinished">আপনার সংরক্ষিত প্রিসেট থেকে " %1 " সরাতে চান? ইতিমধ্যেই এটি ব্যবহার করা ক্লিপগুলি তাদের ইফেক্ট বজায় রাখে.</translation>
+        <translation type="unfinished">আপনার সংরক্ষিত প্রিসেট থেকে &quot; %1 &quot; সরাতে চান? ইতিমধ্যেই এটি ব্যবহার করা ক্লিপগুলি তাদের ইফেক্ট বজায় রাখে.</translation>
     </message>
 </context>
 <context>
@@ -6694,7 +6694,7 @@
     </message>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>
-        <translation type="unfinished">" %1 "-এ দূরত্বের চেয়ে কাছের যেকোনো কিছু এই স্তরের সামনে দিয়ে যায়.</translation>
+        <translation type="unfinished">&quot; %1 &quot;-এ দূরত্বের চেয়ে কাছের যেকোনো কিছু এই স্তরের সামনে দিয়ে যায়.</translation>
     </message>
     <message>
         <source>Anything in “%1” (the clip beneath at the playhead) nearer than Distance passes in front of this layer.</source>
@@ -6706,7 +6706,7 @@
     </message>
     <message>
         <source>“%1” needs its depth estimated before anything in it can pass in front. It runs in the background and takes roughly half a second per frame.</source>
-        <translation type="unfinished">" %1 " এর মধ্যে থাকা কিছু সামনে দিয়ে যাওয়ার আগে এর গভীরতা অনুমান করা প্রয়োজন। এটি ব্যাকগ্রাউন্ডে চলে এবং প্রতি ফ্রেমে প্রায় অর্ধেক সেকেন্ড সময় নেয়.</translation>
+        <translation type="unfinished">&quot; %1 &quot; এর মধ্যে থাকা কিছু সামনে দিয়ে যাওয়ার আগে এর গভীরতা অনুমান করা প্রয়োজন। এটি ব্যাকগ্রাউন্ডে চলে এবং প্রতি ফ্রেমে প্রায় অর্ধেক সেকেন্ড সময় নেয়.</translation>
     </message>
     <message>
         <source>Paste effects</source>
@@ -6986,7 +6986,7 @@
     </message>
     <message>
         <source>invalid prop id “%1”</source>
-        <translation type="unfinished">অবৈধ প্রপ আইডি " %1 "</translation>
+        <translation type="unfinished">অবৈধ প্রপ আইডি &quot; %1 &quot;</translation>
     </message>
     <message>
         <source>prop.json must name a .glb model in the prop folder</source>
@@ -7002,11 +7002,11 @@
     </message>
     <message>
         <source>param “%1” must be a number</source>
-        <translation type="unfinished">প্যারাম " %1 " একটি সংখ্যা হতে হবে</translation>
+        <translation type="unfinished">প্যারাম &quot; %1 &quot; একটি সংখ্যা হতে হবে</translation>
     </message>
     <message>
         <source>param “occlusion” must be true or false</source>
-        <translation type="unfinished">পরম "অবরোধ" সত্য বা মিথ্যা হতে হবে</translation>
+        <translation type="unfinished">পরম &quot;অবরোধ&quot; সত্য বা মিথ্যা হতে হবে</translation>
     </message>
     <message>
         <source>variants must be a list</source>
@@ -7018,7 +7018,7 @@
     </message>
     <message>
         <source>invalid variant id “%1”</source>
-        <translation type="unfinished">অবৈধ ভেরিয়েন্ট আইডি " %1 "</translation>
+        <translation type="unfinished">অবৈধ ভেরিয়েন্ট আইডি &quot; %1 &quot;</translation>
     </message>
     <message>
         <source>a variant must name a .glb model in the prop folder</source>
@@ -7066,11 +7066,11 @@
     </message>
     <message>
         <source>“%1” is not an imported face prop</source>
-        <translation type="unfinished">" %1 " একটি ইমপোর্ট করা মুখের প্রপ নয়</translation>
+        <translation type="unfinished">&quot; %1 &quot; একটি ইমপোর্ট করা মুখের প্রপ নয়</translation>
     </message>
     <message>
         <source>Could not delete “%1”</source>
-        <translation type="unfinished">" %1 " মুছে ফেলা যায়নি</translation>
+        <translation type="unfinished">&quot; %1 &quot; মুছে ফেলা যায়নি</translation>
     </message>
 </context>
 <context>
@@ -8705,7 +8705,7 @@
     </message>
     <message>
         <source>No media match “%1”</source>
-        <translation type="unfinished">কোন মিডিয়া মিল নেই " %1 "</translation>
+        <translation type="unfinished">কোন মিডিয়া মিল নেই &quot; %1 &quot;</translation>
     </message>
     <message>
         <source>Try a different name.</source>
@@ -10127,7 +10127,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation type="unfinished">এই প্রকল্পটি "%1" ব্যবহার করে, যা ইনস্টল করা নেই — এটি দেখাবে না। এটি ইনস্টল করতে অতিরিক্ত খুলুন.</translation>
+        <translation type="unfinished">এই প্রকল্পটি &quot;%1&quot; ব্যবহার করে, যা ইনস্টল করা নেই — এটি দেখাবে না। এটি ইনস্টল করতে অতিরিক্ত খুলুন.</translation>
     </message>
     <message>
         <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
@@ -11047,7 +11047,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speeds are per frame of this clip. Custom models are experimental and may not work. Drop an ONNX export (fp32 or fp16, RGB, 1x/2x/4x) into the folder; put the scale in the file name, e.g. &quot;2x_Name.onnx&quot;.</source>
-        <translation type="unfinished">এই ক্লিপটির প্রতি ফ্রেমের গতি। কাস্টম মডেলগুলি পরীক্ষামূলক এবং কাজ নাও করতে পারে। ফোল্ডারে একটি ONNX এক্সপোর্ট (fp32 বা fp16, RGB, 1x/2x/4x) ড্রপ করুন; ফাইলের নামে স্কেল রাখুন, যেমন "2x_Name.onnx".</translation>
+        <translation type="unfinished">এই ক্লিপটির প্রতি ফ্রেমের গতি। কাস্টম মডেলগুলি পরীক্ষামূলক এবং কাজ নাও করতে পারে। ফোল্ডারে একটি ONNX এক্সপোর্ট (fp32 বা fp16, RGB, 1x/2x/4x) ড্রপ করুন; ফাইলের নামে স্কেল রাখুন, যেমন &quot;2x_Name.onnx&quot;.</translation>
     </message>
     <message>
         <source>Refresh model list</source>
@@ -11552,7 +11552,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
-        <translation type="unfinished">যেখানে প্লেব্যাক শোনা যায়। "সিস্টেম ডিফল্ট" আপনার কম্পিউটার সেট করা যাই হোক না কেন তা অনুসরণ করে, যখন এটি পরিবর্তন হয়.</translation>
+        <translation type="unfinished">যেখানে প্লেব্যাক শোনা যায়। &quot;সিস্টেম ডিফল্ট&quot; আপনার কম্পিউটার সেট করা যাই হোক না কেন তা অনুসরণ করে, যখন এটি পরিবর্তন হয়.</translation>
     </message>
     <message>
         <source>Microphone input</source>
@@ -13122,7 +13122,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Style some text, then use “Save style…” in the properties Text tab to keep it here.</source>
-        <translation type="unfinished">কিছু টেক্সট স্টাইল করুন, তারপর এটিকে এখানে রাখতে বৈশিষ্ট্য টেক্সট ট্যাবে "সেভ স্টাইল..." ব্যবহার করুন.</translation>
+        <translation type="unfinished">কিছু টেক্সট স্টাইল করুন, তারপর এটিকে এখানে রাখতে বৈশিষ্ট্য টেক্সট ট্যাবে &quot;সেভ স্টাইল...&quot; ব্যবহার করুন.</translation>
     </message>
     <message>
         <source>Style options</source>
@@ -13154,7 +13154,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove “%1” from your saved styles? Clips already using it keep their look.</source>
-        <translation type="unfinished">আপনার সংরক্ষিত শৈলী থেকে " %1 " সরাতে চান? ইতিমধ্যেই এটি ব্যবহার করা ক্লিপগুলি তাদের চেহারা বজায় রাখে.</translation>
+        <translation type="unfinished">আপনার সংরক্ষিত শৈলী থেকে &quot; %1 &quot; সরাতে চান? ইতিমধ্যেই এটি ব্যবহার করা ক্লিপগুলি তাদের চেহারা বজায় রাখে.</translation>
     </message>
 </context>
 <context>
