@@ -3849,66 +3849,18 @@ QJsonObject McpController::importGeneratedAudio(const QString &path, const QJson
                                                 const QJsonValue &place)
 {
     using namespace drift::mcp;
-    if (!m_app->m_assetLibrary)
-        return err("not_found", QStringLiteral("No media bin"));
-    const QStringList ids = m_app->m_assetLibrary->importLocalPaths({path});
-    if (ids.isEmpty())
-        return err("import_failed", QStringLiteral("Could not import %1").arg(path));
-    const QString assetId = ids.first();
-    {
-        // Placing needs the probed duration.
-        QEventLoop loop;
-        QTimer timeout;
-        timeout.setSingleShot(true);
-        timeout.start(15000);
-        connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
-        connect(m_app->m_assetLibrary, &AssetLibrary::assetMetadataChanged, &loop, &QEventLoop::quit);
-        while (timeout.isActive() && m_app->m_assetLibrary->isImportPending(assetId))
-            loop.exec();
-    }
-    if (drift::MediaAsset *asset = m_app->m_project.asset(assetId)) {
-        asset->generator = generator;
-        m_app->projectFile()->setDirty(true);
-    }
-    QJsonObject result{{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), path}};
-    if (const drift::MediaAsset *asset = m_app->m_project.asset(assetId))
-        result.insert(QStringLiteral("duration"), drift::usToSeconds(asset->durationUs));
-
-    if (place.isUndefined() || place.isNull() || (place.isBool() && !place.toBool()))
-        return ok(result);
+    const bool doPlace = !(place.isUndefined() || place.isNull() || (place.isBool() && !place.toBool()));
     const QJsonObject where = place.toObject();
-    const int assetIndex = m_app->m_assetLibrary->indexOfPath(path);
-    if (assetIndex < 0)
-        return ok(result);
     const double at = where.contains(QStringLiteral("at")) ? where.value(QStringLiteral("at")).toDouble() : m_app->playheadSeconds();
-    QSet<QString> before;
-    for (const drift::Track &t : m_app->m_project.tracks())
-        for (const drift::Clip &c : t.clips)
-            before.insert(c.id);
-    int track = where.contains(QStringLiteral("track")) ? where.value(QStringLiteral("track")).toInt() : -1;
-    if (track < 0) {
-        // The first audio lane with room for the whole clip at `at`; otherwise a new one.
-        const drift::TimeUs atUs = drift::secondsToUs(at);
-        const drift::MediaAsset *asset = m_app->m_project.asset(assetId);
-        const drift::TimeUs endUs = atUs + qMax<drift::TimeUs>(1, asset ? asset->durationUs : 1);
-        for (int t = 0; t < m_app->m_project.tracks().size() && track < 0; ++t) {
-            if (m_app->m_project.tracks().at(t).type != drift::TrackType::Audio || !m_app->trackAcceptsAsset(t, assetIndex))
-                continue;
-            bool free = true;
-            for (const drift::Clip &c : m_app->m_project.tracks().at(t).clips)
-                free = free && (c.timelineEnd() <= atUs || c.timelineStart >= endUs);
-            if (free)
-                track = t;
-        }
-    }
-    if (track >= 0)
-        m_app->addClipFromAssetAt(assetIndex, track, at);
-    else
-        m_app->addClipFromAssetOnNewTrackAt(assetIndex, m_app->m_project.tracks().size(), at);
-    for (const drift::Track &t : m_app->m_project.tracks())
-        for (const drift::Clip &c : t.clips)
-            if (!before.contains(c.id))
-                result.insert(QStringLiteral("clip"), c.id);
+    const int track = where.contains(QStringLiteral("track")) ? where.value(QStringLiteral("track")).toInt() : -1;
+    const AppController::GeneratedAudioImport imported = m_app->importGeneratedAudio(path, generator, doPlace, at, track);
+    if (!imported.ok)
+        return err(imported.errorCode.toUtf8().constData(), imported.error);
+    QJsonObject result{{QStringLiteral("asset"), imported.assetId}, {QStringLiteral("path"), path}};
+    if (imported.durationSeconds >= 0.0)
+        result.insert(QStringLiteral("duration"), imported.durationSeconds);
+    if (!imported.clipId.isEmpty())
+        result.insert(QStringLiteral("clip"), imported.clipId);
     return ok(result);
 }
 

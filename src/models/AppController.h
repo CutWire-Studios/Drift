@@ -498,6 +498,21 @@ public:
 
     JobRegistry *jobRegistry() const { return m_jobs; }
 
+    struct GeneratedAudioImport
+    {
+        bool ok = false;
+        QString errorCode; // "not_found" | "import_failed"
+        QString error;
+        QString assetId;
+        double durationSeconds = -1.0; // -1 when the asset has no probed duration yet
+        QString clipId;                // set when a clip was placed
+    };
+    // Imports an audio file the app generated, waits for its probe, records `generator` on the
+    // asset and, with `place`, drops a clip at atSeconds. track < 0 picks the first audio lane with
+    // room for the whole clip, else a new one. Blocks in a nested event loop: GUI thread only.
+    GeneratedAudioImport importGeneratedAudio(const QString &path, const QJsonObject &generator,
+                                              bool place, double atSeconds, int track);
+
     void setAddonManager(AddonManager *manager) { m_addonManager = manager; }
     void setMarketClient(MarketClient *client) { m_marketClient = client; }
     MarketClient *marketClient() const { return m_marketClient; }
