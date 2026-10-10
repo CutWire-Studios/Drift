@@ -120,10 +120,10 @@
           "trimmed independently. Acts on the current selection — call select_clip first; fails "
           "bad_args when no linked clips are selected.",
           objectSchema({}) },
-        { "link_clips", "timeline", "Link clips",
+        { "link_clips", "timeline", "Pair clips so they move and trim together",
           "Link two or more selected, currently unlinked clips (typically a video and an audio from "
-          "different media) so they select, move, split and delete together while keeping their own "
-          "duration, trim and speed. Acts on the current selection — call select_clips first; fails "
+          "different media) so they select, move, split and delete together, and trimming one moves the "
+          "others' matching edge by the same amount, while each keeps its own duration and speed. Acts on the current selection — call select_clips first; fails "
           "bad_args when fewer than two unlinked clips are selected.",
           objectSchema({}) },
         { "make_composite", "timeline", "Collapse clips into one composite clip",

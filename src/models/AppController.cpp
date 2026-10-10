@@ -8133,7 +8133,7 @@ void AppController::endTrimGesture()
 }
 
 AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, int clipIndex,
-                                                              double newStart) const
+                                                              double newStart, bool snap) const
 {
     TrimComputation out;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -8149,7 +8149,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
     out.clip = clip;
 
     const drift::TimeUs rawUs = drift::secondsToUs(newStart);
-    drift::TimeUs snappedStart = snapTimeForGesture(rawUs);
+    drift::TimeUs snappedStart = snap ? snapTimeForGesture(rawUs) : rawUs;
     // Whether the edge landed where the pointer asked or was pulled onto a snap target is the
     // difference between the two feelings Haptics offers.
     const int movedOutcome = (snappedStart != rawUs) ? TrimSnapped : TrimMoved;
@@ -8265,7 +8265,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
 }
 
 AppController::TrimComputation AppController::computeTrimRight(int trackIndex, int clipIndex,
-                                                               double newEnd) const
+                                                               double newEnd, bool snap) const
 {
     TrimComputation out;
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -8280,7 +8280,7 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
     out.clip = clip;
 
     const drift::TimeUs rawUs = drift::secondsToUs(newEnd);
-    drift::TimeUs snappedEnd = snapTimeForGesture(rawUs);
+    drift::TimeUs snappedEnd = snap ? snapTimeForGesture(rawUs) : rawUs;
     // With ripple on, extending pushes the followers along rather than stopping at them.
     if (!m_allowClipOverlap && !m_rippleEnabled && snappedEnd > clip.timelineEnd()) {
         const QSet<QString> exclude{clip.id};
@@ -8390,7 +8390,7 @@ QVariantMap AppController::previewTrimRight(int trackIndex, int clipIndex, doubl
 
 // Writes a computed trim back to the project and brings everything that hangs off the clip with
 // it. Shared by both edges.
-int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed)
+int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed, int side)
 {
     if (!computed.ok)
         return TrimNone;
@@ -8399,7 +8399,26 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
 
     drift::Track &track = m_project.tracks()[trackIndex];
     drift::Clip &clip = track.clips[clipIndex];
+    const drift::TimeUs durationDelta = computed.clip.timelineDuration - clip.timelineDuration;
     clip = computed.clip;
+
+    // A loose partner has its own length, so it gets the same edge moved by the same amount
+    // rather than a copy of this clip's timing. Ripple, when on, keeps every left edge put.
+    QList<QPair<int, TrimComputation>> loosePartners;
+    if (clip.linkLoose && durationDelta != 0) {
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip)) {
+            const drift::Clip &partner = m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+            const TrimComputation c =
+                side < 0 ? computeTrimLeft(ref.trackIndex, ref.clipIndex,
+                                           drift::usToSeconds(partner.timelineStart - durationDelta), false)
+                         : computeTrimRight(ref.trackIndex, ref.clipIndex,
+                                            drift::usToSeconds(partner.timelineEnd() + durationDelta), false);
+            if (!c.changed)
+                continue;
+            m_project.tracks()[ref.trackIndex].clips[ref.clipIndex] = c.clip;
+            loosePartners.append(qMakePair(ref.trackIndex, c));
+        }
+    }
 
     // linkId, not linkedClipId: linkId is what symmetrically pairs A/V companions, which is what
     // syncLinkedPartnersFrom walks. linkedClipId is the directional pin used by adjustments, and
@@ -8413,11 +8432,23 @@ int AppController::applyTrim(int trackIndex, int clipIndex, const TrimComputatio
             tracks.insert(ref.trackIndex);
             ids.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
         }
+        if (clip.linkLoose)
+            tracks = {trackIndex};
         rippleTracksFrom(m_project, tracks, computed.rippleFrom, computed.rippleDelta, ids);
         for (const int t : std::as_const(tracks)) {
             if (t != trackIndex)
                 syncOverlapTransitionsOnTrack(m_project.tracks()[t]);
         }
+    }
+    // Each loose partner ripples its own track from its own end, which need not be this clip's.
+    for (const QPair<int, TrimComputation> &p : std::as_const(loosePartners)) {
+        QSet<QString> ids{clip.id};
+        for (const drift::ClipRef &ref : drift::linkedPartners(m_project, clip))
+            ids.insert(m_project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id);
+        if (p.second.rippleDelta != 0)
+            rippleTracksFrom(m_project, {p.first}, p.second.rippleFrom, p.second.rippleDelta, ids);
+        if (p.first != trackIndex)
+            syncOverlapTransitionsOnTrack(m_project.tracks()[p.first]);
     }
     syncOverlapTransitionsOnTrack(track);
     // A pinned adjustment takes its extent from its clip, so it has to be brought along here --
@@ -8455,7 +8486,7 @@ int AppController::trimClipLeft(int trackIndex, int clipIndex, double newStart)
     if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
         return m_trimGestureLastOutcome;
     m_trimGestureLastInputUs = rawUs;
-    return applyTrim(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart));
+    return applyTrim(trackIndex, clipIndex, computeTrimLeft(trackIndex, clipIndex, newStart), -1);
 }
 
 int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
@@ -8465,7 +8496,7 @@ int AppController::trimClipRight(int trackIndex, int clipIndex, double newEnd)
     if (m_trimGestureActive && rawUs == m_trimGestureLastInputUs)
         return m_trimGestureLastOutcome;
     m_trimGestureLastInputUs = rawUs;
-    return applyTrim(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd));
+    return applyTrim(trackIndex, clipIndex, computeTrimRight(trackIndex, clipIndex, newEnd), 1);
 }
 
 void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, double outPoint)
@@ -16505,14 +16536,15 @@ void AppController::unlinkSelectedClips()
         if (!isValidClipIndex(pair.first, pair.second))
             continue;
 
-        drift::Clip &clip = m_project.tracks()[pair.first].clips[pair.second];
-        if (clip.linkId.isEmpty() || clearedLinkIds.contains(clip.linkId))
+        // A copy: clearing the clip's own linkId mid-loop would stop later partners matching.
+        const QString linkId = m_project.tracks().at(pair.first).clips.at(pair.second).linkId;
+        if (linkId.isEmpty() || clearedLinkIds.contains(linkId))
             continue;
 
-        clearedLinkIds.insert(clip.linkId);
+        clearedLinkIds.insert(linkId);
         for (drift::Track &track : m_project.tracks()) {
             for (drift::Clip &candidate : track.clips) {
-                if (candidate.linkId == clip.linkId) {
+                if (candidate.linkId == linkId) {
                     candidate.linkId.clear();
                     candidate.linkLoose = false;
                 }

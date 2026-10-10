@@ -1742,9 +1742,9 @@ protected:
         drift::TimeUs rippleFrom = 0;
         drift::TimeUs rippleDelta = 0;
     };
-    TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart) const;
-    TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd) const;
-    int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed);
+    TrimComputation computeTrimLeft(int trackIndex, int clipIndex, double newStart, bool snap = true) const;
+    TrimComputation computeTrimRight(int trackIndex, int clipIndex, double newEnd, bool snap = true) const;
+    int applyTrim(int trackIndex, int clipIndex, const TrimComputation &computed, int side);
     QVariantMap trimPreviewToMap(int trackIndex, int clipIndex, const TrimComputation &computed) const;
 
     void notifyTracksChanged();

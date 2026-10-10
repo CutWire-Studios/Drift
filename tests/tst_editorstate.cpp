@@ -5023,8 +5023,8 @@ void EditorStateTest::linkedAudioUnlinkAndMove()
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(2.0));
 }
 
-// Link joins clips that did not come from the same media. They move and split together, but the
-// audio keeps its own duration and trim instead of being overwritten by the video's.
+// Link joins clips that did not come from the same media. They move and split together, and a
+// trim moves the partner's matching edge by the same amount instead of copying the video's timing.
 void EditorStateTest::linkUnrelatedClipsMoveTogetherKeepTiming()
 {
     AssetLibrary library;
@@ -5059,15 +5059,31 @@ void EditorStateTest::linkUnrelatedClipsMoveTogetherKeepTiming()
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(3.0));
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(4.0));
 
-    // Trimming the video does not rewrite the audio's duration or trim (a strict link would).
-    state.trimClipRight(0, 0, 5.0);
-    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(2.0));
+    // Trimming the video's end pulls the audio's end in by the same second.
+    state.setSnapEnabled(false);
+    state.trimClipRight(0, 0, 6.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineDuration, drift::secondsToUs(3.0));
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(4.0));
-    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(2.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(1.0));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcIn, drift::secondsToUs(0.5));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcOut, drift::secondsToUs(1.5));
+
+    // And its start, the same way: both lose half a second from the head.
+    state.trimClipLeft(0, 0, 3.5);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::secondsToUs(3.5));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(4.5));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineDuration, drift::secondsToUs(0.5));
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcIn, drift::secondsToUs(1.0));
+
+    // Extending the video back out extends the audio too, never past its media.
+    state.trimClipLeft(0, 0, 3.0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(4.0));
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).srcIn, drift::secondsToUs(0.5));
 
     state.unlinkSelectedClips();
     QVERIFY(!state.canUnlinkSelection());
+    QVERIFY(state.project()->tracks().at(1).clips.at(0).linkId.isEmpty());
+    QVERIFY(!state.project()->tracks().at(1).clips.at(0).linkLoose);
     state.moveClip(0, 0, 0.0);
     QCOMPARE(state.project()->tracks().at(1).clips.at(0).timelineStart, drift::secondsToUs(4.0));
 }
