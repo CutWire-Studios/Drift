@@ -1062,11 +1062,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
+        <source>Unlock crop ratio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
+        <source>Lock crop ratio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1106,11 +1106,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
+        <source>Save keeps the original file and stores this crop.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
+        <source>Save keeps the original file and stores this trim.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2041,6 +2041,22 @@
     </message>
     <message>
         <source>That file is already in this project.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3453,18 +3469,6 @@
     </message>
     <message>
         <source>%1 (off)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7294,27 +7298,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7339,6 +7327,22 @@
     </message>
     <message>
         <source>Trim</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8946,14 +8950,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8967,18 +8963,6 @@
     </message>
     <message>
         <source>Set Out</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9006,23 +8990,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Saving…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9030,7 +8998,51 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14293,6 +14305,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

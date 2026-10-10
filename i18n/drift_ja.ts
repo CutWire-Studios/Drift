@@ -1062,12 +1062,12 @@
         <translation>オーディオのみ — 下でトリム</translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
-        <translation>ソースのフレーム比率のロックを解除</translation>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
-        <translation>ソースのフレーム比率をロック</translation>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1106,12 +1106,12 @@
         <translation>保存中…</translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
-        <translation>保存すると、変更内容がこのプロジェクト内の新しいファイルとして保持されます。</translation>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>保存すると元のビデオは保持され、このフレーミングが保存されます。</translation>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -2042,6 +2042,22 @@
     <message>
         <source>That file is already in this project.</source>
         <translation>そのファイルはこのプロジェクトに既に存在します。</translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
@@ -3454,18 +3470,6 @@
     <message>
         <source>%1 (off)</source>
         <translation>%1 (オフ)</translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation>ビデオをフレーミング</translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation>ビデオのフレーミングを保存しました</translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
-        <translation>ソースビデオをフレーミング</translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
@@ -7294,28 +7298,12 @@
         <translation>元のサイズ : %1 × %2</translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation>ソースフレームボックス</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>ソースのフレーム比率のロックを解除</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>ソースのフレーム比率をロック</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>幅</translation>
     </message>
     <message>
         <source>Height</source>
         <translation>高さ</translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
-        <translation>ソースフレームを編集…</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -7340,6 +7328,22 @@
     <message>
         <source>Trim</source>
         <translation>トリム</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">クロップ</translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8946,14 +8950,6 @@
         <translation>クリップを再生し、端をドラッグして必要な部分だけを保持します。保存すると、メディアビンのこの項目が置き換えられます。</translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation>フレームをドラッグしてクロップします。保存すると、メディアビンのこの項目が置き換えられます — その後タイムラインにドラッグします。</translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation>フレームをドラッグして使用する領域を選択します。元のビデオはリフレーム用にそのまま保持されます。</translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation>一時停止</translation>
     </message>
@@ -8968,18 +8964,6 @@
     <message>
         <source>Set Out</source>
         <translation>アウトを設定</translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation>オリジナル: %1×%2 • フレーム: %3×%4</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>ソースのフレーム比率のロックを解除</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>ソースのフレーム比率をロック</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -9006,32 +8990,60 @@
         <translation>この解像度はほとんどのプロジェクトで十分です。それでもアップスケールすることは可能です。</translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation>「完了」では元のビデオを保持したまま、この範囲とフレーミングを保存します。「アップスケール」では、それらを新しいビデオとしてメディアビンにレンダリングし、強化ウィンドウで開きます。</translation>
-    </message>
-    <message>
         <source>Saving…</source>
         <translation>保存中…</translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation>保持する部分とフレーミングを選択し、「次へ」を押してください。</translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation>保存すると、ビン内のこの項目に新しいファイルが書き込まれます。</translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>保存すると元のビデオは保持され、このフレーミングが保存されます。</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation>保存するものはありません — 準備ができたらこの項目をタイムラインにドラッグしてください。</translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
-        <translation>フレームを調整するか、「リセット」で画像全体を元に戻します。</translation>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">クロップ</translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14302,6 +14314,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to edit-friendly format</source>
         <translation>編集に適した形式に変換</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>

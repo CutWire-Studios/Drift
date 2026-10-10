@@ -1063,12 +1063,12 @@
         <translation type="unfinished">শুধুমাত্র অডিও — এটি নীচে ট্রিম করুন</translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
-        <translation type="unfinished">উৎস ফ্রেম অনুপাত আনলক করুন</translation>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
-        <translation type="unfinished">লক সোর্স ফ্রেম অনুপাত</translation>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1107,12 +1107,12 @@
         <translation>সংরক্ষণ করা হচ্ছে…</translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
-        <translation type="unfinished">সংরক্ষণ এই প্রকল্পে আপনার পরিবর্তনগুলিকে একটি নতুন ফাইল হিসাবে রাখে.</translation>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation type="unfinished">সংরক্ষণ মূল ভিডিও রাখে এবং এই ফ্রেমিং সংরক্ষণ করে.</translation>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -2045,6 +2045,22 @@
     <message>
         <source>That file is already in this project.</source>
         <translation type="unfinished">ফাইলটি ইতিমধ্যেই এই প্রকল্পে রয়েছে.</translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
@@ -3461,18 +3477,6 @@
     <message>
         <source>%1 (off)</source>
         <translation type="unfinished">%1 (বন্ধ)</translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation type="unfinished">ফ্রেম ভিডিও</translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation type="unfinished">ভিডিও ফ্রেমিং সংরক্ষিত</translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
-        <translation type="unfinished">ফ্রেম সোর্স ভিডিও</translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
@@ -7323,28 +7327,12 @@
         <translation type="unfinished">আসল মাত্রা: %1 × %2</translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation type="unfinished">সোর্স ফ্রেম বক্স</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation type="unfinished">উৎস ফ্রেম অনুপাত আনলক করুন</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation type="unfinished">লক সোর্স ফ্রেম অনুপাত</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>প্রস্থ</translation>
     </message>
     <message>
         <source>Height</source>
         <translation>উচ্চতা</translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
-        <translation type="unfinished">উৎস ফ্রেম সম্পাদনা করুন…</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -7369,6 +7357,22 @@
     <message>
         <source>Trim</source>
         <translation>ট্রিম</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8985,14 +8989,6 @@
         <translation type="unfinished">ক্লিপটি চালান এবং শুধুমাত্র আপনার পছন্দের অংশটি রাখতে প্রান্তগুলি টেনে আনুন। সংরক্ষণ মিডিয়া বিন এই আইটেম প্রতিস্থাপন.</translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation type="unfinished">ক্রপ করতে ফ্রেমটি টেনে আনুন। সংরক্ষণ এই আইটেমটিকে মিডিয়া বিনে প্রতিস্থাপন করে — তারপর এটিকে টাইমলাইনে টেনে আনুন.</translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation type="unfinished">ব্যবহার করার জন্য এলাকা বেছে নিতে ফ্রেমটি টেনে আনুন। মূল ভিডিও রিফ্রেমিংয়ের জন্য উপলব্ধ থাকে.</translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation>বিরতি দিন</translation>
     </message>
@@ -9007,18 +9003,6 @@
     <message>
         <source>Set Out</source>
         <translation type="unfinished">সেট আউট</translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation type="unfinished">আসল: %1× %2 • ফ্রেম: %3× %4</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation type="unfinished">উৎস ফ্রেম অনুপাত আনলক করুন</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation type="unfinished">লক সোর্স ফ্রেম অনুপাত</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -9045,32 +9029,60 @@
         <translation type="unfinished">এই রেজোলিউশনটি ইতিমধ্যেই বেশিরভাগ প্রকল্পের জন্য ভাল। আপনি এখনও এটি আপস্কেল করতে পারেন.</translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished">Done মূল ভিডিও রাখে এবং এই পরিসীমা এবং ফ্রেমিং সংরক্ষণ করে। Upscale এগুলিকে মিডিয়া বিনে একটি নতুন ভিডিও হিসাবে রেন্ডার করে, তারপরে এটি উন্নত উইন্ডোতে খোলে.</translation>
-    </message>
-    <message>
         <source>Saving…</source>
         <translation>সংরক্ষণ করা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished">রাখার জন্য অংশ এবং ফ্রেমিং বেছে নিন, তারপর পরবর্তী.</translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation type="unfinished">সংরক্ষণ করুন বিনে এই আইটেমটির উপরে একটি নতুন ফাইল লেখে.</translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation type="unfinished">সংরক্ষণ মূল ভিডিও রাখে এবং এই ফ্রেমিং সংরক্ষণ করে.</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation type="unfinished">সংরক্ষণ করার কিছু নেই — আপনি প্রস্তুত হলে এই আইটেমটিকে টাইমলাইনে টেনে আনুন.</translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
-        <translation type="unfinished">সম্পূর্ণ চিত্র পুনরুদ্ধার করতে ফ্রেম সামঞ্জস্য করুন বা রিসেট করুন.</translation>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14351,6 +14363,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to edit-friendly format</source>
         <translation type="unfinished">সম্পাদনা-বান্ধব বিন্যাসে রূপান্তর করুন</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>

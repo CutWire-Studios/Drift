@@ -1062,12 +1062,12 @@
         <translation>Chỉ âm thanh - cắt ngắn nó bên dưới</translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
-        <translation>Mở khóa tỷ lệ khung hình nguồn</translation>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
-        <translation>Khóa tỷ lệ khung hình nguồn</translation>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1110,12 +1110,12 @@
         <translation>Đang lưu…</translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
-        <translation>Lưu giữ những thay đổi của bạn dưới dạng một tệp mới trong dự án này.</translation>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>Lưu giữ video gốc và lưu trữ khung này.</translation>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -2042,6 +2042,22 @@
     <message>
         <source>That file is already in this project.</source>
         <translation>Tệp đó đã có trong dự án này.</translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
@@ -3462,18 +3478,6 @@
     <message>
         <source>%1 (off)</source>
         <translation>%1 (tắt)</translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation>Khung video</translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation>Đã lưu khung video</translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
-        <translation>Khung video nguồn</translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
@@ -7294,28 +7298,12 @@
         <translation>Kích thước ban đầu: %1 × %2</translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation>Hộp khung nguồn</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>Mở khóa tỷ lệ khung hình nguồn</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>Khóa tỷ lệ khung hình nguồn</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>Chiều rộng</translation>
     </message>
     <message>
         <source>Height</source>
         <translation>Chiều cao</translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
-        <translation>Chỉnh sửa khung hình nguồn…</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -7340,6 +7328,22 @@
     <message>
         <source>Trim</source>
         <translation>Cắt ngắn</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Cắt khung hình</translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8946,14 +8950,6 @@
         <translation>Phát clip và kéo hai đầu để chọn đoạn cần giữ. Lưu thay thế mục này trong ngăn phương tiện.</translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation>Kéo khung hình để cắt. Lưu sẽ thay thế mục này trong ngăn phương tiện — sau đó kéo mục đó vào dòng thời gian.</translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation>Kéo khung để chọn vùng sử dụng. Video gốc vẫn có sẵn để chỉnh sửa.</translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation>Tạm dừng</translation>
     </message>
@@ -8972,18 +8968,6 @@
     <message>
         <source>Rotate</source>
         <translation>Xoay</translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation>Gốc: %1×%2 • Khung: %3×%4</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>Mở khóa tỷ lệ khung hình nguồn</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>Khóa tỷ lệ khung hình nguồn</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -9010,32 +8994,60 @@
         <translation>Độ phân giải này đã tốt cho hầu hết các dự án. Bạn vẫn có thể nâng cấp nó.</translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation>Xong sẽ giữ nguyên video gốc và lưu phạm vi cùng khung hình này. Nâng cấp sẽ kết xuất chúng thành video mới trong ngăn phương tiện rồi mở nó trong cửa sổ Nâng cấp.</translation>
-    </message>
-    <message>
         <source>Saving…</source>
         <translation>Đang lưu…</translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation>Chọn phần và khung hình cần giữ, sau đó chọn Tiếp theo.</translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation>Lưu sẽ ghi tệp mới đè lên mục này trong ngăn.</translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>Lưu giữ video gốc và lưu trữ khung này.</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation>Không có gì để lưu — hãy kéo mục này vào dòng thời gian khi bạn sẵn sàng.</translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
-        <translation>Điều chỉnh khung hình hoặc Đặt lại để khôi phục lại hình ảnh đầy đủ.</translation>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Cắt khung hình</translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14302,6 +14314,10 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>Convert to edit-friendly format</source>
         <translation>Chuyển đổi sang định dạng dễ chỉnh sửa</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>

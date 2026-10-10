@@ -1063,12 +1063,12 @@
         <translation>Somente áudio — apare abaixo</translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
-        <translation>Desbloquear proporção do quadro de origem</translation>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
-        <translation>Bloquear proporção do quadro de origem</translation>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1107,12 +1107,12 @@
         <translation>Salvando…</translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
-        <translation>Salvar mantém suas alterações como um novo arquivo neste projeto.</translation>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>Salvar mantém o vídeo original e armazena este enquadramento.</translation>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -2045,6 +2045,22 @@
     <message>
         <source>That file is already in this project.</source>
         <translation>Esse arquivo já está neste projeto.</translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
@@ -3461,18 +3477,6 @@
     <message>
         <source>%1 (off)</source>
         <translation>%1 (desativado)</translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation>Enquadrar vídeo</translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation>Enquadramento do vídeo salvo</translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
-        <translation>Enquadrar vídeo de origem</translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
@@ -7323,28 +7327,12 @@
         <translation>Dimensões originais: %1 × %2</translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation>Caixa do quadro de origem</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>Desbloquear proporção do quadro de origem</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>Bloquear proporção do quadro de origem</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
         <translation>Altura</translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
-        <translation>Editar quadro de origem…</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -7369,6 +7357,22 @@
     <message>
         <source>Trim</source>
         <translation>Aparar</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Recortar</translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8985,14 +8989,6 @@
         <translation>Reproduza o clipe e arraste as extremidades para manter só a parte que você quer. Salvar substitui este item na biblioteca de mídia.</translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation>Arraste o quadro para recortar. Salvar substitui este item na biblioteca de mídia — depois arraste-o para a linha do tempo.</translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation>Arraste o quadro para escolher a área a ser usada. O vídeo original continua disponível para reenquadramento.</translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation>Pausar</translation>
     </message>
@@ -9007,18 +9003,6 @@
     <message>
         <source>Set Out</source>
         <translation>Definir saída</translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation>Original: %1×%2 • Quadro: %3×%4</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>Desbloquear proporção do quadro de origem</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>Bloquear proporção do quadro de origem</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -9045,32 +9029,60 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Saving…</source>
         <translation>Salvando…</translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation>Salvar grava um novo arquivo sobre este item na biblioteca.</translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>Salvar mantém o vídeo original e armazena este enquadramento.</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation>Nada para salvar — arraste este item para a linha do tempo quando estiver pronto.</translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
-        <translation>Ajuste o quadro ou use Redefinir para restaurar a imagem completa.</translation>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Recortar</translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14351,6 +14363,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Convert to edit-friendly format</source>
         <translation>Converter para formato ideal para edição</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>

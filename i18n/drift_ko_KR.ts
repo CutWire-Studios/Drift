@@ -1062,12 +1062,12 @@
         <translation>오디오만 — 아래에서 잘라내세요</translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
-        <translation>원본 프레임 비율 잠금 해제</translation>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
-        <translation>원본 프레임 비율 잠금</translation>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1106,12 +1106,12 @@
         <translation>저장 중…</translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
-        <translation>저장하면 변경 사항이 이 프로젝트의 새 파일로 유지됩니다.</translation>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>저장해도 원본 동영상은 그대로 유지되며 이 프레이밍이 별도로 저장됩니다.</translation>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -2042,6 +2042,22 @@
     <message>
         <source>That file is already in this project.</source>
         <translation>해당 파일은 이미 이 프로젝트에 있습니다.</translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
@@ -3454,18 +3470,6 @@
     <message>
         <source>%1 (off)</source>
         <translation>%1(꺼짐)</translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation>동영상 프레이밍</translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation>동영상 프레이밍이 저장됨</translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
-        <translation>원본 동영상 프레임 지정</translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
@@ -7294,28 +7298,12 @@
         <translation>원본 크기: %1 × %2</translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation>원본 프레임 영역</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>원본 프레임 비율 잠금 해제</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>원본 프레임 비율 잠금</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>너비</translation>
     </message>
     <message>
         <source>Height</source>
         <translation>높이</translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
-        <translation>원본 프레임 편집…</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -7340,6 +7328,22 @@
     <message>
         <source>Trim</source>
         <translation>자르기</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8946,14 +8950,6 @@
         <translation>클립을 재생하고 양 끝을 드래그하여 원하는 부분만 남기세요. 저장하면 미디어 라이브러리에서 이 항목이 교체됩니다.</translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation>프레임을 드래그하여 크롭하세요. 저장하면 미디어 라이브러리에서 이 항목이 교체되며 — 이후 타임라인으로 드래그하세요.</translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation>프레임을 드래그하여 사용할 영역을 선택하세요. 프레이밍을 다시 조정할 수 있도록 원본 동영상은 그대로 사용할 수 있습니다.</translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation>일시정지</translation>
     </message>
@@ -8968,18 +8964,6 @@
     <message>
         <source>Set Out</source>
         <translation>끝점 설정</translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation>원본: %1×%2 • 프레임: %3×%4</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>원본 프레임 비율 잠금 해제</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>원본 프레임 비율 잠금</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -9006,32 +8990,60 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Saving…</source>
         <translation>저장 중…</translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation>저장하면 미디어 라이브러리에서 이 항목 대신 새 파일이 기록됩니다.</translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>저장해도 원본 동영상은 그대로 유지되며 이 프레이밍이 별도로 저장됩니다.</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation>저장할 내용이 없습니다 — 준비되면 이 항목을 타임라인으로 드래그하세요.</translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
-        <translation>프레임을 조정하거나 초기화를 눌러 전체 이미지를 복원하세요.</translation>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14294,6 +14306,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to edit-friendly format</source>
         <translation>편집하기 좋은 형식으로 변환</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>

@@ -1063,12 +1063,12 @@
         <translation>ශ්‍රව්‍ය පමණි — පහතින් කප්පාදු කරන්න</translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
-        <translation>මූලාශ්‍ර රාමු අනුපාතය අගුළු හරින්න</translation>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
-        <translation>මූලාශ්‍ර රාමු අනුපාතය අගුළු දමන්න</translation>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1107,12 +1107,12 @@
         <translation>සුරකිමින්…</translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
-        <translation>සුරැකීම මඟින් ඔබගේ වෙනස්කම් මෙම ව්‍යාපෘතියේ නව ගොනුවක් ලෙස තබා ගනී.</translation>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>සුරැකීම මඟින් මුල් වීඩියෝව තබා ගන්නා අතර මෙම රාමුගත කිරීම සුරකිනු ලබයි.</translation>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -2045,6 +2045,22 @@
     <message>
         <source>That file is already in this project.</source>
         <translation>එම ගොනුව දැනටමත් මෙම ව්‍යාපෘතියේ ඇත.</translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
@@ -3461,18 +3477,6 @@
     <message>
         <source>%1 (off)</source>
         <translation>%1 (අක්‍රියයි)</translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation>වීඩියෝව රාමුගත කරන්න</translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation>වීඩියෝ රාමුගත කිරීම සුරකින ලදී</translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
-        <translation>මූලාශ්‍ර වීඩියෝව රාමුගත කරන්න</translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
@@ -7323,28 +7327,12 @@
         <translation>මුල් මානයන්: %1 × %2</translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation>මූලාශ්‍ර රාමු කොටුව</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>මූලාශ්‍ර රාමු අනුපාතය අගුළු හරින්න</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>මූලාශ්‍ර රාමු අනුපාතය අගුළු දමන්න</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation>පළල</translation>
     </message>
     <message>
         <source>Height</source>
         <translation>උස</translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
-        <translation>මූලාශ්‍ර රාමුව සංස්කරණය කරන්න…</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -7369,6 +7357,22 @@
     <message>
         <source>Trim</source>
         <translation>කප්පාදුව</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">කප්පාදු (Crop)</translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8985,14 +8989,6 @@
         <translation>ක්ලිප් එක ධාවනය කර ඔබට අවශ්‍ය කොටස පමණක් තබා ගැනීමට අග්‍ර අදින්න. සුරැකීම මඟින් මාධ්‍ය බඳුනේ මෙම අංගය ප්‍රතිස්ථාපනය කරයි.</translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation>කප්පාදු කිරීමට රාමුව අදින්න. සුරැකීම මඟින් මාධ්‍ය බඳුනේ මෙම අංගය ප්‍රතිස්ථාපනය කරයි — ඉන්පසු එය කාලරේඛාව වෙත අදින්න.</translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation>භාවිත කිරීමට අවශ්‍ය ප්‍රදේශය තෝරා ගැනීමට රාමුව අදින්න. නැවත රාමු කිරීම සඳහා මුල් වීඩියෝව දිගටම ලබාගත හැක.</translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation>විරාමය</translation>
     </message>
@@ -9007,18 +9003,6 @@
     <message>
         <source>Set Out</source>
         <translation>අවසානය සකසන්න (Out)</translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation>මුල්: %1×%2 • රාමුව: %3×%4</translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation>මූලාශ්‍ර රාමු අනුපාතය අගුළු හරින්න</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation>මූලාශ්‍ර රාමු අනුපාතය අගුළු දමන්න</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -9045,32 +9029,60 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Saving…</source>
         <translation>සුරකිමින්…</translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation>සුරැකීම මඟින් බඳුනේ ඇති මෙම අංගය මත නව ගොනුවක් ලියයි.</translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>සුරැකීම මඟින් මුල් වීඩියෝව එලෙසම තබා මෙම රාමුගත කිරීම සුරකියි.</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation>සුරැකීමට කිසිවක් නැත — ඔබ සූදානම් වූ විට මෙම අංගය කාලරේඛාව වෙත අදින්න.</translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
-        <translation>සම්පූර්ණ රූපය ප්‍රතිසාධනය කිරීමට රාමුව සකසන්න හෝ යළි සකසන්න.</translation>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">කප්පාදු (Crop)</translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -14351,6 +14363,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to edit-friendly format</source>
         <translation>සංස්කරණයට පහසු ආකෘතියකට පරිවර්තනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>

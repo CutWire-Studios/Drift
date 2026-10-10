@@ -1063,12 +1063,12 @@
         <translation>Audyo lang — i-trim ito sa ibaba</translation>
     </message>
     <message>
-        <source>Unlock source frame ratio</source>
-        <translation>I-unlock ang frame ratio ng pinagmulan</translation>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lock source frame ratio</source>
-        <translation>I-lock ang frame ratio ng pinagmulan</translation>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim</source>
@@ -1107,12 +1107,12 @@
         <translation>Sine-save…</translation>
     </message>
     <message>
-        <source>Save keeps your changes as a new file in this project.</source>
-        <translation>Pinapanatili ng pag-save ang iyong mga pagbabago bilang bagong file sa proyektong ito.</translation>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation>Pinapanatili ng pag-save ang orihinal na video at iniimbak ang framing na ito.</translation>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -2044,6 +2044,22 @@
     </message>
     <message>
         <source>That file is already in this project.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3465,18 +3481,6 @@
     <message>
         <source>%1 (off)</source>
         <translation>%1 (pinatay)</translation>
-    </message>
-    <message>
-        <source>Frame video</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Video framing saved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Frame source video</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
@@ -7323,28 +7327,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Source frame box</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation type="unfinished">I-unlock ang frame ratio ng pinagmulan</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation type="unfinished">I-lock ang frame ratio ng pinagmulan</translation>
-    </message>
-    <message>
         <source>Width</source>
         <translation type="unfinished">Lapad</translation>
     </message>
     <message>
         <source>Height</source>
         <translation type="unfinished">Taas</translation>
-    </message>
-    <message>
-        <source>Edit source frame…</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -7369,6 +7357,22 @@
     <message>
         <source>Trim</source>
         <translation type="unfinished">I-trim</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">I-crop</translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8985,14 +8989,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Drag the frame to crop. Save replaces this item in the media bin — then drag it onto the timeline.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Drag the frame to choose the area to use. The original video stays available for reframing.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9007,18 +9003,6 @@
     <message>
         <source>Set Out</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original: %1×%2 • Frame: %3×%4</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unlock source frame ratio</source>
-        <translation type="unfinished">I-unlock ang frame ratio ng pinagmulan</translation>
-    </message>
-    <message>
-        <source>Lock source frame ratio</source>
-        <translation type="unfinished">I-lock ang frame ratio ng pinagmulan</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -9045,31 +9029,59 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Done keeps the original video and stores this range and framing. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Saving…</source>
         <translation type="unfinished">Sine-save…</translation>
-    </message>
-    <message>
-        <source>Choose the part and framing to keep, then Next.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save writes a new file over this item in the bin.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save keeps the original video and stores this framing.</source>
-        <translation type="unfinished">Pinapanatili ng pag-save ang orihinal na video at iniimbak ang framing na ito.</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Adjust the frame or Reset to restore the full image.</source>
+        <source>Crop — %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">I-crop</translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original: %1×%2 • Crop: %3×%4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock crop ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the part and crop to keep, then Next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keeps the original file and stores this trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adjust the crop or Reset to restore the full picture.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -14343,6 +14355,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Convert to edit-friendly format</source>
         <translation type="unfinished">I-convert sa format na madaling i-edit</translation>
+    </message>
+    <message>
+        <source>Crop…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enhance video…</source>
