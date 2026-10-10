@@ -9,16 +9,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/CutWire-Studios/Drift/releases/latest"><img src="https://img.shields.io/github/v/release/CutWire-Studios/Drift?label=release" alt="Latest release"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="License: GPL-3.0"></a>
-  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Android-lightgrey" alt="Platform: Linux | Windows | macOS | Android">
+  <a href="https://github.com/CutWire-Studios/Drift/releases/latest"><img src="https://img.shields.io/github/v/release/CutWire-Studios/Drift?label=release&style=flat&labelColor=28272f&color=feb504" alt="Latest release" height="24"></a>
+  <a href="https://github.com/CutWire-Studios/Drift/releases"><img src="https://img.shields.io/github/downloads/CutWire-Studios/Drift/total?label=GitHub%20downloads&style=flat&labelColor=28272f&color=feb504" alt="GitHub downloads" height="24"></a>
+  <a href="https://flathub.org/apps/org.cutwire.Drift"><img src="https://img.shields.io/flathub/downloads/org.cutwire.Drift?label=Flathub%20installs&style=flat&labelColor=28272f&color=feb504" alt="Flathub installs" height="24"></a>
+  <a href="https://discord.gg/J5ANFz6Z3y"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2FJ5ANFz6Z3y%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&suffix=%20members&logo=discord&logoColor=F8F8F8&label=Discord&color=feb504&labelColor=28272f&style=flat" alt="Join Drift Discord" height="24"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/CutWire-Studios/Drift?style=flat&labelColor=28272f&color=feb504" alt="License: GPL-3.0" height="24"></a>
+  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Android-feb504?style=flat&labelColor=28272f" alt="Platform: Linux | Windows | macOS | Android" height="24">
 </p>
 
 <p align="center">
-  <a href="https://github.com/CutWire-Studios/Drift">GitHub</a> ·
-  <a href="https://github.com/CutWire-Studios/Drift/releases/latest">Download</a> ·
-  <a href="https://github.com/CutWire-Studios/Drift/issues">Issues</a> ·
-  <a href="LICENSE">License</a>
+  <a href="https://cutwire.org/drift"><strong>cutwire.org/drift</strong></a>
 </p>
 
 Drift is a desktop video editor from CutWire Studios. Drop in clips, add effects, captions, stickers,
@@ -163,6 +163,20 @@ Build, packaging, architecture, and agent protocol live in `docs/`:
 
 Found a bug or have an idea? Open an
 [issue on GitHub](https://github.com/CutWire-Studios/Drift/issues).
+
+## Contributing
+
+[CONTRIBUTING.md](./CONTRIBUTING.md) is the pull-request guide: open an issue before a large change, keep each request to one change, run the tests, and license the work under GPLv3.
+
+Effects, transitions, templates, and audio effects are addons. Send those to [Drift-Addons](https://github.com/CutWire-Studios/Drift-Addons). Changes to the engine that runs them stay in this repository.
+
+Installing a [release](https://github.com/CutWire-Studios/Drift/releases) and editing a real project is enough to help; file what broke, or what should work better. On [Discord](https://discord.gg/J5ANFz6Z3y), people who have contributed can ask for the `@Contributor` role.
+
+## Contributors
+
+<a href="https://github.com/CutWire-Studios/Drift/graphs/contributors">
+  <img alt="Contributors" src="https://contrib.rocks/image?repo=CutWire-Studios/Drift">
+</a>
 
 ## License
 
