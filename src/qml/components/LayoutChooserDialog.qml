@@ -104,6 +104,19 @@ ThemedDialog {
             root.firstRunDismissed()
     }
 
+    // The question can be answered elsewhere while the first-run chooser is up — an MCP agent
+    // setting the canvas, say. close() rather than reject() so this is not mistaken for
+    // "Decide later". Gated on visible, not opened: opened only turns true once the enter
+    // transition finishes, and an answer arriving mid-animation would otherwise be missed.
+    Connections {
+        target: EditorState
+        enabled: root.visible && !root.fromSettings
+        function onProjectLayoutChosenChanged() {
+            if (EditorState.projectLayoutChosen)
+                root.close()
+        }
+    }
+
     contentItem: Column {
         spacing: Theme.spacingXl
         width: parent ? parent.width : 600
