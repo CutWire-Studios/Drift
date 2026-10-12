@@ -383,6 +383,9 @@ private slots:
     void exporterHardwareCodecsListedForThisOs();
     void exporterHardwarePreferredContainerIsMp4();
     void exporterSettingsFromMapRoundTripsHardwareCodec();
+    void exporterScaleOptionsSizeTheShortSide();
+    void exporterReelsTargetRequiresVerticalCanvas();
+    void exporterReelsTargetMeetsInstagramLimits();
     void exporterHardwareEncodeProducesPlayableFile();
     void exporterSettingsFromMapValidatesFrameRate();
     void exporterDefaultsToProjectFrameRate();
@@ -11780,6 +11783,87 @@ void EngineTest::exporterSettingsFromMapRoundTripsHardwareCodec()
     QCOMPARE(settings.rateControl, QStringLiteral("crf"));
     QCOMPARE(settings.crf, 23);
     QCOMPARE(settings.videoPreset, QStringLiteral("p4"));
+}
+
+namespace {
+QVariantMap scaleOptionById(const QVariantList &options, const QString &id)
+{
+    for (const QVariant &v : options) {
+        const QVariantMap m = v.toMap();
+        if (m.value(QStringLiteral("id")).toString() == id)
+            return m;
+    }
+    return {};
+}
+} // namespace
+
+void EngineTest::exporterScaleOptionsSizeTheShortSide()
+{
+    // Landscape is unchanged: 1080p is 1080 lines.
+    const QVariantMap land = scaleOptionById(Exporter::scaleOptions(3840, 2160), QStringLiteral("1080p"));
+    QCOMPARE(land.value(QStringLiteral("width")).toInt(), 1920);
+    QCOMPARE(land.value(QStringLiteral("height")).toInt(), 1080);
+
+    // Portrait: 1080p is 1080 wide, not 608×1080.
+    const QVariantMap port = scaleOptionById(Exporter::scaleOptions(2160, 3840), QStringLiteral("1080p"));
+    QCOMPARE(port.value(QStringLiteral("width")).toInt(), 1080);
+    QCOMPARE(port.value(QStringLiteral("height")).toInt(), 1920);
+
+    // A 1080×1920 canvas is already 1080p, so the chip would not downscale and is left out.
+    const QVariantList native = Exporter::scaleOptions(1080, 1920);
+    QVERIFY(scaleOptionById(native, QStringLiteral("1080p")).isEmpty());
+    const QVariantMap source = scaleOptionById(native, QStringLiteral("source"));
+    QCOMPARE(source.value(QStringLiteral("width")).toInt(), 1080);
+    QCOMPARE(source.value(QStringLiteral("height")).toInt(), 1920);
+    const QVariantMap p720 = scaleOptionById(native, QStringLiteral("720p"));
+    QCOMPARE(p720.value(QStringLiteral("width")).toInt(), 720);
+    QCOMPARE(p720.value(QStringLiteral("height")).toInt(), 1280);
+}
+
+void EngineTest::exporterReelsTargetRequiresVerticalCanvas()
+{
+    for (const QSize &canvas : {QSize(1920, 1080), QSize(1080, 1080), QSize(1080, 1350)}) {
+        const QVariantMap t = Exporter::reelsTarget(canvas.width(), canvas.height(), 30);
+        QVERIFY2(!t.value(QStringLiteral("available")).toBool(),
+                 qPrintable(QStringLiteral("%1x%2").arg(canvas.width()).arg(canvas.height())));
+        QVERIFY(!t.value(QStringLiteral("reason")).toString().isEmpty());
+    }
+    QVERIFY(!Exporter::reelsTarget(0, 0, 30).value(QStringLiteral("available")).toBool());
+}
+
+void EngineTest::exporterReelsTargetMeetsInstagramLimits()
+{
+    if (!Exporter::audioCodecById(QStringLiteral("aac")).value(QStringLiteral("available")).toBool())
+        QSKIP("AAC encoder not available");
+    QVariantMap t = Exporter::reelsTarget(2160, 3840, 60);
+    if (!t.value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available");
+
+    QCOMPARE(t.value(QStringLiteral("width")).toInt(), 1080);
+    QCOMPARE(t.value(QStringLiteral("height")).toInt(), 1920);
+    QVERIFY(t.value(QStringLiteral("videoCodecId")).toString().startsWith(QLatin1String("h264")));
+    QCOMPARE(t.value(QStringLiteral("audioCodecId")).toString(), QStringLiteral("aac"));
+    QCOMPARE(t.value(QStringLiteral("audioBitrateKbps")).toInt(), 128);
+    QCOMPARE(t.value(QStringLiteral("maxVideoBitrateKbps")).toInt(), 25000);
+    QVERIFY(t.value(QStringLiteral("videoBitrateKbps")).toInt() <= 25000);
+    QCOMPARE(t.value(QStringLiteral("fpsNum")).toInt(), 0); // 60 fps project: keep it
+
+    // Outside Instagram's 23–60 fps window the target falls back to 30.
+    t = Exporter::reelsTarget(1080, 1920, 120);
+    QCOMPARE(t.value(QStringLiteral("fpsNum")).toInt(), 30);
+    QCOMPARE(t.value(QStringLiteral("fpsDen")).toInt(), 1);
+    QCOMPARE(t.value(QStringLiteral("targetHeight")).toInt(), 0); // already 1080 wide
+
+    // Smaller canvases are never upscaled.
+    t = Exporter::reelsTarget(720, 1280, 30);
+    QVERIFY(t.value(QStringLiteral("available")).toBool());
+    QCOMPARE(t.value(QStringLiteral("width")).toInt(), 720);
+    QCOMPARE(t.value(QStringLiteral("height")).toInt(), 1280);
+
+    // The peak cap survives the QML → engine settings round trip, and stays off by default.
+    QCOMPARE(Exporter::settingsFromMap({{QStringLiteral("maxVideoBitrateKbps"), 25000}}).maxVideoBitrateKbps,
+             25000);
+    QCOMPARE(Exporter::settingsFromMap({}).maxVideoBitrateKbps, 0);
 }
 
 void EngineTest::exporterHardwareEncodeProducesPlayableFile()

@@ -585,10 +585,22 @@ void evenDims(int &w, int &h)
     h = qMax(2, h);
 }
 
-void scaleSize(int projW, int projH, int targetH, int &outW, int &outH)
+// `targetShort` sizes the short side, so "1080p" means 1080 lines on a landscape canvas and
+// 1080 columns on a portrait one — the way every phone and platform names vertical video.
+// Sizing the height instead turned a 2160×3840 vertical project's "1080p" into 608×1080.
+void scaleSize(int projW, int projH, int targetShort, int &outW, int &outH)
 {
-    outH = targetH > 0 ? targetH : projH;
-    outW = static_cast<int>(std::llround(static_cast<double>(projW) * outH / projH));
+    const int projShort = qMin(projW, projH);
+    if (targetShort <= 0 || projShort <= 0) {
+        outW = projW;
+        outH = projH;
+    } else if (projW >= projH) {
+        outH = targetShort;
+        outW = static_cast<int>(std::llround(static_cast<double>(projW) * outH / projH));
+    } else {
+        outW = targetShort;
+        outH = static_cast<int>(std::llround(static_cast<double>(projH) * outW / projW));
+    }
     evenDims(outW, outH);
 }
 
@@ -848,6 +860,14 @@ void applyVideoRateControl(AVCodecContext *vctx, const VideoCodecDef &def, const
         } else {
             vctx->bit_rate = 0;
             av_opt_set(vctx->priv_data, "crf", QByteArray::number(crf).constData(), 0);
+            // Capped CRF: quality-driven, but a burst of motion (a fast cut, a barbell
+            // slamming) cannot push the peak past a platform's upload ceiling. x264/x265
+            // honour rc_max_rate under CRF once a VBV buffer is given.
+            if (settings.maxVideoBitrateKbps > 0 && id.startsWith(QLatin1String("h26"))) {
+                const int64_t maxRate = static_cast<int64_t>(settings.maxVideoBitrateKbps) * 1000;
+                vctx->rc_max_rate = maxRate;
+                vctx->rc_buffer_size = static_cast<int>(qMin<int64_t>(maxRate * 2, INT_MAX));
+            }
         }
         return;
     }
@@ -1768,9 +1788,10 @@ QVariantList Exporter::scaleOptions(int projectWidth, int projectHeight)
     if (projectWidth <= 0 || projectHeight <= 0)
         return out;
 
+    const int projectShort = qMin(projectWidth, projectHeight);
     for (const ExportScalePreset &preset : scalePresets()) {
         // Skip downscale targets that would upscale.
-        if (preset.targetHeight > 0 && projectHeight <= preset.targetHeight)
+        if (preset.targetHeight > 0 && projectShort <= preset.targetHeight)
             continue;
 
         int outW = 0;
@@ -1803,6 +1824,91 @@ QVariantList Exporter::scaleOptions(int projectWidth, int projectHeight)
             {QStringLiteral("videoBitrateKbps"), 16000},
         });
     }
+    return out;
+}
+
+QVariantMap Exporter::reelsTarget(int projectWidth, int projectHeight, int projectFps)
+{
+    // Instagram's published Reels limits: 9:16, at most 1080 px wide, H.264 or HEVC in MP4,
+    // 23–60 fps, AAC at up to 48 kHz and 128 kbps, and a 25 Mbps video ceiling. H.264 rather
+    // than HEVC because every upload path (desktop web, phone gallery) takes it without a
+    // second transcode on the way in.
+    constexpr int kReelsShortSide = 1080;
+    constexpr int kReelsMaxVideoKbps = 25000;
+    constexpr int kReelsAudioKbps = 128;
+    constexpr int kReelsMinFps = 23;
+    constexpr int kReelsMaxFps = 60;
+
+    QVariantMap out{
+        {QStringLiteral("id"), QStringLiteral("reels")},
+        {QStringLiteral("available"), false},
+    };
+    if (projectWidth <= 0 || projectHeight <= 0) {
+        out.insert(QStringLiteral("label"), QStringLiteral("Instagram Reels"));
+        out.insert(QStringLiteral("reason"), QStringLiteral("The project has no canvas size yet."));
+        return out;
+    }
+
+    // Same tolerance the layout chooser uses to recognise a 9:16 canvas.
+    const double ratio = static_cast<double>(projectWidth) / projectHeight;
+    const bool vertical916 = qAbs(ratio - 9.0 / 16.0) < 0.02;
+
+    // Downscale to 1080 wide, never upscale: a 720×1280 canvas has no detail to add.
+    const int shortSide = qMin(projectWidth, projectHeight);
+    const int targetShort = shortSide > kReelsShortSide ? kReelsShortSide : 0;
+    int outW = 0;
+    int outH = 0;
+    scaleSize(projectWidth, projectHeight, targetShort, outW, outH);
+    out.insert(QStringLiteral("label"), QStringLiteral("Instagram Reels · %1×%2").arg(outW).arg(outH));
+    out.insert(QStringLiteral("width"), outW);
+    out.insert(QStringLiteral("height"), outH);
+    out.insert(QStringLiteral("targetHeight"), targetShort);
+
+    if (!vertical916) {
+        out.insert(QStringLiteral("reason"),
+                   QStringLiteral("Reels are 9:16. Switch the canvas to IG Reel in the video layout "
+                                  "first, so nothing gets stretched or cropped on export."));
+        return out;
+    }
+
+    // Software x264 first; otherwise any 8-bit hardware H.264 this machine can open.
+    QVariantMap video = videoCodecById(QStringLiteral("h264"));
+    if (!video.value(QStringLiteral("available")).toBool()) {
+        video.clear();
+        for (const QVariant &v : videoCodecs()) {
+            const QVariantMap m = v.toMap();
+            const QString id = m.value(QStringLiteral("id")).toString();
+            if (id.startsWith(QLatin1String("h264_")) && !id.contains(QLatin1String("10"))
+                && m.value(QStringLiteral("available")).toBool()) {
+                video = m;
+                break;
+            }
+        }
+    }
+    if (video.isEmpty()) {
+        out.insert(QStringLiteral("reason"), QStringLiteral("No H.264 encoder is available in this build."));
+        return out;
+    }
+    if (!audioCodecById(QStringLiteral("aac")).value(QStringLiteral("available")).toBool()) {
+        out.insert(QStringLiteral("reason"), QStringLiteral("No AAC audio encoder is available in this build."));
+        return out;
+    }
+
+    // Follow the project rate when Instagram takes it as is; otherwise 30 fps.
+    const bool fpsOk = projectFps >= kReelsMinFps && projectFps <= kReelsMaxFps;
+
+    out.insert(QStringLiteral("available"), true);
+    out.insert(QStringLiteral("videoCodecId"), video.value(QStringLiteral("id")));
+    out.insert(QStringLiteral("videoPreset"), video.value(QStringLiteral("defaultPreset")));
+    out.insert(QStringLiteral("crf"), video.value(QStringLiteral("defaultCrf"), 18).toInt());
+    out.insert(QStringLiteral("rateControl"), QStringLiteral("crf"));
+    out.insert(QStringLiteral("maxVideoBitrateKbps"), kReelsMaxVideoKbps);
+    // Bitrate mode stays under the ceiling too, should someone switch to it in Advanced.
+    out.insert(QStringLiteral("videoBitrateKbps"), 16000);
+    out.insert(QStringLiteral("audioCodecId"), QStringLiteral("aac"));
+    out.insert(QStringLiteral("audioBitrateKbps"), kReelsAudioKbps);
+    out.insert(QStringLiteral("fpsNum"), fpsOk ? 0 : 30);
+    out.insert(QStringLiteral("fpsDen"), 1);
     return out;
 }
 
@@ -1915,6 +2021,8 @@ ExportSettings Exporter::settingsFromMap(const QVariantMap &map)
         s.crf = map.value(QStringLiteral("crf")).toInt();
     if (map.contains(QStringLiteral("videoBitrateKbps")))
         s.videoBitrateKbps = map.value(QStringLiteral("videoBitrateKbps")).toInt();
+    if (map.contains(QStringLiteral("maxVideoBitrateKbps")))
+        s.maxVideoBitrateKbps = qMax(0, map.value(QStringLiteral("maxVideoBitrateKbps")).toInt());
     if (map.contains(QStringLiteral("videoPreset")))
         s.videoPreset = map.value(QStringLiteral("videoPreset")).toString();
     if (map.contains(QStringLiteral("audioCodecId")))

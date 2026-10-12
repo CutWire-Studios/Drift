@@ -20559,6 +20559,11 @@ QVariantList AppController::exportScaleOptions() const
     return Exporter::scaleOptions(m_project.width(), m_project.height());
 }
 
+QVariantMap AppController::exportReelsTarget() const
+{
+    return Exporter::reelsTarget(m_project.width(), m_project.height(), m_project.fps());
+}
+
 QVariantList AppController::exportFrameRateOptions() const
 {
     return Exporter::frameRateOptions(m_project.fps());

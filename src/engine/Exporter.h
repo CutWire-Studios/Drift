@@ -21,7 +21,8 @@ struct ExportScalePreset
 {
     QString id;
     QString label;
-    int targetHeight = 0; // 0 = keep project height
+    // Short-side pixels ("1080p" is 1920×1080 landscape, 1080×1920 portrait). 0 = keep project size.
+    int targetHeight = 0;
     int videoBitrateKbps = 12000;
 };
 
@@ -31,7 +32,7 @@ inline constexpr int kMaxExportFps = 480;
 // Full encode settings passed from the export dialog.
 struct ExportSettings
 {
-    int targetHeight = 0; // 0 = keep project height
+    int targetHeight = 0; // Short-side pixels; 0 = keep project size
     // Output frame rate. 0 = follow the project fps. Rational so NTSC rates
     // (24000/1001, 30000/1001, 60000/1001) round-trip exactly.
     int fpsNum = 0;
@@ -40,6 +41,9 @@ struct ExportSettings
     QString rateControl = QStringLiteral("crf"); // "crf" | "bitrate"
     int crf = 18;
     int videoBitrateKbps = 12000;
+    // Peak cap for software H.264/H.265 CRF encodes (VBV), for platforms with an upload
+    // ceiling such as Instagram's 25 Mbps. 0 = uncapped.
+    int maxVideoBitrateKbps = 0;
     QString videoPreset = QStringLiteral("medium");
     QString audioCodecId = QStringLiteral("aac");
     int audioBitrateKbps = 192;
@@ -82,6 +86,11 @@ public:
 
     // Downscale chip options for the current project size (no upscale).
     static QVariantList scaleOptions(int projectWidth, int projectHeight);
+
+    // One-click Instagram Reels target: 1080×1920 H.264 + AAC, 23–60 fps, peak bitrate under
+    // Instagram's 25 Mbps ceiling. Reels are 9:16 only, so a project of any other shape gets
+    // available=false and a `reason` instead of a stretched or letterboxed export.
+    static QVariantMap reelsTarget(int projectWidth, int projectHeight, int projectFps);
 
     // Frame rate choices for the export dialog; the first entry follows `projectFps`.
     static QVariantList frameRateOptions(int projectFps);

@@ -47,6 +47,9 @@ ThemedDialog {
     property var videoCodecs: []
     property var audioCodecs: []
     property var scaleOptions: []
+    // One-click Instagram Reels target from the engine; selecting it sets scaleId "reels".
+    property var reelsTarget: ({})
+    readonly property bool reelsAvailable: !!(reelsTarget && reelsTarget.available)
     property var currentVideoCodec: ({})
     property var currentAudioCodec: ({})
 
@@ -182,10 +185,35 @@ ThemedDialog {
             exportWorkAreaOnly = true
     }
 
+    // Applies the whole Reels recipe at once: size, codecs, rate control, frame rate. Each value
+    // stays editable under Advanced afterwards, like any other choice in this dialog.
+    function applyReelsTarget() {
+        var t = reelsTarget
+        if (!t || !t.available)
+            return
+        scaleId = "reels"
+        targetHeight = t.targetHeight
+        videoCodecId = t.videoCodecId
+        audioCodecId = t.audioCodecId
+        rateControl = t.rateControl
+        crf = t.crf
+        if (t.videoPreset)
+            videoPreset = t.videoPreset
+        videoBitrateKbps = t.videoBitrateKbps
+        audioBitrateKbps = t.audioBitrateKbps
+        syncAudioBitrateChoice()
+        fpsNum = t.fpsNum
+        fpsDen = t.fpsDen
+        frameRateId = frameRateIdFor(t.fpsNum, t.fpsDen)
+        refreshCodecMeta()
+        syncComboIndices()
+    }
+
     function openDialog() {
         videoCodecs = EditorState.exportVideoCodecs()
         audioCodecs = EditorState.exportAudioCodecs()
         scaleOptions = EditorState.exportScaleOptions()
+        reelsTarget = EditorState.exportReelsTarget()
         frameRateOptions = EditorState.exportFrameRateOptions()
 
         var defaults = EditorState.exportDefaultSettings()
@@ -230,7 +258,14 @@ ThemedDialog {
         tagCommentField.text = meta.description || ""
 
         var restoredScale = false
-        if (hasRemembered && src.scaleId && scaleOptions.length > 0) {
+        // Last export was a Reel: reselect it if this project can still be one. The codec,
+        // rate and fps fields were already restored above from the same remembered settings.
+        if (hasRemembered && src.scaleId === "reels" && reelsAvailable) {
+            scaleId = "reels"
+            targetHeight = reelsTarget.targetHeight
+            restoredScale = true
+        }
+        if (!restoredScale && hasRemembered && src.scaleId && scaleOptions.length > 0) {
             for (var i = 0; i < scaleOptions.length; ++i) {
                 if (scaleOptions[i].id === src.scaleId) {
                     scaleId = scaleOptions[i].id
@@ -305,6 +340,9 @@ ThemedDialog {
             "gifExport": isGifExport,
             "exportWorkAreaOnly": exportWorkAreaOnly && EditorState.workAreaActive
         }
+        // The peak cap belongs to the Reels target only; any other size exports uncapped.
+        if (scaleId === "reels" && !isAudioOnly && !isGifExport)
+            s.maxVideoBitrateKbps = reelsTarget.maxVideoBitrateKbps
         if (s.exportWorkAreaOnly) {
             s.startUs = Math.round(EditorState.workAreaInSeconds * 1000000)
             s.endUs = Math.round(EditorState.workAreaOutSeconds * 1000000)
@@ -437,6 +475,32 @@ ThemedDialog {
                     width: parent.width
                     size: "sm"
                     text: qsTr("Saves what you see in the preview. Pick a size — the picture shape stays the same.")
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingSm
+
+                    ThemedLabel {
+                        text: qsTr("Post to")
+                    }
+
+                    ThemedChip {
+                        text: root.reelsTarget.label || qsTr("Instagram Reels")
+                        enabled: root.reelsAvailable
+                        selected: root.scaleId === "reels"
+                        tooltip: qsTr("1080 wide, H.264 + AAC, up to 60 fps, peaks under Instagram's 25 Mbps limit")
+                        onClicked: root.applyReelsTarget()
+                    }
+
+                    // A disabled control gets no hover, so the reason can't live in a tooltip.
+                    ThemedLabel {
+                        width: parent.width
+                        size: "sm"
+                        visible: !root.reelsAvailable && !!root.reelsTarget.reason
+                        height: visible ? implicitHeight : 0
+                        text: root.reelsTarget.reason || ""
+                    }
                 }
 
                 ThemedLabel {

@@ -1435,6 +1435,7 @@ public:
     Q_INVOKABLE void releaseTransientCaches();
     Q_INVOKABLE QVariantList exportPresets() const; // legacy scale ids/labels
     Q_INVOKABLE QVariantList exportScaleOptions() const;
+    Q_INVOKABLE QVariantMap exportReelsTarget() const;
     // Frame rate choices; the "project" entry is labelled with the current project fps.
     Q_INVOKABLE QVariantList exportFrameRateOptions() const;
     Q_INVOKABLE QVariantList exportVideoCodecs() const;
