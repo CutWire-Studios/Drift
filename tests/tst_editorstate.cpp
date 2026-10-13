@@ -71,6 +71,8 @@ class TestController : public AppController
 public:
     using AppController::AppController;
     using AppController::notifyTracksChanged;
+    using AppController::m_filmstripTiles;
+    using AppController::m_waveformBlocks;
 };
 
 QByteArray readFile(const QString &path)
@@ -154,6 +156,8 @@ private slots:
     void videoTransitionMirrorsToLinkedAudio();
     void deleteLeftRightActionsCutAtThePlayhead();
     void playbackRateStepsThroughTheOfferedRates();
+    void previewQualityEighthRendersAtOneEighth();
+    void playbackSuspendsThumbnailAndWaveformDecoding();
     void displayRefreshRateIgnoresDriverPlaceholders();
     void workAreaMarkClearAndUndo();
     void bookmarkSnapTarget();
@@ -10137,6 +10141,53 @@ void EditorStateTest::clipsModelInsertsAndRemovesWithoutReset()
     clips.swapItemsAt(0, 1);
     state.notifyTracksChanged();
     QCOMPARE(resetSpy.count(), 1);
+}
+
+// The fixed qualities are fractions of the project resolution once the panel fits it 1:1;
+// "eighth" is the low-spec step below Quarter, and an unknown value leaves the setting alone.
+void EditorStateTest::previewQualityEighthRendersAtOneEighth()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    PlaybackEngine *playback = state.playback();
+    playback->setPreviewRenderSize(state.project()->width(), state.project()->height());
+
+    const QList<QPair<QString, double>> expected{
+        {QStringLiteral("full"), 1.0},
+        {QStringLiteral("half"), 0.5},
+        {QStringLiteral("quarter"), 0.25},
+        {QStringLiteral("eighth"), 0.125},
+    };
+    for (const auto &[quality, scale] : expected) {
+        playback->setPreviewQuality(quality);
+        QCOMPARE(playback->previewQuality(), quality);
+        QCOMPARE(playback->previewRenderScale(), scale);
+    }
+
+    playback->setPreviewQuality(QStringLiteral("sixteenth"));
+    QCOMPARE(playback->previewQuality(), QStringLiteral("eighth"));
+}
+
+// Tile and peak decoding would compete with the preview's decoders for the CPU, so playback
+// holds both caches and pausing lets them catch up.
+void EditorStateTest::playbackSuspendsThumbnailAndWaveformDecoding()
+{
+    AssetLibrary library;
+    TestController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.notifyTracksChanged();
+    QVERIFY(!state.m_filmstripTiles.isSuspended());
+    QVERIFY(!state.m_waveformBlocks.isSuspended());
+
+    state.setPlaying(true);
+    if (!state.playback()->isPlaying())
+        QSKIP("Playback did not start in this environment");
+    QVERIFY(state.m_filmstripTiles.isSuspended());
+    QVERIFY(state.m_waveformBlocks.isSuspended());
+
+    state.setPlaying(false);
+    QVERIFY(!state.m_filmstripTiles.isSuspended());
+    QVERIFY(!state.m_waveformBlocks.isSuspended());
 }
 
 void EditorStateTest::clipsModelDerivesGapsAndOverlaps()

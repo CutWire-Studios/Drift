@@ -60,6 +60,7 @@
 #include "engine/EditorOverlay.h"
 #include "engine/TransformLayer.h"
 #include "engine/GpuCompositor.h"
+#include "engine/MediaThumbnail.h"
 #include "engine/MediaWaveform.h"
 #include "playback/PlaybackDiagnostics.h"
 #include "playback/PlaybackStats.h"
@@ -418,6 +419,7 @@ private slots:
     void retimedClipAudioIsNotSilent();
     void retimedAudioPreservesPitch();
     void perChannelPeaksFoldToTheMergedEnvelope();
+    void backgroundDecodesStopWhenAborted();
     void panLawIsUnityAtCentreAndSilencesOneSide();
     void retimedAudioLengthTracksTimeline();
     void retimedAudioSurvivesBlockSizeChanges();
@@ -12598,6 +12600,32 @@ void EngineTest::retimedAudioPreservesPitch()
         QVERIFY2(tone > 10.0 * goertzelMagnitude(collected, 220.0), qPrintable(QString::number(speed)));
         QVERIFY2(tone > 10.0 * goertzelMagnitude(collected, 880.0), qPrintable(QString::number(speed)));
     }
+}
+
+// Playback raises the caches' abort flag so a batch already decoding gives the CPU back. A raised
+// flag has to stop both decodes before they produce anything, not just keep the next batch off.
+void EngineTest::backgroundDecodesStopWhenAborted()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString audio = makeMultiChannelAudio(dir);
+    const QString video = makeHighRateVideo(dir);
+    if (audio.isEmpty() || video.isEmpty())
+        QSKIP("ffmpeg not available to generate the test clips");
+
+    const std::atomic<bool> go{false};
+    const std::atomic<bool> stop{true};
+
+    QVERIFY(!MediaWaveform::peaksForRangePerChannel(audio, 0.0, 2.0, 100, 0, &go).channels.isEmpty());
+    QVERIFY(MediaWaveform::peaksForRangePerChannel(audio, 0.0, 2.0, 100, 0, &stop).channels.isEmpty());
+
+    // Separate decoders and indices, so the aborted call cannot be answered from tiles the
+    // other one already wrote to the cache.
+    MediaThumbnail::TileDecoder stopped;
+    QVERIFY(stopped.generateTiles(video, 0, {0}, 0, &stop).isEmpty());
+    QVERIFY(!QFileInfo::exists(MediaThumbnail::tilePath(video, 0, 0, 0)));
+    MediaThumbnail::TileDecoder running;
+    QCOMPARE(running.generateTiles(video, 0, {0}, 0, &go), QList<qint64>{0});
 }
 
 // peaksForRange is implemented as a fold over peaksForRangePerChannel, on the grounds that max

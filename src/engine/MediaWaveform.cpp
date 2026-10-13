@@ -411,7 +411,8 @@ MediaWaveform::PerChannel MediaWaveform::peaksForRangePerChannel(const QString &
                                                                  double startSeconds,
                                                                  double endSeconds,
                                                                  int peaksPerSecond,
-                                                                 int streamOrdinal)
+                                                                 int streamOrdinal,
+                                                                 const std::atomic<bool> *abort)
 {
     if (peaksPerSecond <= 0 || endSeconds <= startSeconds)
         return {};
@@ -519,7 +520,8 @@ MediaWaveform::PerChannel MediaWaveform::peaksForRangePerChannel(const QString &
         }
     };
 
-    while (!pastEnd && packet && frame && av_read_frame(fmt, packet) >= 0) {
+    while (!pastEnd && packet && frame && !(abort && abort->load(std::memory_order_relaxed))
+           && av_read_frame(fmt, packet) >= 0) {
         if (packet->stream_index != audioStreamIndex) {
             av_packet_unref(packet);
             continue;

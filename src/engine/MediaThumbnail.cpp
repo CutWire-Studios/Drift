@@ -524,7 +524,8 @@ bool MediaThumbnail::TileDecoder::ensureOpen(const QString &absolutePath)
 
 QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePath, int level,
                                                          const QList<qint64> &indices,
-                                                         int rotationCorrection)
+                                                         int rotationCorrection,
+                                                         const std::atomic<bool> *abort)
 {
     QList<qint64> produced;
     const QString absolutePath = QFileInfo(sourcePath).absoluteFilePath();
@@ -549,6 +550,8 @@ QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePa
     const int rotation =
         ((displayRotationOf(m_fmt->streams[m_videoStreamIndex]) + rotationCorrection) % 360 + 360) % 360;
     for (const qint64 index : std::as_const(todo)) {
+        if (abort && abort->load(std::memory_order_relaxed))
+            break;
         const int64_t timeUs = static_cast<int64_t>(tileSeconds(level, index) * 1'000'000.0);
         QImage frame;
         if (!seekAndDecodeFrame(m_fmt, m_videoStreamIndex, m_codecCtx, timeUs, frame,

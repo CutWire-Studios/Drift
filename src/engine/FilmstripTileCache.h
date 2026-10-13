@@ -9,6 +9,8 @@
 #include <QString>
 #include <QThread>
 
+#include <atomic>
+
 class QTimer;
 
 // On-demand filmstrip tiles for the timeline.
@@ -43,6 +45,12 @@ public:
     // of the session.
     void clear();
 
+    // While suspended, requests still queue but nothing decodes, and a batch already running
+    // stops at its next tile and requeues the rest; resuming starts the newest batch. Playback holds this so tile and peak decoding do not compete with the preview's
+    // own decoders for the CPU — the frames it would have produced scroll past unseen anyway.
+    void setSuspended(bool suspended);
+    bool isSuspended() const { return m_suspended; }
+
 signals:
     void tileReady(const QString &sourcePath);
 
@@ -58,7 +66,7 @@ private:
     void scheduleBatch();
     void runBatch();
     void applyBatch(const QString &sourcePath, int level, int rotationCorrection,
-                    const QList<qint64> &produced, const QList<qint64> &requested);
+                    const QList<qint64> &produced, const QList<qint64> &requested, bool aborted);
 
     static QString keyFor(const QString &sourcePath, int level, qint64 index, int rotationCorrection);
 
@@ -70,6 +78,10 @@ private:
     QList<Request> m_queue;
     bool m_busy = false;
     bool m_batchScheduled = false;
+    bool m_suspended = false;
+    // Raised by setSuspended(true) so a batch already decoding stops early; read by the worker
+    // after its decode to tell a cut-short batch from a finished one.
+    std::atomic<bool> m_abort{false};
     int m_producedSincePrune = 0;
 
     QThread m_decodeThread;

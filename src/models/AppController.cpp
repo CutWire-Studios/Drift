@@ -790,7 +790,12 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
             emit inspectorPlayheadChanged();
     });
     connect(&m_playback, &PlaybackEngine::playingChanged, this, [this] {
-        if (!m_playback.isPlaying() && m_playing) {
+        // Every play and pause passes through here — UI, shortcuts and MCP alike — so this is
+        // the one place background thumbnail and waveform decoding steps aside for playback.
+        const bool enginePlaying = m_playback.isPlaying();
+        m_filmstripTiles.setSuspended(enginePlaying);
+        m_waveformBlocks.setSuspended(enginePlaying);
+        if (!enginePlaying && m_playing) {
             m_playing = false;
             m_playheadUs = m_playback.playheadUs();
             emit playingChanged();

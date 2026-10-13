@@ -1468,6 +1468,10 @@
         <translation>تلقائي</translation>
     </message>
     <message>
+        <source>1/8 (Eco)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Quality: %1</source>
         <translation>الجودة: %1</translation>
     </message>
@@ -10391,12 +10395,15 @@
         <translation type="unfinished">تلقائي</translation>
     </message>
     <message>
+        <source>1/8 (Eco)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preview quality — lower is smoother while editing.
-Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
+Full, Half, Quarter and 1/8 are fixed fractions of the project resolution: Full composites exactly what an export would.
+1/8 (Eco) is for older laptops with integrated graphics.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation type="unfinished">جودة المعاينة — الجودة الأقل تكون أكثر سلاسة أثناء التحرير.
-تعد Full وHalf وQuarter أجزاءً ثابتة من دقة المشروع: يركب Full تمامًا ما سينتجه التصدير.
-يعرض Auto فقط عدد وحدات البكسل التي تعرضها المعاينة فعليًا، ويخفض ذلك أكثر عندما يتعذر على التشغيل مواكبة السرعة.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Speed</source>

@@ -1468,6 +1468,10 @@
         <translation>Automático</translation>
     </message>
     <message>
+        <source>1/8 (Eco)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Quality: %1</source>
         <translation>Calidad: %1</translation>
     </message>
@@ -10199,12 +10203,15 @@
         <translation type="unfinished">Automático</translation>
     </message>
     <message>
+        <source>1/8 (Eco)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preview quality — lower is smoother while editing.
-Full, Half and Quarter are fixed fractions of the project resolution: Full composites exactly what an export would.
+Full, Half, Quarter and 1/8 are fixed fractions of the project resolution: Full composites exactly what an export would.
+1/8 (Eco) is for older laptops with integrated graphics.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation type="unfinished">Calidad de vista previa: menor es más fluido durante la edición.
-Completa, Media y Un cuarto son fracciones fijas de la resolución del proyecto: Completa compone exactamente lo que generaría una exportación.
-Automática renderiza solo la cantidad de píxeles que realmente muestra la vista previa, y la reduce aún más si la reproducción no puede mantener el ritmo.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Speed</source>

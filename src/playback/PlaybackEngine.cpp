@@ -106,7 +106,8 @@ constexpr std::array<double, 6> kPlaybackRates{0.25, 0.5, 1.0, 1.5, 2.0, 4.0};
 bool isKnownPreviewQuality(const QString &quality)
 {
     return quality == QStringLiteral("full") || quality == QStringLiteral("half")
-        || quality == QStringLiteral("quarter") || quality == QStringLiteral("auto");
+        || quality == QStringLiteral("quarter") || quality == QStringLiteral("eighth")
+        || quality == QStringLiteral("auto");
 }
 
 constexpr QLatin1String kHwPrefix("hw:");
@@ -955,7 +956,11 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
 {
     FrameCompositor::RenderOptions options;
     double qualityFraction = 1.0;
-    if (m_previewQuality == QStringLiteral("quarter"))
+    // Eighth is for machines that cannot keep up even at Quarter — dual-core laptops on
+    // integrated graphics — where a soft preview beats a stuttering one.
+    if (m_previewQuality == QStringLiteral("eighth"))
+        qualityFraction = 0.125;
+    else if (m_previewQuality == QStringLiteral("quarter"))
         qualityFraction = 0.25;
     else if (m_previewQuality == QStringLiteral("half"))
         qualityFraction = 0.5;

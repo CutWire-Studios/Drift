@@ -214,12 +214,12 @@ Item {
                     }
 
                     ThemedChip {
-                        // Same four the desktop quality combo offers, in the same
+                        // Same five the desktop quality combo offers, in the same
                         // order — Auto is the engine's default, and cycling a list
                         // that left it out mislabelled it as Full.
-                        readonly property var values: ["full", "half", "quarter", "auto"]
+                        readonly property var values: ["full", "half", "quarter", "eighth", "auto"]
                         readonly property var labels: [qsTr("Full"), qsTr("Half"),
-                                                       qsTr("Quarter"), qsTr("Auto")]
+                                                       qsTr("Quarter"), qsTr("1/8 (Eco)"), qsTr("Auto")]
                         readonly property int currentIndex:
                             Math.max(0, values.indexOf(EditorState.playback.previewQuality))
                         text: qsTr("Quality: %1").arg(labels[currentIndex])

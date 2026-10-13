@@ -216,9 +216,20 @@ QVector<float> WaveformBlockCache::range(const QString &sourcePath, double start
     return out;
 }
 
+void WaveformBlockCache::setSuspended(bool suspended)
+{
+    if (m_suspended == suspended)
+        return;
+    m_suspended = suspended;
+    if (m_suspended)
+        m_abort.store(true, std::memory_order_relaxed);
+    else
+        scheduleBatch();
+}
+
 void WaveformBlockCache::scheduleBatch()
 {
-    if (m_busy || m_batchScheduled || m_queue.isEmpty())
+    if (m_suspended || m_busy || m_batchScheduled || m_queue.isEmpty())
         return;
 
     // Let the whole burst of requests from one layout pass land first, so the batch reflects
@@ -230,7 +241,8 @@ void WaveformBlockCache::scheduleBatch()
 void WaveformBlockCache::runBatch()
 {
     m_batchScheduled = false;
-    if (m_busy || m_queue.isEmpty())
+    // Re-checked here: playback can start between scheduleBatch() and this running.
+    if (m_suspended || m_busy || m_queue.isEmpty())
         return;
 
     // Newest first: that is what the viewport asked for most recently. Take a contiguous run
@@ -271,6 +283,7 @@ void WaveformBlockCache::runBatch()
     }
 
     m_busy = true;
+    m_abort.store(false, std::memory_order_relaxed);
     const double startSeconds = static_cast<double>(first) * kBlockSeconds;
     const double endSeconds = static_cast<double>(last + 1) * kBlockSeconds;
     QThreadPool::globalInstance()->start([this, sourcePath, first, streamOrdinal, startSeconds, endSeconds,
@@ -279,12 +292,13 @@ void WaveformBlockCache::runBatch()
         // have to be read either way, the merged envelope folds out of the result for free,
         // and it means a lane turning on mid-decode still finds its channels in this batch.
         const MediaWaveform::PerChannel decoded = MediaWaveform::peaksForRangePerChannel(
-            sourcePath, startSeconds, endSeconds, kPeaksPerSecond, streamOrdinal);
+            sourcePath, startSeconds, endSeconds, kPeaksPerSecond, streamOrdinal, &m_abort);
+        const bool aborted = m_abort.load(std::memory_order_relaxed);
 
         QMetaObject::invokeMethod(
             this,
-            [this, sourcePath, first, streamOrdinal, decoded, requested] {
-                applyBatch(sourcePath, first, streamOrdinal, decoded, requested);
+            [this, sourcePath, first, streamOrdinal, decoded, requested, aborted] {
+                applyBatch(sourcePath, first, streamOrdinal, decoded, requested, aborted);
             },
             Qt::QueuedConnection);
     });
@@ -292,9 +306,27 @@ void WaveformBlockCache::runBatch()
 
 void WaveformBlockCache::applyBatch(const QString &sourcePath, int firstBlock, int streamOrdinal,
                                     const MediaWaveform::PerChannel &decoded,
-                                    const QList<int> &requested)
+                                    const QList<int> &requested, bool aborted)
 {
     m_busy = false;
+
+    // Cut short by playback. The peaks stop wherever the decode did, so none of them can be
+    // trusted, and marking the blocks attempted would blank them for good — requeue instead.
+    // Not when the source was forgotten (or everything cleared) meanwhile: its stream is gone.
+    if (aborted) {
+        if (!m_streams.contains(streamKeyFor(sourcePath, streamOrdinal))) {
+            scheduleBatch();
+            return;
+        }
+        for (const int block : requested) {
+            if (!m_queued.contains(blockKeyFor(sourcePath, block, streamOrdinal))) {
+                m_queued.insert(blockKeyFor(sourcePath, block, streamOrdinal));
+                m_queue.append({sourcePath, block, streamOrdinal});
+            }
+        }
+        scheduleBatch();
+        return;
+    }
 
     StreamState &state = m_streams[streamKeyFor(sourcePath, streamOrdinal)];
     const int channels = decoded.channels.size();

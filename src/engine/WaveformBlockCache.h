@@ -10,6 +10,8 @@
 #include <QStringList>
 #include <QVector>
 
+#include <atomic>
+
 // On-demand audio peaks for the timeline.
 //
 // Decoding a whole file up front costs minutes on a multi-hour source and nothing renders
@@ -56,6 +58,12 @@ public:
     void forgetSource(const QString &sourcePath);
     void clear();
 
+    // While suspended, requests still queue but nothing decodes, and a batch already running
+    // stops between packets and requeues its blocks; resuming starts the newest batch. Playback holds this so tile and peak decoding do not compete with the preview's
+    // own decoders for the CPU — the frames it would have produced scroll past unseen anyway.
+    void setSuspended(bool suspended);
+    bool isSuspended() const { return m_suspended; }
+
 signals:
     void rangeReady(const QString &sourcePath);
 
@@ -88,7 +96,8 @@ private:
     void scheduleBatch();
     void runBatch();
     void applyBatch(const QString &sourcePath, int firstBlock, int streamOrdinal,
-                    const MediaWaveform::PerChannel &decoded, const QList<int> &requested);
+                    const MediaWaveform::PerChannel &decoded, const QList<int> &requested,
+                    bool aborted);
     // Drop a stream's stored blocks. Blocks decoded before the flip to per-channel hold only
     // the merged envelope and cannot be filled in afterwards, so they go and the viewport
     // asks once more.
@@ -119,4 +128,8 @@ private:
     QList<QueueItem> m_queue;
     bool m_busy = false;
     bool m_batchScheduled = false;
+    bool m_suspended = false;
+    // Raised by setSuspended(true) so a batch already decoding stops early; read by the worker
+    // after its decode to tell a cut-short batch from a finished one.
+    std::atomic<bool> m_abort{false};
 };

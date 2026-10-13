@@ -5,6 +5,7 @@
 #include <QVariantList>
 #include <QVector>
 
+#include <atomic>
 #include <functional>
 
 class MediaWaveform
@@ -39,7 +40,8 @@ public:
     // One decode feeds every channel: the samples are already read to build the merged
     // envelope peaksForRange returns, so N lanes cost the same I/O and codec time as one.
     // An empty `channels` means nothing decoded — the same signal peaksForRange gives by
-    // returning {}.
+    // returning {}. A set `abort` stops the decode between packets; the result is then partial
+    // and the caller has to discard it.
     struct PerChannel
     {
         QVector<QVector<float>> channels; // channels[channel][bucket]
@@ -48,7 +50,8 @@ public:
 
     static PerChannel peaksForRangePerChannel(const QString &sourcePath, double startSeconds,
                                               double endSeconds, int peaksPerSecond,
-                                              int streamOrdinal = 0);
+                                              int streamOrdinal = 0,
+                                              const std::atomic<bool> *abort = nullptr);
 
     // Writes up to `maxFrames` frames of interleaved-stereo float PCM starting `frameOffset`
     // frames into the span, and returns how many it wrote. Return 0 to stop early.

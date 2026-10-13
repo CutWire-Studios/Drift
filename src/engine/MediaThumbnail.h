@@ -3,6 +3,8 @@
 #include "core/VectorSource.h"
 
 #include <QList>
+
+#include <atomic>
 #include <QString>
 
 struct AVCodecContext;
@@ -60,9 +62,11 @@ public:
 
         // Decodes the missing tiles among `indices`, in ascending time order so seeking stays
         // near-sequential. Returns the indices that are now on disk. Reopens only when
-        // `sourcePath` differs from the file already open.
+        // `sourcePath` differs from the file already open. A set `abort` stops before the next
+        // tile; the tiles already written are still returned.
         QList<qint64> generateTiles(const QString &sourcePath, int level,
-                                    const QList<qint64> &indices, int rotationCorrection = 0);
+                                    const QList<qint64> &indices, int rotationCorrection = 0,
+                                    const std::atomic<bool> *abort = nullptr);
 
         // Releases the decoder and its scaler. Safe to call when nothing is open; the next
         // generateTiles() reopens on demand.
