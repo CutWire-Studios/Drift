@@ -4187,6 +4187,57 @@
     </message>
 </context>
 <context>
+    <name>AppSettingsMenu</name>
+    <message>
+        <source>Workspace</source>
+        <translation>වැඩබිම</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation>ස්වයංක්‍රීය (කැන්වසය අනුව)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation>තිරස් (Landscape)</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation>සිරස් (Portrait)</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>තේමාව</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>ලා පැහැති</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>අඳුරු</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation>භාෂාව…</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation>බහු කැමරා</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation>දෝෂ නිවාරණ තොරතුරු…</translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation>තවත් සැකසීම්…</translation>
+    </message>
+</context>
+<context>
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
@@ -6047,30 +6098,6 @@
         <translation>වැඩබිම, තේමාව, භාෂාව සහ තවත් දෑ</translation>
     </message>
     <message>
-        <source>Light</source>
-        <translation>ලා පැහැති</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>අඳුරු</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>භාෂාව…</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>දෝෂ නිවාරණ තොරතුරු…</translation>
-    </message>
-    <message>
-        <source>More settings…</source>
-        <translation>තවත් සැකසීම්…</translation>
-    </message>
-    <message>
         <source>Notifications — Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6113,30 +6140,6 @@
     <message>
         <source>Export already in progress</source>
         <translation>නිර්යාත කිරීම දැනටමත් සිදුවෙමින් පවතී</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>බහු කැමරා</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>වැඩබිම</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>ස්වයංක්‍රීය (කැන්වසය අනුව)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>තිරස් (Landscape)</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>සිරස් (Portrait)</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation>තේමාව</translation>
     </message>
 </context>
 <context>
@@ -14062,6 +14065,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove from recents</source>
         <translation>මෑතකදී භාවිත කළ ඒවායින් ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>සැකසීම්</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation>වැඩබිම, තේමාව, භාෂාව සහ තවත් දෑ</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">දෝෂහරණ තොරතුරු</translation>
+    </message>
+    <message>
+        <source>System, playback and codec details for bug reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>නියෝජිතයා</translation>
+    </message>
+    <message>
+        <source>Agent access is on</source>
+        <translation>නියෝජිත (Agent) ප්‍රවේශය ක්‍රියාත්මකයි</translation>
+    </message>
+    <message>
+        <source>Agent access</source>
+        <translation>නියෝජිත (Agent) ප්‍රවේශය</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>

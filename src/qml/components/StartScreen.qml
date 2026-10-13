@@ -13,6 +13,13 @@ Rectangle {
     signal newProjectRequested()
     signal openProjectRequested()
     signal openRecentRequested(string path)
+    // The header's app-level entries, which do not need a project: without them here,
+    // turning on agent access or changing a setting meant creating an empty project first.
+    signal languageRequested()
+    signal mobileLayoutRequested()
+    signal moreSettingsRequested()
+    signal debugInfoRequested()
+    signal agentAccessRequested()
 
     color: Theme.appBackground
 
@@ -139,6 +146,55 @@ Rectangle {
                     return
                 root.openRecentRequested(projectRow.modelData.path)
             }
+        }
+    }
+
+    // Same order, icons and labels as the editor header, so they read as the same controls.
+    Row {
+        id: appActions
+        z: 1
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: Theme.spacingXl
+        spacing: Theme.spacingSm
+
+        // The header's own Settings menu, minus Multicam, which needs a timeline.
+        IconButton {
+            id: settingsButton
+            glyph: Theme.icons.settings
+            variant: "ghost"
+            text: qsTr("Settings")
+            active: settingsMenu.opened
+            tooltip: qsTr("Workspace, theme, language and more")
+            onClicked: settingsMenu.popup(0, settingsButton.height + Theme.spacingMd)
+
+            AppSettingsMenu {
+                id: settingsMenu
+                projectTools: false
+                onLanguageRequested: root.languageRequested()
+                onMobileLayoutRequested: root.mobileLayoutRequested()
+                onDebugInfoRequested: root.debugInfoRequested()
+                onMoreSettingsRequested: root.moreSettingsRequested()
+            }
+        }
+
+        IconButton {
+            glyph: Theme.icons.bug
+            variant: "ghost"
+            text: qsTr("Debug info")
+            tooltip: qsTr("System, playback and codec details for bug reports")
+            onClicked: root.debugInfoRequested()
+        }
+
+        IconButton {
+            glyph: Theme.icons.bot
+            variant: "ghost"
+            text: qsTr("Agent")
+            active: EditorState.mcp.running
+            tooltip: EditorState.mcp.running
+                     ? qsTr("Agent access is on")
+                     : qsTr("Agent access")
+            onClicked: root.agentAccessRequested()
         }
     }
 

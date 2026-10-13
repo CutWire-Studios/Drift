@@ -4187,6 +4187,57 @@
     </message>
 </context>
 <context>
+    <name>AppSettingsMenu</name>
+    <message>
+        <source>Workspace</source>
+        <translation>Spazio di lavoro</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation>Automatico (segui area di disegno)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation>Orizzontale</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation>Verticale</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Tema</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Chiaro</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Scuro</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation>Lingua…</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation>Multicam</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation>Informazioni di debug…</translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation>Altre impostazioni…</translation>
+    </message>
+</context>
+<context>
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
@@ -6047,30 +6098,6 @@
         <translation>Area di lavoro, tema, lingua e altro</translation>
     </message>
     <message>
-        <source>Light</source>
-        <translation>Chiaro</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>Scuro</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>Lingua…</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>Informazioni di debug…</translation>
-    </message>
-    <message>
-        <source>More settings…</source>
-        <translation>Altre impostazioni…</translation>
-    </message>
-    <message>
         <source>Notifications — Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6113,30 +6140,6 @@
     <message>
         <source>Export already in progress</source>
         <translation>Esportazione già in corso</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>Multicam</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>Spazio di lavoro</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>Automatico (segui area di disegno)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>Orizzontale</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>Verticale</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation>Tema</translation>
     </message>
 </context>
 <context>
@@ -14062,6 +14065,34 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Remove from recents</source>
         <translation>Rimuovi dai recenti</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Impostazioni</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation>Area di lavoro, tema, lingua e altro</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">Informazioni di debug</translation>
+    </message>
+    <message>
+        <source>System, playback and codec details for bug reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Agente</translation>
+    </message>
+    <message>
+        <source>Agent access is on</source>
+        <translation>Accesso agente attivo</translation>
+    </message>
+    <message>
+        <source>Agent access</source>
+        <translation>Accesso agente</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>

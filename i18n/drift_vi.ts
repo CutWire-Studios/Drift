@@ -4174,6 +4174,57 @@
     </message>
 </context>
 <context>
+    <name>AppSettingsMenu</name>
+    <message>
+        <source>Workspace</source>
+        <translation>Không gian làm việc</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation>Tự động (theo canvas)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation>Ngang</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation>Dọc</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Chủ đề</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Sáng</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Tối</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation>Ngôn ngữ…</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation>Đa góc quay</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation>Thông tin gỡ lỗi…</translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation>Thêm cài đặt…</translation>
+    </message>
+</context>
+<context>
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
@@ -6012,30 +6063,6 @@
         <translation>Không gian làm việc, giao diện, ngôn ngữ và hơn thế nữa</translation>
     </message>
     <message>
-        <source>Light</source>
-        <translation>Sáng</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>Tối</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>Ngôn ngữ…</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>Thông tin gỡ lỗi…</translation>
-    </message>
-    <message>
-        <source>More settings…</source>
-        <translation>Thêm cài đặt…</translation>
-    </message>
-    <message>
         <source>Notifications — Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6086,30 +6113,6 @@
     <message>
         <source>Export already in progress</source>
         <translation>Đang tiến hành xuất</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>Đa góc quay</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>Không gian làm việc</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>Tự động (theo canvas)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>Ngang</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>Dọc</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation>Chủ đề</translation>
     </message>
 </context>
 <context>
@@ -14012,6 +14015,34 @@ Nếu phát lại bị giật, hãy thử cái khác.</translation>
     <message>
         <source>Remove from recents</source>
         <translation>Xóa khỏi gần đây</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Cài đặt</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation>Không gian làm việc, giao diện, ngôn ngữ và hơn thế nữa</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">Thông tin gỡ lỗi</translation>
+    </message>
+    <message>
+        <source>System, playback and codec details for bug reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Trợ lý</translation>
+    </message>
+    <message>
+        <source>Agent access is on</source>
+        <translation>Quyền truy cập trợ lý đang bật</translation>
+    </message>
+    <message>
+        <source>Agent access</source>
+        <translation>Quyền truy cập của trợ lý</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>

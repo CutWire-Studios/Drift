@@ -4200,6 +4200,57 @@
     </message>
 </context>
 <context>
+    <name>AppSettingsMenu</name>
+    <message>
+        <source>Workspace</source>
+        <translation>Рабочее пространство</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation>Авто (по холсту)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation>Горизонтальная</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation>Вертикальная</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>Тема</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>Светлая</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Тёмная</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation>Язык…</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation>Мультикам</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation>Отладочная информация…</translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation>Другие настройки…</translation>
+    </message>
+</context>
+<context>
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
@@ -6074,30 +6125,6 @@
         <translation>Рабочее пространство, тема, язык и другое</translation>
     </message>
     <message>
-        <source>Light</source>
-        <translation>Светлая</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>Тёмная</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>Язык…</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>Отладочная информация…</translation>
-    </message>
-    <message>
-        <source>More settings…</source>
-        <translation>Другие настройки…</translation>
-    </message>
-    <message>
         <source>Notifications — Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6140,30 +6167,6 @@
     <message>
         <source>Export already in progress</source>
         <translation>Экспорт уже выполняется</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>Мультикам</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>Рабочее пространство</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>Авто (по холсту)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>Горизонтальная</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>Вертикальная</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation>Тема</translation>
     </message>
 </context>
 <context>
@@ -14112,6 +14115,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove from recents</source>
         <translation>Убрать из недавних</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation>Рабочее пространство, тема, язык и другое</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">Отладочная информация</translation>
+    </message>
+    <message>
+        <source>System, playback and codec details for bug reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>Агент</translation>
+    </message>
+    <message>
+        <source>Agent access is on</source>
+        <translation>Доступ агента включён</translation>
+    </message>
+    <message>
+        <source>Agent access</source>
+        <translation>Доступ агента</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>

@@ -1926,6 +1926,11 @@ ApplicationWindow {
                 onNewProjectRequested: window.requestNewProject()
                 onOpenProjectRequested: window.requestOpenProjectDialog()
                 onOpenRecentRequested: (path) => window.requestOpenRecentProject(path)
+                onLanguageRequested: editorHeader.openLanguageChooser()
+                onMobileLayoutRequested: window.switchShell("mobile")
+                onMoreSettingsRequested: window.openSettings()
+                onDebugInfoRequested: window.openDebugInfo()
+                onAgentAccessRequested: editorHeader.openAgentAccess()
             }
         }
     }

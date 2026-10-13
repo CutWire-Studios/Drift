@@ -4174,6 +4174,57 @@
     </message>
 </context>
 <context>
+    <name>AppSettingsMenu</name>
+    <message>
+        <source>Workspace</source>
+        <translation>작업 공간</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation>자동(캔버스 따름)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation>가로</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation>세로</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>테마</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>밝게</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>어두운</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation>언어…</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation>멀티캠</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation>디버그 정보…</translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation>추가 설정…</translation>
+    </message>
+</context>
+<context>
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
@@ -6020,30 +6071,6 @@
         <translation>작업 공간, 테마, 언어 및 기타</translation>
     </message>
     <message>
-        <source>Light</source>
-        <translation>밝게</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>어두운</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>언어…</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>디버그 정보…</translation>
-    </message>
-    <message>
-        <source>More settings…</source>
-        <translation>추가 설정…</translation>
-    </message>
-    <message>
         <source>Notifications — Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6086,30 +6113,6 @@
     <message>
         <source>Export already in progress</source>
         <translation>내보내기가 이미 진행 중입니다</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>멀티캠</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>작업 공간</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>자동(캔버스 따름)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>가로</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>세로</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation>테마</translation>
     </message>
 </context>
 <context>
@@ -14004,6 +14007,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove from recents</source>
         <translation>최근 항목에서 제거</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>설정</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation>작업 공간, 테마, 언어 및 기타</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">디버그 정보</translation>
+    </message>
+    <message>
+        <source>System, playback and codec details for bug reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>에이전트</translation>
+    </message>
+    <message>
+        <source>Agent access is on</source>
+        <translation>에이전트 접근이 켜져 있습니다</translation>
+    </message>
+    <message>
+        <source>Agent access</source>
+        <translation>에이전트 접근</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>

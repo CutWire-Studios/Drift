@@ -4239,6 +4239,57 @@
     </message>
 </context>
 <context>
+    <name>AppSettingsMenu</name>
+    <message>
+        <source>Workspace</source>
+        <translation>مساحة العمل</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation>تلقائي (اتّباع اللوحة)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation>أفقي</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation>عمودي</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>المظهر</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>فاتح</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>داكن</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation>اللغة…</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation>كاميرات متعددة</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation>معلومات تصحيح الأخطاء…</translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation>المزيد من الإعدادات…</translation>
+    </message>
+</context>
+<context>
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
@@ -6155,30 +6206,6 @@
         <translation>مساحة العمل والمظهر واللغة والمزيد</translation>
     </message>
     <message>
-        <source>Light</source>
-        <translation>فاتح</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>داكن</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>اللغة…</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>معلومات تصحيح الأخطاء…</translation>
-    </message>
-    <message>
-        <source>More settings…</source>
-        <translation>المزيد من الإعدادات…</translation>
-    </message>
-    <message>
         <source>Notifications — Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6221,30 +6248,6 @@
     <message>
         <source>Export already in progress</source>
         <translation>التصدير قيد التقدم بالفعل</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>كاميرات متعددة</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>مساحة العمل</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>تلقائي (اتّباع اللوحة)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>أفقي</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>عمودي</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation>المظهر</translation>
     </message>
 </context>
 <context>
@@ -14262,6 +14265,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove from recents</source>
         <translation>إزالة من الأخيرة</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>الإعدادات</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation>مساحة العمل والمظهر واللغة والمزيد</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">معلومات تصحيح الأخطاء</translation>
+    </message>
+    <message>
+        <source>System, playback and codec details for bug reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>الوكيل</translation>
+    </message>
+    <message>
+        <source>Agent access is on</source>
+        <translation>وصول الوكيل مفعّل</translation>
+    </message>
+    <message>
+        <source>Agent access</source>
+        <translation>وصول الوكيل</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>

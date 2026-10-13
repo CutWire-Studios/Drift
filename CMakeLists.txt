@@ -1468,6 +1468,7 @@ qt_add_qml_module(drift
         src/qml/components/LanguageChooserDialog.qml
         src/qml/components/AgentAccessControls.qml
         src/qml/components/AgentAccessDialog.qml
+        src/qml/components/AppSettingsMenu.qml
         src/qml/components/VideoSizeDialog.qml
         src/qml/components/VideoSizeControls.qml
         src/qml/components/ProjectPropertiesDialog.qml

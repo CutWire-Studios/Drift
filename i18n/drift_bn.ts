@@ -4187,6 +4187,57 @@
     </message>
 </context>
 <context>
+    <name>AppSettingsMenu</name>
+    <message>
+        <source>Workspace</source>
+        <translation>কর্মক্ষেত্র</translation>
+    </message>
+    <message>
+        <source>Auto (follow canvas)</source>
+        <translation>স্বয়ংক্রিয় (ক্যানভাস অনুযায়ী)</translation>
+    </message>
+    <message>
+        <source>Landscape</source>
+        <translation>আড়াআড়ি</translation>
+    </message>
+    <message>
+        <source>Portrait</source>
+        <translation>লম্বালম্বি</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>থিম</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>লাইট</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>ডার্ক</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation>ভাষা…</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multicam</source>
+        <translation>মাল্টিক্যাম</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation>ডিবাগ তথ্য…</translation>
+    </message>
+    <message>
+        <source>More settings…</source>
+        <translation>আরও সেটিংস…</translation>
+    </message>
+</context>
+<context>
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
@@ -6047,30 +6098,6 @@
         <translation>কর্মক্ষেত্র, থিম, ভাষা ও আরও সেটিংস</translation>
     </message>
     <message>
-        <source>Light</source>
-        <translation>লাইট</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>ডার্ক</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>ভাষা…</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>ডিবাগ তথ্য…</translation>
-    </message>
-    <message>
-        <source>More settings…</source>
-        <translation>আরও সেটিংস…</translation>
-    </message>
-    <message>
         <source>Notifications — Drift %1 is available</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6113,30 +6140,6 @@
     <message>
         <source>Export already in progress</source>
         <translation>এক্সপোর্ট ইতিমধ্যেই চলছে</translation>
-    </message>
-    <message>
-        <source>Multicam</source>
-        <translation>মাল্টিক্যাম</translation>
-    </message>
-    <message>
-        <source>Workspace</source>
-        <translation>কর্মক্ষেত্র</translation>
-    </message>
-    <message>
-        <source>Auto (follow canvas)</source>
-        <translation>স্বয়ংক্রিয় (ক্যানভাস অনুযায়ী)</translation>
-    </message>
-    <message>
-        <source>Landscape</source>
-        <translation>আড়াআড়ি</translation>
-    </message>
-    <message>
-        <source>Portrait</source>
-        <translation>লম্বালম্বি</translation>
-    </message>
-    <message>
-        <source>Theme</source>
-        <translation>থিম</translation>
     </message>
 </context>
 <context>
@@ -14062,6 +14065,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Remove from recents</source>
         <translation>সাম্প্রতিক তালিকা থেকে সরান</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>সেটিংস</translation>
+    </message>
+    <message>
+        <source>Workspace, theme, language and more</source>
+        <translation>কর্মক্ষেত্র, থিম, ভাষা ও আরও সেটিংস</translation>
+    </message>
+    <message>
+        <source>Debug info</source>
+        <translation type="unfinished">ডিবাগ তথ্য</translation>
+    </message>
+    <message>
+        <source>System, playback and codec details for bug reports</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Agent</source>
+        <translation>এজেন্ট</translation>
+    </message>
+    <message>
+        <source>Agent access is on</source>
+        <translation>এজেন্ট অ্যাক্সেস চালু আছে</translation>
+    </message>
+    <message>
+        <source>Agent access</source>
+        <translation>এজেন্ট অ্যাক্সেস</translation>
     </message>
     <message>
         <source>Create polished videos fast</source>
