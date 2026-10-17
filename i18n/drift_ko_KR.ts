@@ -9547,6 +9547,10 @@
         <translation>라이브러리를 업데이트할 수 없습니다</translation>
     </message>
     <message>
+        <source>Could not refresh “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That media is no longer in this project.</source>
         <translation>해당 미디어는 더 이상 이 프로젝트에 없습니다.</translation>
     </message>
@@ -9561,6 +9565,10 @@
     <message>
         <source>Media replaced</source>
         <translation>미디어가 교체됨</translation>
+    </message>
+    <message>
+        <source>Media refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

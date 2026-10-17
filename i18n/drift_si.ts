@@ -9585,6 +9585,10 @@
         <translation>පුස්තකාලය යාවත්කාලීන කිරීමට නොහැකි විය</translation>
     </message>
     <message>
+        <source>Could not refresh “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That media is no longer in this project.</source>
         <translation>එම මාධ්‍ය තවදුරටත් මෙම ව්‍යාපෘතියේ නොමැත.</translation>
     </message>
@@ -9599,6 +9603,10 @@
     <message>
         <source>Media replaced</source>
         <translation>මාධ්‍ය ප්‍රතිස්ථාපනය කෙරිණි</translation>
+    </message>
+    <message>
+        <source>Media refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

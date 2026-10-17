@@ -9547,6 +9547,10 @@
         <translation>Không thể cập nhật thư viện</translation>
     </message>
     <message>
+        <source>Could not refresh “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That media is no longer in this project.</source>
         <translation>Phương tiện đó không còn trong dự án này nữa.</translation>
     </message>
@@ -9561,6 +9565,10 @@
     <message>
         <source>Media replaced</source>
         <translation>Đã thay thế phương tiện</translation>
+    </message>
+    <message>
+        <source>Media refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

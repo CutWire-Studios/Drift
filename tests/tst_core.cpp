@@ -83,6 +83,7 @@ private slots:
     void activateSequenceSwapsTracks();
     void binFolderDeletionMovesChildrenToParent();
     void assetFrameRateMarksRoundTrip();
+    void assetSourceFingerprintRoundTripsAndDetectsChange();
     void projectMetadataRoundTrip();
     void effectColorParamSurvivesRoundTrip();
     void clipTransformSerialization();
@@ -710,6 +711,52 @@ void CoreTest::assetFrameRateMarksRoundTrip()
     QVERIFY(loaded.asset(phoneId)->variableFrameRate);
     QVERIFY(!loaded.asset(phoneId)->editFriendly);
     QVERIFY(!loaded.asset(uncheckedId)->frameRateKnown);
+}
+
+// The size and modification time recorded at probe time save with the project, and are what
+// tells a file rewritten in place from the one the asset was read from. Without a record (an
+// older project) there is nothing to compare, which must not read as "changed".
+void CoreTest::assetSourceFingerprintRoundTripsAndDetectsChange()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("vo.wav"));
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(QByteArray(1000, 'a'));
+    }
+
+    drift::Project project;
+    drift::MediaAsset stamped;
+    stamped.kind = drift::MediaKind::Audio;
+    stamped.path = path;
+    drift::stampSourceFingerprint(stamped);
+    QCOMPARE(stamped.sourceSize, qint64(1000));
+    const QString stampedId = project.addAsset(stamped);
+
+    drift::MediaAsset unstamped;
+    unstamped.kind = drift::MediaKind::Audio;
+    unstamped.path = path;
+    const QString unstampedId = project.addAsset(unstamped);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY(error.isEmpty());
+    const drift::MediaAsset *back = loaded.asset(stampedId);
+    QCOMPARE(back->sourceSize, stamped.sourceSize);
+    QCOMPARE(back->sourceModifiedMs, stamped.sourceModifiedMs);
+    QVERIFY(!drift::sourceChangedOnDisk(*back));
+    QVERIFY(!drift::sourceFingerprintKnown(*loaded.asset(unstampedId)));
+
+    // Rewritten at the same path with other content.
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write(QByteArray(400, 'b'));
+    }
+    QVERIFY(drift::sourceChangedOnDisk(*back));
+    QVERIFY(!drift::sourceChangedOnDisk(*loaded.asset(unstampedId)));
 }
 
 void CoreTest::binFolderDeletionMovesChildrenToParent()

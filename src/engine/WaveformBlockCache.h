@@ -52,7 +52,8 @@ public:
 
     // Drop everything decoded for a source. For media leaving the project (or the project
     // closing): nothing else ever removes a block, so without this a session accumulates every
-    // source it has ever scrolled past.
+    // source it has ever scrolled past. Also for a file replaced in place, so queued requests go
+    // too and a batch already decoding it is discarded when it lands.
     void forgetSource(const QString &sourcePath);
     void clear();
 
@@ -119,4 +120,8 @@ private:
     QList<QueueItem> m_queue;
     bool m_busy = false;
     bool m_batchScheduled = false;
+    // The source the running batch decodes, and whether forgetSource()/clear() has since
+    // disowned it.
+    QString m_busySource;
+    bool m_discardBatch = false;
 };

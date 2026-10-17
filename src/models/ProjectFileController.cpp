@@ -1532,7 +1532,7 @@ void ProjectFileController::newProject(bool silent)
     m_app->m_project.setAuthor(QSettings().value(QStringLiteral("authorName")).toString());
     m_embeddedSources.clear();
     if (m_app->m_assetLibrary)
-        m_app->m_assetLibrary->setProject(&m_app->m_project);
+        m_app->m_assetLibrary->setProject(&m_app->m_project, true);
     m_app->m_bin->folderModel()->setProject(&m_app->m_project);
     m_app->m_bin->setCurrentFolderId(QString());
     m_app->m_playback.setProject(&m_app->m_project);

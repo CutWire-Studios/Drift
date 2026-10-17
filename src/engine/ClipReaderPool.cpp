@@ -41,8 +41,11 @@ ClipReaderPool::~ClipReaderPool()
         stopWorkerEntry(*entry.second);
     for (auto &entry : m_audioWorkers)
         stopWorkerEntry(*entry.second);
+    for (auto &entry : m_retired)
+        stopWorkerEntry(*entry);
     m_videoWorkers.clear();
     m_audioWorkers.clear();
+    m_retired.clear();
 }
 
 // Wakes on its own cadence rather than piggybacking on any caller, which is the whole point:
@@ -214,15 +217,44 @@ void ClipReaderPool::releasePath(const QString &path)
     std::vector<std::unique_ptr<WorkerEntry>> evicted;
     {
         QMutexLocker lock(&m_mutex);
-        evicted = detachIdleLocked(
-            m_videoWorkers, [&](const VideoKey &key, const WorkerEntry &) { return key.first != path; }, 0);
-        std::vector<std::unique_ptr<WorkerEntry>> audio = detachIdleLocked(
-            m_audioWorkers, [&](const QString &key, const WorkerEntry &) { return key != path; }, 0);
-        evicted.insert(evicted.end(), std::make_move_iterator(audio.begin()),
-                       std::make_move_iterator(audio.end()));
+        // A busy worker cannot be stopped under its reader, but it can stop being found: leaving
+        // it in the map would let the next read of this path reuse a decoder still holding the
+        // file it opened, which after an in-place rewrite is the old content.
+        const auto take = [&](auto &workers, auto matches) {
+            for (auto it = workers.begin(); it != workers.end();) {
+                if (!matches(it->first)) {
+                    ++it;
+                    continue;
+                }
+                if (it->second->inFlight > 0) {
+                    it->second->retired = true;
+                    m_retired.push_back(std::move(it->second));
+                } else {
+                    evicted.push_back(std::move(it->second));
+                }
+                it = workers.erase(it);
+            }
+        };
+        take(m_videoWorkers, [&](const VideoKey &key) { return key.first == path; });
+        take(m_audioWorkers, [&](const QString &key) { return key == path; });
     }
     for (const std::unique_ptr<WorkerEntry> &entry : evicted)
         stopWorkerEntry(*entry);
+}
+
+std::unique_ptr<ClipReaderPool::WorkerEntry> ClipReaderPool::endReadLocked(WorkerEntry *entry)
+{
+    --entry->inFlight;
+    if (!entry->retired || entry->inFlight > 0)
+        return {};
+    for (auto it = m_retired.begin(); it != m_retired.end(); ++it) {
+        if (it->get() != entry)
+            continue;
+        std::unique_ptr<WorkerEntry> done = std::move(*it);
+        m_retired.erase(it);
+        return done;
+    }
+    return {};
 }
 
 void ClipReaderPool::setReadAheadUs(drift::TimeUs readAheadUs)
@@ -344,8 +376,13 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
     QMetaObject::invokeMethod(worker, "prefetchNextVideo", Qt::QueuedConnection,
                               Q_ARG(quint64, streamId), Q_ARG(int, maxWidth), Q_ARG(int, maxHeight));
 
-    QMutexLocker lock(&m_mutex);
-    --entry->inFlight;
+    std::unique_ptr<WorkerEntry> retired;
+    {
+        QMutexLocker lock(&m_mutex);
+        retired = endReadLocked(entry);
+    }
+    if (retired)
+        stopWorkerEntry(*retired);
     return frame;
 }
 
@@ -381,8 +418,13 @@ PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, qui
         worker->requestPrefetchPreview(streamId, maxWidth, maxHeight,
                                        m_readAheadUs.load(std::memory_order_relaxed));
 
-    QMutexLocker lock(&m_mutex);
-    --entry->inFlight;
+    std::unique_ptr<WorkerEntry> retired;
+    {
+        QMutexLocker lock(&m_mutex);
+        retired = endReadLocked(entry);
+    }
+    if (retired)
+        stopWorkerEntry(*retired);
     return frame;
 }
 
@@ -409,8 +451,13 @@ int ClipReaderPool::readAudioInterleaved(const QString &path, quint64 streamId,
                               Q_ARG(float *, interleavedStereoOut),
                               Q_ARG(int, audioStreamOrdinal));
 
-    QMutexLocker lock(&m_mutex);
-    --entry->inFlight;
+    std::unique_ptr<WorkerEntry> retired;
+    {
+        QMutexLocker lock(&m_mutex);
+        retired = endReadLocked(entry);
+    }
+    if (retired)
+        stopWorkerEntry(*retired);
     return written;
 }
 

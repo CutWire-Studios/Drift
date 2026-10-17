@@ -9623,6 +9623,10 @@
         <translation>Не удалось обновить медиатеку</translation>
     </message>
     <message>
+        <source>Could not refresh “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That media is no longer in this project.</source>
         <translation>Этого медиафайла больше нет в проекте.</translation>
     </message>
@@ -9637,6 +9641,10 @@
     <message>
         <source>Media replaced</source>
         <translation>Медиафайл заменён</translation>
+    </message>
+    <message>
+        <source>Media refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

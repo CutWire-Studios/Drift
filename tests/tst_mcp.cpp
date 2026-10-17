@@ -165,6 +165,10 @@ private slots:
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
+    void reimportOfFileChangedInPlaceReprobes();
+    void refreshInFlightAcrossProjectReplaceIsDropped();
+    void replaceInFlightAcrossProjectReplaceIsDropped();
+    void replaceInFlightSurvivesBinModelRefresh();
     void saveProjectWithoutPathUsesCurrent();
     void detectSilenceFindsInjectedGap();
     void removeSilenceCutsMiddleGapWithDeclick();
@@ -1515,6 +1519,200 @@ QString importAndPlace(drift::mcp::McpDispatcher &dispatcher, const QString &pat
 }
 
 } // namespace
+
+// A file rewritten at the same path (as a TTS pipeline does: render to a temp name, rename over
+// the old one) used to come back from import_media as the old asset — old duration, old audio —
+// and the same again after reopening the project.
+void McpTest::reimportOfFileChangedInPlaceReprobes()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate audio fixtures");
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("vo.wav"));
+    const auto rewrite = [&](int seconds) {
+        const QString staged = dir.filePath(QStringLiteral("staged.wav"));
+        return writeClickTrack(staged, seconds) && QFile::remove(path) && QFile::rename(staged, path);
+    };
+    const auto clipSeconds = [&](const QString &clipId) {
+        for (const drift::Track &track : state.project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                if (clip.id == clipId)
+                    return drift::usToSeconds(clip.timelineDuration);
+        return -1.0;
+    };
+
+    QVERIFY(writeClickTrack(path, 4));
+    const QString first = importAndPlace(dispatcher, path, 0.0);
+    QVERIFY(!first.isEmpty());
+    QCOMPARE(qRound(clipSeconds(first)), 4);
+    const QString assetId = state.project()->assetOrder().first();
+
+    // Same path, shorter content. Re-importing re-probes the row in place.
+    QVERIFY(rewrite(2));
+    const QJsonObject again = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                  {{QStringLiteral("paths"), QJsonArray{path}}});
+    QVERIFY2(again.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(again).toJson()));
+    QCOMPARE(again.value(QStringLiteral("reprobed")).toArray(), QJsonArray{assetId});
+    QVERIFY(!again.contains(QStringLiteral("stale")));
+    const QJsonObject row = again.value(QStringLiteral("assets")).toArray().first().toObject();
+    QCOMPARE(row.value(QStringLiteral("id")).toString(), assetId);
+    QCOMPARE(qRound(row.value(QStringLiteral("dur")).toDouble()), 2);
+    // The clip already placed no longer reaches past the end of its media.
+    QCOMPARE(qRound(clipSeconds(first)), 2);
+
+    // New clips get the new length.
+    const QString second = importAndPlace(dispatcher, path, 10.0);
+    QVERIFY(!second.isEmpty());
+    QCOMPARE(qRound(clipSeconds(second)), 2);
+
+    // Unchanged since: a plain re-import leaves the row alone.
+    const QJsonObject unchanged = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                      {{QStringLiteral("paths"), QJsonArray{path}}});
+    QVERIFY(!unchanged.contains(QStringLiteral("reprobed")));
+
+    // refresh_asset re-reads it on request, changed or not.
+    const QJsonObject refreshed = dispatcher.applyOne(QStringLiteral("refresh_asset"),
+                                                      {{QStringLiteral("asset"), assetId}});
+    QVERIFY2(refreshed.value(QStringLiteral("ok")).toBool(),
+             qPrintable(QJsonDocument(refreshed).toJson()));
+    QCOMPARE(refreshed.value(QStringLiteral("stale")).toBool(), false);
+
+    // Changed while the project was closed: opening it re-probes the row.
+    const QString projectPath = dir.filePath(QStringLiteral("p.drift"));
+    QVERIFY(dispatcher.applyOne(QStringLiteral("save_project"), {{QStringLiteral("path"), projectPath}})
+                .value(QStringLiteral("ok")).toBool());
+    QVERIFY(rewrite(3));
+    const QJsonObject loaded = dispatcher.applyOne(QStringLiteral("load_project"),
+                                                   {{QStringLiteral("path"), projectPath}});
+    QVERIFY2(loaded.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(loaded).toJson()));
+    // Settled by the time load_project answers, so the next place_clip sees the new length.
+    const QString loadedId = state.project()->assetOrder().first();
+    QCOMPARE(loaded.value(QStringLiteral("reprobed")).toArray(), QJsonArray{loadedId});
+    QVERIFY(!library.isImportPending(loadedId));
+    QCOMPARE(qRound(drift::usToSeconds(state.project()->asset(loadedId)->durationUs)), 3);
+
+    // A refresh that fails is reported as stale, fingerprint or not: here the asset has none
+    // (as in a project saved before it existed) and the file is no longer media at all.
+    drift::MediaAsset *asset = state.project()->asset(loadedId);
+    asset->sourceSize = 0;
+    asset->sourceModifiedMs = 0;
+    {
+        QFile garbage(path);
+        QVERIFY(garbage.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        garbage.write("not audio");
+    }
+    QElapsedTimer waited;
+    waited.start();
+    const QJsonObject failed = dispatcher.applyOne(QStringLiteral("refresh_asset"),
+                                                   {{QStringLiteral("asset"), loadedId}});
+    QVERIFY2(failed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(failed).toJson()));
+    QCOMPARE(failed.value(QStringLiteral("stale")).toBool(), true);
+    // A refused probe changes no metadata; the wait must still wake on it, not sit out its cap.
+    QVERIFY2(waited.elapsed() < 5000, qPrintable(QString::number(waited.elapsed())));
+    const QJsonObject reimported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                       {{QStringLiteral("paths"), QJsonArray{path}}});
+    QCOMPARE(reimported.value(QStringLiteral("stale")).toArray(), QJsonArray{loadedId});
+    QVERIFY(!reimported.contains(QStringLiteral("reprobed")));
+}
+
+// Asset ids survive a reload, so a refresh probe started before the asset set was replaced can
+// land on the reloaded asset of the same id. It must be dropped, not take the refresh mark of the
+// probe the reloaded asset started — that left the second probe to land as a plain replace and
+// reset the name, trim and rotation the user gave the asset.
+void McpTest::refreshInFlightAcrossProjectReplaceIsDropped()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate audio fixtures");
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("vo.wav"));
+    QVERIFY(writeClickTrack(path, 2));
+    QVERIFY(!importAndPlace(dispatcher, path, 0.0).isEmpty());
+    const QString assetId = state.project()->assetOrder().first();
+    QVERIFY(dispatcher.applyOne(QStringLiteral("rename_asset"),
+                                {{QStringLiteral("asset"), assetId}, {QStringLiteral("name"), QStringLiteral("Custom")}})
+                .value(QStringLiteral("ok")).toBool());
+
+    QVERIFY(library.startRefreshProbe(0));
+    // What a load does to the bin, minus the worker-thread open that would let the first probe
+    // land before it.
+    library.setProject(state.project(), true);
+    QVERIFY(library.startRefreshProbe(0));
+
+    QTRY_VERIFY_WITH_TIMEOUT(!library.isImportPending(assetId), 15000);
+    // Let a late first probe land, had it not been dropped.
+    QTest::qWait(200);
+    QCOMPARE(state.project()->asset(assetId)->name, QStringLiteral("Custom"));
+    QVERIFY(!library.isRefreshPending(assetId));
+}
+
+// A reload may not need to start a new probe for this id. The old replace result must still be
+// invalidated rather than changing the freshly loaded asset to a file it never referenced.
+void McpTest::replaceInFlightAcrossProjectReplaceIsDropped()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate audio fixtures");
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("vo.wav"));
+    const QString other = dir.filePath(QStringLiteral("other.wav"));
+    QVERIFY(writeClickTrack(path, 2));
+    QVERIFY(writeClickTrack(other, 3));
+    QVERIFY(!importAndPlace(dispatcher, path, 0.0).isEmpty());
+    const QString assetId = state.project()->assetOrder().first();
+
+    QSignalSpy probed(&library, &AssetLibrary::assetSourceProbed);
+    QVERIFY(library.startReplaceProbe(0, other));
+    library.setProject(state.project(), true);
+    QVERIFY(!library.isImportPending(assetId));
+    QTest::qWait(500);
+    QCOMPARE(probed.count(), 0);
+    QCOMPARE(state.project()->asset(assetId)->path, QFileInfo(path).absoluteFilePath());
+}
+
+// setProject() also runs as a plain model refresh on the same document (template import, collect
+// media), with the asset still there. A replace probe in flight then is still the one that ends
+// the replace: dropping it left the row busy for good, and an edit waiting on it never finished.
+void McpTest::replaceInFlightSurvivesBinModelRefresh()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate audio fixtures");
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("vo.wav"));
+    const QString other = dir.filePath(QStringLiteral("other.wav"));
+    QVERIFY(writeClickTrack(path, 2));
+    QVERIFY(writeClickTrack(other, 3));
+    QVERIFY(!importAndPlace(dispatcher, path, 0.0).isEmpty());
+    const QString assetId = state.project()->assetOrder().first();
+
+    QSignalSpy finished(state.bin(), &MediaBinController::replaceFinished);
+    QVERIFY(state.bin()->replaceSource(0, QUrl::fromLocalFile(other)));
+    QCOMPARE(state.bin()->replacingAssetId(), assetId);
+    library.setProject(state.project());
+
+    QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 15000);
+    QVERIFY(finished.at(0).at(0).toBool());
+    QVERIFY(state.bin()->replacingAssetId().isEmpty());
+    QCOMPARE(state.project()->asset(assetId)->path, QFileInfo(other).absoluteFilePath());
+}
 
 void McpTest::audioToolboxReturnsSchemas()
 {

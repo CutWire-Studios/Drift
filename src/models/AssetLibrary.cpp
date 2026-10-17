@@ -862,9 +862,13 @@ void AssetLibrary::syncToProject()
         refreshSidecars(movedIds);
 }
 
-void AssetLibrary::setProject(drift::Project *project)
+void AssetLibrary::setProject(drift::Project *project, bool newDocument)
 {
     beginResetModel();
+    if (newDocument || m_project != project) {
+        m_probeToken.clear();
+        m_refreshPending.clear();
+    }
     m_project = project;
     m_importPending.clear();
     m_thumbPending.clear();
@@ -1104,7 +1108,9 @@ void AssetLibrary::startImportJob(const QString &assetId, const QString &absolut
     (void)QtConcurrent::run(&m_jobs, [this, assetId, absolutePath, imageOnly]() {
         MediaInfo info;
         const std::optional<drift::MediaAsset> probed = probeAsset(absolutePath, imageOnly, &info);
-        const drift::MediaAsset filled = probed.value_or(drift::MediaAsset{});
+        drift::MediaAsset filled = probed.value_or(drift::MediaAsset{});
+        filled.path = absolutePath;
+        drift::stampSourceFingerprint(filled);
         const bool ok = probed.has_value();
         const bool video = ok && filled.kind == drift::MediaKind::Video;
         const bool suggestProxy = video && wantsPreviewProxy(info);
@@ -1131,21 +1137,55 @@ bool AssetLibrary::startReplaceProbe(int index, const QString &absolutePath)
 
     m_importPending.insert(assetId);
     const bool imageOnly = isImagePath(absolutePath);
+    // Same path, new content: the probe's own thumbnail lookup would hit the old pictures.
+    if (absolutePath == asset->path)
+        emit sourceContentChanging(absolutePath);
 
-    (void)QtConcurrent::run(&m_jobs, [this, assetId, absolutePath, imageOnly]() {
+    const quint64 token = ++m_lastProbeToken;
+    m_probeToken.insert(assetId, token);
+    (void)QtConcurrent::run(&m_jobs, [this, assetId, absolutePath, imageOnly, token]() {
         const std::optional<drift::MediaAsset> probed = probeAsset(absolutePath, imageOnly);
-        const drift::MediaAsset filled = probed.value_or(drift::MediaAsset{});
+        drift::MediaAsset filled = probed.value_or(drift::MediaAsset{});
+        filled.path = absolutePath;
+        drift::stampSourceFingerprint(filled);
         const bool ok = probed.has_value();
 
         QMetaObject::invokeMethod(
             this,
-            [this, assetId, filled, ok]() {
+            [this, assetId, filled, ok, token]() {
+                // Superseded by a newer probe of the same asset (see m_probeToken). Touching
+                // anything here would clear that probe's pending flag and refresh mark, and hand
+                // it this older result; it lands on its own and finishes the job.
+                if (m_probeToken.value(assetId) != token)
+                    return;
+                m_probeToken.remove(assetId);
                 m_importPending.remove(assetId);
                 emit assetSourceProbed(assetId, filled, ok);
             },
             Qt::QueuedConnection);
     });
     return true;
+}
+
+bool AssetLibrary::startRefreshProbe(int index)
+{
+    const drift::MediaAsset *asset = assetAtIndex(index);
+    if (!asset || !QFileInfo(asset->path).isFile())
+        return false;
+    const QString assetId = asset->id;
+    if (!startReplaceProbe(index, asset->path))
+        return false;
+    m_refreshPending.insert(assetId);
+    return true;
+}
+
+bool AssetLibrary::sourceNeedsRefresh(int index) const
+{
+    const drift::MediaAsset *asset = assetAtIndex(index);
+    // Not a plain file (an image sequence, a composite): nothing to fingerprint or re-read.
+    if (!asset || !QFileInfo(asset->path).isFile())
+        return false;
+    return !drift::sourceFingerprintKnown(*asset) || drift::sourceChangedOnDisk(*asset);
 }
 
 bool AssetLibrary::applyProbedSource(const QString &assetId, const drift::MediaAsset &filled)
@@ -1232,6 +1272,8 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
     asset->hasAudioKnown = filled.hasAudioKnown;
     asset->thumbnailPath = filled.thumbnailPath;
     asset->filmstripPath = filled.filmstripPath;
+    asset->sourceSize = filled.sourceSize;
+    asset->sourceModifiedMs = filled.sourceModifiedMs;
 
     // Re-importing a file whose proxy survived in the cache would otherwise suggest another.
     if (suggestProxy && drift::ReverseProxyCache::previewProxiesEnabled
@@ -1532,10 +1574,14 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
         QList<drift::ReverseProxyCache::Sidecars> found;
         for (const auto &[id, path] : targets) {
             drift::ReverseProxyCache::Sidecars sidecars;
+            const QDateTime sourceModified = QFileInfo(path).lastModified();
             for (const int side : kGeneratedProxySides) {
-                const QString generated = drift::generatedProxyPath(path, side);
-                if (QFileInfo(generated).isFile())
-                    sidecars.generated.insert(side, generated);
+                const QFileInfo generated(drift::generatedProxyPath(path, side));
+                // Same rule as the reversed renders below: a proxy Drift rendered before the
+                // source was replaced in place shows the old footage. An external proxy is the
+                // user's own file, so it is left to them.
+                if (generated.isFile() && generated.lastModified() >= sourceModified)
+                    sidecars.generated.insert(side, generated.absoluteFilePath());
             }
             for (const drift::ProxyNameRule &rule : rules) {
                 const QString candidate = drift::proxyCandidatePath(rule, path);
@@ -1553,7 +1599,6 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
                     QDir(source.absolutePath())
                         .entryInfoList({QStringLiteral("*_reversed_*.mp4")}, QDir::Files));
             }
-            const QDateTime sourceModified = source.lastModified();
             for (const QFileInfo &file : *listed) {
                 // Older than the source means the source was replaced in place since the render.
                 if (file.lastModified() < sourceModified)
@@ -2002,6 +2047,8 @@ void AssetLibrary::clear()
     m_project->assets().clear();
     m_project->assetOrder().clear();
     m_importPending.clear();
+    m_probeToken.clear();
+    m_refreshPending.clear();
     m_thumbPending.clear();
     m_audioProbePending.clear();
     endResetModel();
@@ -2055,6 +2102,8 @@ void AssetLibrary::loadFromJsonArray(const QJsonArray &assets)
     m_project->assets().clear();
     m_project->assetOrder().clear();
     m_importPending.clear();
+    m_probeToken.clear();
+    m_refreshPending.clear();
     m_thumbPending.clear();
     m_audioProbePending.clear();
 
@@ -2314,6 +2363,7 @@ QString AssetLibrary::addGeneratedAsset(drift::MediaAsset asset)
     if (asset.id.isEmpty())
         asset.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     asset.path = QFileInfo(asset.path).absoluteFilePath();
+    drift::stampSourceFingerprint(asset);
 
     const int row = m_project->assetOrder().size();
     beginInsertRows({}, row, row);
@@ -2374,7 +2424,10 @@ QStringList AssetLibrary::importFilesReturningIds(const QStringList &paths,
 
         const int existingIndex = indexOfPath(absolutePath);
         if (existingIndex >= 0) {
-            refreshMediaAt(existingIndex);
+            // A file replaced in place keeps its path, so the row has to be re-probed rather
+            // than handed back as-is — otherwise new clips get the old duration and media.
+            if (!(sourceNeedsRefresh(existingIndex) && startRefreshProbe(existingIndex)))
+                refreshMediaAt(existingIndex);
             ids.append(assetIdAt(existingIndex));
             continue;
         }

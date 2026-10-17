@@ -42,6 +42,12 @@ private:
     QJsonObject clipFeedback(const ClipRef &ref, const QJsonObject &extra = {}) const;
     QJsonObject effectHost(const ClipRef &ref, QJsonObject extra) const;
     QJsonObject waitImport(const QStringList &ids);
+    // Ids among `ids` an import or load re-probed because their file changed in place, read
+    // before waiting on them (landing clears the mark).
+    QStringList refreshingIds(const QStringList &ids) const;
+    // After waitImport: sorts refreshed ids into reprobed (now describing the file on disk) and
+    // stale (refused, or still running), inserting each list into `result` when non-empty.
+    void addRefreshOutcome(QJsonObject &result, const QStringList &refreshed);
     bool isUndoable(const QString &tool) const;
     void moveClipToRequested(const ClipRef &ref, double at);
 

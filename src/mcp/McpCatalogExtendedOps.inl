@@ -12,6 +12,16 @@
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
                         {QStringLiteral("path"), stringProp(QStringLiteral("Absolute path or file:// URL; must exist"))}},
                        {QStringLiteral("asset"), QStringLiteral("path")}) },
+        { "refresh_asset", "media", "Re-read a file changed on disk",
+          "Re-probe an asset's own file after it was rewritten at the same path, and drop every "
+          "cached decode, thumbnail, waveform and preview proxy of the old content. Keeps the asset's "
+          "name, bin trim and rotation; clips keep the asset and are clamped if the media got "
+          "shorter. Blocks until the probe lands (15s cap). import_media of the same path does this "
+          "on its own when the file's size or modification time changed; use this when they did "
+          "not (e.g. a copy that preserved mtime). Returns {assets:[{id, index, name, kind, dur, "
+          "pending}], stale} — stale:true means the file could not be re-read (or is now another "
+          "kind of media) and the asset still describes the old file.",
+          objectSchema({{QStringLiteral("asset"), assetRefProp()}}, {QStringLiteral("asset")}) },
         { "export_asset_image", "media", "Export a still from an asset",
           "Write an image file from a bin asset (its poster frame for video). Creates parent folders. "
           "The format follows the path's extension.",
@@ -32,7 +42,10 @@
           "Load a .drift bundle or a JSON document from Save as JSON, replacing the open timeline. "
           "JSON is an import: inspect.path stays empty and save_project still needs a .drift path. "
           "DISCARDS unsaved changes without warning and clears the undo stack — save_project first "
-          "if the current project matters (inspect.dirty tells you).",
+          "if the current project matters (inspect.dirty tells you). Media whose file was rewritten "
+          "in place since the project was saved is re-probed before this returns: those asset ids "
+          "are in reprobed (new duration, clips clamped if it got shorter), and any that could not "
+          "be re-read in stale.",
           objectSchema({{QStringLiteral("path"), stringProp(QStringLiteral("Absolute .drift or .json path"))}},
                        {QStringLiteral("path")}),
           false, true },

@@ -5,6 +5,7 @@
 
 #include <QAtomicInt>
 #include <QObject>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
@@ -85,6 +86,19 @@ public:
     // is — its position, trim, effects and transitions all survive. Asynchronous: true only means
     // the probe started, and the outcome arrives as replaceFinished.
     Q_INVOKABLE bool replaceSource(int assetIndex, const QUrl &url);
+    // Re-reads a bin row's own file after it changed in place: new duration and media, with the
+    // name, trim and rotation the user gave the row kept, and every cache of the old content
+    // dropped. Undoable. Asynchronous: true only means the probe started — the row stays
+    // import-pending until it lands.
+    Q_INVOKABLE bool refreshSource(int assetIndex);
+    // Refreshes every row whose file no longer matches the size and modification time recorded
+    // when it was probed. Run when a project opens. Rows with no record (older projects) are left
+    // alone: re-probing all of them would cost every open. Returns how many probes started.
+    int refreshChangedSources();
+    // Whether the last refresh of `assetId` was refused (unreadable, or now another kind of
+    // media), clearing the record. The fingerprint cannot say: a refused refresh leaves it as it
+    // was, and an asset from an older project never had one.
+    bool takeRefreshFailure(const QString &assetId) { return m_refreshFailed.remove(assetId); }
     // Writes an image asset (a freeze frame, typically) out to `url`. The format follows the
     // destination's extension, so the picker's name filter never has to be reported back.
     Q_INVOKABLE bool exportImage(int assetIndex, const QUrl &url);
@@ -144,6 +158,7 @@ private:
     // The content:// URI the in-flight replace picked, held across the probe so it can be put back
     // on the asset once applyProbedSource has overwritten the struct.
     QString m_replacingAssetSourceUri;
+    QSet<QString> m_refreshFailed;
     bool m_editing = false;
     double m_editProgress = 0.0;
     QString m_editStatus;

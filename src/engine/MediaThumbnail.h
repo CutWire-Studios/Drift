@@ -40,6 +40,12 @@ public:
     // Drops the oldest tile files until the tile cache fits in `maxBytes`.
     static void pruneTileCache(qint64 maxBytes);
 
+    // Deletes everything cached for `sourcePath`: cover thumbnails, strips, frames and tiles.
+    // The cache is keyed by path alone, so a file replaced in place would otherwise keep
+    // showing the old pictures. Call before regenerating, not after. `tilesOnly` leaves the
+    // cover thumbnails and strips alone, for a caller racing a probe that is rewriting them.
+    static void forgetSource(const QString &sourcePath, bool tilesOnly = false);
+
     // A decoder held open across batches of tiles.
     //
     // Opening a decoder is the expensive part: even at 1080p libavcodec allocates a full

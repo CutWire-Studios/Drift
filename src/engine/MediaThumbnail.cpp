@@ -561,6 +561,21 @@ QList<qint64> MediaThumbnail::TileDecoder::generateTiles(const QString &sourcePa
     return produced;
 }
 
+void MediaThumbnail::forgetSource(const QString &sourcePath, bool tilesOnly)
+{
+    if (sourcePath.isEmpty())
+        return;
+    // Every variant (rotation, start, strip, frame-at-time, tile) begins with the bare key and
+    // the next character after its hash digits is "_", so this cannot match another source.
+    // Tiles are the "_t" ones, as in tilePath().
+    QDir dir(cacheDir());
+    const QString pattern =
+        cacheKeyFor(sourcePath) + (tilesOnly ? QStringLiteral("_t*") : QStringLiteral("*"));
+    const QStringList files = dir.entryList({pattern}, QDir::Files);
+    for (const QString &file : files)
+        dir.remove(file);
+}
+
 void MediaThumbnail::pruneTileCache(qint64 maxBytes)
 {
     QDir dir(cacheDir());

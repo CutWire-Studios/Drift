@@ -55,7 +55,9 @@ public:
     explicit AssetLibrary(QObject *parent = nullptr);
     ~AssetLibrary() override;
 
-    void setProject(drift::Project *project);
+    // Pass newDocument when the Project object was replaced in place (its pointer and asset ids
+    // can be unchanged). Plain model resets keep an in-flight probe for a surviving asset alive.
+    void setProject(drift::Project *project, bool newDocument = false);
     drift::Project *project() const { return m_project; }
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -153,6 +155,16 @@ public:
     // touching the project, so the caller can apply the swap, the clip fixups and the undo
     // snapshot as one transaction. Returns false when nothing was started.
     bool startReplaceProbe(int index, const QString &absolutePath);
+    // Re-probes the asset's own file because its content changed in place, through the same
+    // assetSourceProbed path as a replace. The asset counts as import-pending until it lands,
+    // and the caller applying it can tell it apart with takeRefresh(): a refresh keeps what the
+    // user set on the asset (name, trim, rotation), where a replace takes the new file's.
+    bool startRefreshProbe(int index);
+    bool isRefreshPending(const QString &assetId) const { return m_refreshPending.contains(assetId); }
+    bool takeRefresh(const QString &assetId) { return m_refreshPending.remove(assetId); }
+    // The file differs from the one the asset was probed from, or there is no fingerprint to
+    // compare against (projects saved before it existed) — either way a re-import re-probes.
+    bool sourceNeedsRefresh(int index) const;
     // Writes a probed source over the asset at `assetId`, keeping the id. Keeping it is the
     // whole point: clips address their media through it, so they stay bound across the swap.
     // Callers own the undo snapshot and the clip fixups.
@@ -225,6 +237,10 @@ signals:
     // Result of startReplaceProbe. Nothing has been applied yet; the caller decides whether the
     // probed media is an acceptable stand-in and calls applyProbedSource if so.
     void assetSourceProbed(const QString &assetId, const drift::MediaAsset &filled, bool ok);
+    // A probe is about to re-read an asset's current path because the file there changed.
+    // Emitted before the probe starts, so every path-keyed cache can be dropped first and the
+    // probe regenerates from the new file rather than reading back the old one.
+    void sourceContentChanging(const QString &path);
     // A file that passed the suffix whitelist and then could not be read at all, so its bin row
     // was withdrawn. Without this the row just disappears and the user is told nothing.
     void assetImportFailed(const QString &name);
@@ -293,6 +309,15 @@ private:
     QList<QString> m_syncedEdits;
     QString m_importFolderId;
     QSet<QString> m_importPending;
+    QSet<QString> m_refreshPending;
+    // The latest replace probe started per asset. setProject() clears the pending flags, which is
+    // what lets a second probe start for an asset whose first is still running — after a reload,
+    // say, where the asset id survives. The older one is then superseded: its result is dropped
+    // and the newer one, which always lands, does the bookkeeping. Not cleared by setProject(),
+    // which also runs for a mere model refresh (template import, collect media) with the asset
+    // still there and its probe still the one to wait for.
+    QHash<QString, quint64> m_probeToken;
+    quint64 m_lastProbeToken = 0;
     QSet<QString> m_thumbPending;
     // Asset ids whose settings (rotation/trim) changed again while a thumbnail job for them was
     // already in flight — the in-flight job's result is stale the moment it lands, so its landing

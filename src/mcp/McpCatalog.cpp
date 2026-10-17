@@ -501,9 +501,13 @@ const QList<Op> &ops()
           "(\"GX010023.mp4 in Downloads\", \"the wedding clip\"), glob or search with YOUR own "
           "filesystem tools, then pass the hits here. Returns {assets:[{id, index, name, kind, dur, "
           "pending}]}, plus missing:[paths that do not exist] and refreshed:[paths already in the bin] "
-          "— treat a non-empty missing as \"search again\", not as a bin problem. On timeout returns "
-          "error import_timeout with the same assets array and pending:true on the stragglers. Not "
-          "undoable.",
+          "— treat a non-empty missing as \"search again\", not as a bin problem. A path already in "
+          "the bin whose file changed on disk (same path, new content) is re-probed in place: its id "
+          "is listed in reprobed and dur is the new length; clips keep the asset and are clamped if "
+          "the media got shorter (undoable, \"Media refreshed\"). An id in stale could not be "
+          "re-read and still describes the old file. On timeout returns "
+          "error import_timeout with the same assets array and pending:true on the stragglers. Adding "
+          "new files is not undoable.",
           objectSchema({{QStringLiteral("paths"),
                          arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
                                    QStringLiteral("Absolute file paths from your own filesystem search"))}},

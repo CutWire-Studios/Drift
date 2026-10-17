@@ -536,6 +536,11 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sequenceId"), asset.sequenceId);
     if (!asset.generator.isEmpty())
         object.insert(QStringLiteral("generator"), asset.generator);
+    // Only when known, like the keys above: an older project round-trips unchanged.
+    if (drift::sourceFingerprintKnown(asset)) {
+        object.insert(QStringLiteral("sourceSize"), static_cast<double>(asset.sourceSize));
+        object.insert(QStringLiteral("sourceModifiedMs"), static_cast<double>(asset.sourceModifiedMs));
+    }
     if (asset.sourceFrame != QRectF(0, 0, 1, 1))
         object.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame));
     return object;
@@ -567,6 +572,9 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.folderId = object.value(QStringLiteral("folderId")).toString();
     asset.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     asset.generator = object.value(QStringLiteral("generator")).toObject();
+    asset.sourceSize = static_cast<qint64>(object.value(QStringLiteral("sourceSize")).toDouble());
+    asset.sourceModifiedMs =
+        static_cast<qint64>(object.value(QStringLiteral("sourceModifiedMs")).toDouble());
     if (object.contains(QStringLiteral("variableFrameRate"))) {
         asset.frameRateKnown = true;
         asset.variableFrameRate = object.value(QStringLiteral("variableFrameRate")).toBool();

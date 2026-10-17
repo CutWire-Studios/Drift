@@ -9585,6 +9585,10 @@
         <translation>Não foi possível atualizar a biblioteca</translation>
     </message>
     <message>
+        <source>Could not refresh “%1”: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That media is no longer in this project.</source>
         <translation>Essa mídia não está mais neste projeto.</translation>
     </message>
@@ -9599,6 +9603,10 @@
     <message>
         <source>Media replaced</source>
         <translation>Mídia substituída</translation>
+    </message>
+    <message>
+        <source>Media refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

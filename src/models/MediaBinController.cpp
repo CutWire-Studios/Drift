@@ -27,6 +27,13 @@ MediaBinController::MediaBinController(AppController *app, QObject *parent)
     if (m_app->m_assetLibrary)
         connect(m_app->m_assetLibrary, &AssetLibrary::assetSourceProbed, this,
                 &MediaBinController::finalizeReplace);
+    // A file replaced in place while the project was closed: its saved duration and every cache
+    // of it describe the old content.
+    connect(m_app->projectFile(), &ProjectFileController::projectLoadFinished, this,
+            [this](bool ok) {
+                if (ok)
+                    refreshChangedSources();
+            });
     // Queued: the finished job's own bookkeeping is still unwinding when this is emitted.
     connect(this, &MediaBinController::editFinished, this, &MediaBinController::startNextConversion,
             Qt::QueuedConnection);
@@ -364,6 +371,25 @@ bool MediaBinController::replaceSource(int assetIndex, const QUrl &url)
     m_replacingAssetSourceUri = sourceUri;
     emit replacingAssetIdChanged();
     return true;
+}
+
+bool MediaBinController::refreshSource(int assetIndex)
+{
+    return m_app->m_assetLibrary && m_app->m_assetLibrary->startRefreshProbe(assetIndex);
+}
+
+int MediaBinController::refreshChangedSources()
+{
+    AssetLibrary *library = m_app->m_assetLibrary;
+    if (!library)
+        return 0;
+    int started = 0;
+    for (int i = 0; i < library->rowCount(); ++i) {
+        const drift::MediaAsset *asset = m_app->m_project.asset(library->assetIdAt(i));
+        if (asset && drift::sourceChangedOnDisk(*asset) && library->startRefreshProbe(i))
+            ++started;
+    }
+    return started;
 }
 
 bool MediaBinController::exportImage(int assetIndex, const QUrl &url)
@@ -804,15 +830,21 @@ void MediaBinController::startNextConversion()
 void MediaBinController::finalizeReplace(const QString &assetId, const drift::MediaAsset &filled,
                                          bool ok)
 {
+    // A refresh re-read the asset's own file after it changed in place (AssetLibrary
+    // startRefreshProbe). It is nobody's replace, so the replace bookkeeping below is left for
+    // the one it belongs to.
+    const bool refresh = m_app->m_assetLibrary && m_app->m_assetLibrary->takeRefresh(assetId);
+
     // The probe has landed, so the row stops being busy whatever the outcome below turns out to
     // be — including the refusals, which never touch the project at all.
-    if (m_replacingAssetId == assetId) {
+    if (!refresh && m_replacingAssetId == assetId) {
         m_replacingAssetId.clear();
         emit replacingAssetIdChanged();
     }
     // Taken here rather than at the point of use so the refusals below cannot leave it set for
     // whichever replace runs next.
-    const QString replacementSourceUri = std::exchange(m_replacingAssetSourceUri, QString());
+    const QString replacementSourceUri =
+        refresh ? QString() : std::exchange(m_replacingAssetSourceUri, QString());
 
     const bool fromEdit = (m_editingAssetId == assetId);
     const QString keptEditName = fromEdit ? m_editKeepName : QString();
@@ -828,41 +860,51 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
         emit editFinished(editOk, message);
     };
 
+    // Every way out that leaves the project untouched. A refresh was never asked for in the
+    // replace dialog, so it reports on the status line instead of through replaceFinished.
+    const QString currentName = [&] {
+        const drift::MediaAsset *asset = m_app->m_project.asset(assetId);
+        return asset ? asset->name : QString();
+    }();
+    if (refresh)
+        m_refreshFailed.remove(assetId);
+    auto refuse = [&](const QString &message) {
+        finishEditJob(false, message);
+        if (refresh) {
+            m_refreshFailed.insert(assetId);
+            m_app->setLastMessage(tr("Could not refresh “%1”: %2").arg(currentName, message),
+                                  QStringLiteral("warning"));
+        } else if (!fromEdit)
+            emit replaceFinished(false, message, 0);
+    };
+
     const drift::MediaAsset *current = m_app->m_project.asset(assetId);
     if (!current) {
         // The row was removed while the probe ran.
-        const QString message = tr("That media is no longer in this project.");
-        finishEditJob(false, message);
-        if (!fromEdit)
-            emit replaceFinished(false, message, 0);
+        refuse(tr("That media is no longer in this project."));
         return;
     }
 
     if (!ok) {
-        const QString message = tr("That file could not be read.");
-        finishEditJob(false, message);
-        if (!fromEdit)
-            emit replaceFinished(false, message, 0);
+        refuse(tr("That file could not be read."));
         return;
     }
 
     // A clip's type is fixed when it is created and decides which track it may sit on, so media
     // of another kind would leave e.g. a video clip on a video track with nothing to draw.
     if (filled.kind != current->kind) {
-        const QString message = tr("“%1” is %2, but this slot holds %3.")
-                                    .arg(filled.name, drift::mediaKindToString(filled.kind),
-                                         drift::mediaKindToString(current->kind));
-        finishEditJob(false, message);
-        if (!fromEdit)
-            emit replaceFinished(false, message, 0);
+        refuse(tr("“%1” is %2, but this slot holds %3.")
+                   .arg(filled.name, drift::mediaKindToString(filled.kind),
+                        drift::mediaKindToString(current->kind)));
         return;
     }
 
-    const QString newName = keptEditName.isEmpty() ? filled.name : keptEditName;
+    const QString newName = refresh ? current->name
+                                    : (keptEditName.isEmpty() ? filled.name : keptEditName);
     const drift::Project before = m_app->m_project;
     drift::MediaAsset replacement = filled;
     replacement.name = newName;
-    replacement.sourceUri = replacementSourceUri;
+    replacement.sourceUri = refresh ? current->sourceUri : replacementSourceUri;
     // Every edit job writes onto a constant-rate grid, so its output needs no check. The
     // edit-friendly mark comes from the conversion, and a later crop of converted media keeps it.
     if (fromEdit) {
@@ -870,22 +912,42 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
         replacement.variableFrameRate = false;
         replacement.editFriendly = m_editIsConversion || current->editFriendly;
     }
+    // Same file, new content: what the user set on the asset still stands. Only what was read
+    // from the file is taken from the probe, and the bin trim is clamped to the new length.
+    if (refresh) {
+        replacement.rotationOverride = current->rotationOverride;
+        replacement.generator = current->generator;
+        replacement.editFriendly = current->editFriendly;
+        replacement.trimInUs = current->trimInUs;
+        replacement.trimOutUs = current->trimOutUs;
+        if (replacement.durationUs > 0) {
+            if (replacement.trimOutUs > replacement.durationUs)
+                replacement.trimOutUs = -1;
+            if (replacement.trimInUs >= replacement.durationUs)
+                replacement.trimInUs = 0;
+        }
+    }
+    const QString path = current->path;
     // Captured before applyProbedSource overwrites `current` in place — rebindClipsToAsset needs
     // to know what the bin's correction *was* to rebase each clip's own by how much it changed.
     const int oldBinCorrection = drift::rotationCorrectionOf(*current);
     if (!m_app->m_assetLibrary->applyProbedSource(assetId, replacement)) {
-        const QString message = tr("That media is no longer in this project.");
-        finishEditJob(false, message);
-        if (!fromEdit)
-            emit replaceFinished(false, message, 0);
+        refuse(tr("That media is no longer in this project."));
         return;
     }
+    // A replace onto the asset's own path is new content at an old key as well. The first pass
+    // ran before the probe (sourceContentChanging); this one catches a decoder that was mid-read
+    // then and so stayed open on the old file.
+    if (replacement.path == path)
+        m_app->forgetChangedMediaSource(path, /*beforeReprobe=*/false);
 
     const int adjusted = rebindClipsToAsset(assetId, replacement, oldBinCorrection);
-    m_app->pushProjectEdit(before, fromEdit ? tr("Media edited") : tr("Media replaced"));
-    m_app->finishEdit(fromEdit ? tr("Media edited") : tr("Media replaced"));
+    const QString label = fromEdit ? tr("Media edited")
+                                   : (refresh ? tr("Media refreshed") : tr("Media replaced"));
+    m_app->pushProjectEdit(before, label);
+    m_app->finishEdit(label);
     finishEditJob(true, newName);
-    if (!fromEdit)
+    if (!fromEdit && !refresh)
         emit replaceFinished(true, newName, adjusted);
 }
 
@@ -900,8 +962,8 @@ int MediaBinController::rebindClipsToAsset(const QString &assetId, const drift::
                 continue;
 
             // Rewriting the clip's own copy of the path is what actually moves the pixels. It
-            // also keys the reverse-proxy and audio-block caches, so both fall out of scope on
-            // their own rather than needing to be invalidated here.
+            // also keys the reverse-proxy and audio-block caches, so for a new path both fall out
+            // of scope on their own; the same path is handled by forgetChangedMediaSource.
             clip.path = asset.path;
             clip.thumbnailPath = asset.thumbnailPath;
             clip.filmstripPath = asset.filmstripPath;

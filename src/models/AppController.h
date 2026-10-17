@@ -1843,6 +1843,12 @@ protected:
     // Cached dense peaks for `path`, or nullptr while the off-thread decode is still running
     // (waveformReady is emitted when it lands).
     const MediaWaveform::Dense *densePeaksFor(const QString &path) const;
+    // `path` now holds different content than every path-keyed cache remembers: open decoders,
+    // waveform peaks, filmstrip tiles and, `beforeReprobe`, the bin thumbnails, preview proxies
+    // and parsed vector documents too. Called before the re-probe, so it regenerates from the
+    // new file, and again once its result is applied (beforeReprobe false), for a decoder that
+    // was mid-read the first time and so could not be released.
+    void forgetChangedMediaSource(const QString &path, bool beforeReprobe);
     struct SegmentReplaceResult
     {
         QStringList ids;
@@ -2111,6 +2117,8 @@ protected:
     // Curve). The timeline uses m_waveformBlocks instead — see waveformPeaksRange.
     mutable QHash<QString, MediaWaveform::Dense> m_waveformCache;
     mutable QSet<QString> m_waveformPending;
+    // Pending decodes whose file changed since they started; their result is dropped on landing.
+    QSet<QString> m_waveformDiscard;
 
     mutable WaveformBlockCache m_waveformBlocks;
 

@@ -900,6 +900,21 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok({{QStringLiteral("index"), index}, {QStringLiteral("path"), path}});
     }
 
+    if (tool == QLatin1String("refresh_asset")) {
+        const int index = resolveAsset(args.value(QStringLiteral("asset")));
+        if (index < 0)
+            return err("not_found", QStringLiteral("Unknown asset"));
+        AssetLibrary *lib = m_controller->assetLibrary();
+        const QString id = lib->assetIdAt(index);
+        if (!m_controller->bin()->refreshSource(index))
+            return err("bad_args", QStringLiteral("Not a file on disk, or already being re-read"));
+        QJsonObject result = waitImport({id});
+        QJsonObject outcome;
+        addRefreshOutcome(outcome, {id});
+        result.insert(QStringLiteral("stale"), outcome.contains(QStringLiteral("stale")));
+        return result;
+    }
+
     if (tool == QLatin1String("export_asset_image")) {
         const int index = resolveAsset(args.value(QStringLiteral("asset")));
         const QString path = localPath(argString(args, QStringLiteral("path")));
@@ -984,7 +999,22 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         // Desktop already leaves the start screen on projectLoadFinished; Android's Home does
         // not, since its own open paths push the editor themselves.
         emit projectFile->startScreenRequested(false);
-        return ok({{QStringLiteral("path"), path}});
+        // Opening re-probes media rewritten in place since the project was saved (started by
+        // the same projectLoadFinished this waited on). Answer once those land too, or the
+        // agent's next place_clip would size itself from the duration saved with the project.
+        QStringList assetIds;
+        if (AssetLibrary *lib = m_controller->assetLibrary()) {
+            for (int i = 0; i < lib->count(); ++i)
+                assetIds.append(lib->assetIdAt(i));
+        }
+        // The load itself succeeded either way; a refresh still running at the cap is reported
+        // in stale rather than turning that into an error.
+        const QStringList refreshing = refreshingIds(assetIds);
+        if (!refreshing.isEmpty())
+            waitImport(refreshing);
+        QJsonObject result = ok({{QStringLiteral("path"), path}});
+        addRefreshOutcome(result, refreshing);
+        return result;
     }
 
     if (tool == QLatin1String("new_project")) {

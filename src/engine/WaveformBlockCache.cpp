@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <limits>
+#include <utility>
 
 namespace {
 
@@ -96,6 +97,15 @@ void WaveformBlockCache::forgetSource(const QString &sourcePath)
         forgetStream(sourcePath, ordinal);
         m_streams.remove(streamKeyFor(sourcePath, ordinal));
     }
+    for (int i = m_queue.size() - 1; i >= 0; --i) {
+        const QueueItem &item = m_queue.at(i);
+        if (item.sourcePath != sourcePath)
+            continue;
+        m_queued.remove(blockKeyFor(sourcePath, item.block, item.streamOrdinal));
+        m_queue.removeAt(i);
+    }
+    if (m_busy && m_busySource == sourcePath)
+        m_discardBatch = true;
 }
 
 void WaveformBlockCache::clear()
@@ -106,6 +116,7 @@ void WaveformBlockCache::clear()
     m_queued.clear();
     m_queue.clear();
     m_storedPeaks = 0;
+    m_discardBatch = m_busy;
 }
 
 void WaveformBlockCache::trimToBudget(const QString &keepStreamKey)
@@ -271,6 +282,8 @@ void WaveformBlockCache::runBatch()
     }
 
     m_busy = true;
+    m_busySource = sourcePath;
+    m_discardBatch = false;
     const double startSeconds = static_cast<double>(first) * kBlockSeconds;
     const double endSeconds = static_cast<double>(last + 1) * kBlockSeconds;
     QThreadPool::globalInstance()->start([this, sourcePath, first, streamOrdinal, startSeconds, endSeconds,
@@ -295,6 +308,13 @@ void WaveformBlockCache::applyBatch(const QString &sourcePath, int firstBlock, i
                                     const QList<int> &requested)
 {
     m_busy = false;
+    m_busySource.clear();
+    // Decoded from a file that has since been forgotten (replaced in place, removed, or the
+    // whole cache cleared): storing it would put the old audio back.
+    if (std::exchange(m_discardBatch, false)) {
+        scheduleBatch();
+        return;
+    }
 
     StreamState &state = m_streams[streamKeyFor(sourcePath, streamOrdinal)];
     const int channels = decoded.channels.size();

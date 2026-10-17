@@ -116,7 +116,9 @@ public:
     // is cheaper than holding the decoders. Callable from any thread except a worker thread.
     void releaseAll();
     // Same, for one file only — so it can be deleted, which Windows refuses while a decoder
-    // still holds it open.
+    // still holds it open, or because it was rewritten in place. Unlike releaseAll, a worker that
+    // is mid-decode is not skipped: it leaves the pool at once, so the next read of the path opens
+    // the file afresh, and is stopped by whichever reader finishes with it last.
     void releasePath(const QString &path);
 
 private:
@@ -135,6 +137,8 @@ private:
         int inFlight = 0;
         // Video only: compositor thread that last read through this worker, 0 for everything else.
         quintptr session = 0;
+        // Taken out of the maps by releasePath() while still in flight; parked in m_retired.
+        bool retired = false;
     };
     using VideoKey = std::pair<QString, quint64>;
 
@@ -155,6 +159,9 @@ private:
     static std::vector<std::unique_ptr<WorkerEntry>> detachIdleLocked(Map &workers, Keep keep,
                                                                       qint64 minIdleMs);
     bool keepVideoWorkerLocked(const VideoKey &key, const WorkerEntry &entry) const;
+    // Caller holds m_mutex. Ends one blocking read on `entry`; when that was the last read of a
+    // retired entry, hands it back for the caller to stop once the lock is released.
+    std::unique_ptr<WorkerEntry> endReadLocked(WorkerEntry *entry);
 
     // Runs on its own thread for the pool's lifetime so idle workers are reclaimed even when
     // nothing calls retainActivePaths for a while (its only caller is FrameCompositor::prepare,
@@ -171,6 +178,8 @@ private:
     std::atomic<drift::TimeUs> m_readAheadUs{0};
     std::map<VideoKey, std::unique_ptr<WorkerEntry>> m_videoWorkers;
     std::map<QString, std::unique_ptr<WorkerEntry>> m_audioWorkers;
+    // Released while a read was in flight; each is stopped when its last read returns.
+    std::vector<std::unique_ptr<WorkerEntry>> m_retired;
     QSet<QString> m_activeVideoPaths;
     // Per session, the streams on each path its last warmVideoFrames read.
     QHash<quintptr, QHash<QString, QList<quint64>>> m_activeVideoStreams;

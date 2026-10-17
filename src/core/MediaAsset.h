@@ -2,6 +2,8 @@
 
 #include "Time.h"
 
+#include <QDateTime>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QRectF>
@@ -107,7 +109,46 @@ struct MediaAsset
     // Audio Drift generated rather than imported (voiceover, sound effect): what made it —
     // {provider, kind, voice, model, text/prompt} — so it can be regenerated. Empty otherwise.
     QJsonObject generator;
+
+    // Size and modification time of `path` when it was last probed. Every cache that keys on the
+    // path alone would otherwise go on serving a file replaced in place, so this is what tells
+    // "the same file" from "new content at the same path". 0 = unknown: projects saved before
+    // this existed, and paths that name no single file (image sequences).
+    qint64 sourceSize = 0;
+    qint64 sourceModifiedMs = 0;
 };
+
+// Records what `path` looks like on disk now. Leaves the fingerprint unknown for a path that is
+// not a plain file.
+inline void stampSourceFingerprint(MediaAsset &asset)
+{
+    const QFileInfo info(asset.path);
+    if (!info.isFile()) {
+        asset.sourceSize = 0;
+        asset.sourceModifiedMs = 0;
+        return;
+    }
+    asset.sourceSize = info.size();
+    asset.sourceModifiedMs = info.lastModified().toMSecsSinceEpoch();
+}
+
+inline bool sourceFingerprintKnown(const MediaAsset &asset)
+{
+    return asset.sourceSize > 0 || asset.sourceModifiedMs > 0;
+}
+
+// True when the file at `path` is no longer the one this asset was probed from. False when the
+// fingerprint is unknown or the file is missing — neither says the content changed.
+inline bool sourceChangedOnDisk(const MediaAsset &asset)
+{
+    if (!sourceFingerprintKnown(asset))
+        return false;
+    const QFileInfo info(asset.path);
+    if (!info.isFile())
+        return false;
+    return info.size() != asset.sourceSize
+        || info.lastModified().toMSecsSinceEpoch() != asset.sourceModifiedMs;
+}
 
 // The rotation to actually use for this asset: the user's bin-preview correction when set,
 // otherwise the value probed from the file's own display-matrix tag.
