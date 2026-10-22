@@ -5,27 +5,32 @@
     <name>AboutDialog</name>
     <message>
         <source>About Drift</source>
-        <translation type="unfinished"></translation>
+        <comment>AboutDialog#1</comment>
+        <translation>Sobre o Drift</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Fechar</translation>
+        <comment>AboutDialog#2</comment>
+        <translation>Fechar</translation>
     </message>
     <message>
         <source>Drift</source>
-        <translation type="unfinished"></translation>
+        <comment>AboutDialog#3</comment>
+        <translation>Drift</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation type="unfinished"></translation>
+        <comment>AboutDialog#4</comment>
+        <translation>Versão %1</translation>
     </message>
     <message>
         <source>Open-source video editor by CutWire Studios.</source>
-        <translation type="unfinished"></translation>
+        <comment>AboutDialog#5</comment>
+        <translation>Editor de vídeo de código aberto da CutWire Studios.</translation>
     </message>
     <message>
         <source>Licensed under GPLv3. Copyright © CutWire Studios.</source>
-        <translation type="unfinished"></translation>
+        <translation>Licenciado sob GPLv3. Direitos de Cópia © CutWire Studios.</translation>
     </message>
 </context>
 <context>
@@ -48,37 +53,39 @@
     </message>
     <message>
         <source>Could not open that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Não foi possível abrir esse ficheiro.</translation>
     </message>
     <message>
         <source>Could not read that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Não foi possível ler esse ficheiro.</translation>
     </message>
     <message>
         <source>This is not a Drift effect file (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>Este não é um ficheiro de efeito do Drift (%1).</translation>
     </message>
     <message>
         <source>Another addon is still installing.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Outro complemento ainda está a ser instalado.</translation>
     </message>
     <message>
         <source>This is not a Drift addon file.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Este não é um ficheiro de complemento do Drift.</translation>
     </message>
     <message>
         <source>Could not use this addon (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível utilizar este complemento (%1).</translation>
     </message>
 </context>
 <context>
     <name>AddonManagerDialog</name>
     <message>
         <source>Extras</source>
+        <comment>AddonManagerDialog#1</comment>
         <translation>Extras</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>AddonManagerDialog#2</comment>
         <translation>Fechar</translation>
     </message>
     <message>
@@ -87,6 +94,7 @@
     </message>
     <message>
         <source>Remove</source>
+        <comment>AddonManagerDialog#4</comment>
         <translation>Remover</translation>
     </message>
     <message>
@@ -95,83 +103,88 @@
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar esta transição?</translation>
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar este efeito de áudio?</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar este efeito?</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">“%1” por %2</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar complemento</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Complementos do Drift (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar um complemento não oficial?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar mesmo assim</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 não está assinado pela equipa do Drift. Instale apenas ficheiros em que confie.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Contém código que é executado no seu computador.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vai substituir “%1”.</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 foi criado por um utilizador, não pela equipa do Drift, e nada o verificou. Instale apenas ficheiros em que confie.</translation>
     </message>
     <message>
         <source>Could not install “%1”: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível instalar “%1”: %2</translation>
     </message>
     <message>
         <source>Installed “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">“%1” instalado</translation>
     </message>
     <message>
         <source>All</source>
+        <comment>AddonManagerDialog#21</comment>
         <translation>Todos</translation>
     </message>
     <message>
         <source>Effects</source>
+        <comment>AddonManagerDialog#22</comment>
         <translation>Efeitos</translation>
     </message>
     <message>
         <source>Transitions</source>
+        <comment>AddonManagerDialog#23</comment>
         <translation>Transições</translation>
     </message>
     <message>
         <source>Audio FX</source>
+        <comment>AddonManagerDialog#24</comment>
         <translation>Efeitos de áudio</translation>
     </message>
     <message>
         <source>Looks</source>
-        <translation type="unfinished"></translation>
+        <comment>AddonManagerDialog#25</comment>
+        <translation type="unfinished">Aparências</translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -179,6 +192,7 @@
     </message>
     <message>
         <source>Stickers</source>
+        <comment>AddonManagerDialog#27</comment>
         <translation>Adesivos</translation>
     </message>
     <message>
@@ -215,6 +229,7 @@
     </message>
     <message>
         <source>Nothing in this category</source>
+        <comment>AddonManagerDialog#36</comment>
         <translation>Nada nesta categoria</translation>
     </message>
     <message>
@@ -227,27 +242,30 @@
     </message>
     <message>
         <source>Retry</source>
+        <comment>AddonManagerDialog#39</comment>
         <translation>Tentar novamente</translation>
     </message>
     <message>
         <source>Install</source>
+        <comment>AddonManagerDialog#40</comment>
         <translation>Instalar</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <comment>AddonManagerDialog#41</comment>
+        <translation type="unfinished">Personalizado</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar a partir de um ficheiro…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrir pasta de complementos</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Coloque aqui as pastas de complementos e volte a abrir Extras</translation>
     </message>
 </context>
 <context>
@@ -258,23 +276,25 @@
     </message>
     <message>
         <source>%1 → %2</source>
+        <comment>AddonManagerRow#2</comment>
         <translation type="unfinished">%1 → %2</translation>
     </message>
     <message>
         <source>%1… %2%</source>
+        <comment>AddonManagerRow#3</comment>
         <translation type="unfinished">%1… %2%</translation>
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Requer o Drift %1 ou superior</translation>
     </message>
     <message>
         <source>Unofficial</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não oficial</translation>
     </message>
     <message>
         <source>Installed from file</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalado a partir de ficheiro</translation>
     </message>
     <message>
         <source>%1 download</source>
@@ -286,22 +306,27 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>AddonManagerRow#9</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Update</source>
+        <comment>AddonManagerRow#10</comment>
         <translation type="unfinished">Atualizar</translation>
     </message>
     <message>
         <source>Retry</source>
+        <comment>AddonManagerRow#11</comment>
         <translation type="unfinished">Tentar novamente</translation>
     </message>
     <message>
         <source>Install</source>
+        <comment>AddonManagerRow#12</comment>
         <translation type="unfinished">Instalar</translation>
     </message>
     <message>
         <source>Remove</source>
+        <comment>AddonManagerRow#13</comment>
         <translation type="unfinished">Remover</translation>
     </message>
     <message>
@@ -341,10 +366,12 @@
     </message>
     <message>
         <source>Hide</source>
+        <comment>AddonStartupDialog#8</comment>
         <translation>Ocultar</translation>
     </message>
     <message>
         <source>Later</source>
+        <comment>AddonStartupDialog#9</comment>
         <translation>Depois</translation>
     </message>
     <message>
@@ -357,6 +384,7 @@
     </message>
     <message>
         <source>Update</source>
+        <comment>AddonStartupDialog#12</comment>
         <translation>Atualizar</translation>
     </message>
     <message>
@@ -365,10 +393,12 @@
     </message>
     <message>
         <source>Install</source>
+        <comment>AddonStartupDialog#14</comment>
         <translation>Instalar</translation>
     </message>
     <message>
         <source>Install all</source>
+        <comment>AddonStartupDialog#15</comment>
         <translation>Instalar tudo</translation>
     </message>
 </context>
@@ -376,10 +406,12 @@
     <name>AddonStartupPackRow</name>
     <message>
         <source>%1… %2%</source>
+        <comment>AddonStartupPackRow#1</comment>
         <translation type="unfinished">%1… %2%</translation>
     </message>
     <message>
         <source>%1 → %2</source>
+        <comment>AddonStartupPackRow#2</comment>
         <translation type="unfinished">%1 → %2</translation>
     </message>
 </context>
@@ -399,10 +431,12 @@
     </message>
     <message>
         <source>Access is on</source>
+        <comment>AgentAccessControls#4</comment>
         <translation>Acesso ativado</translation>
     </message>
     <message>
         <source>Listening on %1</source>
+        <comment>AgentAccessControls#5</comment>
         <translation>Escutando em %1</translation>
     </message>
     <message>
@@ -498,10 +532,12 @@
     <name>AgentAccessDialog</name>
     <message>
         <source>Agent access</source>
+        <comment>AgentAccessDialog#1</comment>
         <translation>Acesso de agente</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>AgentAccessDialog#2</comment>
         <translation>Fechar</translation>
     </message>
 </context>
@@ -509,54 +545,59 @@
     <name>AgentLogPanel</name>
     <message>
         <source>%1 ms</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 ms</translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>AgentLogPanel#2</comment>
         <translation type="unfinished">%1 s</translation>
     </message>
     <message>
         <source>Agent log</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Registo de agente</translation>
     </message>
     <message>
         <source>Listening on %1</source>
+        <comment>AgentLogPanel#4</comment>
         <translation type="unfinished">Escutando em %1</translation>
     </message>
     <message>
         <source>Access is on</source>
+        <comment>AgentLogPanel#5</comment>
         <translation type="unfinished">Acesso ativado</translation>
     </message>
     <message>
         <source>Agent access is off</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Acesso de agente desativado</translation>
     </message>
     <message>
         <source>Connect an agent…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ligar um agente…</translation>
     </message>
     <message>
         <source>Clear log</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Limpar registo</translation>
     </message>
     <message>
         <source>No tool calls yet. What a connected agent does will show up here.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ainda não há chamadas de ferramentas. O que um agente ligado fizer aparecerá aqui.</translation>
     </message>
     <message>
         <source>Turn on agent access to let an assistant edit this project.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ative o acesso de agente para permitir que um assistente edite este projeto.</translation>
     </message>
     <message>
         <source>running…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">a executar…</translation>
     </message>
     <message>
         <source>Undo</source>
+        <comment>AgentLogPanel#12</comment>
         <translation type="unfinished">Desfazer</translation>
     </message>
     <message>
         <source>Redo</source>
+        <comment>AgentLogPanel#13</comment>
         <translation type="unfinished">Refazer</translation>
     </message>
 </context>
@@ -564,10 +605,12 @@
     <name>AndroidAddMenu</name>
     <message>
         <source>Add to timeline</source>
+        <comment>AndroidAddMenu#1</comment>
         <translation>Adicionar à linha do tempo</translation>
     </message>
     <message>
         <source>Media</source>
+        <comment>AndroidAddMenu#2</comment>
         <translation>Mídia</translation>
     </message>
     <message>
@@ -576,6 +619,7 @@
     </message>
     <message>
         <source>Market</source>
+        <comment>AndroidAddMenu#4</comment>
         <translation>Mercado</translation>
     </message>
     <message>
@@ -584,6 +628,7 @@
     </message>
     <message>
         <source>Text</source>
+        <comment>AndroidAddMenu#6</comment>
         <translation>Texto</translation>
     </message>
     <message>
@@ -592,6 +637,7 @@
     </message>
     <message>
         <source>Subtitles</source>
+        <comment>AndroidAddMenu#8</comment>
         <translation>Legendas</translation>
     </message>
     <message>
@@ -600,14 +646,16 @@
     </message>
     <message>
         <source>Speech</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidAddMenu#10</comment>
+        <translation type="unfinished">Voz</translation>
     </message>
     <message>
         <source>Turn a script into a voiceover</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transforme um guião em locução</translation>
     </message>
     <message>
         <source>Stickers</source>
+        <comment>AndroidAddMenu#12</comment>
         <translation>Adesivos</translation>
     </message>
     <message>
@@ -616,6 +664,7 @@
     </message>
     <message>
         <source>Shapes</source>
+        <comment>AndroidAddMenu#14</comment>
         <translation>Formas</translation>
     </message>
     <message>
@@ -632,6 +681,7 @@
     </message>
     <message>
         <source>Scenes</source>
+        <comment>AndroidAddMenu#18</comment>
         <translation>Cenas</translation>
     </message>
     <message>
@@ -640,6 +690,7 @@
     </message>
     <message>
         <source>Masks</source>
+        <comment>AndroidAddMenu#20</comment>
         <translation>Máscaras</translation>
     </message>
     <message>
@@ -648,6 +699,7 @@
     </message>
     <message>
         <source>Transform layer</source>
+        <comment>AndroidAddMenu#22</comment>
         <translation>Camada de transformação</translation>
     </message>
     <message>
@@ -659,18 +711,22 @@
     <name>AndroidBottomRail</name>
     <message>
         <source>Edit</source>
+        <comment>AndroidBottomRail#1</comment>
         <translation>Editar</translation>
     </message>
     <message>
         <source>Effects</source>
+        <comment>AndroidBottomRail#2</comment>
         <translation>Efeitos</translation>
     </message>
     <message>
         <source>Audio FX</source>
+        <comment>AndroidBottomRail#3</comment>
         <translation>FX de áudio</translation>
     </message>
     <message>
         <source>Transitions</source>
+        <comment>AndroidBottomRail#4</comment>
         <translation>Transições</translation>
     </message>
     <message>
@@ -682,10 +738,12 @@
     <name>AndroidClipToolbar</name>
     <message>
         <source>Duration</source>
+        <comment>AndroidClipToolbar#1</comment>
         <translation>Duração</translation>
     </message>
     <message>
         <source>Curve</source>
+        <comment>AndroidClipToolbar#2</comment>
         <translation>Curva</translation>
     </message>
     <message>
@@ -694,6 +752,7 @@
     </message>
     <message>
         <source>Delete</source>
+        <comment>AndroidClipToolbar#4</comment>
         <translation>Eliminar</translation>
     </message>
     <message>
@@ -702,34 +761,42 @@
     </message>
     <message>
         <source>Transform</source>
+        <comment>AndroidClipToolbar#6</comment>
         <translation>Transformação</translation>
     </message>
     <message>
         <source>Transform together</source>
+        <comment>AndroidClipToolbar#7</comment>
         <translation>Transformar em conjunto</translation>
     </message>
     <message>
         <source>Edit text</source>
+        <comment>AndroidClipToolbar#8</comment>
         <translation type="unfinished">Editar texto</translation>
     </message>
     <message>
         <source>Fade</source>
+        <comment>AndroidClipToolbar#9</comment>
         <translation>Fade</translation>
     </message>
     <message>
         <source>Speed</source>
+        <comment>AndroidClipToolbar#10</comment>
         <translation>Velocidade</translation>
     </message>
     <message>
         <source>Duplicate</source>
+        <comment>AndroidClipToolbar#11</comment>
         <translation>Duplicar</translation>
     </message>
     <message>
         <source>More</source>
+        <comment>AndroidClipToolbar#12</comment>
         <translation>Mais</translation>
     </message>
     <message>
         <source>Fit</source>
+        <comment>AndroidClipToolbar#13</comment>
         <translation>Ajustar</translation>
     </message>
     <message>
@@ -748,11 +815,11 @@
     <name>AndroidComposerTimingEdge</name>
     <message>
         <source>Back one frame</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Recuar um fotograma</translation>
     </message>
     <message>
         <source>Forward one frame</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Avançar um fotograma</translation>
     </message>
 </context>
 <context>
@@ -766,14 +833,17 @@
     <name>AndroidCropOverlay</name>
     <message>
         <source>Reset</source>
+        <comment>AndroidCropOverlay#1</comment>
         <translation>Redefinir</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>AndroidCropOverlay#2</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Apply</source>
+        <comment>AndroidCropOverlay#3</comment>
         <translation>Aplicar</translation>
     </message>
 </context>
@@ -781,10 +851,12 @@
     <name>AndroidDownloadJobRow</name>
     <message>
         <source>Cancel download</source>
+        <comment>AndroidDownloadJobRow#1</comment>
         <translation type="unfinished">Cancelar transferência</translation>
     </message>
     <message>
         <source>Try again</source>
+        <comment>AndroidDownloadJobRow#2</comment>
         <translation type="unfinished">Tentar novamente</translation>
     </message>
 </context>
@@ -792,6 +864,7 @@
     <name>AndroidDownloadsSheet</name>
     <message>
         <source>Downloads</source>
+        <comment>AndroidDownloadsSheet#1</comment>
         <translation>Transferências</translation>
     </message>
     <message>
@@ -800,6 +873,7 @@
     </message>
     <message>
         <source>Clear finished</source>
+        <comment>AndroidDownloadsSheet#3</comment>
         <translation>Limpar concluídos</translation>
     </message>
 </context>
@@ -807,26 +881,32 @@
     <name>AndroidEditor</name>
     <message>
         <source>Drift project (*.drift)</source>
+        <comment>AndroidEditor#1</comment>
         <translation>Projeto do Drift (*.drift)</translation>
     </message>
     <message>
         <source>Save Project As</source>
+        <comment>AndroidEditor#2</comment>
         <translation>Guardar projeto como</translation>
     </message>
     <message>
         <source>%1 copy</source>
+        <comment>AndroidEditor#3</comment>
         <translation>Cópia de %1</translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
+        <comment>AndroidEditor#4</comment>
         <translation>Guardar cópia partilhável</translation>
     </message>
     <message>
         <source>Open Project</source>
+        <comment>AndroidEditor#5</comment>
         <translation>Abrir projeto</translation>
     </message>
     <message>
         <source>Your timeline is empty</source>
+        <comment>AndroidEditor#6</comment>
         <translation>Sua linha do tempo está vazia</translation>
     </message>
     <message>
@@ -839,10 +919,12 @@
     </message>
     <message>
         <source>Edit</source>
+        <comment>AndroidEditor#9</comment>
         <translation>Editar</translation>
     </message>
     <message>
         <source>Done</source>
+        <comment>AndroidEditor#10</comment>
         <translation>Concluir</translation>
     </message>
 </context>
@@ -850,30 +932,37 @@
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
+        <comment>AndroidFadeSheet#1</comment>
         <translation>Fade</translation>
     </message>
     <message>
         <source>Done</source>
+        <comment>AndroidFadeSheet#2</comment>
         <translation>Concluir</translation>
     </message>
     <message>
         <source>Linear</source>
+        <comment>AndroidFadeSheet#3</comment>
         <translation>Linear</translation>
     </message>
     <message>
         <source>Smooth</source>
+        <comment>AndroidFadeSheet#4</comment>
         <translation>Suave</translation>
     </message>
     <message>
         <source>Natural</source>
+        <comment>AndroidFadeSheet#5</comment>
         <translation>Natural</translation>
     </message>
     <message>
         <source>Custom</source>
+        <comment>AndroidFadeSheet#6</comment>
         <translation>Personalizada</translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>AndroidFadeSheet#7</comment>
         <translation>%1 s</translation>
     </message>
     <message>
@@ -886,6 +975,7 @@
     </message>
     <message>
         <source>Curve</source>
+        <comment>AndroidFadeSheet#10</comment>
         <translation>Curva</translation>
     </message>
 </context>
@@ -893,6 +983,7 @@
     <name>AndroidHomeRecentCard</name>
     <message>
         <source>Untitled</source>
+        <comment>AndroidHomeRecentCard#1</comment>
         <translation type="unfinished">Sem título</translation>
     </message>
     <message>
@@ -901,10 +992,12 @@
     </message>
     <message>
         <source>Project actions</source>
+        <comment>AndroidHomeRecentCard#3</comment>
         <translation type="unfinished">Ações do projeto</translation>
     </message>
     <message>
         <source>Remove from recents</source>
+        <comment>AndroidHomeRecentCard#4</comment>
         <translation type="unfinished">Remover dos recentes</translation>
     </message>
 </context>
@@ -912,6 +1005,7 @@
     <name>AndroidHomeWordmark</name>
     <message>
         <source>Create polished videos fast</source>
+        <comment>AndroidHomeWordmark#1</comment>
         <translation type="unfinished">Crie vídeos profissionais rapidamente</translation>
     </message>
 </context>
@@ -919,30 +1013,37 @@
     <name>AndroidLayoutSheet</name>
     <message>
         <source>Canvas &amp; layout</source>
+        <comment>AndroidLayoutSheet#1</comment>
         <translation>Ecrã e layout</translation>
     </message>
     <message>
         <source>Custom</source>
+        <comment>AndroidLayoutSheet#2</comment>
         <translation>Personalizada</translation>
     </message>
     <message>
         <source>Template</source>
+        <comment>AndroidLayoutSheet#3</comment>
         <translation>Modelo</translation>
     </message>
     <message>
         <source>Width</source>
+        <comment>AndroidLayoutSheet#4</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
+        <comment>AndroidLayoutSheet#5</comment>
         <translation>Altura</translation>
     </message>
     <message>
         <source>Quality</source>
+        <comment>AndroidLayoutSheet#6</comment>
         <translation>Qualidade</translation>
     </message>
     <message>
         <source>Frames per second</source>
+        <comment>AndroidLayoutSheet#7</comment>
         <translation>Quadros por segundo</translation>
     </message>
     <message>
@@ -951,6 +1052,7 @@
     </message>
     <message>
         <source>Done</source>
+        <comment>AndroidLayoutSheet#9</comment>
         <translation>Concluir</translation>
     </message>
 </context>
@@ -970,6 +1072,7 @@
     </message>
     <message>
         <source>Downloading…</source>
+        <comment>AndroidLinkImport#4</comment>
         <translation>Baixando…</translation>
     </message>
     <message>
@@ -986,6 +1089,7 @@
     </message>
     <message>
         <source>Loading sources…</source>
+        <comment>AndroidLinkImport#8</comment>
         <translation>Carregando fontes…</translation>
     </message>
     <message>
@@ -994,6 +1098,7 @@
     </message>
     <message>
         <source>Try again</source>
+        <comment>AndroidLinkImport#10</comment>
         <translation>Tentar novamente</translation>
     </message>
     <message>
@@ -1006,6 +1111,7 @@
     </message>
     <message>
         <source>Add to timeline</source>
+        <comment>AndroidLinkImport#13</comment>
         <translation>Adicionar à linha do tempo</translation>
     </message>
     <message>
@@ -1017,18 +1123,22 @@
     <name>AndroidMain</name>
     <message>
         <source>Drift project (*.drift)</source>
+        <comment>AndroidMain#1</comment>
         <translation>Projeto do Drift (*.drift)</translation>
     </message>
     <message>
         <source>Name your project</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidMain#2</comment>
+        <translation type="unfinished">Nomeie o seu projeto</translation>
     </message>
     <message>
         <source>Save Project</source>
+        <comment>AndroidMain#3</comment>
         <translation>Guardar projeto</translation>
     </message>
     <message>
         <source>Untitled Project</source>
+        <comment>AndroidMain#4</comment>
         <translation type="unfinished">Projeto sem título</translation>
     </message>
     <message>
@@ -1049,6 +1159,7 @@
     </message>
     <message>
         <source>Open Project</source>
+        <comment>AndroidMain#9</comment>
         <translation>Abrir projeto</translation>
     </message>
     <message>
@@ -1061,38 +1172,47 @@
     </message>
     <message>
         <source>Project closed</source>
+        <comment>AndroidMain#12</comment>
         <translation type="unfinished">Projeto fechado</translation>
     </message>
     <message>
         <source>Export finished.</source>
+        <comment>AndroidMain#13</comment>
         <translation>Exportação concluída.</translation>
     </message>
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
+        <comment>AndroidMain#14</comment>
         <translation>Não foi possível criar a cópia partilhável: %1</translation>
     </message>
     <message>
         <source>Captions created.</source>
+        <comment>AndroidMain#15</comment>
         <translation>Legendas criadas.</translation>
     </message>
     <message>
         <source>Couldn’t create captions: %1</source>
+        <comment>AndroidMain#16</comment>
         <translation>Não foi possível criar as legendas: %1</translation>
     </message>
     <message>
         <source>Couldn’t create captions.</source>
+        <comment>AndroidMain#17</comment>
         <translation>Não foi possível criar as legendas.</translation>
     </message>
     <message>
         <source>Couldn’t install “%1”: %2</source>
+        <comment>AndroidMain#18</comment>
         <translation>Não foi possível instalar “%1”: %2</translation>
     </message>
     <message>
         <source>Imported “%1”.</source>
+        <comment>AndroidMain#19</comment>
         <translation>“%1” importado.</translation>
     </message>
     <message>
         <source>Imported from the marketplace.</source>
+        <comment>AndroidMain#20</comment>
         <translation>Importado do mercado.</translation>
     </message>
 </context>
@@ -1104,18 +1224,22 @@
     </message>
     <message>
         <source>Unlock crop ratio</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidMediaPreview#2</comment>
+        <translation type="unfinished">Desbloquear proporção do recorte</translation>
     </message>
     <message>
         <source>Lock crop ratio</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidMediaPreview#3</comment>
+        <translation type="unfinished">Bloquear proporção do recorte</translation>
     </message>
     <message>
         <source>Trim</source>
+        <comment>AndroidMediaPreview#4</comment>
         <translation>Aparar</translation>
     </message>
     <message>
         <source>Crop</source>
+        <comment>AndroidMediaPreview#5</comment>
         <translation>Recortar</translation>
     </message>
     <message>
@@ -1144,15 +1268,18 @@
     </message>
     <message>
         <source>Saving…</source>
+        <comment>AndroidMediaPreview#12</comment>
         <translation>Salvando…</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this crop.</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidMediaPreview#13</comment>
+        <translation type="unfinished">Guardar mantém o ficheiro original e guarda este recorte.</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this trim.</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidMediaPreview#14</comment>
+        <translation type="unfinished">Guardar mantém o ficheiro original e guarda este aparado.</translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
@@ -1160,6 +1287,7 @@
     </message>
     <message>
         <source>Rotate</source>
+        <comment>AndroidMediaPreview#16</comment>
         <translation>Girar</translation>
     </message>
 </context>
@@ -1167,10 +1295,12 @@
     <name>AndroidMediaPreviewHeader</name>
     <message>
         <source>Back</source>
+        <comment>AndroidMediaPreviewHeader#1</comment>
         <translation type="unfinished">Voltar</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>AndroidMediaPreviewHeader#2</comment>
         <translation type="unfinished">Guardar</translation>
     </message>
 </context>
@@ -1178,6 +1308,7 @@
     <name>AndroidMediaSavingScrim</name>
     <message>
         <source>Cancel</source>
+        <comment>AndroidMediaSavingScrim#1</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
 </context>
@@ -1189,10 +1320,12 @@
     </message>
     <message>
         <source>Clip</source>
+        <comment>AndroidMoreToolsSheet#2</comment>
         <translation>Clipe</translation>
     </message>
     <message>
         <source>Select multiple</source>
+        <comment>AndroidMoreToolsSheet#3</comment>
         <translation>Selecionar vários</translation>
     </message>
     <message>
@@ -1201,6 +1334,7 @@
     </message>
     <message>
         <source>Cut</source>
+        <comment>AndroidMoreToolsSheet#5</comment>
         <translation>Cortar</translation>
     </message>
     <message>
@@ -1209,6 +1343,7 @@
     </message>
     <message>
         <source>Copy</source>
+        <comment>AndroidMoreToolsSheet#7</comment>
         <translation>Copiar</translation>
     </message>
     <message>
@@ -1217,6 +1352,7 @@
     </message>
     <message>
         <source>Paste attributes…</source>
+        <comment>AndroidMoreToolsSheet#9</comment>
         <translation>Colar atributos…</translation>
     </message>
     <message>
@@ -1225,6 +1361,7 @@
     </message>
     <message>
         <source>Rename…</source>
+        <comment>AndroidMoreToolsSheet#11</comment>
         <translation>Renomear…</translation>
     </message>
     <message>
@@ -1233,6 +1370,7 @@
     </message>
     <message>
         <source>Open composite</source>
+        <comment>AndroidMoreToolsSheet#13</comment>
         <translation>Abrir composto</translation>
     </message>
     <message>
@@ -1241,6 +1379,7 @@
     </message>
     <message>
         <source>Flatten composite</source>
+        <comment>AndroidMoreToolsSheet#15</comment>
         <translation>Achatar composto</translation>
     </message>
     <message>
@@ -1249,6 +1388,7 @@
     </message>
     <message>
         <source>Make composite</source>
+        <comment>AndroidMoreToolsSheet#17</comment>
         <translation>Criar composto</translation>
     </message>
     <message>
@@ -1257,6 +1397,7 @@
     </message>
     <message>
         <source>Transform together</source>
+        <comment>AndroidMoreToolsSheet#19</comment>
         <translation>Transformar em conjunto</translation>
     </message>
     <message>
@@ -1265,6 +1406,7 @@
     </message>
     <message>
         <source>Select transform layer</source>
+        <comment>AndroidMoreToolsSheet#21</comment>
         <translation>Selecionar camada de transformação</translation>
     </message>
     <message>
@@ -1273,6 +1415,7 @@
     </message>
     <message>
         <source>Select covered clips</source>
+        <comment>AndroidMoreToolsSheet#23</comment>
         <translation>Selecionar clipes cobertos</translation>
     </message>
     <message>
@@ -1281,6 +1424,7 @@
     </message>
     <message>
         <source>Covers</source>
+        <comment>AndroidMoreToolsSheet#25</comment>
         <translation>Abrange</translation>
     </message>
     <message>
@@ -1289,6 +1433,7 @@
     </message>
     <message>
         <source>Unlink</source>
+        <comment>AndroidMoreToolsSheet#27</comment>
         <translation>Desvincular</translation>
     </message>
     <message>
@@ -1297,6 +1442,7 @@
     </message>
     <message>
         <source>Separate all audio tracks</source>
+        <comment>AndroidMoreToolsSheet#29</comment>
         <translation>Separar todas as faixas de áudio</translation>
     </message>
     <message>
@@ -1305,6 +1451,7 @@
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
+        <comment>AndroidMoreToolsSheet#31</comment>
         <translation>Converter para formato adequado para edição</translation>
     </message>
     <message>
@@ -1313,6 +1460,7 @@
     </message>
     <message>
         <source>Merge subtitle clips</source>
+        <comment>AndroidMoreToolsSheet#33</comment>
         <translation>Mesclar clipes de legenda</translation>
     </message>
     <message>
@@ -1321,6 +1469,7 @@
     </message>
     <message>
         <source>Merge all subtitles on this track</source>
+        <comment>AndroidMoreToolsSheet#35</comment>
         <translation>Mesclar todas as legendas nesta faixa</translation>
     </message>
     <message>
@@ -1329,6 +1478,7 @@
     </message>
     <message>
         <source>Convert to text clips</source>
+        <comment>AndroidMoreToolsSheet#37</comment>
         <translation>Converter para clipes de texto</translation>
     </message>
     <message>
@@ -1337,6 +1487,7 @@
     </message>
     <message>
         <source>Convert to subtitle</source>
+        <comment>AndroidMoreToolsSheet#39</comment>
         <translation>Converter para legenda</translation>
     </message>
     <message>
@@ -1345,6 +1496,7 @@
     </message>
     <message>
         <source>Unlink from clip</source>
+        <comment>AndroidMoreToolsSheet#41</comment>
         <translation>Desvincular do clipe</translation>
     </message>
     <message>
@@ -1353,6 +1505,7 @@
     </message>
     <message>
         <source>Move to its own track</source>
+        <comment>AndroidMoreToolsSheet#43</comment>
         <translation>Mover para sua própria faixa</translation>
     </message>
     <message>
@@ -1361,10 +1514,12 @@
     </message>
     <message>
         <source>Effects</source>
+        <comment>AndroidMoreToolsSheet#45</comment>
         <translation>Efeitos</translation>
     </message>
     <message>
         <source>Copy effects</source>
+        <comment>AndroidMoreToolsSheet#46</comment>
         <translation>Copiar efeitos</translation>
     </message>
     <message>
@@ -1373,6 +1528,7 @@
     </message>
     <message>
         <source>Paste effects</source>
+        <comment>AndroidMoreToolsSheet#48</comment>
         <translation>Colar efeitos</translation>
     </message>
     <message>
@@ -1381,6 +1537,7 @@
     </message>
     <message>
         <source>Save effects as preset…</source>
+        <comment>AndroidMoreToolsSheet#50</comment>
         <translation>Guardar efeitos como predefinição…</translation>
     </message>
     <message>
@@ -1401,6 +1558,7 @@
     </message>
     <message>
         <source>Trim start</source>
+        <comment>AndroidMoreToolsSheet#55</comment>
         <translation>Aparar início</translation>
     </message>
     <message>
@@ -1409,6 +1567,7 @@
     </message>
     <message>
         <source>Trim end</source>
+        <comment>AndroidMoreToolsSheet#57</comment>
         <translation>Aparar fim</translation>
     </message>
     <message>
@@ -1417,6 +1576,7 @@
     </message>
     <message>
         <source>Speed</source>
+        <comment>AndroidMoreToolsSheet#59</comment>
         <translation>Velocidade</translation>
     </message>
     <message>
@@ -1429,6 +1589,7 @@
     </message>
     <message>
         <source>Freeze frame at current time</source>
+        <comment>AndroidMoreToolsSheet#62</comment>
         <translation>Congelar quadro no tempo atual</translation>
     </message>
     <message>
@@ -1437,10 +1598,12 @@
     </message>
     <message>
         <source>Merge adjacent clips</source>
+        <comment>AndroidMoreToolsSheet#64</comment>
         <translation>Mesclar clipes adjacentes</translation>
     </message>
     <message>
         <source>Close gap</source>
+        <comment>AndroidMoreToolsSheet#65</comment>
         <translation>Fechar espaço</translation>
     </message>
     <message>
@@ -1449,10 +1612,12 @@
     </message>
     <message>
         <source>Audio</source>
+        <comment>AndroidMoreToolsSheet#67</comment>
         <translation>Áudio</translation>
     </message>
     <message>
         <source>Separate audio</source>
+        <comment>AndroidMoreToolsSheet#68</comment>
         <translation>Separar áudio</translation>
     </message>
     <message>
@@ -1461,6 +1626,7 @@
     </message>
     <message>
         <source>Timeline</source>
+        <comment>AndroidMoreToolsSheet#70</comment>
         <translation>Linha do tempo</translation>
     </message>
     <message>
@@ -1477,6 +1643,7 @@
     </message>
     <message>
         <source>Close gaps when trimming</source>
+        <comment>AndroidMoreToolsSheet#74</comment>
         <translation>Fechar espaços ao aparar</translation>
     </message>
     <message>
@@ -1485,6 +1652,7 @@
     </message>
     <message>
         <source>Allow clip overlap</source>
+        <comment>AndroidMoreToolsSheet#76</comment>
         <translation>Permitir sobreposição de clipes</translation>
     </message>
     <message>
@@ -1493,6 +1661,7 @@
     </message>
     <message>
         <source>Find the beat and show markers</source>
+        <comment>AndroidMoreToolsSheet#78</comment>
         <translation>Encontrar a batida e mostrar marcadores</translation>
     </message>
     <message>
@@ -1501,14 +1670,17 @@
     </message>
     <message>
         <source>Paste</source>
+        <comment>AndroidMoreToolsSheet#80</comment>
         <translation>Colar</translation>
     </message>
     <message>
         <source>Paste at current time</source>
+        <comment>AndroidMoreToolsSheet#81</comment>
         <translation>Colar no tempo atual</translation>
     </message>
     <message>
         <source>Bookmark</source>
+        <comment>AndroidMoreToolsSheet#82</comment>
         <translation>Marcador</translation>
     </message>
     <message>
@@ -1533,6 +1705,7 @@
     </message>
     <message>
         <source>Clear work area</source>
+        <comment>AndroidMoreToolsSheet#88</comment>
         <translation>Limpar área de trabalho</translation>
     </message>
     <message>
@@ -1545,6 +1718,7 @@
     </message>
     <message>
         <source>Analyzing…</source>
+        <comment>AndroidMoreToolsSheet#91</comment>
         <translation>Analisando…</translation>
     </message>
 </context>
@@ -1552,13 +1726,15 @@
     <name>AndroidNotificationsSheet</name>
     <message>
         <source>Notifications</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidNotificationsSheet#1</comment>
+        <translation type="unfinished">Notificações</translation>
     </message>
 </context>
 <context>
     <name>AndroidPreview</name>
     <message>
         <source>Seek</source>
+        <comment>AndroidPreview#1</comment>
         <translation>Buscar</translation>
     </message>
 </context>
@@ -1566,22 +1742,27 @@
     <name>AndroidPreviewOptionsStrip</name>
     <message>
         <source>Full</source>
+        <comment>AndroidPreviewOptionsStrip#1</comment>
         <translation type="unfinished">Completo</translation>
     </message>
     <message>
         <source>Half</source>
+        <comment>AndroidPreviewOptionsStrip#2</comment>
         <translation type="unfinished">Metade</translation>
     </message>
     <message>
         <source>Quarter</source>
+        <comment>AndroidPreviewOptionsStrip#3</comment>
         <translation type="unfinished">Um quarto</translation>
     </message>
     <message>
         <source>1/8 (Eco)</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidPreviewOptionsStrip#4</comment>
+        <translation type="unfinished">1/8 (Eco)</translation>
     </message>
     <message>
         <source>Auto</source>
+        <comment>AndroidPreviewOptionsStrip#5</comment>
         <translation type="unfinished">Automático</translation>
     </message>
     <message>
@@ -1590,6 +1771,7 @@
     </message>
     <message>
         <source>Guides</source>
+        <comment>AndroidPreviewOptionsStrip#7</comment>
         <translation type="unfinished">Guias</translation>
     </message>
 </context>
@@ -1601,18 +1783,22 @@
     </message>
     <message>
         <source>Previous frame</source>
+        <comment>AndroidPreviewTransport#2</comment>
         <translation type="unfinished">Quadro anterior</translation>
     </message>
     <message>
         <source>Pause</source>
+        <comment>AndroidPreviewTransport#3</comment>
         <translation type="unfinished">Pausar</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>AndroidPreviewTransport#4</comment>
         <translation type="unfinished">Reproduzir</translation>
     </message>
     <message>
         <source>Next frame</source>
+        <comment>AndroidPreviewTransport#5</comment>
         <translation type="unfinished">Próximo quadro</translation>
     </message>
     <message>
@@ -1637,6 +1823,7 @@
     </message>
     <message>
         <source>Fullscreen preview</source>
+        <comment>AndroidPreviewTransport#11</comment>
         <translation type="unfinished">Pré-visualização em ecrã cheia</translation>
     </message>
 </context>
@@ -1648,6 +1835,7 @@
     </message>
     <message>
         <source>Export</source>
+        <comment>AndroidProjectSheet#2</comment>
         <translation>Exportar</translation>
     </message>
     <message>
@@ -1656,6 +1844,7 @@
     </message>
     <message>
         <source>Save</source>
+        <comment>AndroidProjectSheet#4</comment>
         <translation>Guardar</translation>
     </message>
     <message>
@@ -1680,6 +1869,7 @@
     </message>
     <message>
         <source>Canvas &amp; layout</source>
+        <comment>AndroidProjectSheet#10</comment>
         <translation>Ecrã e layout</translation>
     </message>
     <message>
@@ -1688,14 +1878,17 @@
     </message>
     <message>
         <source>Crop video size</source>
+        <comment>AndroidProjectSheet#12</comment>
         <translation>Recortar tamanho do vídeo</translation>
     </message>
     <message>
         <source>Drag the preview edges to change what’s included</source>
+        <comment>AndroidProjectSheet#13</comment>
         <translation>Arraste as bordas da pré-visualização para alterar o que está incluído</translation>
     </message>
     <message>
         <source>Project properties</source>
+        <comment>AndroidProjectSheet#14</comment>
         <translation>Propriedades do projeto</translation>
     </message>
     <message>
@@ -1704,6 +1897,7 @@
     </message>
     <message>
         <source>Multicam</source>
+        <comment>AndroidProjectSheet#16</comment>
         <translation>Multicâmera</translation>
     </message>
     <message>
@@ -1712,14 +1906,16 @@
     </message>
     <message>
         <source>Extras</source>
+        <comment>AndroidProjectSheet#18</comment>
         <translation type="unfinished">Extras</translation>
     </message>
     <message>
         <source>Add-ons and model packs</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Complementos e pacotes de modelos</translation>
     </message>
     <message>
         <source>Settings</source>
+        <comment>AndroidProjectSheet#20</comment>
         <translation type="unfinished">Definições</translation>
     </message>
     <message>
@@ -1732,39 +1928,42 @@
     </message>
     <message>
         <source>Switch the app’s colour scheme</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar o esquema de cores da aplicação</translation>
     </message>
     <message>
         <source>Switch to desktop layout</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar para o layout de desktop</translation>
     </message>
     <message>
         <source>Use the wide editor layout</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Utilizar o layout de editor alargado</translation>
     </message>
     <message>
         <source>Update available</source>
+        <comment>AndroidProjectSheet#26</comment>
         <translation type="unfinished">Atualização disponível</translation>
     </message>
     <message>
         <source>A newer version of Drift is ready</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Uma nova versão do Drift está pronta</translation>
     </message>
     <message>
         <source>Debug info</source>
+        <comment>AndroidProjectSheet#28</comment>
         <translation type="unfinished">Informações de depuração</translation>
     </message>
     <message>
         <source>Version, device and logs</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Versão, dispositivo e registos</translation>
     </message>
     <message>
         <source>About Drift</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidProjectSheet#30</comment>
+        <translation type="unfinished">Sobre o Drift</translation>
     </message>
     <message>
         <source>Version, licence and credits</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Versão, licença e créditos</translation>
     </message>
     <message>
         <source>Appearance, extras and agent access</source>
@@ -1783,6 +1982,7 @@
     </message>
     <message>
         <source>New project</source>
+        <comment>AndroidProjectsPage#3</comment>
         <translation>Novo projeto</translation>
     </message>
     <message>
@@ -1795,6 +1995,7 @@
     </message>
     <message>
         <source>Open</source>
+        <comment>AndroidProjectsPage#6</comment>
         <translation>Abrir</translation>
     </message>
     <message>
@@ -1803,6 +2004,7 @@
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
+        <comment>AndroidProjectsPage#8</comment>
         <translation>Nada aqui ainda — os projetos que você guardar aparecerão nesta lista.</translation>
     </message>
 </context>
@@ -1810,6 +2012,7 @@
     <name>AndroidRailAddButton</name>
     <message>
         <source>Add to timeline</source>
+        <comment>AndroidRailAddButton#1</comment>
         <translation type="unfinished">Adicionar à linha do tempo</translation>
     </message>
 </context>
@@ -1844,6 +2047,7 @@
     </message>
     <message>
         <source>Close</source>
+        <comment>AndroidSheetHeader#2</comment>
         <translation type="unfinished">Fechar</translation>
     </message>
 </context>
@@ -1851,38 +2055,44 @@
     <name>AndroidTextComposer</name>
     <message>
         <source>Previous caption</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Legenda anterior</translation>
     </message>
     <message>
         <source>Next caption</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Legenda seguinte</translation>
     </message>
     <message>
         <source>Caption %1 / %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Legenda %1 / %2</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidTextComposer#4</comment>
+        <translation type="unfinished">Concluir</translation>
     </message>
     <message>
         <source>Type subtitle…</source>
+        <comment>AndroidTextComposer#5</comment>
         <translation type="unfinished">Digite a legenda…</translation>
     </message>
     <message>
         <source>Start</source>
+        <comment>AndroidTextComposer#6</comment>
         <translation type="unfinished">Início</translation>
     </message>
     <message>
         <source>Set start to current time</source>
+        <comment>AndroidTextComposer#7</comment>
         <translation type="unfinished">Definir início no tempo atual</translation>
     </message>
     <message>
         <source>End</source>
+        <comment>AndroidTextComposer#8</comment>
         <translation type="unfinished">Fim</translation>
     </message>
     <message>
         <source>Set end to current time</source>
+        <comment>AndroidTextComposer#9</comment>
         <translation type="unfinished">Definir fim no tempo atual</translation>
     </message>
 </context>
@@ -1890,101 +2100,124 @@
     <name>AndroidTextEditBar</name>
     <message>
         <source>Cancel</source>
+        <comment>AndroidTextEditBar#1</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Select all</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecionar tudo</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidTextEditBar#3</comment>
+        <translation type="unfinished">Concluir</translation>
     </message>
 </context>
 <context>
     <name>AndroidTimeline</name>
     <message>
         <source>Save effect preset</source>
+        <comment>AndroidTimeline#1</comment>
         <translation>Guardar predefinição de efeito</translation>
     </message>
     <message>
         <source>Convert to subtitle?</source>
+        <comment>AndroidTimeline#2</comment>
         <translation>Converter para legenda?</translation>
     </message>
     <message>
         <source>Convert</source>
+        <comment>AndroidTimeline#3</comment>
         <translation>Converter</translation>
     </message>
     <message>
         <source>The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.</source>
+        <comment>AndroidTimeline#4</comment>
         <translation>Os clipes de texto selecionados serão substituídos por um clipe de legenda. Cada legenda usará a posição e o estilo do primeiro clipe de texto.</translation>
     </message>
     <message>
         <source>Rename clip</source>
+        <comment>AndroidTimeline#5</comment>
         <translation>Renomear clipe</translation>
     </message>
     <message>
         <source>Rename</source>
+        <comment>AndroidTimeline#6</comment>
         <translation>Renomear</translation>
     </message>
     <message>
         <source>Name</source>
+        <comment>AndroidTimeline#7</comment>
         <translation>Nome</translation>
     </message>
     <message>
         <source>Clip name</source>
+        <comment>AndroidTimeline#8</comment>
         <translation>Nome do clipe</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
+        <comment>AndroidTimeline#9</comment>
         <translation>Renomear marcador</translation>
     </message>
     <message>
         <source>Label</source>
+        <comment>AndroidTimeline#10</comment>
         <translation>Rótulo</translation>
     </message>
     <message>
         <source>Bookmark name</source>
+        <comment>AndroidTimeline#11</comment>
         <translation>Nome do marcador</translation>
     </message>
     <message>
         <source>Bookmark</source>
+        <comment>AndroidTimeline#12</comment>
         <translation>Marcador</translation>
     </message>
     <message>
         <source>My look</source>
+        <comment>AndroidTimeline#13</comment>
         <translation>Meu visual</translation>
     </message>
     <message>
         <source>Proxy</source>
+        <comment>AndroidTimeline#14</comment>
         <translation>Proxy</translation>
     </message>
     <message>
         <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <comment>AndroidTimeline#15</comment>
         <translation>Pré-visualizando a partir de um proxy de baixa resolução. A exportação usa o original.</translation>
     </message>
     <message>
         <source>Edit-friendly</source>
+        <comment>AndroidTimeline#16</comment>
         <translation>Otimizado para edição</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
+        <comment>AndroidTimeline#17</comment>
         <translation>Convertido para uma taxa de quadros constante para uma edição suave</translation>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <comment>AndroidTimeline#18</comment>
         <translation>Taxa de quadros variável. Este clipe pode ficar fora de sincronia com o áudio. Clique com o botão direito nele e escolha Converter para formato otimizado para edição.</translation>
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
+        <comment>AndroidTimeline#19</comment>
         <translation>Camada de transformação: move, dimensiona e gira todas as faixas que seu colchete cobre</translation>
     </message>
     <message>
         <source>Add new track</source>
+        <comment>AndroidTimeline#20</comment>
         <translation>Adicionar nova faixa</translation>
     </message>
     <message>
         <source>Go to bookmark</source>
+        <comment>AndroidTimeline#21</comment>
         <translation>Ir para o marcador</translation>
     </message>
     <message>
@@ -1993,14 +2226,17 @@
     </message>
     <message>
         <source>Rename…</source>
+        <comment>AndroidTimeline#23</comment>
         <translation>Renomear…</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>AndroidTimeline#24</comment>
         <translation>Eliminar</translation>
     </message>
     <message>
         <source>Close gap</source>
+        <comment>AndroidTimeline#25</comment>
         <translation>Fechar espaço</translation>
     </message>
 </context>
@@ -2008,6 +2244,7 @@
     <name>AndroidTimelineLaneBar</name>
     <message>
         <source>Keyframes</source>
+        <comment>AndroidTimelineLaneBar#1</comment>
         <translation type="unfinished">Quadros-chave</translation>
     </message>
     <message numerus="yes">
@@ -2019,25 +2256,30 @@
     </message>
     <message>
         <source>All</source>
+        <comment>AndroidTimelineLaneBar#3</comment>
         <translation type="unfinished">Todos</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidTimelineLaneBar#4</comment>
+        <translation type="unfinished">Nenhum</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidTimelineLaneBar#5</comment>
+        <translation type="unfinished">Concluir</translation>
     </message>
 </context>
 <context>
     <name>AndroidTimelineLiveRecording</name>
     <message>
         <source>PAUSED </source>
+        <comment>AndroidTimelineLiveRecording#1</comment>
         <translation type="unfinished">PAUSED </translation>
     </message>
     <message>
         <source>REC </source>
+        <comment>AndroidTimelineLiveRecording#2</comment>
         <translation type="unfinished">REC </translation>
     </message>
 </context>
@@ -2045,6 +2287,7 @@
     <name>AndroidTimelineNewTrackGhost</name>
     <message>
         <source>New track</source>
+        <comment>AndroidTimelineNewTrackGhost#1</comment>
         <translation type="unfinished">Nova faixa</translation>
     </message>
 </context>
@@ -2052,26 +2295,32 @@
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
+        <comment>AndroidTopBar#1</comment>
         <translation>Voltar</translation>
     </message>
     <message>
         <source>Notifications</source>
-        <translation type="unfinished"></translation>
+        <comment>AndroidTopBar#2</comment>
+        <translation type="unfinished">Notificações</translation>
     </message>
     <message>
         <source>Downloads</source>
+        <comment>AndroidTopBar#3</comment>
         <translation type="unfinished">Transferências</translation>
     </message>
     <message>
         <source>Extras</source>
+        <comment>AndroidTopBar#4</comment>
         <translation type="unfinished">Extras</translation>
     </message>
     <message>
         <source>Undo</source>
+        <comment>AndroidTopBar#5</comment>
         <translation>Desfazer</translation>
     </message>
     <message>
         <source>Redo</source>
+        <comment>AndroidTopBar#6</comment>
         <translation>Refazer</translation>
     </message>
 </context>
@@ -2079,6 +2328,7 @@
     <name>AndroidTopBarExportButton</name>
     <message>
         <source>Export</source>
+        <comment>AndroidTopBarExportButton#1</comment>
         <translation type="unfinished">Exportar</translation>
     </message>
     <message>
@@ -2090,10 +2340,12 @@
     <name>AndroidTopBarTitleButton</name>
     <message>
         <source>Project actions</source>
+        <comment>AndroidTopBarTitleButton#1</comment>
         <translation type="unfinished">Ações do projeto</translation>
     </message>
     <message>
         <source>Untitled</source>
+        <comment>AndroidTopBarTitleButton#2</comment>
         <translation type="unfinished">Sem título</translation>
     </message>
 </context>
@@ -2101,6 +2353,7 @@
     <name>AndroidTransformLayerChip</name>
     <message numerus="yes">
         <source>%1 · %n clip(s)</source>
+        <comment>AndroidTransformLayerChip#1</comment>
         <translation type="unfinished">
             <numerusform>%1 · %n clipe</numerusform>
             <numerusform>%1 · %n clipes</numerusform>
@@ -2108,6 +2361,7 @@
     </message>
     <message>
         <source>Transform</source>
+        <comment>AndroidTransformLayerChip#2</comment>
         <translation type="unfinished">Transformação</translation>
     </message>
 </context>
@@ -2115,10 +2369,12 @@
     <name>AndroidTransformParentFrame</name>
     <message>
         <source>Select %1</source>
+        <comment>AndroidTransformParentFrame#1</comment>
         <translation type="unfinished">Selecionar %1</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>AndroidTransformParentFrame#2</comment>
         <translation type="unfinished">Transformação</translation>
     </message>
 </context>
@@ -2126,10 +2382,12 @@
     <name>AnimationInspector</name>
     <message>
         <source>None</source>
+        <comment>AnimationInspector#1</comment>
         <translation>Nenhuma</translation>
     </message>
     <message>
         <source>Fade</source>
+        <comment>AnimationInspector#2</comment>
         <translation>Fade</translation>
     </message>
     <message>
@@ -2150,10 +2408,12 @@
     </message>
     <message>
         <source>Zoom in</source>
+        <comment>AnimationInspector#7</comment>
         <translation>Ampliar</translation>
     </message>
     <message>
         <source>Zoom out</source>
+        <comment>AnimationInspector#8</comment>
         <translation>Reduzir</translation>
     </message>
     <message>
@@ -2170,26 +2430,32 @@
     </message>
     <message>
         <source>Bounce</source>
+        <comment>AnimationInspector#12</comment>
         <translation>Quicar</translation>
     </message>
     <message>
         <source>Linear</source>
+        <comment>AnimationInspector#13</comment>
         <translation>Linear</translation>
     </message>
     <message>
         <source>Smooth</source>
+        <comment>AnimationInspector#14</comment>
         <translation>Suave</translation>
     </message>
     <message>
         <source>Natural</source>
+        <comment>AnimationInspector#15</comment>
         <translation>Natural</translation>
     </message>
     <message>
         <source>Custom</source>
+        <comment>AnimationInspector#16</comment>
         <translation>Personalizada</translation>
     </message>
     <message>
         <source>Bezier</source>
+        <comment>AnimationInspector#17</comment>
         <translation>Bézier</translation>
     </message>
     <message>
@@ -2206,6 +2472,7 @@
     </message>
     <message>
         <source>Style</source>
+        <comment>AnimationInspector#21</comment>
         <translation>Estilo</translation>
     </message>
     <message>
@@ -2214,14 +2481,17 @@
     </message>
     <message>
         <source>Clear</source>
+        <comment>AnimationInspector#23</comment>
         <translation>Limpar</translation>
     </message>
     <message>
         <source>In</source>
+        <comment>AnimationInspector#24</comment>
         <translation>Entrada</translation>
     </message>
     <message>
         <source>Out</source>
+        <comment>AnimationInspector#25</comment>
         <translation>Saída</translation>
     </message>
     <message>
@@ -2241,6 +2511,7 @@
     </message>
     <message>
         <source>Rename media</source>
+        <comment>AppController#2</comment>
         <translation>Renomear mídia</translation>
     </message>
     <message>
@@ -2249,14 +2520,16 @@
     </message>
     <message>
         <source>Crop clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Recortar clipe</translation>
     </message>
     <message>
         <source>Crop saved</source>
-        <translation type="unfinished"></translation>
+        <comment>AppController#5</comment>
+        <translation type="unfinished">Recorte guardado</translation>
     </message>
     <message>
         <source>New project</source>
+        <comment>AppController#6</comment>
         <translation>Novo projeto</translation>
     </message>
     <message>
@@ -2265,6 +2538,7 @@
     </message>
     <message>
         <source>Save project</source>
+        <comment>AppController#8</comment>
         <translation>Guardar projeto</translation>
     </message>
     <message>
@@ -2277,14 +2551,17 @@
     </message>
     <message>
         <source>Undo</source>
+        <comment>AppController#11</comment>
         <translation>Desfazer</translation>
     </message>
     <message>
         <source>Redo</source>
+        <comment>AppController#12</comment>
         <translation>Refazer</translation>
     </message>
     <message>
         <source>Copy selection</source>
+        <comment>AppController#13</comment>
         <translation>Copiar seleção</translation>
     </message>
     <message>
@@ -2293,6 +2570,7 @@
     </message>
     <message>
         <source>Paste at current time</source>
+        <comment>AppController#15</comment>
         <translation>Colar no tempo atual</translation>
     </message>
     <message>
@@ -2301,14 +2579,17 @@
     </message>
     <message>
         <source>Split at current time</source>
+        <comment>AppController#17</comment>
         <translation>Dividir no tempo atual</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
+        <comment>AppController#18</comment>
         <translation>Mesclar clipes adjacentes</translation>
     </message>
     <message>
         <source>Separate audio</source>
+        <comment>AppController#19</comment>
         <translation>Separar áudio</translation>
     </message>
     <message>
@@ -2317,7 +2598,7 @@
     </message>
     <message>
         <source>Link clips</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vincular clipes</translation>
     </message>
     <message>
         <source>Clear selection</source>
@@ -2337,14 +2618,16 @@
     </message>
     <message>
         <source>Go to end of timeline</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ir para o fim da linha do tempo</translation>
     </message>
     <message>
         <source>Toggle guides</source>
+        <comment>AppController#27</comment>
         <translation>Alternar guias</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
+        <comment>AppController#28</comment>
         <translation>Adicionar/remover marcador no tempo atual</translation>
     </message>
     <message>
@@ -2357,10 +2640,12 @@
     </message>
     <message>
         <source>Mark work area in</source>
+        <comment>AppController#31</comment>
         <translation>Marcar início da área de trabalho</translation>
     </message>
     <message>
         <source>Mark work area out</source>
+        <comment>AppController#32</comment>
         <translation>Marcar fim da área de trabalho</translation>
     </message>
     <message>
@@ -2373,10 +2658,12 @@
     </message>
     <message>
         <source>Clear work area</source>
+        <comment>AppController#35</comment>
         <translation>Limpar área de trabalho</translation>
     </message>
     <message>
         <source>Loop work area playback</source>
+        <comment>AppController#36</comment>
         <translation>Reproduzir área de trabalho em loop</translation>
     </message>
     <message>
@@ -2389,67 +2676,68 @@
     </message>
     <message>
         <source>Search…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pesquisar…</translation>
     </message>
     <message>
         <source>Restore Workspace Windows</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Restaurar janelas de área de trabalho</translation>
     </message>
     <message>
         <source>Next workspace</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho seguinte</translation>
     </message>
     <message>
         <source>Previous workspace</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho anterior</translation>
     </message>
     <message>
         <source>Workspace 1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 1</translation>
     </message>
     <message>
         <source>Workspace 2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 2</translation>
     </message>
     <message>
         <source>Workspace 3</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 3</translation>
     </message>
     <message>
         <source>Workspace 4</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 4</translation>
     </message>
     <message>
         <source>Workspace 5</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 5</translation>
     </message>
     <message>
         <source>Workspace 6</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 6</translation>
     </message>
     <message>
         <source>Workspace 7</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 7</translation>
     </message>
     <message>
         <source>Workspace 8</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 8</translation>
     </message>
     <message>
         <source>Workspace 9</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho 9</translation>
     </message>
     <message>
         <source>System default</source>
+        <comment>AppController#52</comment>
         <translation>Padrão do sistema</translation>
     </message>
     <message>
         <source>Select a clip to measure</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe para medir</translation>
     </message>
     <message>
         <source>Select a clip to normalize</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe para normalizar</translation>
     </message>
     <message>
         <source>Clip added</source>
@@ -2465,7 +2753,7 @@
     </message>
     <message>
         <source>A clip can&apos;t completely cover another</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Um clipe não pode cobrir completamente outro</translation>
     </message>
     <message>
         <source>Clip moved</source>
@@ -2505,6 +2793,7 @@
     </message>
     <message>
         <source>Subtitles</source>
+        <comment>AppController#68</comment>
         <translation>Legendas</translation>
     </message>
     <message>
@@ -2541,6 +2830,7 @@
     </message>
     <message>
         <source>Could not write subtitle file</source>
+        <comment>AppController#77</comment>
         <translation>Não foi possível gravar o ficheiro de legenda</translation>
     </message>
     <message>
@@ -2565,10 +2855,12 @@
     </message>
     <message>
         <source>Starting…</source>
+        <comment>AppController#83</comment>
         <translation>Iniciando…</translation>
     </message>
     <message>
         <source>Done</source>
+        <comment>AppController#84</comment>
         <translation>Concluído</translation>
     </message>
     <message>
@@ -2577,6 +2869,7 @@
     </message>
     <message>
         <source>Reading audio…</source>
+        <comment>AppController#86</comment>
         <translation>Lendo áudio…</translation>
     </message>
     <message>
@@ -2589,6 +2882,7 @@
     </message>
     <message>
         <source>No audio decoded</source>
+        <comment>AppController#89</comment>
         <translation>Nenhum áudio decodificado</translation>
     </message>
     <message>
@@ -2617,11 +2911,12 @@
     </message>
     <message>
         <source>Clip</source>
+        <comment>AppController#96</comment>
         <translation>Clipe</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n subtitles</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n legenda importada</numerusform>
             <numerusform>%n legendas importadas</numerusform>
         </translation>
@@ -2648,7 +2943,7 @@
     </message>
     <message numerus="yes">
         <source>Multicam ready: %n camera(s) lined up at the start. Drag a clip to adjust its sync, then pick a shot.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Multicâmera pronta: %n câmera alinhada no início. Arraste um clipe para ajustar a sincronia e depois escolha uma tomada.</numerusform>
             <numerusform>Multicâmera pronta: %n câmeras alinhadas no início. Arraste um clipe para ajustar a sincronia e depois escolha uma tomada.</numerusform>
         </translation>
@@ -2691,6 +2986,7 @@
     </message>
     <message>
         <source>Could not create an output file</source>
+        <comment>AppController#113</comment>
         <translation>Não foi possível criar um ficheiro de saída</translation>
     </message>
     <message>
@@ -2699,7 +2995,7 @@
     </message>
     <message numerus="yes">
         <source>%n media items and referenced clips removed</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n item de mídia e seus clipes associados foram removidos</numerusform>
             <numerusform>%n itens de mídia e seus clipes associados foram removidos</numerusform>
         </translation>
@@ -2714,39 +3010,39 @@
     </message>
     <message>
         <source>%1 isn’t a folder on this computer (a phone, camera or remote location). Export to a local folder, then copy the file there.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 não é uma pasta neste computador (um telemóvel, câmara ou localização remota). Exporte para uma pasta local e, em seguida, copie o ficheiro para lá.</translation>
     </message>
     <message>
         <source>%1 is on a phone or camera connected over MTP, which can’t be written to directly. Export to a local folder, then copy the file there.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 está num telemóvel ou câmara ligado por MTP, que não pode ser escrito diretamente. Exporte para uma pasta local e, em seguida, copie o ficheiro para lá.</translation>
     </message>
     <message>
         <source>The folder %1 doesn’t exist anymore.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A pasta %1 já não existe.</translation>
     </message>
     <message>
         <source>%1 is on a read-only drive. Choose another folder.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 está numa unidade só de leitura. Escolha outra pasta.</translation>
     </message>
     <message>
         <source>Can’t replace %1. It may be read-only or open in another app.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não é possível substituir %1. Pode ser só de leitura ou estar aberto noutra aplicação.</translation>
     </message>
     <message>
         <source>Can’t write to the network location %1. Check that it’s connected and that you have permission to save there.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não é possível escrever na localização de rede %1. Verifique se está ligada e se tem permissão para guardar lá.</translation>
     </message>
     <message>
         <source>You don’t have permission to save in %1. Choose another folder.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não tem permissão para guardar em %1. Escolha outra pasta.</translation>
     </message>
     <message>
         <source>Can’t write to %1: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não é possível escrever em %1: %2</translation>
     </message>
     <message>
         <source>There isn’t enough free space in %1.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não há espaço livre suficiente em %1.</translation>
     </message>
     <message>
         <source>Could not create a proxy for %1: %2</source>
@@ -2770,6 +3066,7 @@
     </message>
     <message>
         <source>Paste attributes…</source>
+        <comment>AppController#132</comment>
         <translation>Colar atributos…</translation>
     </message>
     <message>
@@ -2826,10 +3123,12 @@
     </message>
     <message>
         <source>Zoom in</source>
+        <comment>AppController#146</comment>
         <translation>Ampliar</translation>
     </message>
     <message>
         <source>Zoom out</source>
+        <comment>AppController#147</comment>
         <translation>Reduzir</translation>
     </message>
     <message>
@@ -2842,6 +3141,7 @@
     </message>
     <message>
         <source>Failed to start audio recording</source>
+        <comment>AppController#150</comment>
         <translation>Falha ao iniciar a gravação de áudio</translation>
     </message>
     <message>
@@ -2898,6 +3198,7 @@
     </message>
     <message>
         <source>Transition curve</source>
+        <comment>AppController#164</comment>
         <translation>Curva de transição</translation>
     </message>
     <message>
@@ -2918,6 +3219,7 @@
     </message>
     <message>
         <source>Add adjustment layer</source>
+        <comment>AppController#169</comment>
         <translation>Adicionar camada de ajuste</translation>
     </message>
     <message>
@@ -3022,11 +3324,11 @@
     </message>
     <message>
         <source>Move camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mover câmara</translation>
     </message>
     <message>
         <source>Rotate camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Rodar câmara</translation>
     </message>
     <message>
         <source>Edit effect</source>
@@ -3034,14 +3336,17 @@
     </message>
     <message>
         <source>Speed changed</source>
+        <comment>AppController#198</comment>
         <translation>Velocidade alterada</translation>
     </message>
     <message>
         <source>Adjust fade</source>
+        <comment>AppController#199</comment>
         <translation>Ajustar fade</translation>
     </message>
     <message>
         <source>Mask changed</source>
+        <comment>AppController#200</comment>
         <translation>Máscara alterada</translation>
     </message>
     <message>
@@ -3058,6 +3363,7 @@
     </message>
     <message>
         <source>Rename clip</source>
+        <comment>AppController#204</comment>
         <translation>Renomear clipe</translation>
     </message>
     <message>
@@ -3066,6 +3372,7 @@
     </message>
     <message>
         <source>Edit text</source>
+        <comment>AppController#206</comment>
         <translation>Editar texto</translation>
     </message>
     <message>
@@ -3102,6 +3409,7 @@
     </message>
     <message>
         <source>Save text style</source>
+        <comment>AppController#215</comment>
         <translation>Guardar estilo de texto</translation>
     </message>
     <message>
@@ -3142,15 +3450,15 @@
     </message>
     <message>
         <source>Could not import the font</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível importar o tipo de letra</translation>
     </message>
     <message>
         <source>Added %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 adicionado</translation>
     </message>
     <message>
         <source>Removed %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 removido</translation>
     </message>
     <message>
         <source>Resize text</source>
@@ -3206,6 +3514,7 @@
     </message>
     <message>
         <source>Pan changed</source>
+        <comment>AppController#241</comment>
         <translation>Pan alterado</translation>
     </message>
     <message>
@@ -3242,6 +3551,7 @@
     </message>
     <message>
         <source>Composite</source>
+        <comment>AppController#250</comment>
         <translation>Composição</translation>
     </message>
     <message>
@@ -3290,7 +3600,7 @@
     </message>
     <message>
         <source>Clips linked</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Clipes vinculados</translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -3338,6 +3648,7 @@
     </message>
     <message>
         <source>Animation</source>
+        <comment>AppController#274</comment>
         <translation>Animação</translation>
     </message>
     <message>
@@ -3358,11 +3669,11 @@
     </message>
     <message>
         <source>PDF options</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Opções de PDF</translation>
     </message>
     <message>
         <source>PDF options updated</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Opções de PDF atualizadas</translation>
     </message>
     <message>
         <source>Animation slot</source>
@@ -3378,26 +3689,32 @@
     </message>
     <message>
         <source>Rectangle</source>
+        <comment>AppController#284</comment>
         <translation>Retângulo</translation>
     </message>
     <message>
         <source>Ellipse</source>
+        <comment>AppController#285</comment>
         <translation>Elipse</translation>
     </message>
     <message>
         <source>Star</source>
+        <comment>AppController#286</comment>
         <translation>Estrela</translation>
     </message>
     <message>
         <source>Heart</source>
+        <comment>AppController#287</comment>
         <translation>Coração</translation>
     </message>
     <message>
         <source>Bars</source>
+        <comment>AppController#288</comment>
         <translation>Barras</translation>
     </message>
     <message>
         <source>Freeform</source>
+        <comment>AppController#289</comment>
         <translation>Forma livre</translation>
     </message>
     <message>
@@ -3438,15 +3755,15 @@
     </message>
     <message>
         <source>Change look</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar aparência</translation>
     </message>
     <message>
         <source>Edit curve</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Editar curva</translation>
     </message>
     <message>
         <source>Edit gradient</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Editar gradiente</translation>
     </message>
     <message>
         <source>Track solo</source>
@@ -3494,6 +3811,7 @@
     </message>
     <message>
         <source>Effect</source>
+        <comment>AppController#313</comment>
         <translation>Efeito</translation>
     </message>
     <message>
@@ -3506,6 +3824,7 @@
     </message>
     <message>
         <source>Select transform layer</source>
+        <comment>AppController#316</comment>
         <translation>Selecionar camada de transformação</translation>
     </message>
     <message>
@@ -3530,10 +3849,12 @@
     </message>
     <message>
         <source>%1 copy</source>
+        <comment>AppController#322</comment>
         <translation>Cópia de %1</translation>
     </message>
     <message>
         <source>Audio adjustment</source>
+        <comment>AppController#323</comment>
         <translation>Ajuste de áudio</translation>
     </message>
     <message>
@@ -3570,11 +3891,12 @@
     </message>
     <message>
         <source>Scale clip</source>
+        <comment>AppController#332</comment>
         <translation>Escalar clipe</translation>
     </message>
     <message>
         <source>Fly camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Voar com a câmara</translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -3610,19 +3932,19 @@
     </message>
     <message>
         <source>Enable depth occlusion</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ativar oclusão de profundidade</translation>
     </message>
     <message>
         <source>Disable depth occlusion</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Desativar oclusão de profundidade</translation>
     </message>
     <message>
         <source>Clip is occluded by depth</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O clipe está ocluído pela profundidade</translation>
     </message>
     <message>
         <source>Clip uses track order</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O clipe usa a ordem das faixas</translation>
     </message>
     <message>
         <source>Subtitles converted to text</source>
@@ -3630,7 +3952,7 @@
     </message>
     <message numerus="yes">
         <source>Created %n text clips</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Criado %n clipe de texto</numerusform>
             <numerusform>Criados %n clipes de texto</numerusform>
         </translation>
@@ -3641,6 +3963,7 @@
     </message>
     <message>
         <source>Add transform layer</source>
+        <comment>AppController#349</comment>
         <translation>Adicionar camada de transformação</translation>
     </message>
     <message>
@@ -3657,22 +3980,24 @@
     </message>
     <message>
         <source>Add camera</source>
-        <translation type="unfinished"></translation>
+        <comment>AppController#353</comment>
+        <translation type="unfinished">Adicionar câmara</translation>
     </message>
     <message>
         <source>Add camera clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar clipe de câmara</translation>
     </message>
     <message>
         <source>Camera added</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Câmara adicionada</translation>
     </message>
     <message>
         <source>Camera clip added</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Clipe de câmara adicionado</translation>
     </message>
     <message>
         <source>Transform together</source>
+        <comment>AppController#357</comment>
         <translation>Transformar juntos</translation>
     </message>
     <message>
@@ -3681,7 +4006,7 @@
     </message>
     <message numerus="yes">
         <source>Transform layer now covers %n track(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>A camada de transformação agora cobre %n faixa</numerusform>
             <numerusform>A camada de transformação agora cobre %n faixas</numerusform>
         </translation>
@@ -3692,6 +4017,7 @@
     </message>
     <message>
         <source>Remove transition</source>
+        <comment>AppController#361</comment>
         <translation>Remover transição</translation>
     </message>
     <message>
@@ -3700,6 +4026,7 @@
     </message>
     <message>
         <source>Transition duration</source>
+        <comment>AppController#363</comment>
         <translation>Duração da transição</translation>
     </message>
     <message>
@@ -3716,6 +4043,7 @@
     </message>
     <message>
         <source>Edit transition</source>
+        <comment>AppController#367</comment>
         <translation>Editar transição</translation>
     </message>
     <message>
@@ -3736,6 +4064,7 @@
     </message>
     <message>
         <source>Move keyframe</source>
+        <comment>AppController#372</comment>
         <translation>Mover quadro-chave</translation>
     </message>
     <message>
@@ -3784,11 +4113,11 @@
     </message>
     <message>
         <source>Reset camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repor câmara</translation>
     </message>
     <message>
         <source>Camera reset</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Câmara reposta</translation>
     </message>
     <message>
         <source>Reset transform</source>
@@ -3804,7 +4133,7 @@
     </message>
     <message>
         <source>Mask effects read one clip&apos;s masks, so they go on a clip, not on an adjustment layer.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Os efeitos de máscara leem as máscaras de um clipe, por isso aplicam-se num clipe, não numa camada de ajuste.</translation>
     </message>
     <message>
         <source>Face effects follow one clip&apos;s faces, so they go on a clip, not on an adjustment layer.</source>
@@ -3832,6 +4161,7 @@
     </message>
     <message>
         <source>Remove effect</source>
+        <comment>AppController#396</comment>
         <translation>Remover efeito</translation>
     </message>
     <message>
@@ -3840,10 +4170,12 @@
     </message>
     <message>
         <source>Enable effect</source>
+        <comment>AppController#398</comment>
         <translation>Ativar efeito</translation>
     </message>
     <message>
         <source>Disable effect</source>
+        <comment>AppController#399</comment>
         <translation>Desativar efeito</translation>
     </message>
     <message>
@@ -3872,14 +4204,14 @@
     </message>
     <message numerus="yes">
         <source>Imported %n face prop(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Importado %n adereço facial</numerusform>
             <numerusform>Importados %n adereços faciais</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n face prop(s); %1 skipped: %2</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Importado %n adereço facial; %1 ignorado: %2</numerusform>
             <numerusform>Importados %n adereços faciais; %1 ignorados: %2</numerusform>
         </translation>
@@ -3890,7 +4222,7 @@
     </message>
     <message>
         <source>That style shares its folder with other styles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Esse estilo partilha a pasta com outros estilos</translation>
     </message>
     <message>
         <source>Could not delete the face prop</source>
@@ -3922,6 +4254,7 @@
     </message>
     <message>
         <source>Remove audio effect</source>
+        <comment>AppController#417</comment>
         <translation>Remover efeito de áudio</translation>
     </message>
     <message>
@@ -3930,10 +4263,12 @@
     </message>
     <message>
         <source>Enable audio effect</source>
+        <comment>AppController#419</comment>
         <translation>Ativar efeito de áudio</translation>
     </message>
     <message>
         <source>Disable audio effect</source>
+        <comment>AppController#420</comment>
         <translation>Desativar efeito de áudio</translation>
     </message>
     <message>
@@ -3990,6 +4325,7 @@
     </message>
     <message>
         <source>Paste effects</source>
+        <comment>AppController#434</comment>
         <translation>Colar efeitos</translation>
     </message>
     <message>
@@ -4002,7 +4338,7 @@
     </message>
     <message numerus="yes">
         <source>Pasted attributes onto %n clip(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Atributos colados em %n clipe</numerusform>
             <numerusform>Atributos colados em %n clipes</numerusform>
         </translation>
@@ -4049,15 +4385,15 @@
     </message>
     <message>
         <source>Only effects you imported can be deleted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Só os efeitos que importou podem ser eliminados</translation>
     </message>
     <message>
         <source>Could not delete %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível eliminar %1</translation>
     </message>
     <message>
         <source>Deleted %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 eliminado</translation>
     </message>
     <message>
         <source>Could not export the effect preset</source>
@@ -4109,6 +4445,7 @@
     </message>
     <message>
         <source>Delete track</source>
+        <comment>AppController#463</comment>
         <translation>Eliminar faixa</translation>
     </message>
     <message>
@@ -4177,11 +4514,12 @@
     </message>
     <message>
         <source>Paste</source>
+        <comment>AppController#480</comment>
         <translation>Colar</translation>
     </message>
     <message numerus="yes">
         <source>Pasted %n clips</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n clipe colado</numerusform>
             <numerusform>%n clipes colados</numerusform>
         </translation>
@@ -4192,7 +4530,7 @@
     </message>
     <message>
         <source>Export failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Falha na exportação</translation>
     </message>
     <message>
         <source>Opening your video…</source>
@@ -4216,14 +4554,17 @@
     </message>
     <message>
         <source>Add layer</source>
+        <comment>AppController#489</comment>
         <translation>Adicionar camada</translation>
     </message>
     <message>
         <source>Remove layer</source>
+        <comment>AppController#490</comment>
         <translation>Remover camada</translation>
     </message>
     <message>
         <source>Duplicate layer</source>
+        <comment>AppController#491</comment>
         <translation>Duplicar camada</translation>
     </message>
     <message>
@@ -4252,6 +4593,7 @@
     </message>
     <message>
         <source>Edit text animation</source>
+        <comment>AppController#498</comment>
         <translation>Editar animação de texto</translation>
     </message>
     <message>
@@ -4260,6 +4602,7 @@
     </message>
     <message>
         <source>Basic</source>
+        <comment>AppController#500</comment>
         <translation>Básico</translation>
     </message>
     <message>
@@ -4276,10 +4619,12 @@
     </message>
     <message>
         <source>Light</source>
+        <comment>AppController#504</comment>
         <translation>Luz</translation>
     </message>
     <message>
         <source>Colour</source>
+        <comment>AppController#505</comment>
         <translation>Cor</translation>
     </message>
     <message>
@@ -4300,6 +4645,7 @@
     </message>
     <message>
         <source>Adjust text look</source>
+        <comment>AppController#510</comment>
         <translation>Ajustar visual de texto</translation>
     </message>
     <message>
@@ -4312,25 +4658,29 @@
     </message>
     <message numerus="yes">
         <source>Applied to %n caption clip(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Aplicado a %n clipe de legenda</numerusform>
             <numerusform>Aplicado a %n clipes de legenda</numerusform>
         </translation>
     </message>
     <message>
         <source>Red</source>
+        <comment>AppController#514</comment>
         <translation>Vermelho</translation>
     </message>
     <message>
         <source>Green</source>
+        <comment>AppController#515</comment>
         <translation>Verde</translation>
     </message>
     <message>
         <source>Blue</source>
+        <comment>AppController#516</comment>
         <translation>Azul</translation>
     </message>
     <message>
         <source>Alpha</source>
+        <comment>AppController#517</comment>
         <translation>Alfa</translation>
     </message>
     <message>
@@ -4359,10 +4709,12 @@
     </message>
     <message>
         <source>That save location isn’t valid</source>
+        <comment>AppController#524</comment>
         <translation>Esse local de salvamento não é válido</translation>
     </message>
     <message>
         <source>Export already in progress</source>
+        <comment>AppController#525</comment>
         <translation>Exportação já em andamento</translation>
     </message>
     <message>
@@ -4371,11 +4723,12 @@
     </message>
     <message>
         <source>Close gap</source>
+        <comment>AppController#527</comment>
         <translation>Fechar lacuna</translation>
     </message>
     <message numerus="yes">
         <source>%n items removed</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n item removido</numerusform>
             <numerusform>%n itens removidos</numerusform>
         </translation>
@@ -4409,14 +4762,17 @@
     <name>AppSettingsMenu</name>
     <message>
         <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
+        <comment>AppSettingsMenu#1</comment>
+        <translation type="unfinished">Mudar para layout móvel…</translation>
     </message>
     <message>
         <source>Settings…</source>
-        <translation type="unfinished"></translation>
+        <comment>AppSettingsMenu#2</comment>
+        <translation type="unfinished">Definições…</translation>
     </message>
     <message>
         <source>Multicam</source>
+        <comment>AppSettingsMenu#3</comment>
         <translation>Multicâmera</translation>
     </message>
 </context>
@@ -4424,7 +4780,8 @@
     <name>AssetCategoryChips</name>
     <message>
         <source>My Effects</source>
-        <translation type="unfinished"></translation>
+        <comment>AssetCategoryChips#1</comment>
+        <translation type="unfinished">Os Meus Efeitos</translation>
     </message>
     <message>
         <source>Favorites</source>
@@ -4435,10 +4792,12 @@
     <name>AssetFavoriteButton</name>
     <message>
         <source>Remove from favorites</source>
+        <comment>AssetFavoriteButton#1</comment>
         <translation>Remover dos favoritos</translation>
     </message>
     <message>
         <source>Add to favorites</source>
+        <comment>AssetFavoriteButton#2</comment>
         <translation>Adicionar aos favoritos</translation>
     </message>
 </context>
@@ -4450,19 +4809,20 @@
     </message>
     <message>
         <source>%1 s</source>
+        <comment>AssetLibrary#2</comment>
         <translation type="unfinished">%1 s</translation>
     </message>
     <message>
         <source>That file isn’t a video.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Esse ficheiro não é um vídeo.</translation>
     </message>
     <message>
         <source>“%1” is %2 long but the source is %3 — it can’t be its proxy.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">“%1” tem %2 de duração, mas a origem tem %3 — não pode ser o seu proxy.</translation>
     </message>
     <message>
         <source>The proxy’s name must contain “%1” and sit in the source’s folder or a subfolder of it.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O nome do proxy tem de conter “%1” e estar na pasta da origem ou numa subpasta desta.</translation>
     </message>
 </context>
 <context>
@@ -4473,6 +4833,7 @@
     </message>
     <message>
         <source>Remove</source>
+        <comment>AssetsPanel#2</comment>
         <translation>Remover</translation>
     </message>
     <message>
@@ -4481,18 +4842,22 @@
     </message>
     <message>
         <source>Removed “%1”.</source>
+        <comment>AssetsPanel#4</comment>
         <translation>“%1” removido.</translation>
     </message>
     <message>
         <source>Rename media</source>
+        <comment>AssetsPanel#5</comment>
         <translation>Renomear mídia</translation>
     </message>
     <message>
         <source>Rename</source>
+        <comment>AssetsPanel#6</comment>
         <translation>Renomear</translation>
     </message>
     <message>
         <source>Name</source>
+        <comment>AssetsPanel#7</comment>
         <translation>Nome</translation>
     </message>
     <message>
@@ -4525,7 +4890,7 @@
     </message>
     <message numerus="yes">
         <source>Replaced with “%1”. %n clips were shortened to fit the new file.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Substituído por “%1”. %n clipe foi encurtado para se ajustar ao novo ficheiro.</numerusform>
             <numerusform>Substituído por “%1”. %n clipes foram encurtados para se ajustar ao novo ficheiro.</numerusform>
         </translation>
@@ -4544,10 +4909,12 @@
     </message>
     <message>
         <source>Import Media</source>
+        <comment>AssetsPanel#19</comment>
         <translation>Importar mídia</translation>
     </message>
     <message>
         <source>Media</source>
+        <comment>AssetsPanel#20</comment>
         <translation>Mídia</translation>
     </message>
     <message>
@@ -4560,27 +4927,28 @@
     </message>
     <message>
         <source>%1 file (*.%2)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ficheiro %1 (*.%2)</translation>
     </message>
     <message>
         <source>All files (*)</source>
+        <comment>AssetsPanel#24</comment>
         <translation type="unfinished">Todos os ficheiros (*)</translation>
     </message>
     <message>
         <source>Save As</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Guardar como</translation>
     </message>
     <message>
         <source>Saving “%1”…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A guardar “%1”…</translation>
     </message>
     <message>
         <source>Couldn’t save “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível guardar “%1”.</translation>
     </message>
     <message>
         <source>Saved “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">“%1” guardado.</translation>
     </message>
     <message>
         <source>Couldn’t import that folder.</source>
@@ -4588,69 +4956,72 @@
     </message>
     <message>
         <source>Link Proxy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vincular proxy</translation>
     </message>
     <message>
         <source>Link proxies by pattern?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vincular proxies por padrão?</translation>
     </message>
     <message>
         <source>Link</source>
-        <translation type="unfinished"></translation>
+        <comment>AssetsPanel#32</comment>
+        <translation type="unfinished">Vincular</translation>
     </message>
     <message numerus="yes">
         <source>“%1” matches this clip and %n other clips in the project. Drift will link them all, and link future imports whose proxy follows the same name.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>“%1” corresponde a este clip e a %n outros clips do projeto. O Drift irá associá-los todos e associará também futuras importações cujo proxy tenha o mesmo nome.</numerusform>
+            <numerusform>“%1” corresponde a este clip e a %n outros clips do projeto. O Drift irá associá-los todos e associará também futuras importações cujo proxy tenha o mesmo nome.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Linked this clip and %n other clips.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Linkei este clip de vídeo e %n outros clips.</numerusform>
+            <numerusform>Linkei este clip de vídeo e %n outros clips.</numerusform>
         </translation>
     </message>
     <message>
         <source>Couldn’t save files next to the media</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível guardar os ficheiros ao lado da multimédia</translation>
     </message>
     <message>
         <source>OK</source>
+        <comment>AssetsPanel#36</comment>
         <translation type="unfinished">OK</translation>
     </message>
     <message>
         <source>Drift can’t write to the folders listed below, because of their permissions or because they are on a read-only network share. The proxies or reversed clips were saved to Drift’s cache instead.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O Drift não consegue escrever nas pastas listadas abaixo, devido às suas permissões ou por estarem numa partilha de rede só de leitura. Os proxies ou clipes invertidos foram guardados na cache do Drift.</translation>
     </message>
     <message>
         <source>Linked the proxy. Future imports named like “%1” will link automatically.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Proxy vinculado. Importações futuras com nomes como “%1” serão vinculadas automaticamente.</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Importado %n ficheiro em %1 pastas — o máximo que uma importação de pasta aceita. Importe as subpastas restantes separadamente.</numerusform>
             <numerusform>Importados %n ficheiros em %1 pastas — o máximo que uma importação de pasta aceita. Importe as subpastas restantes separadamente.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Importado %n ficheiro em %1 pastas. %2 ficheiros foram ignorados — o Drift não reconhece o formato deles. Arraste-os para o compartimento para tentar mesmo assim.</numerusform>
             <numerusform>Importados %n ficheiros em %1 pastas. %2 ficheiros foram ignorados — o Drift não reconhece o formato deles. Arraste-os para o compartimento para tentar mesmo assim.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Importado %n ficheiro em %1 pastas.</numerusform>
             <numerusform>Importados %n ficheiros em %1 pastas.</numerusform>
         </translation>
     </message>
     <message>
         <source>All Files (*)</source>
+        <comment>AssetsPanel#42</comment>
         <translation>Todos os ficheiros (*)</translation>
     </message>
     <message>
@@ -4663,50 +5034,62 @@
     </message>
     <message>
         <source>Market</source>
+        <comment>AssetsPanel#45</comment>
         <translation>Mercado</translation>
     </message>
     <message>
         <source>Text</source>
+        <comment>AssetsPanel#46</comment>
         <translation>Texto</translation>
     </message>
     <message>
         <source>Subtitles</source>
+        <comment>AssetsPanel#47</comment>
         <translation>Legendas</translation>
     </message>
     <message>
         <source>Speech</source>
-        <translation type="unfinished"></translation>
+        <comment>AssetsPanel#48</comment>
+        <translation type="unfinished">Voz</translation>
     </message>
     <message>
         <source>Stickers</source>
+        <comment>AssetsPanel#49</comment>
         <translation>Adesivos</translation>
     </message>
     <message>
         <source>Shapes</source>
+        <comment>AssetsPanel#50</comment>
         <translation>Formas</translation>
     </message>
     <message>
         <source>Scenes</source>
+        <comment>AssetsPanel#51</comment>
         <translation>Cenas</translation>
     </message>
     <message>
         <source>Masks</source>
+        <comment>AssetsPanel#52</comment>
         <translation>Máscaras</translation>
     </message>
     <message>
         <source>Effects</source>
+        <comment>AssetsPanel#53</comment>
         <translation>Efeitos</translation>
     </message>
     <message>
         <source>Templates</source>
+        <comment>AssetsPanel#54</comment>
         <translation>Modelos</translation>
     </message>
     <message>
         <source>Transitions</source>
+        <comment>AssetsPanel#55</comment>
         <translation>Transições</translation>
     </message>
     <message>
         <source>Audio FX</source>
+        <comment>AssetsPanel#56</comment>
         <translation>Efeitos de áudio</translation>
     </message>
     <message>
@@ -4715,6 +5098,7 @@
     </message>
     <message>
         <source>Create</source>
+        <comment>AssetsPanel#58</comment>
         <translation>Criar</translation>
     </message>
     <message>
@@ -4731,7 +5115,7 @@
     </message>
     <message numerus="yes">
         <source>%n items</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n item</numerusform>
             <numerusform>%n itens</numerusform>
         </translation>
@@ -4742,7 +5126,7 @@
     </message>
     <message numerus="yes">
         <source>Removed %n items.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n item removido.</numerusform>
             <numerusform>%n itens removidos.</numerusform>
         </translation>
@@ -4789,6 +5173,7 @@
     <name>AssetsPanelImportOverlay</name>
     <message>
         <source>Importing…</source>
+        <comment>AssetsPanelImportOverlay#1</comment>
         <translation type="unfinished">Importando…</translation>
     </message>
     <message>
@@ -4800,6 +5185,7 @@
     <name>AssetsPanelImportSplit</name>
     <message>
         <source>Import</source>
+        <comment>AssetsPanelImportSplit#1</comment>
         <translation type="unfinished">Importar</translation>
     </message>
     <message>
@@ -4823,6 +5209,7 @@
     </message>
     <message>
         <source>Install audio effects</source>
+        <comment>AudioEffectBrowser#3</comment>
         <translation>Instalar efeitos de áudio</translation>
     </message>
     <message>
@@ -4831,11 +5218,11 @@
     </message>
     <message>
         <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar um efeito de áudio personalizado ou efeito a partir de um ficheiro .driftfx criado no Drift Forge</translation>
     </message>
     <message>
         <source>My Audio Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Os Meus Efeitos de Áudio</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
@@ -4843,26 +5230,32 @@
     </message>
     <message>
         <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation type="unfinished"></translation>
+        <comment>AudioEffectBrowser#8</comment>
+        <translation type="unfinished">Nada aqui ainda. Importe um ficheiro .driftfx para adicionar os seus.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
+        <comment>AudioEffectBrowser#9</comment>
         <translation>Nenhum favorito ainda. Marque predefinições com estrela para salvá-las aqui.</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
+        <comment>AudioEffectBrowser#10</comment>
         <translation>Nada nesta categoria.</translation>
     </message>
     <message>
         <source>%1 is empty</source>
-        <translation type="unfinished"></translation>
+        <comment>AudioEffectBrowser#11</comment>
+        <translation type="unfinished">%1 está vazio</translation>
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <comment>AudioEffectBrowser#12</comment>
+        <translation type="unfinished">Importe um ficheiro .driftfx criado no Drift Forge para adicionar os seus.</translation>
     </message>
     <message>
         <source>Import</source>
+        <comment>AudioEffectBrowser#13</comment>
         <translation type="unfinished">Importar</translation>
     </message>
 </context>
@@ -4870,6 +5263,7 @@
     <name>AudioEffectCatalog</name>
     <message>
         <source>Voice</source>
+        <comment>AudioEffectCatalog#1</comment>
         <translation>Voz</translation>
     </message>
     <message>
@@ -4878,6 +5272,7 @@
     </message>
     <message>
         <source>Texture</source>
+        <comment>AudioEffectCatalog#3</comment>
         <translation>Textura</translation>
     </message>
     <message>
@@ -4886,6 +5281,7 @@
     </message>
     <message>
         <source>Other</source>
+        <comment>AudioEffectCatalog#5</comment>
         <translation>Outros</translation>
     </message>
 </context>
@@ -4893,6 +5289,7 @@
     <name>AudioEffectHeader</name>
     <message>
         <source>%1 (not installed)</source>
+        <comment>AudioEffectHeader#1</comment>
         <translation type="unfinished">%1 (não instalado)</translation>
     </message>
     <message>
@@ -4905,10 +5302,12 @@
     </message>
     <message>
         <source>Disable audio effect</source>
+        <comment>AudioEffectHeader#4</comment>
         <translation type="unfinished">Desativar efeito de áudio</translation>
     </message>
     <message>
         <source>Enable audio effect</source>
+        <comment>AudioEffectHeader#5</comment>
         <translation type="unfinished">Ativar efeito de áudio</translation>
     </message>
     <message>
@@ -4917,6 +5316,7 @@
     </message>
     <message>
         <source>Remove audio effect</source>
+        <comment>AudioEffectHeader#7</comment>
         <translation type="unfinished">Remover efeito de áudio</translation>
     </message>
 </context>
@@ -4924,22 +5324,26 @@
     <name>AudioEffectPresetCard</name>
     <message>
         <source>%1 — click to apply to the selection, or drag onto a clip</source>
-        <translation type="unfinished"></translation>
+        <comment>AudioEffectPresetCard#1</comment>
+        <translation type="unfinished">%1 — clique para aplicar à seleção ou arraste para um clipe</translation>
     </message>
     <message>
         <source>%1 — drag onto a clip in the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 — arraste para um clipe na linha do tempo</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
+        <comment>AudioEffectPresetCard#3</comment>
         <translation type="unfinished">Aplicar ao clipe selecionado</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
+        <comment>AudioEffectPresetCard#4</comment>
         <translation type="unfinished">Remover dos favoritos</translation>
     </message>
     <message>
         <source>Add to favorites</source>
+        <comment>AudioEffectPresetCard#5</comment>
         <translation type="unfinished">Adicionar aos favoritos</translation>
     </message>
 </context>
@@ -4959,6 +5363,7 @@
     </message>
     <message>
         <source>Install audio effects</source>
+        <comment>AudioEffectsInspector#4</comment>
         <translation>Instalar efeitos de áudio</translation>
     </message>
     <message>
@@ -4975,10 +5380,12 @@
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <comment>AudioEffectsInspector#8</comment>
         <translation type="unfinished">Vá até um tempo, defina um valor e clique no losango para adicionar um quadro-chave. Com Quadros-chave automáticos ativados, arrastar um controle deslizante também os cria.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
+        <comment>AudioEffectsInspector#9</comment>
         <translation type="unfinished">Quadros-chave automáticos</translation>
     </message>
 </context>
@@ -4986,26 +5393,32 @@
     <name>AudioInspector</name>
     <message>
         <source>Volume</source>
+        <comment>AudioInspector#1</comment>
         <translation>Volume</translation>
     </message>
     <message>
         <source>Recommended caption length</source>
+        <comment>AudioInspector#2</comment>
         <translation>Tamanho recomendado da legenda</translation>
     </message>
     <message>
         <source>1 word per caption</source>
+        <comment>AudioInspector#3</comment>
         <translation>1 palavra por legenda</translation>
     </message>
     <message>
         <source>%1 words per caption</source>
+        <comment>AudioInspector#4</comment>
         <translation>%1 palavras por legenda</translation>
     </message>
     <message>
         <source>Pan</source>
+        <comment>AudioInspector#5</comment>
         <translation>Panorâmica</translation>
     </message>
     <message>
         <source>C</source>
+        <comment>AudioInspector#6</comment>
         <translation>C</translation>
     </message>
     <message>
@@ -5018,14 +5431,17 @@
     </message>
     <message>
         <source>Pan changed</source>
+        <comment>AudioInspector#9</comment>
         <translation>Panorâmica alterada</translation>
     </message>
     <message>
         <source>Centre</source>
+        <comment>AudioInspector#10</comment>
         <translation>Centro</translation>
     </message>
     <message>
         <source>Audio track</source>
+        <comment>AudioInspector#11</comment>
         <translation>Faixa de áudio</translation>
     </message>
     <message>
@@ -5038,26 +5454,32 @@
     </message>
     <message>
         <source>Remove noise…</source>
+        <comment>AudioInspector#14</comment>
         <translation>Remover ruído…</translation>
     </message>
     <message>
         <source>Download noise removal (about 9 MB)</source>
+        <comment>AudioInspector#15</comment>
         <translation>Transferir remoção de ruído (cerca de 9 MB)</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
+        <comment>AudioInspector#16</comment>
         <translation>Instale o mecanismo de IA primeiro</translation>
     </message>
     <message>
         <source>Auto subtitles</source>
+        <comment>AudioInspector#17</comment>
         <translation>Legendas automáticas</translation>
     </message>
     <message>
         <source>Shorter captions are timed by splitting each phrase evenly, so they can drift slightly out of sync with the speech.</source>
+        <comment>AudioInspector#18</comment>
         <translation>O tempo das legendas mais curtas é definido dividindo cada frase em partes iguais, então elas podem ficar um pouco fora de sincronia com a fala.</translation>
     </message>
     <message>
         <source>Creating captions… %1%</source>
+        <comment>AudioInspector#19</comment>
         <translation>Criando legendas… %1%</translation>
     </message>
     <message>
@@ -5070,6 +5492,7 @@
     </message>
     <message>
         <source>Download speech recognition (about 670 MB)</source>
+        <comment>AudioInspector#22</comment>
         <translation>Transferir reconhecimento de fala (cerca de 670 MB)</translation>
     </message>
 </context>
@@ -5077,69 +5500,72 @@
     <name>AudioMixerPanel</name>
     <message>
         <source>Loudness: not measured</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Intensidade sonora: não medida</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Falhou</translation>
     </message>
     <message>
         <source>Loudness: %1 LUFS, true peak %2 dBTP</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Intensidade sonora: %1 LUFS, pico verdadeiro %2 dBTP</translation>
     </message>
     <message>
         <source>Normalized to %1 LUFS, but peaks clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Normalizado para %1 LUFS, mas os picos saturam</translation>
     </message>
     <message>
         <source>Normalized to %1 LUFS</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Normalizado para %1 LUFS</translation>
     </message>
     <message>
         <source>Audio Mixer</source>
+        <comment>AudioMixerPanel#6</comment>
         <translation type="unfinished">Mixer de áudio</translation>
     </message>
     <message>
         <source>Analyze</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Analisar</translation>
     </message>
     <message>
         <source>Measure loudness of the selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Medir a intensidade sonora do clipe selecionado</translation>
     </message>
     <message>
         <source>Select a clip first</source>
-        <translation type="unfinished"></translation>
+        <comment>AudioMixerPanel#9</comment>
+        <translation type="unfinished">Selecione primeiro um clipe</translation>
     </message>
     <message>
         <source>Normalize to</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Normalizar para</translation>
     </message>
     <message>
         <source>-14 LUFS</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">-14 LUFS</translation>
     </message>
     <message>
         <source>-16 LUFS</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">-16 LUFS</translation>
     </message>
     <message>
         <source>-23 LUFS</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">-23 LUFS</translation>
     </message>
     <message>
         <source>Normalize</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Normalizar</translation>
     </message>
     <message>
         <source>Set the selected clip&apos;s volume to the chosen loudness</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Definir o volume do clipe selecionado para a intensidade sonora escolhida</translation>
     </message>
 </context>
 <context>
     <name>AudioMixerStrip</name>
     <message>
         <source>Audio Mixer</source>
+        <comment>AudioMixerStrip#1</comment>
         <translation>Mixer de áudio</translation>
     </message>
     <message>
@@ -5160,10 +5586,12 @@
     </message>
     <message>
         <source>Resume recording</source>
+        <comment>AudioMixerStrip#6</comment>
         <translation>Retomar gravação</translation>
     </message>
     <message>
         <source>Pause recording</source>
+        <comment>AudioMixerStrip#7</comment>
         <translation>Pausar gravação</translation>
     </message>
     <message>
@@ -5176,6 +5604,7 @@
     </message>
     <message>
         <source>Default Mic</source>
+        <comment>AudioMixerStrip#10</comment>
         <translation>Microfone padrão</translation>
     </message>
     <message>
@@ -5188,10 +5617,12 @@
     </message>
     <message>
         <source>Master</source>
+        <comment>AudioMixerStrip#13</comment>
         <translation>Master</translation>
     </message>
     <message>
         <source>C</source>
+        <comment>AudioMixerStrip#14</comment>
         <translation>C</translation>
     </message>
     <message>
@@ -5230,6 +5661,7 @@
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
+        <comment>BinBreadcrumb#1</comment>
         <translation>Mídia</translation>
     </message>
 </context>
@@ -5237,6 +5669,7 @@
     <name>BlendingInspector</name>
     <message>
         <source>Blend mode</source>
+        <comment>BlendingInspector#1</comment>
         <translation>Modo de mesclagem</translation>
     </message>
     <message>
@@ -5245,30 +5678,37 @@
     </message>
     <message>
         <source>Normal</source>
+        <comment>BlendingInspector#3</comment>
         <translation>Normal</translation>
     </message>
     <message>
         <source>Multiply</source>
+        <comment>BlendingInspector#4</comment>
         <translation>Multiplicar</translation>
     </message>
     <message>
         <source>Screen</source>
+        <comment>BlendingInspector#5</comment>
         <translation>Divisão</translation>
     </message>
     <message>
         <source>Overlay</source>
+        <comment>BlendingInspector#6</comment>
         <translation>Sobreposição</translation>
     </message>
     <message>
         <source>Add</source>
+        <comment>BlendingInspector#7</comment>
         <translation>Adicionar</translation>
     </message>
     <message>
         <source>Darken</source>
+        <comment>BlendingInspector#8</comment>
         <translation>Escurecer</translation>
     </message>
     <message>
         <source>Lighten</source>
+        <comment>BlendingInspector#9</comment>
         <translation>Clarear</translation>
     </message>
     <message>
@@ -5284,62 +5724,62 @@
     <name>CameraInspector</name>
     <message>
         <source>Pan X</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pan X</translation>
     </message>
     <message>
         <source>Pan Y</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pan Y</translation>
     </message>
     <message>
         <source>Dolly</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Dolly</translation>
     </message>
     <message>
         <source>Pitch</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pitch</translation>
     </message>
     <message>
         <source>Yaw</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Yaw</translation>
     </message>
     <message>
         <source>Roll</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Roll</translation>
     </message>
     <message>
         <source>Lens</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Lente</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de câmara para enquadrar a tomada.</translation>
     </message>
     <message>
         <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tudo na linha do tempo é visto através desta câmara enquanto o clipe dura. Uma câmara em repouso é exatamente igual a não haver câmara nenhuma, pelo que os números abaixo são todos desvios em relação à vista normal.</translation>
     </message>
     <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Uma lente curta exagera a profundidade; uma longa aplaná-la-á. Enquanto esta câmara está ativa, substitui o valor de Perspetiva de cada clipe, porque uma cena tem um único observador.</translation>
     </message>
     <message>
         <source>Reset camera position</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repor posição da câmara</translation>
     </message>
     <message>
         <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">De volta ao repouso: sem pan, dolly ou rotação, a enquadrar a tela de frente. A lente é mantida.</translation>
     </message>
 </context>
 <context>
     <name>ChannelKeyButton</name>
     <message>
         <source>Remove %1 keyframe at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Remover o quadro-chave %1 no cursor de reprodução</translation>
     </message>
     <message>
         <source>Add %1 keyframe at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar o quadro-chave %1 no cursor de reprodução</translation>
     </message>
 </context>
 <context>
@@ -5377,14 +5817,17 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>CollectMediaDialog#6</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Move</source>
+        <comment>CollectMediaDialog#7</comment>
         <translation>Mover</translation>
     </message>
     <message>
         <source>Copy</source>
+        <comment>CollectMediaDialog#8</comment>
         <translation>Copiar</translation>
     </message>
 </context>
@@ -5392,71 +5835,73 @@
     <name>ColorController</name>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorController#1</comment>
+        <translation type="unfinished">Nenhuma</translation>
     </message>
     <message>
         <source>Adjust color</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ajustar cor</translation>
     </message>
     <message>
         <source>Set look</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Definir aparência</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorController#4</comment>
+        <translation type="unfinished">Repor %1</translation>
     </message>
     <message>
         <source>Reset grade</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repor graduação</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n look(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n visual importado</numerusform>
+            <numerusform>%n visuais importados</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n look(s), %1 failed</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Foram importados %n visual, %1 falhou</numerusform>
+            <numerusform>Foram importados %n visuais, %1 falharam</numerusform>
         </translation>
     </message>
     <message>
         <source>Could not remove the look</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível remover a aparência</translation>
     </message>
     <message>
         <source>Look removed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparência removida</translation>
     </message>
     <message>
         <source>Could not rename the look</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível renomear a aparência</translation>
     </message>
     <message>
         <source>Look renamed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparência renomeada</translation>
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Grade este clipe antes de o aplicar aos outros</translation>
     </message>
     <message>
         <source>No other clips to apply the grade to</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não há outros clipes para aplicar a graduação</translation>
     </message>
     <message>
         <source>Apply grade to all clips</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aplicar graduação a todos os clipes</translation>
     </message>
     <message numerus="yes">
         <source>Grade applied to %n clip(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Gradiente aplicado a %n clip(s)</numerusform>
+            <numerusform>Gradiente aplicado a %n clip(s)</numerusform>
         </translation>
     </message>
 </context>
@@ -5472,6 +5917,7 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>ColorEyedropper#3</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
 </context>
@@ -5479,188 +5925,216 @@
     <name>ColorPanel</name>
     <message>
         <source>Basic</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#1</comment>
+        <translation type="unfinished">Básico</translation>
     </message>
     <message>
         <source>Wheels</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Rodas</translation>
     </message>
     <message>
         <source>Curves</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#3</comment>
+        <translation type="unfinished">Curvas</translation>
     </message>
     <message>
         <source>Finishing</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Acabamento</translation>
     </message>
     <message>
         <source>Exposure</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#5</comment>
+        <translation type="unfinished">Exposição</translation>
     </message>
     <message>
         <source>Contrast</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#6</comment>
+        <translation type="unfinished">Contraste</translation>
     </message>
     <message>
         <source>Highlights</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#7</comment>
+        <translation type="unfinished">Realces</translation>
     </message>
     <message>
         <source>Shadows</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#8</comment>
+        <translation type="unfinished">Sombras</translation>
     </message>
     <message>
         <source>Whites</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#9</comment>
+        <translation type="unfinished">Brancos</translation>
     </message>
     <message>
         <source>Blacks</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#10</comment>
+        <translation type="unfinished">Pretos</translation>
     </message>
     <message>
         <source>Temperature</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#11</comment>
+        <translation type="unfinished">Temperatura</translation>
     </message>
     <message>
         <source>Tint</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#12</comment>
+        <translation type="unfinished">Tonalidade</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#13</comment>
+        <translation type="unfinished">Saturação</translation>
     </message>
     <message>
         <source>Vibrance</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#14</comment>
+        <translation type="unfinished">Vibração</translation>
     </message>
     <message>
         <source>Midtones</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Meios-tons</translation>
     </message>
     <message>
         <source>Film Grain</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#16</comment>
+        <translation type="unfinished">Grão de filme</translation>
     </message>
     <message>
         <source>Glow</source>
+        <comment>ColorPanel#17</comment>
         <translation type="unfinished">Brilho</translation>
     </message>
     <message>
         <source>Chromatic Aberration</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#18</comment>
+        <translation type="unfinished">Aberração cromática</translation>
     </message>
     <message>
         <source>Vignette</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#19</comment>
+        <translation type="unfinished">Vinheta</translation>
     </message>
     <message>
         <source>Halation</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Halation</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#21</comment>
+        <translation type="unfinished">Nenhuma</translation>
     </message>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#22</comment>
+        <translation type="unfinished">Repor %1</translation>
     </message>
     <message>
         <source>No clip selected</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhum clipe selecionado</translation>
     </message>
     <message>
         <source>Compare</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#24</comment>
+        <translation type="unfinished">Comparar</translation>
     </message>
     <message>
         <source>Hold to see the original (or hold the  key)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mantenha premido para ver o original (ou mantenha premida a tecla )</translation>
     </message>
     <message>
         <source>Apply to all…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aplicar a tudo…</translation>
     </message>
     <message>
         <source>Copy this grade to every clip on the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Copiar esta graduação para todos os clipes da linha do tempo</translation>
     </message>
     <message>
         <source>Reset</source>
+        <comment>ColorPanel#28</comment>
         <translation type="unfinished">Redefinir</translation>
     </message>
     <message>
         <source>Reset everything</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repor tudo</translation>
     </message>
     <message>
         <source>Reset this tab</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repor este separador</translation>
     </message>
     <message>
         <source>Light</source>
+        <comment>ColorPanel#31</comment>
         <translation type="unfinished">Luz</translation>
     </message>
     <message>
         <source>Adjust %1</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#32</comment>
+        <translation type="unfinished">Ajustar %1</translation>
     </message>
     <message>
         <source>Color</source>
+        <comment>ColorPanel#33</comment>
         <translation type="unfinished">Cor</translation>
     </message>
     <message>
         <source>Look</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparência</translation>
     </message>
     <message>
         <source>Look Intensity</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#35</comment>
+        <translation type="unfinished">Intensidade da aparência</translation>
     </message>
     <message>
         <source>Adjust curves</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ajustar curvas</translation>
     </message>
     <message>
         <source>Remove</source>
+        <comment>ColorPanel#37</comment>
         <translation type="unfinished">Remover</translation>
     </message>
     <message>
         <source>Select a clip to color grade it</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe para o graduar</translation>
     </message>
     <message>
         <source>Or grade the whole timeline at once.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ou grade a linha do tempo inteira de uma vez.</translation>
     </message>
     <message>
         <source>Grade whole timeline</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Graduar linha do tempo inteira</translation>
     </message>
     <message>
         <source>Apply to all clips</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorPanel#41</comment>
+        <translation type="unfinished">Aplicar a todos os clipes</translation>
     </message>
     <message>
         <source>Apply</source>
+        <comment>ColorPanel#42</comment>
         <translation type="unfinished">Aplicar</translation>
     </message>
     <message numerus="yes">
         <source>Applied to %n clip(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Aplicado a %n clip(s)</numerusform>
+            <numerusform>Aplicado a %n clip(s)</numerusform>
         </translation>
     </message>
     <message>
         <source>Include finishing effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Incluir efeitos de acabamento</translation>
     </message>
 </context>
 <context>
     <name>ColorSwatchButton</name>
     <message>
         <source>Choose colour</source>
+        <comment>ColorSwatchButton#1</comment>
         <translation type="unfinished">Escolher cor</translation>
     </message>
 </context>
@@ -5668,10 +6142,12 @@
     <name>ColorSwatchField</name>
     <message>
         <source>Choose colour</source>
+        <comment>ColorSwatchField#1</comment>
         <translation>Escolher cor</translation>
     </message>
     <message>
         <source>Enter a color like #FF0000</source>
+        <comment>ColorSwatchField#2</comment>
         <translation>Digite uma cor como #FF0000</translation>
     </message>
     <message>
@@ -5683,11 +6159,13 @@
     <name>ColorWheel</name>
     <message>
         <source>Reset %1</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorWheel#1</comment>
+        <translation type="unfinished">Repor %1</translation>
     </message>
     <message>
         <source>Brightness</source>
-        <translation type="unfinished"></translation>
+        <comment>ColorWheel#2</comment>
+        <translation type="unfinished">Brilho</translation>
     </message>
 </context>
 <context>
@@ -5702,6 +6180,7 @@
     </message>
     <message>
         <source>Reset</source>
+        <comment>CropOverlay#3</comment>
         <translation>Redefinir</translation>
     </message>
     <message>
@@ -5710,6 +6189,7 @@
     </message>
     <message>
         <source>Apply</source>
+        <comment>CropOverlay#5</comment>
         <translation>Aplicar</translation>
     </message>
 </context>
@@ -5732,11 +6212,12 @@
     <name>CurveEditor</name>
     <message>
         <source>Master</source>
+        <comment>CurveEditor#1</comment>
         <translation type="unfinished">Master</translation>
     </message>
     <message>
         <source>Reset channel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repor canal</translation>
     </message>
 </context>
 <context>
@@ -5766,6 +6247,7 @@
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
+        <comment>DebugInfoDialog#1</comment>
         <translation>Informações de depuração</translation>
     </message>
     <message>
@@ -5774,6 +6256,7 @@
     </message>
     <message>
         <source>Close</source>
+        <comment>DebugInfoDialog#3</comment>
         <translation>Fechar</translation>
     </message>
     <message>
@@ -5786,6 +6269,7 @@
     </message>
     <message>
         <source>Playback</source>
+        <comment>DebugInfoDialog#6</comment>
         <translation>Reprodução</translation>
     </message>
     <message>
@@ -5798,6 +6282,7 @@
     </message>
     <message>
         <source>System</source>
+        <comment>DebugInfoDialog#9</comment>
         <translation>Sistema</translation>
     </message>
     <message>
@@ -5821,6 +6306,7 @@
     <name>DebugInfoPlaybackTab</name>
     <message>
         <source>Playback</source>
+        <comment>DebugInfoPlaybackTab#1</comment>
         <translation type="unfinished">Reprodução</translation>
     </message>
     <message>
@@ -5877,10 +6363,12 @@
     </message>
     <message>
         <source>Preview upload</source>
+        <comment>DebugInfoPlaybackTab#15</comment>
         <translation type="unfinished">Upload da pré-visualização</translation>
     </message>
     <message>
         <source>Decode</source>
+        <comment>DebugInfoPlaybackTab#16</comment>
         <translation type="unfinished">Decodificação</translation>
     </message>
     <message>
@@ -5952,10 +6440,12 @@
     </message>
     <message>
         <source>Open Add-ons</source>
+        <comment>DebugInfoSystemTab#11</comment>
         <translation type="unfinished">Abrir complementos</translation>
     </message>
     <message>
         <source>System</source>
+        <comment>DebugInfoSystemTab#12</comment>
         <translation type="unfinished">Sistema</translation>
     </message>
 </context>
@@ -5971,6 +6461,7 @@
     </message>
     <message>
         <source>Reading audio…</source>
+        <comment>DenoiseController#3</comment>
         <translation>Lendo áudio…</translation>
     </message>
     <message>
@@ -5979,6 +6470,7 @@
     </message>
     <message>
         <source>No audio decoded</source>
+        <comment>DenoiseController#5</comment>
         <translation>Nenhum áudio decodificado</translation>
     </message>
     <message>
@@ -5999,6 +6491,7 @@
     </message>
     <message>
         <source>Select a video or audio clip</source>
+        <comment>DenoiseController#10</comment>
         <translation>Selecione um clipe de vídeo ou áudio</translation>
     </message>
     <message>
@@ -6007,6 +6500,7 @@
     </message>
     <message>
         <source>Starting…</source>
+        <comment>DenoiseController#12</comment>
         <translation>Iniciando…</translation>
     </message>
     <message>
@@ -6023,14 +6517,17 @@
     </message>
     <message>
         <source>Could not create an output file</source>
+        <comment>DenoiseController#16</comment>
         <translation>Não foi possível criar um ficheiro de saída</translation>
     </message>
     <message>
         <source>Done</source>
+        <comment>DenoiseController#17</comment>
         <translation>Concluído</translation>
     </message>
     <message>
         <source>Clip</source>
+        <comment>DenoiseController#18</comment>
         <translation>Clipe</translation>
     </message>
     <message>
@@ -6039,10 +6536,12 @@
     </message>
     <message>
         <source>Remove noise</source>
+        <comment>DenoiseController#20</comment>
         <translation>Remover ruído</translation>
     </message>
     <message>
         <source>Noise removed</source>
+        <comment>DenoiseController#21</comment>
         <translation>Ruído removido</translation>
     </message>
 </context>
@@ -6050,22 +6549,26 @@
     <name>DenoisePanel</name>
     <message>
         <source>Noise Removal</source>
-        <translation type="unfinished"></translation>
+        <comment>DenoisePanel#1</comment>
+        <translation type="unfinished">Remoção de ruído</translation>
     </message>
     <message>
         <source>Download noise removal (about 9 MB)</source>
+        <comment>DenoisePanel#2</comment>
         <translation type="unfinished">Transferir remoção de ruído (cerca de 9 MB)</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
-        <translation type="unfinished"></translation>
+        <comment>DenoisePanel#3</comment>
+        <translation type="unfinished">Instale primeiro o motor de IA</translation>
     </message>
     <message>
         <source>Select an audio or video clip to remove noise</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de áudio ou vídeo para remover o ruído</translation>
     </message>
     <message>
         <source>Open Add-ons</source>
+        <comment>DenoisePanel#5</comment>
         <translation type="unfinished">Abrir complementos</translation>
     </message>
 </context>
@@ -6077,18 +6580,22 @@
     </message>
     <message>
         <source>Original</source>
+        <comment>DenoiseView#2</comment>
         <translation type="unfinished">Original</translation>
     </message>
     <message>
         <source>Noise removed</source>
+        <comment>DenoiseView#3</comment>
         <translation type="unfinished">Ruído removido</translation>
     </message>
     <message>
         <source>Stop</source>
+        <comment>DenoiseView#4</comment>
         <translation type="unfinished">Parar</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>DenoiseView#5</comment>
         <translation type="unfinished">Reproduzir</translation>
     </message>
     <message>
@@ -6097,14 +6604,17 @@
     </message>
     <message>
         <source>s</source>
+        <comment>DenoiseView#7</comment>
         <translation type="unfinished">s</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>DenoiseView#8</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Remove noise</source>
+        <comment>DenoiseView#9</comment>
         <translation type="unfinished">Remover ruído</translation>
     </message>
 </context>
@@ -6119,6 +6629,7 @@
     <name>DenoiseWindow</name>
     <message>
         <source>Remove noise</source>
+        <comment>DenoiseWindow#1</comment>
         <translation>Remover ruído</translation>
     </message>
 </context>
@@ -6161,6 +6672,7 @@
     <name>DepthEffectAimRing</name>
     <message>
         <source>Aim light</source>
+        <comment>DepthEffectAimRing#1</comment>
         <translation type="unfinished">Direcionar luz</translation>
     </message>
 </context>
@@ -6183,6 +6695,7 @@
     <name>DepthEffectLightKnob</name>
     <message>
         <source>Move light</source>
+        <comment>DepthEffectLightKnob#1</comment>
         <translation type="unfinished">Mover luz</translation>
     </message>
 </context>
@@ -6190,6 +6703,7 @@
     <name>DepthLight3dAimRing</name>
     <message>
         <source>Aim light</source>
+        <comment>DepthLight3dAimRing#1</comment>
         <translation type="unfinished">Direcionar luz</translation>
     </message>
 </context>
@@ -6197,6 +6711,7 @@
     <name>DepthLight3dKnob</name>
     <message>
         <source>Move light</source>
+        <comment>DepthLight3dKnob#1</comment>
         <translation type="unfinished">Mover luz</translation>
     </message>
 </context>
@@ -6204,54 +6719,60 @@
     <name>DesignerSlot</name>
     <message>
         <source>Add as tab</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar como separador</translation>
     </message>
 </context>
 <context>
     <name>DesignerWorkspaceList</name>
     <message>
         <source>Built-in</source>
+        <comment>DesignerWorkspaceList#1</comment>
         <translation type="unfinished">Integrados</translation>
     </message>
     <message>
         <source>Modified</source>
+        <comment>DesignerWorkspaceList#2</comment>
         <translation type="unfinished">Modificado em</translation>
     </message>
     <message>
         <source>Active</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ativa</translation>
     </message>
     <message>
         <source>Not saved yet</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ainda não guardada</translation>
     </message>
     <message>
         <source>New</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nova</translation>
     </message>
     <message>
         <source>Duplicate</source>
+        <comment>DesignerWorkspaceList#6</comment>
         <translation type="unfinished">Duplicar</translation>
     </message>
     <message>
         <source>Rename</source>
+        <comment>DesignerWorkspaceList#7</comment>
         <translation type="unfinished">Renomear</translation>
     </message>
     <message>
         <source>Confirm delete</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Confirmar eliminação</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>DesignerWorkspaceList#9</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
     <message>
         <source>Reset</source>
+        <comment>DesignerWorkspaceList#10</comment>
         <translation type="unfinished">Redefinir</translation>
     </message>
     <message>
         <source>Set active</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Definir como ativa</translation>
     </message>
 </context>
 <context>
@@ -6266,10 +6787,12 @@
     </message>
     <message>
         <source>%1 MB</source>
+        <comment>DownloadFormat#3</comment>
         <translation>%1 MB</translation>
     </message>
     <message>
         <source>%1 GB</source>
+        <comment>DownloadFormat#4</comment>
         <translation>%1 GB</translation>
     </message>
     <message>
@@ -6278,20 +6801,21 @@
     </message>
     <message numerus="yes">
         <source>%n second(s) left</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n segundo restante</numerusform>
             <numerusform>%n segundos restantes</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n minute(s) left</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n minuto restante</numerusform>
             <numerusform>%n minutos restantes</numerusform>
         </translation>
     </message>
     <message>
         <source>Cancelled</source>
+        <comment>DownloadFormat#8</comment>
         <translation>Cancelado</translation>
     </message>
     <message>
@@ -6304,6 +6828,7 @@
     </message>
     <message>
         <source>In the media bin</source>
+        <comment>DownloadFormat#11</comment>
         <translation>No compartimento de mídia</translation>
     </message>
     <message>
@@ -6315,10 +6840,12 @@
     <name>DownloadsJobRow</name>
     <message>
         <source>Try again</source>
+        <comment>DownloadsJobRow#1</comment>
         <translation type="unfinished">Tentar novamente</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>DownloadsJobRow#2</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
 </context>
@@ -6326,11 +6853,12 @@
     <name>DownloadsWindow</name>
     <message>
         <source>Downloads</source>
+        <comment>DownloadsWindow#1</comment>
         <translation>Transferências</translation>
     </message>
     <message numerus="yes">
         <source>%n active</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n ativo</numerusform>
             <numerusform>%n ativos</numerusform>
         </translation>
@@ -6345,6 +6873,7 @@
     </message>
     <message>
         <source>Clear finished</source>
+        <comment>DownloadsWindow#5</comment>
         <translation>Limpar concluídos</translation>
     </message>
     <message>
@@ -6360,22 +6889,24 @@
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
+        <comment>DriftAssetCard#1</comment>
         <translation>Adicionar</translation>
     </message>
     <message numerus="yes">
         <source>%n style(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n estilo(s)</numerusform>
+            <numerusform>%n estilo(s)</numerusform>
         </translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>DriftAssetCard#3</comment>
         <translation>%1 s</translation>
     </message>
     <message numerus="yes">
         <source>%n colour(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n cor</numerusform>
             <numerusform>%n cores</numerusform>
         </translation>
@@ -6390,6 +6921,7 @@
     </message>
     <message>
         <source>Retry</source>
+        <comment>DriftAssetCard#7</comment>
         <translation>Tentar novamente</translation>
     </message>
     <message>
@@ -6413,10 +6945,12 @@
     </message>
     <message>
         <source>Back</source>
+        <comment>DriftAssetDetail#4</comment>
         <translation>Voltar</translation>
     </message>
     <message>
         <source>Style</source>
+        <comment>DriftAssetDetail#5</comment>
         <translation type="unfinished">Estilo</translation>
     </message>
     <message>
@@ -6425,10 +6959,12 @@
     </message>
     <message>
         <source>Reset</source>
+        <comment>DriftAssetDetail#7</comment>
         <translation>Redefinir</translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>DriftAssetDetail#8</comment>
         <translation>%1 s</translation>
     </message>
     <message>
@@ -6453,10 +6989,12 @@
     </message>
     <message>
         <source>Apply to selected clip</source>
+        <comment>DriftAssetDetail#14</comment>
         <translation>Aplicar ao clipe selecionado</translation>
     </message>
     <message>
         <source>Add at playhead</source>
+        <comment>DriftAssetDetail#15</comment>
         <translation>Adicionar no cursor de reprodução</translation>
     </message>
     <message>
@@ -6477,6 +7015,7 @@
     </message>
     <message>
         <source>Choose colour</source>
+        <comment>DriftAssetDetail#20</comment>
         <translation>Escolher cor</translation>
     </message>
 </context>
@@ -6496,6 +7035,7 @@
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
+        <comment>DriftAssetStore#4</comment>
         <translation>Não foi possível gravar na pasta de dados do aplicação.</translation>
     </message>
     <message>
@@ -6504,6 +7044,7 @@
     </message>
     <message>
         <source>That download was damaged. Try again.</source>
+        <comment>DriftAssetStore#6</comment>
         <translation>Esse transferência estava corrompido. Tente novamente.</translation>
     </message>
     <message>
@@ -6519,10 +7060,12 @@
     <name>DriftAssetsHome</name>
     <message>
         <source>Apply</source>
+        <comment>DriftAssetsHome#1</comment>
         <translation>Aplicar</translation>
     </message>
     <message>
         <source>Add</source>
+        <comment>DriftAssetsHome#2</comment>
         <translation>Adicionar</translation>
     </message>
     <message>
@@ -6535,6 +7078,7 @@
     </message>
     <message>
         <source>Added to the media bin</source>
+        <comment>DriftAssetsHome#5</comment>
         <translation>Adicionado ao compartimento de mídia</translation>
     </message>
     <message>
@@ -6543,6 +7087,7 @@
     </message>
     <message>
         <source>Try again</source>
+        <comment>DriftAssetsHome#7</comment>
         <translation>Tentar novamente</translation>
     </message>
     <message>
@@ -6578,10 +7123,12 @@
     <name>EditorHeader</name>
     <message>
         <source>Drift project (*.drift)</source>
+        <comment>EditorHeader#1</comment>
         <translation>Projeto do Drift (*.drift)</translation>
     </message>
     <message>
         <source>Save Project</source>
+        <comment>EditorHeader#2</comment>
         <translation>Guardar projeto</translation>
     </message>
     <message>
@@ -6590,6 +7137,7 @@
     </message>
     <message>
         <source>JSON document (*.json)</source>
+        <comment>EditorHeader#4</comment>
         <translation>Documento JSON (*.json)</translation>
     </message>
     <message>
@@ -6598,30 +7146,37 @@
     </message>
     <message>
         <source>All Files (*)</source>
+        <comment>EditorHeader#6</comment>
         <translation>Todos os ficheiros (*)</translation>
     </message>
     <message>
         <source>Name your project</source>
-        <translation type="unfinished"></translation>
+        <comment>EditorHeader#7</comment>
+        <translation type="unfinished">Nomeie o seu projeto</translation>
     </message>
     <message>
         <source>Save Project As</source>
+        <comment>EditorHeader#8</comment>
         <translation>Guardar projeto como</translation>
     </message>
     <message>
         <source>%1 copy</source>
+        <comment>EditorHeader#9</comment>
         <translation>Cópia de %1</translation>
     </message>
     <message>
         <source>Save Shareable Copy</source>
+        <comment>EditorHeader#10</comment>
         <translation>Guardar cópia partilhável</translation>
     </message>
     <message>
         <source>Untitled Project</source>
+        <comment>EditorHeader#11</comment>
         <translation type="unfinished">Projeto sem título</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>EditorHeader#12</comment>
         <translation>Guardar</translation>
     </message>
     <message>
@@ -6630,26 +7185,32 @@
     </message>
     <message>
         <source>Save project</source>
+        <comment>EditorHeader#14</comment>
         <translation>Guardar projeto</translation>
     </message>
     <message>
         <source>Video</source>
+        <comment>EditorHeader#15</comment>
         <translation>Vídeo</translation>
     </message>
     <message>
         <source>Video size and layout</source>
+        <comment>EditorHeader#16</comment>
         <translation>Tamanho e layout do vídeo</translation>
     </message>
     <message>
         <source>Agent</source>
+        <comment>EditorHeader#17</comment>
         <translation>Agente</translation>
     </message>
     <message>
         <source>Agent access is on</source>
+        <comment>EditorHeader#18</comment>
         <translation>Acesso do agente ativado</translation>
     </message>
     <message>
         <source>Agent access</source>
+        <comment>EditorHeader#19</comment>
         <translation>Acesso de agente</translation>
     </message>
 </context>
@@ -6664,6 +7225,7 @@
     </message>
     <message>
         <source>Downloads</source>
+        <comment>EditorHeaderDownloadsButton#2</comment>
         <translation type="unfinished">Transferências</translation>
     </message>
 </context>
@@ -6678,14 +7240,17 @@
     <name>EditorHeaderExportButton</name>
     <message>
         <source>Export video</source>
+        <comment>EditorHeaderExportButton#1</comment>
         <translation type="unfinished">Exportar vídeo</translation>
     </message>
     <message>
         <source>Export</source>
+        <comment>EditorHeaderExportButton#2</comment>
         <translation type="unfinished">Exportar</translation>
     </message>
     <message>
         <source>Export already in progress</source>
+        <comment>EditorHeaderExportButton#3</comment>
         <translation type="unfinished">Exportação já em andamento</translation>
     </message>
 </context>
@@ -6693,6 +7258,7 @@
     <name>EditorHeaderExtrasButton</name>
     <message>
         <source>Extras</source>
+        <comment>EditorHeaderExtrasButton#1</comment>
         <translation type="unfinished">Extras</translation>
     </message>
     <message>
@@ -6704,11 +7270,12 @@
     <name>EditorHeaderNotificationsButton</name>
     <message>
         <source>Notifications — Drift %1 is available</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Notificações — O Drift %1 está disponível</translation>
     </message>
     <message>
         <source>Notifications</source>
-        <translation type="unfinished"></translation>
+        <comment>EditorHeaderNotificationsButton#2</comment>
+        <translation type="unfinished">Notificações</translation>
     </message>
 </context>
 <context>
@@ -6719,10 +7286,12 @@
     </message>
     <message>
         <source>All changes saved</source>
+        <comment>EditorHeaderProjectsButton#2</comment>
         <translation type="unfinished">Todas as alterações guardadas</translation>
     </message>
     <message>
         <source>Unsaved changes</source>
+        <comment>EditorHeaderProjectsButton#3</comment>
         <translation type="unfinished">Alterações não guardadas</translation>
     </message>
     <message>
@@ -6738,18 +7307,21 @@
     <name>EditorHeaderSearchField</name>
     <message>
         <source>Search  %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pesquisar  %1</translation>
     </message>
     <message>
         <source>Search</source>
+        <comment>EditorHeaderSearchField#2</comment>
         <translation type="unfinished">Pesquisar</translation>
     </message>
     <message>
         <source>Export video</source>
+        <comment>EditorHeaderSearchField#3</comment>
         <translation type="unfinished">Exportar vídeo</translation>
     </message>
     <message>
         <source>Downloads</source>
+        <comment>EditorHeaderSearchField#4</comment>
         <translation type="unfinished">Transferências</translation>
     </message>
     <message>
@@ -6758,17 +7330,20 @@
     </message>
     <message>
         <source>Video size and layout</source>
+        <comment>EditorHeaderSearchField#6</comment>
         <translation type="unfinished">Tamanho e layout do vídeo</translation>
     </message>
     <message>
         <source>Switch to mobile layout…</source>
-        <translation type="unfinished"></translation>
+        <comment>EditorHeaderSearchField#7</comment>
+        <translation type="unfinished">Mudar para layout móvel…</translation>
     </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
     <message>
         <source>Settings</source>
+        <comment>EditorHeaderSettingsButton#1</comment>
         <translation type="unfinished">Definições</translation>
     </message>
 </context>
@@ -6776,15 +7351,16 @@
     <name>EditorHeaderWorkspaceButton</name>
     <message>
         <source>Workspaces</source>
-        <translation type="unfinished"></translation>
+        <comment>EditorHeaderWorkspaceButton#1</comment>
+        <translation type="unfinished">Áreas de trabalho</translation>
     </message>
     <message>
         <source>Switch workspace</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar de área de trabalho</translation>
     </message>
     <message>
         <source>Edit workspaces…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Editar áreas de trabalho…</translation>
     </message>
 </context>
 <context>
@@ -6799,6 +7375,7 @@
     </message>
     <message>
         <source>Get extras</source>
+        <comment>EffectBrowser#3</comment>
         <translation>Obter extras</translation>
     </message>
     <message>
@@ -6811,19 +7388,21 @@
     </message>
     <message>
         <source>Import</source>
+        <comment>EffectBrowser#6</comment>
         <translation type="unfinished">Importar</translation>
     </message>
     <message>
         <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalar um efeito ou transição personalizado a partir de um ficheiro .driftfx criado no Drift Forge</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar camada de ajuste — clique ou arraste-a para uma faixa</translation>
     </message>
     <message>
         <source>My Effects</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectBrowser#9</comment>
+        <translation type="unfinished">Os Meus Efeitos</translation>
     </message>
     <message>
         <source>No effects match “%1”.</source>
@@ -6831,48 +7410,55 @@
     </message>
     <message>
         <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectBrowser#11</comment>
+        <translation type="unfinished">Nada aqui ainda. Importe um ficheiro .driftfx para adicionar os seus.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
+        <comment>EffectBrowser#12</comment>
         <translation>Nenhum favorito ainda. Marque predefinições com estrela para salvá-las aqui.</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
+        <comment>EffectBrowser#13</comment>
         <translation>Nada nesta categoria.</translation>
     </message>
     <message>
         <source>%1 is empty</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectBrowser#14</comment>
+        <translation type="unfinished">%1 está vazio</translation>
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectBrowser#15</comment>
+        <translation type="unfinished">Importe um ficheiro .driftfx criado no Drift Forge para adicionar os seus.</translation>
     </message>
     <message>
         <source>Delete effect</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Eliminar efeito</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>EffectBrowser#17</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
     <message numerus="yes">
         <source>Delete “%1” from My Effects? It is used %n time(s) in this project, and those clips will play without it.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Apagar “%1” dos &quot;Meus efeitos&quot;? Foi usado %n vez(es) neste projeto, e esses clips serão reproduzidos sem ele.</numerusform>
+            <numerusform>Apagar “%1” dos &quot;Meus efeitos&quot;? Foi usado %n vez(es) neste projeto, e esses clips serão reproduzidos sem ele.</numerusform>
         </translation>
     </message>
     <message>
         <source>Delete “%1” from My Effects? You can import its .driftfx file again later.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Eliminar “%1” de Os Meus Efeitos? Pode voltar a importar o ficheiro .driftfx mais tarde.</translation>
     </message>
 </context>
 <context>
     <name>EffectCatalog</name>
     <message>
         <source>Color</source>
+        <comment>EffectCatalog#1</comment>
         <translation>Cor</translation>
     </message>
     <message>
@@ -6917,6 +7503,7 @@
     </message>
     <message>
         <source>Other</source>
+        <comment>EffectCatalog#12</comment>
         <translation>Outros</translation>
     </message>
 </context>
@@ -6924,30 +7511,35 @@
     <name>EffectPresetCard</name>
     <message>
         <source>%1 — click to apply to the selection, or drag onto a clip</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectPresetCard#1</comment>
+        <translation type="unfinished">%1 — clique para aplicar à seleção ou arraste para um clipe</translation>
     </message>
     <message>
         <source>%1 — click to add as an adjustment layer, or drag onto a clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 — clique para adicionar como camada de ajuste ou arraste para um clipe</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
+        <comment>EffectPresetCard#3</comment>
         <translation type="unfinished">Aplicar ao clipe selecionado</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
+        <comment>EffectPresetCard#4</comment>
         <translation type="unfinished">Remover dos favoritos</translation>
     </message>
     <message>
         <source>Add to favorites</source>
+        <comment>EffectPresetCard#5</comment>
         <translation type="unfinished">Adicionar aos favoritos</translation>
     </message>
     <message>
         <source>Delete from My Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Eliminar de Os Meus Efeitos</translation>
     </message>
     <message>
         <source>Built-in</source>
+        <comment>EffectPresetCard#7</comment>
         <translation type="unfinished">Integrados</translation>
     </message>
 </context>
@@ -6963,14 +7555,17 @@
     </message>
     <message>
         <source>Rename…</source>
+        <comment>EffectStackCard#3</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Export…</source>
+        <comment>EffectStackCard#4</comment>
         <translation type="unfinished">Exportar…</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>EffectStackCard#5</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
 </context>
@@ -6990,7 +7585,7 @@
     </message>
     <message>
         <source>No saved presets</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhuma predefinição guardada</translation>
     </message>
     <message>
         <source>Tune a clip&apos;s effects, then use “Save as preset…” in the properties Effects tab to keep them here.</source>
@@ -6998,10 +7593,12 @@
     </message>
     <message>
         <source>Import</source>
+        <comment>EffectStacksSection#6</comment>
         <translation type="unfinished">Importar</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>EffectStacksSection#7</comment>
         <translation>Eliminar</translation>
     </message>
     <message>
@@ -7029,6 +7626,7 @@
     </message>
     <message>
         <source>Get extras</source>
+        <comment>EffectTemplateBrowser#3</comment>
         <translation>Obter extras</translation>
     </message>
     <message>
@@ -7053,6 +7651,7 @@
     </message>
     <message>
         <source>Nothing in this category.</source>
+        <comment>EffectTemplateBrowser#9</comment>
         <translation>Nada nesta categoria.</translation>
     </message>
 </context>
@@ -7060,22 +7659,25 @@
     <name>EffectTemplateCard</name>
     <message>
         <source>%1 — click to apply music-synced effects to the selection</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 — clique para aplicar efeitos sincronizados com a música à seleção</translation>
     </message>
     <message>
         <source>%1 — select a clip, then click to apply</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 — selecione um clipe e clique para aplicar</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
+        <comment>EffectTemplateCard#3</comment>
         <translation type="unfinished">Aplicar ao clipe selecionado</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
+        <comment>EffectTemplateCard#4</comment>
         <translation type="unfinished">Remover dos favoritos</translation>
     </message>
     <message>
         <source>Add to favorites</source>
+        <comment>EffectTemplateCard#5</comment>
         <translation type="unfinished">Adicionar aos favoritos</translation>
     </message>
     <message>
@@ -7119,10 +7721,12 @@
     </message>
     <message>
         <source>Transition</source>
+        <comment>EffectTemplateCatalog#9</comment>
         <translation>Transição</translation>
     </message>
     <message>
         <source>Other</source>
+        <comment>EffectTemplateCatalog#10</comment>
         <translation>Outros</translation>
     </message>
 </context>
@@ -7130,10 +7734,12 @@
     <name>EffectsAutoKeyHint</name>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
+        <comment>EffectsAutoKeyHint#1</comment>
         <translation type="unfinished">Vá até um tempo, defina um valor e clique no losango para adicionar um quadro-chave. Com Quadros-chave automáticos ativados, arrastar um controle deslizante também os cria.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
+        <comment>EffectsAutoKeyHint#2</comment>
         <translation type="unfinished">Quadros-chave automáticos</translation>
     </message>
 </context>
@@ -7141,10 +7747,12 @@
     <name>EffectsBoolParam</name>
     <message>
         <source>On</source>
+        <comment>EffectsBoolParam#1</comment>
         <translation type="unfinished">Ativado</translation>
     </message>
     <message>
         <source>Off</source>
+        <comment>EffectsBoolParam#2</comment>
         <translation type="unfinished">Desativado</translation>
     </message>
 </context>
@@ -7159,14 +7767,16 @@
     <name>EffectsColorParam</name>
     <message>
         <source>Choose %1</source>
+        <comment>EffectsColorParam#1</comment>
         <translation type="unfinished">Escolher %1</translation>
     </message>
     <message>
         <source>%1 opacity</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Opacidade de %1</translation>
     </message>
     <message>
         <source>Edit %1</source>
+        <comment>EffectsColorParam#3</comment>
         <translation type="unfinished">Editar %1</translation>
     </message>
 </context>
@@ -7174,6 +7784,7 @@
     <name>EffectsCurveParam</name>
     <message>
         <source>Edit %1</source>
+        <comment>EffectsCurveParam#1</comment>
         <translation type="unfinished">Editar %1</translation>
     </message>
 </context>
@@ -7201,6 +7812,7 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>EffectsDepthPanel#6</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
@@ -7209,13 +7821,15 @@
     </message>
     <message>
         <source>Install AI engine first</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectsDepthPanel#8</comment>
+        <translation type="unfinished">Instale primeiro o motor de IA</translation>
     </message>
 </context>
 <context>
     <name>EffectsDepthSection</name>
     <message>
         <source>Depth</source>
+        <comment>EffectsDepthSection#1</comment>
         <translation type="unfinished">Profundidade</translation>
     </message>
     <message>
@@ -7235,10 +7849,12 @@
     </message>
     <message>
         <source>Save as preset…</source>
+        <comment>EffectsEffectHeader#2</comment>
         <translation type="unfinished">Guardar como predefinição…</translation>
     </message>
     <message>
         <source>%1 (not installed)</source>
+        <comment>EffectsEffectHeader#3</comment>
         <translation type="unfinished">%1 (não instalado)</translation>
     </message>
     <message>
@@ -7251,14 +7867,17 @@
     </message>
     <message>
         <source>Disable effect</source>
+        <comment>EffectsEffectHeader#6</comment>
         <translation type="unfinished">Desativar efeito</translation>
     </message>
     <message>
         <source>Enable effect</source>
+        <comment>EffectsEffectHeader#7</comment>
         <translation type="unfinished">Ativar efeito</translation>
     </message>
     <message>
         <source>Remove effect</source>
+        <comment>EffectsEffectHeader#8</comment>
         <translation type="unfinished">Remover efeito</translation>
     </message>
 </context>
@@ -7266,13 +7885,14 @@
     <name>EffectsFaceIndexParam</name>
     <message>
         <source>Face %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Rosto %1</translation>
     </message>
 </context>
 <context>
     <name>EffectsFaceSection</name>
     <message>
         <source>Face tracking</source>
+        <comment>EffectsFaceSection#1</comment>
         <translation type="unfinished">Rastreamento de rosto</translation>
     </message>
     <message>
@@ -7289,7 +7909,7 @@
     </message>
     <message>
         <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Este clipe foi analisado antes do suporte da malha facial. Detete novamente os rostos para ativar a Malha Facial 3D e o Retoque Facial.</translation>
     </message>
     <message>
         <source>Re-detect faces</source>
@@ -7305,6 +7925,7 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>EffectsFaceSection#9</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
@@ -7313,7 +7934,8 @@
     </message>
     <message>
         <source>Install AI engine first</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectsFaceSection#11</comment>
+        <translation type="unfinished">Instale primeiro o motor de IA</translation>
     </message>
 </context>
 <context>
@@ -7328,10 +7950,12 @@
     </message>
     <message>
         <source>Choose %1</source>
+        <comment>EffectsFileParam#3</comment>
         <translation type="unfinished">Escolher %1</translation>
     </message>
     <message>
         <source>Clear</source>
+        <comment>EffectsFileParam#4</comment>
         <translation type="unfinished">Limpar</translation>
     </message>
 </context>
@@ -7343,10 +7967,12 @@
     </message>
     <message>
         <source>Choose %1</source>
+        <comment>EffectsHueParam#2</comment>
         <translation type="unfinished">Escolher %1</translation>
     </message>
     <message>
         <source>Edit %1</source>
+        <comment>EffectsHueParam#3</comment>
         <translation type="unfinished">Editar %1</translation>
     </message>
 </context>
@@ -7369,23 +7995,26 @@
     <name>EffectsLookParam</name>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectsLookParam#1</comment>
+        <translation type="unfinished">Nenhuma</translation>
     </message>
     <message>
         <source>Import…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar…</translation>
     </message>
     <message>
         <source>Import looks</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectsLookParam#3</comment>
+        <translation type="unfinished">Importar aparências</translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
-        <translation type="unfinished"></translation>
+        <comment>EffectsLookParam#4</comment>
+        <translation type="unfinished">Ficheiros LUT (*.cube)</translation>
     </message>
     <message>
         <source>Missing look</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparência em falta</translation>
     </message>
 </context>
 <context>
@@ -7411,10 +8040,12 @@
     <name>EffectsStackActions</name>
     <message>
         <source>Paste effects</source>
+        <comment>EffectsStackActions#1</comment>
         <translation type="unfinished">Colar efeitos</translation>
     </message>
     <message>
         <source>Save as preset…</source>
+        <comment>EffectsStackActions#2</comment>
         <translation type="unfinished">Guardar como predefinição…</translation>
     </message>
 </context>
@@ -7430,10 +8061,12 @@
     </message>
     <message>
         <source>Get extras</source>
+        <comment>EmojiPicker#3</comment>
         <translation>Obter extras</translation>
     </message>
     <message>
         <source>Search</source>
+        <comment>EmojiPicker#4</comment>
         <translation>Pesquisar</translation>
     </message>
 </context>
@@ -7448,6 +8081,7 @@
     <name>ExportDialog</name>
     <message>
         <source>Export</source>
+        <comment>ExportDialog#1</comment>
         <translation>Exportar</translation>
     </message>
     <message>
@@ -7476,6 +8110,7 @@
     </message>
     <message>
         <source>Custom</source>
+        <comment>ExportDialog#8</comment>
         <translation>Personalizado</translation>
     </message>
     <message>
@@ -7511,18 +8146,22 @@
     </message>
     <message>
         <source>Audio encoder</source>
+        <comment>ExportDialogAudioSection#2</comment>
         <translation type="unfinished">Codificador de áudio</translation>
     </message>
     <message>
         <source>Bitrate</source>
+        <comment>ExportDialogAudioSection#3</comment>
         <translation type="unfinished">Taxa de bits</translation>
     </message>
     <message>
         <source>kbps</source>
+        <comment>ExportDialogAudioSection#4</comment>
         <translation type="unfinished">kbps</translation>
     </message>
     <message>
         <source>Advanced</source>
+        <comment>ExportDialogAudioSection#5</comment>
         <translation type="unfinished">Avançado</translation>
     </message>
     <message>
@@ -7531,6 +8170,7 @@
     </message>
     <message>
         <source>Title</source>
+        <comment>ExportDialogAudioSection#7</comment>
         <translation type="unfinished">Título</translation>
     </message>
     <message>
@@ -7554,18 +8194,22 @@
     </message>
     <message>
         <source>Downscale</source>
+        <comment>ExportDialogGifSection#2</comment>
         <translation type="unfinished">Reduzir resolução</translation>
     </message>
     <message>
         <source>Export at %1×%2</source>
+        <comment>ExportDialogGifSection#3</comment>
         <translation type="unfinished">Exportar em %1×%2</translation>
     </message>
     <message>
         <source>Frame rate</source>
+        <comment>ExportDialogGifSection#4</comment>
         <translation type="unfinished">Taxa de quadros</translation>
     </message>
     <message>
         <source>fps</source>
+        <comment>ExportDialogGifSection#5</comment>
         <translation type="unfinished">fps</translation>
     </message>
     <message>
@@ -7577,10 +8221,12 @@
     <name>ExportDialogModeBar</name>
     <message>
         <source>Video</source>
+        <comment>ExportDialogModeBar#1</comment>
         <translation type="unfinished">Vídeo</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>ExportDialogModeBar#2</comment>
         <translation type="unfinished">Áudio</translation>
     </message>
     <message>
@@ -7600,18 +8246,22 @@
     </message>
     <message>
         <source>Downscale</source>
+        <comment>ExportDialogVideoSection#2</comment>
         <translation type="unfinished">Reduzir resolução</translation>
     </message>
     <message>
         <source>Export at %1×%2</source>
+        <comment>ExportDialogVideoSection#3</comment>
         <translation type="unfinished">Exportar em %1×%2</translation>
     </message>
     <message>
         <source>Frame rate</source>
+        <comment>ExportDialogVideoSection#4</comment>
         <translation type="unfinished">Taxa de quadros</translation>
     </message>
     <message>
         <source>fps</source>
+        <comment>ExportDialogVideoSection#5</comment>
         <translation type="unfinished">fps</translation>
     </message>
     <message>
@@ -7620,6 +8270,7 @@
     </message>
     <message>
         <source>Advanced</source>
+        <comment>ExportDialogVideoSection#7</comment>
         <translation type="unfinished">Avançado</translation>
     </message>
     <message>
@@ -7636,6 +8287,7 @@
     </message>
     <message>
         <source>Bitrate</source>
+        <comment>ExportDialogVideoSection#11</comment>
         <translation type="unfinished">Taxa de bits</translation>
     </message>
     <message>
@@ -7660,14 +8312,17 @@
     </message>
     <message>
         <source>kbps</source>
+        <comment>ExportDialogVideoSection#17</comment>
         <translation type="unfinished">kbps</translation>
     </message>
     <message>
         <source>Preset</source>
+        <comment>ExportDialogVideoSection#18</comment>
         <translation type="unfinished">Predefinição</translation>
     </message>
     <message>
         <source>Audio encoder</source>
+        <comment>ExportDialogVideoSection#19</comment>
         <translation type="unfinished">Codificador de áudio</translation>
     </message>
 </context>
@@ -7690,6 +8345,7 @@
     </message>
     <message>
         <source>Export</source>
+        <comment>ExportProgressDialog#2</comment>
         <translation>Exportar</translation>
     </message>
     <message>
@@ -7698,6 +8354,7 @@
     </message>
     <message>
         <source>Close</source>
+        <comment>ExportProgressDialog#4</comment>
         <translation>Fechar</translation>
     </message>
     <message>
@@ -7706,14 +8363,17 @@
     </message>
     <message>
         <source>Export finished.</source>
+        <comment>ExportProgressDialog#6</comment>
         <translation>Exportação concluída.</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>ExportProgressDialog#7</comment>
         <translation>Reproduzir</translation>
     </message>
     <message>
         <source>Share</source>
+        <comment>ExportProgressDialog#8</comment>
         <translation>Partilhar</translation>
     </message>
 </context>
@@ -7765,27 +8425,27 @@
     </message>
     <message>
         <source>variants must be a list</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">as variantes têm de ser uma lista</translation>
     </message>
     <message>
         <source>a variant must be an object</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">uma variante tem de ser um objeto</translation>
     </message>
     <message>
         <source>invalid variant id “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">id de variante inválido “%1”</translation>
     </message>
     <message>
         <source>a variant must name a .glb model in the prop folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">uma variante tem de indicar um modelo .glb na pasta do adereço</translation>
     </message>
     <message>
         <source>a variant thumbnail must be a file in the prop folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">a miniatura de uma variante tem de ser um ficheiro na pasta do adereço</translation>
     </message>
     <message>
         <source>a variant names the same file twice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">uma variante lista o mesmo ficheiro duas vezes</translation>
     </message>
     <message>
         <source>Could not open %1</source>
@@ -7836,6 +8496,7 @@
     </message>
     <message>
         <source>Import</source>
+        <comment>FacePropPicker#2</comment>
         <translation>Importar</translation>
     </message>
     <message>
@@ -7856,6 +8517,7 @@
     </message>
     <message>
         <source>Import folder…</source>
+        <comment>FacePropPicker#7</comment>
         <translation>Importar pasta…</translation>
     </message>
     <message>
@@ -7880,6 +8542,7 @@
     </message>
     <message>
         <source>Delete</source>
+        <comment>FacePropPicker#13</comment>
         <translation>Eliminar</translation>
     </message>
     <message>
@@ -7903,10 +8566,12 @@
     </message>
     <message>
         <source>Clip has no video to scan</source>
+        <comment>FaceTrackingController#4</comment>
         <translation>O clipe não tem vídeo para analisar</translation>
     </message>
     <message>
         <source>Getting ready…</source>
+        <comment>FaceTrackingController#5</comment>
         <translation>Preparando…</translation>
     </message>
     <message>
@@ -7915,6 +8580,7 @@
     </message>
     <message>
         <source>Done</source>
+        <comment>FaceTrackingController#7</comment>
         <translation>Concluído</translation>
     </message>
     <message>
@@ -7927,10 +8593,12 @@
     </message>
     <message>
         <source>Could not decode frame %1</source>
+        <comment>FaceTrackingController#10</comment>
         <translation>Não foi possível decodificar o quadro %1</translation>
     </message>
     <message>
         <source>Scanning frame %1 of %2…</source>
+        <comment>FaceTrackingController#11</comment>
         <translation>Analisando quadro %1 de %2…</translation>
     </message>
     <message>
@@ -7962,6 +8630,7 @@
     <name>FadeCurveWindow</name>
     <message>
         <source>Custom curve</source>
+        <comment>FadeCurveWindow#1</comment>
         <translation>Curva personalizada</translation>
     </message>
     <message>
@@ -7982,26 +8651,32 @@
     </message>
     <message>
         <source>Points</source>
+        <comment>FadeCurveWindow#6</comment>
         <translation>Pontas</translation>
     </message>
     <message>
         <source>Bezier</source>
+        <comment>FadeCurveWindow#7</comment>
         <translation>Bézier</translation>
     </message>
     <message>
         <source>Linear</source>
+        <comment>FadeCurveWindow#8</comment>
         <translation>Linear</translation>
     </message>
     <message>
         <source>Smooth</source>
+        <comment>FadeCurveWindow#9</comment>
         <translation>Suave</translation>
     </message>
     <message>
         <source>Ease</source>
+        <comment>FadeCurveWindow#10</comment>
         <translation>Suave</translation>
     </message>
     <message>
         <source>Natural</source>
+        <comment>FadeCurveWindow#11</comment>
         <translation>Natural</translation>
     </message>
     <message>
@@ -8022,10 +8697,12 @@
     </message>
     <message>
         <source>Apply</source>
+        <comment>FadeCurveWindow#16</comment>
         <translation>Aplicar</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>FadeCurveWindow#17</comment>
         <translation>Cancelar</translation>
     </message>
 </context>
@@ -8033,14 +8710,17 @@
     <name>FileDialogs</name>
     <message>
         <source>Untitled</source>
+        <comment>FileDialogs#1</comment>
         <translation>Sem título</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>FileDialogs#2</comment>
         <translation>Reproduzir</translation>
     </message>
     <message>
         <source>Share</source>
+        <comment>FileDialogs#3</comment>
         <translation>Partilhar</translation>
     </message>
 </context>
@@ -8048,19 +8728,19 @@
     <name>FontCatalog</name>
     <message>
         <source>Choose a .ttf, .otf or .ttc font file</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Escolha um ficheiro de tipo de letra .ttf, .otf ou .ttc</translation>
     </message>
     <message>
         <source>Could not create the fonts folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível criar a pasta de tipos de letra</translation>
     </message>
     <message>
         <source>Could not copy the font file</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível copiar o ficheiro de tipo de letra</translation>
     </message>
     <message>
         <source>That file is not a usable font</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Esse ficheiro não é um tipo de letra utilizável</translation>
     </message>
     <message>
         <source>High-Impact &amp; Bold</source>
@@ -8083,37 +8763,37 @@
     <name>FontPicker</name>
     <message>
         <source>Add font</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar tipo de letra</translation>
     </message>
     <message>
         <source>Fonts (*.ttf *.otf *.ttc *.otc)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tipos de letra (*.ttf *.otf *.ttc *.otc)</translation>
     </message>
     <message>
         <source>My fonts</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Os meus tipos de letra</translation>
     </message>
     <message>
         <source>System fonts</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tipos de letra do sistema</translation>
     </message>
     <message>
         <source>Search fonts</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pesquisar tipos de letra</translation>
     </message>
 </context>
 <context>
     <name>FontPickerAddRow</name>
     <message>
         <source>Add font file…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar ficheiro de tipo de letra…</translation>
     </message>
 </context>
 <context>
     <name>FontPickerFamilyRow</name>
     <message>
         <source>Remove font</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Remover tipo de letra</translation>
     </message>
 </context>
 <context>
@@ -8127,10 +8807,12 @@
     <name>GeneralInspector</name>
     <message>
         <source>Video</source>
+        <comment>GeneralInspector#1</comment>
         <translation>Vídeo</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>GeneralInspector#2</comment>
         <translation>Áudio</translation>
     </message>
     <message>
@@ -8139,26 +8821,32 @@
     </message>
     <message>
         <source>Text</source>
+        <comment>GeneralInspector#4</comment>
         <translation>Texto</translation>
     </message>
     <message>
         <source>Subtitle</source>
+        <comment>GeneralInspector#5</comment>
         <translation>Legenda</translation>
     </message>
     <message>
         <source>Shape</source>
+        <comment>GeneralInspector#6</comment>
         <translation>Forma</translation>
     </message>
     <message>
         <source>Sticker</source>
+        <comment>GeneralInspector#7</comment>
         <translation>Adesivo</translation>
     </message>
     <message>
         <source>Adjustment</source>
+        <comment>GeneralInspector#8</comment>
         <translation>Ajuste</translation>
     </message>
     <message>
         <source>Clip name</source>
+        <comment>GeneralInspector#9</comment>
         <translation>Nome do clipe</translation>
     </message>
     <message>
@@ -8167,14 +8855,17 @@
     </message>
     <message>
         <source>Rename clip</source>
+        <comment>GeneralInspector#11</comment>
         <translation>Renomear clipe</translation>
     </message>
     <message>
         <source>Type</source>
+        <comment>GeneralInspector#12</comment>
         <translation>Tipo</translation>
     </message>
     <message>
         <source>Transform layer</source>
+        <comment>GeneralInspector#13</comment>
         <translation>Camada de transformação</translation>
     </message>
     <message>
@@ -8183,10 +8874,12 @@
     </message>
     <message>
         <source>Width</source>
+        <comment>GeneralInspector#15</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
+        <comment>GeneralInspector#16</comment>
         <translation>Altura</translation>
     </message>
     <message>
@@ -8195,6 +8888,7 @@
     </message>
     <message>
         <source>Duration</source>
+        <comment>GeneralInspector#18</comment>
         <translation>Duração</translation>
     </message>
     <message>
@@ -8207,27 +8901,33 @@
     </message>
     <message>
         <source>Rename</source>
+        <comment>GeneralInspector#21</comment>
         <translation>Renomear</translation>
     </message>
     <message>
         <source>Trim</source>
+        <comment>GeneralInspector#22</comment>
         <translation>Aparar</translation>
     </message>
     <message>
         <source>Crop</source>
+        <comment>GeneralInspector#23</comment>
         <translation type="unfinished">Recortar</translation>
     </message>
     <message>
         <source>Unlock crop ratio</source>
-        <translation type="unfinished"></translation>
+        <comment>GeneralInspector#24</comment>
+        <translation type="unfinished">Desbloquear proporção do recorte</translation>
     </message>
     <message>
         <source>Lock crop ratio</source>
-        <translation type="unfinished"></translation>
+        <comment>GeneralInspector#25</comment>
+        <translation type="unfinished">Bloquear proporção do recorte</translation>
     </message>
     <message>
         <source>Crop…</source>
-        <translation type="unfinished"></translation>
+        <comment>GeneralInspector#26</comment>
+        <translation type="unfinished">Recortar…</translation>
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
@@ -8250,462 +8950,554 @@
     <name>GlobalSearchControls</name>
     <message>
         <source>Properties</source>
+        <comment>GlobalSearchControls#1</comment>
         <translation type="unfinished">Propriedades</translation>
     </message>
     <message>
         <source>Assets</source>
+        <comment>GlobalSearchControls#2</comment>
         <translation type="unfinished">Recursos</translation>
     </message>
     <message>
         <source>Settings</source>
+        <comment>GlobalSearchControls#3</comment>
         <translation type="unfinished">Definições</translation>
     </message>
     <message>
         <source>Color</source>
+        <comment>GlobalSearchControls#4</comment>
         <translation type="unfinished">Cor</translation>
     </message>
     <message>
         <source>Select a clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe</translation>
     </message>
     <message>
         <source>Select a video, image, text or shape clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de vídeo, imagem, texto ou forma</translation>
     </message>
     <message>
         <source>Select a video clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de vídeo</translation>
     </message>
     <message>
         <source>Select a video or audio clip</source>
+        <comment>GlobalSearchControls#8</comment>
         <translation type="unfinished">Selecione um clipe de vídeo ou áudio</translation>
     </message>
     <message>
         <source>Select a text or subtitle clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de texto ou legenda</translation>
     </message>
     <message>
         <source>Select a clip&apos;s effects layer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione a camada de efeitos de um clipe</translation>
     </message>
     <message>
         <source>Select a clip&apos;s mask layer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione a camada de máscaras de um clipe</translation>
     </message>
     <message>
         <source>Select a clip&apos;s audio effects layer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione a camada de efeitos de áudio de um clipe</translation>
     </message>
     <message>
         <source>Select the clip before a cut</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione o clipe antes de um corte</translation>
     </message>
     <message>
         <source>General</source>
+        <comment>GlobalSearchControls#14</comment>
         <translation type="unfinished">Geral</translation>
     </message>
     <message>
         <source>Clip name</source>
+        <comment>GlobalSearchControls#15</comment>
         <translation type="unfinished">Nome do clipe</translation>
     </message>
     <message>
         <source>Crop</source>
+        <comment>GlobalSearchControls#16</comment>
         <translation type="unfinished">Recortar</translation>
     </message>
     <message>
         <source>Trim</source>
+        <comment>GlobalSearchControls#17</comment>
         <translation type="unfinished">Aparar</translation>
     </message>
     <message>
         <source>Duration</source>
+        <comment>GlobalSearchControls#18</comment>
         <translation type="unfinished">Duração</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>GlobalSearchControls#19</comment>
         <translation type="unfinished">Transformação</translation>
     </message>
     <message>
         <source>Position</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Posição</translation>
     </message>
     <message>
         <source>Scale</source>
+        <comment>GlobalSearchControls#21</comment>
         <translation type="unfinished">Escala</translation>
     </message>
     <message>
         <source>Opacity</source>
+        <comment>GlobalSearchControls#22</comment>
         <translation type="unfinished">Opacidade</translation>
     </message>
     <message>
         <source>Rotation</source>
+        <comment>GlobalSearchControls#23</comment>
         <translation type="unfinished">Rotação</translation>
     </message>
     <message>
         <source>Flip</source>
+        <comment>GlobalSearchControls#24</comment>
         <translation type="unfinished">Inverter</translation>
     </message>
     <message>
         <source>Fix orientation</source>
+        <comment>GlobalSearchControls#25</comment>
         <translation type="unfinished">Corrigir orientação</translation>
     </message>
     <message>
         <source>Reset position &amp; size</source>
+        <comment>GlobalSearchControls#26</comment>
         <translation type="unfinished">Redefinir posição &amp; tamanho</translation>
     </message>
     <message>
         <source>Stabilization</source>
+        <comment>GlobalSearchControls#27</comment>
         <translation type="unfinished">Estabilização</translation>
     </message>
     <message>
         <source>Stabilize</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Estabilizar</translation>
     </message>
     <message>
         <source>Smoothing</source>
+        <comment>GlobalSearchControls#29</comment>
         <translation type="unfinished">Suavização</translation>
     </message>
     <message>
         <source>Tripod mode</source>
+        <comment>GlobalSearchControls#30</comment>
         <translation type="unfinished">Modo tripé</translation>
     </message>
     <message>
         <source>Animation</source>
+        <comment>GlobalSearchControls#31</comment>
         <translation type="unfinished">Animação</translation>
     </message>
     <message>
         <source>In animation</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Animação de entrada</translation>
     </message>
     <message>
         <source>Out animation</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Animação de saída</translation>
     </message>
     <message>
         <source>Custom curve</source>
+        <comment>GlobalSearchControls#34</comment>
         <translation type="unfinished">Curva personalizada</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>GlobalSearchControls#35</comment>
         <translation type="unfinished">Áudio</translation>
     </message>
     <message>
         <source>Volume</source>
+        <comment>GlobalSearchControls#36</comment>
         <translation type="unfinished">Volume</translation>
     </message>
     <message>
         <source>Pan</source>
+        <comment>GlobalSearchControls#37</comment>
         <translation type="unfinished">Panorâmica</translation>
     </message>
     <message>
         <source>Remove noise…</source>
+        <comment>GlobalSearchControls#38</comment>
         <translation type="unfinished">Remover ruído…</translation>
     </message>
     <message>
         <source>Auto subtitles</source>
+        <comment>GlobalSearchControls#39</comment>
         <translation type="unfinished">Legendas automáticas</translation>
     </message>
     <message>
         <source>Audio track</source>
+        <comment>GlobalSearchControls#40</comment>
         <translation type="unfinished">Faixa de áudio</translation>
     </message>
     <message>
         <source>Speed</source>
+        <comment>GlobalSearchControls#41</comment>
         <translation type="unfinished">Velocidade</translation>
     </message>
     <message>
         <source>Playback speed</source>
+        <comment>GlobalSearchControls#42</comment>
         <translation type="unfinished">Velocidade de reprodução</translation>
     </message>
     <message>
         <source>Custom speed…</source>
+        <comment>GlobalSearchControls#43</comment>
         <translation type="unfinished">Velocidade personalizada…</translation>
     </message>
     <message>
         <source>Reverse</source>
+        <comment>GlobalSearchControls#44</comment>
         <translation type="unfinished">Inverter</translation>
     </message>
     <message>
         <source>Blending</source>
+        <comment>GlobalSearchControls#45</comment>
         <translation type="unfinished">Mesclagem</translation>
     </message>
     <message>
         <source>Blend mode</source>
+        <comment>GlobalSearchControls#46</comment>
         <translation type="unfinished">Modo de mesclagem</translation>
     </message>
     <message>
         <source>Masks</source>
+        <comment>GlobalSearchControls#47</comment>
         <translation type="unfinished">Máscaras</translation>
     </message>
     <message>
         <source>Feather</source>
+        <comment>GlobalSearchControls#48</comment>
         <translation type="unfinished">Suavização de borda</translation>
     </message>
     <message>
         <source>Invert</source>
+        <comment>GlobalSearchControls#49</comment>
         <translation type="unfinished">Inverter</translation>
     </message>
     <message>
         <source>Combine</source>
+        <comment>GlobalSearchControls#50</comment>
         <translation type="unfinished">Combinar</translation>
     </message>
     <message>
         <source>Effects</source>
+        <comment>GlobalSearchControls#51</comment>
         <translation type="unfinished">Efeitos</translation>
     </message>
     <message>
         <source>Effect settings</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Definições do efeito</translation>
     </message>
     <message>
         <source>Face tracking</source>
+        <comment>GlobalSearchControls#53</comment>
         <translation type="unfinished">Rastreamento de rosto</translation>
     </message>
     <message>
         <source>Save as preset…</source>
+        <comment>GlobalSearchControls#54</comment>
         <translation type="unfinished">Guardar como predefinição…</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#55</comment>
+        <translation type="unfinished">FX de áudio</translation>
     </message>
     <message>
         <source>Audio effect settings</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Definições do efeito de áudio</translation>
     </message>
     <message>
         <source>Transition</source>
+        <comment>GlobalSearchControls#57</comment>
         <translation type="unfinished">Transição</translation>
     </message>
     <message>
         <source>Transition duration</source>
+        <comment>GlobalSearchControls#58</comment>
         <translation type="unfinished">Duração da transição</translation>
     </message>
     <message>
         <source>Transition curve</source>
+        <comment>GlobalSearchControls#59</comment>
         <translation type="unfinished">Curva de transição</translation>
     </message>
     <message>
         <source>Text</source>
+        <comment>GlobalSearchControls#60</comment>
         <translation type="unfinished">Texto</translation>
     </message>
     <message>
         <source>Font</source>
+        <comment>GlobalSearchControls#61</comment>
         <translation type="unfinished">Fonte</translation>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#62</comment>
+        <translation type="unfinished">Estilo de texto</translation>
     </message>
     <message>
         <source>Shape</source>
+        <comment>GlobalSearchControls#63</comment>
         <translation type="unfinished">Forma</translation>
     </message>
     <message>
         <source>Shape style</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Estilo de forma</translation>
     </message>
     <message>
         <source>Select a shape clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de forma</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#66</comment>
+        <translation type="unfinished">Câmara</translation>
     </message>
     <message>
         <source>Camera position</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Posição da câmara</translation>
     </message>
     <message>
         <source>Select the camera layer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione a camada de câmara</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#69</comment>
+        <translation type="unfinished">PDF</translation>
     </message>
     <message>
         <source>PDF page</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Página de PDF</translation>
     </message>
     <message>
         <source>Select a PDF clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de PDF</translation>
     </message>
     <message>
         <source>3D Model</source>
+        <comment>GlobalSearchControls#72</comment>
         <translation type="unfinished">Modelo 3D</translation>
     </message>
     <message>
         <source>3D model</source>
+        <comment>GlobalSearchControls#73</comment>
         <translation type="unfinished">Modelo 3D</translation>
     </message>
     <message>
         <source>Select a 3D model clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de modelo 3D</translation>
     </message>
     <message>
         <source>Exposure</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#75</comment>
+        <translation type="unfinished">Exposição</translation>
     </message>
     <message>
         <source>Contrast</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#76</comment>
+        <translation type="unfinished">Contraste</translation>
     </message>
     <message>
         <source>Highlights</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#77</comment>
+        <translation type="unfinished">Realces</translation>
     </message>
     <message>
         <source>Shadows</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#78</comment>
+        <translation type="unfinished">Sombras</translation>
     </message>
     <message>
         <source>Whites</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#79</comment>
+        <translation type="unfinished">Brancos</translation>
     </message>
     <message>
         <source>Blacks</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#80</comment>
+        <translation type="unfinished">Pretos</translation>
     </message>
     <message>
         <source>Temperature</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#81</comment>
+        <translation type="unfinished">Temperatura</translation>
     </message>
     <message>
         <source>Tint</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#82</comment>
+        <translation type="unfinished">Tonalidade</translation>
     </message>
     <message>
         <source>Saturation</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#83</comment>
+        <translation type="unfinished">Saturação</translation>
     </message>
     <message>
         <source>Vibrance</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#84</comment>
+        <translation type="unfinished">Vibração</translation>
     </message>
     <message>
         <source>Color wheels</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Rodas de cor</translation>
     </message>
     <message>
         <source>Curves</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#86</comment>
+        <translation type="unfinished">Curvas</translation>
     </message>
     <message>
         <source>Looks</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#87</comment>
+        <translation type="unfinished">Aparências</translation>
     </message>
     <message>
         <source>Import looks</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#88</comment>
+        <translation type="unfinished">Importar aparências</translation>
     </message>
     <message>
         <source>Scopes</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#89</comment>
+        <translation type="unfinished">Instrumentos</translation>
     </message>
     <message>
         <source>Open the Color workspace</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrir a área de trabalho Cor</translation>
     </message>
     <message>
         <source>Film Grain</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#91</comment>
+        <translation type="unfinished">Grão de filme</translation>
     </message>
     <message>
         <source>Glow</source>
+        <comment>GlobalSearchControls#92</comment>
         <translation type="unfinished">Brilho</translation>
     </message>
     <message>
         <source>Vignette</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#93</comment>
+        <translation type="unfinished">Vinheta</translation>
     </message>
     <message>
         <source>Chromatic Aberration</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#94</comment>
+        <translation type="unfinished">Aberração cromática</translation>
     </message>
     <message>
         <source>Compare</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#95</comment>
+        <translation type="unfinished">Comparar</translation>
     </message>
     <message>
         <source>Apply to all clips</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#96</comment>
+        <translation type="unfinished">Aplicar a todos os clipes</translation>
     </message>
     <message>
         <source>Workspaces</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#97</comment>
+        <translation type="unfinished">Áreas de trabalho</translation>
     </message>
     <message>
         <source>Transitions</source>
+        <comment>GlobalSearchControls#98</comment>
         <translation type="unfinished">Transições</translation>
     </message>
     <message>
         <source>Templates</source>
+        <comment>GlobalSearchControls#99</comment>
         <translation type="unfinished">Modelos</translation>
     </message>
     <message>
         <source>Stickers</source>
+        <comment>GlobalSearchControls#100</comment>
         <translation type="unfinished">Adesivos</translation>
     </message>
     <message>
         <source>Subtitles</source>
+        <comment>GlobalSearchControls#101</comment>
         <translation type="unfinished">Legendas</translation>
     </message>
     <message>
         <source>Speech</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#102</comment>
+        <translation type="unfinished">Voz</translation>
     </message>
     <message>
         <source>Subject</source>
+        <comment>GlobalSearchControls#103</comment>
         <translation type="unfinished">Assunto</translation>
     </message>
     <message>
         <source>Scenes</source>
+        <comment>GlobalSearchControls#104</comment>
         <translation type="unfinished">Cenas</translation>
     </message>
     <message>
         <source>Media</source>
+        <comment>GlobalSearchControls#105</comment>
         <translation type="unfinished">Mídia</translation>
     </message>
     <message>
         <source>Preview</source>
+        <comment>GlobalSearchControls#106</comment>
         <translation type="unfinished">Pré-visualização</translation>
     </message>
     <message>
         <source>Appearance</source>
+        <comment>GlobalSearchControls#107</comment>
         <translation type="unfinished">Aparência</translation>
     </message>
     <message>
         <source>Timeline</source>
+        <comment>GlobalSearchControls#108</comment>
         <translation type="unfinished">Linha do tempo</translation>
     </message>
     <message>
         <source>Timeline toolbar</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#109</comment>
+        <translation type="unfinished">Barra de ferramentas da linha do tempo</translation>
     </message>
     <message>
         <source>Keyboard shortcuts</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#110</comment>
+        <translation type="unfinished">Atalhos de teclado</translation>
     </message>
     <message>
         <source>AI &amp; Cloud</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#111</comment>
+        <translation type="unfinished">IA e nuvem</translation>
     </message>
     <message>
         <source>Network</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#112</comment>
+        <translation type="unfinished">Rede</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#113</comment>
+        <translation type="unfinished">Sobre</translation>
     </message>
     <message>
         <source>Upscale…</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchControls#114</comment>
+        <translation type="unfinished">Aumentar resolução…</translation>
     </message>
     <message>
         <source>Extras</source>
+        <comment>GlobalSearchControls#115</comment>
         <translation type="unfinished">Extras</translation>
     </message>
 </context>
@@ -8713,87 +9505,100 @@
     <name>GlobalSearchPopup</name>
     <message>
         <source>Action</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ação</translation>
     </message>
     <message>
         <source>Command</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Comando</translation>
     </message>
     <message>
         <source>Panel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Painel</translation>
     </message>
     <message>
         <source>Effect</source>
+        <comment>GlobalSearchPopup#4</comment>
         <translation type="unfinished">Efeito</translation>
     </message>
     <message>
         <source>Template</source>
+        <comment>GlobalSearchPopup#5</comment>
         <translation type="unfinished">Modelo</translation>
     </message>
     <message>
         <source>Effect stack</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pilha de efeitos</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchPopup#7</comment>
+        <translation type="unfinished">FX de áudio</translation>
     </message>
     <message>
         <source>Transition</source>
+        <comment>GlobalSearchPopup#8</comment>
         <translation type="unfinished">Transição</translation>
     </message>
     <message>
         <source>Mask</source>
+        <comment>GlobalSearchPopup#9</comment>
         <translation type="unfinished">Máscara</translation>
     </message>
     <message>
         <source>Shape</source>
+        <comment>GlobalSearchPopup#10</comment>
         <translation type="unfinished">Forma</translation>
     </message>
     <message>
         <source>Sticker</source>
+        <comment>GlobalSearchPopup#11</comment>
         <translation type="unfinished">Adesivo</translation>
     </message>
     <message>
         <source>Text style</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchPopup#12</comment>
+        <translation type="unfinished">Estilo de texto</translation>
     </message>
     <message>
         <source>Add-on</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Complemento</translation>
     </message>
     <message>
         <source>Control</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Controlo</translation>
     </message>
     <message>
         <source>Select a clip first</source>
-        <translation type="unfinished"></translation>
+        <comment>GlobalSearchPopup#15</comment>
+        <translation type="unfinished">Selecione primeiro um clipe</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
+        <comment>GlobalSearchPopup#16</comment>
         <translation type="unfinished">Aplicar ao clipe selecionado</translation>
     </message>
     <message>
         <source>Add at playhead</source>
+        <comment>GlobalSearchPopup#17</comment>
         <translation type="unfinished">Adicionar no cursor de reprodução</translation>
     </message>
     <message>
         <source>Not available now</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Indisponível de momento</translation>
     </message>
     <message>
         <source>Settings</source>
+        <comment>GlobalSearchPopup#19</comment>
         <translation type="unfinished">Definições</translation>
     </message>
     <message>
         <source>Extras</source>
+        <comment>GlobalSearchPopup#20</comment>
         <translation type="unfinished">Extras</translation>
     </message>
     <message>
         <source>Add-on manager</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gestor de complementos</translation>
     </message>
     <message>
         <source>Debug info…</source>
@@ -8801,39 +9606,39 @@
     </message>
     <message>
         <source>Light theme</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tema claro</translation>
     </message>
     <message>
         <source>Dark theme</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tema escuro</translation>
     </message>
     <message>
         <source>System theme</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tema do sistema</translation>
     </message>
     <message>
         <source>Theme: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tema: %1</translation>
     </message>
     <message>
         <source>Workspace: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho: %1</translation>
     </message>
     <message>
         <source>Add as adjustment clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar como clipe de ajuste</translation>
     </message>
     <message>
         <source>Add after selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar após o clipe selecionado</translation>
     </message>
     <message>
         <source>Not available on this track</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Indisponível nesta faixa</translation>
     </message>
     <message>
         <source>No matches</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sem resultados</translation>
     </message>
 </context>
 <context>
@@ -8859,10 +9664,12 @@
     </message>
     <message>
         <source>Type</source>
+        <comment>GradientStopEditor#3</comment>
         <translation>Tipo</translation>
     </message>
     <message>
         <source>Linear</source>
+        <comment>GradientStopEditor#4</comment>
         <translation>Linear</translation>
     </message>
     <message>
@@ -8875,6 +9682,7 @@
     </message>
     <message>
         <source>Angle</source>
+        <comment>GradientStopEditor#7</comment>
         <translation>Ângulo</translation>
     </message>
     <message>
@@ -8891,10 +9699,12 @@
     </message>
     <message>
         <source>Line</source>
+        <comment>GradientStopEditor#11</comment>
         <translation>Linha</translation>
     </message>
     <message>
         <source>Word</source>
+        <comment>GradientStopEditor#12</comment>
         <translation>Palavra</translation>
     </message>
     <message>
@@ -8907,10 +9717,12 @@
     </message>
     <message>
         <source>Offset</source>
+        <comment>GradientStopEditor#15</comment>
         <translation>Deslocamento</translation>
     </message>
     <message>
         <source>Speed</source>
+        <comment>GradientStopEditor#16</comment>
         <translation>Velocidade</translation>
     </message>
     <message>
@@ -8954,7 +9766,8 @@
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <comment>GuideEditBar#3</comment>
+        <translation type="unfinished">Concluir</translation>
     </message>
 </context>
 <context>
@@ -8995,14 +9808,17 @@
     <name>GuidesPopover</name>
     <message>
         <source>Margins</source>
+        <comment>GuidesPopover#1</comment>
         <translation>Margens</translation>
     </message>
     <message>
         <source>Show guides</source>
+        <comment>GuidesPopover#2</comment>
         <translation>Mostrar guias</translation>
     </message>
     <message>
         <source>Guide sets</source>
+        <comment>GuidesPopover#3</comment>
         <translation>Conjuntos de guias</translation>
     </message>
     <message>
@@ -9039,6 +9855,7 @@
     </message>
     <message>
         <source>Frame</source>
+        <comment>GuidesPopover#12</comment>
         <translation>Quadro</translation>
     </message>
     <message>
@@ -9054,6 +9871,7 @@
     </message>
     <message>
         <source>Opacity</source>
+        <comment>GuidesPopoverColorRow#2</comment>
         <translation type="unfinished">Opacidade</translation>
     </message>
 </context>
@@ -9069,6 +9887,7 @@
     </message>
     <message>
         <source>Margins</source>
+        <comment>GuidesPopoverItemHeader#3</comment>
         <translation type="unfinished">Margens</translation>
     </message>
     <message>
@@ -9137,6 +9956,7 @@
     </message>
     <message>
         <source>Built-in</source>
+        <comment>GuidesPopoverSetRow#2</comment>
         <translation type="unfinished">Integrados</translation>
     </message>
     <message>
@@ -9148,65 +9968,70 @@
     <name>HistoryPanel</name>
     <message>
         <source>Start</source>
+        <comment>HistoryPanel#1</comment>
         <translation type="unfinished">Início</translation>
     </message>
     <message>
         <source>History</source>
-        <translation type="unfinished"></translation>
+        <comment>HistoryPanel#2</comment>
+        <translation type="unfinished">Histórico</translation>
     </message>
     <message>
         <source>Nothing to undo yet. Your edits will be listed here.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ainda nada para desfazer. As suas edições serão listadas aqui.</translation>
     </message>
 </context>
 <context>
     <name>ImageSequenceDialog</name>
     <message numerus="yes">
         <source>%n image sequence(s) detected</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n sequência(s) de imagem detetada(s)</numerusform>
+            <numerusform>%n sequência(s) de imagem detetada(s)</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%1  ·  %n frame(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%1  ·  %n fotograma(s)</numerusform>
+            <numerusform>%1  ·  %n fotograma(s)</numerusform>
         </translation>
     </message>
     <message>
         <source>Frame rate</source>
+        <comment>ImageSequenceDialog#3</comment>
         <translation type="unfinished">Taxa de quadros</translation>
     </message>
     <message>
         <source>= %1 s</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">= %1 s</translation>
     </message>
     <message numerus="yes">
         <source>%n selected frame(s) after a gap in the numbering will be skipped.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n fotograma(s) selecionado(s) após uma lacuna na numeração serão ignorados.</numerusform>
+            <numerusform>%n fotograma(s) selecionado(s) após uma lacuna na numeração serão ignorados.</numerusform>
         </translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>ImageSequenceDialog#6</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Import as stills</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar como imagens</translation>
     </message>
     <message>
         <source>Import as sequence</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar como sequência</translation>
     </message>
 </context>
 <context>
     <name>JobRegistry</name>
     <message>
         <source>Queued</source>
+        <comment>JobRegistry#1</comment>
         <translation>Na fila</translation>
     </message>
 </context>
@@ -9222,38 +10047,47 @@
     </message>
     <message>
         <source>Width</source>
+        <comment>KeyframeGraph#3</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
+        <comment>KeyframeGraph#4</comment>
         <translation>Altura</translation>
     </message>
     <message>
         <source>Rotation</source>
+        <comment>KeyframeGraph#5</comment>
         <translation>Rotação</translation>
     </message>
     <message>
         <source>Tilt X</source>
+        <comment>KeyframeGraph#6</comment>
         <translation>Inclinação X</translation>
     </message>
     <message>
         <source>Tilt Y</source>
+        <comment>KeyframeGraph#7</comment>
         <translation>Inclinação Y</translation>
     </message>
     <message>
         <source>Depth</source>
+        <comment>KeyframeGraph#8</comment>
         <translation>Profundidade</translation>
     </message>
     <message>
         <source>Perspective</source>
+        <comment>KeyframeGraph#9</comment>
         <translation>Perspectiva</translation>
     </message>
     <message>
         <source>Opacity</source>
+        <comment>KeyframeGraph#10</comment>
         <translation>Opacidade</translation>
     </message>
     <message>
         <source>Volume</source>
+        <comment>KeyframeGraph#11</comment>
         <translation>Volume</translation>
     </message>
     <message>
@@ -9294,14 +10128,17 @@
     </message>
     <message>
         <source>Straight</source>
+        <comment>KeyframeGraph#21</comment>
         <translation type="unfinished">Reta</translation>
     </message>
     <message>
         <source>Ease</source>
+        <comment>KeyframeGraph#22</comment>
         <translation type="unfinished">Suave</translation>
     </message>
     <message>
         <source>Jump</source>
+        <comment>KeyframeGraph#23</comment>
         <translation type="unfinished">Salto</translation>
     </message>
 </context>
@@ -9309,18 +10146,20 @@
     <name>KeyframeGraphHeaderBar</name>
     <message>
         <source>Keyframes</source>
+        <comment>KeyframeGraphHeaderBar#1</comment>
         <translation type="unfinished">Quadros-chave</translation>
     </message>
     <message>
         <source>Collapse curve editor to compact view (88px)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Colapsar o editor de curvas para vista compacta (88px)</translation>
     </message>
     <message>
         <source>Expand curve editor to view and edit Bezier handles (180px)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Expandir o editor de curvas para ver e editar as pegas de Bézier (180px)</translation>
     </message>
     <message>
         <source>Analyzing…</source>
+        <comment>KeyframeGraphHeaderBar#4</comment>
         <translation type="unfinished">Analisando…</translation>
     </message>
     <message>
@@ -9329,6 +10168,7 @@
     </message>
     <message>
         <source>Find the beat and show markers</source>
+        <comment>KeyframeGraphHeaderBar#6</comment>
         <translation type="unfinished">Encontrar a batida e mostrar marcadores</translation>
     </message>
     <message>
@@ -9344,6 +10184,7 @@
     <name>KeyframeGraphKeyDot</name>
     <message>
         <source>Move keyframe</source>
+        <comment>KeyframeGraphKeyDot#1</comment>
         <translation type="unfinished">Mover quadro-chave</translation>
     </message>
 </context>
@@ -9362,7 +10203,7 @@
     </message>
     <message>
         <source>Expand for handles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Expandir para as pegas</translation>
     </message>
     <message>
         <source> BPM</source>
@@ -9388,18 +10229,22 @@
     </message>
     <message>
         <source>Language</source>
+        <comment>LanguageChooserDialog#2</comment>
         <translation>Idioma</translation>
     </message>
     <message>
         <source>Continue</source>
+        <comment>LanguageChooserDialog#3</comment>
         <translation>Continuar</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>LanguageChooserDialog#4</comment>
         <translation>Fechar</translation>
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
+        <comment>LanguageChooserDialog#5</comment>
         <translation>Idioma dos menus e rótulos. Tem efeito imediatamente.</translation>
     </message>
     <message>
@@ -9415,10 +10260,12 @@
     </message>
     <message>
         <source>Continue</source>
+        <comment>LayoutChooserDialog#2</comment>
         <translation>Continuar</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>LayoutChooserDialog#3</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
@@ -9435,10 +10282,12 @@
     </message>
     <message>
         <source>Template</source>
+        <comment>LayoutChooserDialog#7</comment>
         <translation>Modelo</translation>
     </message>
     <message>
         <source>Quality</source>
+        <comment>LayoutChooserDialog#8</comment>
         <translation>Qualidade</translation>
     </message>
     <message>
@@ -9470,6 +10319,7 @@
     </message>
     <message>
         <source>More</source>
+        <comment>LayoutPresets#5</comment>
         <translation>Mais</translation>
     </message>
     <message>
@@ -9522,14 +10372,17 @@
     </message>
     <message>
         <source>Square</source>
+        <comment>LayoutPresets#18</comment>
         <translation>Quadrado</translation>
     </message>
     <message>
         <source>Landscape</source>
+        <comment>LayoutPresets#19</comment>
         <translation>Paisagem</translation>
     </message>
     <message>
         <source>Portrait</source>
+        <comment>LayoutPresets#20</comment>
         <translation>Retrato</translation>
     </message>
     <message>
@@ -9538,6 +10391,7 @@
     </message>
     <message>
         <source>Custom</source>
+        <comment>LayoutPresets#22</comment>
         <translation>Personalizada</translation>
     </message>
     <message>
@@ -9554,10 +10408,12 @@
     </message>
     <message>
         <source>1080p</source>
+        <comment>LayoutPresets#26</comment>
         <translation>1080p</translation>
     </message>
     <message>
         <source>720p</source>
+        <comment>LayoutPresets#27</comment>
         <translation>720p</translation>
     </message>
 </context>
@@ -9565,90 +10421,101 @@
     <name>LooksPanel</name>
     <message>
         <source>Looks</source>
-        <translation type="unfinished"></translation>
+        <comment>LooksPanel#1</comment>
+        <translation type="unfinished">Aparências</translation>
     </message>
     <message>
         <source>My Looks</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">As Minhas Aparências</translation>
     </message>
     <message>
         <source>Import looks</source>
-        <translation type="unfinished"></translation>
+        <comment>LooksPanel#3</comment>
+        <translation type="unfinished">Importar aparências</translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
-        <translation type="unfinished"></translation>
+        <comment>LooksPanel#4</comment>
+        <translation type="unfinished">Ficheiros LUT (*.cube)</translation>
     </message>
     <message>
         <source>Search looks</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pesquisar aparências</translation>
     </message>
     <message>
         <source>Look Intensity</source>
-        <translation type="unfinished"></translation>
+        <comment>LooksPanel#6</comment>
+        <translation type="unfinished">Intensidade da aparência</translation>
     </message>
     <message>
         <source>Adjust %1</source>
-        <translation type="unfinished"></translation>
+        <comment>LooksPanel#7</comment>
+        <translation type="unfinished">Ajustar %1</translation>
     </message>
     <message>
         <source>Get free looks</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Obter aparências gratuitas</translation>
     </message>
     <message>
         <source>Rename…</source>
+        <comment>LooksPanel#9</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Import .cube looks</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar aparências .cube</translation>
     </message>
     <message>
         <source>Remove</source>
+        <comment>LooksPanel#11</comment>
         <translation type="unfinished">Remover</translation>
     </message>
     <message>
         <source>No looks match “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhuma aparência corresponde a “%1”.</translation>
     </message>
     <message>
         <source>No favorites yet. Star looks to save them here.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhum favorito ainda. Marque aparências com estrela para as guardar aqui.</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
+        <comment>LooksPanel#14</comment>
         <translation type="unfinished">Nada nesta categoria.</translation>
     </message>
     <message>
         <source>%1 is empty</source>
-        <translation type="unfinished"></translation>
+        <comment>LooksPanel#15</comment>
+        <translation type="unfinished">%1 está vazio</translation>
     </message>
     <message>
         <source>Import a .cube file to add your own.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importe um ficheiro .cube para adicionar as suas.</translation>
     </message>
     <message>
         <source>Import</source>
+        <comment>LooksPanel#17</comment>
         <translation type="unfinished">Importar</translation>
     </message>
     <message>
         <source>No looks</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhuma aparência</translation>
     </message>
     <message>
         <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transfira um pacote gratuito de aparências prontas ou importe os seus ficheiros .cube.</translation>
     </message>
     <message>
         <source>Select a clip to try looks on it</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe para experimentar aparências nele</translation>
     </message>
     <message>
         <source>Rename look</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Renomear aparência</translation>
     </message>
     <message>
         <source>Rename</source>
+        <comment>LooksPanel#22</comment>
         <translation type="unfinished">Renomear</translation>
     </message>
 </context>
@@ -9656,62 +10523,74 @@
     <name>Main</name>
     <message>
         <source>Drift %1 is the latest version.</source>
+        <comment>Main#1</comment>
         <translation type="unfinished">O Drift %1 é a versão mais recente.</translation>
     </message>
     <message>
         <source>Still opening a project — try again in a moment.</source>
+        <comment>Main#2</comment>
         <translation>Ainda abrindo um projeto — tente novamente em um instante.</translation>
     </message>
     <message>
         <source>Open Project</source>
+        <comment>Main#3</comment>
         <translation>Abrir projeto</translation>
     </message>
     <message>
         <source>Project closed</source>
+        <comment>Main#4</comment>
         <translation>Projeto fechado</translation>
     </message>
     <message>
         <source>Already checking for updates…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Já a verificar atualizações…</translation>
     </message>
     <message>
         <source>Checking for updates…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A verificar atualizações…</translation>
     </message>
     <message>
         <source>Links can’t be opened in this layout.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Os links não podem ser abertos nesto layout.</translation>
     </message>
     <message>
         <source>Export finished.</source>
+        <comment>Main#8</comment>
         <translation>Exportação concluída.</translation>
     </message>
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
+        <comment>Main#9</comment>
         <translation>Não foi possível criar a cópia partilhável: %1</translation>
     </message>
     <message>
         <source>Captions created.</source>
+        <comment>Main#10</comment>
         <translation>Legendas criadas.</translation>
     </message>
     <message>
         <source>Couldn’t create captions: %1</source>
+        <comment>Main#11</comment>
         <translation>Não foi possível criar as legendas: %1</translation>
     </message>
     <message>
         <source>Couldn’t create captions.</source>
+        <comment>Main#12</comment>
         <translation>Não foi possível criar as legendas.</translation>
     </message>
     <message>
         <source>Couldn’t install “%1”: %2</source>
+        <comment>Main#13</comment>
         <translation>Não foi possível instalar “%1”: %2</translation>
     </message>
     <message>
         <source>Imported “%1”.</source>
+        <comment>Main#14</comment>
         <translation>“%1” importado.</translation>
     </message>
     <message>
         <source>Imported from the marketplace.</source>
+        <comment>Main#15</comment>
         <translation>Importado do mercado.</translation>
     </message>
 </context>
@@ -9719,219 +10598,223 @@
     <name>MainMacMenuBar</name>
     <message>
         <source>&amp;File</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Ficheiro</translation>
     </message>
     <message>
         <source>&amp;New Project</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Novo Projeto</translation>
     </message>
     <message>
         <source>&amp;Open Project…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Abrir Projeto…</translation>
     </message>
     <message>
         <source>&amp;Save Project</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Guardar Projeto</translation>
     </message>
     <message>
         <source>Save Project &amp;As…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Guardar Projeto &amp;Como…</translation>
     </message>
     <message>
         <source>Save Project &amp;JSON…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Guardar Projeto &amp;JSON…</translation>
     </message>
     <message>
         <source>Open Project JSON…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrir Projeto &amp;JSON…</translation>
     </message>
     <message>
         <source>&amp;Export Video…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Exportar Vídeo…</translation>
     </message>
     <message>
         <source>&amp;Package Project…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">E&amp;mpacotar Projeto…</translation>
     </message>
     <message>
         <source>&amp;Close Project</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Fechar Projeto</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Editar</translation>
     </message>
     <message>
         <source>&amp;Undo</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Desfazer</translation>
     </message>
     <message>
         <source>&amp;Redo</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Refazer</translation>
     </message>
     <message>
         <source>Cu&amp;t</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Cortar</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Copiar</translation>
     </message>
     <message>
         <source>&amp;Paste</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Colar</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Eliminar</translation>
     </message>
     <message>
         <source>Select &amp;All</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecionar T&amp;udo</translation>
     </message>
     <message>
         <source>Clear Selection</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Limpar Seleção</translation>
     </message>
     <message>
         <source>Split Clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Dividir Clipe</translation>
     </message>
     <message>
         <source>Duplicate Clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duplicar Clipe</translation>
     </message>
     <message>
         <source>Copy Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Copiar Efeitos</translation>
     </message>
     <message>
         <source>Paste Effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Colar Efeitos</translation>
     </message>
     <message>
         <source>Paste Attributes…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Colar Atributos…</translation>
     </message>
     <message>
         <source>About Drift</source>
-        <translation type="unfinished"></translation>
+        <comment>MainMacMenuBar#25</comment>
+        <translation type="unfinished">Sobre o Drift</translation>
     </message>
     <message>
         <source>Settings…</source>
-        <translation type="unfinished"></translation>
+        <comment>MainMacMenuBar#26</comment>
+        <translation type="unfinished">Definições…</translation>
     </message>
     <message>
         <source>Check for Updates…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Procurar Atualizações…</translation>
     </message>
     <message>
         <source>&amp;Playback</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Reprodução</translation>
     </message>
     <message>
         <source>Play / Pause</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reproduzir / Pausar</translation>
     </message>
     <message>
         <source>Step Back One Frame</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Recuar Um Fotograma</translation>
     </message>
     <message>
         <source>Step Forward One Frame</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Avançar Um Fotograma</translation>
     </message>
     <message>
         <source>Previous Cut Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ponto de Corte Anterior</translation>
     </message>
     <message>
         <source>Next Cut Point</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ponto de Corte Seguinte</translation>
     </message>
     <message>
         <source>Go to Start of Timeline</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ir para o Início da Linha do Tempo</translation>
     </message>
     <message>
         <source>Toggle Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Alternar Marcador</translation>
     </message>
     <message>
         <source>Next Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Marcador Seguinte</translation>
     </message>
     <message>
         <source>Previous Bookmark</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Marcador Anterior</translation>
     </message>
     <message>
         <source>&amp;View</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Ver</translation>
     </message>
     <message>
         <source>Zoom &amp;In</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A&amp;mpliar</translation>
     </message>
     <message>
         <source>Zoom &amp;Out</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Red&amp;uzir</translation>
     </message>
     <message>
         <source>Toggle Fullscreen Preview</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Alternar Pré-visualização em Ecrã Inteiro</translation>
     </message>
     <message>
         <source>Toggle Guides</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Alternar Guias</translation>
     </message>
     <message>
         <source>Switch to Mobile Layout…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar para Layout Móvel…</translation>
     </message>
     <message>
         <source>&amp;Window</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Janela</translation>
     </message>
     <message>
         <source>Edit Workspaces…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Editar Áreas de Trabalho…</translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de Trabalho Horizontal</translation>
     </message>
     <message>
         <source>Portrait Workspace</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de Trabalho Vertical</translation>
     </message>
     <message>
         <source>Auto Workspace (Follow Canvas)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de Trabalho Automática (Seguir a Tela)</translation>
     </message>
     <message>
         <source>Downloads</source>
+        <comment>MainMacMenuBar#49</comment>
         <translation type="unfinished">Transferências</translation>
     </message>
     <message>
         <source>Multicam</source>
+        <comment>MainMacMenuBar#50</comment>
         <translation type="unfinished">Multicâmera</translation>
     </message>
     <message>
         <source>&amp;Help</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Ajuda</translation>
     </message>
     <message>
         <source>Keyboard Shortcuts</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Atalhos de Teclado</translation>
     </message>
     <message>
         <source>Extras…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Extras…</translation>
     </message>
     <message>
         <source>Debug Info…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Informações de Depuração…</translation>
     </message>
 </context>
 <context>
@@ -9946,6 +10829,7 @@
     </message>
     <message>
         <source>Starting…</source>
+        <comment>MarketClient#3</comment>
         <translation>Iniciando…</translation>
     </message>
     <message>
@@ -9954,6 +10838,7 @@
     </message>
     <message>
         <source>Cancelled</source>
+        <comment>MarketClient#5</comment>
         <translation>Cancelado</translation>
     </message>
     <message>
@@ -9966,6 +10851,7 @@
     </message>
     <message>
         <source>Downloading…</source>
+        <comment>MarketClient#8</comment>
         <translation>Baixando…</translation>
     </message>
     <message>
@@ -9978,6 +10864,7 @@
     </message>
     <message>
         <source>Importing…</source>
+        <comment>MarketClient#11</comment>
         <translation>Importando…</translation>
     </message>
     <message>
@@ -9986,6 +10873,7 @@
     </message>
     <message>
         <source>In the media bin</source>
+        <comment>MarketClient#13</comment>
         <translation>No compartimento de mídia</translation>
     </message>
     <message>
@@ -10072,10 +10960,12 @@
     <name>MarketSearchField</name>
     <message>
         <source>Cancel</source>
+        <comment>MarketSearchField#1</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Clear</source>
+        <comment>MarketSearchField#2</comment>
         <translation>Limpar</translation>
     </message>
 </context>
@@ -10099,7 +10989,7 @@
     </message>
     <message>
         <source>Search sound effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Multimâmara</translation>
     </message>
     <message>
         <source>Search, or paste a link</source>
@@ -10107,11 +10997,12 @@
     </message>
     <message>
         <source>Assets</source>
+        <comment>MarketTab#7</comment>
         <translation>Recursos</translation>
     </message>
     <message>
         <source>SFX</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O motor de pesquisa não está disponível nesta versão.</translation>
     </message>
     <message>
         <source>Stock footage</source>
@@ -10119,6 +11010,7 @@
     </message>
     <message>
         <source>Loading sources…</source>
+        <comment>MarketTab#10</comment>
         <translation>Carregando fontes…</translation>
     </message>
     <message>
@@ -10127,10 +11019,12 @@
     </message>
     <message>
         <source>Try again</source>
+        <comment>MarketTab#12</comment>
         <translation>Tentar novamente</translation>
     </message>
     <message>
         <source>Search</source>
+        <comment>MarketTab#13</comment>
         <translation>Pesquisar</translation>
     </message>
 </context>
@@ -10138,6 +11032,7 @@
     <name>MaskOverlay</name>
     <message>
         <source>Mask changed</source>
+        <comment>MaskOverlay#1</comment>
         <translation>Máscara alterada</translation>
     </message>
 </context>
@@ -10145,6 +11040,7 @@
     <name>MaskOverlayBarEdge</name>
     <message>
         <source>Mask changed</source>
+        <comment>MaskOverlayBarEdge#1</comment>
         <translation type="unfinished">Máscara alterada</translation>
     </message>
 </context>
@@ -10163,6 +11059,7 @@
     <name>MaskOverlayResizeGrip</name>
     <message>
         <source>Mask changed</source>
+        <comment>MaskOverlayResizeGrip#1</comment>
         <translation type="unfinished">Máscara alterada</translation>
     </message>
 </context>
@@ -10170,6 +11067,7 @@
     <name>MaskOverlayRotateHandle</name>
     <message>
         <source>Mask changed</source>
+        <comment>MaskOverlayRotateHandle#1</comment>
         <translation type="unfinished">Máscara alterada</translation>
     </message>
 </context>
@@ -10177,6 +11075,7 @@
     <name>MaskOverlayVertexHandle</name>
     <message>
         <source>Mask changed</source>
+        <comment>MaskOverlayVertexHandle#1</comment>
         <translation type="unfinished">Máscara alterada</translation>
     </message>
 </context>
@@ -10196,6 +11095,7 @@
     </message>
     <message>
         <source>Apply to selected clip</source>
+        <comment>MaskPresetCard#4</comment>
         <translation type="unfinished">Aplicar ao clipe selecionado</translation>
     </message>
 </context>
@@ -10203,42 +11103,52 @@
     <name>MasksInspector</name>
     <message>
         <source>None</source>
+        <comment>MasksInspector#1</comment>
         <translation>Nenhuma</translation>
     </message>
     <message>
         <source>Shape</source>
+        <comment>MasksInspector#2</comment>
         <translation>Forma</translation>
     </message>
     <message>
         <source>Rectangle</source>
+        <comment>MasksInspector#3</comment>
         <translation>Retângulo</translation>
     </message>
     <message>
         <source>Ellipse</source>
+        <comment>MasksInspector#4</comment>
         <translation>Elipse</translation>
     </message>
     <message>
         <source>Star</source>
+        <comment>MasksInspector#5</comment>
         <translation>Estrela</translation>
     </message>
     <message>
         <source>Heart</source>
+        <comment>MasksInspector#6</comment>
         <translation>Coração</translation>
     </message>
     <message>
         <source>Bars</source>
+        <comment>MasksInspector#7</comment>
         <translation>Barras</translation>
     </message>
     <message>
         <source>Freeform</source>
+        <comment>MasksInspector#8</comment>
         <translation>Forma livre</translation>
     </message>
     <message>
         <source>Combine</source>
+        <comment>MasksInspector#9</comment>
         <translation>Combinar</translation>
     </message>
     <message>
         <source>Add</source>
+        <comment>MasksInspector#10</comment>
         <translation>Adicionar</translation>
     </message>
     <message>
@@ -10267,22 +11177,27 @@
     </message>
     <message>
         <source>Width</source>
+        <comment>MasksInspector#17</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
+        <comment>MasksInspector#18</comment>
         <translation>Altura</translation>
     </message>
     <message>
         <source>Rotation</source>
+        <comment>MasksInspector#19</comment>
         <translation>Rotação</translation>
     </message>
     <message>
         <source>Feather</source>
+        <comment>MasksInspector#20</comment>
         <translation>Suavização de borda</translation>
     </message>
     <message>
         <source>Invert</source>
+        <comment>MasksInspector#21</comment>
         <translation>Inverter</translation>
     </message>
 </context>
@@ -10298,6 +11213,7 @@
     </message>
     <message>
         <source>Subject</source>
+        <comment>MasksTab#3</comment>
         <translation>Assunto</translation>
     </message>
     <message>
@@ -10310,6 +11226,7 @@
     </message>
     <message>
         <source>Select a video clip first</source>
+        <comment>MasksTab#6</comment>
         <translation>Selecione um clipe de vídeo primeiro</translation>
     </message>
     <message>
@@ -10318,6 +11235,7 @@
     </message>
     <message>
         <source>Install AI engine first</source>
+        <comment>MasksTab#8</comment>
         <translation>Instale primeiro o motor de IA</translation>
     </message>
     <message>
@@ -10342,6 +11260,7 @@
     </message>
     <message>
         <source>All files (*)</source>
+        <comment>MasksTab#14</comment>
         <translation>Todos os ficheiros (*)</translation>
     </message>
 </context>
@@ -10369,10 +11288,12 @@
     </message>
     <message>
         <source>Video</source>
+        <comment>MediaAssetsEmptyState#6</comment>
         <translation type="unfinished">Vídeo</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>MediaAssetsEmptyState#7</comment>
         <translation type="unfinished">Áudio</translation>
     </message>
     <message>
@@ -10389,33 +11310,38 @@
     </message>
     <message>
         <source>glTF binary (.glb) · Gaussian splats (.sog, .ply, .zip)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pesquisar efeitos sonoros</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaAssetsEmptyState#12</comment>
+        <translation type="unfinished">SFX</translation>
     </message>
     <message>
         <source>PDF (needs the PDF Viewer addon)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Efeitos sonoros</translation>
     </message>
 </context>
 <context>
     <name>MediaAssetsFolderMenu</name>
     <message>
         <source>Open</source>
+        <comment>MediaAssetsFolderMenu#1</comment>
         <translation type="unfinished">Abrir</translation>
     </message>
     <message>
         <source>Rename…</source>
+        <comment>MediaAssetsFolderMenu#2</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Move to folder…</source>
+        <comment>MediaAssetsFolderMenu#3</comment>
         <translation type="unfinished">Mover para pasta…</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>MediaAssetsFolderMenu#4</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
 </context>
@@ -10423,6 +11349,7 @@
     <name>MediaAssetsGridCard</name>
     <message>
         <source>%1 — drag to the timeline, right-click to preview</source>
+        <comment>MediaAssetsGridCard#1</comment>
         <translation type="unfinished">%1 — arraste para a linha do tempo, clique com o botão direito para pré-visualizar</translation>
     </message>
 </context>
@@ -10430,22 +11357,27 @@
     <name>MediaAssetsGridNameRow</name>
     <message>
         <source>Linked proxy</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaAssetsGridNameRow#1</comment>
+        <translation type="unfinished">A carregar fontes…</translation>
     </message>
     <message>
         <source>Proxy</source>
+        <comment>MediaAssetsGridNameRow#2</comment>
         <translation type="unfinished">Proxy</translation>
     </message>
     <message>
         <source>Using a proxy file found next to the original</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaAssetsGridNameRow#3</comment>
+        <translation type="unfinished">A carregar efeitos sonoros…</translation>
     </message>
     <message>
         <source>Edit-friendly</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaAssetsGridNameRow#4</comment>
+        <translation type="unfinished">Não foi possível carregar os efeitos sonoros</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
+        <comment>MediaAssetsGridNameRow#5</comment>
         <translation type="unfinished">Convertido para uma taxa de quadros constante para uma edição suave</translation>
     </message>
 </context>
@@ -10453,6 +11385,7 @@
     <name>MediaAssetsItemMenu</name>
     <message>
         <source>Open composite</source>
+        <comment>MediaAssetsItemMenu#1</comment>
         <translation type="unfinished">Abrir composto</translation>
     </message>
     <message numerus="yes">
@@ -10464,11 +11397,12 @@
     </message>
     <message>
         <source>Add to timeline</source>
+        <comment>MediaAssetsItemMenu#3</comment>
         <translation type="unfinished">Adicionar à linha do tempo</translation>
     </message>
     <message>
         <source>Trim, crop and upscale…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhum efeito sonoro aqui.</translation>
     </message>
     <message>
         <source>Preview and edit…</source>
@@ -10476,6 +11410,7 @@
     </message>
     <message>
         <source>Rename…</source>
+        <comment>MediaAssetsItemMenu#6</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
@@ -10491,6 +11426,7 @@
     </message>
     <message>
         <source>Move to folder…</source>
+        <comment>MediaAssetsItemMenu#9</comment>
         <translation type="unfinished">Mover para pasta…</translation>
     </message>
     <message numerus="yes">
@@ -10506,7 +11442,7 @@
     </message>
     <message>
         <source>Link proxy…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível adicionar esse som ao compartimento de mídia.</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n proxies</source>
@@ -10521,6 +11457,7 @@
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
+        <comment>MediaAssetsItemMenu#15</comment>
         <translation type="unfinished">Converter para formato adequado para edição</translation>
     </message>
     <message>
@@ -10529,7 +11466,7 @@
     </message>
     <message>
         <source>Save As…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar à linha do tempo</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
@@ -10547,22 +11484,27 @@
     <name>MediaAssetsListLabels</name>
     <message>
         <source>Linked proxy</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaAssetsListLabels#1</comment>
+        <translation type="unfinished">Mudar para o layout de desktop?</translation>
     </message>
     <message>
         <source>Proxy</source>
+        <comment>MediaAssetsListLabels#2</comment>
         <translation type="unfinished">Proxy</translation>
     </message>
     <message>
         <source>Using a proxy file found next to the original</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaAssetsListLabels#3</comment>
+        <translation type="unfinished">Reiniciar agora</translation>
     </message>
     <message>
         <source>Edit-friendly</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaAssetsListLabels#4</comment>
+        <translation type="unfinished">Mudar</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
+        <comment>MediaAssetsListLabels#5</comment>
         <translation type="unfinished">Convertido para uma taxa de quadros constante para uma edição suave</translation>
     </message>
 </context>
@@ -10570,6 +11512,7 @@
     <name>MediaAssetsListRow</name>
     <message>
         <source>%1 — drag to the timeline, right-click to preview</source>
+        <comment>MediaAssetsListRow#1</comment>
         <translation type="unfinished">%1 — arraste para a linha do tempo, clique com o botão direito para pré-visualizar</translation>
     </message>
     <message>
@@ -10601,6 +11544,7 @@
     </message>
     <message>
         <source>Try a different name.</source>
+        <comment>MediaAssetsTab#5</comment>
         <translation>Tente outro nome.</translation>
     </message>
     <message>
@@ -10679,7 +11623,7 @@
     </message>
     <message numerus="yes">
         <source>%n items moved</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n item movido</numerusform>
             <numerusform>%n itens movidos</numerusform>
         </translation>
@@ -10698,19 +11642,21 @@
     </message>
     <message>
         <source>Could not open the media file</source>
+        <comment>MediaBinController#10</comment>
         <translation>Não foi possível abrir o ficheiro de mídia</translation>
     </message>
     <message>
         <source>Crop image</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mais tarde</translation>
     </message>
     <message>
         <source>Crop saved</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaBinController#12</comment>
+        <translation type="unfinished">Reinicie o Drift para mudar de layout.</translation>
     </message>
     <message>
         <source>Crop video</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Está ligado um rato. O layout de desktop tem menus completos, painéis e edição precisa da linha do tempo. O Drift reinicia para mudar e o seu projeto é mantido.</translation>
     </message>
     <message>
         <source>Media trimmed</source>
@@ -10722,19 +11668,20 @@
     </message>
     <message>
         <source>Could not create an output file</source>
+        <comment>MediaBinController#16</comment>
         <translation>Não foi possível criar um ficheiro de saída</translation>
     </message>
     <message>
         <source>%1 (trimmed)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O layout móvel é a interface tátil feita para telemóveis. O Drift reinicia para mudar.</translation>
     </message>
     <message>
         <source>Rendering…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O layout de desktop é indicado para rato e teclado. O Drift reinicia para mudar.</translation>
     </message>
     <message>
         <source>Render Trimmed Copy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Origem: %1</translation>
     </message>
     <message>
         <source>Couldn’t save that edit</source>
@@ -10742,11 +11689,13 @@
     </message>
     <message>
         <source>%1 (%2)</source>
+        <comment>MediaBinController#21</comment>
         <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaBinController#22</comment>
+        <translation type="unfinished">Visualizador de Origem</translation>
     </message>
     <message>
         <source>Converting…</source>
@@ -10754,6 +11703,7 @@
     </message>
     <message>
         <source>Saving…</source>
+        <comment>MediaBinController#24</comment>
         <translation>Salvando…</translation>
     </message>
     <message>
@@ -10774,7 +11724,7 @@
     </message>
     <message>
         <source>Could not refresh “%1”: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe no compartimento de mídia para o pré-visualizar aqui.</translation>
     </message>
     <message>
         <source>That media is no longer in this project.</source>
@@ -10794,7 +11744,7 @@
     </message>
     <message>
         <source>Media refreshed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Voz guardada</translation>
     </message>
 </context>
 <context>
@@ -10805,6 +11755,7 @@
     </message>
     <message>
         <source>Import Media</source>
+        <comment>MediaImport#2</comment>
         <translation>Importar mídia</translation>
     </message>
     <message>
@@ -10833,7 +11784,7 @@
     </message>
     <message numerus="yes">
         <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n clipe pode ter reprodução lenta. Um proxy torna a pré-visualização mais suave; a exportação ainda usa o original.</numerusform>
             <numerusform>%n clipes podem ter reprodução lenta. Um proxy torna a pré-visualização mais suave; a exportação ainda usa o original.</numerusform>
         </translation>
@@ -10844,13 +11795,14 @@
     </message>
     <message numerus="yes">
         <source>%n clip(s) have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n clipe tem taxa de quadros variável, o que pode deixá-lo fora de sincronia com o áudio. Converta-o para um formato otimizado para edição para corrigir isso.</numerusform>
             <numerusform>%n clipes têm taxa de quadros variável, o que pode deixá-los fora de sincronia com o áudio. Converta-os para um formato otimizado para edição para corrigir isso.</numerusform>
         </translation>
     </message>
     <message>
         <source>Convert</source>
+        <comment>MediaImport#12</comment>
         <translation>Converter</translation>
     </message>
     <message>
@@ -10863,7 +11815,7 @@
     </message>
     <message numerus="yes">
         <source>Imported %n files.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n ficheiro importado.</numerusform>
             <numerusform>%n ficheiros importados.</numerusform>
         </translation>
@@ -10874,7 +11826,7 @@
     </message>
     <message numerus="yes">
         <source>Could not import any of the %n selected files.</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n ficheiro selecionado não pôde ser importado.</numerusform>
             <numerusform>Nenhum dos %n ficheiros selecionados pôde ser importado.</numerusform>
         </translation>
@@ -10884,7 +11836,7 @@
     <name>MediaPreviewResolutionPill</name>
     <message>
         <source>%1p</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Necessário para gerar fala</translation>
     </message>
 </context>
 <context>
@@ -10895,18 +11847,20 @@
     </message>
     <message>
         <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Escreva o que a voz deve dizer</translation>
     </message>
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 caracteres, cerca de %2 s</translation>
     </message>
     <message>
         <source>Pause</source>
+        <comment>MediaPreviewView#4</comment>
         <translation type="unfinished">Pausar</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>MediaPreviewView#5</comment>
         <translation type="unfinished">Reproduzir</translation>
     </message>
     <message>
@@ -10919,71 +11873,79 @@
     </message>
     <message>
         <source>Add sub-clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Fala com mais de 30 segundos termina frequentemente em palavras sem sentido ou em silêncio. Divida o guião em partes mais curtas.</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaPreviewView#9</comment>
+        <translation type="unfinished">Reproduzir a amostra de voz</translation>
     </message>
     <message>
         <source>Rotate</source>
+        <comment>MediaPreviewView#10</comment>
         <translation type="unfinished">Girar</translation>
     </message>
     <message>
         <source>Original: %1×%2 • Crop: %3×%4</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Renomear ou eliminar esta voz</translation>
     </message>
     <message>
         <source>Unlock crop ratio</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaPreviewView#12</comment>
+        <translation type="unfinished">Renomear voz</translation>
     </message>
     <message>
         <source>Lock crop ratio</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaPreviewView#13</comment>
+        <translation type="unfinished">Nova voz</translation>
     </message>
     <message>
         <source>Reset</source>
+        <comment>MediaPreviewView#14</comment>
         <translation type="unfinished">Redefinir</translation>
     </message>
     <message>
         <source>Upscale this video?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Clonar uma voz a partir de uma gravação</translation>
     </message>
     <message>
         <source>Length %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Do clipe selecionado</translation>
     </message>
     <message>
         <source>This video is under 700 pixels on its shorter side. Upscaling it with an AI model can make it look sharper.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gravar…</translation>
     </message>
     <message>
         <source>This resolution is already good for most projects. You can still upscale it.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar ficheiro…</translation>
     </message>
     <message>
         <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A carregar o modelo de voz (a primeira utilização demora um pouco)…</translation>
     </message>
     <message>
         <source>Saving…</source>
+        <comment>MediaPreviewView#20</comment>
         <translation type="unfinished">Salvando…</translation>
     </message>
     <message>
         <source>Choose the part and crop to keep, then Next.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A aprender a voz…</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this crop.</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaPreviewView#22</comment>
+        <translation type="unfinished">Expressividade</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this trim.</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaPreviewView#23</comment>
+        <translation type="unfinished">Valores mais altos soam mais dramáticos e falam mais depressa</translation>
     </message>
     <message>
         <source>Adjust the crop or Reset to restore the full picture.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gerar fala</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
@@ -10991,31 +11953,37 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>MediaPreviewView#26</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>MediaPreviewView#27</comment>
         <translation type="unfinished">Fechar</translation>
     </message>
     <message>
         <source>Back</source>
+        <comment>MediaPreviewView#28</comment>
         <translation type="unfinished">Voltar</translation>
     </message>
     <message>
         <source>Upscale…</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaPreviewView#29</comment>
+        <translation type="unfinished">Gerar fala e adicioná-la no cursor de reprodução</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>MediaPreviewView#30</comment>
         <translation type="unfinished">Guardar</translation>
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Parar de gerar</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <comment>MediaPreviewView#32</comment>
+        <translation type="unfinished">Gravar uma voz</translation>
     </message>
 </context>
 <context>
@@ -11026,14 +11994,16 @@
     </message>
     <message>
         <source>Preview</source>
+        <comment>MediaPreviewWindow#2</comment>
         <translation>Pré-visualização</translation>
     </message>
     <message>
         <source>Crop — %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar uma voz</translation>
     </message>
     <message>
         <source>Crop</source>
+        <comment>MediaPreviewWindow#4</comment>
         <translation type="unfinished">Recortar</translation>
     </message>
 </context>
@@ -11045,10 +12015,12 @@
     </message>
     <message>
         <source>Install all</source>
+        <comment>MissingAddonsDialog#2</comment>
         <translation>Instalar todos</translation>
     </message>
     <message>
         <source>Skip</source>
+        <comment>MissingAddonsDialog#3</comment>
         <translation>Pular</translation>
     </message>
     <message>
@@ -11064,6 +12036,7 @@
     <name>MissingAddonsRow</name>
     <message>
         <source>%1… %2%</source>
+        <comment>MissingAddonsRow#1</comment>
         <translation type="unfinished">%1… %2%</translation>
     </message>
     <message>
@@ -11072,6 +12045,7 @@
     </message>
     <message>
         <source>Install</source>
+        <comment>MissingAddonsRow#3</comment>
         <translation type="unfinished">Instalar</translation>
     </message>
 </context>
@@ -11174,11 +12148,12 @@
     </message>
     <message>
         <source>3D model</source>
+        <comment>Model3DInspector#3</comment>
         <translation>Modelo 3D</translation>
     </message>
     <message numerus="yes">
         <source>%n animation(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n animação</numerusform>
             <numerusform>%n animações</numerusform>
         </translation>
@@ -11193,22 +12168,24 @@
     </message>
     <message>
         <source>3D models and Gaussian splats (*.glb *.sog *.ply *.zip meta.json lod-meta.json)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A minha voz</translation>
     </message>
     <message>
         <source>Gaussian splat</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar uma amostra de voz</translation>
     </message>
     <message>
         <source>Load another model or splat; position, length, pose and lighting stay</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ficheiros de áudio (*.wav *.mp3 *.flac *.ogg *.m4a *.aac *.opus)</translation>
     </message>
     <message>
         <source>Playback</source>
+        <comment>Model3DInspector#10</comment>
         <translation>Reprodução</translation>
     </message>
     <message>
         <source>Animation</source>
+        <comment>Model3DInspector#11</comment>
         <translation>Animação</translation>
     </message>
     <message>
@@ -11221,35 +12198,42 @@
     </message>
     <message>
         <source>After the end</source>
+        <comment>Model3DInspector#14</comment>
         <translation>Após o término</translation>
     </message>
     <message>
         <source>Hold last frame</source>
+        <comment>Model3DInspector#15</comment>
         <translation>Manter último quadro</translation>
     </message>
     <message>
         <source>Loop</source>
+        <comment>Model3DInspector#16</comment>
         <translation>Repetir</translation>
     </message>
     <message>
         <source>Ping-pong</source>
+        <comment>Model3DInspector#17</comment>
         <translation>Ping-pong</translation>
     </message>
     <message>
         <source>Hide</source>
+        <comment>Model3DInspector#18</comment>
         <translation>Ocultar</translation>
     </message>
     <message>
         <source>What plays once the animation has run its length</source>
+        <comment>Model3DInspector#19</comment>
         <translation>O que é reproduzido assim que a animação chega ao fim</translation>
     </message>
     <message>
         <source>Start offset</source>
+        <comment>Model3DInspector#20</comment>
         <translation>Deslocamento inicial</translation>
     </message>
     <message>
         <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O clipe tem mais de 20 segundos, pelo que são usados 20 segundos. A começar nos %1 s.</translation>
     </message>
     <message>
         <source>Lighting</source>
@@ -11257,47 +12241,48 @@
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A usar %1 segundos do clipe selecionado.</translation>
     </message>
     <message>
         <source>Light %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Grave de 5 a 20 segundos numa sala silenciosa. Leia isto em voz alta com a sua voz natural:</translation>
     </message>
     <message>
         <source>Light %1 colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A rápida raposa castanha salta sobre o cão preguiçoso, enquanto uma brisa suave atravessa o jardim tranquilo e a luz da tarde esbate-se lentamente.</translation>
     </message>
     <message>
         <source>Left / right</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A gravar…</translation>
     </message>
     <message>
         <source>Up / down</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Começar a gravação</translation>
     </message>
     <message>
         <source>Near / far</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tenho o direito de usar a voz desta pessoa</translation>
     </message>
     <message>
         <source>Brightness</source>
-        <translation type="unfinished"></translation>
+        <comment>Model3DInspector#29</comment>
+        <translation type="unfinished">%1 (estabilizado)</translation>
     </message>
     <message>
         <source>Reach</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O vídeo a partir do qual este clipe foi estabilizado já não está no compartimento de mídia</translation>
     </message>
     <message>
         <source>Spot angle</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vídeo estabilizado adicionado ao compartimento de mídia</translation>
     </message>
     <message>
         <source>Aim left / right</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Renderizar um novo vídeo</translation>
     </message>
     <message>
         <source>Aim up / down</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Suaviza a trepidação da câmara. O Drift analisa o clipe uma vez e, em seguida, renderiza uma cópia estabilizada no compartimento de mídia e muda o clipe para ela. Alterar a suavização ou o tripé não atualiza a pré-visualização até aplicar.</translation>
     </message>
     <message>
         <source>Ambient</source>
@@ -11312,39 +12297,39 @@
     </message>
     <message>
         <source>left / right</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Renderizar uma cópia estabilizada ou animar o clipe com quadros-chave de transformação esparsos</translation>
     </message>
     <message>
         <source>up / down</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Detalhes de sistema, reprodução e codecs para relatórios de erros</translation>
     </message>
     <message>
         <source>near / far</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Filtros — %n aplicado(s)</translation>
     </message>
     <message>
         <source>brightness</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%n moeda(s)</translation>
     </message>
     <message>
         <source>reach</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%n legendas</translation>
     </message>
     <message>
         <source>spot angle</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reproduza a linha do tempo — a linha no ecrã acende-se. Toque em qualquer linha para a editar.</translation>
     </message>
     <message>
         <source>aim left / right</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O gizmo segue os eixos do mundo (clique para os do próprio objeto)</translation>
     </message>
     <message>
         <source>aim up / down</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Voar (WASD para mover, Q/E descer/subir, dirigir em direção ao ponteiro)</translation>
     </message>
     <message>
         <source>Light %1 %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ver através da câmara</translation>
     </message>
 </context>
 <context>
@@ -11369,6 +12354,7 @@
     <name>MulticamWindow</name>
     <message>
         <source>Multicam</source>
+        <comment>MulticamWindow#1</comment>
         <translation>Multicâmera</translation>
     </message>
     <message>
@@ -11397,6 +12383,7 @@
     </message>
     <message>
         <source>No clip at the current time</source>
+        <comment>MulticamWindow#8</comment>
         <translation>Nenhum clipe no tempo atual</translation>
     </message>
     <message>
@@ -11405,26 +12392,32 @@
     </message>
     <message>
         <source>Previous frame</source>
+        <comment>MulticamWindow#10</comment>
         <translation>Quadro anterior</translation>
     </message>
     <message>
         <source>Pause</source>
+        <comment>MulticamWindow#11</comment>
         <translation>Pausar</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>MulticamWindow#12</comment>
         <translation>Reproduzir</translation>
     </message>
     <message>
         <source>Next frame</source>
+        <comment>MulticamWindow#13</comment>
         <translation>Próximo quadro</translation>
     </message>
     <message>
         <source>Seek</source>
+        <comment>MulticamWindow#14</comment>
         <translation>Buscar</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>MulticamWindow#15</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
@@ -11440,10 +12433,12 @@
     <name>NameDialog</name>
     <message>
         <source>Save</source>
+        <comment>NameDialog#1</comment>
         <translation>Guardar</translation>
     </message>
     <message>
         <source>Name</source>
+        <comment>NameDialog#2</comment>
         <translation>Nome</translation>
     </message>
     <message>
@@ -11455,42 +12450,52 @@
     <name>NewTrackMenu</name>
     <message>
         <source>Video</source>
+        <comment>NewTrackMenu#1</comment>
         <translation>Vídeo</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>NewTrackMenu#2</comment>
         <translation>Áudio</translation>
     </message>
     <message>
         <source>Text</source>
+        <comment>NewTrackMenu#3</comment>
         <translation>Texto</translation>
     </message>
     <message>
         <source>Subtitle</source>
+        <comment>NewTrackMenu#4</comment>
         <translation>Legenda</translation>
     </message>
     <message>
         <source>Graphic</source>
+        <comment>NewTrackMenu#5</comment>
         <translation>Gráfico</translation>
     </message>
     <message>
         <source>Adjustment</source>
+        <comment>NewTrackMenu#6</comment>
         <translation>Ajuste</translation>
     </message>
     <message>
         <source>Audio adjustment</source>
+        <comment>NewTrackMenu#7</comment>
         <translation>Ajuste de áudio</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>NewTrackMenu#8</comment>
         <translation>Transformação</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <comment>NewTrackMenu#9</comment>
+        <translation type="unfinished">Numpad 0</translation>
     </message>
     <message>
         <source>New track</source>
+        <comment>NewTrackMenu#10</comment>
         <translation>Nova faixa</translation>
     </message>
 </context>
@@ -11498,6 +12503,7 @@
     <name>NotificationHistoryRow</name>
     <message>
         <source>%1  (×%2)</source>
+        <comment>NotificationHistoryRow#1</comment>
         <translation type="unfinished">%1  (×%2)</translation>
     </message>
 </context>
@@ -11505,29 +12511,33 @@
     <name>NotificationList</name>
     <message>
         <source>Notifications</source>
-        <translation type="unfinished"></translation>
+        <comment>NotificationList#1</comment>
+        <translation type="unfinished">Repor a posição da câmara da cena</translation>
     </message>
     <message>
         <source>Clear</source>
+        <comment>NotificationList#2</comment>
         <translation type="unfinished">Limpar</translation>
     </message>
     <message>
         <source>No notifications yet.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Enquadrar a seleção</translation>
     </message>
 </context>
 <context>
     <name>NotificationUpdateRow</name>
     <message>
         <source>Drift %1 is ready to install</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repor a vista</translation>
     </message>
     <message>
         <source>Drift %1 is available</source>
+        <comment>NotificationUpdateRow#2</comment>
         <translation type="unfinished">O Drift %1 está disponível</translation>
     </message>
     <message>
         <source>Update</source>
+        <comment>NotificationUpdateRow#3</comment>
         <translation type="unfinished">Atualizar</translation>
     </message>
 </context>
@@ -11539,6 +12549,7 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>PackageProgressDialog#2</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
@@ -11554,6 +12565,7 @@
     </message>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <comment>PaintEditor#2</comment>
         <translation>Imagens (*.png *.jpg *.jpeg *.webp)</translation>
     </message>
     <message>
@@ -11562,22 +12574,27 @@
     </message>
     <message>
         <source>Solid</source>
+        <comment>PaintEditor#4</comment>
         <translation>Sólido</translation>
     </message>
     <message>
         <source>Gradient</source>
+        <comment>PaintEditor#5</comment>
         <translation>Gradiente</translation>
     </message>
     <message>
         <source>Texture</source>
+        <comment>PaintEditor#6</comment>
         <translation>Textura</translation>
     </message>
     <message>
         <source>Effect</source>
+        <comment>PaintEditor#7</comment>
         <translation>Efeito</translation>
     </message>
     <message>
         <source>Colour</source>
+        <comment>PaintEditor#8</comment>
         <translation>Cor</translation>
     </message>
     <message>
@@ -11586,10 +12603,12 @@
     </message>
     <message>
         <source>Change image…</source>
+        <comment>PaintEditor#10</comment>
         <translation>Alterar imagem…</translation>
     </message>
     <message>
         <source>Choose image…</source>
+        <comment>PaintEditor#11</comment>
         <translation>Escolher imagem…</translation>
     </message>
     <message>
@@ -11598,6 +12617,7 @@
     </message>
     <message>
         <source>Fit</source>
+        <comment>PaintEditor#13</comment>
         <translation>Ajustar</translation>
     </message>
     <message>
@@ -11610,6 +12630,7 @@
     </message>
     <message>
         <source>Cover</source>
+        <comment>PaintEditor#16</comment>
         <translation>Cobrir</translation>
     </message>
     <message>
@@ -11618,10 +12639,12 @@
     </message>
     <message>
         <source>Scale</source>
+        <comment>PaintEditor#18</comment>
         <translation>Escala</translation>
     </message>
     <message>
         <source>Angle</source>
+        <comment>PaintEditor#19</comment>
         <translation>Ângulo</translation>
     </message>
     <message>
@@ -11659,19 +12682,22 @@
     </message>
     <message>
         <source>Paste</source>
+        <comment>PasteAttributesDialog#2</comment>
         <translation>Colar</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>PasteAttributesDialog#3</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Clip</source>
+        <comment>PasteAttributesDialog#4</comment>
         <translation>Clipe</translation>
     </message>
     <message numerus="yes">
         <source>Pasting from “%1” onto %n selected clip(s):</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Colando de “%1” em %n clipe selecionado:</numerusform>
             <numerusform>Colando de “%1” em %n clipes selecionados:</numerusform>
         </translation>
@@ -11693,6 +12719,7 @@
     <name>PasteAttributesTransitionsSection</name>
     <message>
         <source>Transitions</source>
+        <comment>PasteAttributesTransitionsSection#1</comment>
         <translation type="unfinished">Transições</translation>
     </message>
     <message numerus="yes">
@@ -11745,100 +12772,107 @@
     <name>PdfClipRenderer</name>
     <message>
         <source>Install the PDF viewer addon to show this PDF</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A cena vista de um ponto de vista livre, com a câmara incluída. Arrastar com o botão do meio ou direito orbita, Shift desloca, a roda faz zoom e o teclado do canto ajusta a vista.</translation>
     </message>
     <message>
         <source>Can&apos;t open this PDF</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Defina o Drift como Alto desempenho em Definições do Windows &gt; Ecrã &gt; Gráficos e reinicie o Drift.</translation>
     </message>
 </context>
 <context>
     <name>PdfInspector</name>
     <message>
         <source>PDF pages need the PDF Viewer addon.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrir definições de gráficos</translation>
     </message>
     <message>
         <source>Install PDF Viewer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">1/8 (Eco)</translation>
     </message>
     <message>
         <source>Pages</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Manter as pegas da máscara visíveis</translation>
     </message>
     <message numerus="yes">
         <source>%n page(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n página(s)</numerusform>
+            <numerusform>%n página(s)</numerusform>
         </translation>
     </message>
     <message>
         <source>First page</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pré-visualização por GPU indisponível</translation>
     </message>
     <message>
         <source>Last page</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ir para o início</translation>
     </message>
     <message>
         <source>Layout</source>
-        <translation type="unfinished"></translation>
+        <comment>PdfInspector#7</comment>
+        <translation type="unfinished">Ir para o fim</translation>
     </message>
     <message>
         <source>Column</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Multimédia recolhida, mas %n original(is) não puderam ser eliminados</translation>
     </message>
     <message>
         <source>Row</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A abrir o projeto</translation>
     </message>
     <message>
         <source>Grid</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">PDF</translation>
     </message>
     <message>
         <source>How the pages are arranged</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Câmara</translation>
     </message>
     <message>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe para editar o seu %1</translation>
     </message>
     <message>
         <source>Gap</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 não se aplica a este clipe</translation>
     </message>
     <message>
         <source>Viewport</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A carregar os modelos…</translation>
     </message>
     <message>
         <source>Scroll X</source>
-        <translation type="unfinished"></translation>
+        <comment>PdfInspector#15</comment>
+        <translation type="unfinished">%1 h %2 min</translation>
     </message>
     <message>
         <source>Scroll Y</source>
-        <translation type="unfinished"></translation>
+        <comment>PdfInspector#16</comment>
+        <translation type="unfinished">A melhorar… %1% — cerca de %2 restantes</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished"></translation>
+        <comment>PdfInspector#17</comment>
+        <translation type="unfinished">A melhorar… %1%</translation>
     </message>
 </context>
 <context>
     <name>PdfSource</name>
     <message>
         <source>Scroll X</source>
-        <translation type="unfinished"></translation>
+        <comment>PdfSource#1</comment>
+        <translation type="unfinished">A melhorar este fotograma… %1%</translation>
     </message>
     <message>
         <source>Scroll Y</source>
-        <translation type="unfinished"></translation>
+        <comment>PdfSource#2</comment>
+        <translation type="unfinished">A amostra de voz tem de ter pelo menos %1 segundos de fala</translation>
     </message>
     <message>
         <source>Zoom</source>
-        <translation type="unfinished"></translation>
+        <comment>PdfSource#3</comment>
+        <translation type="unfinished">Não foi possível guardar a voz</translation>
     </message>
 </context>
 <context>
@@ -11853,6 +12887,7 @@
     </message>
     <message>
         <source>Auto</source>
+        <comment>PlaybackEngine#3</comment>
         <translation>Automático</translation>
     </message>
     <message>
@@ -11912,6 +12947,7 @@
     </message>
     <message>
         <source>Preview upload</source>
+        <comment>PlaybackStats#12</comment>
         <translation>Upload da pré-visualização</translation>
     </message>
     <message>
@@ -11943,111 +12979,117 @@
     </message>
     <message>
         <source>System default</source>
+        <comment>PreferencesController#3</comment>
         <translation>Padrão do sistema</translation>
     </message>
     <message>
         <source>Could not write the settings file.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gravador</translation>
     </message>
     <message>
         <source>Could not open the settings file.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">PRONTO</translation>
     </message>
     <message>
         <source>That file is not a Drift settings export.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Parar - terminar a gravação e guardar na faixa</translation>
     </message>
     <message>
         <source>Settings imported. Restart Drift to apply them all.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cancelar - descartar a gravação</translation>
     </message>
 </context>
 <context>
     <name>Preview3DMode</name>
     <message>
         <source>W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Começar a gravação</translation>
     </message>
     <message>
         <source>Move the pointer to the centre ring to start steering</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Melhorado — desatualizado, volte a pré-visualizar</translation>
     </message>
 </context>
 <context>
     <name>Preview3DTools</name>
     <message>
         <source>%1 (%2)</source>
+        <comment>Preview3DTools#1</comment>
         <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
         <source>Move</source>
+        <comment>Preview3DTools#2</comment>
         <translation type="unfinished">Mover</translation>
     </message>
     <message>
         <source>Rotate</source>
+        <comment>Preview3DTools#3</comment>
         <translation type="unfinished">Girar</translation>
     </message>
     <message>
         <source>Scale</source>
+        <comment>Preview3DTools#4</comment>
         <translation type="unfinished">Escala</translation>
     </message>
     <message>
         <source>Gizmo follows the selection&apos;s own axes (click for world axes)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Melhorado %1 × %2</translation>
     </message>
     <message>
         <source>Gizmo follows the world axes (click for the selection&apos;s own)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A carregar este fotograma…</translation>
     </message>
     <message>
         <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Escolha os modelos e, em seguida, Pré-visualizar para comparar este fotograma</translation>
     </message>
     <message>
         <source>Look through the camera</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pré-visualize um fotograma e, em seguida, melhore o vídeo inteiro. O resultado é adicionado ao compartimento de mídia. A melhoria é lenta — minutos por segundo de vídeo sem GPU.</translation>
     </message>
     <message>
         <source>Numpad 0</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pré-visualize um fotograma e, em seguida, melhore a parte do clipe usada na linha do tempo. O resultado é adicionado ao compartimento de mídia. A melhoria é lenta — minutos por segundo de vídeo sem GPU.</translation>
     </message>
     <message>
         <source>Reset the scene camera&apos;s position</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Remover compressão</translation>
     </message>
     <message>
         <source>Frame the selection</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aumentar resolução</translation>
     </message>
     <message>
         <source>Reset the view</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Saída: %1 × %2</translation>
     </message>
 </context>
 <context>
     <name>PreviewCompactGpuCaption</name>
     <message>
         <source>GPU preview unavailable</source>
-        <translation type="unfinished"></translation>
+        <comment>PreviewCompactGpuCaption#1</comment>
+        <translation type="unfinished">— maior que 4K, o que torna a edição e a exportação lentas</translation>
     </message>
 </context>
 <context>
     <name>PreviewModeSwitch</name>
     <message>
         <source>Camera Output</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Até cerca de %1 no CPU deste computador.</translation>
     </message>
     <message>
         <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Até cerca de %1 num CPU típico de portátil. Pré-visualize um fotograma para obter uma estimativa deste computador.</translation>
     </message>
     <message>
         <source>3D Scene</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pré-visualizar este fotograma</translation>
     </message>
     <message>
         <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms, and the corner pad steps the view.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Melhorar clipe</translation>
     </message>
 </context>
 <context>
@@ -12062,6 +13104,7 @@
     </message>
     <message>
         <source>Cancel</source>
+        <comment>PreviewOptionsDecodeDialog#3</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
@@ -12074,37 +13117,44 @@
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de vídeo para melhorar</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation type="unfinished"></translation>
+        <comment>PreviewOptionsDecodeDialog#7</comment>
+        <translation type="unfinished">Escolha um modelo para melhorar</translation>
     </message>
 </context>
 <context>
     <name>PreviewOptionsMenu</name>
     <message>
         <source>Quality</source>
+        <comment>PreviewOptionsMenu#1</comment>
         <translation type="unfinished">Qualidade</translation>
     </message>
     <message>
         <source>Full</source>
+        <comment>PreviewOptionsMenu#2</comment>
         <translation type="unfinished">Completo</translation>
     </message>
     <message>
         <source>Half</source>
+        <comment>PreviewOptionsMenu#3</comment>
         <translation type="unfinished">Metade</translation>
     </message>
     <message>
         <source>Quarter</source>
+        <comment>PreviewOptionsMenu#4</comment>
         <translation type="unfinished">Um quarto</translation>
     </message>
     <message>
         <source>1/8 (Eco)</source>
-        <translation type="unfinished"></translation>
+        <comment>PreviewOptionsMenu#5</comment>
+        <translation type="unfinished">Este clipe já está a ser melhorado</translation>
     </message>
     <message>
         <source>Auto</source>
+        <comment>PreviewOptionsMenu#6</comment>
         <translation type="unfinished">Automático</translation>
     </message>
     <message>
@@ -12118,14 +13168,17 @@ Automático renderiza só os pixels que a pré-visualização realmente mostra, 
     </message>
     <message>
         <source>Speed</source>
+        <comment>PreviewOptionsMenu#8</comment>
         <translation type="unfinished">Velocidade</translation>
     </message>
     <message>
         <source>Playback speed</source>
+        <comment>PreviewOptionsMenu#9</comment>
         <translation type="unfinished">Velocidade de reprodução</translation>
     </message>
     <message>
         <source>Decode</source>
+        <comment>PreviewOptionsMenu#10</comment>
         <translation type="unfinished">Decodificação</translation>
     </message>
     <message>
@@ -12142,7 +13195,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Keep mask handles up</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 (melhorado %2x)</translation>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
@@ -12153,6 +13206,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>PreviewOsdGuideMenuButton</name>
     <message>
         <source>Guide sets</source>
+        <comment>PreviewOsdGuideMenuButton#1</comment>
         <translation type="unfinished">Conjuntos de guias</translation>
     </message>
 </context>
@@ -12160,6 +13214,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>PreviewOsdGuidesButton</name>
     <message>
         <source>Toggle guides</source>
+        <comment>PreviewOsdGuidesButton#1</comment>
         <translation type="unfinished">Alternar guias</translation>
     </message>
 </context>
@@ -12167,7 +13222,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>PreviewOsdOptionsButton</name>
     <message>
         <source>Preview options</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 (melhorado)</translation>
     </message>
 </context>
 <context>
@@ -12181,6 +13236,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>PreviewPanel</name>
     <message>
         <source>Seek</source>
+        <comment>PreviewPanel#1</comment>
         <translation>Buscar</translation>
     </message>
 </context>
@@ -12196,7 +13252,8 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>GPU preview unavailable</source>
-        <translation type="unfinished"></translation>
+        <comment>PreviewStatusLayer#3</comment>
+        <translation type="unfinished">Melhorar Vídeo</translation>
     </message>
     <message>
         <source>Your graphics driver only provides %1. Drift&apos;s preview needs OpenGL 3.3.</source>
@@ -12208,14 +13265,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Debug info</source>
+        <comment>PreviewStatusLayer#6</comment>
         <translation type="unfinished">Informações de depuração</translation>
     </message>
     <message>
         <source>Audio only</source>
+        <comment>PreviewStatusLayer#7</comment>
         <translation type="unfinished">Somente áudio</translation>
     </message>
     <message>
         <source>No clip at the current time</source>
+        <comment>PreviewStatusLayer#8</comment>
         <translation type="unfinished">Nenhum clipe no tempo atual</translation>
     </message>
 </context>
@@ -12223,23 +13283,26 @@ Se a reprodução travar, experimente outro.</translation>
     <name>PreviewTransportBar</name>
     <message>
         <source>%1 (%2)</source>
+        <comment>PreviewTransportBar#1</comment>
         <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
         <source>Go to start</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vídeo melhorado adicionado ao compartimento de mídia</translation>
     </message>
     <message>
         <source>Previous frame</source>
+        <comment>PreviewTransportBar#3</comment>
         <translation type="unfinished">Quadro anterior</translation>
     </message>
     <message>
         <source>Next frame</source>
+        <comment>PreviewTransportBar#4</comment>
         <translation type="unfinished">Próximo quadro</translation>
     </message>
     <message>
         <source>Go to end</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A melhorar o vídeo…</translation>
     </message>
 </context>
 <context>
@@ -12257,6 +13320,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Fullscreen preview</source>
+        <comment>PreviewTransportFullscreenButton#2</comment>
         <translation type="unfinished">Pré-visualização em ecrã cheia</translation>
     </message>
 </context>
@@ -12275,10 +13339,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>PreviewTransportPlayButton</name>
     <message>
         <source>Pause</source>
+        <comment>PreviewTransportPlayButton#1</comment>
         <translation type="unfinished">Pausar</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>PreviewTransportPlayButton#2</comment>
         <translation type="unfinished">Reproduzir</translation>
     </message>
 </context>
@@ -12414,6 +13480,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cancelled</source>
+        <comment>ProjectBundle#24</comment>
         <translation>Cancelado</translation>
     </message>
     <message>
@@ -12453,6 +13520,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ProjectFileController</name>
     <message>
         <source>New project</source>
+        <comment>ProjectFileController#1</comment>
         <translation>Novo projeto</translation>
     </message>
     <message>
@@ -12469,6 +13537,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Frame rate</source>
+        <comment>ProjectFileController#5</comment>
         <translation>Taxa de quadros</translation>
     </message>
     <message>
@@ -12501,6 +13570,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Still opening a project — try again in a moment.</source>
+        <comment>ProjectFileController#13</comment>
         <translation>Ainda abrindo um projeto — tente novamente em instantes.</translation>
     </message>
     <message>
@@ -12585,7 +13655,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message numerus="yes">
         <source>Media collected, but %n original(s) couldn’t be deleted</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Mídia coletada, mas %n original não pôde ser eliminado</numerusform>
             <numerusform>Mídia coletada, mas %n originais não puderam ser excluídos</numerusform>
         </translation>
@@ -12600,6 +13670,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>That save location isn’t valid</source>
+        <comment>ProjectFileController#37</comment>
         <translation>Esse local de salvamento não é válido</translation>
     </message>
     <message>
@@ -12624,6 +13695,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Unpacking project media…</source>
+        <comment>ProjectFileController#43</comment>
         <translation>Extraindo mídia do projeto…</translation>
     </message>
     <message>
@@ -12643,10 +13715,11 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ProjectLoadDialog</name>
     <message>
         <source>Opening project</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Filme real</translation>
     </message>
     <message>
         <source>Unpacking project media…</source>
+        <comment>ProjectLoadDialog#2</comment>
         <translation type="unfinished">Extraindo mídia do projeto…</translation>
     </message>
 </context>
@@ -12654,18 +13727,22 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ProjectPropertiesDialog</name>
     <message>
         <source>Project properties</source>
+        <comment>ProjectPropertiesDialog#1</comment>
         <translation>Propriedades do projeto</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>ProjectPropertiesDialog#2</comment>
         <translation>Guardar</translation>
     </message>
     <message>
         <source>Title</source>
+        <comment>ProjectPropertiesDialog#3</comment>
         <translation>Título</translation>
     </message>
     <message>
         <source>Untitled Project</source>
+        <comment>ProjectPropertiesDialog#4</comment>
         <translation>Projeto sem título</translation>
     </message>
     <message>
@@ -12690,6 +13767,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Modified</source>
+        <comment>ProjectPropertiesDialog#10</comment>
         <translation>Modificado em</translation>
     </message>
 </context>
@@ -12701,6 +13779,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Create</source>
+        <comment>ProjectSetupDialog#2</comment>
         <translation>Criar</translation>
     </message>
     <message>
@@ -12721,18 +13800,22 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Custom</source>
+        <comment>ProjectSetupDialog#7</comment>
         <translation>Personalizada</translation>
     </message>
     <message>
         <source>Width</source>
+        <comment>ProjectSetupDialog#8</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
+        <comment>ProjectSetupDialog#9</comment>
         <translation>Altura</translation>
     </message>
     <message>
         <source>Frames per second</source>
+        <comment>ProjectSetupDialog#10</comment>
         <translation>Quadros por segundo</translation>
     </message>
     <message>
@@ -12741,6 +13824,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Reset</source>
+        <comment>ProjectSetupDialog#12</comment>
         <translation>Redefinir</translation>
     </message>
     <message>
@@ -12767,86 +13851,105 @@ Se a reprodução travar, experimente outro.</translation>
     <name>PropertiesPanel</name>
     <message>
         <source>General</source>
+        <comment>PropertiesPanel#1</comment>
         <translation>Geral</translation>
     </message>
     <message>
         <source>Text</source>
+        <comment>PropertiesPanel#2</comment>
         <translation>Texto</translation>
     </message>
     <message>
         <source>Shape</source>
+        <comment>PropertiesPanel#3</comment>
         <translation>Forma</translation>
     </message>
     <message>
         <source>Motion</source>
+        <comment>PropertiesPanel#4</comment>
         <translation>Movimento</translation>
     </message>
     <message>
         <source>3D Model</source>
+        <comment>PropertiesPanel#5</comment>
         <translation>Modelo 3D</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished"></translation>
+        <comment>PropertiesPanel#6</comment>
+        <translation type="unfinished">Animação 3D e jogos</translation>
     </message>
     <message>
         <source>Subtitles</source>
+        <comment>PropertiesPanel#7</comment>
         <translation>Legendas</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>PropertiesPanel#8</comment>
         <translation>Transformação</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <comment>PropertiesPanel#9</comment>
+        <translation type="unfinished">Escolha um modelo de aumento de resolução</translation>
     </message>
     <message>
         <source>Stabilization</source>
+        <comment>PropertiesPanel#10</comment>
         <translation>Estabilização</translation>
     </message>
     <message>
         <source>Animation</source>
+        <comment>PropertiesPanel#11</comment>
         <translation>Animação</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>PropertiesPanel#12</comment>
         <translation>Áudio</translation>
     </message>
     <message>
         <source>Speed</source>
+        <comment>PropertiesPanel#13</comment>
         <translation>Velocidade</translation>
     </message>
     <message>
         <source>Blending</source>
+        <comment>PropertiesPanel#14</comment>
         <translation>Mesclagem</translation>
     </message>
     <message>
         <source>Masks</source>
+        <comment>PropertiesPanel#15</comment>
         <translation>Máscaras</translation>
     </message>
     <message>
         <source>Effects</source>
+        <comment>PropertiesPanel#16</comment>
         <translation>Efeitos</translation>
     </message>
     <message>
         <source>Audio FX</source>
+        <comment>PropertiesPanel#17</comment>
         <translation>Efeitos de áudio</translation>
     </message>
     <message>
         <source>Transition</source>
+        <comment>PropertiesPanel#18</comment>
         <translation>Transição</translation>
     </message>
     <message>
         <source>Select a clip to edit its %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">As velocidades são por fotograma deste clipe. Modelos personalizados são experimentais e podem não funcionar. Largue uma exportação ONNX (fp32 ou fp16, RGB, 1x/2x/4x) na pasta; coloque a escala no nome do ficheiro, p. ex. “2x_Nome.onnx”.</translation>
     </message>
     <message>
         <source>%1 doesn&apos;t apply to this clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Obter modelos (openmodeldb.info)</translation>
     </message>
     <message>
         <source>Save effect preset</source>
+        <comment>PropertiesPanel#21</comment>
         <translation>Guardar predefinição de efeito</translation>
     </message>
     <message>
@@ -12855,6 +13958,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>My look</source>
+        <comment>PropertiesPanel#23</comment>
         <translation>Meu visual</translation>
     </message>
 </context>
@@ -12874,6 +13978,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Straight</source>
+        <comment>PropertyKeyframeRow#4</comment>
         <translation>Reta</translation>
     </message>
     <message>
@@ -12882,6 +13987,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Ease</source>
+        <comment>PropertyKeyframeRow#6</comment>
         <translation>Suave</translation>
     </message>
     <message>
@@ -12890,6 +13996,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Jump</source>
+        <comment>PropertyKeyframeRow#8</comment>
         <translation>Salto</translation>
     </message>
     <message>
@@ -12914,6 +14021,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Edit %1</source>
+        <comment>PropertyKeyframeRow#14</comment>
         <translation>Editar %1</translation>
     </message>
     <message>
@@ -13033,6 +14141,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Could not allocate decode buffers</source>
+        <comment>ProxyEncoder#28</comment>
         <translation>Não foi possível alocar os buffers de decodificação</translation>
     </message>
     <message>
@@ -13041,6 +14150,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>No frames could be decoded from this clip</source>
+        <comment>ProxyEncoder#30</comment>
         <translation>Nenhum quadro pôde ser decodificado deste clipe</translation>
     </message>
 </context>
@@ -13060,6 +14170,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
+        <comment>QObject#4</comment>
         <translation>Não foi possível abrir o ficheiro de mídia</translation>
     </message>
     <message>
@@ -13076,6 +14187,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Could not decode frame %1</source>
+        <comment>QObject#8</comment>
         <translation>Não foi possível decodificar o quadro %1</translation>
     </message>
     <message>
@@ -13084,38 +14196,43 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Loading the models…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instale primeiro o motor de IA</translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>QObject#11</comment>
         <translation type="unfinished">%1 s</translation>
     </message>
     <message>
         <source>%1 min</source>
+        <comment>QObject#12</comment>
         <translation type="unfinished">%1 min</translation>
     </message>
     <message>
         <source>%1 h %2 min</source>
-        <translation type="unfinished"></translation>
+        <comment>QObject#13</comment>
+        <translation type="unfinished">Abrir pasta de modelos personalizados</translation>
     </message>
     <message>
         <source>Enhancing… %1% — about %2 left</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Atualizar a lista de modelos</translation>
     </message>
     <message>
         <source>Enhancing… %1%</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Melhorar vídeo</translation>
     </message>
     <message>
         <source>Enhancing this frame… %1%</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhum</translation>
     </message>
     <message>
         <source>Scanning frame %1 of %2…</source>
+        <comment>QObject#17</comment>
         <translation>Analisando quadro %1 de %2…</translation>
     </message>
     <message>
         <source>Clip</source>
+        <comment>QObject#18</comment>
         <translation>Clipe</translation>
     </message>
     <message>
@@ -13200,21 +14317,23 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>The voice sample must be at least %1 seconds of speech</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 (personalizado, experimental)</translation>
     </message>
     <message>
         <source>Could not save the voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">menos de um segundo</translation>
     </message>
 </context>
 <context>
     <name>RecentProjectsPopup</name>
     <message>
         <source>All changes saved</source>
+        <comment>RecentProjectsPopup#1</comment>
         <translation>Todas as alterações guardadas</translation>
     </message>
     <message>
         <source>Unsaved changes</source>
+        <comment>RecentProjectsPopup#2</comment>
         <translation>Alterações não guardadas</translation>
     </message>
     <message>
@@ -13227,11 +14346,13 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source> (missing)</source>
+        <comment>RecentProjectsPopup#5</comment>
         <translation> (não encontrado)</translation>
     </message>
     <message>
         <source>This file has been moved or deleted:
 %1</source>
+        <comment>RecentProjectsPopup#6</comment>
         <translation>Este ficheiro foi movido ou eliminado:
 %1</translation>
     </message>
@@ -13272,6 +14393,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>RecentProjectsProjectRow</name>
     <message>
         <source>Remove from recents</source>
+        <comment>RecentProjectsProjectRow#1</comment>
         <translation type="unfinished">Remover dos recentes</translation>
     </message>
 </context>
@@ -13279,51 +14401,60 @@ Se a reprodução travar, experimente outro.</translation>
     <name>RecorderPanel</name>
     <message>
         <source>Recorder</source>
-        <translation type="unfinished"></translation>
+        <comment>RecorderPanel#1</comment>
+        <translation type="unfinished">%1 h %2 min</translation>
     </message>
     <message>
         <source>READY</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 s por fotograma</translation>
     </message>
     <message>
         <source>PAUSED</source>
+        <comment>RecorderPanel#3</comment>
         <translation type="unfinished">PAUSED</translation>
     </message>
     <message>
         <source>REC</source>
+        <comment>RecorderPanel#4</comment>
         <translation type="unfinished">REC</translation>
     </message>
     <message>
         <source>Default Mic</source>
+        <comment>RecorderPanel#5</comment>
         <translation type="unfinished">Microfone padrão</translation>
     </message>
     <message>
         <source>Input microphone: %1 (click to switch)</source>
+        <comment>RecorderPanel#6</comment>
         <translation type="unfinished">Microfone de entrada: %1 (clique para alternar)</translation>
     </message>
     <message>
         <source>Resume recording</source>
+        <comment>RecorderPanel#7</comment>
         <translation type="unfinished">Retomar gravação</translation>
     </message>
     <message>
         <source>Pause recording</source>
+        <comment>RecorderPanel#8</comment>
         <translation type="unfinished">Pausar gravação</translation>
     </message>
     <message>
         <source>Stop - finish recording and save to track</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sem aumento de resolução</translation>
     </message>
     <message>
         <source>Stop recording</source>
+        <comment>RecorderPanel#10</comment>
         <translation type="unfinished">Parar gravação</translation>
     </message>
     <message>
         <source>Cancel - discard recording</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Manter o tamanho original.</translation>
     </message>
     <message>
         <source>Start recording</source>
-        <translation type="unfinished"></translation>
+        <comment>RecorderPanel#12</comment>
+        <translation type="unfinished">Encontradas %n cenas</translation>
     </message>
 </context>
 <context>
@@ -13346,6 +14477,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Untitled project</source>
+        <comment>RecoveryDialog#5</comment>
         <translation>Projeto sem título</translation>
     </message>
     <message>
@@ -13357,38 +14489,43 @@ Se a reprodução travar, experimente outro.</translation>
     <name>RestoreCompareView</name>
     <message>
         <source>Original</source>
+        <comment>RestoreCompareView#1</comment>
         <translation type="unfinished">Original</translation>
     </message>
     <message>
         <source>Enhanced — out of date, preview again</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Histograma</translation>
     </message>
     <message>
         <source>Enhanced %1 × %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Parada</translation>
     </message>
     <message>
         <source>Loading this frame…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vetorscópio</translation>
     </message>
     <message>
         <source>Working…</source>
+        <comment>RestoreCompareView#5</comment>
         <translation type="unfinished">Processando…</translation>
     </message>
     <message>
         <source>Choose models, then Preview to compare this frame</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instrumentos</translation>
     </message>
     <message>
         <source>Frame</source>
+        <comment>RestoreCompareView#7</comment>
         <translation type="unfinished">Quadro</translation>
     </message>
     <message>
         <source>s</source>
+        <comment>RestoreCompareView#8</comment>
         <translation type="unfinished">s</translation>
     </message>
     <message>
         <source>Fit</source>
+        <comment>RestoreCompareView#9</comment>
         <translation type="unfinished">Ajustar</translation>
     </message>
 </context>
@@ -13396,180 +14533,193 @@ Se a reprodução travar, experimente outro.</translation>
     <name>RestoreControlColumn</name>
     <message>
         <source>Preview one frame, then enhance the whole video. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Toque para marcar o assunto; prima e mantenha para marcar o que excluir. Toque num marcador para o remover.</translation>
     </message>
     <message>
         <source>Preview one frame, then enhance the part of the clip used on the timeline. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Concluído</translation>
     </message>
     <message>
         <source>Remove compression</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sobre</translation>
     </message>
     <message>
         <source>Upscale</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Drift</translation>
     </message>
     <message>
         <source>Output: %1 × %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Versão %1</translation>
     </message>
     <message>
         <source> — larger than 4K, which is slow to edit and export</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Procurar atualizações ao iniciar</translation>
     </message>
     <message>
         <source>Up to about %1 on this computer&apos;s CPU.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Uma vez por dia, verificar se foi lançado um Drift mais recente.</translation>
     </message>
     <message>
         <source>Up to about %1 on a typical laptop CPU. Preview a frame for an estimate for this computer.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Procurar atualizações</translation>
     </message>
     <message>
         <source>Preview this frame</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ajuda</translation>
     </message>
     <message>
         <source>Stop</source>
+        <comment>RestoreControlColumn#10</comment>
         <translation type="unfinished">Parar</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>RestoreControlColumn#11</comment>
         <translation type="unfinished">Fechar</translation>
     </message>
     <message>
         <source>Enhance clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sobre o Drift</translation>
     </message>
 </context>
 <context>
     <name>RestoreController</name>
     <message>
         <source>Select a video clip to enhance</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Editor de vídeo de código aberto da CutWire Studios.</translation>
     </message>
     <message>
         <source>Choose a model to enhance with</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mostrar a caixa de diálogo sobre</translation>
     </message>
     <message>
         <source>This clip is already being enhanced</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Detalhes de sistema, reprodução e codecs para relatórios de erros.</translation>
     </message>
     <message>
         <source>%1 (enhanced %2x)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrir informações de depuração…</translation>
     </message>
     <message>
         <source>%1 (enhanced)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">IA e Nuvem</translation>
     </message>
     <message>
         <source>Enhance Video</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deixe o Cursor ou o Claude editar este projeto por si. Só programas neste dispositivo podem ligar-se.</translation>
     </message>
     <message>
         <source>Enhanced video added to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Iniciar acesso de agente ao iniciar</translation>
     </message>
     <message>
         <source>Enhancing video…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ativar o acesso de agente automaticamente da próxima vez que abrir o Drift. Desativar o acesso reinicia esta opção.</translation>
     </message>
 </context>
 <context>
     <name>RestoreUpscalerPicker</name>
     <message>
         <source>Anime and drawings</source>
-        <translation type="unfinished"></translation>
+        <comment>RestoreUpscalerPicker#1</comment>
+        <translation type="unfinished">Mais alto encontra mais cortes. Quando um clipe é plano ou muito graduado, o Drift continua a recorrer a um limiar adaptativo.</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation type="unfinished"></translation>
+        <comment>RestoreUpscalerPicker#2</comment>
+        <translation type="unfinished">Não foi possível importar esse tema.</translation>
     </message>
     <message>
         <source>3D animation and games</source>
-        <translation type="unfinished"></translation>
+        <comment>RestoreUpscalerPicker#3</comment>
+        <translation type="unfinished">Importar tema…</translation>
     </message>
     <message>
         <source>General</source>
+        <comment>RestoreUpscalerPicker#4</comment>
         <translation type="unfinished">Geral</translation>
     </message>
     <message>
         <source>Choose an upscaler</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar Tema</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>RestoreUpscalerPicker#6</comment>
         <translation type="unfinished">Fechar</translation>
     </message>
     <message>
         <source>All</source>
+        <comment>RestoreUpscalerPicker#7</comment>
         <translation type="unfinished">Todos</translation>
     </message>
     <message>
         <source>Speeds are per frame of this clip. Custom models are experimental and may not work. Drop an ONNX export (fp32 or fp16, RGB, 1x/2x/4x) into the folder; put the scale in the file name, e.g. &quot;2x_Name.onnx&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Temas (*.json *.zip)</translation>
     </message>
     <message>
         <source>Get models (openmodeldb.info)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar Pasta de Tema</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
-        <translation type="unfinished"></translation>
+        <comment>RestoreUpscalerPicker#10</comment>
+        <translation type="unfinished">Abrir pasta de temas</translation>
     </message>
     <message>
         <source>Open custom models folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Exportar tema atual…</translation>
     </message>
     <message>
         <source>Refresh model list</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Exportar Tema</translation>
     </message>
 </context>
 <context>
     <name>RestoreWindow</name>
     <message>
         <source>Enhance video</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tema JSON (*.json)</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <comment>RestoreWindow#2</comment>
+        <translation type="unfinished">Não foi possível exportar este tema.</translation>
     </message>
     <message>
         <source>%1 (custom, experimental)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tema atual exportado.</translation>
     </message>
     <message>
         <source>under a second</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Recarregar temas quando os ficheiros mudam</translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>RestoreWindow#5</comment>
         <translation type="unfinished">%1 s</translation>
     </message>
     <message>
         <source>%1 min</source>
+        <comment>RestoreWindow#6</comment>
         <translation type="unfinished">%1 min</translation>
     </message>
     <message>
         <source>%1 h %2 min</source>
-        <translation type="unfinished"></translation>
+        <comment>RestoreWindow#7</comment>
+        <translation type="unfinished">Vigia o tema de utilizador selecionado e aplica as edições quando os seus ficheiros mudam. Temas integrados não são vigiados.</translation>
     </message>
     <message>
         <source>%1 s per frame</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A recarga automática aplica-se da próxima vez que um tema de utilizador for selecionado.</translation>
     </message>
     <message>
         <source>No upscaling</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Remover tema?</translation>
     </message>
     <message>
         <source>Keep the original size.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível remover esse tema.</translation>
     </message>
 </context>
 <context>
@@ -13584,6 +14734,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Working…</source>
+        <comment>ReverseProgressDialog#3</comment>
         <translation>Processando…</translation>
     </message>
     <message>
@@ -13592,6 +14743,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>This can take a few minutes on longer clips.</source>
+        <comment>ReverseProgressDialog#5</comment>
         <translation>Isso pode levar alguns minutos em clipes mais longos.</translation>
     </message>
     <message>
@@ -13600,18 +14752,22 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>%1 min</source>
+        <comment>ReverseProgressDialog#7</comment>
         <translation>%1 min</translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>ReverseProgressDialog#8</comment>
         <translation>%1 s</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>ReverseProgressDialog#9</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Reverse</source>
+        <comment>ReverseProgressDialog#10</comment>
         <translation>Inverter</translation>
     </message>
 </context>
@@ -13623,6 +14779,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Could not allocate decode buffers</source>
+        <comment>ReverseRenderer#2</comment>
         <translation>Não foi possível alocar os buffers de decodificação</translation>
     </message>
     <message>
@@ -13631,6 +14788,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>No frames could be decoded from this clip</source>
+        <comment>ReverseRenderer#4</comment>
         <translation>Nenhum quadro pôde ser decodificado deste clipe</translation>
     </message>
 </context>
@@ -13646,17 +14804,19 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Clip has no video to scan</source>
+        <comment>SceneDetectController#3</comment>
         <translation>O clipe não tem vídeo para analisar</translation>
     </message>
     <message numerus="yes">
         <source>Found %n scene(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n cena encontrada</numerusform>
             <numerusform>%n cenas encontradas</numerusform>
         </translation>
     </message>
     <message>
         <source>Getting ready…</source>
+        <comment>SceneDetectController#5</comment>
         <translation>Preparando…</translation>
     </message>
     <message>
@@ -13665,6 +14825,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Done</source>
+        <comment>SceneDetectController#7</comment>
         <translation>Concluído</translation>
     </message>
     <message>
@@ -13699,10 +14860,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Select a video clip first</source>
+        <comment>ScenesTab#4</comment>
         <translation>Selecione um clipe de vídeo primeiro</translation>
     </message>
     <message>
         <source>Clear</source>
+        <comment>ScenesTab#5</comment>
         <translation>Limpar</translation>
     </message>
     <message>
@@ -13723,10 +14886,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Scene detection sensitivity</source>
+        <comment>ScenesTab#10</comment>
         <translation>Sensibilidade da detecção de cenas</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>ScenesTab#11</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
@@ -13770,34 +14935,37 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ScopesPanel</name>
     <message>
         <source>All</source>
+        <comment>ScopesPanel#1</comment>
         <translation type="unfinished">Todos</translation>
     </message>
     <message>
         <source>Histogram</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível utilizar esse tema.</translation>
     </message>
     <message>
         <source>Waveform</source>
+        <comment>ScopesPanel#3</comment>
         <translation type="unfinished">Forma de onda</translation>
     </message>
     <message>
         <source>Parade</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tema de cores</translation>
     </message>
     <message>
         <source>Vectorscope</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Claro e Escuro seguem o sistema. Outros temas podem ser instalados ou importados.</translation>
     </message>
     <message>
         <source>Scopes</source>
-        <translation type="unfinished"></translation>
+        <comment>ScopesPanel#6</comment>
+        <translation type="unfinished">Este tema é apenas %1. Claro e Escuro deixam-no e voltam ao tema do sistema.</translation>
     </message>
 </context>
 <context>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">escuro</translation>
     </message>
     <message>
         <source>Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.</source>
@@ -13813,6 +14981,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Quality</source>
+        <comment>SegmentationControlColumn#5</comment>
         <translation type="unfinished">Qualidade</translation>
     </message>
     <message>
@@ -13849,10 +15018,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cut out subject</source>
+        <comment>SegmentationControlColumn#14</comment>
         <translation type="unfinished">Recorte automático</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>SegmentationControlColumn#15</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
@@ -13880,6 +15051,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Getting ready…</source>
+        <comment>SegmentationController#5</comment>
         <translation type="unfinished">Preparando…</translation>
     </message>
     <message>
@@ -13888,7 +15060,8 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
+        <comment>SegmentationController#7</comment>
+        <translation type="unfinished">claro</translation>
     </message>
     <message>
         <source>Clip is too short to cut out</source>
@@ -13904,6 +15077,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Could not decode frame %1</source>
+        <comment>SegmentationController#11</comment>
         <translation type="unfinished">Não foi possível decodificar o quadro %1</translation>
     </message>
     <message>
@@ -13928,6 +15102,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cut out subject</source>
+        <comment>SegmentationController#17</comment>
         <translation type="unfinished">Recorte automático</translation>
     </message>
 </context>
@@ -13939,10 +15114,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Frame</source>
+        <comment>SegmentationFrameColumn#2</comment>
         <translation type="unfinished">Quadro</translation>
     </message>
     <message>
         <source>s</source>
+        <comment>SegmentationFrameColumn#3</comment>
         <translation type="unfinished">s</translation>
     </message>
 </context>
@@ -13950,6 +15127,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SegmentationWindow</name>
     <message>
         <source>Cut out subject</source>
+        <comment>SegmentationWindow#1</comment>
         <translation>Recorte automático</translation>
     </message>
     <message>
@@ -13973,15 +15151,18 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsAboutPage</name>
     <message>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAboutPage#1</comment>
+        <translation type="unfinished">Este tema tem uma variante escura e uma clara. O botão do cabeçalho alterna entre elas.</translation>
     </message>
     <message>
         <source>Drift</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAboutPage#2</comment>
+        <translation type="unfinished">Janelas translúcidas</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAboutPage#3</comment>
+        <translation type="unfinished">Deixa o ambiente de trabalho mostrar-se atrás dos painéis quando um tema o pede. Tem efeito após reiniciar.</translation>
     </message>
     <message>
         <source>Updates</source>
@@ -13989,22 +15170,24 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Check for updates on startup</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tamanho da interface</translation>
     </message>
     <message>
         <source>Once a day, check whether a newer Drift has been released.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Torna botões, texto e ícones maiores, por cima das suas definições de ecrã.</translation>
     </message>
     <message>
         <source>Check for updates</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Layout</translation>
     </message>
     <message>
         <source>Checking…</source>
+        <comment>SettingsAboutPage#8</comment>
         <translation type="unfinished">Verificando…</translation>
     </message>
     <message>
         <source>Downloading…</source>
+        <comment>SettingsAboutPage#9</comment>
         <translation type="unfinished">Baixando…</translation>
     </message>
     <message>
@@ -14013,54 +15196,59 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Help</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reinicie o Drift para mudar de layout.</translation>
     </message>
     <message>
         <source>About Drift</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAboutPage#12</comment>
+        <translation type="unfinished">O ambiente de trabalho é indicado para rato e teclado. O móvel é o layout tátil feito para telemóveis.</translation>
     </message>
     <message>
         <source>Open-source video editor by CutWire Studios.</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAboutPage#13</comment>
+        <translation type="unfinished">Automático</translation>
     </message>
     <message>
         <source>Show about dialog</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ambiente de Trabalho</translation>
     </message>
     <message>
         <source>Debug info</source>
+        <comment>SettingsAboutPage#15</comment>
         <translation type="unfinished">Informações de depuração</translation>
     </message>
     <message>
         <source>System, playback and codec details for bug reports.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Móvel</translation>
     </message>
     <message>
         <source>Open debug info…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reiniciar agora</translation>
     </message>
 </context>
 <context>
     <name>SettingsAiPage</name>
     <message>
         <source>AI &amp; Cloud</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAiPage#1</comment>
+        <translation type="unfinished">Orientação da área de trabalho</translation>
     </message>
     <message>
         <source>Agent access</source>
+        <comment>SettingsAiPage#2</comment>
         <translation type="unfinished">Acesso de agente</translation>
     </message>
     <message>
         <source>Let Cursor or Claude edit this project for you. Only programs on this device can connect.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Área de trabalho horizontal ou vertical. Automático segue a forma da tela.</translation>
     </message>
     <message>
         <source>Start agent access on launch</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reinicie o Drift para aplicar a transparência das janelas.</translation>
     </message>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Fundos neste sistema: %1. Fundo efetivo: %2.</translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -14068,149 +15256,157 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Scene detection sensitivity</source>
+        <comment>SettingsAiPage#7</comment>
         <translation type="unfinished">Sensibilidade da detecção de cenas</translation>
     </message>
     <message>
         <source>Higher finds more cuts. When a clip is flat or heavily graded, Drift still falls back to an adaptive threshold.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">nenhum</translation>
     </message>
 </context>
 <context>
     <name>SettingsAppearanceActions</name>
     <message>
         <source>Could not import that theme.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Este sistema não tem fundo translúcido.</translation>
     </message>
     <message>
         <source>Imported “%1”.</source>
+        <comment>SettingsAppearanceActions#2</comment>
         <translation type="unfinished">“%1” importado.</translation>
     </message>
     <message>
         <source>Import theme…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Este tema usa uma janela translúcida. Ative as janelas translúcidas para mostrar o seu fundo.</translation>
     </message>
     <message>
         <source>Import Theme</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Dispositivos</translation>
     </message>
     <message>
         <source>Themes (*.json *.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Idioma e região</translation>
     </message>
     <message>
         <source>Import folder…</source>
+        <comment>SettingsAppearanceActions#6</comment>
         <translation type="unfinished">Importar pasta…</translation>
     </message>
     <message>
         <source>Import Theme Folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Arranque</translation>
     </message>
     <message>
         <source>Open themes folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Restaura o último projeto aberto. Fechar continua a pedir para guardar.</translation>
     </message>
     <message>
         <source>Export current theme…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gravação</translation>
     </message>
     <message>
         <source>Export Theme</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Intervalo de gravação automática</translation>
     </message>
     <message>
         <source>JSON theme (*.json)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Com que frequência o trabalho não guardado é copiado para recuperação em caso de falha.</translation>
     </message>
     <message>
         <source>Could not export this theme.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A cada 15 segundos</translation>
     </message>
     <message>
         <source>Exported the current theme.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A cada 30 segundos</translation>
     </message>
     <message>
         <source>Remove</source>
+        <comment>SettingsAppearanceActions#14</comment>
         <translation type="unfinished">Remover</translation>
     </message>
     <message>
         <source>Reload themes when files change</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A cada minuto</translation>
     </message>
     <message>
         <source>Watches the selected user theme and applies edits when its files change. Built-in themes are not watched.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A cada 5 minutos</translation>
     </message>
     <message>
         <source>Hot reload applies the next time a user theme is selected.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Fazer pulsar o ícone Extras quando os pacotes de vídeo, transições e áudio não estão instalados.</translation>
     </message>
     <message>
         <source>Remove theme?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Fazer pulsar o ícone Extras quando há atualizações disponíveis para pacotes que já tem instalados.</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>SettingsAppearanceActions#19</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Could not remove that theme.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Comentários</translation>
     </message>
     <message>
         <source>Removed “%1”.</source>
+        <comment>SettingsAppearanceActions#21</comment>
         <translation type="unfinished">“%1” removido.</translation>
     </message>
     <message>
         <source>Remove “%1” from this device? Its files are deleted.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Armazenamento</translation>
     </message>
 </context>
 <context>
     <name>SettingsAppearancePage</name>
     <message>
         <source>Appearance</source>
+        <comment>SettingsAppearancePage#1</comment>
         <translation type="unfinished">Aparência</translation>
     </message>
     <message>
         <source>Could not use that theme.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cache</translation>
     </message>
     <message>
         <source>Theme</source>
+        <comment>SettingsAppearancePage#3</comment>
         <translation type="unfinished">Tema</translation>
     </message>
     <message>
         <source>Color theme</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 utilizados, guardados em %2</translation>
     </message>
     <message>
         <source>Light and Dark follow your system. Other themes can be installed or imported.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Limpar cache</translation>
     </message>
     <message>
         <source>This theme is %1 only. Light and Dark leave it and return to the system theme.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ficheiro de definições</translation>
     </message>
     <message>
         <source>dark</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Exportar e importar</translation>
     </message>
     <message>
         <source>light</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Guarde as suas preferências num ficheiro JSON ou carregue-as a partir de um.</translation>
     </message>
     <message>
         <source>This theme has a dark and a light variant. The header toggle switches between them.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Exportar definições…</translation>
     </message>
     <message>
         <source>Translucent windows</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Exportar Definições</translation>
     </message>
     <message>
         <source>Lets the desktop show through panels when a theme asks for it. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Definições exportadas</translation>
     </message>
     <message>
         <source>Interface</source>
@@ -14218,7 +15414,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Interface size</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar definições…</translation>
     </message>
     <message>
         <source>Restart Drift to apply this size.</source>
@@ -14226,7 +15422,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar Definições</translation>
     </message>
     <message>
         <source>100% (system)</source>
@@ -14234,43 +15430,47 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Layout</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAppearancePage#17</comment>
+        <translation type="unfinished">Atalhos de teclado</translation>
     </message>
     <message>
         <source>Restart Drift to switch layouts.</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAppearancePage#18</comment>
+        <translation type="unfinished">Restaura todos os atalhos para a tecla original.</translation>
     </message>
     <message>
         <source>Desktop suits a mouse and keyboard. Mobile is the touch layout made for phones.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Conta</translation>
     </message>
     <message>
         <source>Automatic</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Rede</translation>
     </message>
     <message>
         <source>Desktop</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ligação</translation>
     </message>
     <message>
         <source>Mobile</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Como o Drift acede à internet para transferências, atualizações e serviços online. Aplica-se imediatamente.</translation>
     </message>
     <message>
         <source>Restart now</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsAppearancePage#23</comment>
+        <translation type="unfinished">Proxy do sistema</translation>
     </message>
     <message>
         <source>Workspace</source>
+        <comment>SettingsAppearancePage#24</comment>
         <translation type="unfinished">Espaço de trabalho</translation>
     </message>
     <message>
         <source>Workspace orientation</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sem proxy</translation>
     </message>
     <message>
         <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Proxy HTTP</translation>
     </message>
     <message>
         <source>Auto (follow canvas)</source>
@@ -14278,10 +15478,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Landscape</source>
+        <comment>SettingsAppearancePage#28</comment>
         <translation type="unfinished">Paisagem</translation>
     </message>
     <message>
         <source>Portrait</source>
+        <comment>SettingsAppearancePage#29</comment>
         <translation type="unfinished">Retrato</translation>
     </message>
 </context>
@@ -14289,34 +15491,35 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsAppearanceTranslucency</name>
     <message>
         <source>Restart Drift to apply window transparency.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Proxy SOCKS5</translation>
     </message>
     <message>
         <source>Backdrops on this system: %1. Effective backdrop: %2.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Servidor proxy</translation>
     </message>
     <message>
         <source>none</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Anfitrião e porta do proxy. O nome de utilizador e a palavra-passe são opcionais.</translation>
     </message>
     <message>
         <source>This system has no translucent backdrop.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Anfitrião do proxy</translation>
     </message>
     <message>
         <source>This theme uses a translucent window. Turn on translucent windows to show its backdrop.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Porta</translation>
     </message>
 </context>
 <context>
     <name>SettingsAudioPage</name>
     <message>
         <source>Audio</source>
+        <comment>SettingsAudioPage#1</comment>
         <translation type="unfinished">Áudio</translation>
     </message>
     <message>
         <source>Devices</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nome de utilizador (opcional)</translation>
     </message>
     <message>
         <source>Audio output</source>
@@ -14367,6 +15570,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>SettingsCloudProvidersSection#8</comment>
         <translation type="unfinished">Guardar</translation>
     </message>
     <message>
@@ -14375,10 +15579,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Checking…</source>
+        <comment>SettingsCloudProvidersSection#10</comment>
         <translation type="unfinished">Verificando…</translation>
     </message>
     <message>
         <source>Clear</source>
+        <comment>SettingsCloudProvidersSection#11</comment>
         <translation type="unfinished">Limpar</translation>
     </message>
     <message>
@@ -14406,10 +15612,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsDialog</name>
     <message>
         <source>Settings</source>
+        <comment>SettingsDialog#1</comment>
         <translation>Definições</translation>
     </message>
     <message>
         <source>Done</source>
+        <comment>SettingsDialog#2</comment>
         <translation>Concluir</translation>
     </message>
 </context>
@@ -14417,31 +15625,36 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsGeneralPage</name>
     <message>
         <source>General</source>
+        <comment>SettingsGeneralPage#1</comment>
         <translation type="unfinished">Geral</translation>
     </message>
     <message>
         <source>%1 GB</source>
+        <comment>SettingsGeneralPage#2</comment>
         <translation type="unfinished">%1 GB</translation>
     </message>
     <message>
         <source>%1 MB</source>
+        <comment>SettingsGeneralPage#3</comment>
         <translation type="unfinished">%1 MB</translation>
     </message>
     <message>
         <source>Language &amp; region</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Palavra-passe (opcional)</translation>
     </message>
     <message>
         <source>Language</source>
+        <comment>SettingsGeneralPage#5</comment>
         <translation type="unfinished">Idioma</translation>
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
+        <comment>SettingsGeneralPage#6</comment>
         <translation type="unfinished">Idioma dos menus e rótulos. Tem efeito imediatamente.</translation>
     </message>
     <message>
         <source>Startup</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Áreas de Trabalho</translation>
     </message>
     <message>
         <source>Reopen last project on startup</source>
@@ -14449,42 +15662,44 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Restores the last open project. Closing still asks you to save.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Barra de Ferramentas da Linha do Tempo</translation>
     </message>
     <message>
         <source>Saving</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Atalhos de Teclado</translation>
     </message>
     <message>
         <source>Autosave interval</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">IA e Nuvem</translation>
     </message>
     <message>
         <source>How often unsaved work is snapshotted for crash recovery.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Rede</translation>
     </message>
     <message>
         <source>Off</source>
+        <comment>SettingsGeneralPage#13</comment>
         <translation type="unfinished">Desativado</translation>
     </message>
     <message>
         <source>Every 15 seconds</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sobre</translation>
     </message>
     <message>
         <source>Every 30 seconds</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pesquisar definições…</translation>
     </message>
     <message>
         <source>Every minute</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhuma definição corresponde a “%1”</translation>
     </message>
     <message>
         <source>Every 5 minutes</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Guias de alinhamento desenhadas sobre a pré-visualização.</translation>
     </message>
     <message>
         <source>Extras</source>
+        <comment>SettingsGeneralPage#18</comment>
         <translation type="unfinished">Extras</translation>
     </message>
     <message>
@@ -14493,7 +15708,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Escolha quais os conjuntos de guias desenhados sobre a pré-visualização.</translation>
     </message>
     <message>
         <source>Remind about pack updates</source>
@@ -14501,11 +15716,11 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Preencher atrás dos clipes que não cobrem todo o ecrã.</translation>
     </message>
     <message>
         <source>Feedback</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cor de fundo</translation>
     </message>
     <message>
         <source>Haptic feedback</source>
@@ -14517,62 +15732,64 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Storage</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cor do fundo sólido.</translation>
     </message>
     <message>
         <source>Cache</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O quanto o fundo é desfocado atrás dos clipes.</translation>
     </message>
     <message>
         <source>%1 used, stored in %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Qualidade de reprodução</translation>
     </message>
     <message>
         <source>Clear cache</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Qualidade de pré-visualização</translation>
     </message>
     <message>
         <source>Settings file</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mais baixo é mais suave durante a edição. Completo corresponde exatamente a uma exportação; Automático renderiza apenas os pixéis no ecrã.</translation>
     </message>
     <message>
         <source>Export and import</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">1/8 (Eco)</translation>
     </message>
     <message>
         <source>Save your preferences to a JSON file, or load them from one.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Decodificação</translation>
     </message>
     <message>
         <source>Export settings…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Como o vídeo é decodificado para pré-visualização. O software é mais suave para a maioria dos clipes, mas usa mais CPU. O hardware é indicado para 4K de alta qualidade.</translation>
     </message>
     <message>
         <source>Export Settings</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Escolha em que placa gráfica o Drift é executado nas Definições do Windows, em Ecrã &gt; Gráficos. Tem efeito após reiniciar.</translation>
     </message>
     <message>
         <source>JSON document (*.json)</source>
+        <comment>SettingsGeneralPage#35</comment>
         <translation type="unfinished">Documento JSON (*.json)</translation>
     </message>
     <message>
         <source>Settings exported</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrir definições de gráficos</translation>
     </message>
     <message>
         <source>Import settings…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Proxies</translation>
     </message>
     <message>
         <source>Import Settings</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Padrões de nome de proxy</translation>
     </message>
 </context>
 <context>
     <name>SettingsKeymapPage</name>
     <message>
         <source>Keyboard shortcuts</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsKeymapPage#1</comment>
+        <translation type="unfinished">Vincular um proxy ensina o Drift o seu padrão de nome. Proxies ao lado da sua mídia que correspondam a um padrão abaixo são vinculados automaticamente.</translation>
     </message>
     <message>
         <source>Click a shortcut, then press the keys. Esc cancels, Backspace clears.</source>
@@ -14580,11 +15797,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
+        <comment>SettingsKeymapPage#3</comment>
         <translation type="unfinished">Restaurar padrões</translation>
     </message>
     <message>
         <source>Restores every shortcut to its original key.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Remover padrão</translation>
     </message>
     <message>
         <source>Shortcuts reset to defaults.</source>
@@ -14595,11 +15813,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsMarketplacePage</name>
     <message>
         <source>Marketplace</source>
+        <comment>SettingsMarketplacePage#1</comment>
         <translation type="unfinished">Marketplace</translation>
     </message>
     <message>
         <source>Account</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Substituições</translation>
     </message>
     <message>
         <source>Account connected (%1)</source>
@@ -14622,153 +15841,172 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsNetworkPage#1</comment>
+        <translation type="unfinished">Fidedigno</translation>
     </message>
     <message>
         <source>Connection</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não fidedigno</translation>
     </message>
     <message>
         <source>Proxy</source>
+        <comment>SettingsNetworkPage#3</comment>
         <translation type="unfinished">Proxy</translation>
     </message>
     <message>
         <source>How Drift reaches the internet for downloads, updates, and online services. Applies immediately.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Revogar confiança</translation>
     </message>
     <message>
         <source>System proxy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Segue claro e escuro</translation>
     </message>
     <message>
         <source>No proxy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Escuro e claro</translation>
     </message>
     <message>
         <source>HTTP proxy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deslocação</translation>
     </message>
     <message>
         <source>SOCKS5 proxy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A roda do rato desloca</translation>
     </message>
     <message>
         <source>Proxy server</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O que a roda do rato move na linha do tempo. Mantenha Shift para a outra direção; arrastar com o botão do meio também desloca.</translation>
     </message>
     <message>
         <source>Host and port of the proxy. The username and password are optional.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Faixas (cima e baixo)</translation>
     </message>
     <message>
         <source>Proxy host</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tempo (esquerda e direita)</translation>
     </message>
     <message>
         <source>Port</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Edição</translation>
     </message>
     <message>
         <source>Username (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Criar crossfade automaticamente em clipes sobrepostos</translation>
     </message>
     <message>
         <source>Password (optional)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Quando uma movimentação cria uma sobreposição com um clipe vizinho na mesma faixa, adiciona um crossfade sobre ela.</translation>
     </message>
 </context>
 <context>
     <name>SettingsPane</name>
     <message>
         <source>General</source>
+        <comment>SettingsPane#1</comment>
         <translation type="unfinished">Geral</translation>
     </message>
     <message>
         <source>Appearance</source>
+        <comment>SettingsPane#2</comment>
         <translation type="unfinished">Aparência</translation>
     </message>
     <message>
         <source>Workspaces</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPane#3</comment>
+        <translation type="unfinished">Selecionar automaticamente o clipe sob o cursor de reprodução</translation>
     </message>
     <message>
         <source>Timeline</source>
+        <comment>SettingsPane#4</comment>
         <translation type="unfinished">Linha do tempo</translation>
     </message>
     <message>
         <source>Timeline toolbar</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPane#5</comment>
+        <translation type="unfinished">Seleciona o clipe sob o cursor de reprodução à medida que este se move.</translation>
     </message>
     <message>
         <source>Keyboard shortcuts</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPane#6</comment>
+        <translation type="unfinished">Arrastar um controlo deslizante também cria quadros-chave.</translation>
     </message>
     <message>
         <source>Preview</source>
+        <comment>SettingsPane#7</comment>
         <translation type="unfinished">Pré-visualização</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>SettingsPane#8</comment>
         <translation type="unfinished">Áudio</translation>
     </message>
     <message>
         <source>AI &amp; Cloud</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPane#9</comment>
+        <translation type="unfinished">Repetir área de trabalho</translation>
     </message>
     <message>
         <source>Network</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPane#10</comment>
+        <translation type="unfinished">A reprodução repete-se entre os pontos de entrada e saída da área de trabalho.</translation>
     </message>
     <message>
         <source>Marketplace</source>
+        <comment>SettingsPane#11</comment>
         <translation type="unfinished">Marketplace</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPane#12</comment>
+        <translation type="unfinished">Predefinições</translation>
     </message>
     <message>
         <source>Search settings…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração de imagem estática</translation>
     </message>
     <message>
         <source>No settings match “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração de imagens e fotogramas estáticos adicionados à linha do tempo.</translation>
     </message>
 </context>
 <context>
     <name>SettingsPreviewPage</name>
     <message>
         <source>Preview</source>
+        <comment>SettingsPreviewPage#1</comment>
         <translation type="unfinished">Pré-visualização</translation>
     </message>
     <message>
         <source>Guides</source>
+        <comment>SettingsPreviewPage#2</comment>
         <translation type="unfinished">Guias</translation>
     </message>
     <message>
         <source>Show guides</source>
+        <comment>SettingsPreviewPage#3</comment>
         <translation type="unfinished">Mostrar guias</translation>
     </message>
     <message>
         <source>Alignment guides drawn over the preview.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração da transição</translation>
     </message>
     <message>
         <source>Guide sets</source>
+        <comment>SettingsPreviewPage#5</comment>
         <translation type="unfinished">Conjuntos de guias</translation>
     </message>
     <message>
         <source>Choose which guide sets are drawn over the preview.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração das novas transições largadas entre clipes.</translation>
     </message>
     <message>
         <source>Background</source>
+        <comment>SettingsPreviewPage#7</comment>
         <translation type="unfinished">Fundo</translation>
     </message>
     <message>
         <source>Fill behind clips that don’t cover the whole screen.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Painéis</translation>
     </message>
     <message>
         <source>Solid color</source>
@@ -14776,6 +16014,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Blur</source>
+        <comment>SettingsPreviewPage#10</comment>
         <translation type="unfinished">Desfoque</translation>
     </message>
     <message>
@@ -14784,11 +16023,11 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Background colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mostrar vista geral da linha do tempo</translation>
     </message>
     <message>
         <source>Colour of the solid background.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Um minimapa de todo o projeto. Clique ou arraste para saltar na vista.</translation>
     </message>
     <message>
         <source>Blur strength</source>
@@ -14796,47 +16035,52 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>How much the background is blurred behind clips.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mostrar misturador de áudio</translation>
     </message>
     <message>
         <source>Playback quality</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mostra a faixa do misturador de áudio ao lado da linha do tempo.</translation>
     </message>
     <message>
         <source>Preview quality</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Barra de Ferramentas da Linha do Tempo</translation>
     </message>
     <message>
         <source>Lower is smoother while editing. Full matches an export exactly; Auto renders only the pixels on screen.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Disposição da barra de ferramentas</translation>
     </message>
     <message>
         <source>Full</source>
+        <comment>SettingsPreviewPage#19</comment>
         <translation type="unfinished">Completo</translation>
     </message>
     <message>
         <source>Half</source>
+        <comment>SettingsPreviewPage#20</comment>
         <translation type="unfinished">Metade</translation>
     </message>
     <message>
         <source>Quarter</source>
+        <comment>SettingsPreviewPage#21</comment>
         <translation type="unfinished">Um quarto</translation>
     </message>
     <message>
         <source>1/8 (Eco)</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPreviewPage#22</comment>
+        <translation type="unfinished">Escolha quais as ações que aparecem na barra de ferramentas acima da linha do tempo e quais vão para o menu de overflow.</translation>
     </message>
     <message>
         <source>Auto</source>
+        <comment>SettingsPreviewPage#23</comment>
         <translation type="unfinished">Automático</translation>
     </message>
     <message>
         <source>Decoding</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Áreas de Trabalho</translation>
     </message>
     <message>
         <source>How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Organize painéis em layouts, opcionalmente em várias janelas. Arraste um painel para uma aresta de outro bloco para o dividir, ou para o centro para adicionar um separador. Nada muda no editor até guardar.</translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
@@ -14868,15 +16112,16 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Designer de Layout</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsPreviewPage#34</comment>
+        <translation type="unfinished">As predefinições integradas mantêm uma cópia do original, pelo que Repor traz-nas de volta.</translation>
     </message>
     <message>
         <source>Proxies</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A carregar efeitos sonoros…</translation>
     </message>
     <message>
         <source>Use proxies for preview</source>
@@ -14904,26 +16149,29 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>720p</source>
+        <comment>SettingsPreviewPage#42</comment>
         <translation type="unfinished">720p</translation>
     </message>
     <message>
         <source>1080p</source>
+        <comment>SettingsPreviewPage#43</comment>
         <translation type="unfinished">1080p</translation>
     </message>
     <message>
         <source>Proxy name patterns</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível carregar efeitos sonoros</translation>
     </message>
     <message>
         <source>Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhum efeito sonoro corresponde a “%1”.</translation>
     </message>
     <message>
         <source>Remove pattern</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhum efeito sonoro aqui.</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
+        <comment>SettingsPreviewPage#47</comment>
         <translation type="unfinished">Restaurar padrões</translation>
     </message>
 </context>
@@ -14931,33 +16179,34 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsThemeEntry</name>
     <message>
         <source>Overrides</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível carregar efeitos sonoros. Verifique a sua ligação e tente novamente.</translation>
     </message>
     <message>
         <source>Trusted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível transferir esse som. Verifique a sua ligação e tente novamente.</translation>
     </message>
     <message>
         <source>Not trusted</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foi possível adicionar esse som ao compartimento de mídia.</translation>
     </message>
     <message>
         <source>Revoke trust</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar ao compartimento de mídia</translation>
     </message>
 </context>
 <context>
     <name>SettingsThemeList</name>
     <message>
         <source>Follows light and dark</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar à linha do tempo</translation>
     </message>
     <message>
         <source>Dark and light</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar para o layout móvel?</translation>
     </message>
     <message>
         <source>Light</source>
+        <comment>SettingsThemeList#3</comment>
         <translation type="unfinished">Luz</translation>
     </message>
     <message>
@@ -14966,10 +16215,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>System</source>
+        <comment>SettingsThemeList#5</comment>
         <translation type="unfinished">Sistema</translation>
     </message>
     <message>
         <source>Theme</source>
+        <comment>SettingsThemeList#6</comment>
         <translation type="unfinished">Tema</translation>
     </message>
 </context>
@@ -14977,210 +16228,222 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SettingsTimelinePage</name>
     <message>
         <source>Timeline</source>
+        <comment>SettingsTimelinePage#1</comment>
         <translation type="unfinished">Linha do tempo</translation>
     </message>
     <message>
         <source>Scrolling</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar para o layout de desktop?</translation>
     </message>
     <message>
         <source>Mouse wheel scrolls</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reiniciar agora</translation>
     </message>
     <message>
         <source>What the mouse wheel moves on the timeline. Hold Shift for the other direction; middle-click drag also pans.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar</translation>
     </message>
     <message>
         <source>Tracks (up and down)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Agora não</translation>
     </message>
     <message>
         <source>Time (left and right)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mais tarde</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reinicie o Drift para mudar de layout.</translation>
     </message>
     <message>
         <source>Auto-crossfade overlapping clips</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Está ligado um rato. O layout de desktop tem menus completos, painéis e edição precisa da linha do tempo. O Drift reinicia para mudar e o seu projeto é mantido.</translation>
     </message>
     <message>
         <source>When a move creates an overlap with a neighbouring clip on the same track, add a crossfade across it.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O layout móvel é a interface tátil feita para telemóveis. O Drift reinicia para mudar.</translation>
     </message>
     <message>
         <source>Auto-select clip under playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O layout de desktop é indicado para rato e teclado. O Drift reinicia para mudar.</translation>
     </message>
     <message>
         <source>Select the clip under the playhead as the playhead moves.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Origem: %1</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
+        <comment>SettingsTimelinePage#12</comment>
         <translation type="unfinished">Quadros-chave automáticos</translation>
     </message>
     <message>
         <source>Dragging a slider also creates keyframes.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Visualizador de Origem</translation>
     </message>
     <message>
         <source>Loop work area</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe no compartimento de mídia para o pré-visualizar aqui.</translation>
     </message>
     <message>
         <source>Playback repeats between the work area in and out points.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Voz guardada</translation>
     </message>
     <message>
         <source>Defaults</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transforme um guião em fala com uma voz integrada ou clonada. É gerada neste dispositivo e adicionada no cursor de reprodução.</translation>
     </message>
     <message>
         <source>Still image duration</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A geração de fala é executada neste dispositivo e precisa do modelo de voz.</translation>
     </message>
     <message>
         <source>Length of images and stills when added to the timeline.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transferir modelo de voz</translation>
     </message>
     <message>
         <source>Transition length</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instale primeiro o motor de IA</translation>
     </message>
     <message>
         <source>Length of new transitions dropped between clips.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Necessário para gerar fala</translation>
     </message>
     <message>
         <source>Panels</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsTimelinePage#21</comment>
+        <translation type="unfinished">Escreva o que a voz deve dizer</translation>
     </message>
     <message>
         <source>Show timeline overview</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 caracteres, cerca de %2 s</translation>
     </message>
     <message>
         <source>A minimap of the whole project. Click or drag it to jump the view.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Fala com mais de 30 segundos termina frequentemente em palavras sem sentido ou em silêncio. Divida o guião em partes mais curtas.</translation>
     </message>
     <message>
         <source>Show audio mixer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reproduzir a amostra de voz</translation>
     </message>
     <message>
         <source>Show the audio mixer strip beside the timeline.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Renomear ou eliminar esta voz</translation>
     </message>
 </context>
 <context>
     <name>SettingsToolbarPage</name>
     <message>
         <source>Timeline toolbar</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsToolbarPage#1</comment>
+        <translation type="unfinished">Renomear voz</translation>
     </message>
     <message>
         <source>Toolbar layout</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nova voz</translation>
     </message>
     <message>
         <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Clonar uma voz a partir de uma gravação</translation>
     </message>
 </context>
 <context>
     <name>SettingsWorkspacesPage</name>
     <message>
         <source>Workspaces</source>
-        <translation type="unfinished"></translation>
+        <comment>SettingsWorkspacesPage#1</comment>
+        <translation type="unfinished">Do clipe selecionado</translation>
     </message>
     <message>
         <source>Arrange panels into layouts, optionally across several windows. Drag a panel onto an edge of another block to split it, or onto its middle to add a tab. Nothing changes in the editor until you save.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gravar…</translation>
     </message>
     <message>
         <source>Layout designer</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar ficheiro…</translation>
     </message>
     <message>
         <source>Built-in presets keep a copy of the original, so Reset brings them back.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A carregar o modelo de voz (a primeira utilização demora um pouco)…</translation>
     </message>
 </context>
 <context>
     <name>SfxBrowser</name>
     <message>
         <source>Added to the media bin</source>
+        <comment>SfxBrowser#1</comment>
         <translation type="unfinished">Adicionado ao compartimento de mídia</translation>
     </message>
     <message>
         <source>Loading sound effects…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A aprender a voz…</translation>
     </message>
     <message>
         <source>Couldn’t load sound effects</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Expressividade</translation>
     </message>
     <message>
         <source>Try again</source>
+        <comment>SfxBrowser#4</comment>
         <translation type="unfinished">Tentar novamente</translation>
     </message>
     <message>
         <source>All</source>
+        <comment>SfxBrowser#5</comment>
         <translation type="unfinished">Todos</translation>
     </message>
     <message>
         <source>No sound effects match “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Valores mais altos soam mais dramáticos e falam mais depressa</translation>
     </message>
     <message>
         <source>No sound effects here.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gerar fala</translation>
     </message>
 </context>
 <context>
     <name>SfxLibrary</name>
     <message>
         <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gerar fala e adicioná-la no cursor de reprodução</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
+        <comment>SfxLibrary#2</comment>
         <translation type="unfinished">Não foi possível gravar na pasta de dados do aplicação.</translation>
     </message>
     <message>
         <source>Could not download that sound. Check your connection and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Parar de gerar</translation>
     </message>
     <message>
         <source>That download was damaged. Try again.</source>
+        <comment>SfxLibrary#4</comment>
         <translation type="unfinished">Esse transferência estava corrompido. Tente novamente.</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gravar uma voz</translation>
     </message>
 </context>
 <context>
     <name>SfxSoundRow</name>
     <message>
         <source>Pause</source>
+        <comment>SfxSoundRow#1</comment>
         <translation type="unfinished">Pausar</translation>
     </message>
     <message>
         <source>Play preview</source>
+        <comment>SfxSoundRow#2</comment>
         <translation type="unfinished">Reproduzir pré-visualização</translation>
     </message>
     <message>
         <source>Add to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar uma voz</translation>
     </message>
     <message>
         <source>Add to the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Voz do clipe</translation>
     </message>
 </context>
 <context>
@@ -15211,10 +16474,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Duplicate layer</source>
+        <comment>ShadingLayerHeader#7</comment>
         <translation type="unfinished">Duplicar camada</translation>
     </message>
     <message>
         <source>Remove layer</source>
+        <comment>ShadingLayerHeader#8</comment>
         <translation type="unfinished">Remover camada</translation>
     </message>
 </context>
@@ -15222,70 +16487,87 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ShadingLayerRow</name>
     <message>
         <source>Fill</source>
+        <comment>ShadingLayerRow#1</comment>
         <translation>Preenchimento</translation>
     </message>
     <message>
         <source>Stroke</source>
+        <comment>ShadingLayerRow#2</comment>
         <translation>Contorno</translation>
     </message>
     <message>
         <source>Shadow</source>
+        <comment>ShadingLayerRow#3</comment>
         <translation>Sombra</translation>
     </message>
     <message>
         <source>Glow</source>
+        <comment>ShadingLayerRow#4</comment>
         <translation>Brilho</translation>
     </message>
     <message>
         <source>Extrude</source>
+        <comment>ShadingLayerRow#5</comment>
         <translation>Extrusão</translation>
     </message>
     <message>
         <source>Solid</source>
+        <comment>ShadingLayerRow#6</comment>
         <translation>Sólido</translation>
     </message>
     <message>
         <source>Gradient</source>
+        <comment>ShadingLayerRow#7</comment>
         <translation>Gradiente</translation>
     </message>
     <message>
         <source>Texture</source>
+        <comment>ShadingLayerRow#8</comment>
         <translation>Textura</translation>
     </message>
     <message>
         <source>Effect</source>
+        <comment>ShadingLayerRow#9</comment>
         <translation>Efeito</translation>
     </message>
     <message>
         <source>Normal</source>
+        <comment>ShadingLayerRow#10</comment>
         <translation>Normal</translation>
     </message>
     <message>
         <source>Multiply</source>
+        <comment>ShadingLayerRow#11</comment>
         <translation>Multiplicar</translation>
     </message>
     <message>
         <source>Screen</source>
+        <comment>ShadingLayerRow#12</comment>
         <translation>Divisão</translation>
     </message>
     <message>
         <source>Overlay</source>
+        <comment>ShadingLayerRow#13</comment>
         <translation>Sobreposição</translation>
     </message>
     <message>
         <source>Add</source>
+        <comment>ShadingLayerRow#14</comment>
         <translation>Adicionar</translation>
     </message>
     <message>
         <source>Darken</source>
+        <comment>ShadingLayerRow#15</comment>
         <translation>Escurecer</translation>
     </message>
     <message>
         <source>Lighten</source>
+        <comment>ShadingLayerRow#16</comment>
         <translation>Clarear</translation>
     </message>
     <message>
         <source>Centre</source>
+        <comment>ShadingLayerRow#17</comment>
         <translation>Centro</translation>
     </message>
     <message>
@@ -15310,6 +16592,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Opacity</source>
+        <comment>ShadingLayerRow#23</comment>
         <translation>Opacidade</translation>
     </message>
     <message>
@@ -15318,6 +16601,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Width</source>
+        <comment>ShadingLayerRow#25</comment>
         <translation>Largura</translation>
     </message>
     <message>
@@ -15334,14 +16618,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Dash offset</source>
+        <comment>ShadingLayerRow#29</comment>
         <translation>Deslocamento do tracejado</translation>
     </message>
     <message>
         <source>Trim start</source>
+        <comment>ShadingLayerRow#30</comment>
         <translation>Início do aparo</translation>
     </message>
     <message>
         <source>Trim end</source>
+        <comment>ShadingLayerRow#31</comment>
         <translation>Fim do aparo</translation>
     </message>
     <message>
@@ -15362,6 +16649,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Colour</source>
+        <comment>ShadingLayerRow#36</comment>
         <translation>Cor</translation>
     </message>
     <message>
@@ -15370,10 +16658,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Offset X</source>
+        <comment>ShadingLayerRow#38</comment>
         <translation>Deslocamento X</translation>
     </message>
     <message>
         <source>Offset Y</source>
+        <comment>ShadingLayerRow#39</comment>
         <translation>Deslocamento Y</translation>
     </message>
     <message>
@@ -15382,18 +16672,22 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Blur</source>
+        <comment>ShadingLayerRow#41</comment>
         <translation>Desfoque</translation>
     </message>
     <message>
         <source>Spread</source>
+        <comment>ShadingLayerRow#42</comment>
         <translation>Expansão</translation>
     </message>
     <message>
         <source>Depth</source>
+        <comment>ShadingLayerRow#43</comment>
         <translation>Profundidade</translation>
     </message>
     <message>
         <source>Angle</source>
+        <comment>ShadingLayerRow#44</comment>
         <translation>Ângulo</translation>
     </message>
     <message>
@@ -15409,6 +16703,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ShapeInspector</name>
     <message>
         <source>Shape</source>
+        <comment>ShapeInspector#1</comment>
         <translation>Forma</translation>
     </message>
     <message>
@@ -15417,10 +16712,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Fill</source>
+        <comment>ShapeInspector#3</comment>
         <translation>Preenchimento</translation>
     </message>
     <message>
         <source>Stroke</source>
+        <comment>ShapeInspector#4</comment>
         <translation>Contorno</translation>
     </message>
     <message>
@@ -15429,26 +16726,32 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Layers</source>
+        <comment>ShapeInspector#6</comment>
         <translation>Camadas</translation>
     </message>
     <message>
         <source>Add layer</source>
+        <comment>ShapeInspector#7</comment>
         <translation>Adicionar camada</translation>
     </message>
     <message>
         <source>Add a fill, stroke, shadow, glow or extrude layer</source>
+        <comment>ShapeInspector#8</comment>
         <translation>Adicione uma camada de preenchimento, traçado, sombra, brilho ou extrusão</translation>
     </message>
     <message>
         <source>Shadow</source>
+        <comment>ShapeInspector#9</comment>
         <translation>Sombra</translation>
     </message>
     <message>
         <source>Glow</source>
+        <comment>ShapeInspector#10</comment>
         <translation>Brilho</translation>
     </message>
     <message>
         <source>Extrude</source>
+        <comment>ShapeInspector#11</comment>
         <translation>Extrusão</translation>
     </message>
     <message>
@@ -15461,30 +16764,37 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Corner radius</source>
+        <comment>ShapeInspector#14</comment>
         <translation>Raio dos cantos</translation>
     </message>
     <message>
         <source>Points</source>
+        <comment>ShapeInspector#15</comment>
         <translation>Pontas</translation>
     </message>
     <message>
         <source>Inner radius</source>
+        <comment>ShapeInspector#16</comment>
         <translation>Raio interno</translation>
     </message>
     <message>
         <source>Head size</source>
+        <comment>ShapeInspector#17</comment>
         <translation>Tamanho da ponta</translation>
     </message>
     <message>
         <source>Thickness</source>
+        <comment>ShapeInspector#18</comment>
         <translation>Espessura</translation>
     </message>
     <message>
         <source>Tail position</source>
+        <comment>ShapeInspector#19</comment>
         <translation>Posição da cauda</translation>
     </message>
     <message>
         <source>Tail size</source>
+        <comment>ShapeInspector#20</comment>
         <translation>Tamanho da cauda</translation>
     </message>
 </context>
@@ -15492,18 +16802,22 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ShapePresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
+        <comment>ShapePresetCard#1</comment>
         <translation type="unfinished">%1 — clique para adicionar ou arraste para a linha do tempo ou pré-visualização</translation>
     </message>
     <message>
         <source>Add at playhead</source>
+        <comment>ShapePresetCard#2</comment>
         <translation type="unfinished">Adicionar no cursor de reprodução</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
+        <comment>ShapePresetCard#3</comment>
         <translation type="unfinished">Remover dos favoritos</translation>
     </message>
     <message>
         <source>Add to favorites</source>
+        <comment>ShapePresetCard#4</comment>
         <translation type="unfinished">Adicionar aos favoritos</translation>
     </message>
 </context>
@@ -15511,6 +16825,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ShapeStyle</name>
     <message>
         <source>Rectangle</source>
+        <comment>ShapeStyle#1</comment>
         <translation>Retângulo</translation>
     </message>
     <message>
@@ -15519,10 +16834,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Square</source>
+        <comment>ShapeStyle#3</comment>
         <translation>Quadrado</translation>
     </message>
     <message>
         <source>Ellipse</source>
+        <comment>ShapeStyle#4</comment>
         <translation>Elipse</translation>
     </message>
     <message>
@@ -15599,6 +16916,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Star</source>
+        <comment>ShapeStyle#23</comment>
         <translation>Estrela</translation>
     </message>
     <message>
@@ -15615,6 +16933,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Heart</source>
+        <comment>ShapeStyle#27</comment>
         <translation>Coração</translation>
     </message>
     <message>
@@ -15627,6 +16946,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Basic</source>
+        <comment>ShapeStyle#30</comment>
         <translation>Básicas</translation>
     </message>
     <message>
@@ -15643,30 +16963,37 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Corner radius</source>
+        <comment>ShapeStyle#34</comment>
         <translation>Raio dos cantos</translation>
     </message>
     <message>
         <source>Inner radius</source>
+        <comment>ShapeStyle#35</comment>
         <translation>Raio interno</translation>
     </message>
     <message>
         <source>Head size</source>
+        <comment>ShapeStyle#36</comment>
         <translation>Tamanho da ponta</translation>
     </message>
     <message>
         <source>Thickness</source>
+        <comment>ShapeStyle#37</comment>
         <translation>Espessura</translation>
     </message>
     <message>
         <source>Tail position</source>
+        <comment>ShapeStyle#38</comment>
         <translation>Posição da cauda</translation>
     </message>
     <message>
         <source>Tail size</source>
+        <comment>ShapeStyle#39</comment>
         <translation>Tamanho da cauda</translation>
     </message>
     <message>
         <source>Points</source>
+        <comment>ShapeStyle#40</comment>
         <translation>Pontas</translation>
     </message>
 </context>
@@ -15686,6 +17013,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
+        <comment>ShapesTab#4</comment>
         <translation>Nada nesta categoria.</translation>
     </message>
 </context>
@@ -15693,43 +17021,46 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ShellSwitchDialog</name>
     <message>
         <source>Switch to the mobile layout?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A minha voz</translation>
     </message>
     <message>
         <source>Switch to the desktop layout?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importar uma amostra de voz</translation>
     </message>
     <message>
         <source>Restart now</source>
-        <translation type="unfinished"></translation>
+        <comment>ShellSwitchDialog#3</comment>
+        <translation type="unfinished">Ficheiros de áudio (*.wav *.mp3 *.flac *.ogg *.m4a *.aac *.opus)</translation>
     </message>
     <message>
         <source>Switch</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O clipe tem mais de 20 segundos, pelo que são usados 20 segundos. A começar nos %1 s.</translation>
     </message>
     <message>
         <source>Not now</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A usar %1 segundos do clipe selecionado.</translation>
     </message>
     <message>
         <source>Later</source>
-        <translation type="unfinished"></translation>
+        <comment>ShellSwitchDialog#6</comment>
+        <translation type="unfinished">Grave de 5 a 20 segundos numa sala silenciosa. Leia isto em voz alta com a sua voz natural:</translation>
     </message>
     <message>
         <source>Restart Drift to switch layouts.</source>
-        <translation type="unfinished"></translation>
+        <comment>ShellSwitchDialog#7</comment>
+        <translation type="unfinished">A rápida raposa castanha salta sobre o cão preguiçoso, enquanto uma brisa suave atravessa o jardim tranquilo e a luz da tarde esbate-se lentamente.</translation>
     </message>
     <message>
         <source>A mouse is connected. The desktop layout has full menus, panels and precise timeline editing. Drift restarts to switch, and your project is kept.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">A gravar…</translation>
     </message>
     <message>
         <source>The mobile layout is the touch interface made for phones. Drift restarts to switch.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Começar a gravação</translation>
     </message>
     <message>
         <source>The desktop layout suits a mouse and keyboard. Drift restarts to switch.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tenho o direito de usar a voz desta pessoa</translation>
     </message>
 </context>
 <context>
@@ -15759,210 +17090,227 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SourceViewerPanel</name>
     <message>
         <source>Source: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 (estabilizado)</translation>
     </message>
     <message>
         <source>Source Viewer</source>
-        <translation type="unfinished"></translation>
+        <comment>SourceViewerPanel#2</comment>
+        <translation type="unfinished">O vídeo a partir do qual este clipe foi estabilizado já não está no compartimento de mídia</translation>
     </message>
     <message>
         <source>Select a clip in the media bin to preview it here.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vídeo estabilizado adicionado ao compartimento de mídia</translation>
     </message>
 </context>
 <context>
     <name>SpeechTab</name>
     <message>
         <source>Voice saved</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Renderizar um novo vídeo</translation>
     </message>
     <message>
         <source>Turn a script into speech with a built-in or cloned voice. It is generated on this device and added at the playhead.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Suaviza a trepidação da câmara. O Drift analisa o clipe uma vez e, em seguida, renderiza uma cópia estabilizada no compartimento de mídia e muda o clipe para ela. Alterar a suavização ou o tripé não atualiza a pré-visualização até aplicar.</translation>
     </message>
     <message>
         <source>Speech generation runs on this device and needs the voice model.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Renderizar uma cópia estabilizada ou animar o clipe com quadros-chave de transformação esparsos</translation>
     </message>
     <message>
         <source>Download voice model</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Detalhes de sistema, reprodução e codecs para relatórios de erros</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
-        <translation type="unfinished"></translation>
+        <comment>SpeechTab#5</comment>
+        <translation type="unfinished">Filtros — %n aplicado(s)</translation>
     </message>
     <message>
         <source>Needed to generate speech</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%n moeda(s)</translation>
     </message>
     <message>
         <source>Type what the voice should say</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%n legendas</translation>
     </message>
     <message>
         <source>%1 characters, about %2 s</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reproduza a linha do tempo — a linha no ecrã acende-se. Toque em qualquer linha para a editar.</translation>
     </message>
     <message>
         <source>Speech longer than 30 seconds often ends in gibberish or silence. Split the script into shorter parts.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Selecione um clipe de legenda ou gere legendas</translation>
     </message>
     <message>
         <source>Voice</source>
+        <comment>SpeechTab#10</comment>
         <translation type="unfinished">Voz</translation>
     </message>
     <message>
         <source>Stop</source>
+        <comment>SpeechTab#11</comment>
         <translation type="unfinished">Parar</translation>
     </message>
     <message>
         <source>Play the voice sample</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gerar legendas</translation>
     </message>
     <message>
         <source>Rename or delete this voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhuma</translation>
     </message>
     <message>
         <source>Rename…</source>
+        <comment>SpeechTab#14</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Rename voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Os meus estilos · %1</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>SpeechTab#16</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
     <message>
         <source>New voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nenhum estilo guardado</translation>
     </message>
     <message>
         <source>Clone a voice from a recording</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gerar locução</translation>
     </message>
     <message>
         <source>From selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Fale cada legenda com uma voz gerada</translation>
     </message>
     <message>
         <source>Record…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instale primeiro o modelo de voz no gestor de complementos</translation>
     </message>
     <message>
         <source>Import file…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instale o motor de IA e o modelo de voz a partir do gestor de complementos para gerar locuções.</translation>
     </message>
     <message>
         <source>Loading voice model (first use takes a while)…</source>
-        <translation type="unfinished"></translation>
+        <comment>SpeechTab#22</comment>
+        <translation type="unfinished">%1 — clique para adicionar no cursor de reprodução ou arraste para a linha do tempo. Clique duas vezes na pré-visualização para editar.</translation>
     </message>
     <message>
         <source>Learning the voice…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 — clique para adicionar no cursor de reprodução ou arraste para a linha do tempo. Clique duas vezes na pré-visualização para editar.</translation>
     </message>
     <message>
         <source>Language</source>
+        <comment>SpeechTab#24</comment>
         <translation type="unfinished">Idioma</translation>
     </message>
     <message>
         <source>Expressiveness</source>
-        <translation type="unfinished"></translation>
+        <comment>SpeechTab#25</comment>
+        <translation type="unfinished">Confiar nas substituições do tema?</translation>
     </message>
     <message>
         <source>Higher values sound more dramatic and speak faster</source>
-        <translation type="unfinished"></translation>
+        <comment>SpeechTab#26</comment>
+        <translation type="unfinished">“%1” inclui ficheiros QML que substituem controlos. Esses ficheiros são executados com as permissões do Drift. Confie num tema apenas depois de o ter lido.</translation>
     </message>
     <message>
         <source>Generate speech</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Não foram encontrados ficheiros de substituição.</translation>
     </message>
     <message>
         <source>Generate speech and add it at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Confiar e usar substituições</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>SpeechTab#29</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Stop generating</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Usar sem substituições</translation>
     </message>
     <message>
         <source>Record a voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transformar juntos</translation>
     </message>
     <message>
         <source>Import a voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrange…</translation>
     </message>
     <message>
         <source>Voice from clip</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Recortar…</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>SpeechTab#34</comment>
         <translation type="unfinished">Guardar</translation>
     </message>
     <message>
         <source>My voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Melhorar vídeo…</translation>
     </message>
     <message>
         <source>Import a voice sample</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vincular</translation>
     </message>
     <message>
         <source>Audio files (*.wav *.mp3 *.flac *.ogg *.m4a *.aac *.opus)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%n faixa(s)</translation>
     </message>
     <message>
         <source>All files (*)</source>
+        <comment>SpeechTab#38</comment>
         <translation type="unfinished">Todos os ficheiros (*)</translation>
     </message>
     <message>
         <source>Name</source>
+        <comment>SpeechTab#39</comment>
         <translation type="unfinished">Nome</translation>
     </message>
     <message>
         <source>The clip is longer than 20 seconds, so 20 seconds are used. Starting at %1 s.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Seleção automática: selecionar o clipe sob o cursor de reprodução</translation>
     </message>
     <message>
         <source>Using %1 seconds of the selected clip.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Vincular clipes selecionados</translation>
     </message>
     <message>
         <source>Start offset</source>
+        <comment>SpeechTab#42</comment>
         <translation type="unfinished">Deslocamento inicial</translation>
     </message>
     <message>
         <source>%1 s</source>
+        <comment>SpeechTab#43</comment>
         <translation type="unfinished">%1 s</translation>
     </message>
     <message>
         <source>Record 5 to 20 seconds in a quiet room. Read this aloud in your natural voice:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparar início</translation>
     </message>
     <message>
         <source>The quick brown fox jumps over the lazy dog, while a gentle breeze moves through the quiet garden and the evening light fades slowly.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparar fim</translation>
     </message>
     <message>
         <source>Recording…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparar início até ao cursor de reprodução</translation>
     </message>
     <message>
         <source>Start recording</source>
-        <translation type="unfinished"></translation>
+        <comment>SpeechTab#47</comment>
+        <translation type="unfinished">Aparar fim até ao cursor de reprodução</translation>
     </message>
     <message>
         <source>I have the right to use this person&apos;s voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar câmara</translation>
     </message>
 </context>
 <context>
@@ -15988,6 +17336,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SpeedCurvePreviewStage</name>
     <message>
         <source>Audio only</source>
+        <comment>SpeedCurvePreviewStage#1</comment>
         <translation type="unfinished">Somente áudio</translation>
     </message>
 </context>
@@ -15995,14 +17344,17 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SpeedCurveWindow</name>
     <message>
         <source>Custom speed</source>
+        <comment>SpeedCurveWindow#1</comment>
         <translation>Velocidade personalizada</translation>
     </message>
     <message>
         <source>Pause</source>
+        <comment>SpeedCurveWindow#2</comment>
         <translation>Pausar</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>SpeedCurveWindow#3</comment>
         <translation>Reproduzir</translation>
     </message>
     <message>
@@ -16011,6 +17363,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>s</source>
+        <comment>SpeedCurveWindow#5</comment>
         <translation>s</translation>
     </message>
     <message>
@@ -16027,6 +17380,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Smooth</source>
+        <comment>SpeedCurveWindow#9</comment>
         <translation>Suave</translation>
     </message>
     <message>
@@ -16035,6 +17389,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Reset</source>
+        <comment>SpeedCurveWindow#11</comment>
         <translation>Redefinir</translation>
     </message>
     <message>
@@ -16043,10 +17398,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>SpeedCurveWindow#13</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Apply</source>
+        <comment>SpeedCurveWindow#14</comment>
         <translation>Aplicar</translation>
     </message>
 </context>
@@ -16054,10 +17411,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SpeedFadeInspector</name>
     <message>
         <source>Playback speed</source>
+        <comment>SpeedFadeInspector#1</comment>
         <translation>Velocidade de reprodução</translation>
     </message>
     <message>
         <source>Custom speed…</source>
+        <comment>SpeedFadeInspector#2</comment>
         <translation>Velocidade personalizada…</translation>
     </message>
     <message>
@@ -16066,14 +17425,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Speed</source>
+        <comment>SpeedFadeInspector#4</comment>
         <translation>Velocidade</translation>
     </message>
     <message>
         <source>Speed changed</source>
+        <comment>SpeedFadeInspector#5</comment>
         <translation>Velocidade alterada</translation>
     </message>
     <message>
         <source>Custom speed</source>
+        <comment>SpeedFadeInspector#6</comment>
         <translation>Velocidade personalizada</translation>
     </message>
     <message>
@@ -16082,6 +17444,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Reverse</source>
+        <comment>SpeedFadeInspector#8</comment>
         <translation>Inverter</translation>
     </message>
     <message>
@@ -16121,6 +17484,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Could not write subtitle file</source>
+        <comment>SrtIO#7</comment>
         <translation>Não foi possível gravar o ficheiro de legenda</translation>
     </message>
 </context>
@@ -16128,7 +17492,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>StabilizeController</name>
     <message>
         <source>%1 (stabilized)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar câmara — um único ponto de vista através do qual toda a linha do tempo é vista. Com uma câmara já presente, adiciona um novo clipe de câmara (um corte para um novo enquadramento) no cursor de reprodução</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
@@ -16148,7 +17512,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>The video this clip was stabilized from is no longer in the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">+%1</translation>
     </message>
     <message>
         <source>Could not create stabilization cache directory</source>
@@ -16188,6 +17552,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Could not create an output file</source>
+        <comment>StabilizeController#16</comment>
         <translation>Não foi possível criar um ficheiro de saída</translation>
     </message>
     <message>
@@ -16204,7 +17569,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Stabilized video added to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%n notificações(ão) adicional(is)</translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -16239,7 +17604,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Render a new video</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">CAM</translation>
     </message>
     <message>
         <source>Update stabilization</source>
@@ -16271,14 +17636,15 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Câmara</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Adicionar clipe de câmara no cursor de reprodução</translation>
     </message>
     <message>
         <source>Smoothing</source>
+        <comment>StabilizeInspector#12</comment>
         <translation>Suavização</translation>
     </message>
     <message>
@@ -16287,6 +17653,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Tripod mode</source>
+        <comment>StabilizeInspector#14</comment>
         <translation>Modo tripé</translation>
     </message>
     <message>
@@ -16303,6 +17670,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Remove</source>
+        <comment>StabilizeInspector#18</comment>
         <translation>Remover</translation>
     </message>
     <message>
@@ -16311,6 +17679,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>StabilizeInspector#20</comment>
         <translation>Cancelar</translation>
     </message>
 </context>
@@ -16318,26 +17687,31 @@ Se a reprodução travar, experimente outro.</translation>
     <name>StartScreen</name>
     <message>
         <source>Settings</source>
+        <comment>StartScreen#1</comment>
         <translation>Definições</translation>
     </message>
     <message>
         <source>Debug info</source>
+        <comment>StartScreen#2</comment>
         <translation type="unfinished">Informações de depuração</translation>
     </message>
     <message>
         <source>System, playback and codec details for bug reports</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Abrange…</translation>
     </message>
     <message>
         <source>Agent</source>
+        <comment>StartScreen#4</comment>
         <translation>Agente</translation>
     </message>
     <message>
         <source>Agent access is on</source>
+        <comment>StartScreen#5</comment>
         <translation>Acesso do agente ativado</translation>
     </message>
     <message>
         <source>Agent access</source>
+        <comment>StartScreen#6</comment>
         <translation>Acesso de agente</translation>
     </message>
 </context>
@@ -16356,16 +17730,19 @@ Se a reprodução travar, experimente outro.</translation>
     <name>StartScreenProjectRow</name>
     <message>
         <source> (missing)</source>
+        <comment>StartScreenProjectRow#1</comment>
         <translation type="unfinished"> (não encontrado)</translation>
     </message>
     <message>
         <source>This file has been moved or deleted:
 %1</source>
+        <comment>StartScreenProjectRow#2</comment>
         <translation type="unfinished">Este ficheiro foi movido ou eliminado:
 %1</translation>
     </message>
     <message>
         <source>Remove from recents</source>
+        <comment>StartScreenProjectRow#3</comment>
         <translation type="unfinished">Remover dos recentes</translation>
     </message>
 </context>
@@ -16377,6 +17754,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
+        <comment>StartScreenRecents#2</comment>
         <translation type="unfinished">Nada aqui ainda — os projetos que você guardar aparecerão nesta lista.</translation>
     </message>
 </context>
@@ -16384,6 +17762,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>StartScreenTitle</name>
     <message>
         <source>Create polished videos fast</source>
+        <comment>StartScreenTitle#1</comment>
         <translation type="unfinished">Crie vídeos profissionais rapidamente</translation>
     </message>
 </context>
@@ -16391,18 +17770,22 @@ Se a reprodução travar, experimente outro.</translation>
     <name>StickerPresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
+        <comment>StickerPresetCard#1</comment>
         <translation type="unfinished">%1 — clique para adicionar ou arraste para a linha do tempo ou pré-visualização</translation>
     </message>
     <message>
         <source>Add at playhead</source>
+        <comment>StickerPresetCard#2</comment>
         <translation type="unfinished">Adicionar no cursor de reprodução</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
+        <comment>StickerPresetCard#3</comment>
         <translation type="unfinished">Remover dos favoritos</translation>
     </message>
     <message>
         <source>Add to favorites</source>
+        <comment>StickerPresetCard#4</comment>
         <translation type="unfinished">Adicionar aos favoritos</translation>
     </message>
 </context>
@@ -16426,6 +17809,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Get extras</source>
+        <comment>StickersTab#5</comment>
         <translation>Obter extras</translation>
     </message>
     <message>
@@ -16434,14 +17818,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>No favorites yet</source>
+        <comment>StickersTab#7</comment>
         <translation>Nenhum favorito ainda</translation>
     </message>
     <message>
         <source>Nothing in this category</source>
+        <comment>StickersTab#8</comment>
         <translation>Nada nesta categoria</translation>
     </message>
     <message>
         <source>Try a different name.</source>
+        <comment>StickersTab#9</comment>
         <translation>Tente outro nome.</translation>
     </message>
     <message>
@@ -16450,6 +17837,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Pick another category.</source>
+        <comment>StickersTab#11</comment>
         <translation>Escolha outra categoria.</translation>
     </message>
 </context>
@@ -16457,10 +17845,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>StockAudioRow</name>
     <message>
         <source>Pause</source>
+        <comment>StockAudioRow#1</comment>
         <translation type="unfinished">Pausar</translation>
     </message>
     <message>
         <source>Play preview</source>
+        <comment>StockAudioRow#2</comment>
         <translation type="unfinished">Reproduzir pré-visualização</translation>
     </message>
 </context>
@@ -16472,6 +17862,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>All</source>
+        <comment>StockBrowser#2</comment>
         <translation>Todos</translation>
     </message>
     <message>
@@ -16480,7 +17871,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message numerus="yes">
         <source>Filters — %n applied</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Filtros — %n aplicado</numerusform>
             <numerusform>Filtros — %n aplicados</numerusform>
         </translation>
@@ -16511,6 +17902,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Try again</source>
+        <comment>StockBrowser#11</comment>
         <translation>Tentar novamente</translation>
     </message>
     <message>
@@ -16550,13 +17942,14 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message numerus="yes">
         <source>%n coin(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>%n moeda</numerusform>
             <numerusform>%n moedas</numerusform>
         </translation>
     </message>
     <message>
         <source>Downloading…</source>
+        <comment>StockItemDetail#4</comment>
         <translation>Baixando…</translation>
     </message>
     <message>
@@ -16588,10 +17981,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>StockThumb</name>
     <message>
         <source>Cancel download</source>
+        <comment>StockThumb#1</comment>
         <translation>Cancelar transferência</translation>
     </message>
     <message>
         <source>Retry</source>
+        <comment>StockThumb#2</comment>
         <translation>Tentar novamente</translation>
     </message>
 </context>
@@ -16599,6 +17994,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SubtitleCue</name>
     <message>
         <source>Subtitles</source>
+        <comment>SubtitleCue#1</comment>
         <translation>Legendas</translation>
     </message>
     <message>
@@ -16610,6 +18006,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SubtitleCueBlock</name>
     <message>
         <source>(empty)</source>
+        <comment>SubtitleCueBlock#1</comment>
         <translation type="unfinished">(vazio)</translation>
     </message>
 </context>
@@ -16617,6 +18014,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SubtitleCueCard</name>
     <message>
         <source>(empty)</source>
+        <comment>SubtitleCueCard#1</comment>
         <translation type="unfinished">(vazio)</translation>
     </message>
     <message>
@@ -16639,6 +18037,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SubtitleCueGutter</name>
     <message>
         <source>Subtitles</source>
+        <comment>SubtitleCueGutter#1</comment>
         <translation type="unfinished">Legendas</translation>
     </message>
     <message numerus="yes">
@@ -16653,6 +18052,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SubtitleEditorHeader</name>
     <message>
         <source>Subtitles</source>
+        <comment>SubtitleEditorHeader#1</comment>
         <translation type="unfinished">Legendas</translation>
     </message>
     <message>
@@ -16661,7 +18061,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Play the timeline — the line on screen lights up. Tap any line to edit it.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Desativar ajuste</translation>
     </message>
     <message>
         <source>Play the timeline — the line on screen lights up. Click any line to jump to it and edit it below.</source>
@@ -16669,6 +18069,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Import</source>
+        <comment>SubtitleEditorHeader#5</comment>
         <translation type="unfinished">Importar</translation>
     </message>
     <message>
@@ -16677,18 +18078,22 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Import Subtitles</source>
+        <comment>SubtitleEditorHeader#7</comment>
         <translation type="unfinished">Importar legendas</translation>
     </message>
     <message>
         <source>SubRip subtitles (*.srt)</source>
+        <comment>SubtitleEditorHeader#8</comment>
         <translation type="unfinished">Legendas SubRip (*.srt)</translation>
     </message>
     <message>
         <source>All files (*)</source>
+        <comment>SubtitleEditorHeader#9</comment>
         <translation type="unfinished">Todos os ficheiros (*)</translation>
     </message>
     <message>
         <source>Export</source>
+        <comment>SubtitleEditorHeader#10</comment>
         <translation type="unfinished">Exportar</translation>
     </message>
     <message>
@@ -16712,6 +18117,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SubtitleEditorPanel</name>
     <message>
         <source>Type subtitle…</source>
+        <comment>SubtitleEditorPanel#1</comment>
         <translation type="unfinished">Digite a legenda…</translation>
     </message>
     <message>
@@ -16720,18 +18126,22 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Start</source>
+        <comment>SubtitleEditorPanel#3</comment>
         <translation type="unfinished">Início</translation>
     </message>
     <message>
         <source>Set start to current time</source>
+        <comment>SubtitleEditorPanel#4</comment>
         <translation type="unfinished">Definir início no tempo atual</translation>
     </message>
     <message>
         <source>End</source>
+        <comment>SubtitleEditorPanel#5</comment>
         <translation type="unfinished">Fim</translation>
     </message>
     <message>
         <source>Set end to current time</source>
+        <comment>SubtitleEditorPanel#6</comment>
         <translation type="unfinished">Definir fim no tempo atual</translation>
     </message>
     <message>
@@ -16759,14 +18169,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>SubtitleProgressDialog#2</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Working…</source>
+        <comment>SubtitleProgressDialog#3</comment>
         <translation>Processando…</translation>
     </message>
     <message>
         <source>This can take a few minutes on longer clips.</source>
+        <comment>SubtitleProgressDialog#4</comment>
         <translation>Isso pode levar alguns minutos em clipes mais longos.</translation>
     </message>
 </context>
@@ -16774,15 +18187,16 @@ Se a reprodução travar, experimente outro.</translation>
     <name>SubtitlesPanel</name>
     <message>
         <source>Subtitles</source>
+        <comment>SubtitlesPanel#1</comment>
         <translation type="unfinished">Legendas</translation>
     </message>
     <message>
         <source>Select a subtitle clip, or generate subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ativar ajuste</translation>
     </message>
     <message>
         <source>Generate subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Desativar ajuste</translation>
     </message>
 </context>
 <context>
@@ -16805,14 +18219,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Import Subtitles</source>
+        <comment>SubtitlesTab#5</comment>
         <translation>Importar legendas</translation>
     </message>
     <message>
         <source>SubRip subtitles (*.srt)</source>
+        <comment>SubtitlesTab#6</comment>
         <translation>Legendas SubRip (*.srt)</translation>
     </message>
     <message>
         <source>All files (*)</source>
+        <comment>SubtitlesTab#7</comment>
         <translation>Todos os ficheiros (*)</translation>
     </message>
     <message>
@@ -16829,6 +18246,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Shorter captions are timed by splitting each phrase evenly, so they can drift slightly out of sync with the speech.</source>
+        <comment>SubtitlesTab#11</comment>
         <translation>Legendas mais curtas têm o tempo definido dividindo cada frase em partes iguais, então podem ficar levemente fora de sincronia com a fala.</translation>
     </message>
     <message>
@@ -16841,10 +18259,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Creating captions… %1%</source>
+        <comment>SubtitlesTab#14</comment>
         <translation>Criando legendas… %1%</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>SubtitlesTab#15</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
@@ -16853,10 +18273,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Download speech recognition (about 670 MB)</source>
+        <comment>SubtitlesTab#17</comment>
         <translation>Transferir reconhecimento de fala (cerca de 670 MB)</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
+        <comment>SubtitlesTab#18</comment>
         <translation>Instale primeiro o mecanismo de IA</translation>
     </message>
     <message>
@@ -16865,14 +18287,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Recommended caption length</source>
+        <comment>SubtitlesTab#20</comment>
         <translation>Tamanho recomendado da legenda</translation>
     </message>
     <message>
         <source>1 word per caption</source>
+        <comment>SubtitlesTab#21</comment>
         <translation>1 palavra por legenda</translation>
     </message>
     <message>
         <source>%1 words per caption</source>
+        <comment>SubtitlesTab#22</comment>
         <translation>%1 palavras por legenda</translation>
     </message>
 </context>
@@ -16880,13 +18305,15 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextAnimPresetFrame</name>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <comment>TextAnimPresetFrame#1</comment>
+        <translation type="unfinished">Posição (px, ligada)</translation>
     </message>
 </context>
 <context>
     <name>TextAnimPresetTile</name>
     <message>
         <source>None</source>
+        <comment>TextAnimPresetTile#1</comment>
         <translation>Nenhum</translation>
     </message>
 </context>
@@ -16906,6 +18333,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>My styles</source>
+        <comment>TextAssetsTab#4</comment>
         <translation>Meus estilos</translation>
     </message>
     <message>
@@ -16918,22 +18346,25 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>TextAssetsTab#7</comment>
         <translation>Eliminar</translation>
     </message>
     <message>
         <source>Built-in</source>
+        <comment>TextAssetsTab#8</comment>
         <translation>Integrados</translation>
     </message>
     <message>
         <source>My styles · %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Posição X</translation>
     </message>
     <message>
         <source>No saved styles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Posição Y</translation>
     </message>
     <message>
         <source>Import</source>
+        <comment>TextAssetsTab#11</comment>
         <translation type="unfinished">Importar</translation>
     </message>
     <message>
@@ -16965,10 +18396,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Glitch</source>
+        <comment>TextEffects#4</comment>
         <translation>Falha</translation>
     </message>
     <message>
         <source>Chrome</source>
+        <comment>TextEffects#5</comment>
         <translation>Cromado</translation>
     </message>
     <message>
@@ -16980,10 +18413,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspector</name>
     <message>
         <source>Aa</source>
+        <comment>TextInspector#1</comment>
         <translation>Aa</translation>
     </message>
     <message>
         <source>None</source>
+        <comment>TextInspector#2</comment>
         <translation>Nenhum</translation>
     </message>
     <message>
@@ -16996,10 +18431,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Word</source>
+        <comment>TextInspector#5</comment>
         <translation>Palavra</translation>
     </message>
     <message>
         <source>Line</source>
+        <comment>TextInspector#6</comment>
         <translation>Linha</translation>
     </message>
     <message>
@@ -17020,10 +18457,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Linear</source>
+        <comment>TextInspector#11</comment>
         <translation>Linear</translation>
     </message>
     <message>
         <source>Smooth</source>
+        <comment>TextInspector#12</comment>
         <translation>Suave</translation>
     </message>
     <message>
@@ -17032,14 +18471,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Back</source>
+        <comment>TextInspector#14</comment>
         <translation>Voltar</translation>
     </message>
     <message>
         <source>Bounce</source>
+        <comment>TextInspector#15</comment>
         <translation>Quicar</translation>
     </message>
     <message>
         <source>Save text style</source>
+        <comment>TextInspector#16</comment>
         <translation>Guardar estilo de texto</translation>
     </message>
     <message>
@@ -17091,6 +18533,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Width</source>
+        <comment>TextInspectorAccentSection#11</comment>
         <translation type="unfinished">Largura</translation>
     </message>
     <message>
@@ -17110,6 +18553,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorAnimAdvanced</name>
     <message>
         <source>Advanced</source>
+        <comment>TextInspectorAnimAdvanced#1</comment>
         <translation type="unfinished">Avançado</translation>
     </message>
     <message>
@@ -17129,6 +18573,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
         <source>All</source>
+        <comment>TextInspectorAnimCategoryStrip#1</comment>
         <translation type="unfinished">Todos</translation>
     </message>
 </context>
@@ -17144,10 +18589,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Duration</source>
+        <comment>TextInspectorAnimControls#3</comment>
         <translation type="unfinished">Duração</translation>
     </message>
     <message>
         <source>Edit text animation</source>
+        <comment>TextInspectorAnimControls#4</comment>
         <translation type="unfinished">Editar animação de texto</translation>
     </message>
     <message>
@@ -17176,6 +18623,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Ease</source>
+        <comment>TextInspectorAnimControls#11</comment>
         <translation type="unfinished">Suave</translation>
     </message>
 </context>
@@ -17183,14 +18631,17 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorAnimSlotBar</name>
     <message>
         <source>In</source>
+        <comment>TextInspectorAnimSlotBar#1</comment>
         <translation type="unfinished">Entrada</translation>
     </message>
     <message>
         <source>Out</source>
+        <comment>TextInspectorAnimSlotBar#2</comment>
         <translation type="unfinished">Saída</translation>
     </message>
     <message>
         <source>Loop</source>
+        <comment>TextInspectorAnimSlotBar#3</comment>
         <translation type="unfinished">Repetir</translation>
     </message>
 </context>
@@ -17205,6 +18656,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorContentSection</name>
     <message>
         <source>Text</source>
+        <comment>TextInspectorContentSection#1</comment>
         <translation type="unfinished">Texto</translation>
     </message>
     <message>
@@ -17213,6 +18665,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Apply</source>
+        <comment>TextInspectorContentSection#3</comment>
         <translation type="unfinished">Aplicar</translation>
     </message>
     <message>
@@ -17232,6 +18685,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Background</source>
+        <comment>TextInspectorDecorations#3</comment>
         <translation type="unfinished">Fundo</translation>
     </message>
     <message>
@@ -17252,6 +18706,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Corner radius</source>
+        <comment>TextInspectorDecorations#8</comment>
         <translation type="unfinished">Raio dos cantos</translation>
     </message>
     <message>
@@ -17268,6 +18723,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Thickness</source>
+        <comment>TextInspectorDecorations#12</comment>
         <translation type="unfinished">Espessura</translation>
     </message>
     <message>
@@ -17292,6 +18748,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Offset</source>
+        <comment>TextInspectorDecorations#18</comment>
         <translation type="unfinished">Deslocamento</translation>
     </message>
     <message>
@@ -17311,6 +18768,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorFontSection</name>
     <message>
         <source>Font</source>
+        <comment>TextInspectorFontSection#1</comment>
         <translation type="unfinished">Fonte</translation>
     </message>
     <message>
@@ -17323,6 +18781,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Colour</source>
+        <comment>TextInspectorFontSection#4</comment>
         <translation type="unfinished">Cor</translation>
     </message>
     <message>
@@ -17351,6 +18810,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Style</source>
+        <comment>TextInspectorFontSection#11</comment>
         <translation type="unfinished">Estilo</translation>
     </message>
     <message>
@@ -17394,6 +18854,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorLookSection</name>
     <message>
         <source>Effect</source>
+        <comment>TextInspectorLookSection#1</comment>
         <translation type="unfinished">Efeito</translation>
     </message>
     <message>
@@ -17406,38 +18867,47 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Adjust text look</source>
+        <comment>TextInspectorLookSection#4</comment>
         <translation type="unfinished">Ajustar visual de texto</translation>
     </message>
     <message>
         <source>Layers</source>
+        <comment>TextInspectorLookSection#5</comment>
         <translation type="unfinished">Camadas</translation>
     </message>
     <message>
         <source>Add layer</source>
+        <comment>TextInspectorLookSection#6</comment>
         <translation type="unfinished">Adicionar camada</translation>
     </message>
     <message>
         <source>Add a fill, stroke, shadow, glow or extrude layer</source>
+        <comment>TextInspectorLookSection#7</comment>
         <translation type="unfinished">Adicione uma camada de preenchimento, traçado, sombra, brilho ou extrusão</translation>
     </message>
     <message>
         <source>Fill</source>
+        <comment>TextInspectorLookSection#8</comment>
         <translation type="unfinished">Preenchimento</translation>
     </message>
     <message>
         <source>Stroke</source>
+        <comment>TextInspectorLookSection#9</comment>
         <translation type="unfinished">Contorno</translation>
     </message>
     <message>
         <source>Shadow</source>
+        <comment>TextInspectorLookSection#10</comment>
         <translation type="unfinished">Sombra</translation>
     </message>
     <message>
         <source>Glow</source>
+        <comment>TextInspectorLookSection#11</comment>
         <translation type="unfinished">Brilho</translation>
     </message>
     <message>
         <source>Extrude</source>
+        <comment>TextInspectorLookSection#12</comment>
         <translation type="unfinished">Extrusão</translation>
     </message>
     <message>
@@ -17449,6 +18919,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorPresetSection</name>
     <message>
         <source>Preset</source>
+        <comment>TextInspectorPresetSection#1</comment>
         <translation type="unfinished">Predefinição</translation>
     </message>
     <message>
@@ -17485,19 +18956,20 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Generate voiceover</source>
-        <translation type="unfinished"></translation>
+        <comment>TextInspectorPresetSection#10</comment>
+        <translation type="unfinished">Tamanho X</translation>
     </message>
     <message>
         <source>Speak every caption with a generated voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tamanho Y</translation>
     </message>
     <message>
         <source>Install the voice model from the add-on manager first</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Largura da caixa de texto</translation>
     </message>
     <message>
         <source>Install the AI engine and the voice model from the add-on manager to generate voiceovers.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Altura da caixa de texto</translation>
     </message>
 </context>
 <context>
@@ -17512,10 +18984,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Line height</source>
+        <comment>TextInspectorSpacingSection#3</comment>
         <translation type="unfinished">Altura da linha</translation>
     </message>
     <message>
         <source>Letter spacing</source>
+        <comment>TextInspectorSpacingSection#4</comment>
         <translation type="unfinished">Espaçamento entre letras</translation>
     </message>
     <message>
@@ -17532,6 +19006,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Bend</source>
+        <comment>TextInspectorSpacingSection#8</comment>
         <translation type="unfinished">Curvatura</translation>
     </message>
 </context>
@@ -17539,10 +19014,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextInspectorTabBar</name>
     <message>
         <source>Text</source>
+        <comment>TextInspectorTabBar#1</comment>
         <translation type="unfinished">Texto</translation>
     </message>
     <message>
         <source>Style</source>
+        <comment>TextInspectorTabBar#2</comment>
         <translation type="unfinished">Estilo</translation>
     </message>
     <message>
@@ -17554,10 +19031,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextLookPicker</name>
     <message>
         <source>Custom</source>
+        <comment>TextLookPicker#1</comment>
         <translation>Personalizada</translation>
     </message>
     <message>
         <source>Aa</source>
+        <comment>TextLookPicker#2</comment>
         <translation>Aa</translation>
     </message>
     <message>
@@ -17566,6 +19045,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>TextLookPicker#4</comment>
         <translation>Fechar</translation>
     </message>
 </context>
@@ -17573,6 +19053,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextParamSlots</name>
     <message>
         <source>Reset</source>
+        <comment>TextParamSlots#1</comment>
         <translation>Redefinir</translation>
     </message>
     <message>
@@ -17581,10 +19062,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Change image…</source>
+        <comment>TextParamSlots#3</comment>
         <translation>Alterar imagem…</translation>
     </message>
     <message>
         <source>Choose image…</source>
+        <comment>TextParamSlots#4</comment>
         <translation>Escolher imagem…</translation>
     </message>
     <message>
@@ -17593,6 +19076,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp)</source>
+        <comment>TextParamSlots#6</comment>
         <translation>Imagens (*.png *.jpg *.jpeg *.webp)</translation>
     </message>
 </context>
@@ -17600,38 +19084,47 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextStyle</name>
     <message>
         <source>Opacity</source>
+        <comment>TextStyle#1</comment>
         <translation>Opacidade</translation>
     </message>
     <message>
         <source>Offset X</source>
+        <comment>TextStyle#2</comment>
         <translation>Deslocamento X</translation>
     </message>
     <message>
         <source>Offset Y</source>
+        <comment>TextStyle#3</comment>
         <translation>Deslocamento Y</translation>
     </message>
     <message>
         <source>Blur</source>
+        <comment>TextStyle#4</comment>
         <translation>Desfoque</translation>
     </message>
     <message>
         <source>Width</source>
+        <comment>TextStyle#5</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Spread</source>
+        <comment>TextStyle#6</comment>
         <translation>Expansão</translation>
     </message>
     <message>
         <source>Trim start</source>
+        <comment>TextStyle#7</comment>
         <translation>Aparar início</translation>
     </message>
     <message>
         <source>Trim end</source>
+        <comment>TextStyle#8</comment>
         <translation>Aparar fim</translation>
     </message>
     <message>
         <source>Dash offset</source>
+        <comment>TextStyle#9</comment>
         <translation>Deslocamento do tracejado</translation>
     </message>
     <message>
@@ -17644,18 +19137,22 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Red</source>
+        <comment>TextStyle#12</comment>
         <translation>Vermelho</translation>
     </message>
     <message>
         <source>Green</source>
+        <comment>TextStyle#13</comment>
         <translation>Verde</translation>
     </message>
     <message>
         <source>Blue</source>
+        <comment>TextStyle#14</comment>
         <translation>Azul</translation>
     </message>
     <message>
         <source>Alpha</source>
+        <comment>TextStyle#15</comment>
         <translation>Alfa</translation>
     </message>
     <message>
@@ -17684,22 +19181,27 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Fill</source>
+        <comment>TextStyle#22</comment>
         <translation>Preenchimento</translation>
     </message>
     <message>
         <source>Stroke</source>
+        <comment>TextStyle#23</comment>
         <translation>Contorno</translation>
     </message>
     <message>
         <source>Shadow</source>
+        <comment>TextStyle#24</comment>
         <translation>Sombra</translation>
     </message>
     <message>
         <source>Glow</source>
+        <comment>TextStyle#25</comment>
         <translation>Brilho</translation>
     </message>
     <message>
         <source>Extrude</source>
+        <comment>TextStyle#26</comment>
         <translation>Extrusão</translation>
     </message>
     <message>
@@ -17708,10 +19210,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Letter spacing</source>
+        <comment>TextStyle#28</comment>
         <translation>Espaçamento entre letras</translation>
     </message>
     <message>
         <source>Line height</source>
+        <comment>TextStyle#29</comment>
         <translation>Altura da linha</translation>
     </message>
     <message>
@@ -17720,6 +19224,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Bend</source>
+        <comment>TextStyle#31</comment>
         <translation>Curvatura</translation>
     </message>
 </context>
@@ -17727,10 +19232,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextStylePackCard</name>
     <message>
         <source>%1 — click to add at the playhead, or drag to the timeline. Double-click it on the preview to edit.</source>
-        <translation type="unfinished"></translation>
+        <comment>TextStylePackCard#1</comment>
+        <translation type="unfinished">Deslocação Y da caixa de texto</translation>
     </message>
     <message>
         <source>Add at playhead</source>
+        <comment>TextStylePackCard#2</comment>
         <translation type="unfinished">Adicionar no cursor de reprodução</translation>
     </message>
 </context>
@@ -17738,6 +19245,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextStylePackPicker</name>
     <message>
         <source>Custom</source>
+        <comment>TextStylePackPicker#1</comment>
         <translation>Personalizado</translation>
     </message>
     <message>
@@ -17746,14 +19254,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>TextStylePackPicker#3</comment>
         <translation>Fechar</translation>
     </message>
     <message>
         <source>My styles</source>
+        <comment>TextStylePackPicker#4</comment>
         <translation>Meus estilos</translation>
     </message>
     <message>
         <source>Built-in</source>
+        <comment>TextStylePackPicker#5</comment>
         <translation>Integrados</translation>
     </message>
 </context>
@@ -17761,6 +19272,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextStylePackThumb</name>
     <message>
         <source>Custom</source>
+        <comment>TextStylePackThumb#1</comment>
         <translation>Personalizado</translation>
     </message>
 </context>
@@ -17768,7 +19280,8 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TextStyleUserCard</name>
     <message>
         <source>%1 — click to add at the playhead, or drag to the timeline. Double-click it on the preview to edit.</source>
-        <translation type="unfinished"></translation>
+        <comment>TextStyleUserCard#1</comment>
+        <translation type="unfinished">Contorno do texto</translation>
     </message>
     <message>
         <source>Style options</source>
@@ -17776,14 +19289,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Rename…</source>
+        <comment>TextStyleUserCard#3</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Export…</source>
+        <comment>TextStyleUserCard#4</comment>
         <translation type="unfinished">Exportar…</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>TextStyleUserCard#5</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
 </context>
@@ -17791,26 +19307,27 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ThemeTrustDialog</name>
     <message>
         <source>Trust theme overrides?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cor do contorno</translation>
     </message>
     <message>
         <source>“%1” includes QML files that replace controls. Those files run with Drift’s permissions. Trust a theme only after you have read it.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Opacidade do contorno</translation>
     </message>
     <message>
         <source>No override files were found.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deslocação X da sombra</translation>
     </message>
     <message>
         <source>Trust and use overrides</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deslocação Y da sombra</translation>
     </message>
     <message>
         <source>Use without overrides</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Desfoque da sombra</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>ThemeTrustDialog#6</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
 </context>
@@ -17822,6 +19339,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Enter a color like #FF0000</source>
+        <comment>ThemedColorDialog#2</comment>
         <translation>Digite uma cor como #FF0000</translation>
     </message>
     <message>
@@ -17837,10 +19355,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ThemedDialog</name>
     <message>
         <source>OK</source>
+        <comment>ThemedDialog#1</comment>
         <translation>OK</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>ThemedDialog#2</comment>
         <translation>Cancelar</translation>
     </message>
 </context>
@@ -17863,14 +19383,17 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineBookmarkContextMenu</name>
     <message>
         <source>Go to bookmark</source>
+        <comment>TimelineBookmarkContextMenu#1</comment>
         <translation type="unfinished">Ir para o marcador</translation>
     </message>
     <message>
         <source>Rename…</source>
+        <comment>TimelineBookmarkContextMenu#2</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>TimelineBookmarkContextMenu#3</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
 </context>
@@ -17878,46 +19401,57 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineClipContextMenu</name>
     <message>
         <source>Properties</source>
+        <comment>TimelineClipContextMenu#1</comment>
         <translation type="unfinished">Propriedades</translation>
     </message>
     <message>
         <source>Select multiple</source>
+        <comment>TimelineClipContextMenu#2</comment>
         <translation type="unfinished">Selecionar vários</translation>
     </message>
     <message>
         <source>Open composite</source>
+        <comment>TimelineClipContextMenu#3</comment>
         <translation type="unfinished">Abrir composto</translation>
     </message>
     <message>
         <source>Flatten composite</source>
+        <comment>TimelineClipContextMenu#4</comment>
         <translation type="unfinished">Achatar composto</translation>
     </message>
     <message>
         <source>Make composite</source>
+        <comment>TimelineClipContextMenu#5</comment>
         <translation type="unfinished">Criar composto</translation>
     </message>
     <message>
         <source>Transform together</source>
-        <translation type="unfinished"></translation>
+        <comment>TimelineClipContextMenu#6</comment>
+        <translation type="unfinished">Suavização</translation>
     </message>
     <message>
         <source>Add transform layer</source>
+        <comment>TimelineClipContextMenu#7</comment>
         <translation type="unfinished">Adicionar camada de transformação</translation>
     </message>
     <message>
         <source>Select transform layer</source>
+        <comment>TimelineClipContextMenu#8</comment>
         <translation type="unfinished">Selecionar camada de transformação</translation>
     </message>
     <message>
         <source>Covers…</source>
-        <translation type="unfinished"></translation>
+        <comment>TimelineClipContextMenu#9</comment>
+        <translation type="unfinished">Velocidade</translation>
     </message>
     <message>
         <source>Select covered clips</source>
+        <comment>TimelineClipContextMenu#10</comment>
         <translation type="unfinished">Selecionar clipes cobertos</translation>
     </message>
     <message>
         <source>Split at current time</source>
+        <comment>TimelineClipContextMenu#11</comment>
         <translation type="unfinished">Dividir no tempo atual</translation>
     </message>
     <message>
@@ -17926,90 +19460,111 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Separate audio</source>
+        <comment>TimelineClipContextMenu#13</comment>
         <translation type="unfinished">Separar áudio</translation>
     </message>
     <message>
         <source>Separate all audio tracks</source>
+        <comment>TimelineClipContextMenu#14</comment>
         <translation type="unfinished">Separar todas as faixas de áudio</translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
+        <comment>TimelineClipContextMenu#15</comment>
         <translation type="unfinished">Converter para formato adequado para edição</translation>
     </message>
     <message>
         <source>Crop…</source>
-        <translation type="unfinished"></translation>
+        <comment>TimelineClipContextMenu#16</comment>
+        <translation type="unfinished">Opacidade</translation>
     </message>
     <message>
         <source>Enhance video…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Padrão do traço</translation>
     </message>
     <message>
         <source>Unlink</source>
+        <comment>TimelineClipContextMenu#18</comment>
         <translation type="unfinished">Desvincular</translation>
     </message>
     <message>
         <source>Link</source>
-        <translation type="unfinished"></translation>
+        <comment>TimelineClipContextMenu#19</comment>
+        <translation type="unfinished">Ângulo</translation>
     </message>
     <message>
         <source>Merge subtitle clips</source>
+        <comment>TimelineClipContextMenu#20</comment>
         <translation type="unfinished">Mesclar clipes de legenda</translation>
     </message>
     <message>
         <source>Merge all subtitles on this track</source>
+        <comment>TimelineClipContextMenu#21</comment>
         <translation type="unfinished">Mesclar todas as legendas nesta faixa</translation>
     </message>
     <message>
         <source>Convert to text clips</source>
+        <comment>TimelineClipContextMenu#22</comment>
         <translation type="unfinished">Converter para clipes de texto</translation>
     </message>
     <message>
         <source>Convert to subtitle</source>
+        <comment>TimelineClipContextMenu#23</comment>
         <translation type="unfinished">Converter para legenda</translation>
     </message>
     <message>
         <source>Cut</source>
+        <comment>TimelineClipContextMenu#24</comment>
         <translation type="unfinished">Cortar</translation>
     </message>
     <message>
         <source>Copy</source>
+        <comment>TimelineClipContextMenu#25</comment>
         <translation type="unfinished">Copiar</translation>
     </message>
     <message>
         <source>Paste attributes…</source>
+        <comment>TimelineClipContextMenu#26</comment>
         <translation type="unfinished">Colar atributos…</translation>
     </message>
     <message>
         <source>Duplicate</source>
+        <comment>TimelineClipContextMenu#27</comment>
         <translation type="unfinished">Duplicar</translation>
     </message>
     <message>
         <source>Rename…</source>
+        <comment>TimelineClipContextMenu#28</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Copy effects</source>
+        <comment>TimelineClipContextMenu#29</comment>
         <translation type="unfinished">Copiar efeitos</translation>
     </message>
     <message>
         <source>Paste effects</source>
+        <comment>TimelineClipContextMenu#30</comment>
         <translation type="unfinished">Colar efeitos</translation>
     </message>
     <message>
         <source>Save effects as preset…</source>
+        <comment>TimelineClipContextMenu#31</comment>
         <translation type="unfinished">Guardar efeitos como predefinição…</translation>
     </message>
     <message>
         <source>Unlink from clip</source>
+        <comment>TimelineClipContextMenu#32</comment>
         <translation type="unfinished">Desvincular do clipe</translation>
     </message>
     <message>
         <source>Move to its own track</source>
+        <comment>TimelineClipContextMenu#33</comment>
         <translation type="unfinished">Mover para sua própria faixa</translation>
     </message>
     <message>
         <source>Delete</source>
+        <comment>TimelineClipContextMenu#34</comment>
         <translation type="unfinished">Eliminar</translation>
     </message>
 </context>
@@ -18017,6 +19572,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineClipItem</name>
     <message>
         <source>%1, track %2</source>
+        <comment>TimelineClipItem#1</comment>
         <translation>%1, faixa %2</translation>
     </message>
 </context>
@@ -18024,6 +19580,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineEmptyState</name>
     <message>
         <source>Your timeline is empty</source>
+        <comment>TimelineEmptyState#1</comment>
         <translation type="unfinished">Sua linha do tempo está vazia</translation>
     </message>
     <message>
@@ -18032,6 +19589,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>New track</source>
+        <comment>TimelineEmptyState#3</comment>
         <translation type="unfinished">Nova faixa</translation>
     </message>
 </context>
@@ -18039,6 +19597,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineFadeHandle</name>
     <message>
         <source>Adjust fade</source>
+        <comment>TimelineFadeHandle#1</comment>
         <translation type="unfinished">Ajustar fade</translation>
     </message>
     <message>
@@ -18054,6 +19613,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineLandingOutline</name>
     <message>
         <source>Importing…</source>
+        <comment>TimelineLandingOutline#1</comment>
         <translation type="unfinished">Importando…</translation>
     </message>
 </context>
@@ -18061,10 +19621,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
+        <comment>TimelineLiveRecordingBlock#1</comment>
         <translation type="unfinished">PAUSED </translation>
     </message>
     <message>
         <source>REC </source>
+        <comment>TimelineLiveRecordingBlock#2</comment>
         <translation type="unfinished">REC </translation>
     </message>
 </context>
@@ -18072,6 +19634,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineNewTrackGhostClip</name>
     <message>
         <source>Importing…</source>
+        <comment>TimelineNewTrackGhostClip#1</comment>
         <translation type="unfinished">Importando…</translation>
     </message>
 </context>
@@ -18079,82 +19642,102 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelinePanel</name>
     <message>
         <source>Proxy</source>
+        <comment>TimelinePanel#1</comment>
         <translation>Proxy</translation>
     </message>
     <message>
         <source>Previewing from a low-resolution proxy. Export uses the original.</source>
+        <comment>TimelinePanel#2</comment>
         <translation>Pré-visualizando a partir de um proxy de baixa resolução. A exportação usa o original.</translation>
     </message>
     <message>
         <source>Edit-friendly</source>
+        <comment>TimelinePanel#3</comment>
         <translation>Ideal para edição</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
+        <comment>TimelinePanel#4</comment>
         <translation>Convertido para uma taxa de quadros constante para uma edição suave</translation>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <comment>TimelinePanel#5</comment>
         <translation>Taxa de quadros variável. Este clipe pode ficar fora de sincronia com seu áudio. Clique com o botão direito nele e escolha Converter para formato ideal para edição.</translation>
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
+        <comment>TimelinePanel#6</comment>
         <translation>Camada de transformação: move, dimensiona e gira todas as faixas que seu colchete abrange</translation>
     </message>
     <message>
         <source>Save effect preset</source>
+        <comment>TimelinePanel#7</comment>
         <translation>Guardar predefinição de efeitos</translation>
     </message>
     <message>
         <source>Add new track</source>
+        <comment>TimelinePanel#8</comment>
         <translation>Adicionar nova faixa</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
+        <comment>TimelinePanel#9</comment>
         <translation>Renomear marcador</translation>
     </message>
     <message>
         <source>Rename</source>
+        <comment>TimelinePanel#10</comment>
         <translation>Renomear</translation>
     </message>
     <message>
         <source>Label</source>
+        <comment>TimelinePanel#11</comment>
         <translation>Rótulo</translation>
     </message>
     <message>
         <source>Bookmark name</source>
+        <comment>TimelinePanel#12</comment>
         <translation>Nome do marcador</translation>
     </message>
     <message>
         <source>Bookmark</source>
+        <comment>TimelinePanel#13</comment>
         <translation>Marcador</translation>
     </message>
     <message>
         <source>Convert to subtitle?</source>
+        <comment>TimelinePanel#14</comment>
         <translation>Converter para legenda?</translation>
     </message>
     <message>
         <source>Convert</source>
+        <comment>TimelinePanel#15</comment>
         <translation>Converter</translation>
     </message>
     <message>
         <source>The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.</source>
+        <comment>TimelinePanel#16</comment>
         <translation>Os clipes de texto selecionados serão substituídos por um clipe de legenda. Cada legenda usará a posição e o estilo do primeiro clipe de texto.</translation>
     </message>
     <message>
         <source>Rename clip</source>
+        <comment>TimelinePanel#17</comment>
         <translation>Renomear clipe</translation>
     </message>
     <message>
         <source>Name</source>
+        <comment>TimelinePanel#18</comment>
         <translation>Nome</translation>
     </message>
     <message>
         <source>Clip name</source>
+        <comment>TimelinePanel#19</comment>
         <translation>Nome do clipe</translation>
     </message>
     <message>
         <source>My look</source>
+        <comment>TimelinePanel#20</comment>
         <translation>Meu visual</translation>
     </message>
     <message>
@@ -18183,19 +19766,22 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineToolbar</name>
     <message>
         <source>%1 (%2)</source>
+        <comment>TimelineToolbar#1</comment>
         <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Pause</source>
+        <comment>TimelineToolbar#2</comment>
         <translation>Pausar</translation>
     </message>
     <message>
         <source>Play</source>
+        <comment>TimelineToolbar#3</comment>
         <translation>Reproduzir</translation>
     </message>
     <message>
         <source>Auto-select: select the clip under the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deslocação da lista</translation>
     </message>
     <message>
         <source>Toggle audio mixer strip</source>
@@ -18211,10 +19797,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Close gaps when trimming</source>
+        <comment>TimelineToolbar#8</comment>
         <translation>Fechar espaços ao aparar</translation>
     </message>
     <message>
         <source>Allow clip overlap</source>
+        <comment>TimelineToolbar#9</comment>
         <translation>Permitir sobreposição de clipes</translation>
     </message>
 </context>
@@ -18222,6 +19810,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineToolbarActions</name>
     <message>
         <source>Select</source>
+        <comment>TimelineToolbarActions#1</comment>
         <translation type="unfinished">Selecionar</translation>
     </message>
     <message>
@@ -18246,11 +19835,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Link selected clips</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Espaçamento entre palavras</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation type="unfinished"></translation>
+        <comment>TimelineToolbarActions#8</comment>
+        <translation type="unfinished">Texto</translation>
     </message>
     <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
@@ -18258,7 +19848,8 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation type="unfinished"></translation>
+        <comment>TimelineToolbarActions#10</comment>
+        <translation type="unfinished">Cor</translation>
     </message>
     <message>
         <source>Trim end — click a clip to drop everything right of the cut</source>
@@ -18266,18 +19857,20 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Trim start to playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tipo de letra</translation>
     </message>
     <message>
         <source>Trim end to playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Peso do texto</translation>
     </message>
     <message>
         <source>Undo</source>
+        <comment>TimelineToolbarActions#14</comment>
         <translation type="unfinished">Desfazer</translation>
     </message>
     <message>
         <source>Redo</source>
+        <comment>TimelineToolbarActions#15</comment>
         <translation type="unfinished">Refazer</translation>
     </message>
     <message>
@@ -18286,10 +19879,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Copy selection</source>
+        <comment>TimelineToolbarActions#17</comment>
         <translation type="unfinished">Copiar seleção</translation>
     </message>
     <message>
         <source>Paste at current time</source>
+        <comment>TimelineToolbarActions#18</comment>
         <translation type="unfinished">Colar no tempo atual</translation>
     </message>
     <message>
@@ -18298,38 +19893,47 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
+        <comment>TimelineToolbarActions#20</comment>
         <translation type="unfinished">Adicionar/remover marcador no tempo atual</translation>
     </message>
     <message>
         <source>Mark work area in</source>
+        <comment>TimelineToolbarActions#21</comment>
         <translation type="unfinished">Marcar início da área de trabalho</translation>
     </message>
     <message>
         <source>Mark work area out</source>
+        <comment>TimelineToolbarActions#22</comment>
         <translation type="unfinished">Marcar fim da área de trabalho</translation>
     </message>
     <message>
         <source>Loop work area playback</source>
+        <comment>TimelineToolbarActions#23</comment>
         <translation type="unfinished">Reproduzir área de trabalho em loop</translation>
     </message>
     <message>
         <source>Clear work area</source>
+        <comment>TimelineToolbarActions#24</comment>
         <translation type="unfinished">Limpar área de trabalho</translation>
     </message>
     <message>
         <source>Merge adjacent clips</source>
+        <comment>TimelineToolbarActions#25</comment>
         <translation type="unfinished">Mesclar clipes adjacentes</translation>
     </message>
     <message>
         <source>Freeze frame at current time</source>
+        <comment>TimelineToolbarActions#26</comment>
         <translation type="unfinished">Congelar quadro no tempo atual</translation>
     </message>
     <message>
         <source>Add adjustment layer</source>
+        <comment>TimelineToolbarActions#27</comment>
         <translation type="unfinished">Adicionar camada de ajuste</translation>
     </message>
     <message>
         <source>Add transform layer</source>
+        <comment>TimelineToolbarActions#28</comment>
         <translation type="unfinished">Adicionar camada de transformação</translation>
     </message>
     <message>
@@ -18338,11 +19942,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Add camera</source>
-        <translation type="unfinished"></translation>
+        <comment>TimelineToolbarActions#30</comment>
+        <translation type="unfinished">Transformação do texto</translation>
     </message>
     <message>
         <source>Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sublinhado do texto</translation>
     </message>
 </context>
 <context>
@@ -18353,6 +19958,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>TimelineToolbarCustomizeDialog#2</comment>
         <translation>Guardar</translation>
     </message>
 </context>
@@ -18394,6 +20000,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
+        <comment>TimelineToolbarCustomizer#3</comment>
         <translation type="unfinished">Restaurar padrões</translation>
     </message>
 </context>
@@ -18416,6 +20023,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Composite</source>
+        <comment>TimelineToolbarSceneBadge#2</comment>
         <translation type="unfinished">Composição</translation>
     </message>
     <message>
@@ -18434,10 +20042,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineToolbarZoomControl</name>
     <message>
         <source>Zoom out</source>
+        <comment>TimelineToolbarZoomControl#1</comment>
         <translation type="unfinished">Reduzir</translation>
     </message>
     <message>
         <source>Zoom in</source>
+        <comment>TimelineToolbarZoomControl#2</comment>
         <translation type="unfinished">Ampliar</translation>
     </message>
     <message>
@@ -18467,26 +20077,32 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TimelineTrackItem</name>
     <message>
         <source>Audio adjustment</source>
+        <comment>TimelineTrackItem#1</comment>
         <translation>Ajuste de áudio</translation>
     </message>
     <message>
         <source>Mask</source>
+        <comment>TimelineTrackItem#2</comment>
         <translation>Máscara</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>TimelineTrackItem#3</comment>
         <translation>Transformação</translation>
     </message>
     <message>
         <source>Adjustment</source>
+        <comment>TimelineTrackItem#4</comment>
         <translation>Ajuste</translation>
     </message>
     <message>
         <source>Subtitles</source>
+        <comment>TimelineTrackItem#5</comment>
         <translation>Legendas</translation>
     </message>
     <message>
         <source>%1, track %2</source>
+        <comment>TimelineTrackItem#6</comment>
         <translation>%1, faixa %2</translation>
     </message>
 </context>
@@ -18509,17 +20125,18 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ToastHost</name>
     <message>
         <source>%1  (×%2)</source>
+        <comment>ToastHost#1</comment>
         <translation>%1  (×%2)</translation>
     </message>
     <message>
         <source>+%1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Espaçamento entre letras</translation>
     </message>
     <message numerus="yes">
         <source>%n more notification(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>mais %n notificação</numerusform>
+            <numerusform>mais %n notificações</numerusform>
         </translation>
     </message>
     <message>
@@ -18549,6 +20166,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TrackHeaderColumn</name>
     <message>
         <source>Waveform</source>
+        <comment>TrackHeaderColumn#1</comment>
         <translation>Forma de onda</translation>
     </message>
     <message>
@@ -18557,7 +20175,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>CAM</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Caixa de texto</translation>
     </message>
     <message>
         <source>TF</source>
@@ -18589,46 +20207,57 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <comment>TrackHeaderColumn#11</comment>
+        <translation type="unfinished">Transformação</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>TrackHeaderColumn#12</comment>
         <translation>Transformação</translation>
     </message>
     <message>
         <source>Adjustment</source>
+        <comment>TrackHeaderColumn#13</comment>
         <translation>Ajuste</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>TrackHeaderColumn#14</comment>
         <translation>Áudio</translation>
     </message>
     <message>
         <source>Text</source>
+        <comment>TrackHeaderColumn#15</comment>
         <translation>Texto</translation>
     </message>
     <message>
         <source>Subtitle</source>
+        <comment>TrackHeaderColumn#16</comment>
         <translation>Legenda</translation>
     </message>
     <message>
         <source>Graphic</source>
+        <comment>TrackHeaderColumn#17</comment>
         <translation>Gráfico</translation>
     </message>
     <message>
         <source>Everything below</source>
+        <comment>TrackHeaderColumn#18</comment>
         <translation>Tudo abaixo</translation>
     </message>
     <message>
         <source>%1 only</source>
+        <comment>TrackHeaderColumn#19</comment>
         <translation>Apenas %1</translation>
     </message>
     <message>
         <source>%1 to %2</source>
+        <comment>TrackHeaderColumn#20</comment>
         <translation>%1 a %2</translation>
     </message>
     <message>
         <source>Video</source>
+        <comment>TrackHeaderColumn#21</comment>
         <translation>Vídeo</translation>
     </message>
 </context>
@@ -18636,34 +20265,41 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TrackHeaderContextMenu</name>
     <message>
         <source>Rename…</source>
+        <comment>TrackHeaderContextMenu#1</comment>
         <translation type="unfinished">Renomear…</translation>
     </message>
     <message>
         <source>Unmute track</source>
+        <comment>TrackHeaderContextMenu#2</comment>
         <translation type="unfinished">Reativar som da faixa</translation>
     </message>
     <message>
         <source>Mute track</source>
+        <comment>TrackHeaderContextMenu#3</comment>
         <translation type="unfinished">Silenciar faixa</translation>
     </message>
     <message>
         <source>Show track</source>
+        <comment>TrackHeaderContextMenu#4</comment>
         <translation type="unfinished">Mostrar faixa</translation>
     </message>
     <message>
         <source>Hide track</source>
+        <comment>TrackHeaderContextMenu#5</comment>
         <translation type="unfinished">Ocultar faixa</translation>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Opacidade</translation>
     </message>
     <message>
         <source>Covers…</source>
-        <translation type="unfinished"></translation>
+        <comment>TrackHeaderContextMenu#7</comment>
+        <translation type="unfinished">Perspetiva</translation>
     </message>
     <message>
         <source>Select covered clips</source>
+        <comment>TrackHeaderContextMenu#8</comment>
         <translation type="unfinished">Selecionar clipes cobertos</translation>
     </message>
     <message>
@@ -18700,6 +20336,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Delete track</source>
+        <comment>TrackHeaderContextMenu#17</comment>
         <translation type="unfinished">Eliminar faixa</translation>
     </message>
 </context>
@@ -18707,7 +20344,8 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TrackHeaderCoversMenu</name>
     <message>
         <source>Covers</source>
-        <translation type="unfinished"></translation>
+        <comment>TrackHeaderCoversMenu#1</comment>
+        <translation type="unfinished">Sombra</translation>
     </message>
 </context>
 <context>
@@ -18718,6 +20356,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Delete track</source>
+        <comment>TrackHeaderDeleteDialog#2</comment>
         <translation type="unfinished">Eliminar faixa</translation>
     </message>
     <message numerus="yes">
@@ -18743,17 +20382,20 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TrackHeaderLaneEye</name>
     <message>
         <source>Turn adjustment on</source>
-        <translation type="unfinished"></translation>
+        <comment>TrackHeaderLaneEye#1</comment>
+        <translation type="unfinished">Sublinhado</translation>
     </message>
     <message>
         <source>Turn adjustment off</source>
-        <translation type="unfinished"></translation>
+        <comment>TrackHeaderLaneEye#2</comment>
+        <translation type="unfinished">Texto</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderMicButton</name>
     <message>
         <source>Stop recording</source>
+        <comment>TrackHeaderMicButton#1</comment>
         <translation type="unfinished">Parar gravação</translation>
     </message>
     <message>
@@ -18777,10 +20419,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TrackHeaderMuteButton</name>
     <message>
         <source>Unmute track</source>
+        <comment>TrackHeaderMuteButton#1</comment>
         <translation type="unfinished">Reativar som da faixa</translation>
     </message>
     <message>
         <source>Mute track</source>
+        <comment>TrackHeaderMuteButton#2</comment>
         <translation type="unfinished">Silenciar faixa</translation>
     </message>
 </context>
@@ -18792,6 +20436,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Rename</source>
+        <comment>TrackHeaderRenameDialog#2</comment>
         <translation type="unfinished">Renomear</translation>
     </message>
     <message>
@@ -18811,18 +20456,22 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Turn adjustment on</source>
-        <translation type="unfinished"></translation>
+        <comment>TrackHeaderRow#3</comment>
+        <translation type="unfinished">Cor</translation>
     </message>
     <message>
         <source>Turn adjustment off</source>
-        <translation type="unfinished"></translation>
+        <comment>TrackHeaderRow#4</comment>
+        <translation type="unfinished">Tipo de letra</translation>
     </message>
     <message>
         <source>Show track</source>
+        <comment>TrackHeaderRow#5</comment>
         <translation type="unfinished">Mostrar faixa</translation>
     </message>
     <message>
         <source>Hide track</source>
+        <comment>TrackHeaderRow#6</comment>
         <translation type="unfinished">Ocultar faixa</translation>
     </message>
 </context>
@@ -18830,34 +20479,42 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
+        <comment>TransformInspector#1</comment>
         <translation>Opacidade</translation>
     </message>
     <message>
         <source>Width</source>
+        <comment>TransformInspector#2</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
+        <comment>TransformInspector#3</comment>
         <translation>Altura</translation>
     </message>
     <message>
         <source>Angle</source>
+        <comment>TransformInspector#4</comment>
         <translation>Ângulo</translation>
     </message>
     <message>
         <source>Tilt X</source>
+        <comment>TransformInspector#5</comment>
         <translation>Inclinação X</translation>
     </message>
     <message>
         <source>Tilt Y</source>
+        <comment>TransformInspector#6</comment>
         <translation>Inclinação Y</translation>
     </message>
     <message>
         <source>Depth</source>
+        <comment>TransformInspector#7</comment>
         <translation>Profundidade</translation>
     </message>
     <message>
         <source>Perspective</source>
+        <comment>TransformInspector#8</comment>
         <translation>Perspectiva</translation>
     </message>
     <message>
@@ -18866,6 +20523,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Select</source>
+        <comment>TransformInspector#10</comment>
         <translation>Selecionar</translation>
     </message>
     <message>
@@ -18874,6 +20532,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
+        <comment>TransformInspector#12</comment>
         <translation>Quadros-chave automáticos</translation>
     </message>
     <message>
@@ -18882,15 +20541,15 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Position (px, linked)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Peso do texto</translation>
     </message>
     <message>
         <source>Separate X and Y keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transformação do texto</translation>
     </message>
     <message>
         <source>Link X and Y keyframes and motion curves</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sublinhado do texto</translation>
     </message>
     <message>
         <source>Measured inside %1&apos;s frame</source>
@@ -18902,6 +20561,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Scale</source>
+        <comment>TransformInspector#19</comment>
         <translation>Escala</translation>
     </message>
     <message>
@@ -18914,11 +20574,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Scale clip</source>
+        <comment>TransformInspector#22</comment>
         <translation>Escalar clipe</translation>
     </message>
     <message>
         <source>Scale origin</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sombra do texto</translation>
     </message>
     <message>
         <source>Opacity &amp; rotation</source>
@@ -18938,18 +20599,19 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Occlude by depth</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Contorno do texto</translation>
     </message>
     <message>
         <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gradiente do texto</translation>
     </message>
     <message>
         <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Caixa de texto</translation>
     </message>
     <message>
         <source>Move</source>
+        <comment>TransformInspector#31</comment>
         <translation>Mover</translation>
     </message>
     <message>
@@ -18958,6 +20620,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Rotate</source>
+        <comment>TransformInspector#33</comment>
         <translation>Girar</translation>
     </message>
     <message>
@@ -18970,6 +20633,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
+        <comment>TransformInspector#36</comment>
         <translation>%1 (%2)</translation>
     </message>
     <message>
@@ -18990,6 +20654,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Flip</source>
+        <comment>TransformInspector#41</comment>
         <translation>Inverter</translation>
     </message>
     <message>
@@ -19002,14 +20667,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Reset position &amp; size</source>
+        <comment>TransformInspector#44</comment>
         <translation>Redefinir posição &amp; tamanho</translation>
     </message>
     <message>
         <source>Fix orientation</source>
+        <comment>TransformInspector#45</comment>
         <translation>Corrigir orientação</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>TransformInspector#46</comment>
         <translation>Transformação</translation>
     </message>
     <message>
@@ -19025,42 +20693,52 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TransformLayerCard</name>
     <message>
         <source>Transform</source>
+        <comment>TransformLayerCard#1</comment>
         <translation>Transformação</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>TransformLayerCard#2</comment>
         <translation>Áudio</translation>
     </message>
     <message>
         <source>Text</source>
+        <comment>TransformLayerCard#3</comment>
         <translation>Texto</translation>
     </message>
     <message>
         <source>Subtitle</source>
+        <comment>TransformLayerCard#4</comment>
         <translation>Legenda</translation>
     </message>
     <message>
         <source>Graphic</source>
+        <comment>TransformLayerCard#5</comment>
         <translation>Gráfico</translation>
     </message>
     <message>
         <source>Adjustment</source>
+        <comment>TransformLayerCard#6</comment>
         <translation>Ajuste</translation>
     </message>
     <message>
         <source>Video</source>
+        <comment>TransformLayerCard#7</comment>
         <translation>Vídeo</translation>
     </message>
     <message>
         <source>Everything below</source>
+        <comment>TransformLayerCard#8</comment>
         <translation>Tudo abaixo</translation>
     </message>
     <message>
         <source>%1 only</source>
+        <comment>TransformLayerCard#9</comment>
         <translation>Apenas %1</translation>
     </message>
     <message>
         <source>%1 to %2</source>
+        <comment>TransformLayerCard#10</comment>
         <translation>%1 a %2</translation>
     </message>
     <message>
@@ -19069,6 +20747,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Covers</source>
+        <comment>TransformLayerCard#12</comment>
         <translation>Cobre</translation>
     </message>
     <message>
@@ -19085,11 +20764,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Clip</source>
+        <comment>TransformLayerCard#16</comment>
         <translation>Clipe</translation>
     </message>
     <message numerus="yes">
         <source>+%n more</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>+%n mais</numerusform>
             <numerusform>+%n mais</numerusform>
         </translation>
@@ -19099,6 +20779,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TransformOverlayLayerChip</name>
     <message numerus="yes">
         <source>%1 · %n clip(s)</source>
+        <comment>TransformOverlayLayerChip#1</comment>
         <translation type="unfinished">
             <numerusform>%1 · %n clipe</numerusform>
             <numerusform>%1 · %n clipes</numerusform>
@@ -19106,6 +20787,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>TransformOverlayLayerChip#2</comment>
         <translation type="unfinished">Transformação</translation>
     </message>
 </context>
@@ -19113,10 +20795,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TransformOverlayParentChip</name>
     <message>
         <source>Select %1</source>
+        <comment>TransformOverlayParentChip#1</comment>
         <translation type="unfinished">Selecionar %1</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>TransformOverlayParentChip#2</comment>
         <translation type="unfinished">Transformação</translation>
     </message>
     <message>
@@ -19132,7 +20816,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message numerus="yes">
         <source>Covers %n track(s)</source>
-        <translation>
+        <translation type="unfinished">
             <numerusform>Cobre %n faixa</numerusform>
             <numerusform>Cobre %n faixas</numerusform>
         </translation>
@@ -19142,6 +20826,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TransitionCatalog</name>
     <message>
         <source>Basic</source>
+        <comment>TransitionCatalog#1</comment>
         <translation>Básico</translation>
     </message>
     <message>
@@ -19162,6 +20847,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Other</source>
+        <comment>TransitionCatalog#6</comment>
         <translation>Outros</translation>
     </message>
 </context>
@@ -19181,7 +20867,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Add crossfade (%1 s)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Palavra</translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
@@ -19197,50 +20883,62 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Type</source>
+        <comment>TransitionInspector#8</comment>
         <translation>Tipo</translation>
     </message>
     <message>
         <source>Duration</source>
+        <comment>TransitionInspector#9</comment>
         <translation>Duração</translation>
     </message>
     <message>
         <source>Curve</source>
+        <comment>TransitionInspector#10</comment>
         <translation>Curva</translation>
     </message>
     <message>
         <source>Linear</source>
+        <comment>TransitionInspector#11</comment>
         <translation>Linear</translation>
     </message>
     <message>
         <source>Smooth</source>
+        <comment>TransitionInspector#12</comment>
         <translation>Suave</translation>
     </message>
     <message>
         <source>Natural</source>
+        <comment>TransitionInspector#13</comment>
         <translation>Natural</translation>
     </message>
     <message>
         <source>Custom</source>
+        <comment>TransitionInspector#14</comment>
         <translation>Personalizada</translation>
     </message>
     <message>
         <source>Bezier</source>
+        <comment>TransitionInspector#15</comment>
         <translation>Bezier</translation>
     </message>
     <message>
         <source>On</source>
+        <comment>TransitionInspector#16</comment>
         <translation>Ativado</translation>
     </message>
     <message>
         <source>Off</source>
+        <comment>TransitionInspector#17</comment>
         <translation>Desativado</translation>
     </message>
     <message>
         <source>Edit transition</source>
+        <comment>TransitionInspector#18</comment>
         <translation>Editar transição</translation>
     </message>
     <message>
         <source>Remove transition</source>
+        <comment>TransitionInspector#19</comment>
         <translation>Remover transição</translation>
     </message>
 </context>
@@ -19248,14 +20946,16 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Bloco</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
+        <comment>TransitionPresetCard#2</comment>
         <translation type="unfinished">Remover dos favoritos</translation>
     </message>
     <message>
         <source>Add to favorites</source>
+        <comment>TransitionPresetCard#3</comment>
         <translation type="unfinished">Adicionar aos favoritos</translation>
     </message>
 </context>
@@ -19267,11 +20967,11 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Linha</translation>
     </message>
     <message>
         <source>My Transitions</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O que uma passagem do gradiente abrange: o bloco inteiro, cada linha, palavra ou glifo</translation>
     </message>
     <message>
         <source>No transitions available</source>
@@ -19283,6 +20983,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Get extras</source>
+        <comment>TransitionsTab#6</comment>
         <translation>Obter extras</translation>
     </message>
     <message>
@@ -19291,23 +20992,27 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>No custom transitions yet</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deslocação da lista</translation>
     </message>
     <message>
         <source>No favorites yet</source>
+        <comment>TransitionsTab#9</comment>
         <translation>Nenhum favorito ainda</translation>
     </message>
     <message>
         <source>Nothing in this category</source>
+        <comment>TransitionsTab#10</comment>
         <translation>Nada nesta categoria</translation>
     </message>
     <message>
         <source>Try a different name.</source>
+        <comment>TransitionsTab#11</comment>
         <translation>Tente outro nome.</translation>
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation type="unfinished"></translation>
+        <comment>TransitionsTab#12</comment>
+        <translation type="unfinished">Restam %n caracteres</translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>
@@ -19315,10 +21020,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Pick another category.</source>
+        <comment>TransitionsTab#14</comment>
         <translation>Escolha outra categoria.</translation>
     </message>
     <message>
         <source>Import</source>
+        <comment>TransitionsTab#15</comment>
         <translation type="unfinished">Importar</translation>
     </message>
 </context>
@@ -19326,52 +21033,55 @@ Se a reprodução travar, experimente outro.</translation>
     <name>TtsController</name>
     <message>
         <source>Install the voice model first</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Controlo de tempo</translation>
     </message>
     <message>
         <source>Queued</source>
+        <comment>TtsController#2</comment>
         <translation type="unfinished">Na fila</translation>
     </message>
     <message>
         <source>Cancelled</source>
+        <comment>TtsController#3</comment>
         <translation type="unfinished">Cancelado</translation>
     </message>
     <message>
         <source>Speech added to the timeline</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração</translation>
     </message>
     <message>
         <source>Speech added to the media bin</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Velocidade</translation>
     </message>
     <message>
         <source>Select a subtitle clip first</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repetir</translation>
     </message>
     <message>
         <source>This subtitle clip has no text to speak</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repetir o efeito</translation>
     </message>
     <message>
         <source>Generate voiceover</source>
-        <translation type="unfinished"></translation>
+        <comment>TtsController#8</comment>
+        <translation type="unfinished">Quanto tempo cada letra, palavra ou linha demora a entrar</translation>
     </message>
     <message>
         <source>Could not add the voiceover</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração total da animação de entrada</translation>
     </message>
     <message numerus="yes">
         <source>Generated %n line(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Geradas %n linhas(s)</numerusform>
+            <numerusform>Geradas %n linhas(s)</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>; %n ran longer than their captions</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>; %n demorou mais tempo do que as respetivas legendas</numerusform>
+            <numerusform>; %n demoraram mais tempo do que as respetivas legendas</numerusform>
         </translation>
     </message>
 </context>
@@ -19379,6 +21089,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>UnsavedChangesDialog</name>
     <message>
         <source>Unsaved changes</source>
+        <comment>UnsavedChangesDialog#1</comment>
         <translation>Alterações não guardadas</translation>
     </message>
     <message>
@@ -19387,6 +21098,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Untitled project</source>
+        <comment>UnsavedChangesDialog#3</comment>
         <translation>Projeto sem título</translation>
     </message>
     <message>
@@ -19395,10 +21107,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>UnsavedChangesDialog#5</comment>
         <translation>Cancelar</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>UnsavedChangesDialog#6</comment>
         <translation>Guardar</translation>
     </message>
 </context>
@@ -19406,23 +21120,25 @@ Se a reprodução travar, experimente outro.</translation>
     <name>UpdateChecker</name>
     <message>
         <source>Drift %1 update</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Velocidade de saída</translation>
     </message>
     <message>
         <source>Preparing the update…</source>
-        <translation type="unfinished"></translation>
+        <comment>UpdateChecker#2</comment>
+        <translation type="unfinished">Texto</translation>
     </message>
     <message>
         <source>Installs when you close Drift</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cor</translation>
     </message>
     <message>
         <source>Ready to install</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tipo de letra</translation>
     </message>
     <message>
         <source>Drift %1 will install when you close Drift.</source>
-        <translation type="unfinished"></translation>
+        <comment>UpdateChecker#5</comment>
+        <translation type="unfinished">Peso do texto</translation>
     </message>
     <message>
         <source>Couldn’t check for updates: %1</source>
@@ -19434,6 +21150,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Drift %1 is the latest version.</source>
+        <comment>UpdateChecker#8</comment>
         <translation>O Drift %1 é a versão mais recente.</translation>
     </message>
     <message>
@@ -19442,54 +21159,57 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Couldn’t download the update: the cache isn’t writable.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transformação do texto</translation>
     </message>
     <message>
         <source>Couldn’t download the update: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sublinhado do texto</translation>
     </message>
     <message>
         <source>the download was interrupted.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Espaçamento entre letras</translation>
     </message>
     <message>
         <source>Couldn’t download the update: the file didn’t match the release.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cor do gradiente</translation>
     </message>
     <message>
         <source>Couldn’t prepare the update.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Caixa de texto</translation>
     </message>
     <message>
         <source>Drift %1 is ready to install.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transformação</translation>
     </message>
 </context>
 <context>
     <name>UpdateDialog</name>
     <message>
         <source>Update available</source>
+        <comment>UpdateDialog#1</comment>
         <translation>Atualização disponível</translation>
     </message>
     <message>
         <source>Update ready</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Opacidade</translation>
     </message>
     <message>
         <source>Drift %1 will install when you close Drift.</source>
-        <translation type="unfinished"></translation>
+        <comment>UpdateDialog#3</comment>
+        <translation type="unfinished">Perspetiva</translation>
     </message>
     <message>
         <source>Drift %1 is downloaded and ready to install</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sombra</translation>
     </message>
     <message>
         <source>Drift %1 is available</source>
+        <comment>UpdateDialog#5</comment>
         <translation>O Drift %1 está disponível</translation>
     </message>
     <message>
         <source>A new Drift update is available</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Contorno</translation>
     </message>
     <message>
         <source>You have %1.</source>
@@ -19497,14 +21217,15 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Install automatically when I close Drift</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sublinhado</translation>
     </message>
     <message>
         <source>Downloads in the background and installs the next time you close Drift. Unchecked, you choose when to install once the download finishes.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gradiente</translation>
     </message>
     <message>
         <source>Skip</source>
+        <comment>UpdateDialog#10</comment>
         <translation>Ignorar</translation>
     </message>
     <message>
@@ -19513,23 +21234,25 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Later</source>
+        <comment>UpdateDialog#12</comment>
         <translation>Mais tarde</translation>
     </message>
     <message>
         <source>Install when I close Drift</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Letra</translation>
     </message>
     <message>
         <source>Update</source>
+        <comment>UpdateDialog#14</comment>
         <translation type="unfinished">Atualizar</translation>
     </message>
     <message>
         <source>Closes Drift, installs the update and opens Drift again</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Palavra</translation>
     </message>
     <message>
         <source>Downloads the update in the background</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Bloco</translation>
     </message>
     <message>
         <source>Opens the release page in your browser</source>
@@ -19537,18 +21260,20 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Downloading Drift %1…</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Linha</translation>
     </message>
     <message>
         <source>Preparing the update…</source>
-        <translation type="unfinished"></translation>
+        <comment>UpdateDialog#19</comment>
+        <translation type="unfinished">O que uma passagem do gradiente abrange: o bloco inteiro, cada linha, palavra ou glifo</translation>
     </message>
     <message>
         <source>Restart and install</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deslocação da lista</translation>
     </message>
     <message>
         <source>Downloading…</source>
+        <comment>UpdateDialog#21</comment>
         <translation type="unfinished">Baixando…</translation>
     </message>
 </context>
@@ -19556,37 +21281,42 @@ Se a reprodução travar, experimente outro.</translation>
     <name>UpscaleModelCard</name>
     <message>
         <source>Anime and drawings</source>
-        <translation type="unfinished"></translation>
+        <comment>UpscaleModelCard#1</comment>
+        <translation type="unfinished">Restam %n caracteres</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation type="unfinished"></translation>
+        <comment>UpscaleModelCard#2</comment>
+        <translation type="unfinished">Controlo de tempo</translation>
     </message>
     <message>
         <source>3D animation and games</source>
-        <translation type="unfinished"></translation>
+        <comment>UpscaleModelCard#3</comment>
+        <translation type="unfinished">Duração</translation>
     </message>
     <message>
         <source>General</source>
+        <comment>UpscaleModelCard#4</comment>
         <translation type="unfinished">Geral</translation>
     </message>
     <message>
         <source>Before</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Velocidade</translation>
     </message>
     <message>
         <source>After</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repetir</translation>
     </message>
     <message>
         <source>Custom model</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repetir o efeito</translation>
     </message>
 </context>
 <context>
     <name>Vec2ParamPad</name>
     <message>
         <source>Edit %1</source>
+        <comment>Vec2ParamPad#1</comment>
         <translation type="unfinished">Editar %1</translation>
     </message>
 </context>
@@ -19638,10 +21368,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Playback</source>
+        <comment>VectorInspector#12</comment>
         <translation>Reprodução</translation>
     </message>
     <message>
         <source>Fit</source>
+        <comment>VectorInspector#13</comment>
         <translation>Ajustar</translation>
     </message>
     <message>
@@ -19650,6 +21382,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Cover</source>
+        <comment>VectorInspector#15</comment>
         <translation>Cobrir</translation>
     </message>
     <message>
@@ -19662,34 +21395,42 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>After the end</source>
+        <comment>VectorInspector#18</comment>
         <translation>Após o fim</translation>
     </message>
     <message>
         <source>Hold last frame</source>
+        <comment>VectorInspector#19</comment>
         <translation>Manter último quadro</translation>
     </message>
     <message>
         <source>Loop</source>
+        <comment>VectorInspector#20</comment>
         <translation>Repetir</translation>
     </message>
     <message>
         <source>Ping-pong</source>
+        <comment>VectorInspector#21</comment>
         <translation>Ping-pong</translation>
     </message>
     <message>
         <source>Hide</source>
+        <comment>VectorInspector#22</comment>
         <translation>Ocultar</translation>
     </message>
     <message>
         <source>What plays once the animation has run its length</source>
+        <comment>VectorInspector#23</comment>
         <translation>O que é reproduzido depois que a animação chega ao fim de sua duração</translation>
     </message>
     <message>
         <source>Start offset</source>
+        <comment>VectorInspector#24</comment>
         <translation>Deslocamento inicial</translation>
     </message>
     <message>
         <source>Appearance</source>
+        <comment>VectorInspector#25</comment>
         <translation>Aparência</translation>
     </message>
     <message>
@@ -19714,22 +21455,27 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Fill</source>
+        <comment>VectorInspector#31</comment>
         <translation>Preenchimento</translation>
     </message>
     <message>
         <source>Stroke</source>
+        <comment>VectorInspector#32</comment>
         <translation>Contorno</translation>
     </message>
     <message>
         <source>Stroke width</source>
+        <comment>VectorInspector#33</comment>
         <translation>Espessura do contorno</translation>
     </message>
     <message>
         <source>Opacity</source>
+        <comment>VectorInspector#34</comment>
         <translation>Opacidade</translation>
     </message>
     <message>
         <source>Visible</source>
+        <comment>VectorInspector#35</comment>
         <translation>Visível</translation>
     </message>
     <message>
@@ -19769,22 +21515,27 @@ Se a reprodução travar, experimente outro.</translation>
     <name>VectorSource</name>
     <message>
         <source>Fill</source>
+        <comment>VectorSource#1</comment>
         <translation>Preenchimento</translation>
     </message>
     <message>
         <source>Stroke</source>
+        <comment>VectorSource#2</comment>
         <translation>Contorno</translation>
     </message>
     <message>
         <source>Stroke width</source>
+        <comment>VectorSource#3</comment>
         <translation>Espessura do contorno</translation>
     </message>
     <message>
         <source>Opacity</source>
+        <comment>VectorSource#4</comment>
         <translation>Opacidade</translation>
     </message>
     <message>
         <source>Visible</source>
+        <comment>VectorSource#5</comment>
         <translation>Visível</translation>
     </message>
 </context>
@@ -19811,6 +21562,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>VfrWarning</name>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
+        <comment>VfrWarning#1</comment>
         <translation>Taxa de quadros variável. Este clipe pode ficar fora de sincronia com o áudio. Clique com o botão direito nele e escolha Converter para formato otimizado para edição.</translation>
     </message>
 </context>
@@ -19818,6 +21570,7 @@ Se a reprodução travar, experimente outro.</translation>
     <name>VideoSizeControls</name>
     <message>
         <source>Custom</source>
+        <comment>VideoSizeControls#1</comment>
         <translation>Personalizado</translation>
     </message>
     <message>
@@ -19834,14 +21587,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Width</source>
+        <comment>VideoSizeControls#5</comment>
         <translation>Largura</translation>
     </message>
     <message>
         <source>Height</source>
+        <comment>VideoSizeControls#6</comment>
         <translation>Altura</translation>
     </message>
     <message>
         <source>Frames per second</source>
+        <comment>VideoSizeControls#7</comment>
         <translation>Quadros por segundo</translation>
     </message>
     <message>
@@ -19850,10 +21606,12 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Crop video size</source>
+        <comment>VideoSizeControls#9</comment>
         <translation>Recortar tamanho do vídeo</translation>
     </message>
     <message>
         <source>Drag the preview edges to change what’s included</source>
+        <comment>VideoSizeControls#10</comment>
         <translation>Arraste as bordas da pré-visualização para alterar o que está incluído</translation>
     </message>
     <message>
@@ -19869,10 +21627,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>VideoSizeDialog</name>
     <message>
         <source>Video</source>
+        <comment>VideoSizeDialog#1</comment>
         <translation>Vídeo</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>VideoSizeDialog#2</comment>
         <translation>Fechar</translation>
     </message>
 </context>
@@ -19880,124 +21640,136 @@ Se a reprodução travar, experimente outro.</translation>
     <name>ViewNavPad</name>
     <message>
         <source>%1 (%2)</source>
+        <comment>ViewNavPad#1</comment>
         <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
         <source>Orbit left</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Quanto tempo cada letra, palavra ou linha demora a entrar</translation>
     </message>
     <message>
         <source>Numpad 4</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração total da animação de entrada</translation>
     </message>
     <message>
         <source>Orbit up</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração de entrada</translation>
     </message>
     <message>
         <source>Numpad 8</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração da animação de saída</translation>
     </message>
     <message>
         <source>Orbit right</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Velocidade de saída</translation>
     </message>
     <message>
         <source>Numpad 6</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Texto</translation>
     </message>
     <message>
         <source>Zoom out</source>
+        <comment>ViewNavPad#8</comment>
         <translation type="unfinished">Reduzir</translation>
     </message>
     <message>
         <source>Numpad -</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cor</translation>
     </message>
     <message>
         <source>Orbit down</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tipo de letra</translation>
     </message>
     <message>
         <source>Numpad 2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Peso do texto</translation>
     </message>
     <message>
         <source>Zoom in</source>
+        <comment>ViewNavPad#12</comment>
         <translation type="unfinished">Ampliar</translation>
     </message>
     <message>
         <source>Numpad +</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transformação do texto</translation>
     </message>
 </context>
 <context>
     <name>VoiceLibrary</name>
     <message>
         <source>Default</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sublinhado do texto</translation>
     </message>
     <message>
         <source>Another voice is still being prepared</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Espaçamento entre letras</translation>
     </message>
     <message>
         <source>A voice needs a name and a recording</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Cor do gradiente</translation>
     </message>
     <message>
         <source>Could not prepare the voice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Caixa de texto</translation>
     </message>
     <message>
         <source>A recording is already in progress</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transformação</translation>
     </message>
     <message>
         <source>Failed to start audio recording</source>
+        <comment>VoiceLibrary#6</comment>
         <translation type="unfinished">Falha ao iniciar a gravação de áudio</translation>
     </message>
     <message>
         <source>The recording is too short: record at least %1 seconds</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Opacidade</translation>
     </message>
 </context>
 <context>
     <name>VoiceoverDialog</name>
     <message>
         <source>Generate voiceover</source>
-        <translation type="unfinished"></translation>
+        <comment>VoiceoverDialog#1</comment>
+        <translation type="unfinished">Perspetiva</translation>
     </message>
     <message>
         <source>Voice</source>
+        <comment>VoiceoverDialog#2</comment>
         <translation type="unfinished">Voz</translation>
     </message>
     <message>
         <source>Language</source>
+        <comment>VoiceoverDialog#3</comment>
         <translation type="unfinished">Idioma</translation>
     </message>
     <message>
         <source>Expressiveness</source>
-        <translation type="unfinished"></translation>
+        <comment>VoiceoverDialog#4</comment>
+        <translation type="unfinished">Sombra</translation>
     </message>
     <message>
         <source>Higher values sound more dramatic and speak faster</source>
-        <translation type="unfinished"></translation>
+        <comment>VoiceoverDialog#5</comment>
+        <translation type="unfinished">Contorno</translation>
     </message>
     <message>
         <source>Loading voice model (first use takes a while)…</source>
-        <translation type="unfinished"></translation>
+        <comment>VoiceoverDialog#6</comment>
+        <translation type="unfinished">Sublinhado</translation>
     </message>
     <message>
         <source>Generate</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gradiente</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>VoiceoverDialog#8</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
     <message>
         <source>Close</source>
+        <comment>VoiceoverDialog#9</comment>
         <translation type="unfinished">Fechar</translation>
     </message>
 </context>
@@ -20023,10 +21795,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>VoiceoverMicPicker</name>
     <message>
         <source>Default Mic</source>
+        <comment>VoiceoverMicPicker#1</comment>
         <translation type="unfinished">Microfone padrão</translation>
     </message>
     <message>
         <source>Input microphone: %1 (click to switch)</source>
+        <comment>VoiceoverMicPicker#2</comment>
         <translation type="unfinished">Microfone de entrada: %1 (clique para alternar)</translation>
     </message>
 </context>
@@ -20034,10 +21808,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>VoiceoverRecLabel</name>
     <message>
         <source>PAUSED</source>
+        <comment>VoiceoverRecLabel#1</comment>
         <translation type="unfinished">PAUSED</translation>
     </message>
     <message>
         <source>REC</source>
+        <comment>VoiceoverRecLabel#2</comment>
         <translation type="unfinished">REC</translation>
     </message>
 </context>
@@ -20045,10 +21821,12 @@ Se a reprodução travar, experimente outro.</translation>
     <name>VoiceoverTransport</name>
     <message>
         <source>Resume recording</source>
+        <comment>VoiceoverTransport#1</comment>
         <translation type="unfinished">Retomar gravação</translation>
     </message>
     <message>
         <source>Pause recording</source>
+        <comment>VoiceoverTransport#2</comment>
         <translation type="unfinished">Pausar gravação</translation>
     </message>
     <message>
@@ -20064,98 +21842,102 @@ Se a reprodução travar, experimente outro.</translation>
     <name>WorkspaceDesigner</name>
     <message>
         <source>Panels</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceDesigner#1</comment>
+        <translation type="unfinished">Letra</translation>
     </message>
     <message>
         <source>Library tabs</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Palavra</translation>
     </message>
     <message>
         <source>Inspector tabs</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Bloco</translation>
     </message>
     <message>
         <source>New workspace</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Linha</translation>
     </message>
     <message>
         <source>Window %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">O que uma passagem do gradiente abrange: o bloco inteiro, cada linha, palavra ou glifo</translation>
     </message>
     <message>
         <source>Main window</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Deslocação da lista</translation>
     </message>
     <message>
         <source>Window</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Restam %n caracteres</translation>
     </message>
     <message>
         <source>Default tab</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Controlo de tempo</translation>
     </message>
     <message>
         <source>Make active tab</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração</translation>
     </message>
     <message>
         <source>Remove %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Velocidade</translation>
     </message>
     <message>
         <source>Unsaved changes</source>
+        <comment>WorkspaceDesigner#11</comment>
         <translation type="unfinished">Alterações não guardadas</translation>
     </message>
     <message>
         <source>Save</source>
+        <comment>WorkspaceDesigner#12</comment>
         <translation type="unfinished">Guardar</translation>
     </message>
     <message>
         <source>Discard</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repetir</translation>
     </message>
     <message>
         <source>Keep editing</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Repetir o efeito</translation>
     </message>
     <message>
         <source>Window title</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Quanto tempo cada letra, palavra ou linha demora a entrar</translation>
     </message>
     <message>
         <source>Any screen</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração total da animação de entrada</translation>
     </message>
     <message>
         <source>Fullscreen</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração de entrada</translation>
     </message>
     <message>
         <source>Remove window</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração da animação de saída</translation>
     </message>
     <message>
         <source>Use a Preview-only fullscreen window as a second-monitor output.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Velocidade de saída</translation>
     </message>
     <message>
         <source>Every panel is placed. Drag one here to remove it.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Menu</translation>
     </message>
     <message>
         <source>Drag a panel here</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Linha do Tempo</translation>
     </message>
     <message>
         <source>Changes apply when you save.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ir para o início</translation>
     </message>
     <message>
         <source>No changes.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ir para o fim</translation>
     </message>
     <message>
         <source>Cancel</source>
+        <comment>WorkspaceDesigner#24</comment>
         <translation type="unfinished">Cancelar</translation>
     </message>
 </context>
@@ -20163,213 +21945,253 @@ Se a reprodução travar, experimente outro.</translation>
     <name>WorkspacePlaceholderPanel</name>
     <message>
         <source>%1 — coming soon</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Seleção automática: selecionar o clipe sob o cursor de reprodução</translation>
     </message>
 </context>
 <context>
     <name>WorkspaceStore</name>
     <message>
         <source>Assets</source>
+        <comment>WorkspaceStore#1</comment>
         <translation type="unfinished">Recursos</translation>
     </message>
     <message>
         <source>Properties</source>
+        <comment>WorkspaceStore#2</comment>
         <translation type="unfinished">Propriedades</translation>
     </message>
     <message>
         <source>Preview</source>
+        <comment>WorkspaceStore#3</comment>
         <translation type="unfinished">Pré-visualização</translation>
     </message>
     <message>
         <source>Timeline</source>
+        <comment>WorkspaceStore#4</comment>
         <translation type="unfinished">Linha do tempo</translation>
     </message>
     <message>
         <source>Audio Mixer</source>
+        <comment>WorkspaceStore#5</comment>
         <translation type="unfinished">Mixer de áudio</translation>
     </message>
     <message>
         <source>Source Viewer</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#6</comment>
+        <translation type="unfinished">Colar</translation>
     </message>
     <message>
         <source>Subtitles</source>
+        <comment>WorkspaceStore#7</comment>
         <translation type="unfinished">Legendas</translation>
     </message>
     <message>
         <source>History</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#8</comment>
+        <translation type="unfinished">Vincular</translation>
     </message>
     <message>
         <source>Agent Log</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Aparar</translation>
     </message>
     <message>
         <source>Recorder</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#10</comment>
+        <translation type="unfinished">Painel da Linha do Tempo</translation>
     </message>
     <message>
         <source>Noise Removal</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#11</comment>
+        <translation type="unfinished">Reprodução em curso</translation>
     </message>
     <message>
         <source>Color</source>
+        <comment>WorkspaceStore#12</comment>
         <translation type="unfinished">Cor</translation>
     </message>
     <message>
         <source>Looks</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#13</comment>
+        <translation type="unfinished">Editando a linha do tempo</translation>
     </message>
     <message>
         <source>Scopes</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#14</comment>
+        <translation type="unfinished">Reproduzir / Pausar</translation>
     </message>
     <message>
         <source>Media</source>
+        <comment>WorkspaceStore#15</comment>
         <translation type="unfinished">Mídia</translation>
     </message>
     <message>
         <source>Market</source>
+        <comment>WorkspaceStore#16</comment>
         <translation type="unfinished">Mercado</translation>
     </message>
     <message>
         <source>Text</source>
+        <comment>WorkspaceStore#17</comment>
         <translation type="unfinished">Texto</translation>
     </message>
     <message>
         <source>Speech</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#18</comment>
+        <translation type="unfinished">Mudar para o layout móvel…</translation>
     </message>
     <message>
         <source>Stickers</source>
+        <comment>WorkspaceStore#19</comment>
         <translation type="unfinished">Adesivos</translation>
     </message>
     <message>
         <source>Shapes</source>
+        <comment>WorkspaceStore#20</comment>
         <translation type="unfinished">Formas</translation>
     </message>
     <message>
         <source>Masks</source>
+        <comment>WorkspaceStore#21</comment>
         <translation type="unfinished">Máscaras</translation>
     </message>
     <message>
         <source>Scenes</source>
+        <comment>WorkspaceStore#22</comment>
         <translation type="unfinished">Cenas</translation>
     </message>
     <message>
         <source>Effects</source>
+        <comment>WorkspaceStore#23</comment>
         <translation type="unfinished">Efeitos</translation>
     </message>
     <message>
         <source>Templates</source>
+        <comment>WorkspaceStore#24</comment>
         <translation type="unfinished">Modelos</translation>
     </message>
     <message>
         <source>Transitions</source>
+        <comment>WorkspaceStore#25</comment>
         <translation type="unfinished">Transições</translation>
     </message>
     <message>
         <source>Audio FX</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#26</comment>
+        <translation type="unfinished">Duração do projeto</translation>
     </message>
     <message>
         <source>General</source>
+        <comment>WorkspaceStore#27</comment>
         <translation type="unfinished">Geral</translation>
     </message>
     <message>
         <source>Shape</source>
+        <comment>WorkspaceStore#28</comment>
         <translation type="unfinished">Forma</translation>
     </message>
     <message>
         <source>Motion</source>
+        <comment>WorkspaceStore#29</comment>
         <translation type="unfinished">Movimento</translation>
     </message>
     <message>
         <source>3D Model</source>
+        <comment>WorkspaceStore#30</comment>
         <translation type="unfinished">Modelo 3D</translation>
     </message>
     <message>
         <source>PDF</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#31</comment>
+        <translation type="unfinished">Mover a camada para a faixa</translation>
     </message>
     <message>
         <source>Transform</source>
+        <comment>WorkspaceStore#32</comment>
         <translation type="unfinished">Transformação</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceStore#33</comment>
+        <translation type="unfinished">Mover a camada para a faixa de novo</translation>
     </message>
     <message>
         <source>Stabilization</source>
+        <comment>WorkspaceStore#34</comment>
         <translation type="unfinished">Estabilização</translation>
     </message>
     <message>
         <source>Animation</source>
+        <comment>WorkspaceStore#35</comment>
         <translation type="unfinished">Animação</translation>
     </message>
     <message>
         <source>Audio</source>
+        <comment>WorkspaceStore#36</comment>
         <translation type="unfinished">Áudio</translation>
     </message>
     <message>
         <source>Speed</source>
+        <comment>WorkspaceStore#37</comment>
         <translation type="unfinished">Velocidade</translation>
     </message>
     <message>
         <source>Blending</source>
+        <comment>WorkspaceStore#38</comment>
         <translation type="unfinished">Mesclagem</translation>
     </message>
     <message>
         <source>Transition</source>
+        <comment>WorkspaceStore#39</comment>
         <translation type="unfinished">Transição</translation>
     </message>
     <message>
         <source>A window has no panels.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">o Drift enviou uma atualização de parâmetros; verifique se os inputs refletem o estado atual</translation>
     </message>
     <message>
         <source>A split needs at least two sections.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Descrição</translation>
     </message>
     <message>
         <source>A section needs at least one panel.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Correto</translation>
     </message>
     <message>
         <source>A section&apos;s active tab is out of range.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Incorreto</translation>
     </message>
     <message>
         <source>Unknown panel type &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Painel da Linha do Tempo</translation>
     </message>
     <message>
         <source>The &quot;%1&quot; panel is used more than once.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reprodução em curso</translation>
     </message>
     <message>
         <source>%1 · Library</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Editando a linha do tempo</translation>
     </message>
     <message>
         <source>%1 · Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Reproduzir / Pausar</translation>
     </message>
     <message>
         <source>A workspace needs at least one window.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mudar para o layout móvel…</translation>
     </message>
     <message>
         <source>The first window must be the main window.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Duração do projeto</translation>
     </message>
     <message>
         <source>Workspace</source>
+        <comment>WorkspaceStore#50</comment>
         <translation type="unfinished">Espaço de trabalho</translation>
     </message>
     <message>
         <source>%1 copy</source>
+        <comment>WorkspaceStore#51</comment>
         <translation type="unfinished">Cópia de %1</translation>
     </message>
 </context>
@@ -20377,7 +22199,10 @@ Se a reprodução travar, experimente outro.</translation>
     <name>WorkspaceWindow</name>
     <message>
         <source>Drift</source>
-        <translation type="unfinished"></translation>
+        <comment>WorkspaceWindow#1</comment>
+        <translation type="unfinished">O Drift está em execução há %1 segundos, mas a sua janela ainda não desenhou nada.
+
+Se a janela estiver em branco ou preta, o seu controlador gráfico muito provavelmente está desatualizado ou com defeito. Atualize-o no site do fabricante da sua GPU (AMD, NVIDIA ou Intel) e inicie o Drift novamente.</translation>
     </message>
 </context>
 <context>
@@ -20388,6 +22213,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Shadow</source>
+        <comment>drift#2</comment>
         <translation>Sombra</translation>
     </message>
     <message>
@@ -20412,6 +22238,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Glitch</source>
+        <comment>drift#8</comment>
         <translation>Falha</translation>
     </message>
     <message>
@@ -20420,14 +22247,17 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Background</source>
+        <comment>drift#10</comment>
         <translation>Fundo</translation>
     </message>
     <message>
         <source>Curve</source>
+        <comment>drift#11</comment>
         <translation>Curva</translation>
     </message>
     <message>
         <source>Gradient</source>
+        <comment>drift#12</comment>
         <translation>Gradiente</translation>
     </message>
     <message>
@@ -20436,6 +22266,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>Chrome</source>
+        <comment>drift#14</comment>
         <translation>Cromado</translation>
     </message>
     <message>
