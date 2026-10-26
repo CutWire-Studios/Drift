@@ -8554,6 +8554,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11745,6 +11749,14 @@
     </message>
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

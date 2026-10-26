@@ -8522,6 +8522,10 @@
         <translation>Chiều cao</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>Bắt đầu lúc</translation>
     </message>
@@ -11698,6 +11702,14 @@
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
         <translation type="unfinished">Kéo hộp để cắt cúp. Video gốc vẫn được giữ, nên có thể thay đổi phần cắt cúp sau.</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>
