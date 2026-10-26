@@ -83,8 +83,8 @@ public:
     QPair<int, int> locateClip(const QString &id) const;
     QString clipId(int trackIndex, int clipIndex) const;
     QVariantMap compactClip(int trackIndex, int clipIndex, bool includeCanvas = true) const;
-    // A video/image clip's crop: the normalised source window, plus the same window in source
-    // pixels when the asset's size is known. Empty for any other clip.
+    // A video/image clip's crop: the normalised source window and its straighten angle, plus the
+    // window in source pixels when the asset's size is known. Empty for any other clip.
     QJsonObject clipCrop(int trackIndex, int clipIndex) const;
     struct InspectOptions {
         bool clips = false;

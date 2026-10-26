@@ -62,6 +62,8 @@ struct GpuLayer
     PreviewVideoFrame video;
     // The clip's source frame: the normalized part of `video` the layer shows.
     QRectF videoCrop{0, 0, 1, 1};
+    // Straighten applied before videoCrop is cut (Clip::sourceFrameAngle), degrees clockwise.
+    double videoCropAngle = 0.0;
     // Skia-drawn content (text, shapes, Lottie). Declared whether or not Skia is compiled in so
     // the struct has one layout; without DRIFT_WITH_SKIA nothing ever sets it. When Skia cannot
     // draw it, `source` is the fallback if the builder filled one.

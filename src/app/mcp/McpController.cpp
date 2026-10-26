@@ -542,7 +542,8 @@ QJsonObject McpController::clipCrop(int trackIndex, int clipIndex) const
         {QStringLiteral("y"), frame.y()},
         {QStringLiteral("w"), frame.width()},
         {QStringLiteral("h"), frame.height()},
-        {QStringLiteral("cropped"), frame != QRectF(0, 0, 1, 1)},
+        {QStringLiteral("angle"), clip.sourceFrameAngle},
+        {QStringLiteral("cropped"), frame != QRectF(0, 0, 1, 1) || clip.sourceFrameAngle != 0.0},
     };
     // The window is in the displayed source, so pixels are too. Display orientation is the file's
     // own tag plus this clip's correction, as the decoder applies it — not the bin's override.

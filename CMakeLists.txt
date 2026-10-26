@@ -805,6 +805,8 @@ add_library(driftengine STATIC
     src/engine/compositor/effects/CompositorFrameHistory.cpp
     src/engine/compositor/FrameCompositor.h
     src/engine/compositor/FrameCompositor.cpp
+    src/engine/compositor/SourceFrameCrop.h
+    src/engine/compositor/SourceFrameCrop.cpp
     src/engine/compositor/layers/MaskApplier.h
     src/engine/compositor/layers/MaskApplier.cpp
     src/engine/packages/audio/AudioEffectCatalog.h

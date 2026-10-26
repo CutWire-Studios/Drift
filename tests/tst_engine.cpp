@@ -112,6 +112,8 @@
 #include "engine/packages/assets/EmojiCatalog.h"
 #include "engine/packages/assets/FontCatalog.h"
 #include "engine/compositor/FrameCompositor.h"
+#include "engine/compositor/SourceFrameCrop.h"
+#include "core/project/media/MediaAsset.h"
 #include "engine/compositor/GpuCompositor.h"
 #include "core/text/animation/TextAnimationPreset.h"
 #include "engine/render2d/text/TextLayout.h"
@@ -174,6 +176,7 @@ private slots:
     void reversedSidecarsOutrankTheIndex();
     void variableFrameRateIsDetected();
     void mediaEditorCropsAnImage();
+    void sourceFrameCropStraightens();
     void mediaEditorConformsVariableFrameRate();
     void mediaEditorKeepsTenBitAndColourTags();
     void mediaEditorStabilizesInProcess();
@@ -5564,6 +5567,46 @@ void EngineTest::variableFrameRateIsDetected()
 
     QVERIFY(!MediaProbe::isVariableFrameRate(cfrPath));
     QVERIFY(MediaProbe::isVariableFrameRate(vfrPath));
+}
+
+void EngineTest::sourceFrameCropStraightens()
+{
+    // Non-square on purpose: the turn happens in pixels, so a 90° turn must not skew it.
+    QImage source(200, 100, QImage::Format_RGBA8888);
+    source.fill(Qt::red);
+    for (int y = 0; y < 100; ++y)
+        for (int x = 100; x < 200; ++x)
+            source.setPixelColor(x, y, Qt::blue);
+
+    // No angle: a plain cut, as before.
+    const QImage plain = drift::cropSourceFrame(source, QRectF(0.5, 0, 0.5, 1), 0.0);
+    QCOMPARE(plain.size(), QSize(100, 100));
+    QCOMPARE(plain.pixelColor(50, 50), QColor(Qt::blue));
+
+    // 90° clockwise: the source's left (red) half turns to the top, its right (blue) to the
+    // bottom, and the 100 px tall picture only spans x 50..150 of the 200 px wide frame.
+    const QImage turned = drift::cropSourceFrame(source, QRectF(0, 0, 1, 1), 90.0);
+    QCOMPARE(turned.size(), QSize(200, 100));
+    QCOMPARE(turned.format(), QImage::Format_RGBA8888);
+    QCOMPARE(turned.pixelColor(100, 10), QColor(Qt::red));
+    QCOMPARE(turned.pixelColor(100, 90), QColor(Qt::blue));
+    QCOMPARE(turned.pixelColor(10, 50).alpha(), 0);
+    QCOMPARE(turned.pixelColor(190, 50).alpha(), 0);
+
+    // The frame is cut from the turned picture.
+    const QImage window = drift::cropSourceFrame(source, QRectF(0.25, 0, 0.5, 1), 90.0);
+    QCOMPARE(window.size(), QSize(100, 100));
+    QCOMPARE(window.pixelColor(50, 10), QColor(Qt::red));
+    QCOMPARE(window.pixelColor(50, 90), QColor(Qt::blue));
+
+    // A small tilt leaves the corners of a full frame empty and the middle covered.
+    const QImage tilted = drift::cropSourceFrame(source, QRectF(0, 0, 1, 1), 5.0);
+    QCOMPARE(tilted.pixelColor(0, 0).alpha(), 0);
+    QCOMPARE(tilted.pixelColor(50, 50), QColor(Qt::red));
+
+    QCOMPARE(drift::normalizedSourceAngle(190.0), -170.0);
+    QCOMPARE(drift::normalizedSourceAngle(-180.0), 180.0);
+    QCOMPARE(drift::normalizedSourceAngle(qQNaN()), 0.0);
 }
 
 void EngineTest::mediaEditorCropsAnImage()

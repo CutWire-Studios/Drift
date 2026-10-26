@@ -96,6 +96,10 @@ struct Clip
     QString sequenceId;
 
     QRectF sourceFrame{0, 0, 1, 1};
+    // Straighten: degrees the source is turned clockwise about its centre before sourceFrame is cut
+    // from it (drift::normalizedSourceAngle). The frame stays in the same normalised space, so a
+    // turned picture can leave its corners empty; those render transparent.
+    double sourceFrameAngle = 0.0;
 
     QString path;
     QString thumbnailPath;

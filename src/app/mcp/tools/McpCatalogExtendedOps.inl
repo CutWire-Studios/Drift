@@ -230,7 +230,8 @@
                                   clipRefProps())) },
         { "get_clip_crop", "canvas", "Read which part of the source a clip shows",
           "Read a video or image clip's crop. Returns crop: {x, y, w, h} as fractions 0..1 of the "
-          "displayed (rotation-corrected) source, cropped false for the full frame, and, when the "
+          "displayed (rotation-corrected) source, angle (straighten, degrees clockwise), cropped "
+          "false for the full, unturned frame, and, when the "
           "source size is known, sourceWidth/sourceHeight and the same window in source pixels. The "
           "top-level x/y/w/h are the clip's canvas box, not the crop.",
           objectSchema(clipRefProps()),
@@ -239,18 +240,23 @@
           "Crop a video or image clip to a window of its source, undoable like the inspector's crop. "
           "units normalized (default) takes fractions 0..1; pixels takes source pixels and needs the "
           "source size (see get_clip_crop). Omitted fields keep their current value; reset: true "
-          "restores the full frame. The window is clamped inside the source. The clip's on-canvas "
+          "restores the full, unturned frame. angle straightens: the picture turns clockwise by that "
+          "many degrees about its centre (negative = anticlockwise) and the window is cut from the "
+          "turned picture, so a tilted horizon can be levelled; corners the turned picture does not "
+          "reach are transparent, so shrink w/h to hide them. Omit angle to keep the current one. "
+          "The window is clamped inside the source. The clip's on-canvas "
           "size is rescaled to the new crop's aspect, the way the inspector does it. Does not crop "
           "the project canvas (apply_canvas_crop). Returns crop as get_clip_crop does.",
           objectSchema(mergeProps({{QStringLiteral("x"), numberProp(QStringLiteral("Left edge"))},
                                    {QStringLiteral("y"), numberProp(QStringLiteral("Top edge"))},
                                    {QStringLiteral("w"), numberProp(QStringLiteral("Width, > 0"))},
                                    {QStringLiteral("h"), numberProp(QStringLiteral("Height, > 0"))},
+                                   {QStringLiteral("angle"), numberProp(QStringLiteral("Straighten, degrees clockwise"), -180, 180)},
                                    {QStringLiteral("units"),
                                     propWithDefault(enumProp(QStringLiteral("Units of x/y/w/h"),
                                                              {QStringLiteral("normalized"), QStringLiteral("pixels")}),
                                                     QStringLiteral("normalized"))},
-                                   {QStringLiteral("reset"), boolProp(QStringLiteral("Restore the full frame; ignores x/y/w/h"))}},
+                                   {QStringLiteral("reset"), boolProp(QStringLiteral("Restore the full frame; ignores x/y/w/h/angle"))}},
                                   clipRefProps())) },
         { "set_blend_mode", "canvas", "Multiply/screen/overlay a clip onto the layers below",
           "Set how the clip composites over the layers below it. Unrecognised values silently fall back "

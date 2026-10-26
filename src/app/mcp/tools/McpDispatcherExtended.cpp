@@ -1362,8 +1362,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (tool == QLatin1String("get_clip_crop"))
             return ok(clipFeedback(ref, {{QStringLiteral("crop"), crop}}));
 
-        double x = 0, y = 0, w = 1, h = 1;
+        double x = 0, y = 0, w = 1, h = 1, angle = 0;
         if (!jsonBool(args.value(QStringLiteral("reset")))) {
+            const QJsonValue turn = args.value(QStringLiteral("angle"));
+            angle = turn.isUndefined() || turn.isNull() ? qQNaN() : jsonNumber(turn, 0);
             const QString units = args.value(QStringLiteral("units")).toString(QStringLiteral("normalized"));
             double sx = 1, sy = 1;
             if (units == QLatin1String("pixels")) {
@@ -1385,7 +1387,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             if (!(w > 0) || !(h > 0))
                 return err("bad_args", QStringLiteral("w and h must be > 0"));
         }
-        if (!m_controller->setClipSourceFrame(ref.id, x, y, w, h))
+        if (!m_controller->setClipSourceFrame(ref.id, x, y, w, h, angle))
             return err("failed", QStringLiteral("could not crop %1").arg(ref.id));
         return ok(clipFeedback(ref, {{QStringLiteral("crop"), m_controller->mcp()->clipCrop(ref.track, ref.clip)}}));
     }

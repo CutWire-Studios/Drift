@@ -4589,6 +4589,22 @@ void McpTest::clipCropRoundTrip()
     QCOMPARE(nudged.value(QStringLiteral("crop")).toObject().value(QStringLiteral("x")).toDouble(), 0.5);
     QCOMPARE(nudged.value(QStringLiteral("crop")).toObject().value(QStringLiteral("w")).toDouble(), 0.5);
 
+    // Straighten: set, kept when a later call omits it, saved with the project, cleared by reset.
+    QJsonObject level = clipRef;
+    level.insert(QStringLiteral("angle"), -3.5);
+    const QJsonObject levelled = dispatcher.applyOne(QStringLiteral("set_clip_crop"), level);
+    QVERIFY2(levelled.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(levelled).toJson(QJsonDocument::Compact)));
+    QCOMPARE(levelled.value(QStringLiteral("crop")).toObject().value(QStringLiteral("angle")).toDouble(), -3.5);
+    QJsonObject widen = clipRef;
+    widen.insert(QStringLiteral("x"), 0.0);
+    const QJsonObject widened = dispatcher.applyOne(QStringLiteral("set_clip_crop"), widen);
+    QCOMPARE(widened.value(QStringLiteral("crop")).toObject().value(QStringLiteral("angle")).toDouble(), -3.5);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrameAngle, -3.5);
+    {
+        const drift::Project reloaded = drift::Project::fromJson(state.project()->toJson());
+        QCOMPARE(reloaded.tracks().at(0).clips.at(0).sourceFrameAngle, -3.5);
+    }
+
     QJsonObject bad = clipRef;
     bad.insert(QStringLiteral("w"), 0);
     QCOMPARE(dispatcher.applyOne(QStringLiteral("set_clip_crop"), bad).value(QStringLiteral("error")).toString(),
@@ -4599,6 +4615,7 @@ void McpTest::clipCropRoundTrip()
     const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("set_clip_crop"), reset);
     QVERIFY(cleared.value(QStringLiteral("ok")).toBool());
     QVERIFY(!cleared.value(QStringLiteral("crop")).toObject().value(QStringLiteral("cropped")).toBool());
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrameAngle, 0.0);
     QVERIFY(!inspectRow(dispatcher, video.id).contains(QStringLiteral("crop")));
 
     // Pixels follow the clip's own orientation correction, not the bin asset's.

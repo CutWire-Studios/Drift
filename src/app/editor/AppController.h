@@ -18,6 +18,7 @@
 #include "core/project/GuideSet.h"
 
 #include <QAtomicInt>
+#include <QtNumeric>
 #include <QColor>
 #include <QCursor>
 #include <QImage>
@@ -605,7 +606,10 @@ public:
     // Bin-preview orientation for a video asset (absolute 0/90/180/270; -1 = the file's own tag),
     // as one undoable edit — AssetLibrary::setAssetRotation on its own leaves no undo entry.
     Q_INVOKABLE bool setAssetRotation(int assetIndex, int degrees);
-    Q_INVOKABLE bool setClipSourceFrame(const QString &clipId, double x, double y, double w, double h);
+    // Crop a video/image clip to a normalised source window, as one undoable edit. `angle` is the
+    // straighten (Clip::sourceFrameAngle); NaN, the default, keeps the clip's current one.
+    Q_INVOKABLE bool setClipSourceFrame(const QString &clipId, double x, double y, double w, double h,
+                                        double angle = qQNaN());
     Q_INVOKABLE bool trackAcceptsAsset(int trackIndex, int assetIndex) const;
     Q_INVOKABLE QString trackTypeForAsset(int assetIndex) const;
     // The same two questions asked of a bare media kind ("video", "audio", "image", ...) rather
