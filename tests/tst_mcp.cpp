@@ -4600,6 +4600,7 @@ void McpTest::clipCropRoundTrip()
     const QJsonObject widened = dispatcher.applyOne(QStringLiteral("set_clip_crop"), widen);
     QCOMPARE(widened.value(QStringLiteral("crop")).toObject().value(QStringLiteral("angle")).toDouble(), -3.5);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrameAngle, -3.5);
+    QCOMPARE(inspectRow(dispatcher, video.id).value(QStringLiteral("cropAngle")).toDouble(), -3.5);
     {
         const drift::Project reloaded = drift::Project::fromJson(state.project()->toJson());
         QCOMPARE(reloaded.tracks().at(0).clips.at(0).sourceFrameAngle, -3.5);
@@ -4617,6 +4618,8 @@ void McpTest::clipCropRoundTrip()
     QVERIFY(!cleared.value(QStringLiteral("crop")).toObject().value(QStringLiteral("cropped")).toBool());
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrameAngle, 0.0);
     QVERIFY(!inspectRow(dispatcher, video.id).contains(QStringLiteral("crop")));
+    QVERIFY(!inspectRow(dispatcher, video.id).contains(QStringLiteral("cropAngle")));
+    QVERIFY(!inspectRow(dispatcher, video.id).contains(QStringLiteral("sourceFrameAngle")));
 
     // Pixels follow the clip's own orientation correction, not the bin asset's.
     state.project()->tracks()[0].clips[0].rotationCorrection = 90;

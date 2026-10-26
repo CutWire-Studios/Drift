@@ -449,6 +449,9 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
     const QRectF sourceFrame = m.take(QStringLiteral("sourceFrame")).toRectF();
     if (!sourceFrame.isNull() && sourceFrame != QRectF(0, 0, 1, 1))
         m.insert(QStringLiteral("crop"), drift::sourceFrameToJson(sourceFrame).toVariantList());
+    // Straighten, likewise only when set: every clip map carries it, most of them at 0.
+    if (const double angle = m.take(QStringLiteral("sourceFrameAngle")).toDouble(); angle != 0.0)
+        m.insert(QStringLiteral("cropAngle"), angle);
     if (m.value(QStringLiteral("audioStreamIndex")).toInt() == 0)
         m.remove(QStringLiteral("audioStreamIndex"));
     if (m.value(QStringLiteral("pan")).toDouble() == 0.0)
