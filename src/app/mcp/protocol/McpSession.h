@@ -13,6 +13,7 @@ struct SessionInfo
     qint64 pid = 0;
     qint64 startedAt = 0; // ms since epoch; newer instances sort first
     bool headless = false;
+    bool isolated = false; // started by launch_instance; the only kind close_instance may end
     QString project;     // project file path, empty for an unsaved timeline
     QString projectName;
     // A project load is under way, or a startup project is queued and has not begun.

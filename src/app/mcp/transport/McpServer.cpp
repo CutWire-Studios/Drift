@@ -233,6 +233,7 @@ bool McpServer::publishSession()
         info.project = project->currentProjectPath();
         info.projectName = project->projectName();
         info.loading = project->projectLoadPending() || project->startupProjectQueued();
+        info.isolated = project->isolatedSession();
     }
     info.hasLoaded = m_hasLoaded;
     info.loadOk = m_loadOk;

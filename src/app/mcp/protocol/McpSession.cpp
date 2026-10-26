@@ -47,6 +47,7 @@ bool parseSession(const QString &path, SessionInfo *info)
     info->pid = o.value(QStringLiteral("pid")).toInteger();
     info->startedAt = o.value(QStringLiteral("startedAt")).toInteger();
     info->headless = o.value(QStringLiteral("headless")).toBool();
+    info->isolated = o.value(QStringLiteral("isolated")).toBool();
     info->project = o.value(QStringLiteral("project")).toString();
     info->projectName = o.value(QStringLiteral("projectName")).toString();
     info->loading = o.value(QStringLiteral("loading")).toBool();
@@ -100,6 +101,7 @@ bool writeSessionFile(const SessionInfo &info)
         {QStringLiteral("pid"), QCoreApplication::applicationPid()},
         {QStringLiteral("startedAt"), info.startedAt},
         {QStringLiteral("headless"), info.headless},
+        {QStringLiteral("isolated"), info.isolated},
         {QStringLiteral("project"), info.project},
         {QStringLiteral("projectName"), info.projectName},
         {QStringLiteral("loading"), info.loading},

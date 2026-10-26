@@ -21,6 +21,7 @@ namespace {
 const QString kInstances = QStringLiteral("instances");
 const QString kUseInstance = QStringLiteral("use_instance");
 const QString kLaunchInstance = QStringLiteral("launch_instance");
+const QString kCloseInstance = QStringLiteral("close_instance");
 
 int httpStatus(const QByteArray &response)
 {
@@ -77,6 +78,7 @@ QJsonObject sessionRow(const SessionInfo &session, qint64 attachedPid)
         {QStringLiteral("id"), session.pid},
         {QStringLiteral("name"), session.projectName},
         {QStringLiteral("headless"), session.headless},
+        {QStringLiteral("isolated"), session.isolated},
         {QStringLiteral("url"), QStringLiteral("http://127.0.0.1:%1/mcp").arg(session.port)},
         {QStringLiteral("started"),
          QDateTime::fromMSecsSinceEpoch(session.startedAt).toString(Qt::ISODate)},
@@ -96,7 +98,8 @@ QString instructions()
               " Several Drift instances can be open: instances() lists them, "
               "use_instance({id}) picks the one every other call goes to, and "
               "launch_instance({project?}) opens a new editor to work in without touching "
-              "the user's session. With one instance running it is used automatically.");
+              "the user's session; close_instance({id}) quits one it launched when done. "
+              "With one instance running it is used automatically.");
 }
 
 } // namespace
@@ -108,7 +111,8 @@ StdioBridge::StdioBridge(qint64 pinnedPid)
 
 bool StdioBridge::isBridgeTool(const QString &name)
 {
-    return name == kInstances || name == kUseInstance || name == kLaunchInstance;
+    return name == kInstances || name == kUseInstance || name == kLaunchInstance
+        || name == kCloseInstance;
 }
 
 QJsonArray StdioBridge::bridgeTools()
@@ -133,7 +137,7 @@ QJsonArray StdioBridge::bridgeTools()
                        "Agent access on, waits until it is up and project has finished opening, and "
                        "attaches to it. The new instance never restores the user's last session or "
                        "touches their recovery file. headless:true runs it with no window; it then "
-                       "keeps running until it is stopped."),
+                       "keeps running until close_instance({id})."),
         objectSchema({{QStringLiteral("project"),
                        stringProp(QStringLiteral("Project file to open (absolute path); empty timeline when omitted"))},
                       {QStringLiteral("headless"),
@@ -142,6 +146,18 @@ QJsonArray StdioBridge::bridgeTools()
                        propWithDefault(numberProp(QStringLiteral("Seconds to wait for it to come up"), 1, 300),
                                        60)}}),
         toolAnnotations(false, false, false)));
+    tools.append(toolDef(
+        kCloseInstance,
+        QStringLiteral("When: Done with an instance launch_instance started. Quits it cleanly and waits "
+                       "for it to exit. Only launched instances (isolated:true in instances()) can be "
+                       "closed; never the user's own editor. Refuses unsaved_changes unless discard:true "
+                       "— save_project first to keep the work."),
+        objectSchema({{QStringLiteral("id"), numberProp(QStringLiteral("Instance id from instances()"))},
+                      {QStringLiteral("discard"),
+                       propWithDefault(boolProp(QStringLiteral("Close even with unsaved changes, losing them")),
+                                       false)}},
+                     {QStringLiteral("id")}),
+        toolAnnotations(false, true, false)));
     return tools;
 }
 
@@ -260,6 +276,8 @@ QJsonObject StdioBridge::callBridgeTool(const QString &name, const QJsonObject &
         return listInstances();
     if (name == kUseInstance)
         return useInstance(args);
+    if (name == kCloseInstance)
+        return closeInstance(args);
     return launchInstance(args);
 }
 
@@ -376,6 +394,88 @@ QJsonObject StdioBridge::launchInstance(const QJsonObject &args)
                                     "%2 s; instances() shows it once it does.")
                          .arg(pid)
                          .arg(deadline / 1000));
+}
+
+QJsonObject StdioBridge::closeInstance(const QJsonObject &args)
+{
+    const QJsonValue idValue = args.value(QStringLiteral("id"));
+    const qint64 pid = idValue.isString() ? idValue.toString().toLongLong() : idValue.toInteger();
+    if (pid <= 0)
+        return err("bad_args", QStringLiteral("id is required: an instance id from instances()"));
+
+    SessionInfo target;
+    for (const SessionInfo &session : listSessions()) {
+        if (session.pid == pid)
+            target = session;
+    }
+    if (target.pid == 0)
+        return err("not_found", QStringLiteral("No instance %1 with Agent access on").arg(pid));
+    // Checked here as well as by the instance, so the refusal names what to do instead.
+    if (!target.isolated) {
+        return err("not_isolated",
+                   QStringLiteral("%1 is not an instance launch_instance started; only the user can "
+                                  "close it, from its own window.")
+                       .arg(describeSession(target)));
+    }
+
+    // The instance quits itself so its exit path runs: its registry record and instance marker
+    // go with it, which a signal would skip on the GUI and cannot do at all on Windows.
+    const QJsonObject call{
+        {QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
+        {QStringLiteral("id"), 1},
+        {QStringLiteral("method"), QStringLiteral("tools/call")},
+        {QStringLiteral("params"),
+         QJsonObject{{QStringLiteral("name"), QStringLiteral("quit_instance")},
+                     {QStringLiteral("arguments"),
+                      QJsonObject{{QStringLiteral("discard"),
+                                   args.value(QStringLiteral("discard")).toBool()}}}}},
+    };
+    QString postError;
+    int status = 0;
+    const QByteArray reply = postJson(target.port, target.token,
+                                      QJsonDocument(call).toJson(QJsonDocument::Compact),
+                                      &postError, &status);
+    if (reply.isEmpty() || status < 200 || status >= 300) {
+        // The instance may have quit before its reply was out; the process is the real answer.
+        QElapsedTimer grace;
+        grace.start();
+        while (drift::instances::processAlive(pid) && grace.elapsed() < 2000)
+            QThread::msleep(100);
+        if (!drift::instances::processAlive(pid)) {
+            if (m_attached.pid == pid)
+                m_attached = SessionInfo{};
+            return ok({{QStringLiteral("closed"), pid}});
+        }
+        return err("close_failed", postError.isEmpty()
+                                       ? QStringLiteral("Drift MCP HTTP %1").arg(status)
+                                       : postError);
+    }
+    const QJsonArray content = QJsonDocument::fromJson(reply)
+                                   .object()
+                                   .value(QStringLiteral("result"))
+                                   .toObject()
+                                   .value(QStringLiteral("content"))
+                                   .toArray();
+    const QJsonObject answer =
+        QJsonDocument::fromJson(
+            content.at(0).toObject().value(QStringLiteral("text")).toString().toUtf8())
+            .object();
+    if (!answer.value(QStringLiteral("ok")).toBool())
+        return answer; // not_isolated, busy, unsaved_changes: the instance says why
+
+    QElapsedTimer timer;
+    timer.start();
+    while (drift::instances::processAlive(pid) && timer.elapsed() < 20000)
+        QThread::msleep(100);
+    if (drift::instances::processAlive(pid)) {
+        return err("close_timeout",
+                   QStringLiteral("%1 accepted quit_instance but is still running after 20 s")
+                       .arg(describeSession(target)));
+    }
+    // Back to the attach rule rather than pointing at a pid that no longer exists.
+    if (m_attached.pid == pid)
+        m_attached = SessionInfo{};
+    return ok({{QStringLiteral("closed"), pid}});
 }
 
 } // namespace drift::mcp

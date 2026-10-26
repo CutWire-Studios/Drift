@@ -88,6 +88,8 @@ private slots:
     void sessionRecordReportsProjectLoad();
     void extractionSweepSparesOtherInstances();
     void startupLockExcludesConcurrentStartup();
+    void quitInstanceOnlyEndsIsolatedSessions();
+    void bridgeCloseRefusesUsersEditor();
     void sessionRecordTracksProject();
     void stdioFramingIsNewlineDelimited();
     void stdioWriteEscapesEmbeddedNewlines();
@@ -328,7 +330,7 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 21400);
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 21500);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                 .toJson(QJsonDocument::Compact).size() < 10800);
 
@@ -1039,6 +1041,49 @@ void McpTest::startupLockExcludesConcurrentStartup()
     QVERIFY(!drift::instances::lockStartup(200));
     first.reset();
     QVERIFY(drift::instances::lockStartup(1000));
+}
+
+// quit_instance is reachable over plain HTTP too, so the instance itself refuses to end the
+// user's editor; an agent's own instance still keeps unsaved work unless told to discard it.
+// (The accepting path quits the process, so it is exercised end to end, not here.)
+void McpTest::quitInstanceOnlyEndsIsolatedSessions()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("quit_instance"), {{QStringLiteral("discard"), true}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_isolated"));
+
+    state.projectFile()->setIsolatedSession(true);
+    state.projectFile()->setDirty(true);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("quit_instance"), {})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("unsaved_changes"));
+}
+
+void McpTest::bridgeCloseRefusesUsersEditor()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+    const auto stopServer = qScopeGuard([&] { state.mcp()->setEnabled(false); });
+
+    drift::mcp::StdioBridge bridge;
+    const QJsonObject refused = bridgeTool(bridge, QStringLiteral("close_instance"),
+                                           {{QStringLiteral("id"), QCoreApplication::applicationPid()}});
+    QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("not_isolated"));
+    QCOMPARE(bridgeTool(bridge, QStringLiteral("close_instance"), {{QStringLiteral("id"), 999999999}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QVERIFY(!drift::mcp::listSessions().value(0).isolated);
 }
 
 void McpTest::serverRequiresBearerToken()

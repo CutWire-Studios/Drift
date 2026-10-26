@@ -12,8 +12,9 @@ namespace drift::mcp {
 // The routing half of `drift --mcp-stdio`: one JSON-RPC message in, the reply out.
 //
 // Several Drift instances can be running, so the bridge holds which one it is attached
-// to and adds three tools of its own to the homepage — instances, use_instance and
-// launch_instance. Those, initialize, ping and tools/list are answered here, so an agent
+// to and adds four tools of its own to the homepage — instances, use_instance,
+// launch_instance and close_instance. Those, initialize, ping and tools/list are answered
+// here, so an agent
 // sees the full tool list and can pick or start an instance before any editor is
 // reachable; every other call is forwarded to the attached instance over HTTP.
 class StdioBridge
@@ -38,6 +39,7 @@ private:
     QJsonObject listInstances();
     QJsonObject useInstance(const QJsonObject &args);
     QJsonObject launchInstance(const QJsonObject &args);
+    QJsonObject closeInstance(const QJsonObject &args);
 
     SessionInfo m_attached;
 };
