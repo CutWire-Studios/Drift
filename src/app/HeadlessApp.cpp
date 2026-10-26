@@ -163,6 +163,7 @@ int runHeadless(int argc, char *argv[])
     editorState.projectFile()->consumeStartupProject();
 
     drift::mcp::McpServer *server = editorState.mcp()->server();
+    server->setHeadless(true);
     if (httpPort > 0) {
         if (!httpToken.isEmpty())
             server->setToken(httpToken);

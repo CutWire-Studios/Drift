@@ -72,6 +72,10 @@ private slots:
     void protocolNotificationHasNoReply();
     void sessionFileRoundTrip();
     void sessionFileMissing();
+    void sessionRegistryListsInstancesNewestFirst();
+    void sessionRegistryPrunesDeadInstances();
+    void stdioBridgeStaysOnAttachedInstance();
+    void sessionRecordTracksProject();
     void stdioFramingIsNewlineDelimited();
     void stdioWriteEscapesEmbeddedNewlines();
     void stdioReadsNewlineDelimited();
@@ -516,13 +520,14 @@ void McpTest::sessionFileRoundTrip()
     QVERIFY(dir.isValid());
     const QString path = dir.filePath(QStringLiteral("session.json"));
     qputenv("DRIFT_MCP_SESSION_PATH", path.toUtf8());
-    QVERIFY(drift::mcp::writeSessionFile(4731, QStringLiteral("abc123")));
-    quint16 port = 0;
-    QString token;
-    QString error;
-    QVERIFY(drift::mcp::readSessionFile(&port, &token, &error));
-    QCOMPARE(port, quint16(4731));
-    QCOMPARE(token, QStringLiteral("abc123"));
+    drift::mcp::SessionInfo info;
+    info.port = 4731;
+    info.token = QStringLiteral("abc123");
+    QVERIFY(drift::mcp::writeSessionFile(info));
+    const QList<drift::mcp::SessionInfo> sessions = drift::mcp::listSessions();
+    QCOMPARE(sessions.size(), 1);
+    QCOMPARE(sessions.at(0).port, quint16(4731));
+    QCOMPARE(sessions.at(0).token, QStringLiteral("abc123"));
     drift::mcp::removeSessionFile();
     QVERIFY(!QFile::exists(path));
     qunsetenv("DRIFT_MCP_SESSION_PATH");
@@ -531,10 +536,167 @@ void McpTest::sessionFileRoundTrip()
 void McpTest::sessionFileMissing()
 {
     qputenv("DRIFT_MCP_SESSION_PATH", "/tmp/drift-mcp-does-not-exist-test.json");
+    drift::mcp::SessionInfo attached;
     QString error;
-    QVERIFY(!drift::mcp::readSessionFile(nullptr, nullptr, &error));
+    QVERIFY(!drift::mcp::resolveAttachedSession(&attached, &error));
     QVERIFY(error.contains(QStringLiteral("Agent access")));
     qunsetenv("DRIFT_MCP_SESSION_PATH");
+}
+
+namespace {
+
+void writeRegistryRecord(const QDir &dir, const QString &name, const QJsonObject &record)
+{
+    QFile file(dir.filePath(name));
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write(QJsonDocument(record).toJson(QJsonDocument::Compact));
+}
+
+} // namespace
+
+// Two editors open at once must both stay reachable: each keeps its own record, and the
+// bridge's default is the most recently started one.
+void McpTest::sessionRegistryListsInstancesNewestFirst()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    drift::mcp::SessionInfo mine;
+    mine.port = 4731;
+    mine.token = QStringLiteral("older");
+    mine.startedAt = 1000;
+    mine.project = QStringLiteral("/projects/a.json");
+    QVERIFY(drift::mcp::writeSessionFile(mine));
+    QVERIFY(QFile::exists(dir.filePath(
+        QStringLiteral("%1.json").arg(QCoreApplication::applicationPid()))));
+
+    // Stands in for a second instance; it only has to carry a live pid.
+    writeRegistryRecord(QDir(dir.path()), QStringLiteral("other.json"),
+                        {{QStringLiteral("port"), 4732},
+                         {QStringLiteral("token"), QStringLiteral("newer")},
+                         {QStringLiteral("pid"), QCoreApplication::applicationPid()},
+                         {QStringLiteral("startedAt"), 2000},
+                         {QStringLiteral("headless"), true}});
+
+    const QList<drift::mcp::SessionInfo> sessions = drift::mcp::listSessions();
+    QCOMPARE(sessions.size(), 2);
+    QCOMPARE(sessions.at(0).token, QStringLiteral("newer"));
+    QVERIFY(sessions.at(0).headless);
+    QCOMPARE(sessions.at(1).token, QStringLiteral("older"));
+    QCOMPARE(sessions.at(1).project, QStringLiteral("/projects/a.json"));
+
+    // Stopping one instance leaves the other registered.
+    drift::mcp::removeSessionFile();
+    const QList<drift::mcp::SessionInfo> remaining = drift::mcp::listSessions();
+    QCOMPARE(remaining.size(), 1);
+    QCOMPARE(remaining.at(0).token, QStringLiteral("newer"));
+}
+
+// A bridge stays on the instance it first attached to: a newer editor opening must not
+// take over its next call, while the attached instance's token rotation still reaches it.
+void McpTest::stdioBridgeStaysOnAttachedInstance()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    drift::mcp::SessionInfo mine;
+    mine.port = 4731;
+    mine.token = QStringLiteral("first");
+    mine.startedAt = 1000;
+    mine.projectName = QStringLiteral("Project A");
+    QVERIFY(drift::mcp::writeSessionFile(mine));
+
+    drift::mcp::SessionInfo attached;
+    QString error;
+    QVERIFY(drift::mcp::resolveAttachedSession(&attached, &error));
+    QCOMPARE(attached.port, quint16(4731));
+
+    // A newer instance appears under another live pid...
+    QProcess sleeper;
+    sleeper.start(QStringLiteral("sleep"), {QStringLiteral("30")});
+    if (!sleeper.waitForStarted())
+        QSKIP("needs a `sleep` process to stand in for a second instance");
+    const auto stopSleeper = qScopeGuard([&] {
+        sleeper.kill();
+        sleeper.waitForFinished();
+    });
+    writeRegistryRecord(QDir(dir.path()), QStringLiteral("other.json"),
+                        {{QStringLiteral("port"), 4732},
+                         {QStringLiteral("token"), QStringLiteral("other")},
+                         {QStringLiteral("pid"), sleeper.processId()},
+                         {QStringLiteral("startedAt"), 2000}});
+
+    // ...and the attached one rotates its token.
+    mine.token = QStringLiteral("rotated");
+    QVERIFY(drift::mcp::writeSessionFile(mine));
+
+    QVERIFY(drift::mcp::resolveAttachedSession(&attached, &error));
+    QCOMPARE(attached.port, quint16(4731));
+    QCOMPARE(attached.token, QStringLiteral("rotated"));
+
+    // Once the attached instance turns access off, the bridge reports it instead of
+    // moving to the other one.
+    drift::mcp::removeSessionFile();
+    QVERIFY(!drift::mcp::resolveAttachedSession(&attached, &error));
+    QVERIFY2(error.contains(QStringLiteral("Project A")), qPrintable(error));
+    QVERIFY2(error.contains(QStringLiteral("Agent access is off")), qPrintable(error));
+}
+
+// An instance that crashed never removes its record; it must not shadow a live one.
+void McpTest::sessionRegistryPrunesDeadInstances()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    // Above every platform's pid range.
+    const QString stale = dir.filePath(QStringLiteral("stale.json"));
+    writeRegistryRecord(QDir(dir.path()), QStringLiteral("stale.json"),
+                        {{QStringLiteral("port"), 4733},
+                         {QStringLiteral("token"), QStringLiteral("dead")},
+                         {QStringLiteral("pid"), qint64(1) << 40},
+                         {QStringLiteral("startedAt"), 9999}});
+    // Unreadable records may be mid-write by their owner and are left alone.
+    const QString junk = dir.filePath(QStringLiteral("junk.json"));
+    {
+        QFile file(junk);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("{");
+    }
+
+    QVERIFY(drift::mcp::listSessions().isEmpty());
+    QVERIFY(!QFile::exists(stale));
+    QVERIFY(QFile::exists(junk));
+}
+
+void McpTest::sessionRecordTracksProject()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+
+    state.projectFile()->setProjectName(QStringLiteral("Registry Test"));
+    QList<drift::mcp::SessionInfo> sessions = drift::mcp::listSessions();
+    QCOMPARE(sessions.size(), 1);
+    QCOMPARE(sessions.at(0).port, quint16(state.mcp()->port()));
+    QCOMPARE(sessions.at(0).token, state.mcp()->token());
+    QCOMPARE(sessions.at(0).projectName, QStringLiteral("Registry Test"));
+    QVERIFY(!sessions.at(0).headless);
+    QVERIFY(sessions.at(0).startedAt > 0);
+
+    state.mcp()->setEnabled(false);
+    QVERIFY(drift::mcp::listSessions().isEmpty());
 }
 
 void McpTest::serverRequiresBearerToken()

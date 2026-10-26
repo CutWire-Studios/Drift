@@ -25,6 +25,22 @@ is closed or Agent access is off, each call comes back as a JSON-RPC error and t
 keeps running, so enabling Agent access is enough to make it work — no need to restart the
 client.
 
+### Several instances
+
+Any number of editors (and headless instances) can run at once. The first takes port 4731;
+the rest bind a free port. Each one with Agent access on registers itself with a file in
+`$XDG_RUNTIME_DIR/drift/mcp-sessions/<pid>.json` (the temp directory where there is no
+runtime directory; `DRIFT_MCP_SESSION_DIR` moves it) holding its port, token, pid, start
+time, whether it is headless, and the open project's path and name. The file is
+owner-only, rewritten when the token rotates or the project changes, and removed when
+Agent access is turned off. Records left by a process that has died are ignored and
+deleted the next time anything reads the registry.
+
+A stdio bridge attaches to the most recently started instance and then stays on it for
+the rest of its life, following its token rotations. Opening another editor never takes
+over a bridge's next call; if its instance turns Agent access off or closes, each call
+fails with a message naming it until access returns or the client restarts the bridge.
+
 ## Headless
 
 `drift --headless` runs the editor with no window and serves MCP itself, for servers and
@@ -53,8 +69,8 @@ stdio is a transport, where it goes to stderr instead: the spec allows nothing b
 messages on stdout, and a banner there is exactly what breaks clients.
 
 Without `--mcp-token` (or `$DRIFT_MCP_TOKEN`) a token is generated and shown in the
-banner. Only the HTTP form writes the session file that `--mcp-stdio` reads, so a headless
-instance serving stdio never disturbs a GUI editor running alongside it.
+banner. Only the HTTP form registers a session file for `--mcp-stdio` to find, so a
+headless instance serving only stdio stays out of the registry.
 
 Both forms shut down on SIGINT (Ctrl-C) and SIGTERM.
 

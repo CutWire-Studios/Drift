@@ -173,9 +173,10 @@ int runStdioAttach()
     // that spawned us before the editor was up, or before Agent access was switched on,
     // gets a working bridge as soon as the user gets there. stderr only — the spec lets
     // nothing but MCP messages onto stdout.
+    SessionInfo attached;
     {
         QString error;
-        if (!readSessionFile(nullptr, nullptr, &error))
+        if (!resolveAttachedSession(&attached, &error))
             fprintf(stderr, "%s\n", qPrintable(error));
     }
 
@@ -189,10 +190,8 @@ int runStdioAttach()
         // Re-read per request rather than once at startup: the token rotates every time
         // Agent access is toggled, and the old bridge died with HTTP 401 for the rest of
         // its life the first time that happened.
-        quint16 port = 0;
-        QString token;
         QString error;
-        if (!readSessionFile(&port, &token, &error)) {
+        if (!resolveAttachedSession(&attached, &error)) {
             fprintf(stderr, "%s\n", qPrintable(error));
             writeRpcError(id, -32000, error);
             continue;
@@ -200,7 +199,8 @@ int runStdioAttach()
 
         QString postError;
         int status = 0;
-        const QByteArray reply = postJson(port, token, message, &postError, &status);
+        const QByteArray reply =
+            postJson(attached.port, attached.token, message, &postError, &status);
         if (!postError.isEmpty() && reply.isEmpty()) {
             fprintf(stderr, "%s\n", qPrintable(postError));
             writeRpcError(id, -32000, postError);
