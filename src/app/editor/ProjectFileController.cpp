@@ -3,6 +3,7 @@
 #include "app/editor/AppController.h"
 
 #include "app/bin/AssetLibrary.h"
+#include "app/platform/RunningInstances.h"
 #include "core/interchange/EdlReader.h"
 #include "core/project/media/ImageSequence.h"
 #include "core/interchange/KdenliveReader.h"
@@ -29,6 +30,7 @@
 #include <QFutureWatcher>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QLockFile>
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QSettings>
@@ -71,7 +73,8 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
     m_autosaveTimer->start(kAutosaveIntervalMs);
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
         // Remember the open project so opt-in reopen can load a clean .drift next launch.
-        QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
+        if (!m_isolatedSession)
+            QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
         if (m_dirty)
             writeRecoveryFile(true);
         else
@@ -116,6 +119,20 @@ void ProjectFileController::sweepExtractionDirs()
     const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (base.isEmpty())
         return;
+
+    // Liveness below comes from this process's recents and the one recovery file, which say
+    // nothing about another Drift running beside it: an unsaved session there, or an isolated
+    // one an agent launched (it writes neither), has media under projects/ that only it knows
+    // about. With anyone else running, nothing that might be theirs is reclaimed.
+    //
+    // The startup lock is held from registering until the last deletion below: a peer
+    // starting meanwhile waits at it in its own constructor — for as long as it takes, since
+    // carrying on early is exactly the overlap this prevents — before it registers or opens
+    // anything. So it cannot be extracting media into projects/ while this sweep removes
+    // dirs, and once through it sees this instance and holds back its own sweep.
+    const auto startupLock = drift::instances::lockStartup();
+    drift::instances::registerThisInstance();
+    const bool othersRunning = !startupLock || drift::instances::otherInstanceRunning();
 
     QSet<QString> live;
     QSet<QString> liveFiles; // files outside any bundle that a known project still points at
@@ -180,7 +197,7 @@ void ProjectFileController::sweepExtractionDirs()
     // after a reboot, say) may still reference media under projects, so nothing is reclaimed
     // until every recent can be read.
     QDir root(QDir(base).filePath(QStringLiteral("projects")));
-    if (root.exists() && !unreadableRecent) {
+    if (root.exists() && !unreadableRecent && !othersRunning) {
         const QFileInfoList dirs = root.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (const QFileInfo &dir : dirs) {
             if (!live.contains(dir.fileName()))
@@ -199,7 +216,7 @@ void ProjectFileController::sweepExtractionDirs()
         for (const QFileInfo &file : files) {
             const bool analysis = file.fileName().endsWith(QLatin1String(".trf"));
             if (analysis ? file.lastModified() < staleBefore
-                         : !liveFiles.contains(file.absoluteFilePath()))
+                         : !othersRunning && !liveFiles.contains(file.absoluteFilePath()))
                 QFile::remove(file.absoluteFilePath());
         }
     }
@@ -220,7 +237,7 @@ void ProjectFileController::sweepExtractionDirs()
     const QString derivedDirs[] = {drift::matteCacheDir(), drift::faceTrackCacheDir(),
                                    drift::denoiseCacheDir()};
     for (const QString &dirPath : derivedDirs) {
-        if (dirPath.isEmpty())
+        if (dirPath.isEmpty() || othersRunning)
             continue;
         const QFileInfoList files = QDir(dirPath).entryInfoList(QDir::Files);
         for (const QFileInfo &file : files) {
@@ -1636,7 +1653,7 @@ QVariantList ProjectFileController::recentProjects() const
 
 void ProjectFileController::addRecentProject(const QString &path)
 {
-    if (path.isEmpty())
+    if (path.isEmpty() || m_isolatedSession)
         return;
     QSettings settings;
     QStringList paths = settings.value(QStringLiteral("recentProjects")).toStringList();
@@ -1681,7 +1698,8 @@ void ProjectFileController::setCurrentProjectPath(const QString &path)
         return;
     m_currentProjectPath = path;
     // Cleared by newProject(); set after load/save/package so next launch can reopen.
-    QSettings().setValue(QStringLiteral("lastSessionPath"), path);
+    if (!m_isolatedSession)
+        QSettings().setValue(QStringLiteral("lastSessionPath"), path);
     emit currentProjectPathChanged();
 }
 
@@ -1697,7 +1715,8 @@ void ProjectFileController::flushRecoverySnapshot()
 {
     // Same two things aboutToQuit does, because on Android it never runs: without the settings
     // write, "reopen last project at startup" also silently never has a path to reopen.
-    QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
+    if (!m_isolatedSession)
+        QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
     if (m_dirty)
         writeRecoveryFile();
 }
@@ -1738,6 +1757,10 @@ void promoteRecoveryTemp(const QString &tmpPath, const QString &path)
 
 void ProjectFileController::writeRecoveryFile(bool synchronous)
 {
+    // There is one recovery file per user: an isolated instance writing it would replace
+    // the snapshot of the user's own unsaved work.
+    if (m_isolatedSession)
+        return;
     const QString path = recoveryFilePath();
     QDir().mkpath(QFileInfo(path).absolutePath());
 
@@ -1782,7 +1805,7 @@ void ProjectFileController::deleteRecoveryFile()
 {
     ++m_recoveryGeneration;
     const QString path = recoveryFilePath();
-    if (QFile::exists(path))
+    if (!m_isolatedSession && QFile::exists(path))
         QFile::remove(path);
     if (m_recoveryAvailable) {
         m_recoveryAvailable = false;
@@ -1793,6 +1816,8 @@ void ProjectFileController::deleteRecoveryFile()
 
 void ProjectFileController::detectRecoveryFile()
 {
+    if (m_isolatedSession)
+        return;
     const QString path = recoveryFilePath();
     QFile file(path);
     if (!file.exists() || !file.open(QIODevice::ReadOnly))
@@ -1842,9 +1867,21 @@ void ProjectFileController::discardAutosave()
     m_app->setLastMessage(tr("Started new session"));
 }
 
+void ProjectFileController::setIsolatedSession(bool isolated)
+{
+    m_isolatedSession = isolated;
+    // AppController's constructor already looked for the user's recovery file; an isolated
+    // instance must not offer it.
+    if (isolated && m_recoveryAvailable) {
+        m_recoveryAvailable = false;
+        m_recoveryInfo.clear();
+        emit recoveryChanged();
+    }
+}
+
 bool ProjectFileController::restoreLastSessionIfEnabled()
 {
-    if (!m_app->m_preferences->reopenLastProject())
+    if (m_isolatedSession || !m_app->m_preferences->reopenLastProject())
         return false;
 
     // Unsaved (or crashed) session takes priority over the last clean .drift path.

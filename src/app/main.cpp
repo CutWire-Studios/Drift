@@ -508,7 +508,14 @@ int main(int argc, char *argv[])
             QCoreApplication app(argc, argv);
             QCoreApplication::setApplicationName("CutWire Drift");
             QCoreApplication::setOrganizationName("CutWire Drift");
-            return drift::mcp::runStdioAttach();
+            // --mcp-instance <pid> pins the bridge to one instance from its config, for a
+            // client that must always edit the same editor.
+            qint64 pinnedPid = 0;
+            for (int j = 1; j + 1 < argc; ++j) {
+                if (qstrcmp(argv[j], "--mcp-instance") == 0)
+                    pinnedPid = QByteArray(argv[j + 1]).toLongLong();
+            }
+            return drift::mcp::runStdioAttach(pinnedPid);
         }
     }
 #endif
@@ -750,6 +757,14 @@ int main(int argc, char *argv[])
             forwarded.append(arg);
         }
         editorState.projectFile()->queueExternalProject(ProjectFileController::startupProjectUrlFromArguments(forwarded));
+        // launch_instance starts an editor this way: kept off the user's session state, and
+        // Agent access on for this run only, leaving "Start agent on startup" as it was.
+        // Isolation first: enabling access publishes the session record, which reports
+        // whether the startup project is still loading.
+        if (args.contains(QStringLiteral("--isolated-session")))
+            editorState.projectFile()->setIsolatedSession(true);
+        if (args.contains(QStringLiteral("--agent-access")))
+            editorState.mcp()->setEnabled(true);
     }
 
     QQmlApplicationEngine engine;

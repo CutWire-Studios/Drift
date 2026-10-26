@@ -8,9 +8,11 @@
 #include "core/animation/Easing.h"
 #include "core/animation/EasingPresetStore.h"
 #include "app/editor/AppController.h"
+#include "app/editor/ProjectFileController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/bin/MediaBinController.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
@@ -809,6 +811,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opSetMetadata(args);
     if (tool == QLatin1String("save_project"))
         return opSaveProject(args);
+    if (tool == QLatin1String("quit_instance"))
+        return opQuitInstance(args);
     if (tool == QLatin1String("list_export_options"))
         return opListExportOptions();
     if (tool == QLatin1String("export_video"))
@@ -1840,6 +1844,33 @@ QJsonObject McpDispatcher::opSaveProject(const QJsonObject &args)
     else
         m_controller->projectFile()->saveProject(QUrl::fromLocalFile(path));
     return ok({{QStringLiteral("path"), path}});
+}
+
+QJsonObject McpDispatcher::opQuitInstance(const QJsonObject &args)
+{
+    ProjectFileController *project = m_controller->projectFile();
+    // Never the user's own editor: only an instance an agent launched is the agent's to end,
+    // whichever transport the request came in on.
+    if (!project->isolatedSession()) {
+        return err("not_isolated",
+                   QStringLiteral("Only an instance started by launch_instance can be closed this way"));
+    }
+    if (project->packaging() || project->projectLoadPending())
+        return err("busy", QStringLiteral("A save or load is still running; try again once it finishes"));
+    if (project->hasUnsavedChanges()) {
+        if (!args.value(QStringLiteral("discard")).toBool()) {
+            return err("unsaved_changes",
+                       QStringLiteral("The project has unsaved changes: save_project first, or pass "
+                                      "discard:true to lose them"));
+        }
+        // The discard is authorized here, so nothing downstream may ask again: where quitting
+        // closes the windows first, the editor's close handler would otherwise stop at its
+        // unsaved-changes prompt with nobody there to answer it.
+        project->discardUnsavedChanges();
+    }
+    // Deferred so this reply is written before the server shuts down with the application.
+    QTimer::singleShot(250, qApp, &QCoreApplication::quit);
+    return ok({{QStringLiteral("quitting"), true}});
 }
 
 QJsonObject McpDispatcher::opListExportOptions() const

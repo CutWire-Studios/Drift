@@ -99,6 +99,7 @@ private:
     QJsonObject opSetBackground(const QJsonObject &args);
     QJsonObject opSetMetadata(const QJsonObject &args);
     QJsonObject opSaveProject(const QJsonObject &args);
+    QJsonObject opQuitInstance(const QJsonObject &args);
     QJsonObject opListExportOptions() const;
     QJsonObject opExportVideo(const QJsonObject &args);
     QJsonObject opExportStatus() const;
