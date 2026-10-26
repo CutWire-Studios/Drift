@@ -17,7 +17,8 @@ QByteArray readStdioMessage(std::FILE *in);
 void writeStdioMessage(std::FILE *out, const QByteArray &json);
 
 // Attach to a running Drift MCP server over stdio. Returns a process exit code.
-// Does not start the GUI. See runHeadless() for the no-editor case.
-int runStdioAttach();
+// Does not start the GUI. See runHeadless() for the no-editor case. pinnedPid
+// (--mcp-instance) fixes the instance up front; 0 leaves the choice to StdioBridge.
+int runStdioAttach(qint64 pinnedPid = 0);
 
 } // namespace drift::mcp

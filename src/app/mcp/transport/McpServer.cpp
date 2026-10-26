@@ -1,13 +1,16 @@
 #include "app/mcp/transport/McpServer.h"
+#include "app/editor/AppController.h"
+#include "app/editor/ProjectFileController.h"
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/tools/McpDispatcher.h"
 #include "app/mcp/transport/McpHttp.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/protocol/McpProtocol.h"
 
-#include <QElapsedTimer>
 #include "app/mcp/protocol/McpSession.h"
 
+#include <QDateTime>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QMetaObject>
 #include <QRandomGenerator>
@@ -22,6 +25,24 @@ McpServer::McpServer(AppController *controller, QObject *parent)
     , m_controller(controller)
     , m_dispatcher(std::make_unique<McpDispatcher>(controller))
 {
+    // The registry names each instance's project so an agent can pick the right editor;
+    // that is only useful while it tracks what is actually open.
+    if (ProjectFileController *project = controller ? controller->projectFile() : nullptr) {
+        const auto republish = [this]() {
+            if (m_wroteSessionFile)
+                publishSession();
+        };
+        connect(project, &ProjectFileController::currentProjectPathChanged, this, republish);
+        connect(project, &ProjectFileController::projectNameChanged, this, republish);
+        connect(project, &ProjectFileController::projectLoadPendingChanged, this, republish);
+        connect(project, &ProjectFileController::projectLoadFinished, this,
+                [this, republish](bool ok, const QString &message) {
+                    m_hasLoaded = true;
+                    m_loadOk = ok;
+                    m_loadMessage = message;
+                    republish();
+                });
+    }
 }
 
 McpServer::~McpServer()
@@ -98,7 +119,7 @@ void McpServer::rotateToken()
     QMetaObject::invokeMethod(
         m_http, [this, token]() { m_http->setToken(token); }, Qt::BlockingQueuedConnection);
     if (m_wroteSessionFile)
-        writeSessionFile(m_port, m_token);
+        publishSession();
     emit tokenChanged();
 }
 
@@ -163,7 +184,8 @@ bool McpServer::start()
         return false;
     }
     m_port = port;
-    m_wroteSessionFile = writeSessionFile(port, m_token);
+    m_startedAt = QDateTime::currentMSecsSinceEpoch();
+    m_wroteSessionFile = publishSession();
     m_running = true;
     emit runningChanged();
     return true;
@@ -198,6 +220,25 @@ void McpServer::stop()
     m_token.clear();
     if (wasRunning)
         emit runningChanged();
+}
+
+bool McpServer::publishSession()
+{
+    SessionInfo info;
+    info.port = m_port;
+    info.token = m_token;
+    info.startedAt = m_startedAt;
+    info.headless = m_headless;
+    if (ProjectFileController *project = m_controller ? m_controller->projectFile() : nullptr) {
+        info.project = project->currentProjectPath();
+        info.projectName = project->projectName();
+        info.loading = project->projectLoadPending() || project->startupProjectQueued();
+        info.isolated = project->isolatedSession();
+    }
+    info.hasLoaded = m_hasLoaded;
+    info.loadOk = m_loadOk;
+    info.loadMessage = m_loadMessage;
+    return writeSessionFile(info);
 }
 
 QJsonValue McpServer::handleRpc(const QString &toolbox, const QJsonValue &body)

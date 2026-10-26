@@ -1,11 +1,9 @@
 #include "app/mcp/transport/McpStdio.h"
 #include "app/mcp/protocol/McpSession.h"
+#include "app/mcp/transport/McpBridge.h"
 
 #include <QByteArray>
 #include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
-#include <QTcpSocket>
 
 #include <cstdio>
 
@@ -16,80 +14,6 @@
 
 namespace drift::mcp {
 namespace {
-
-// The id to echo on a reply. Undefined means there is nobody to reply to — a
-// notification, or a batch whose failures cannot be attributed to one request.
-QJsonValue requestId(const QByteArray &message)
-{
-    const QJsonDocument doc = QJsonDocument::fromJson(message);
-    if (!doc.isObject())
-        return QJsonValue::Undefined;
-    return doc.object().value(QStringLiteral("id"));
-}
-
-void writeRpcError(const QJsonValue &id, int code, const QString &message)
-{
-    // JSON-RPC forbids responding to a notification, and a client cannot match an
-    // id-less error to anything it is waiting on. stderr already carried the reason.
-    if (id.isUndefined())
-        return;
-
-    const QJsonObject body{
-        {QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
-        {QStringLiteral("id"), id},
-        {QStringLiteral("error"),
-         QJsonObject{{QStringLiteral("code"), code}, {QStringLiteral("message"), message}}},
-    };
-    writeStdioMessage(stdout, QJsonDocument(body).toJson(QJsonDocument::Compact));
-}
-
-int httpStatus(const QByteArray &response)
-{
-    const int nl = response.indexOf('\n');
-    const QByteArray line = nl < 0 ? response : response.left(nl);
-    const auto parts = line.split(' ');
-    return parts.size() >= 2 ? parts.at(1).toInt() : 0;
-}
-
-QByteArray postJson(quint16 port, const QString &token, const QByteArray &body, QString *error,
-                    int *statusOut)
-{
-    QTcpSocket socket;
-    socket.connectToHost(QStringLiteral("127.0.0.1"), port);
-    if (!socket.waitForConnected(2000)) {
-        if (error)
-            *error = QStringLiteral(
-                "Could not connect to Drift. Is the editor open with Agent access enabled?");
-        return {};
-    }
-
-    QByteArray req;
-    req += "POST /mcp HTTP/1.1\r\n";
-    req += "Host: 127.0.0.1\r\n";
-    req += "Content-Type: application/json\r\n";
-    req += "Authorization: Bearer ";
-    req += token.toUtf8();
-    req += "\r\nContent-Length: ";
-    req += QByteArray::number(body.size());
-    req += "\r\nConnection: close\r\n\r\n";
-    req += body;
-    socket.write(req);
-    socket.waitForBytesWritten(2000);
-
-    QByteArray response;
-    while (socket.waitForReadyRead(15000) || socket.bytesAvailable() > 0)
-        response += socket.readAll();
-
-    const int sep = response.indexOf("\r\n\r\n");
-    if (sep < 0) {
-        if (error)
-            *error = QStringLiteral("Empty response from Drift MCP.");
-        return {};
-    }
-    if (statusOut)
-        *statusOut = httpStatus(response);
-    return response.mid(sep + 4);
-}
 
 // The body of a Content-Length framed message, once its header block has been read.
 QByteArray readBody(std::FILE *in, int length)
@@ -162,20 +86,23 @@ void writeStdioMessage(std::FILE *out, const QByteArray &json)
     std::fflush(out);
 }
 
-int runStdioAttach()
+int runStdioAttach(qint64 pinnedPid)
 {
 #ifdef Q_OS_WIN
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
+    StdioBridge bridge(pinnedPid);
+
     // Say why up front for whoever ran this in a terminal, but keep serving: a client
     // that spawned us before the editor was up, or before Agent access was switched on,
     // gets a working bridge as soon as the user gets there. stderr only — the spec lets
     // nothing but MCP messages onto stdout.
     {
+        SessionInfo probe = bridge.attached();
         QString error;
-        if (!readSessionFile(nullptr, nullptr, &error))
+        if (!resolveAttachedSession(&probe, &error))
             fprintf(stderr, "%s\n", qPrintable(error));
     }
 
@@ -184,40 +111,12 @@ int runStdioAttach()
         if (message.isEmpty())
             return 0; // stdin closed
 
-        const QJsonValue id = requestId(message);
-
-        // Re-read per request rather than once at startup: the token rotates every time
-        // Agent access is toggled, and the old bridge died with HTTP 401 for the rest of
-        // its life the first time that happened.
-        quint16 port = 0;
-        QString token;
-        QString error;
-        if (!readSessionFile(&port, &token, &error)) {
-            fprintf(stderr, "%s\n", qPrintable(error));
-            writeRpcError(id, -32000, error);
-            continue;
-        }
-
-        QString postError;
-        int status = 0;
-        const QByteArray reply = postJson(port, token, message, &postError, &status);
-        if (!postError.isEmpty() && reply.isEmpty()) {
-            fprintf(stderr, "%s\n", qPrintable(postError));
-            writeRpcError(id, -32000, postError);
-            continue;
-        }
-        if (status > 0 && (status < 200 || status >= 300)) {
-            const QString msg = QStringLiteral("Drift MCP HTTP %1").arg(status);
-            fprintf(stderr, "%s\n", qPrintable(msg));
-            writeRpcError(id, -32000, msg);
-            continue;
-        }
-        // JSON-RPC notifications (no id) must not get a response. The HTTP server
-        // answers those with 202 and an empty body — forwarding that would break
-        // stdio clients after `notifications/initialized`.
-        if (status == 202 || reply.trimmed().isEmpty())
-            continue;
-        writeStdioMessage(stdout, reply);
+        // The session registry is re-read per request rather than once at startup: the
+        // token rotates every time Agent access is toggled, and the old bridge died with
+        // HTTP 401 for the rest of its life the first time that happened.
+        const QByteArray reply = bridge.handle(message);
+        if (!reply.isEmpty())
+            writeStdioMessage(stdout, reply);
     }
 }
 

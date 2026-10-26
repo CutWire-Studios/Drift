@@ -867,6 +867,14 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("title"), stringProp(QStringLiteral("Project title"))},
                         {QStringLiteral("author"), stringProp(QStringLiteral("Author name"))},
                         {QStringLiteral("description"), stringProp(QStringLiteral("Project description"))}}) },
+        { "quit_instance", "project", "Quit an agent-launched instance",
+          "Quit this Drift process. Only an instance started by launch_instance (an isolated "
+          "session) accepts it; the user's own editor answers not_isolated. Refuses busy while a "
+          "save or load is running, and unsaved_changes when inspect.dirty is true unless "
+          "discard:true. Through the stdio bridge, use close_instance({id}) instead.",
+          objectSchema({{QStringLiteral("discard"),
+                         boolProp(QStringLiteral("Quit even with unsaved changes, losing them"))}}),
+          false, true },
         { "save_project", "project", "Save the project file",
           "Save the open project. With path omitted, saves to the current project path (inspect.path); "
           "fails bad_args when the project has never been saved. With path given, writes a .drift "
@@ -1182,7 +1190,8 @@ QStringList undoExemptOps()
         QStringLiteral("set_overlap"),         QStringLiteral("set_ripple"),
         QStringLiteral("set_snap"),            QStringLiteral("set_loop_work_area"),
         QStringLiteral("export_video"),
-        QStringLiteral("save_project"),        QStringLiteral("set_theme"),        QStringLiteral("set_preview_view"),
+        QStringLiteral("save_project"),        QStringLiteral("quit_instance"),
+        QStringLiteral("set_theme"),        QStringLiteral("set_preview_view"),
         QStringLiteral("set_shortcut"),        QStringLiteral("reset_shortcuts"),
         QStringLiteral("export_theme"),        QStringLiteral("import_theme"),
         QStringLiteral("select_theme"),

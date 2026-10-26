@@ -34,6 +34,8 @@ public:
     // the defaults: the token persisted in QSettings (generated on first start) on port 4731.
     void setToken(const QString &token) { m_fixedToken = token; }
     void setPort(quint16 port) { m_requestedPort = port; }
+    // Recorded in the session registry so a bridge can tell a headless worker from an editor.
+    void setHeadless(bool headless) { m_headless = headless; }
 
     // Replaces the persisted token, live if the server is running. Every assistant set up
     // with the old one has to be re-pointed; that is the point.
@@ -54,6 +56,7 @@ signals:
 private:
     QString makeToken() const;
     QString persistedToken() const;
+    bool publishSession();
     int m_callSeq = 0;
     QJsonObject dispatchTool(const QString &name, const QJsonObject &args);
 
@@ -66,6 +69,12 @@ private:
     QString m_error;
     quint16 m_port = 0;
     quint16 m_requestedPort = 4731;
+    qint64 m_startedAt = 0;
+    bool m_headless = false;
+    // The last project load to finish, for the session record (launch_instance waits on it).
+    bool m_hasLoaded = false;
+    bool m_loadOk = false;
+    QString m_loadMessage;
     // stop() must not delete a session file this server never wrote: a headless instance
     // serving only stdio would otherwise unregister a GUI editor running alongside it.
     bool m_wroteSessionFile = false;
