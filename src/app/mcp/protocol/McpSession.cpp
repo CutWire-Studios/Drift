@@ -1,4 +1,5 @@
 #include "app/mcp/protocol/McpSession.h"
+#include "app/platform/RunningInstances.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -10,17 +11,6 @@
 #include <QStandardPaths>
 
 #include <algorithm>
-#include <limits>
-
-#ifdef Q_OS_WIN
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#else
-#include <cerrno>
-#include <signal.h>
-#endif
 
 namespace drift::mcp {
 namespace {
@@ -38,24 +28,6 @@ QString pinnedSessionPath()
     return qEnvironmentVariable("DRIFT_MCP_SESSION_PATH");
 }
 
-bool processAlive(qint64 pid)
-{
-    // Out of range would truncate, and kill(0, 0) probes our own process group.
-    if (pid <= 0 || pid > std::numeric_limits<qint32>::max())
-        return false;
-#ifdef Q_OS_WIN
-    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, DWORD(pid));
-    if (!process)
-        return GetLastError() == ERROR_ACCESS_DENIED;
-    DWORD code = 0;
-    const bool alive = GetExitCodeProcess(process, &code) && code == STILL_ACTIVE;
-    CloseHandle(process);
-    return alive;
-#else
-    // EPERM: it exists but belongs to someone else, which still means the pid is taken.
-    return ::kill(pid_t(pid), 0) == 0 || errno == EPERM;
-#endif
-}
 
 bool parseSession(const QString &path, SessionInfo *info)
 {
@@ -77,6 +49,11 @@ bool parseSession(const QString &path, SessionInfo *info)
     info->headless = o.value(QStringLiteral("headless")).toBool();
     info->project = o.value(QStringLiteral("project")).toString();
     info->projectName = o.value(QStringLiteral("projectName")).toString();
+    info->loading = o.value(QStringLiteral("loading")).toBool();
+    const QJsonObject lastLoad = o.value(QStringLiteral("lastLoad")).toObject();
+    info->hasLoaded = !lastLoad.isEmpty();
+    info->loadOk = lastLoad.value(QStringLiteral("ok")).toBool();
+    info->loadMessage = lastLoad.value(QStringLiteral("message")).toString();
     info->file = path;
     return true;
 }
@@ -116,7 +93,7 @@ bool writeSessionFile(const SessionInfo &info)
                                        | QFileDevice::ExeOwner);
     }
 
-    const QJsonObject body{
+    QJsonObject body{
         {QStringLiteral("port"), static_cast<int>(info.port)},
         {QStringLiteral("url"), QStringLiteral("http://127.0.0.1:%1/mcp").arg(info.port)},
         {QStringLiteral("token"), info.token},
@@ -125,7 +102,13 @@ bool writeSessionFile(const SessionInfo &info)
         {QStringLiteral("headless"), info.headless},
         {QStringLiteral("project"), info.project},
         {QStringLiteral("projectName"), info.projectName},
+        {QStringLiteral("loading"), info.loading},
     };
+    if (info.hasLoaded) {
+        body.insert(QStringLiteral("lastLoad"),
+                    QJsonObject{{QStringLiteral("ok"), info.loadOk},
+                                {QStringLiteral("message"), info.loadMessage}});
+    }
 
     // Rewritten on every token rotation and project switch while bridges may be reading
     // it, so it is replaced whole rather than truncated in place.
@@ -151,7 +134,7 @@ QList<SessionInfo> listSessions()
     const QString pinned = pinnedSessionPath();
     if (!pinned.isEmpty()) {
         SessionInfo info;
-        if (parseSession(pinned, &info) && processAlive(info.pid))
+        if (parseSession(pinned, &info) && drift::instances::processAlive(info.pid))
             sessions.append(info);
         return sessions;
     }
@@ -163,7 +146,7 @@ QList<SessionInfo> listSessions()
         SessionInfo info;
         if (!parseSession(path, &info))
             continue; // possibly mid-write by its owner; never delete what we cannot read
-        if (!processAlive(info.pid)) {
+        if (!drift::instances::processAlive(info.pid)) {
             QFile::remove(path);
             continue;
         }
@@ -175,19 +158,40 @@ QList<SessionInfo> listSessions()
     return sessions;
 }
 
+QString describeSession(const SessionInfo &session)
+{
+    QString text = QString::number(session.pid);
+    if (!session.projectName.isEmpty())
+        text += QStringLiteral(" \"%1\"").arg(session.projectName);
+    if (session.headless)
+        text += QStringLiteral(" (headless)");
+    return text;
+}
+
 bool resolveAttachedSession(SessionInfo *attached, QString *error)
 {
     const QList<SessionInfo> sessions = listSessions();
     if (attached->pid == 0) {
-        if (sessions.isEmpty()) {
-            if (error) {
-                *error = QStringLiteral(
-                    "Drift MCP is off. Open Drift and enable Agent access in Settings.");
-            }
-            return false;
+        if (sessions.size() == 1) {
+            *attached = sessions.first();
+            return true;
         }
-        *attached = sessions.first();
-        return true;
+        if (!error)
+            return false;
+        if (sessions.isEmpty()) {
+            *error = QStringLiteral(
+                "Drift MCP is off. Open Drift and enable Agent access in Settings, or call "
+                "launch_instance to start a new instance.");
+        } else {
+            QStringList list;
+            for (const SessionInfo &session : sessions)
+                list.append(describeSession(session));
+            *error = QStringLiteral("%1 Drift instances are running; pick one with "
+                                    "use_instance({id}) before editing: %2.")
+                         .arg(sessions.size())
+                         .arg(list.join(QStringLiteral(", ")));
+        }
+        return false;
     }
 
     for (const SessionInfo &session : sessions) {
@@ -200,12 +204,12 @@ bool resolveAttachedSession(SessionInfo *attached, QString *error)
         const QString which = attached->projectName.isEmpty()
             ? QStringLiteral("pid %1").arg(attached->pid)
             : QStringLiteral("\"%1\", pid %2").arg(attached->projectName).arg(attached->pid);
-        *error = processAlive(attached->pid)
+        *error = drift::instances::processAlive(attached->pid)
             ? QStringLiteral("Agent access is off in the Drift instance this bridge is attached "
-                             "to (%1). Enable it there again to continue.")
+                             "to (%1). Enable it there again, or switch with use_instance({id}).")
                   .arg(which)
             : QStringLiteral("The Drift instance this bridge was attached to (%1) has closed. "
-                             "Restart the MCP client to attach to another instance.")
+                             "instances() lists the others; use_instance({id}) attaches to one.")
                   .arg(which);
     }
     return false;

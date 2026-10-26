@@ -34,6 +34,14 @@ McpServer::McpServer(AppController *controller, QObject *parent)
         };
         connect(project, &ProjectFileController::currentProjectPathChanged, this, republish);
         connect(project, &ProjectFileController::projectNameChanged, this, republish);
+        connect(project, &ProjectFileController::projectLoadPendingChanged, this, republish);
+        connect(project, &ProjectFileController::projectLoadFinished, this,
+                [this, republish](bool ok, const QString &message) {
+                    m_hasLoaded = true;
+                    m_loadOk = ok;
+                    m_loadMessage = message;
+                    republish();
+                });
     }
 }
 
@@ -224,7 +232,11 @@ bool McpServer::publishSession()
     if (ProjectFileController *project = m_controller ? m_controller->projectFile() : nullptr) {
         info.project = project->currentProjectPath();
         info.projectName = project->projectName();
+        info.loading = project->projectLoadPending() || project->startupProjectQueued();
     }
+    info.hasLoaded = m_hasLoaded;
+    info.loadOk = m_loadOk;
+    info.loadMessage = m_loadMessage;
     return writeSessionFile(info);
 }
 

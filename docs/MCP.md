@@ -36,10 +36,35 @@ owner-only, rewritten when the token rotates or the project changes, and removed
 Agent access is turned off. Records left by a process that has died are ignored and
 deleted the next time anything reads the registry.
 
-A stdio bridge attaches to the most recently started instance and then stays on it for
-the rest of its life, following its token rotations. Opening another editor never takes
-over a bridge's next call; if its instance turns Agent access off or closes, each call
-fails with a message naming it until access returns or the client restarts the bridge.
+The stdio bridge adds three tools of its own to the homepage, and answers `initialize`,
+`ping` and `tools/list` itself, so they work before any editor is reachable:
+
+| Tool | Does |
+| --- | --- |
+| `instances()` | Lists running instances: `id` (pid), `name` (project name), `project` (path, when saved), `headless`, `url`, `started`, `attached`. Never the token |
+| `use_instance({id})` | Attaches to that instance; every later call goes to it |
+| `launch_instance({project?, headless?, wait?})` | Starts a new Drift with Agent access on and attaches to it once it is up **and** the requested project has finished opening (up to `wait` seconds, default 60). A failed open comes back as `load_failed` with the reason, still attached to the instance. A window by default; `headless:true` runs `--headless --mcp-port 4731` instead, which keeps running until it is stopped |
+
+Launched instances run with `--isolated-session` (the GUI also gets `--agent-access`, which
+turns Agent access on for that run only). An isolated instance shares the user's settings
+but not their session: it never reopens the last project or offers crash recovery, opens
+straight into the editor without the start screen, and does not write the recovery file,
+`lastSessionPath` or the recent-projects list, so the user's own editor reopens exactly what
+it would have otherwise.
+
+Every instance, with Agent access or without, also leaves a marker in
+`<AppData>/instances/<pid>` while it runs. The startup sweep that reclaims unpacked project
+media under `<AppData>/projects` only knows what this instance's recents and the recovery
+file name, so it holds back entirely while any other instance is alive.
+
+With exactly one instance running, the bridge attaches to it on the first call. With
+several it refuses to guess: tool calls come back `no_instance` with the list until
+`use_instance` picks one. `drift --mcp-stdio --mcp-instance <pid>` pins it up front.
+
+Once attached, a bridge stays on that instance and follows its token rotations. Opening
+another editor never takes over its next call; if the instance turns Agent access off or
+closes, calls fail with a message naming it until access returns or `use_instance` moves
+the bridge elsewhere.
 
 ## Headless
 

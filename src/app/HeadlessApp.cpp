@@ -107,6 +107,7 @@ int runHeadless(int argc, char *argv[])
     quint16 httpPort = 0;
     QString httpToken;
     bool stdioRequested = false;
+    bool isolated = false;
     QStringList positional;
     for (int i = 1; i < argc; ++i) {
         const QByteArray arg(argv[i]);
@@ -116,6 +117,8 @@ int runHeadless(int argc, char *argv[])
             httpPort = QByteArray(argv[++i]).toUShort();
         } else if (arg == "--mcp-token" && i + 1 < argc) {
             httpToken = QString::fromLocal8Bit(argv[++i]);
+        } else if (arg == "--isolated-session") {
+            isolated = true;
         } else if (!arg.startsWith('-')) {
             positional.append(QString::fromLocal8Bit(arg));
         }
@@ -158,6 +161,7 @@ int runHeadless(int argc, char *argv[])
     // consumeStartupProject() is the hook the QML window normally calls once it is up;
     // here there is no window to wait for. Only positional arguments are considered, so
     // the value of --mcp-port is not mistaken for a project path.
+    editorState.projectFile()->setIsolatedSession(isolated);
     positional.prepend(app.arguments().value(0));
     editorState.projectFile()->queueExternalProject(ProjectFileController::startupProjectUrlFromArguments(positional));
     editorState.projectFile()->consumeStartupProject();

@@ -47,6 +47,11 @@ class ProjectFileController : public QObject
     Q_PROPERTY(bool recoveryAvailable READ recoveryAvailable NOTIFY recoveryChanged)
     Q_PROPERTY(QVariantMap recoveryInfo READ recoveryInfo NOTIFY recoveryChanged)
     Q_PROPERTY(QVariantList recentProjects READ recentProjects NOTIFY recentProjectsChanged)
+    // An instance an agent launched next to the user's editor (--isolated-session). It must
+    // not restore or prompt for the user's last session, and must leave the per-user state
+    // that session relies on alone: the crash-recovery file, lastSessionPath, recents. Set
+    // before the QML engine loads and never changed after.
+    Q_PROPERTY(bool isolatedSession READ isolatedSession CONSTANT)
 
 public:
     explicit ProjectFileController(AppController *app, QObject *parent = nullptr);
@@ -150,6 +155,11 @@ public:
     void queueExternalProject(const QUrl &url);
     // Load a queued startup document. True if a load started (skip recovery / last session).
     Q_INVOKABLE bool consumeStartupProject();
+    // A startup document is queued and its load has not begun yet.
+    bool startupProjectQueued() const { return m_pendingStartupProject.isValid(); }
+
+    bool isolatedSession() const { return m_isolatedSession; }
+    void setIsolatedSession(bool isolated);
 
     // C++ access for AppController. Not invokable.
     void setDirty(bool dirty);
@@ -268,6 +278,7 @@ private:
     QUrl m_pendingStartupProject;
     QUrl m_lastExternalProject;
     bool m_uiReady = false;
+    bool m_isolatedSession = false;
 
     static constexpr int kAutosaveIntervalMs = 15000;
     static constexpr int kMaxRecentProjects = 10;

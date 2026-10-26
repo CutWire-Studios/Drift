@@ -71,6 +71,10 @@ private:
     quint16 m_requestedPort = 4731;
     qint64 m_startedAt = 0;
     bool m_headless = false;
+    // The last project load to finish, for the session record (launch_instance waits on it).
+    bool m_hasLoaded = false;
+    bool m_loadOk = false;
+    QString m_loadMessage;
     // stop() must not delete a session file this server never wrote: a headless instance
     // serving only stdio would otherwise unregister a GUI editor running alongside it.
     bool m_wroteSessionFile = false;

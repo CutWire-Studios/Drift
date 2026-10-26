@@ -15,6 +15,12 @@ struct SessionInfo
     bool headless = false;
     QString project;     // project file path, empty for an unsaved timeline
     QString projectName;
+    // A project load is under way, or a startup project is queued and has not begun.
+    bool loading = false;
+    // The most recent load that finished: hasLoaded is false until one has.
+    bool hasLoaded = false;
+    bool loadOk = false;
+    QString loadMessage;
     QString file;        // the registry file this record came from (read side only)
 };
 
@@ -32,10 +38,14 @@ void removeSessionFile();
 // removing them are skipped, and deleted from the registry directory.
 QList<SessionInfo> listSessions();
 
-// The instance a stdio bridge talks to. With `attached->pid` still 0 it picks the newest
-// live instance; after that it follows only that pid, refreshing its port and token,
-// and fails rather than drifting to another editor once that instance is gone — an
-// agent that inspected one project must never have its next edit land in another.
+// The instance a stdio bridge talks to. With `attached->pid` still 0 it attaches only
+// when exactly one instance is running — with several, guessing could put an agent's
+// edits into the wrong project, so it fails with the list instead. After that it follows
+// only that pid, refreshing its port and token, and fails rather than drifting to another
+// editor once that instance is gone.
 bool resolveAttachedSession(SessionInfo *attached, QString *error);
+
+// "1234 \"My Project\" (headless)" — how errors and logs name an instance.
+QString describeSession(const SessionInfo &session);
 
 } // namespace drift::mcp

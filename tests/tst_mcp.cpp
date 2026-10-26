@@ -25,11 +25,16 @@
 #include <QTimer>
 #include <QUrlQuery>
 
+#include <atomic>
+#include <thread>
+
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/tools/McpDispatcher.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/protocol/McpProtocol.h"
 #include "app/mcp/protocol/McpSession.h"
+#include "app/mcp/transport/McpBridge.h"
+#include "app/platform/RunningInstances.h"
 #include "app/mcp/transport/McpStdio.h"
 #include "engine/addons/AddonPackage.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
@@ -75,6 +80,14 @@ private slots:
     void sessionRegistryListsInstancesNewestFirst();
     void sessionRegistryPrunesDeadInstances();
     void stdioBridgeStaysOnAttachedInstance();
+    void bridgeServesToolsWithoutInstance();
+    void bridgeRefusesToGuessBetweenInstances();
+    void bridgeLaunchRejectsMissingProject();
+    void bridgeNotificationBatchSendsNothing();
+    void isolatedSessionLeavesUserStateAlone();
+    void sessionRecordReportsProjectLoad();
+    void extractionSweepSparesOtherInstances();
+    void startupLockExcludesConcurrentStartup();
     void sessionRecordTracksProject();
     void stdioFramingIsNewlineDelimited();
     void stdioWriteEscapesEmbeddedNewlines();
@@ -697,6 +710,335 @@ void McpTest::sessionRecordTracksProject()
 
     state.mcp()->setEnabled(false);
     QVERIFY(drift::mcp::listSessions().isEmpty());
+}
+
+namespace {
+
+QJsonObject bridgeCall(drift::mcp::StdioBridge &bridge, const QString &method,
+                       const QJsonObject &params = {})
+{
+    QJsonObject request{{QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
+                        {QStringLiteral("id"), 1},
+                        {QStringLiteral("method"), method}};
+    if (!params.isEmpty())
+        request.insert(QStringLiteral("params"), params);
+    return QJsonDocument::fromJson(
+               bridge.handle(QJsonDocument(request).toJson(QJsonDocument::Compact)))
+        .object();
+}
+
+// The text payload of a tools/call reply through the bridge.
+QJsonObject bridgeTool(drift::mcp::StdioBridge &bridge, const QString &name,
+                       const QJsonObject &args = {})
+{
+    const QJsonObject reply = bridgeCall(
+        bridge, QStringLiteral("tools/call"),
+        {{QStringLiteral("name"), name}, {QStringLiteral("arguments"), args}});
+    const QJsonArray content = reply.value(QStringLiteral("result")).toObject()
+                                   .value(QStringLiteral("content")).toArray();
+    return QJsonDocument::fromJson(
+               content.at(0).toObject().value(QStringLiteral("text")).toString().toUtf8())
+        .object();
+}
+
+// Forwarding blocks on a socket while the in-process server answers on this thread, so
+// the bridge runs on its own thread and this one keeps the event loop turning.
+QJsonObject bridgeToolOffThread(drift::mcp::StdioBridge &bridge, const QString &name,
+                                const QJsonObject &args = {})
+{
+    QJsonObject result;
+    std::atomic<bool> done{false};
+    std::thread worker([&] {
+        result = bridgeTool(bridge, name, args);
+        done = true;
+    });
+    QElapsedTimer timer;
+    timer.start();
+    while (!done && timer.elapsed() < 20000)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+    worker.join();
+    return result;
+}
+
+} // namespace
+
+// With no editor running an agent must still see the whole tool list — launch_instance
+// above all — rather than a dead server.
+void McpTest::bridgeServesToolsWithoutInstance()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    drift::mcp::StdioBridge bridge;
+    const QJsonObject init = bridgeCall(bridge, QStringLiteral("initialize"));
+    QVERIFY(init.value(QStringLiteral("result")).toObject()
+                .value(QStringLiteral("instructions")).toString()
+                .contains(QStringLiteral("use_instance")));
+
+    const QJsonArray tools = bridgeCall(bridge, QStringLiteral("tools/list"))
+                                 .value(QStringLiteral("result")).toObject()
+                                 .value(QStringLiteral("tools")).toArray();
+    QStringList names;
+    for (const QJsonValue &tool : tools)
+        names.append(tool.toObject().value(QStringLiteral("name")).toString());
+    for (const QString &name : {QStringLiteral("catalog"), QStringLiteral("inspect"),
+                                QStringLiteral("instances"), QStringLiteral("use_instance"),
+                                QStringLiteral("launch_instance")})
+        QVERIFY2(names.contains(name), qPrintable(name));
+
+    const QJsonObject inspect = bridgeTool(bridge, QStringLiteral("inspect"));
+    QCOMPARE(inspect.value(QStringLiteral("error")).toString(), QStringLiteral("no_instance"));
+    QVERIFY(inspect.value(QStringLiteral("detail")).toString().contains(QStringLiteral("launch_instance")));
+
+    const QJsonObject listed = bridgeTool(bridge, QStringLiteral("instances"));
+    QVERIFY(listed.value(QStringLiteral("ok")).toBool());
+    QVERIFY(listed.value(QStringLiteral("instances")).toArray().isEmpty());
+}
+
+// With two instances open, a bridge that guessed could put edits into the wrong project:
+// it lists them and waits for use_instance, then forwards to the chosen one.
+void McpTest::bridgeRefusesToGuessBetweenInstances()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.projectFile()->setProjectName(QStringLiteral("Mine"));
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+    const auto stopServer = qScopeGuard([&] { state.mcp()->setEnabled(false); });
+
+    QProcess sleeper;
+    sleeper.start(QStringLiteral("sleep"), {QStringLiteral("30")});
+    if (!sleeper.waitForStarted())
+        QSKIP("needs a `sleep` process to stand in for a second instance");
+    const auto stopSleeper = qScopeGuard([&] {
+        sleeper.kill();
+        sleeper.waitForFinished();
+    });
+    writeRegistryRecord(QDir(dir.path()), QStringLiteral("other.json"),
+                        {{QStringLiteral("port"), 1},
+                         {QStringLiteral("token"), QStringLiteral("other")},
+                         {QStringLiteral("pid"), sleeper.processId()},
+                         {QStringLiteral("projectName"), QStringLiteral("Theirs")},
+                         {QStringLiteral("startedAt"), QDateTime::currentMSecsSinceEpoch() + 1000}});
+
+    drift::mcp::StdioBridge bridge;
+    const QJsonObject refused = bridgeTool(bridge, QStringLiteral("inspect"));
+    QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("no_instance"));
+    const QString detail = refused.value(QStringLiteral("detail")).toString();
+    QVERIFY2(detail.contains(QStringLiteral("Mine")) && detail.contains(QStringLiteral("Theirs")),
+             qPrintable(detail));
+
+    const QJsonArray rows = bridgeTool(bridge, QStringLiteral("instances"))
+                                .value(QStringLiteral("instances")).toArray();
+    QCOMPARE(rows.size(), 2);
+    for (const QJsonValue &row : rows) {
+        QVERIFY(!row.toObject().contains(QStringLiteral("token")));
+        QVERIFY(!row.toObject().value(QStringLiteral("attached")).toBool());
+    }
+
+    QCOMPARE(bridgeTool(bridge, QStringLiteral("use_instance"), {{QStringLiteral("id"), 999999999}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    const qint64 self = QCoreApplication::applicationPid();
+    const QJsonObject chosen =
+        bridgeTool(bridge, QStringLiteral("use_instance"), {{QStringLiteral("id"), self}});
+    QVERIFY2(chosen.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(chosen).toJson()));
+    QCOMPARE(chosen.value(QStringLiteral("instance")).toObject().value(QStringLiteral("name")).toString(),
+             QStringLiteral("Mine"));
+    QCOMPARE(bridge.attached().pid, self);
+
+    const QJsonObject inspected = bridgeToolOffThread(bridge, QStringLiteral("inspect"));
+    QVERIFY2(inspected.contains(QStringLiteral("revision")),
+             qPrintable(QJsonDocument(inspected).toJson()));
+}
+
+void McpTest::bridgeLaunchRejectsMissingProject()
+{
+    drift::mcp::StdioBridge bridge;
+    const QJsonObject result =
+        bridgeTool(bridge, QStringLiteral("launch_instance"),
+                   {{QStringLiteral("project"), QStringLiteral("/nonexistent/drift-project.json")}});
+    QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+}
+
+void McpTest::bridgeNotificationBatchSendsNothing()
+{
+    drift::mcp::StdioBridge bridge;
+    const QByteArray batch =
+        R"([{"jsonrpc":"2.0","method":"notifications/initialized"},)"
+        R"({"jsonrpc":"2.0","method":"notifications/initialized"}])";
+    QVERIFY(bridge.handle(batch).isEmpty());
+}
+
+// An agent's instance runs next to the user's editor under the same settings profile: it
+// must not reopen the user's last project, offer their crash recovery, or rewrite the
+// recovery file or lastSessionPath the user's own next launch depends on.
+void McpTest::isolatedSessionLeavesUserStateAlone()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMcpTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpTest"));
+    const QString recoveryPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+        + QStringLiteral("/recovery/autosave.json");
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("lastSessionPath"));
+        QFile::remove(recoveryPath);
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    const QString userProject = QStringLiteral("/user/project.drift");
+    QSettings().setValue(QStringLiteral("lastSessionPath"), userProject);
+    QVERIFY(QDir().mkpath(QFileInfo(recoveryPath).absolutePath()));
+    const QByteArray userRecovery =
+        R"({"__recovery":{"originalPath":"/user/project.drift","projectName":"Users work"}})";
+    {
+        QFile file(recoveryPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(userRecovery);
+    }
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.preferences()->setReopenLastProject(true);
+    QVERIFY(state.projectFile()->recoveryAvailable());
+    state.projectFile()->setIsolatedSession(true);
+    QVERIFY(!state.projectFile()->recoveryAvailable());
+    QVERIFY(!state.projectFile()->restoreLastSessionIfEnabled());
+
+    state.projectFile()->setCurrentProjectPath(QStringLiteral("/agent/other.drift"));
+    state.projectFile()->setDirty(true);
+    state.projectFile()->flushRecoverySnapshot();
+    state.projectFile()->newProject(); // deletes the recovery file in a normal session
+
+    QCOMPARE(QSettings().value(QStringLiteral("lastSessionPath")).toString(), userProject);
+    QFile file(recoveryPath);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), userRecovery);
+}
+
+// launch_instance waits on these fields: registering is not the same as the startup
+// project having opened, and a failed open has to be reported rather than look like success.
+void McpTest::sessionRecordReportsProjectLoad()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    qputenv("DRIFT_MCP_SESSION_DIR", dir.path().toUtf8());
+    const auto restore = qScopeGuard([] { qunsetenv("DRIFT_MCP_SESSION_DIR"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+    const auto stopServer = qScopeGuard([&] { state.mcp()->setEnabled(false); });
+
+    drift::mcp::SessionInfo record = drift::mcp::listSessions().value(0);
+    QVERIFY(!record.loading);
+    QVERIFY(!record.hasLoaded);
+
+    const QString broken = dir.filePath(QStringLiteral("broken.json"));
+    {
+        QFile file(broken);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("{ not json");
+    }
+    QSignalSpy finished(state.projectFile(), &ProjectFileController::projectLoadFinished);
+    state.projectFile()->loadProjectJson(QUrl::fromLocalFile(broken));
+    QVERIFY(drift::mcp::listSessions().value(0).loading);
+    QVERIFY(finished.wait(10000));
+
+    record = drift::mcp::listSessions().value(0);
+    QVERIFY(!record.loading);
+    QVERIFY(record.hasLoaded);
+    QVERIFY(!record.loadOk);
+    QVERIFY(!record.loadMessage.isEmpty());
+}
+
+// Startup reclaims projects/<id> dirs that no recent or recovery snapshot names. Those say
+// nothing about another Drift running beside this one — an isolated agent session writes
+// neither — so with one alive the sweep must leave everything that might be its media.
+void McpTest::extractionSweepSparesOtherInstances()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftSweepTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftSweepTest"));
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const auto restore = qScopeGuard([&] {
+        QDir(base).removeRecursively();
+        QSettings().remove(QStringLiteral("recentProjects"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    QSettings().remove(QStringLiteral("recentProjects"));
+    QFile::remove(base + QStringLiteral("/recovery/autosave.json"));
+
+    const QString orphan = base + QStringLiteral("/projects/other-instance-project");
+    QVERIFY(QDir().mkpath(orphan));
+
+    QProcess sleeper;
+    sleeper.start(QStringLiteral("sleep"), {QStringLiteral("30")});
+    if (!sleeper.waitForStarted())
+        QSKIP("needs a `sleep` process to stand in for another instance");
+    const QString marker =
+        base + QStringLiteral("/instances/") + QString::number(sleeper.processId());
+    QVERIFY(QDir().mkpath(QFileInfo(marker).absolutePath()));
+    {
+        QFile file(marker);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+    }
+
+    {
+        AssetLibrary library;
+        AppController state(&library);
+    }
+    QVERIFY(QDir(orphan).exists());
+
+    // Once that instance is gone, its marker is pruned and the sweep runs as before.
+    sleeper.kill();
+    sleeper.waitForFinished();
+    {
+        AssetLibrary library;
+        AppController state(&library);
+    }
+    QVERIFY(!QFile::exists(marker));
+    QVERIFY(!QDir(orphan).exists());
+}
+
+// The sweep holds this from registering until its last deletion, so an instance starting
+// meanwhile cannot register or extract anything until the sweep is over.
+void McpTest::startupLockExcludesConcurrentStartup()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftSweepTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftSweepTest"));
+    const auto restore = qScopeGuard([&] {
+        QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).removeRecursively();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+
+    auto first = drift::instances::lockStartup(1000);
+    QVERIFY(first);
+    QVERIFY(!drift::instances::lockStartup(200));
+    first.reset();
+    QVERIFY(drift::instances::lockStartup(1000));
 }
 
 void McpTest::serverRequiresBearerToken()

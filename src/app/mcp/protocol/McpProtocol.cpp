@@ -7,7 +7,6 @@
 #endif
 
 namespace drift::mcp {
-namespace {
 
 QJsonObject jsonRpcError(const QJsonValue &id, int code, const QString &message)
 {
@@ -51,6 +50,8 @@ QJsonObject initializeResult()
              "spends quota). Full guide: catalog({guide:true}).")},
     };
 }
+
+namespace {
 
 QJsonValue handleOne(const QJsonObject &req, const QString &toolbox, const ToolHandler &handler)
 {

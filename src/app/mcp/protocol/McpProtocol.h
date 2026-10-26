@@ -17,4 +17,8 @@ QJsonValue handleJsonRpc(const QJsonValue &body, const QString &toolbox, const T
 
 QJsonArray toolsForEndpoint(const QString &toolbox);
 
+QJsonObject initializeResult();
+QJsonObject jsonRpcOk(const QJsonValue &id, const QJsonValue &result);
+QJsonObject jsonRpcError(const QJsonValue &id, int code, const QString &message);
+
 } // namespace drift::mcp
