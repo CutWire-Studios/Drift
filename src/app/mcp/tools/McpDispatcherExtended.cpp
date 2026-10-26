@@ -1350,6 +1350,46 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return ok(clipFeedback(ref, {{QStringLiteral("flipH"), flipH}, {QStringLiteral("flipV"), flipV}}));
     }
 
+    if (tool == QLatin1String("get_clip_crop") || tool == QLatin1String("set_clip_crop")) {
+        const ClipRef ref = resolveClip(args);
+        if (!ref.valid())
+            return clipRefError(args);
+        const QByteArray name = tool.toUtf8();
+        if (const QJsonObject wrong = requireKind(ref, {QStringLiteral("video"), QStringLiteral("image")}, name.constData());
+            !wrong.isEmpty())
+            return wrong;
+        QJsonObject crop = m_controller->mcp()->clipCrop(ref.track, ref.clip);
+        if (tool == QLatin1String("get_clip_crop"))
+            return ok(clipFeedback(ref, {{QStringLiteral("crop"), crop}}));
+
+        double x = 0, y = 0, w = 1, h = 1;
+        if (!jsonBool(args.value(QStringLiteral("reset")))) {
+            const QString units = args.value(QStringLiteral("units")).toString(QStringLiteral("normalized"));
+            double sx = 1, sy = 1;
+            if (units == QLatin1String("pixels")) {
+                sx = crop.value(QStringLiteral("sourceWidth")).toDouble();
+                sy = crop.value(QStringLiteral("sourceHeight")).toDouble();
+                if (sx <= 0 || sy <= 0)
+                    return err("unsupported", QStringLiteral("source size of %1 is unknown; use units normalized").arg(ref.id));
+            } else if (units != QLatin1String("normalized")) {
+                return err("bad_args", QStringLiteral("units must be normalized or pixels"));
+            }
+            const auto field = [&](const char *key, double current, double scale) {
+                const QJsonValue v = args.value(QLatin1String(key));
+                return v.isUndefined() || v.isNull() ? current : jsonNumber(v, current * scale) / scale;
+            };
+            x = field("x", crop.value(QStringLiteral("x")).toDouble(), sx);
+            y = field("y", crop.value(QStringLiteral("y")).toDouble(), sy);
+            w = field("w", crop.value(QStringLiteral("w")).toDouble(), sx);
+            h = field("h", crop.value(QStringLiteral("h")).toDouble(), sy);
+            if (!(w > 0) || !(h > 0))
+                return err("bad_args", QStringLiteral("w and h must be > 0"));
+        }
+        if (!m_controller->setClipSourceFrame(ref.id, x, y, w, h))
+            return err("failed", QStringLiteral("could not crop %1").arg(ref.id));
+        return ok(clipFeedback(ref, {{QStringLiteral("crop"), m_controller->mcp()->clipCrop(ref.track, ref.clip)}}));
+    }
+
     if (tool == QLatin1String("set_blend_mode")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())

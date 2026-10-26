@@ -5390,8 +5390,9 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
             auto &clip = m_project.tracks()[t].clips[c];
             clip.sourceFrame = frame;
             if (const auto *asset = m_project.asset(clip.assetId)) {
+                // Displayed orientation: the file's own tag plus this clip's correction, as decoded.
                 int sw = asset->width, sh = asset->height;
-                if (qAbs(asset->rotationDegrees) % 180 == 90)
+                if (qAbs(asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
                     std::swap(sw, sh);
                 if (sw > 0 && sh > 0) {
                     const auto fittedSize = [&](const QRectF &r) {
