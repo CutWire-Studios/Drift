@@ -10,7 +10,8 @@ Item {
 
     property bool interacting: false
 
-    // Snapshot from AppController::maskEditorState(), the same frame MaskOverlay places against.
+    // Snapshot from PreviewController::maskingFrame(): the selection's frame, and whether it is under the
+    // playhead. Nothing is placed or accepted while it is not.
     property var editorState: ({})
     readonly property bool hasFrame: !!editorState.hasFrame
     // The selection's mask target (MaskingController::maskTarget). Assigned, not bound, so it
@@ -48,7 +49,7 @@ Item {
         // Playhead ticks ~60 Hz; the frame and target are only needed when a drag starts.
         if (EditorState.playing)
             return
-        editorState = EditorState.preview.maskEditorState()
+        editorState = EditorState.preview.maskingFrame()
         target = EditorState.masking.maskTarget()
     }
 
@@ -403,9 +404,9 @@ Item {
         }
     }
 
-    // Nothing to draw on: the tool is up, but no clip is selected.
+    // Nothing to draw on: the tool is up, but no clip is selected, or the selected one is off the playhead.
     Rectangle {
-        visible: root.target.kind === "none"
+        visible: root.target.kind === "none" || !root.editorState.inside
         anchors.centerIn: parent
         width: hintText.width + Theme.spacingLg * 2
         height: hintText.height + Theme.spacingMd * 2
@@ -415,7 +416,9 @@ Item {
         Text {
             id: hintText
             anchors.centerIn: parent
-            text: qsTr("Select a clip on the timeline to draw a mask")
+            text: root.target.kind === "none"
+                  ? qsTr("Select a clip on the timeline to draw a mask")
+                  : qsTr("Move the playhead over the selected clip")
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -423,7 +426,7 @@ Item {
     }
 
     Rectangle {
-        visible: root.polyActive
+        visible: root.polyActive && root.editorState.inside
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Theme.spacingLg

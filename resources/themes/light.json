@@ -2620,7 +2620,6 @@
     },
     "trackerOverlay": {
       "pattern": "$semantic.primary",
-      "search": "$semantic.mutedForeground",
       "trail": "$semantic.onMedia",
       "good": "$semantic.constructive",
       "warn": "$semantic.warning",

@@ -12,6 +12,9 @@ QtObject {
     property var colorTabRequest: null
     property var keyframesActionHandler: null
     property var maskingActionHandler: null
+    property var trackingActionHandler: null
+    // Whether the pointer is over the preview panel; masking tool keys are only claimed there.
+    property bool previewHovered: false
     // Vertices placed by the polygon tool so far. Escape cancels them before it leaves the tool.
     property int pendingPolygonPoints: 0
     signal maskingCancelRequested()

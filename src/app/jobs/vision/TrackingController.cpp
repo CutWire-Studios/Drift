@@ -45,6 +45,7 @@ struct TrackingController::Job
         QPointF pos;                    // normalized, at the start frame
         double patternWidth = 0.05;     // normalized
         QMap<TimeUs, QPointF> userKeys; // normalized
+        bool skip = false;              // no sample at the start frame (added after the last run)
     };
 
     QString clipId;
@@ -521,8 +522,9 @@ QVector<QPointF> parseRegion(const QVariantList &list)
 }
 
 // Drops non-key samples beyond the playhead in timeline order. The reference sample stays.
-void eraseSamples(const drift::Project &project, const Clip &host, MotionTracker &tracker,
-                  TimeUs playheadUs, bool forward)
+// Returns whether anything was removed.
+bool eraseSamples(const drift::Project &project, const Clip &host, MotionTracker &tracker, TimeUs playheadUs,
+                  bool forward)
 {
     const TimeUs margin = drift::frameDurationUs(project.fps()) / 2;
     const auto beyond = [&](TimeUs key) {
@@ -531,13 +533,26 @@ void eraseSamples(const drift::Project &project, const Clip &host, MotionTracker
         const TimeUs at = sampleTimelineUs(host, key);
         return forward ? at > playheadUs + margin : at < playheadUs - margin;
     };
+    bool erased = false;
     for (TrackPoint &point : tracker.points) {
         for (auto it = point.samples.begin(); it != point.samples.end();) {
-            it = (!it->userKey && beyond(it.key())) ? point.samples.erase(it) : std::next(it);
+            if (!it->userKey && beyond(it.key())) {
+                it = point.samples.erase(it);
+                erased = true;
+            } else {
+                ++it;
+            }
         }
     }
-    for (auto it = tracker.homographies.begin(); it != tracker.homographies.end();)
-        it = beyond(it.key()) ? tracker.homographies.erase(it) : std::next(it);
+    for (auto it = tracker.homographies.begin(); it != tracker.homographies.end();) {
+        if (beyond(it.key())) {
+            it = tracker.homographies.erase(it);
+            erased = true;
+        } else {
+            ++it;
+        }
+    }
+    return erased;
 }
 
 // ---- worker ---------------------------------------------------------------------------------
@@ -675,7 +690,7 @@ Outcome trackPoints(const TrackingController::Job &job, FrameFeed &feed, const Q
                                              : Outcome{TrackingController::tr("Could not decode frame %1").arg(i),
                                                        QStringLiteral("error")};
         }
-        const drift::tracking::Pyramid next = drift::tracking::buildPyramid(*gray);
+        drift::tracking::Pyramid next = drift::tracking::buildPyramid(*gray);
 
         TrackingController::FrameResult result;
         result.sourceUs = job.sourceTimes.at(i);
@@ -684,6 +699,11 @@ Outcome trackPoints(const TrackingController::Job &job, FrameFeed &feed, const Q
         for (int p = 0; p < states.size(); ++p) {
             State &s = states[p];
             TrackSample sample;
+            if (job.points.at(p).skip) {
+                sample.confidence = -1.0f;
+                result.samples.append(sample);
+                continue;
+            }
             const auto key = nearestKey(job.points.at(p).userKeys, result.sourceUs, keyTolerance);
             if (key != job.points.at(p).userKeys.constEnd()) {
                 // A hand-placed key is ground truth: continue from it with a fresh reference.
@@ -712,7 +732,7 @@ Outcome trackPoints(const TrackingController::Job &job, FrameFeed &feed, const Q
             result.samples.append(sample);
         }
         writer.add(std::move(result), double(i) / (count - 1));
-        previous = next;
+        previous = std::move(next);
         if (!anyGood) {
             writer.flush(double(i) / (count - 1));
             return {TrackingController::tr("Tracking stopped: confidence dropped below the minimum"),
@@ -826,7 +846,6 @@ bool TrackingController::editTracker(int trackIndex, int clipIndex, const QStrin
         return false;
     m_app->pushProjectEdit(before, undoText);
     m_app->finishEdit(undoText);
-    emit trackersChanged();
     return true;
 }
 
@@ -1117,6 +1136,37 @@ void TrackingController::setTrackerRegion(int trackIndex, int clipIndex, const Q
     });
 }
 
+void TrackingController::correctPlanarCorners(int trackIndex, int clipIndex, const QString &id,
+                                              const QVariantList &region)
+{
+    const Clip *view = hostView(trackIndex, clipIndex);
+    const MotionTracker *tracker = view ? trackerById(*view, id) : nullptr;
+    if (m_busy || !tracker || tracker->kind != MotionTracker::Kind::Planar)
+        return;
+    const TimeUs tolerance = matchTolerance(m_app->m_project, *view);
+    const TimeUs playhead = qBound(view->timelineStart, m_app->m_playheadUs, view->timelineEnd() - 1);
+    const TimeUs sourceUs = view->timelineToSourceUs(playhead);
+    if (tracker->homographies.isEmpty() || std::abs(sourceUs - tracker->referenceUs) <= tolerance) {
+        setTrackerRegion(trackIndex, clipIndex, id, region);
+        return;
+    }
+
+    // Stored homographies act on normalized coordinates (see trackerFrame), so the fit does too.
+    const QVector<QPointF> outline = parseRegion(region);
+    Homography h;
+    if (outline.size() != tracker->planarRegion.size()
+        || !drift::tracking::fitHomography(tracker->planarRegion, outline, &h)) {
+        return;
+    }
+    editTracker(trackIndex, clipIndex, id, tr("Correct planar track"), [&](Clip &, MotionTracker &planar) {
+        if (planar.kind != MotionTracker::Kind::Planar)
+            return false;
+        const auto near = nearestKey(planar.homographies, sourceUs, tolerance);
+        planar.homographies.insert(near != planar.homographies.constEnd() ? near.key() : sourceUs, h);
+        return true;
+    });
+}
+
 void TrackingController::setTrackerProperty(int trackIndex, int clipIndex, const QString &id, const QString &key,
                                             const QVariant &value)
 {
@@ -1218,14 +1268,17 @@ void TrackingController::track(int trackIndex, int clipIndex, const QString &id,
         job.start = it.value();
         job.region = QPolygonF(tracker->planarRegion);
     } else {
+        // A point added after the last run has no sample at the start yet; it sits this run out
+        // rather than blocking the others.
+        bool anyPoint = false;
         for (const TrackPoint &point : tracker->points) {
             const auto it = nearestKey(point.samples, startSource, tolerance);
-            if (it == point.samples.constEnd()) {
-                m_app->setLastMessage(tr("Move the playhead to a tracked frame first"), QStringLiteral("warning"));
-                return;
-            }
             Job::Point entry;
-            entry.pos = it->pos;
+            entry.skip = it == point.samples.constEnd();
+            if (!entry.skip) {
+                entry.pos = it->pos;
+                anyPoint = true;
+            }
             entry.patternWidth = point.patternSize.width();
             for (auto key = point.samples.constBegin(); key != point.samples.constEnd(); ++key) {
                 if (key->userKey)
@@ -1233,14 +1286,22 @@ void TrackingController::track(int trackIndex, int clipIndex, const QString &id,
             }
             job.points.append(entry);
         }
+        if (!anyPoint) {
+            m_app->setLastMessage(tr("Move the playhead to a tracked frame first"), QStringLiteral("warning"));
+            return;
+        }
     }
 
-    m_jobBefore = m_app->m_project;
-    m_jobWrote = false;
-    // Anything beyond the start is about to be redone; leaving it would keep stale samples past
-    // wherever this run stops.
     Clip *editable = hostAt(trackIndex, clipIndex);
-    eraseSamples(project, *editable, *trackerById(*editable, id), playhead, forward);
+    MotionTracker &liveTracker = *trackerById(*editable, id);
+    m_jobClipId = editable->id;
+    m_jobTrackerId = id;
+    m_jobTrackerBefore = liveTracker;
+    m_jobChanged = false;
+    // Anything beyond the start is about to be redone; leaving it would keep stale samples past
+    // wherever this run stops. A single frame overwrites only its own sample, so it keeps the rest.
+    if (!singleFrame)
+        m_jobChanged = eraseSamples(project, *editable, liveTracker, playhead, forward);
 
     m_cancel.storeRelaxed(0);
     m_progress = 0.0;
@@ -1286,7 +1347,7 @@ void TrackingController::mergeBatch(const QString &clipId, const QString &tracke
     for (const FrameResult &frame : frames) {
         if (frame.hasHomography) {
             tracker->homographies.insert(frame.sourceUs, frame.homography);
-            m_jobWrote = true;
+            m_jobChanged = true;
             continue;
         }
         for (int p = 0; p < frame.samples.size() && p < tracker->points.size(); ++p) {
@@ -1298,10 +1359,11 @@ void TrackingController::mergeBatch(const QString &clipId, const QString &tracke
             if (existing != samples.constEnd() && existing->userKey)
                 continue;
             samples.insert(frame.sourceUs, sample);
-            m_jobWrote = true;
+            m_jobChanged = true;
         }
     }
-    if (!frames.isEmpty())
+    // Following the worker would fight a scrub; the playhead is the user's while they drag it.
+    if (!frames.isEmpty() && !m_app->scrubbing())
         m_app->setPlayheadUs(lastTimelineUs);
     emit samplesUpdated(trackerId);
 }
@@ -1314,15 +1376,39 @@ void TrackingController::finishJob(const QString &message, const QString &severi
         m_progress = 1.0;
     emit progressChanged();
     emit busyChanged();
-    if (m_jobWrote) {
-        m_app->pushProjectEdit(m_jobBefore, tr("Track"));
+    QString shownMessage = message;
+    QString shownSeverity = severity;
+    int t = -1;
+    int c = -1;
+    const MotionTracker *live = nullptr;
+    if (findClipById(m_app->m_project, m_jobClipId, &t, &c))
+        live = trackerById(m_app->m_project.tracks().at(t).clips.at(c), m_jobTrackerId);
+    const bool applyWanted = live && severity != QLatin1String("error") && !live->targets.isEmpty();
+    if (live && (m_jobChanged || applyWanted)) {
+        // Copied before the apply, so undo also reverts the keys it writes. Only this tracker is
+        // swapped back, so edits made during the run survive an undo.
+        drift::Project before = m_app->m_project;
+        for (MotionTracker &tracker : before.tracks()[t].clips[c].motionTrackers) {
+            if (tracker.id == m_jobTrackerId)
+                tracker = m_jobTrackerBefore;
+        }
+        if (applyWanted) {
+            const QString error = applyTargets(m_jobClipId, m_jobTrackerId);
+            if (!error.isEmpty() && shownMessage.isEmpty()) {
+                shownMessage = error;
+                shownSeverity = QStringLiteral("warning");
+            }
+        }
+        m_app->pushProjectEdit(before, tr("Track"));
         m_app->finishEdit(tr("Tracked"));
     }
-    m_jobBefore = drift::Project();
-    m_jobWrote = false;
+    m_jobClipId.clear();
+    m_jobTrackerId.clear();
+    m_jobTrackerBefore = MotionTracker();
+    m_jobChanged = false;
     emit trackersChanged();
-    if (!message.isEmpty())
-        m_app->setLastMessage(message, severity);
+    if (!shownMessage.isEmpty())
+        m_app->setLastMessage(shownMessage, shownSeverity);
 }
 
 void TrackingController::cancel()

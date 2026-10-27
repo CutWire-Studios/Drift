@@ -2838,8 +2838,12 @@ drift::TimeUs syntheticClipMaxDurationUs()
 
 void syncSyntheticSourceRange(drift::Clip &clip)
 {
-    clip.srcIn = 0;
-    clip.srcOut = qMin(clip.sourceSpanUs(), syntheticClipMaxDurationUs());
+    // A mask adjustment's srcIn is where its matte media starts playing, so a head-trim or split
+    // moves it; everything else synthetic always starts at 0.
+    const bool keepsSrcIn = clip.type == drift::ClipType::Adjustment
+                            && clip.adjustmentKind == drift::AdjustmentKind::Mask;
+    clip.srcIn = keepsSrcIn ? qMax<drift::TimeUs>(0, clip.srcIn) : 0;
+    clip.srcOut = clip.srcIn + qMin(clip.sourceSpanUs(), syntheticClipMaxDurationUs());
 }
 
 } // namespace
@@ -4746,8 +4750,8 @@ QHash<QString, QString> defaultShortcuts()
         // TimelinePanel they were neither.
         {QStringLiteral("selectTool"), QStringLiteral("V")},
         {QStringLiteral("bladeTool"), QStringLiteral("B")},
-        // Masking workspace tools. The masking panel claims these only while it has focus or
-        // hover, so they stay free on the timeline.
+        // Masking workspace tools. The masking panel claims these only while the pointer is over the
+        // preview or it has focus or hover (never in 3D mode), so they stay free on the timeline.
         {QStringLiteral("maskingPolygonTool"), QStringLiteral("P")},
         {QStringLiteral("maskingAiTool"), QStringLiteral("A")},
         {QStringLiteral("maskingBrushSmaller"), QStringLiteral("[")},
@@ -8072,6 +8076,8 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
             cue.startUs -= delta;
             cue.endUs -= delta;
         }
+        if (clip.type == drift::ClipType::Adjustment && clip.adjustmentKind == drift::AdjustmentKind::Mask)
+            clip.srcIn += delta;
         syncSyntheticSourceRange(clip);
         if (!m_rippleEnabled && trackHasCompleteOverlap(track, clip, &track.clips.at(clipIndex))) {
             out.outcome = TrimBlocked;
@@ -15543,8 +15549,26 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
         }
     }
     if (existing && mask.keyframes.isEmpty() && mask.pathKeys.isEmpty()) {
+        // An edit of one property keeps the rest of the animation; a caller that supplies a new
+        // value or new geometry has replaced that property, so its old keys must not override it.
+        const auto same = [](double a, double b) { return qAbs(a - b) <= 1e-9; };
+        const std::pair<const char *, std::pair<double, double>> scalars[] = {
+            {"x", {seeded.x, existing->x}}, {"y", {seeded.y, existing->y}},
+            {"w", {seeded.w, existing->w}}, {"h", {seeded.h, existing->h}},
+            {"rotation", {seeded.rotation, existing->rotation}},
+            {"feather", {seeded.feather, existing->feather}}};
         seeded.keyframes = existing->keyframes;
-        if (existing->shape == seeded.shape)
+        for (const auto &[key, values] : scalars) {
+            if (!same(values.first, values.second))
+                seeded.keyframes.remove(QString::fromLatin1(key));
+        }
+
+        bool samePoints = seeded.points.size() == existing->points.size();
+        for (qsizetype i = 0; samePoints && i < seeded.points.size(); ++i) {
+            samePoints = same(seeded.points.at(i).x(), existing->points.at(i).x())
+                         && same(seeded.points.at(i).y(), existing->points.at(i).y());
+        }
+        if (existing->shape == seeded.shape && samePoints)
             seeded.pathKeys = existing->pathKeys;
     }
 

@@ -8,6 +8,7 @@
 #include <QPointF>
 #include <QSize>
 #include <QString>
+#include <QThreadPool>
 #include <QVariant>
 #include <QVariantList>
 #include <QVector>
@@ -36,6 +37,7 @@ class MaskingController : public QObject
 
 public:
     explicit MaskingController(AppController *app, QObject *parent = nullptr);
+    ~MaskingController() override;
 
     double brushSize() const { return m_brushSize; }
     void setBrushSize(double size);
@@ -99,6 +101,8 @@ public:
     // Fill the selected brush mask entirely (coverage 1) or clear it (0); same target rules, creates
     // the mask if needed. Undo tr("Fill mask") / tr("Clear mask").
     Q_INVOKABLE void brushFill(int trackIndex, int clipIndex, bool clear);
+    // Test hook: waits until every queued brush save has been applied to the project.
+    bool waitForBrushSaves(int timeoutMs = 5000);
 
     // Path keys of the mask on adjustment clip (track, clip), as seconds on the TIMELINE
     // (adjustment.timelineStart + key time), ascending.
@@ -142,8 +146,10 @@ private:
     QPair<int, int> selectedBrushMask(int trackIndex, int clipIndex) const;
     // The matte to paint on: the selected brush mask's image, else a black one of the matte's size.
     QImage brushImage(int trackIndex, int clipIndex) const;
-    // Saves `image` as a new matte file and points the selected brush mask at it, or creates the mask.
+    // Saves `image` as a new matte file on m_brushPool and then points the selected brush mask at it, or
+    // creates the mask (finishBrushSave).
     void commitBrushMatte(int trackIndex, int clipIndex, const QImage &image, const QString &undoText);
+    void finishBrushSave(bool ok, const QString &path, const QString &clipId, const QString &undoText);
     bool isBrushTarget(int trackIndex, int clipIndex) const;
     // The mask label: its own name, else a human label for its shape.
     QString maskLabel(const drift::Mask &mask) const;
@@ -160,10 +166,15 @@ private:
     double m_brushHardness = 0.7;
     double m_brushOpacity = 1.0;
     bool m_brushErase = false;
-    // The matte last painted or loaded, and the file it was saved to. Mattes are never rewritten in
-    // place, so a path match means the image is still current.
+    // The matte last painted or loaded, and the file it was (or is being) saved to. Mattes are never
+    // rewritten in place, so a path match means the image is still current. While saves are in flight
+    // the project lags m_brushImage, so brushImage() trusts m_brushImage for m_brushClipId instead.
     QImage m_brushImage;
-    QString m_brushImagePath;
+    QString m_brushPendingPath;
+    QString m_brushClipId;
+    int m_brushSavesInFlight = 0;
+    // Single thread: saves finish in stroke order, so the first commit creates the mask and later ones update it.
+    QThreadPool m_brushPool;
 };
 
 namespace drift::masking {

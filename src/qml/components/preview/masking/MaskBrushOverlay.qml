@@ -10,7 +10,8 @@ Item {
 
     property bool interacting: false
 
-    // Snapshot from AppController::maskEditorState(), the same frame MaskOverlay places against.
+    // Snapshot from PreviewController::maskingFrame(): the selection's frame, and whether it is under the
+    // playhead. Nothing is placed or accepted while it is not.
     property var editorState: ({})
     readonly property bool hasFrame: !!editorState.hasFrame
     // The selection's mask target (MaskingController::maskTarget). Assigned, not bound, so it
@@ -38,7 +39,7 @@ Item {
         // Playhead ticks ~60 Hz; the frame and target are only needed when a stroke starts.
         if (EditorState.playing)
             return
-        editorState = EditorState.preview.maskEditorState()
+        editorState = EditorState.preview.maskingFrame()
         target = EditorState.masking.maskTarget()
     }
 
@@ -207,9 +208,11 @@ Item {
         Text {
             id: hintText
             anchors.centerIn: parent
-            text: root.clipTarget
-                  ? qsTr("Paint to add · Right-drag to erase · [ ] size")
-                  : qsTr("Select a video or image clip to paint a mask")
+            text: !root.clipTarget
+                  ? qsTr("Select a video or image clip to paint a mask")
+                  : root.editorState.inside
+                    ? qsTr("Paint to add · Right-drag to erase · [ ] size")
+                    : qsTr("Move the playhead over the selected clip")
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

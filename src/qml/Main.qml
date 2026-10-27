@@ -1336,6 +1336,8 @@ ApplicationWindow {
             return
         if (ShellBridge.maskingActionHandler && ShellBridge.maskingActionHandler.handleAction(id))
             return
+        if (ShellBridge.trackingActionHandler && ShellBridge.trackingActionHandler.handleAction(id))
+            return
         if (ShellBridge.subtitleActionHandler && ShellBridge.subtitleActionHandler.handleAction(id))
             return
         if (ShellBridge.sourceLabActionHandler && ShellBridge.sourceLabActionHandler.handleAction(id))

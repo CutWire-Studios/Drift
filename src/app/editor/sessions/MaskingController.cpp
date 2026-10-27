@@ -8,8 +8,10 @@
 #include "core/project/Track.h"
 #include "engine/encode/writers/MatteWriter.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QList>
 #include <QPainter>
@@ -18,6 +20,7 @@
 #include <QSet>
 #include <QStringList>
 #include <QUuid>
+#include <QtConcurrent>
 
 #include <algorithm>
 #include <cmath>
@@ -182,6 +185,12 @@ MaskingController::MaskingController(AppController *app, QObject *parent)
     : QObject(parent)
     , m_app(app)
 {
+    m_brushPool.setMaxThreadCount(1);
+}
+
+MaskingController::~MaskingController()
+{
+    m_brushPool.waitForDone();
 }
 
 void MaskingController::setBrushSize(double size)
@@ -307,8 +316,11 @@ bool MaskingController::canConvertClipToMask(int trackIndex, int clipIndex) cons
     const QList<drift::Clip> &clips = project.tracks().at(trackIndex).clips;
     if (clipIndex < 0 || clipIndex >= clips.size())
         return false;
-    const drift::ClipType type = clips.at(clipIndex).type;
-    if (type != drift::ClipType::Video && type != drift::ClipType::Image)
+    const drift::Clip &clip = clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
+        return false;
+    // The matte plays at 1x forward from srcIn, so a retimed clip would convert to different timing.
+    if (clip.effectiveSpeed() != 1.0 || clip.reverse || clip.hasSpeedCurve())
         return false;
     return trackBelow(project, trackIndex) >= 0;
 }
@@ -504,17 +516,22 @@ QSize MaskingController::brushMatteSize(int trackIndex, int clipIndex) const
 {
     const drift::Project &project = m_app->m_project;
     const drift::Clip &clip = project.tracks().at(trackIndex).clips.at(clipIndex);
-    const drift::MediaAsset *asset = project.asset(clip.assetId);
-    int width = asset && asset->width > 0 ? asset->width : project.width();
-    int height = asset && asset->height > 0 ? asset->height : project.height();
+    // The matte is stretched over the clip's frame, not its media, so its aspect has to be the
+    // frame's or round dabs come out oval. Same resolution as PreviewController::maskEditorState.
+    const drift::TimeUs relative = m_app->m_playheadUs - clip.timelineStart;
+    const auto value = [&](const drift::KeyframeTrack<double> &kt, double fallback) {
+        return kt.isEmpty() ? fallback : kt.evaluateAt(relative);
+    };
+    double frameW = value(clip.transformW, project.width());
+    double frameH = value(clip.transformH, project.height());
+    if (frameW <= 0.0 || frameH <= 0.0) {
+        frameW = project.width();
+        frameH = project.height();
+    }
 
     constexpr int kMaxSide = 2048;
-    const int longest = std::max(width, height);
-    if (longest > kMaxSide) {
-        const double scale = static_cast<double>(kMaxSide) / longest;
-        width = std::max(1, static_cast<int>(std::lround(width * scale)));
-        height = std::max(1, static_cast<int>(std::lround(height * scale)));
-    }
+    const int width = std::max(1, static_cast<int>(std::lround(std::min<double>(kMaxSide, frameW))));
+    const int height = std::max(1, static_cast<int>(std::lround(width * frameH / frameW)));
     return QSize(width, height);
 }
 
@@ -544,13 +561,19 @@ QPair<int, int> MaskingController::selectedBrushMask(int trackIndex, int clipInd
 
 QImage MaskingController::brushImage(int trackIndex, int clipIndex) const
 {
+    // Saves in flight mean the project's mask still points at an older file, so m_brushImage is the
+    // only up-to-date copy. It is also the only copy before the first save creates the mask.
+    if (m_brushSavesInFlight > 0 && !m_brushImage.isNull()
+        && m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id == m_brushClipId)
+        return m_brushImage;
+
     const QSize size = brushMatteSize(trackIndex, clipIndex);
     const QPair<int, int> brush = selectedBrushMask(trackIndex, clipIndex);
 
     QImage image;
     if (brush.first >= 0) {
         const QString &path = m_app->m_project.tracks().at(brush.first).clips.at(brush.second).mask.mediaPath;
-        if (path == m_brushImagePath && !m_brushImage.isNull())
+        if (path == m_brushPendingPath && !m_brushImage.isNull())
             image = m_brushImage;
         else
             image = QImage(path).convertToFormat(QImage::Format_ARGB32_Premultiplied);
@@ -569,12 +592,53 @@ void MaskingController::commitBrushMatte(int trackIndex, int clipIndex, const QI
 {
     const QString path = QDir(drift::matteCacheDir())
                              .filePath(QUuid::createUuid().toString(QUuid::WithoutBraces) + QStringLiteral(".png"));
-    if (!image.convertToFormat(QImage::Format_Grayscale8).save(path, "PNG")) {
+    const QString clipId = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+    m_brushImage = image;
+    m_brushPendingPath = path;
+    m_brushClipId = clipId;
+    ++m_brushSavesInFlight;
+    (void)QtConcurrent::run(&m_brushPool, [this, image, path, clipId, undoText] {
+        const bool ok = image.convertToFormat(QImage::Format_Grayscale8).save(path, "PNG");
+        QMetaObject::invokeMethod(this, [this, ok, path, clipId, undoText] {
+            finishBrushSave(ok, path, clipId, undoText);
+        }, Qt::QueuedConnection);
+    });
+}
+
+bool MaskingController::waitForBrushSaves(int timeoutMs)
+{
+    QElapsedTimer timer;
+    timer.start();
+    m_brushPool.waitForDone(timeoutMs);
+    while (m_brushSavesInFlight > 0 && timer.elapsed() < timeoutMs)
+        QCoreApplication::processEvents();
+    return m_brushSavesInFlight == 0;
+}
+
+void MaskingController::finishBrushSave(bool ok, const QString &path, const QString &clipId, const QString &undoText)
+{
+    --m_brushSavesInFlight;
+    if (!ok) {
         qWarning() << "Could not save brush matte" << path;
+        m_app->setLastMessage(tr("Could not save the brush mask"), QStringLiteral("error"));
         return;
     }
-    m_brushImage = image;
-    m_brushImagePath = path;
+
+    // The clip's indices may have moved since the stroke was made.
+    int trackIndex = -1;
+    int clipIndex = -1;
+    const QList<drift::Track> &tracks = m_app->m_project.tracks();
+    for (int t = 0; t < tracks.size() && trackIndex < 0; ++t) {
+        for (int c = 0; c < tracks.at(t).clips.size(); ++c) {
+            if (tracks.at(t).clips.at(c).id == clipId) {
+                trackIndex = t;
+                clipIndex = c;
+                break;
+            }
+        }
+    }
+    if (trackIndex < 0)
+        return;
 
     const drift::Project before = m_app->m_project;
     const QPair<int, int> brush = selectedBrushMask(trackIndex, clipIndex);

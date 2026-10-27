@@ -10951,6 +10951,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the object to select it · Right-click or Ctrl-click to exclude</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10966,6 +10970,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video or image clip to paint a mask</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10974,6 +10982,10 @@
     <name>MaskDrawOverlay</name>
     <message>
         <source>Select a clip on the timeline to draw a mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead over the selected clip</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11090,6 +11102,10 @@
     </message>
     <message>
         <source>Fill mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the brush mask</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21937,6 +21953,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move the playhead over the selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the feature to track on the preview.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -22029,6 +22049,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Change tracking outline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Correct planar track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

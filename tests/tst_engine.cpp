@@ -11310,15 +11310,21 @@ void EngineTest::maskMediaTimeBaseIndexesHostOrAdjustment()
     const drift::TimeUs t = drift::secondsToUs(13.0);
 
     // Host source time: 4 + 3 * 2 = 10 s, less the 1 s offset.
-    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, t), drift::secondsToUs(9.0));
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, 0, t), drift::secondsToUs(9.0));
 
     // Adjustment base ignores the host's trim and speed: (13 - 8) + 1 s.
     mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
-    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, t), drift::secondsToUs(6.0));
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, 0, t), drift::secondsToUs(6.0));
 
     // Before the adjustment starts, the clamp keeps it at 0 once the offset is spent.
     mask.mediaSrcOffsetUs = 0;
-    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, drift::secondsToUs(6.0)), 0);
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, 0, drift::secondsToUs(6.0)), 0);
+
+    // A split or head-trim moves the start but advances srcIn by the same amount, so the matte
+    // carries on instead of replaying: (13 - 11) + 3 s of srcIn.
+    mask.mediaSrcOffsetUs = 0;
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, drift::secondsToUs(11.0), drift::secondsToUs(3.0), t),
+             drift::secondsToUs(5.0));
 }
 
 void EngineTest::maskApplierEllipseMasksCorners()

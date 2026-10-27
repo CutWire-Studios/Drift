@@ -184,6 +184,9 @@ public:
     // out of step: the host clip's rect at the playhead, and the mask layers on that track
     // covering it. Empty when the selection names no maskable track.
     Q_INVOKABLE QVariantMap maskEditorState() const;
+    // The frame the masking overlays place against: the selection's mask target, with `inside`
+    // telling whether that target is under the playhead (hasFrame follows it).
+    Q_INVOKABLE QVariantMap maskingFrame() const;
     // What the depth handles need, as one snapshot: the selected media clip's frame on the canvas
     // and every enabled depth effect with a handle (relight, depth of field) on its stack, with
     // parameters resolved at the playhead. Empty when there is nothing to show.
@@ -233,6 +236,8 @@ private:
     // The viewpoint the gizmo is drawn and solved from: the scene camera when one covers the
     // playhead, otherwise none (each clip's own eye).
     drift::gizmo::View gizmoView() const;
+    // A clip's frame at the playhead: rect, rotation and pose with keyframes evaluated, and its parent transform.
+    QVariantMap clipFrameMap(int trackIndex, int clipIndex) const;
     // The selected clip's relief in 3D mode, as the compositor lays it out. False when there is none.
     struct SelectedRelief;
     bool selectedRelief(SelectedRelief *out) const;

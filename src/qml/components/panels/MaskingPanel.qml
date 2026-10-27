@@ -10,9 +10,10 @@ PanelFrame {
     property bool shown: false
 
     readonly property var focusItem: Window.activeFocusItem
-    // Tool keys are pressed with the pointer over the preview, not this panel, so the handler is
-    // claimed for as long as the workspace shows the panel.
+    // Tool keys are pressed with the pointer over the preview, not this panel, so the handler stays
+    // registered while the workspace shows the panel; handleAction decides per key whether to claim it.
     readonly property bool wantsActions: shown
+    HoverHandler { id: panelHover }
 
     // What the panel edits and the masks on it. Read from the controller on the selection and
     // playback signals below rather than bound, because each call returns a fresh snapshot.
@@ -91,11 +92,18 @@ PanelFrame {
     onShownChanged: {
         if (shown)
             refresh()
-        else
+        else {
             EditorState.preview.maskingTool = ""
+            EditorState.preview.maskViewMode = "off"
+        }
     }
 
-    Component.onCompleted: if (shown) refresh()
+    Component.onCompleted: {
+        if (shown)
+            refresh()
+        if (wantsActions)
+            ShellBridge.maskingActionHandler = root
+    }
 
     Connections {
         target: EditorState
@@ -473,6 +481,12 @@ PanelFrame {
 
     function handleAction(id) {
         if (!shown || textFieldFocused())
+            return false
+        // These keys are shared with the timeline tools and the 3D gizmo, so they are only ours
+        // while the user is working here. Escape cancels state that exists only mid-edit.
+        const engaged = !(EditorState.preview.mode === "3d")
+                        && (ShellBridge.previewHovered || root.activeFocus || panelHover.hovered)
+        if (!engaged && id !== "clearSelection")
             return false
         switch (id) {
         case "selectTool":

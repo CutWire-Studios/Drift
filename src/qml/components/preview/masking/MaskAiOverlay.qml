@@ -10,7 +10,8 @@ Item {
 
     property bool interacting: false
 
-    // Snapshot from AppController::maskEditorState(), the same frame MaskOverlay places against.
+    // Snapshot from PreviewController::maskingFrame(): the selection's frame, and whether it is under the
+    // playhead. Nothing is placed or accepted while it is not.
     property var editorState: ({})
     readonly property bool hasFrame: !!editorState.hasFrame
     // The selection's mask target (MaskingController::maskTarget). Assigned, not bound, so it
@@ -37,7 +38,7 @@ Item {
         // Playhead ticks ~60 Hz; the frame and target are only needed when a click lands.
         if (EditorState.playing)
             return
-        editorState = EditorState.preview.maskEditorState()
+        editorState = EditorState.preview.maskingFrame()
         target = EditorState.masking.maskTarget()
         syncSession()
     }
@@ -284,9 +285,9 @@ Item {
         }
     }
 
-    // Nothing to pick on: the tool is up, but the selection is not a clip.
+    // Nothing to pick on: the tool is up, but the selection is not a clip, or it is off the playhead.
     Rectangle {
-        visible: root.target.kind !== "clip"
+        visible: root.target.kind !== "clip" || !root.editorState.inside
         anchors.centerIn: parent
         width: noClipText.width + Theme.spacingLg * 2
         height: noClipText.height + Theme.spacingMd * 2
@@ -296,7 +297,9 @@ Item {
         Text {
             id: noClipText
             anchors.centerIn: parent
-            text: qsTr("Select a clip on the timeline to pick an object")
+            text: root.target.kind !== "clip"
+                  ? qsTr("Select a clip on the timeline to pick an object")
+                  : qsTr("Move the playhead over the selected clip")
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -304,7 +307,7 @@ Item {
     }
 
     Rectangle {
-        visible: root.aiActive && !EditorState.segmentation.running
+        visible: root.aiActive && root.editorState.inside && !EditorState.segmentation.running
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Theme.spacingLg

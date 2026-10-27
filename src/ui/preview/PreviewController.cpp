@@ -1714,17 +1714,7 @@ QVariantMap PreviewController::maskEditorState() const
         }
     }
 
-    // Default frame: the whole canvas, which is both the standalone case and the right fallback
-    // for an untransformed clip.
-    double frameX = 0.0;
-    double frameY = 0.0;
-    double frameW = m_app.m_project.width();
-    double frameH = m_app.m_project.height();
-    double frameRotation = 0.0;
-    drift::ClipPose3d framePose;
-    bool hasFrame = hostTrack < 0;
     int hostClip = -1;
-
     if (hostTrack >= 0 && hostTrack < m_app.m_project.tracks().size()) {
         const drift::Track &track = m_app.m_project.tracks().at(hostTrack);
         for (int c = 0; c < track.clips.size(); ++c) {
@@ -1733,25 +1723,6 @@ QVariantMap PreviewController::maskEditorState() const
                 hostClip = c;
                 break;
             }
-        }
-        if (hostClip >= 0) {
-            const drift::Clip &clip = track.clips.at(hostClip);
-            const drift::TimeUs relative = m_app.m_playheadUs - clip.timelineStart;
-            const auto value = [&](const drift::KeyframeTrack<double> &kt, double fallback) {
-                return kt.isEmpty() ? fallback : kt.evaluateAt(relative);
-            };
-            frameX = value(clip.transformX, 0.0);
-            frameY = value(clip.transformY, 0.0);
-            frameW = value(clip.transformW, m_app.m_project.width());
-            frameH = value(clip.transformH, m_app.m_project.height());
-            frameRotation = value(clip.rotation, 0.0);
-            if (clip.type != drift::ClipType::Model3d) {
-                framePose.rotationX = value(clip.rotationX, 0.0);
-                framePose.rotationY = value(clip.rotationY, 0.0);
-                framePose.positionZ = value(clip.positionZ, 0.0);
-                framePose.perspective = value(clip.perspective, drift::kDefaultClipPerspective);
-            }
-            hasFrame = true;
         }
 
         for (const int laneIndex : drift::adjustmentLaneIndexes(m_app.m_project, hostTrack)) {
@@ -1767,27 +1738,104 @@ QVariantMap PreviewController::maskEditorState() const
         }
     }
 
+    // Without a clip under the playhead the frame is the whole canvas, unposed, through whatever
+    // parent the track has. A standalone adjustment (no host track) is the same canvas frame.
+    QVariantMap frame;
+    if (hostClip >= 0) {
+        frame = clipFrameMap(hostTrack, hostClip);
+    } else {
+        const drift::TransformParent parent =
+            hostTrack >= 0 ? m_app.transformParentFor(hostTrack) : drift::TransformParent{};
+        const drift::ClipPose3d noPose;
+        frame = {{QStringLiteral("x"), 0.0},
+                 {QStringLiteral("y"), 0.0},
+                 {QStringLiteral("width"), m_app.m_project.width()},
+                 {QStringLiteral("height"), m_app.m_project.height()},
+                 {QStringLiteral("rotation"), 0.0},
+                 {QStringLiteral("rotationX"), noPose.rotationX},
+                 {QStringLiteral("rotationY"), noPose.rotationY},
+                 {QStringLiteral("z"), noPose.positionZ},
+                 {QStringLiteral("perspective"), noPose.perspective},
+                 {QStringLiteral("parentActive"), parent.hasParent},
+                 {QStringLiteral("parent"), transformToList(parent.matrix)}};
+    }
+
     out.insert(QStringLiteral("hostTrack"), hostTrack);
     out.insert(QStringLiteral("hostClip"), hostClip);
-    out.insert(QStringLiteral("hasFrame"), hasFrame);
+    out.insert(QStringLiteral("hasFrame"), hostTrack < 0 || hostClip >= 0);
     out.insert(QStringLiteral("canvasWidth"), m_app.m_project.width());
     out.insert(QStringLiteral("canvasHeight"), m_app.m_project.height());
     out.insert(QStringLiteral("layers"), layers);
-    out.insert(QStringLiteral("x"), frameX);
-    out.insert(QStringLiteral("y"), frameY);
-    out.insert(QStringLiteral("width"), frameW);
-    out.insert(QStringLiteral("height"), frameH);
-    out.insert(QStringLiteral("rotation"), frameRotation);
-    out.insert(QStringLiteral("rotationX"), framePose.rotationX);
-    out.insert(QStringLiteral("rotationY"), framePose.rotationY);
-    out.insert(QStringLiteral("z"), framePose.positionZ);
-    out.insert(QStringLiteral("perspective"), framePose.perspective);
-    // A host moved by a transform layer: the handles are placed through that parent too.
-    const drift::TransformParent parent =
-        hostTrack >= 0 ? m_app.transformParentFor(hostTrack) : drift::TransformParent{};
-    out.insert(QStringLiteral("parentActive"), parent.hasParent);
-    out.insert(QStringLiteral("parent"), transformToList(parent.matrix));
+    for (auto it = frame.cbegin(); it != frame.cend(); ++it)
+        out.insert(it.key(), it.value());
     return out;
+}
+
+QVariantMap PreviewController::clipFrameMap(int trackIndex, int clipIndex) const
+{
+    const drift::Clip &clip = m_app.m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const drift::TimeUs relative = m_app.m_playheadUs - clip.timelineStart;
+    const auto value = [&](const drift::KeyframeTrack<double> &kt, double fallback) {
+        return kt.isEmpty() ? fallback : kt.evaluateAt(relative);
+    };
+    drift::ClipPose3d pose;
+    if (clip.type != drift::ClipType::Model3d) {
+        pose.rotationX = value(clip.rotationX, 0.0);
+        pose.rotationY = value(clip.rotationY, 0.0);
+        pose.positionZ = value(clip.positionZ, 0.0);
+        pose.perspective = value(clip.perspective, drift::kDefaultClipPerspective);
+    }
+    // A host moved by a transform layer: the handles are placed through that parent too.
+    const drift::TransformParent parent = m_app.transformParentFor(trackIndex);
+    return {{QStringLiteral("x"), value(clip.transformX, 0.0)},
+            {QStringLiteral("y"), value(clip.transformY, 0.0)},
+            {QStringLiteral("width"), value(clip.transformW, m_app.m_project.width())},
+            {QStringLiteral("height"), value(clip.transformH, m_app.m_project.height())},
+            {QStringLiteral("rotation"), value(clip.rotation, 0.0)},
+            {QStringLiteral("rotationX"), pose.rotationX},
+            {QStringLiteral("rotationY"), pose.rotationY},
+            {QStringLiteral("z"), pose.positionZ},
+            {QStringLiteral("perspective"), pose.perspective},
+            {QStringLiteral("canvasWidth"), m_app.m_project.width()},
+            {QStringLiteral("canvasHeight"), m_app.m_project.height()},
+            {QStringLiteral("hasFrame"), true},
+            {QStringLiteral("parentActive"), parent.hasParent},
+            {QStringLiteral("parent"), transformToList(parent.matrix)}};
+}
+
+QVariantMap PreviewController::maskingFrame() const
+{
+    const QVariantMap target = m_app.masking()->maskTarget();
+    const QString kind = target.value(QStringLiteral("kind")).toString();
+    const int trackIndex = target.value(QStringLiteral("track")).toInt();
+    const int clipIndex = target.value(QStringLiteral("clip")).toInt();
+    const bool isClip = kind == QStringLiteral("clip");
+    const bool isAdjustment = kind == QStringLiteral("adjustment");
+    if (!isClip && !isAdjustment) {
+        return {{QStringLiteral("hasFrame"), false},
+                {QStringLiteral("inside"), false},
+                {QStringLiteral("canvasWidth"), m_app.m_project.width()},
+                {QStringLiteral("canvasHeight"), m_app.m_project.height()}};
+    }
+
+    const drift::Clip &clip = m_app.m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const bool inside = clip.containsTime(m_app.m_playheadUs);
+    if (isClip) {
+        QVariantMap out = clipFrameMap(trackIndex, clipIndex);
+        out.insert(QStringLiteral("inside"), inside);
+        out.insert(QStringLiteral("hasFrame"), inside);
+        return out;
+    }
+    // A standalone adjustment masks the canvas composited so far, so its frame is the canvas.
+    return {{QStringLiteral("x"), 0.0},
+            {QStringLiteral("y"), 0.0},
+            {QStringLiteral("width"), m_app.m_project.width()},
+            {QStringLiteral("height"), m_app.m_project.height()},
+            {QStringLiteral("rotation"), 0.0},
+            {QStringLiteral("canvasWidth"), m_app.m_project.width()},
+            {QStringLiteral("canvasHeight"), m_app.m_project.height()},
+            {QStringLiteral("hasFrame"), inside},
+            {QStringLiteral("inside"), inside}};
 }
 
 bool PreviewController::resetSceneCamera(int trackIndex, int clipIndex)

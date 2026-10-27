@@ -358,7 +358,7 @@ QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timel
             const Mask &mask = adjustment.mask;
             result.append(LaneMask{
                 mask.isAnimated() ? mask.resolvedAt(timelineUs - adjustment.timelineStart) : mask,
-                adjustment.id, adjustment.timelineStart});
+                adjustment.id, adjustment.timelineStart, adjustment.srcIn});
         }
     }
     return result;

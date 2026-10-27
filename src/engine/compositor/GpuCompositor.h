@@ -114,6 +114,7 @@ struct GpuLayer
     bool screenSpace = false;
     double opacity = 1.0;
     MaskViewMode maskView = MaskViewMode::Off;
+    QColor maskViewTint = QColor(0xFF, 0x30, 0x30, 0x80);
     drift::TimeUs clipTimeUs = 0; // effect time base (relative to clip start)
     int frameRate = 0;            // the project's, for u_frameIndex; 0 reads as 30
     // This frame's baked face anchors, one per tracked slot, sampled by FrameCompositor. Carried

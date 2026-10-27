@@ -1856,7 +1856,6 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | trackingPanel | stripBad | $semantic.destructive | $semantic.destructive |
 | trackingPanel | stripPlayhead | $semantic.primary | $semantic.primary |
 | trackerOverlay | pattern | $semantic.primary | $semantic.primary |
-| trackerOverlay | search | $semantic.mutedForeground | $semantic.mutedForeground |
 | trackerOverlay | trail | $semantic.onMedia | $semantic.onMedia |
 | trackerOverlay | good | $semantic.constructive | $semantic.constructive |
 | trackerOverlay | warn | $semantic.warning | $semantic.warning |

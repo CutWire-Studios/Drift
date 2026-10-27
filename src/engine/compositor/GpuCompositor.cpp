@@ -870,11 +870,15 @@ enum class CanvasWrite { Over, Erase, Add };
 
 // `layerDepth`, when set, is the layer's own packed depth (a model clip's), written in place of
 // the quad's when the layer takes part in depth occlusion.
+//
+// `sharedMask`, when given, holds the composed coverage across calls: an empty one is filled by the
+// first draw and reused by the next, so the caller owns it and must release it. The mask view's
+// second pass uses this to avoid folding and blurring the same mask twice.
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
                        const GlTarget &layerTarget, const GpuLayer &layer, drift::BlendMode blend,
                        const QSize &canvasSize, const OcclusionDraw *occlusion = nullptr,
                        CanvasWrite write = CanvasWrite::Over, GLuint layerDepth = 0,
-                       ViewPass viewPass = ViewPass::None);
+                       ViewPass viewPass = ViewPass::None, GlTarget *sharedMask = nullptr);
 
 // Where a media mask's pixels land inside the coverage target. The mask's rect is normalized to
 // the clip frame; the fit mode then decides what happens when the media's aspect differs from it.
@@ -1133,7 +1137,7 @@ GlTarget depthCanvasTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
                        const GlTarget &layerTarget, const GpuLayer &layer, drift::BlendMode blend,
                        const QSize &canvasSize, const OcclusionDraw *occlusion, CanvasWrite write,
-                       GLuint layerDepth, ViewPass viewPass)
+                       GLuint layerDepth, ViewPass viewPass, GlTarget *sharedMask)
 {
     if (!layerTarget.isValid() || layer.rect.width() < 0.5 || layer.rect.height() < 0.5)
         return;
@@ -1156,8 +1160,10 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         maskInvert = layer.masks.at(sole).invert ? 1.f : 0.f;
     } else if (!consumed && !drift::masksAreInert(layer.masks)) {
         // Feather, placement and the combine ops all live in the fold, which bakes invert in too.
-        maskTarget = composeMaskTarget(rt, gl, layer, layerTarget.size());
-        maskTex = maskTarget.isValid() ? maskTarget.texture() : 0;
+        GlTarget &composed = sharedMask ? *sharedMask : maskTarget;
+        if (!composed.isValid())
+            composed = composeMaskTarget(rt, gl, layer, layerTarget.size());
+        maskTex = composed.isValid() ? composed.texture() : 0;
     }
     const QMatrix4x4 model = modelMatrixFor(layer, canvasSize);
 
@@ -1275,7 +1281,8 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         program->setUniformValue("u_layer", 0);
         program->setUniformValue("u_mask", 1);
         program->setUniformValue("u_layerPremul", layerPremul);
-        program->setUniformValue("u_tint", viewPass == ViewPass::Removed ? QVector4D(1.f, 0.1875f, 0.1875f, 0.5f)
+        program->setUniformValue("u_tint", viewPass == ViewPass::Removed ? QVector4D(layer.maskViewTint.redF(), layer.maskViewTint.greenF(),
+                                                                                  layer.maskViewTint.blueF(), layer.maskViewTint.alphaF())
                                                                          : QVector4D());
         program->setUniformValue("u_matteView", viewPass == ViewPass::Matte ? 1.f : 0.f);
         // Set either way: the program is cached and reused, so a 1 left over from the last
@@ -1767,12 +1774,17 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
                 rt.releaseTarget(std::move(layerTarget));
                 continue;
             }
+            const bool overlay = showsMaskView(item.layer) && item.layer.maskView == MaskViewMode::Overlay;
+            GlTarget overlayMask;
             drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, item.blend, canvasSize,
                               occlusion.texture ? &occlusion : nullptr, CanvasWrite::Over,
-                              modelDepth.isValid() ? modelDepth.texture() : 0u);
-            if (showsMaskView(item.layer) && item.layer.maskView == MaskViewMode::Overlay) {
+                              modelDepth.isValid() ? modelDepth.texture() : 0u, ViewPass::None,
+                              overlay ? &overlayMask : nullptr);
+            if (overlay) {
                 drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, drift::BlendMode::Normal, canvasSize,
-                                  nullptr, CanvasWrite::Over, 0u, ViewPass::Removed);
+                                  nullptr, CanvasWrite::Over, 0u, ViewPass::Removed, &overlayMask);
+                if (overlayMask.isValid())
+                    rt.releaseTarget(std::move(overlayMask));
             }
             rt.releaseTarget(std::move(layerTarget));
             if (item.layer.emitDepthCanvas)

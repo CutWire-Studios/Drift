@@ -69,6 +69,11 @@ public:
     // existing homographies are dropped.
     Q_INVOKABLE void setTrackerRegion(int trackIndex, int clipIndex, const QString &id,
                                       const QVariantList &region);
+    // Planar: one corner dragged at the playhead. Off the reference frame it only moves the outline
+    // there, through a homography that keeps the other frames' homographies; at the reference, or
+    // with none yet, it is setTrackerRegion.
+    Q_INVOKABLE void correctPlanarCorners(int trackIndex, int clipIndex, const QString &id,
+                                          const QVariantList &region);
     // key: name | solve | minConfidence | patternSize | searchSize. The sizes are a normalized
     // width; the height follows so the box is square in pixels.
     Q_INVOKABLE void setTrackerProperty(int trackIndex, int clipIndex, const QString &id,
@@ -124,6 +129,9 @@ private:
     double m_progress = 0.0;
     QString m_busyTrackerId;
     QAtomicInt m_cancel = 0;
-    drift::Project m_jobBefore;
-    bool m_jobWrote = false;
+    // The run's undo target: only this tracker is restored, so unrelated edits made meanwhile survive.
+    QString m_jobClipId;
+    QString m_jobTrackerId;
+    drift::MotionTracker m_jobTrackerBefore;
+    bool m_jobChanged = false;
 };

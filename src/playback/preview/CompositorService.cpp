@@ -265,6 +265,7 @@ bool CompositorService::isRedundantRequest(drift::TimeUs time,
            && options.readAheadUs == last.readAheadUs
            && options.textEdit == last.textEdit
            && options.maskView == last.maskView
+           && options.maskViewTint == last.maskViewTint
            && options.allowProxies == last.allowProxies
            && options.scopeReadbackWidth <= last.scopeReadbackWidth
            && options.editor.active == last.editor.active

@@ -3,14 +3,15 @@ import QtQuick
 import QtQuick.Shapes
 import Drift
 
-// Draws the motion trackers over the target clip's frame: each point's pattern and search boxes and
-// trail, and a planar tracker's outline. Also takes the clicks that place new trackers.
+// Draws the motion trackers over the target clip's frame: each point's pattern box and trail, and
+// a planar tracker's outline. Also takes the clicks that place new trackers.
 Item {
     id: root
 
     property bool interacting: false
 
-    // Snapshot from AppController::maskEditorState(), the same frame MaskDrawOverlay places against.
+    // Snapshot from PreviewController::maskingFrame(): the selection's frame, and whether it is under the
+    // playhead. Nothing is placed or accepted while it is not.
     property var editorState: ({})
     readonly property bool hasFrame: !!editorState.hasFrame
     property var target: ({ kind: "none" })
@@ -104,7 +105,7 @@ Item {
         if (!visible || interacting)
             return
         if (!EditorState.playing)
-            editorState = EditorState.preview.maskEditorState()
+            editorState = EditorState.preview.maskingFrame()
         target = EditorState.masking.maskTarget()
         refreshTracker()
         refreshFrame()
@@ -175,7 +176,7 @@ Item {
             return
         if (cornerDrag !== null) {
             const region = frameCorners.map((c, i) => ({ "x": cornerAt(i).x, "y": cornerAt(i).y }))
-            EditorState.tracking.setTrackerRegion(target.track, target.clip, ShellBridge.selectedTrackerId, region)
+            EditorState.tracking.correctPlanarCorners(target.track, target.clip, ShellBridge.selectedTrackerId, region)
         }
         interacting = false
         refreshFrame()
@@ -185,6 +186,8 @@ Item {
     function hintText() {
         if (!hasClip)
             return qsTr("Select a clip on the timeline to track motion in it")
+        if (!editorState.inside)
+            return qsTr("Move the playhead over the selected clip")
         switch (placeMode) {
         case "point":
             return qsTr("Click the feature to track on the preview.")
@@ -215,10 +218,12 @@ Item {
         function onSelectionChanged() { root.refresh() }
         function onSelectedClipDataChanged() { root.refresh() }
         function onClipPropertiesPreviewed() { root.refresh() }
-        // Playback keeps the frame current but skips the placement, as MaskDrawOverlay does.
+        // Playback is refreshed by the timer below, not per tick.
         function onPlayheadSecondsChanged() {
+            if (EditorState.playing)
+                return
             root.refreshFrame()
-            if (!EditorState.scrubbing && !EditorState.playing)
+            if (!EditorState.scrubbing)
                 root.refresh()
         }
         function onScrubbingChanged() {
@@ -228,6 +233,17 @@ Item {
         function onPlayingChanged() {
             if (!EditorState.playing)
                 root.refresh()
+        }
+    }
+
+    // Playback refreshes at 10 Hz rather than per tick: the frame and tracker are heavy to resolve.
+    Timer {
+        interval: 100
+        repeat: true
+        running: root.visible && EditorState.playing
+        onTriggered: {
+            root.editorState = EditorState.preview.maskingFrame()
+            root.refreshFrame()
         }
     }
 
@@ -318,6 +334,7 @@ Item {
             delegate: Shape {
                 required property int index
                 anchors.fill: parent
+                visible: !EditorState.playing
 
                 ShapePath {
                     strokeColor: Qt.alpha(Theme.c.trackerOverlay.trail, 0.6)
@@ -358,36 +375,11 @@ Item {
                 readonly property real cy: at.y * clipFrame.height
                 readonly property real pw: pt.patternW * clipFrame.width
                 readonly property real ph: pt.patternH * clipFrame.height
-                readonly property real sw: pt.searchW * clipFrame.width
-                readonly property real sh: pt.searchH * clipFrame.height
-
                 visible: pt.has === true
                 x: cx - pw / 2
                 y: cy - ph / 2
                 width: pw
                 height: ph
-
-                Shape {
-                    x: (pointItem.pw - pointItem.sw) / 2
-                    y: (pointItem.ph - pointItem.sh) / 2
-                    width: pointItem.sw
-                    height: pointItem.sh
-
-                    ShapePath {
-                        strokeColor: Qt.alpha(Theme.c.trackerOverlay.search, 0.7)
-                        strokeWidth: Theme.c.maskDrawOverlay.borderWidth
-                        strokeStyle: ShapePath.DashLine
-                        dashPattern: [4, 3]
-                        fillColor: "transparent"
-
-                        PathRectangle {
-                            x: 0
-                            y: 0
-                            width: pointItem.sw
-                            height: pointItem.sh
-                        }
-                    }
-                }
 
                 Rectangle {
                     anchors.fill: parent

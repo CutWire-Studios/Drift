@@ -92,11 +92,14 @@ public:
             bool operator==(const MaskView &other) const = default;
         };
         MaskView maskView;
+        // The Overlay view's tint for the part the mask cuts away; its alpha is the strength.
+        QColor maskViewTint = QColor(0xFF, 0x30, 0x30, 0x80);
     };
 
     // The media time a mask reads at (before looping); exposed so tests can pin the time bases.
     static drift::TimeUs maskMediaSourceTimeUs(const drift::Clip &host, const drift::Mask &mask,
-                                               drift::TimeUs adjustmentStartUs, drift::TimeUs timelineUs);
+                                               drift::TimeUs adjustmentStartUs, drift::TimeUs adjustmentSrcInUs,
+                                               drift::TimeUs timelineUs);
 
     // How a text clip is laid out at `timelineUs`, as the compositor will draw it: the layout rect
     // (canvas px at renderScale, before any rotation about its centre) and the shaped block for

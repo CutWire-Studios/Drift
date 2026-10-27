@@ -8,6 +8,7 @@ PanelFrame {
     id: root
 
     property bool shown: false
+    readonly property bool wantsActions: shown
 
     // The media clip the trackers live on. Assigned on the signals below, not bound, because each
     // controller call returns a fresh snapshot.
@@ -17,11 +18,6 @@ PanelFrame {
     property real clipStart: 0
     property real clipDuration: 0
     property string selectedId: ""
-
-    // A run started here, so its targets apply once it finishes. Set before the call, because the
-    // controller can refuse a run without going busy.
-    property var pendingRun: null
-    property var activeRun: null
 
     readonly property bool hasTarget: target.kind === "clip"
     readonly property string placeMode: ShellBridge.trackerPlaceMode
@@ -61,7 +57,6 @@ PanelFrame {
     }
 
     function runTrack(id, forward, singleFrame) {
-        pendingRun = { track: target.track, clip: target.clip, id: id }
         EditorState.tracking.track(target.track, target.clip, id, forward, singleFrame)
     }
 
@@ -81,17 +76,40 @@ PanelFrame {
         return Theme.c.trackingPanel.stripWarn
     }
 
+    // Escape cancels an armed placement even when the Masking panel is not in the layout.
+    function handleAction(id) {
+        if (id !== "clearSelection" || ShellBridge.trackerPlaceMode === "")
+            return false
+        ShellBridge.trackerPlaceMode = ""
+        return true
+    }
+
+    onWantsActionsChanged: {
+        if (wantsActions)
+            ShellBridge.trackingActionHandler = root
+        else if (ShellBridge.trackingActionHandler === root)
+            ShellBridge.trackingActionHandler = null
+    }
+    Component.onDestruction: {
+        if (ShellBridge.trackingActionHandler === root)
+            ShellBridge.trackingActionHandler = null
+    }
+
     onShownChanged: {
         if (shown) {
             refresh()
-        } else if (EditorState.preview.maskingTool === "tracker") {
-            EditorState.preview.maskingTool = ""
+        } else {
+            ShellBridge.trackerPlaceMode = ""
+            if (EditorState.preview.maskingTool === "tracker")
+                EditorState.preview.maskingTool = ""
         }
     }
 
     onSelectedIdChanged: ShellBridge.selectedTrackerId = selectedId
 
     Component.onCompleted: {
+        if (wantsActions)
+            ShellBridge.trackingActionHandler = root
         selectedId = ShellBridge.selectedTrackerId
         if (shown)
             refresh()
@@ -122,21 +140,8 @@ PanelFrame {
                 root.refreshIfLive()
         }
         function onBusyChanged() {
-            if (EditorState.tracking.busy) {
-                const p = root.pendingRun
-                if (p && p.id === EditorState.tracking.busyTrackerId)
-                    root.activeRun = p
-                root.pendingRun = null
-                return
-            }
-            root.refreshIfLive()
-            const run = root.activeRun
-            root.activeRun = null
-            if (!run)
-                return
-            const tracker = EditorState.tracking.trackers(run.track, run.clip).find(t => t.id === run.id)
-            if (tracker && tracker.targets.length > 0)
-                EditorState.tracking.apply(run.track, run.clip, run.id)
+            if (!EditorState.tracking.busy)
+                root.refreshIfLive()
         }
     }
 

@@ -42,6 +42,7 @@
 #include "app/editor/PreferencesController.h"
 #include "engine/compositor/FrameCompositor.h"
 #include "engine/compositor/GpuCompositor.h"
+#include "engine/tracking/MotionTracking.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "app/editor/AppController.h"
 #include "app/editor/TimelineClipsModel.h"
@@ -337,8 +338,11 @@ private slots:
     void maskRoundTripsThroughTheInspectorMap();
     void maskScalarsKeyframeThroughTheGenericApi();
     void maskEditsKeepTheirKeyframes();
+    void replacingMaskGeometryDropsItsAnimation();
+    void adjustmentMatteContinuesAfterSplit();
     void freeformMaskPointsAreEditable();
     void maskEditorStateResolvesTheHostFrame();
+    void maskingFrameFollowsTheSelectedClip();
     void selectingAMaskClipTurnsOnThePreviewHandles();
     void droppingAMaskOnAClipStacksAndSelectsIt();
     void droppingAMaskOnEmptyTrackSpaceMakesALaneClip();
@@ -360,8 +364,12 @@ private slots:
     void trackingClearSamplesKeepsUserKeysAndEarlierSamples();
     void trackingSurvivesProjectRoundTrip();
     void trackingFollowsMovingSquareBothWays();
+    void trackingSingleFrameStepKeepsLaterSamples();
+    void trackingUndoRevertsOnlyTheTracker();
+    void trackingCorrectPlanarCornersAwayFromReference();
     void maskingBrushPaintsAndErases();
     void maskingBrushStrokeCreatesAndUpdatesAMatte();
+    void maskingBrushStrokesChainBeforeSaving();
     void freeformPointsCrossToQmlAsNamedFields();
     void trackMovesAndDeletesCarryTheirAdjustmentLanes();
     void projectV3MigratesEffectsOntoAdjustmentLanes();
@@ -10646,6 +10654,71 @@ void EditorStateTest::maskEditsKeepTheirKeyframes()
     QCOMPARE(stored.keyframes.value(QStringLiteral("feather")).keyframes().size(), 2);
 }
 
+void EditorStateTest::replacingMaskGeometryDropsItsAnimation()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    drift::Mask poly;
+    poly.shape = drift::MaskShape::Freeform;
+    poly.points = {QPointF(0.2, 0.2), QPointF(0.8, 0.2), QPointF(0.5, 0.8)};
+    poly.pathKeys.insert(0, poly.points);
+    poly.pathKeys.insert(drift::secondsToUs(1.0),
+                         {QPointF(0.3, 0.2), QPointF(0.9, 0.2), QPointF(0.6, 0.8)});
+    drift::setLinkedMask(*state.project(), 0, 0, poly);
+    state.setClipKeyframe(0, 0, QStringLiteral("mask.feather"), 0.0, 2.0);
+    state.setClipKeyframe(0, 0, QStringLiteral("mask.feather"), 1.0, 8.0);
+
+    QVariantMap map = state.clipAt(0, 0).value(QStringLiteral("mask")).toMap();
+    QVariantList pentagon;
+    for (const QPointF &p : {QPointF(0.5, 0.1), QPointF(0.9, 0.4), QPointF(0.75, 0.9),
+                             QPointF(0.25, 0.9), QPointF(0.1, 0.4)})
+        pentagon.append(QVariantMap{{QStringLiteral("x"), p.x()}, {QStringLiteral("y"), p.y()}});
+    map.insert(QStringLiteral("points"), pentagon);
+    state.setClipMask(0, 0, map);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const drift::Mask &stored = state.project()->tracks().at(pinned.constFirst().trackIndex)
+                                    .clips.at(pinned.constFirst().clipIndex).mask;
+    QCOMPARE(stored.points.size(), 5);
+    QVERIFY(stored.pathKeys.isEmpty());
+    QCOMPARE(stored.keyframes.value(QStringLiteral("feather")).keyframes().size(), 2);
+}
+
+// Splitting a matte that plays from its own start must leave the tail reading on from where the
+// head stopped, not from frame 0.
+void EditorStateTest::adjustmentMatteContinuesAfterSplit()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Media;
+    mask.mediaPath = QStringLiteral("/nonexistent/matte.mp4");
+    mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
+    const drift::ClipRef added =
+        drift::addLaneMask(*state.project(), 0, mask, drift::secondsToUs(2.0), drift::secondsToUs(4.0));
+    QVERIFY(added.trackIndex >= 0);
+
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(state.project()->tracks()[added.trackIndex].clips[added.clipIndex], tail,
+                                     drift::secondsToUs(3.0)));
+    state.project()->tracks()[added.trackIndex].clips.append(tail);
+
+    const drift::Clip &host = state.project()->tracks().at(0).clips.at(1);
+    const drift::TimeUs tailStart = drift::secondsToUs(5.0);
+    const QList<drift::LaneMask> masks = drift::laneMasksAt(*state.project(), 0, tailStart, host.id);
+    QCOMPARE(masks.size(), 1);
+    QCOMPARE(masks.constFirst().adjustmentStartUs, tailStart);
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, masks.constFirst().mask,
+                                                    masks.constFirst().adjustmentStartUs,
+                                                    masks.constFirst().adjustmentSrcInUs, tailStart),
+             drift::secondsToUs(3.0));
+}
+
 // A freeform with no vertices rasterizes to an empty path, which blanks the clip with no way back
 // except deleting the mask. Picking the shape has to hand the user something to drag.
 void EditorStateTest::freeformMaskPointsAreEditable()
@@ -10731,6 +10804,29 @@ void EditorStateTest::maskEditorStateResolvesTheHostFrame()
     QCOMPARE(viaLane.value(QStringLiteral("hostClip")).toInt(), 0);
     QVERIFY(viaLane.value(QStringLiteral("layers")).toList().constFirst().toMap()
                 .value(QStringLiteral("selected")).toBool());
+}
+
+void EditorStateTest::maskingFrameFollowsTheSelectedClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->tracks()[0].clips[0].transformW.setKeyframe(0, 300.0);
+    state.project()->tracks()[0].clips[0].transformH.setKeyframe(0, 200.0);
+
+    state.selectClip(0, 0);
+
+    // The playhead over the other clip must not move the frame onto it.
+    state.setPlayheadSeconds(3.0);
+    QVERIFY(!state.preview()->maskingFrame().value(QStringLiteral("inside")).toBool());
+    QVERIFY(!state.preview()->maskingFrame().value(QStringLiteral("hasFrame")).toBool());
+
+    state.setPlayheadSeconds(0.5);
+    const QVariantMap frame = state.preview()->maskingFrame();
+    QVERIFY(frame.value(QStringLiteral("inside")).toBool());
+    QVERIFY(frame.value(QStringLiteral("hasFrame")).toBool());
+    QCOMPARE(frame.value(QStringLiteral("width")).toDouble(), 300.0);
+    QCOMPARE(frame.value(QStringLiteral("height")).toDouble(), 200.0);
 }
 
 // Selecting a mask clip on a lane is itself the request to edit it. Requiring the toolbar toggle
@@ -11311,6 +11407,7 @@ void EditorStateTest::maskingBrushStrokeCreatesAndUpdatesAMatte()
 
     const QVariantList firstStroke{maskVertex(0.2, 0.5), maskVertex(0.8, 0.5)};
     state.masking()->brushStroke(0, 0, firstStroke, false);
+    QVERIFY(state.masking()->waitForBrushSaves());
 
     const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
     QCOMPARE(pinned.size(), 1);
@@ -11326,6 +11423,7 @@ void EditorStateTest::maskingBrushStrokeCreatesAndUpdatesAMatte()
              QStringLiteral("mask"));
 
     state.masking()->brushStroke(0, 0, QVariantList{maskVertex(0.5, 0.2), maskVertex(0.5, 0.8)}, false);
+    QVERIFY(state.masking()->waitForBrushSaves());
 
     const QList<drift::ClipRef> afterSecond = drift::linkedMaskAdjustments(*state.project(), 0, 0);
     QCOMPARE(afterSecond.size(), 1);
@@ -11340,6 +11438,31 @@ void EditorStateTest::maskingBrushStrokeCreatesAndUpdatesAMatte()
     QCOMPARE(state.project()->tracks().at(afterUndo.constFirst().trackIndex)
                  .clips.at(afterUndo.constFirst().clipIndex).mask.mediaPath,
              firstMask.mediaPath);
+}
+
+void EditorStateTest::maskingBrushStrokesChainBeforeSaving()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+
+    state.masking()->brushStroke(0, 0, QVariantList{maskVertex(0.2, 0.5), maskVertex(0.4, 0.5)}, false);
+    state.masking()->brushStroke(0, 0, QVariantList{maskVertex(0.8, 0.5), maskVertex(0.9, 0.5)}, false);
+    QVERIFY(state.masking()->waitForBrushSaves());
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const drift::Mask mask = state.project()->tracks().at(pinned.constFirst().trackIndex)
+                                 .clips.at(pinned.constFirst().clipIndex).mask;
+    const QImage saved(mask.mediaPath);
+    QVERIFY(!saved.isNull());
+    const int y = saved.height() / 2;
+    QVERIFY(qGray(saved.pixel(static_cast<int>(0.3 * saved.width()), y)) > 250);
+    QVERIFY(qGray(saved.pixel(static_cast<int>(0.85 * saved.width()), y)) > 250);
 }
 
 // Vertices reach QML as {x, y} objects, not [x, y] pairs: a Repeater delegate's `modelData` does
@@ -12806,6 +12929,39 @@ void EditorStateTest::trackingPlanarConvertsRectangleToFreeform()
     QVERIFY(qAbs(mask.pathKeys.last().at(0).y() - 0.2) < 1e-6);
 }
 
+void EditorStateTest::trackingCorrectPlanarCornersAwayFromReference()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+
+    const auto corner = [](double x, double y) { return QVariantMap{{QStringLiteral("x"), x}, {QStringLiteral("y"), y}}; };
+    const auto point = [](const QVariant &v) {
+        const QVariantMap map = v.toMap();
+        return QPointF(map.value(QStringLiteral("x")).toDouble(), map.value(QStringLiteral("y")).toDouble());
+    };
+    const QVariantList reference{corner(0.3, 0.3), corner(0.7, 0.3), corner(0.7, 0.7), corner(0.3, 0.7)};
+    const QString id = state.tracking()->addPlanarTracker(0, 0, reference);
+    QVERIFY(!id.isEmpty());
+    const drift::TimeUs referenceUs = fx.tracker(QStringLiteral("clip-0"), id).referenceUs;
+    const std::array<double, 9> identity{1, 0, 0, 0, 1, 0, 0, 0, 1};
+    fx.tracker(QStringLiteral("clip-0"), id).homographies.insert(referenceUs + fx.frame, {1, 0, 0.1, 0, 1, 0.05, 0, 0, 1});
+
+    state.setPlayheadSeconds(drift::usToSeconds(fx.frame));
+    const QVariantList moved{corner(0.55, 0.45), corner(0.95, 0.45), corner(0.95, 0.85), corner(0.55, 0.85)};
+    state.tracking()->correctPlanarCorners(0, 0, id, moved);
+
+    const drift::MotionTracker &after = fx.tracker(QStringLiteral("clip-0"), id);
+    QCOMPARE(after.homographies.size(), 2);
+    QVERIFY(after.homographies.value(referenceUs) == identity);
+    const std::array<double, 9> corrected = after.homographies.value(referenceUs + fx.frame);
+    for (int i = 0; i < reference.size(); ++i) {
+        const QPointF mapped = drift::tracking::applyHomography(corrected, point(reference.at(i)));
+        QVERIFY(qAbs(mapped.x() - point(moved.at(i)).x()) < 1e-6);
+        QVERIFY(qAbs(mapped.y() - point(moved.at(i)).y()) < 1e-6);
+    }
+}
+
 void EditorStateTest::trackingFollowClipOffsetsTransformKeys()
 {
     AssetLibrary library;
@@ -12957,6 +13113,103 @@ void EditorStateTest::trackingFollowsMovingSquareBothWays()
     const QString backward = state.tracking()->addPointTracker(0, 0, (80.5 + 3 * (frames - 1)) / size.width(), 90.5 / size.height());
     run(backward, false);
     check(backward, 0, frames - 2);
+}
+
+namespace {
+
+// The square from trackingFollowsMovingSquareBothWays: 3 px a frame, starting at x = 60.
+bool writeMovingSquareClip(const QString &path, QSize size, int frames, QString *error)
+{
+    QImage texture(40, 40, QImage::Format_RGB888);
+    for (int y = 0; y < 40; ++y) {
+        for (int x = 0; x < 40; ++x)
+            texture.setPixel(x, y, qRgb((x * 37 + y * 11) % 256, (x * 5 + y * 71) % 256, ((x ^ y) * 29) % 256));
+    }
+    drift::MatteWriter writer;
+    if (!writer.open(path, size, 30, 1, error, drift::MatteWriter::Mode::Colour))
+        return false;
+    for (int k = 0; k < frames; ++k) {
+        QImage image(size, QImage::Format_RGB888);
+        image.fill(QColor(90, 90, 90));
+        QPainter p(&image);
+        p.drawImage(60 + 3 * k, 70, texture);
+        p.end();
+        if (!writer.writeFrame(image, error))
+            return false;
+    }
+    return writer.finish(error);
+}
+
+} // namespace
+
+// One frame tracked from the playhead overwrites that frame only; the samples further on stay.
+void EditorStateTest::trackingSingleFrameStepKeepsLaterSamples()
+{
+    if (!Exporter::videoCodecById(QStringLiteral("h264")).value(QStringLiteral("available")).toBool())
+        QSKIP("No H.264 encoder available in this FFmpeg build");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("square.mp4"));
+    const QSize size(320, 180);
+    constexpr int frames = 30;
+    QString error;
+    QVERIFY2(writeMovingSquareClip(path, size, frames, &error), qPrintable(error));
+
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    state.project()->setFps(30);
+    state.project()->setResolution(size.width(), size.height());
+    drift::Clip &clip = state.project()->tracks()[0].clips[0];
+    clip.path = path;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(1.0);
+    clip.srcIn = 0;
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.removeAt(1);
+    const drift::TimeUs frame = drift::frameDurationUs(30);
+
+    QSignalSpy busy(state.tracking(), &TrackingController::busyChanged);
+    state.setPlayheadUs(0);
+    const QString id = state.tracking()->addPointTracker(0, 0, 80.5 / size.width(), 90.5 / size.height());
+    state.tracking()->track(0, 0, id, true, false);
+    QTRY_VERIFY_WITH_TIMEOUT(busy.count() >= 2, 60000);
+    const int before = fx.tracker(QStringLiteral("clip-0"), id).points[0].samples.size();
+    QVERIFY(before >= frames);
+
+    state.setPlayheadUs(10 * frame);
+    state.tracking()->track(0, 0, id, true, true);
+    QTRY_VERIFY_WITH_TIMEOUT(busy.count() >= 4, 60000);
+    const auto &samples = fx.tracker(QStringLiteral("clip-0"), id).points[0].samples;
+    QCOMPARE(samples.size(), before);
+    QVERIFY(samples.contains((frames - 1) * frame));
+}
+
+// A run that fails before its first batch still erases the later samples, so undo must bring
+// them back. The fixture's clip path does not exist, so the first decode fails deterministically.
+void EditorStateTest::trackingUndoRevertsOnlyTheTracker()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5, 0.5), 0.9f, false});
+    const int before = fx.tracker(QStringLiteral("clip-0"), id).points[0].samples.size();
+
+    QSignalSpy busy(state.tracking(), &TrackingController::busyChanged);
+    state.setPlayheadUs(0);
+    state.tracking()->track(0, 0, id, true, false);
+    QTRY_VERIFY_WITH_TIMEOUT(busy.count() >= 2, 10000);
+    QVERIFY(!state.tracking()->busy());
+    QVERIFY(fx.tracker(QStringLiteral("clip-0"), id).points[0].samples.size() < before);
+
+    QVERIFY(state.undoAvailable());
+    state.undo();
+    QCOMPARE(fx.tracker(QStringLiteral("clip-0"), id).points[0].samples.size(), before);
+    QVERIFY(fx.tracker(QStringLiteral("clip-0"), id).points[0].samples.contains(15 * fx.frame));
 }
 
 QTEST_MAIN(EditorStateTest)
