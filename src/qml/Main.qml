@@ -1095,6 +1095,12 @@ ApplicationWindow {
         // reopen and the recovery prompt.
         if (EditorState.projectFile.consumeStartupProject())
             return
+        // An agent's instance (launch_instance) starts on the empty timeline it asked for:
+        // no last-session restore, no recovery or layout prompt, no start screen.
+        if (EditorState.projectFile.isolatedSession) {
+            window.showStartScreen = false
+            return
+        }
         // Opt-in: restore unsaved recovery or the last clean project silently.
         if (EditorState.projectFile.restoreLastSessionIfEnabled())
             return

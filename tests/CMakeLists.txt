@@ -72,6 +72,7 @@ qt_add_executable(tst_editorstate
     ../src/playback/stats/PlaybackDiagnostics.cpp
     ../src/playback/preview/ClipPreviewPlayer.cpp
     ../src/app/mcp/protocol/McpSession.cpp
+    ../src/app/platform/RunningInstances.cpp
     ../src/app/mcp/tools/McpCatalog.cpp
     ../src/app/mcp/protocol/McpProtocol.cpp
     ../src/app/mcp/transport/McpHttp.cpp
@@ -86,6 +87,7 @@ qt_add_executable(tst_editorstate
     ../src/app/online/market/MarketIdentity.cpp
     ../src/app/mcp/transport/McpServer.cpp
     ../src/app/mcp/transport/McpStdio.cpp
+    ../src/app/mcp/transport/McpBridge.cpp
     ../src/app/mcp/transport/McpStdioServer.cpp
 )
 target_include_directories(tst_editorstate PRIVATE ../src)
@@ -212,6 +214,7 @@ endif()
 qt_add_executable(tst_mcp
     tst_mcp.cpp
     ../src/app/mcp/protocol/McpSession.cpp
+    ../src/app/platform/RunningInstances.cpp
     ../src/app/mcp/tools/McpCatalog.cpp
     ../src/app/mcp/protocol/McpProtocol.cpp
     ../src/app/mcp/transport/McpHttp.cpp
@@ -271,6 +274,7 @@ qt_add_executable(tst_mcp
     ../src/app/online/market/MarketIdentity.cpp
     ../src/app/mcp/transport/McpServer.cpp
     ../src/app/mcp/transport/McpStdio.cpp
+    ../src/app/mcp/transport/McpBridge.cpp
     ../src/app/mcp/transport/McpStdioServer.cpp
 )
 target_include_directories(tst_mcp PRIVATE ../src)

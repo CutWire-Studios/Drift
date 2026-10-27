@@ -1146,6 +1146,8 @@ qt_add_executable(drift
 target_sources(drift PRIVATE
     src/app/mcp/protocol/McpSession.h
     src/app/mcp/protocol/McpSession.cpp
+    src/app/platform/RunningInstances.h
+    src/app/platform/RunningInstances.cpp
     src/app/mcp/tools/McpCatalog.h
     src/app/mcp/tools/McpCatalog.cpp
     src/app/mcp/protocol/McpProtocol.h
@@ -1178,6 +1180,8 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
     target_sources(drift PRIVATE
         src/app/mcp/transport/McpStdio.h
         src/app/mcp/transport/McpStdio.cpp
+        src/app/mcp/transport/McpBridge.h
+        src/app/mcp/transport/McpBridge.cpp
         src/app/mcp/transport/McpStdioServer.h
         src/app/mcp/transport/McpStdioServer.cpp
         src/app/HeadlessApp.h

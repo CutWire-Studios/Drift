@@ -25,6 +25,48 @@ is closed or Agent access is off, each call comes back as a JSON-RPC error and t
 keeps running, so enabling Agent access is enough to make it work — no need to restart the
 client.
 
+### Several instances
+
+Any number of editors (and headless instances) can run at once. The first takes port 4731;
+the rest bind a free port. Each one with Agent access on registers itself with a file in
+`$XDG_RUNTIME_DIR/drift/mcp-sessions/<pid>.json` (the temp directory where there is no
+runtime directory; `DRIFT_MCP_SESSION_DIR` moves it) holding its port, token, pid, start
+time, whether it is headless, and the open project's path and name. The file is
+owner-only, rewritten when the token rotates or the project changes, and removed when
+Agent access is turned off. Records left by a process that has died are ignored and
+deleted the next time anything reads the registry.
+
+The stdio bridge adds four tools of its own to the homepage, and answers `initialize`,
+`ping` and `tools/list` itself, so they work before any editor is reachable:
+
+| Tool | Does |
+| --- | --- |
+| `instances()` | Lists running instances: `id` (pid), `name` (project name), `project` (path, when saved), `headless`, `isolated` (started by `launch_instance`), `url`, `started`, `attached`. Never the token |
+| `use_instance({id})` | Attaches to that instance; every later call goes to it |
+| `launch_instance({project?, headless?, wait?})` | Starts a new Drift with Agent access on and attaches to it once it is up **and** the requested project has finished opening (up to `wait` seconds, default 60). A failed open comes back as `load_failed` with the reason, still attached to the instance. A window by default; `headless:true` runs `--headless --mcp-port 4731` instead, which keeps running until `close_instance` or a signal stops it |
+| `close_instance({id, discard?})` | Quits an instance that `launch_instance` started (`isolated:true` in `instances()`) and waits for it to exit; its registry record and instance marker go with it. Never the user's own editor (`not_isolated`). Refuses `busy` during a save or load, and `unsaved_changes` when the project is dirty unless `discard:true`. The instance-side op is `quit_instance`, which applies the same checks |
+
+Launched instances run with `--isolated-session` (the GUI also gets `--agent-access`, which
+turns Agent access on for that run only). An isolated instance shares the user's settings
+but not their session: it never reopens the last project or offers crash recovery, opens
+straight into the editor without the start screen, and does not write the recovery file,
+`lastSessionPath` or the recent-projects list, so the user's own editor reopens exactly what
+it would have otherwise.
+
+Every instance, with Agent access or without, also leaves a marker in
+`<AppData>/instances/<pid>` while it runs. The startup sweep that reclaims unpacked project
+media under `<AppData>/projects` only knows what this instance's recents and the recovery
+file name, so it holds back entirely while any other instance is alive.
+
+With exactly one instance running, the bridge attaches to it on the first call. With
+several it refuses to guess: tool calls come back `no_instance` with the list until
+`use_instance` picks one. `drift --mcp-stdio --mcp-instance <pid>` pins it up front.
+
+Once attached, a bridge stays on that instance and follows its token rotations. Opening
+another editor never takes over its next call; if the instance turns Agent access off or
+closes, calls fail with a message naming it until access returns or `use_instance` moves
+the bridge elsewhere.
+
 ## Headless
 
 `drift --headless` runs the editor with no window and serves MCP itself, for servers and
@@ -53,8 +95,8 @@ stdio is a transport, where it goes to stderr instead: the spec allows nothing b
 messages on stdout, and a banner there is exactly what breaks clients.
 
 Without `--mcp-token` (or `$DRIFT_MCP_TOKEN`) a token is generated and shown in the
-banner. Only the HTTP form writes the session file that `--mcp-stdio` reads, so a headless
-instance serving stdio never disturbs a GUI editor running alongside it.
+banner. Only the HTTP form registers a session file for `--mcp-stdio` to find, so a
+headless instance serving only stdio stays out of the registry.
 
 Both forms shut down on SIGINT (Ctrl-C) and SIGTERM.
 
@@ -110,7 +152,7 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Composites | `make_composite` (selection-based) moves the selected clips into a nested timeline and leaves one `composite` clip plus a bin item. `open_composite({clip})` / `({sequence})` makes that timeline the one every op edits; `open_composite({main:true})` returns. Adding content past a composite's end never lengthens placed instances, and shortening the content never shortens them (or the adjustment clips hosted on them) — trim them with `set_duration`; their trim limit follows the content. `set_clip_speed` retimes a composite as a unit: on an untrimmed instance, `speed = currentDuration / target` makes it end at `target`. `set_speed_curve` also works on composites. One level only: no composites inside composites. `flatten_composite` renders the clip to a video file (async, poll `export_status`) and swaps it in. `export_video` always renders the main timeline |
 | Export | `export_video` is async — poll `inspect().export` or `export_status`. The output path is normalised, so use the `path` echoed back. Named sizes: `list_export_presets` + `export_with_preset` |
 | Atomicity | `apply` is **not** atomic: on failure the ops before it stay applied. The failure reply is `{ok:false, error:"apply_failed", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops that ran]}` — `done` never contains the failed op. An ops array cannot reference an id produced earlier in the same batch — end the batch after `set_speed_curve` |
-| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_loop_work_area`, `export_video`, `save_project`, `set_theme`, `export_theme`, `import_theme`, `select_theme`, `set_preview_view`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_download`, `market_cancel_download`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`, `import_effect`, `rename/delete/export/import_effect_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
+| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_loop_work_area`, `export_video`, `save_project`, `quit_instance`, `set_theme`, `export_theme`, `import_theme`, `select_theme`, `set_preview_view`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_download`, `market_cancel_download`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`, `import_effect`, `rename/delete/export/import_effect_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
 | Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict`, `unsupported` (a build without the vector renderer), and from the market toolbox `market_unavailable`, `consent_required`, `market_error`, `download_failed`. `type_mismatch` is also the answer when an op gets the wrong **kind** of clip (a shape to `apply_text_preset`, a title to `set_shape_style`, an image to `set_clip_orientation`) |
 | UI themes | No op edits theme tokens. `export_theme({path, name, theme?, mode?})` writes a copy (`copy`: every resolved token; `starter`: `extends` + core palette, metrics, typography, motion, window) to a file; edit it with your own file tools, then `import_theme({path, replace:true, select:true})`. Import errors name the bad key; fix and re-import. `list_themes` / `select_theme` switch between installed themes. Built-in ids (`dark`, `light`, `graphite`, `frost`) and `system` are reserved and cannot be imported or removed. Format: `docs/theming.md` |
 | Change detection | Every `inspect` includes `revision`; pass `since:<revision>` to get `{unchanged:true}` when state is current |
