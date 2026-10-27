@@ -32,7 +32,6 @@ Rectangle {
     readonly property real vx: liveVx > -1e11 ? liveVx : modelData.x
     readonly property real vy: liveVy > -1e11 ? liveVy : modelData.y
 
-    parent: vertex.frame
     x: vx * vertex.frame.width - vs / 2
     y: vy * vertex.frame.height - vs / 2
     z: 200

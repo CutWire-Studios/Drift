@@ -78,7 +78,8 @@ public:
     // width; the height follows so the box is square in pixels.
     Q_INVOKABLE void setTrackerProperty(int trackIndex, int clipIndex, const QString &id,
                                         const QString &key, const QVariant &value);
-    Q_INVOKABLE void removeTracker(int trackIndex, int clipIndex, const QString &id);
+    // removeKeys also strips the keys the tracker wrote onto its targets, as removeTarget does.
+    Q_INVOKABLE void removeTracker(int trackIndex, int clipIndex, const QString &id, bool removeKeys);
     // Drops the non-key samples after (forward) or before the playhead, in timeline order.
     Q_INVOKABLE void clearSamples(int trackIndex, int clipIndex, const QString &id, bool forward);
 
@@ -98,6 +99,10 @@ public:
                                const QString &targetClipId, const QString &mode);
     Q_INVOKABLE void removeTarget(int trackIndex, int clipIndex, const QString &id,
                                   const QString &targetClipId);
+    // Follow targets: true puts the clip's centre on the tracked point, false keeps its offset from
+    // it at the reference frame. Re-applies that target.
+    Q_INVOKABLE void setTargetCenter(int trackIndex, int clipIndex, const QString &id,
+                                     const QString &targetClipId, bool center);
     // Regenerates the keys on every target. One undo step.
     Q_INVOKABLE void apply(int trackIndex, int clipIndex, const QString &id);
 
@@ -123,6 +128,7 @@ private:
     void finishJob(const QString &message, const QString &severity);
     // Returns an error to show, or empty. Does not push undo.
     QString applyTargets(const QString &clipId, const QString &trackerId, const QString &onlyTarget = {});
+    void unapplyTarget(const drift::Clip &host, const drift::MotionTracker &tracker, const drift::TrackerTarget &target);
 
     AppController *m_app = nullptr;
     bool m_busy = false;

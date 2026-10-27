@@ -7,6 +7,7 @@
 #include <QList>
 #include <QMap>
 #include <QPointF>
+#include <QRectF>
 #include <QSizeF>
 #include <QString>
 #include <QVector>
@@ -39,6 +40,14 @@ struct TrackerTarget
     enum class Mode { Mask, FollowClip };
     QString clipId; // the Mask adjustment clip, or the clip made to follow
     Mode mode = Mode::Mask;
+    // FollowClip only: put the clip's centre on the tracked point instead of keeping the offset it
+    // had from it at the reference frame.
+    bool centerOnTrack = false;
+    // FollowClip only: the clip's own pose at the reference frame when it was added, so applying,
+    // switching anchor and removing all start from it rather than from keys a previous apply baked.
+    bool hasRest = false;
+    QRectF restRect;
+    double restRotation = 0;
 };
 
 struct MotionTracker
@@ -137,10 +146,17 @@ inline QJsonObject toJson(const MotionTracker &tracker)
 
     QJsonArray targets;
     for (const TrackerTarget &target : tracker.targets) {
-        targets.append(QJsonObject{
+        QJsonObject entry{
             {QStringLiteral("clipId"), target.clipId},
             {QStringLiteral("mode"), trackerTargetModeToString(target.mode)},
-        });
+            {QStringLiteral("anchor"), target.centerOnTrack ? QStringLiteral("center") : QStringLiteral("offset")},
+        };
+        if (target.hasRest) {
+            entry.insert(QStringLiteral("rest"), QJsonArray{target.restRect.x(), target.restRect.y(),
+                                                            target.restRect.width(), target.restRect.height(),
+                                                            target.restRotation});
+        }
+        targets.append(entry);
     }
 
     return QJsonObject{
@@ -210,6 +226,14 @@ inline MotionTracker motionTrackerFromJson(const QJsonObject &object)
         TrackerTarget target;
         target.clipId = targetObject.value(QStringLiteral("clipId")).toString();
         target.mode = trackerTargetModeFromString(targetObject.value(QStringLiteral("mode")).toString());
+        target.centerOnTrack = targetObject.value(QStringLiteral("anchor")).toString() == QStringLiteral("center");
+        const QJsonArray rest = targetObject.value(QStringLiteral("rest")).toArray();
+        if (rest.size() == 5) {
+            target.hasRest = true;
+            target.restRect = QRectF(rest.at(0).toDouble(), rest.at(1).toDouble(), rest.at(2).toDouble(),
+                                     rest.at(3).toDouble());
+            target.restRotation = rest.at(4).toDouble();
+        }
         tracker.targets.append(target);
     }
 

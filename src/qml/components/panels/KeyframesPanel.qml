@@ -390,7 +390,8 @@ PanelFrame {
                 id: delegate
                 required property int index
                 width: treeList.width
-                row: root.rows[index]
+                // Empty while the row outlives a shrinking list, until the ListView removes it.
+                row: root.rows[index] ?? ({})
                 track: root.track
                 clip: root.clip
                 playhead: root.playhead

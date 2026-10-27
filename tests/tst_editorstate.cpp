@@ -12988,6 +12988,13 @@ void EditorStateTest::trackingFollowClipOffsetsTransformKeys()
         tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5 + 0.005 * k), 0.95f, false});
 
     state.tracking()->setTarget(0, 0, id, QStringLiteral("follower"), QStringLiteral("followClip"));
+    // New followers centre on the tracked point (0.5, 0.5 of a full-canvas host) at the reference.
+    const drift::Clip *centred = fx.clipById(QStringLiteral("follower"));
+    QVERIFY(qAbs(centred->transformX.keyframes().first().value - (state.project()->width() / 2.0 - 100.0)) < 1e-6);
+    QVERIFY(qAbs(centred->transformY.keyframes().first().value - (state.project()->height() / 2.0 - 50.0)) < 1e-6);
+
+    // Keep offset starts from the pose stored when the target was added, not the centred keys.
+    state.tracking()->setTargetCenter(0, 0, id, QStringLiteral("follower"), false);
     const drift::Clip *moved = fx.clipById(QStringLiteral("follower"));
     const auto &x = moved->transformX.keyframes();
     const auto &y = moved->transformY.keyframes();
@@ -12997,6 +13004,14 @@ void EditorStateTest::trackingFollowClipOffsetsTransformKeys()
     QVERIFY(qAbs(x.last().value - (100.0 + 0.29 * state.project()->width())) < 1e-3);
     QVERIFY(qAbs(y.last().value - (50.0 + 0.145 * state.project()->height())) < 1e-3);
     QVERIFY(moved->transformW.keyframes().size() == 1);
+
+    // Removing the target takes the baked motion with it, leaving the follower at its own pose.
+    state.tracking()->removeTarget(0, 0, id, QStringLiteral("follower"));
+    const drift::Clip *restored = fx.clipById(QStringLiteral("follower"));
+    QCOMPARE(restored->transformX.keyframes().size(), 1);
+    QCOMPARE(restored->transformY.keyframes().size(), 1);
+    QVERIFY(qAbs(restored->transformX.keyframes().first().value - 100.0) < 1e-6);
+    QVERIFY(qAbs(restored->transformY.keyframes().first().value - 50.0) < 1e-6);
 }
 
 void EditorStateTest::trackingClearSamplesKeepsUserKeysAndEarlierSamples()

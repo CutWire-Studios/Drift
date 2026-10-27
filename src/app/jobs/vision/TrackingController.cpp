@@ -225,6 +225,31 @@ std::optional<Homography> pointTransform(const MotionTracker &tracker, TimeUs so
     return solvePoints(tracker.solve, src, dst);
 }
 
+// The tracked point at the reference frame, in clip-frame pixels: the centroid of the points that
+// have a reference sample, or of the planar outline.
+std::optional<QPointF> trackAnchor(const MotionTracker &tracker, QSizeF px)
+{
+    QPointF sum;
+    int count = 0;
+    if (tracker.kind == MotionTracker::Kind::Planar) {
+        for (const QPointF &corner : tracker.planarRegion) {
+            sum += corner;
+            ++count;
+        }
+    } else {
+        for (const TrackPoint &point : tracker.points) {
+            const auto ref = point.samples.constFind(tracker.referenceUs);
+            if (ref == point.samples.constEnd())
+                continue;
+            sum += ref->pos;
+            ++count;
+        }
+    }
+    if (count == 0)
+        return std::nullopt;
+    return QPointF(sum.x() / count * px.width(), sum.y() / count * px.height());
+}
+
 struct FrameXform
 {
     TimeUs timelineUs = 0;
@@ -387,6 +412,24 @@ void writeChannel(drift::KeyframeTrack<double> &track, const QVector<PoseRun> &r
             track.setKeyframe(run[k].t, key);
         }
     }
+}
+
+// Undoes writeChannel: drops the keys inside [lo, hi] and, if none are left, holds the value the
+// track had at `restT` (the reference frame, where the track wrote the follower's own pose).
+// Returns false when the track ends up empty, for callers whose static value lives elsewhere.
+bool stripChannel(drift::KeyframeTrack<double> &track, TimeUs lo, TimeUs hi, TimeUs restT, double *rest)
+{
+    if (track.isEmpty())
+        return true;
+    *rest = track.evaluateAt(restT);
+    QList<TimeUs> stale;
+    for (auto it = track.keyframes().constBegin(); it != track.keyframes().constEnd(); ++it) {
+        if (it.key() >= lo && it.key() <= hi)
+            stale.append(it.key());
+    }
+    for (const TimeUs t : stale)
+        track.removeKeyframe(t);
+    return !track.isEmpty();
 }
 
 struct PathPose
@@ -870,6 +913,7 @@ QVariantList TrackingController::trackers(int trackIndex, int clipIndex) const
             }
             targets.append(QVariantMap{{QStringLiteral("clipId"), target.clipId},
                                        {QStringLiteral("mode"), drift::trackerTargetModeToString(target.mode)},
+                                       {QStringLiteral("center"), target.centerOnTrack},
                                        {QStringLiteral("name"), name}});
         }
 
@@ -1190,9 +1234,13 @@ void TrackingController::setTrackerProperty(int trackIndex, int clipIndex, const
     });
 }
 
-void TrackingController::removeTracker(int trackIndex, int clipIndex, const QString &id)
+void TrackingController::removeTracker(int trackIndex, int clipIndex, const QString &id, bool removeKeys)
 {
-    editTracker(trackIndex, clipIndex, id, tr("Remove tracker"), [&](Clip &host, MotionTracker &) {
+    editTracker(trackIndex, clipIndex, id, tr("Remove tracker"), [&](Clip &host, MotionTracker &tracker) {
+        if (removeKeys) {
+            for (const drift::TrackerTarget &target : tracker.targets)
+                unapplyTarget(host, tracker, target);
+        }
         for (int i = 0; i < host.motionTrackers.size(); ++i) {
             if (host.motionTrackers.at(i).id == id) {
                 host.motionTrackers.removeAt(i);
@@ -1464,8 +1512,27 @@ void TrackingController::setTarget(int trackIndex, int clipIndex, const QString 
                 found = true;
             }
         }
-        if (!found)
-            tracker.targets.append(drift::TrackerTarget{targetClipId, targetMode});
+        if (!found) {
+            drift::TrackerTarget target{targetClipId, targetMode};
+            int t = -1;
+            int c = -1;
+            if (targetMode == drift::TrackerTarget::Mode::FollowClip
+                && findClipById(m_app->m_project, targetClipId, &t, &c)) {
+                // A new follower lands on the tracked point; Keep offset is the opt-in.
+                target.centerOnTrack = true;
+                const Clip &owner = m_app->m_project.tracks().at(t).clips.at(c);
+                const TimeUs rel = qMax<TimeUs>(0, referenceTimelineUs(host, tracker) - owner.timelineStart);
+                const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
+                    return track.isEmpty() ? fallback : track.evaluateAt(rel);
+                };
+                target.hasRest = true;
+                target.restRect = QRectF(own(owner.transformX, 0.0), own(owner.transformY, 0.0),
+                                         own(owner.transformW, m_app->m_project.width()),
+                                         own(owner.transformH, m_app->m_project.height()));
+                target.restRotation = own(owner.rotation, 0.0);
+            }
+            tracker.targets.append(target);
+        }
         error = applyTargets(host.id, tracker.id, targetClipId);
         return true;
     });
@@ -1475,15 +1542,101 @@ void TrackingController::setTarget(int trackIndex, int clipIndex, const QString 
 
 void TrackingController::removeTarget(int trackIndex, int clipIndex, const QString &id, const QString &targetClipId)
 {
-    editTracker(trackIndex, clipIndex, id, tr("Remove tracking target"), [&](Clip &, MotionTracker &tracker) {
+    editTracker(trackIndex, clipIndex, id, tr("Remove tracking target"), [&](Clip &host, MotionTracker &tracker) {
         for (int i = 0; i < tracker.targets.size(); ++i) {
             if (tracker.targets.at(i).clipId == targetClipId) {
+                unapplyTarget(host, tracker, tracker.targets.at(i));
                 tracker.targets.removeAt(i);
                 return true;
             }
         }
         return false;
     });
+}
+
+// Removes the animation applyTargets wrote, so the target is left at its own pose rather than
+// carrying sparse baked keys that a later drag would only partly edit.
+void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tracker, const drift::TrackerTarget &target)
+{
+    drift::Project &project = m_app->m_project;
+    int t = -1;
+    int c = -1;
+    if (!findClipById(project, target.clipId, &t, &c))
+        return;
+    Clip &owner = project.tracks()[t].clips[c];
+
+    const TimeUs refTimeline = referenceTimelineUs(host, tracker);
+    const QSizeF px = frameSizeAt(project, host, refTimeline);
+    const QVector<FrameXform> frames = frameTransforms(project, host, tracker, px);
+    const QVector<QVector<int>> runs = keyableRuns(frames, owner);
+    if (runs.isEmpty())
+        return;
+    const TimeUs lo = frames[runs.first().first()].timelineUs - owner.timelineStart;
+    const TimeUs hi = frames[runs.last().last()].timelineUs - owner.timelineStart;
+    const TimeUs restT = qMax<TimeUs>(0, refTimeline - owner.timelineStart);
+
+    const bool planar = tracker.kind == MotionTracker::Kind::Planar;
+    const bool writesRotation = planar || tracker.solve != MotionTracker::Solve::Translate;
+    const bool writesScale = planar || tracker.solve == MotionTracker::Solve::TranslateRotateScale
+                             || tracker.solve == MotionTracker::Solve::Perspective;
+
+    if (target.mode == drift::TrackerTarget::Mode::Mask) {
+        if (owner.type != drift::ClipType::Adjustment || owner.adjustmentKind != drift::AdjustmentKind::Mask)
+            return;
+        drift::Mask &mask = owner.mask;
+        const std::pair<QString, double drift::Mask::*> channels[] = {
+            {QStringLiteral("x"), &drift::Mask::x}, {QStringLiteral("y"), &drift::Mask::y},
+            {QStringLiteral("rotation"), &drift::Mask::rotation}, {QStringLiteral("w"), &drift::Mask::w},
+            {QStringLiteral("h"), &drift::Mask::h}};
+        for (const auto &[key, field] : channels) {
+            if ((key == QLatin1String("rotation") && !writesRotation)
+                || ((key == QLatin1String("w") || key == QLatin1String("h")) && !writesScale))
+                continue;
+            if (!mask.keyframes.contains(key))
+                continue;
+            double rest = mask.*field;
+            if (!stripChannel(mask.keyframes[key], lo, hi, restT, &rest)) {
+                mask.keyframes.remove(key);
+                mask.*field = rest;
+            }
+        }
+        for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end();)
+            it = (it.key() >= lo && it.key() <= hi) ? mask.pathKeys.erase(it) : std::next(it);
+        return;
+    }
+
+    const auto strip = [&](drift::KeyframeTrack<double> &track, double stored) {
+        double rest = 0;
+        if (!stripChannel(track, lo, hi, restT, &rest))
+            track.setKeyframe(0, target.hasRest ? stored : rest);
+    };
+    strip(owner.transformX, target.restRect.x());
+    strip(owner.transformY, target.restRect.y());
+    if (writesRotation)
+        strip(owner.rotation, target.restRotation);
+    if (writesScale) {
+        strip(owner.transformW, target.restRect.width());
+        strip(owner.transformH, target.restRect.height());
+    }
+}
+
+void TrackingController::setTargetCenter(int trackIndex, int clipIndex, const QString &id,
+                                         const QString &targetClipId, bool center)
+{
+    QString error;
+    const bool ok = editTracker(trackIndex, clipIndex, id, tr("Change follow anchor"), [&](Clip &host, MotionTracker &tracker) {
+        for (drift::TrackerTarget &target : tracker.targets) {
+            if (target.clipId != targetClipId || target.mode != drift::TrackerTarget::Mode::FollowClip
+                || target.centerOnTrack == center)
+                continue;
+            target.centerOnTrack = center;
+            error = applyTargets(host.id, tracker.id, targetClipId);
+            return true;
+        }
+        return false;
+    });
+    if (ok && !error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
 }
 
 void TrackingController::apply(int trackIndex, int clipIndex, const QString &id)
@@ -1639,12 +1792,19 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
         const auto ownValue = [&](const drift::KeyframeTrack<double> &track, double fallback) {
             return track.isEmpty() ? fallback : track.evaluateAt(followerRel);
         };
-        const double x0 = ownValue(owner.transformX, 0.0);
-        const double y0 = ownValue(owner.transformY, 0.0);
-        const double w0 = qMax(1.0, ownValue(owner.transformW, project.width()));
-        const double h0 = qMax(1.0, ownValue(owner.transformH, project.height()));
-        const double rotation0 = ownValue(owner.rotation, 0.0);
-        const QPointF centre0(x0 + w0 / 2.0, y0 + h0 / 2.0);
+        const double x0 = target.hasRest ? target.restRect.x() : ownValue(owner.transformX, 0.0);
+        const double y0 = target.hasRest ? target.restRect.y() : ownValue(owner.transformY, 0.0);
+        const double w0 = qMax(1.0, target.hasRest ? target.restRect.width() : ownValue(owner.transformW, project.width()));
+        const double h0 = qMax(1.0, target.hasRest ? target.restRect.height() : ownValue(owner.transformH, project.height()));
+        const double rotation0 = target.hasRest ? target.restRotation : ownValue(owner.rotation, 0.0);
+        QPointF centre0(x0 + w0 / 2.0, y0 + h0 / 2.0);
+        if (target.centerOnTrack) {
+            if (const std::optional<QPointF> anchor = trackAnchor(*tracker, px)) {
+                const QPointF local((anchor->x() / px.width() - 0.5) * hostRef.w,
+                                    (anchor->y() / px.height() - 0.5) * hostRef.h);
+                centre0 = hostRef.centre + rotated(local, hostRef.rotation);
+            }
+        }
 
         QVector<PoseRun> poseRuns;
         for (const QVector<int> &run : runs) {

@@ -456,27 +456,41 @@ Item {
                 // Polygon vertices. Drawn in the clip frame rather than the mask box, because the
                 // box is only their bounding rect — dragging a vertex changes that rect, which
                 // would otherwise move every other vertex under the cursor.
-                Repeater {
-                    model: (maskBox.isSelected && maskBox.isFreeform
-                            && maskBox.maskData.enabled !== false)
-                           ? (maskBox.maskData.points || []) : []
+                // The Repeaters sit in holders parented to the clip frame, so their delegates stay
+                // the Repeater's siblings; delegates reparenting themselves broke Repeater stacking.
+                Item {
+                    parent: clipFrame
+                    anchors.fill: parent
+                    z: 200
 
-                    delegate: MaskOverlayVertexHandle {
-                        mask: maskBox
-                        frame: clipFrame
-                        overlay: root
+                    Repeater {
+                        model: (maskBox.isSelected && maskBox.isFreeform
+                                && maskBox.maskData.enabled !== false)
+                               ? (maskBox.maskData.points || []) : []
+
+                        delegate: MaskOverlayVertexHandle {
+                            mask: maskBox
+                            frame: clipFrame
+                            overlay: root
+                        }
                     }
                 }
 
                 // Edge midpoints: click one to split that edge.
-                Repeater {
-                    model: (maskBox.isSelected && maskBox.isFreeform
-                            && maskBox.maskData.enabled !== false)
-                           ? (maskBox.maskData.points || []) : []
+                Item {
+                    parent: clipFrame
+                    anchors.fill: parent
+                    z: 199
 
-                    delegate: MaskOverlayEdgeMidpoint {
-                        mask: maskBox
-                        frame: clipFrame
+                    Repeater {
+                        model: (maskBox.isSelected && maskBox.isFreeform
+                                && maskBox.maskData.enabled !== false)
+                               ? (maskBox.maskData.points || []) : []
+
+                        delegate: MaskOverlayEdgeMidpoint {
+                            mask: maskBox
+                            frame: clipFrame
+                        }
                     }
                 }
 

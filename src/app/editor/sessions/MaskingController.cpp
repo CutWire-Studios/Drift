@@ -563,7 +563,7 @@ QImage MaskingController::brushImage(int trackIndex, int clipIndex) const
 {
     // Saves in flight mean the project's mask still points at an older file, so m_brushImage is the
     // only up-to-date copy. It is also the only copy before the first save creates the mask.
-    if (m_brushSavesInFlight > 0 && !m_brushImage.isNull()
+    if ((m_brushSavesInFlight > 0 || m_brushSaveFailed) && !m_brushImage.isNull()
         && m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id == m_brushClipId)
         return m_brushImage;
 
@@ -618,9 +618,12 @@ bool MaskingController::waitForBrushSaves(int timeoutMs)
 void MaskingController::finishBrushSave(bool ok, const QString &path, const QString &clipId, const QString &undoText)
 {
     --m_brushSavesInFlight;
+    if (path == m_brushPendingPath)
+        m_brushSaveFailed = !ok;
     if (!ok) {
         qWarning() << "Could not save brush matte" << path;
-        m_app->setLastMessage(tr("Could not save the brush mask"), QStringLiteral("error"));
+        m_app->setLastMessage(tr("Could not save the brush mask. The next stroke will try again"),
+                              QStringLiteral("error"));
         return;
     }
 

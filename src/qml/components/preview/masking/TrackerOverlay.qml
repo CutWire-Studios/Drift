@@ -79,7 +79,8 @@ Item {
     }
 
     function trailPixels(i) {
-        return (frameTrails[i] || []).map(p => toPx(p))
+        // A list nested in the C++ map arrives as a sequence wrapper without Array methods.
+        return Array.from(frameTrails[i] || [], p => toPx(p))
     }
 
     function outlinePixels() {

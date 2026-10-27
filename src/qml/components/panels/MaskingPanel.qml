@@ -41,7 +41,6 @@ PanelFrame {
     readonly property var aiPoints: EditorState.segmentation.sessionPoints
     readonly property int aiIncludeCount: aiPoints.filter(p => p.include).length
     readonly property int aiExcludeCount: aiPoints.length - aiIncludeCount
-    // Entries carry no backend tag: SAM2 and RVM cutouts are both Media masks named "Cutout".
     readonly property var aiRefineMask: stack.find(e => e.selected && e.mediaSource === "object") || null
 
     readonly property var tools: [
@@ -678,12 +677,15 @@ PanelFrame {
             }
 
             Repeater {
-                model: root.stack
+                // A count, not the array: refresh() builds a new array every time, and an array
+                // model would recreate every row (closing open combo boxes, dropping slider drags).
+                model: root.stack.length
 
                 delegate: Column {
                     id: maskEntry
                     required property int index
-                    required property var modelData
+                    // Empty while the row outlives a shrinking stack, until the Repeater removes it.
+                    readonly property var modelData: root.stack[index] ?? ({})
                     width: column.width
                     spacing: Theme.spacingSm
 

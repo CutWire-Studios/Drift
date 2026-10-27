@@ -173,6 +173,8 @@ private:
     QString m_brushPendingPath;
     QString m_brushClipId;
     int m_brushSavesInFlight = 0;
+    // The newest save failed: m_brushImage holds strokes no file has, and the next stroke's save retries them.
+    bool m_brushSaveFailed = false;
     // Single thread: saves finish in stroke order, so the first commit creates the mask and later ones update it.
     QThreadPool m_brushPool;
 };

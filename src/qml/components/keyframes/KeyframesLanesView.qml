@@ -50,7 +50,7 @@ Item {
 
             required property int index
 
-            readonly property var modelData: root.panel.rows[index]
+            readonly property var modelData: root.panel.rows[index] ?? ({})
             readonly property bool isGroup: modelData.type === "group"
             readonly property var dots: Model.laneDots(root.panel.rows, index)
             readonly property color dotColor: isGroup ? Theme.c.keyframesKeyDot.summary

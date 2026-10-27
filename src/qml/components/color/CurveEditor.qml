@@ -169,7 +169,9 @@ Item {
                 delegate: ThemedChip {
                     id: tab
                     required property string modelData
-                    text: root.channelNames[modelData]
+                    // The maps can still be unset when hueMode flips during creation and the
+                    // Repeater builds tabs first; the bindings settle once they are.
+                    text: root.channelNames?.[modelData] ?? ""
                     selected: root.channel === modelData
                     onClicked: root.channel = modelData
                     Rectangle {
@@ -178,7 +180,7 @@ Item {
                         anchors.bottom: parent.bottom
                         height: 2
                         radius: 1
-                        color: root.channelColors[tab.modelData]
+                        color: root.channelColors?.[tab.modelData] ?? "transparent"
                         opacity: tab.selected ? 1 : 0.4
                     }
                 }

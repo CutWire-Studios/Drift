@@ -11295,7 +11295,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not save the brush mask</source>
+        <source>Could not save the brush mask. The next stroke will try again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22470,6 +22470,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Change follow anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Nothing is tracked yet</source>
         <translation type="unfinished"></translation>
     </message>
@@ -22621,7 +22625,34 @@ If playback stutters, try another.</source>
         <translation type="unfinished">قناع</translation>
     </message>
     <message>
-        <source>Follows</source>
+        <source>Center on track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the clip&apos;s centre on the tracked point, or keep the offset it has from it at the reference frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">حذف</translation>
+    </message>
+    <message numerus="yes">
+        <source>“%1” drives %n clip(s) or mask(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Also remove the keyframes it added to them</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

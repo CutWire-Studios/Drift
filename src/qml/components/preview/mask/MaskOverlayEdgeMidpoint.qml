@@ -20,7 +20,6 @@ Rectangle {
     readonly property real myN: nextPoint
             ? (modelData.y + nextPoint.y) / 2 : modelData.y
 
-    parent: midpoint.frame
     width: Theme.spacingMd
     height: Theme.spacingMd
     radius: width / 2

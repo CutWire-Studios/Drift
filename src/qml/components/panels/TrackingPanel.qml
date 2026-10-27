@@ -238,11 +238,14 @@ PanelFrame {
             }
 
             Repeater {
-                model: root.trackerList
+                // A count, not the array: an array model would recreate every row on each refresh.
+                model: root.trackerList.length
 
                 delegate: Column {
                     id: trackerRow
-                    required property var modelData
+                    required property int index
+                    // Empty while the row outlives a shrinking list, until the Repeater removes it.
+                    readonly property var modelData: root.trackerList[index] ?? ({})
                     readonly property bool selected: modelData.id === root.selectedId
                     readonly property bool isPoint: modelData.kind === "point"
                     // Read from the controller when the row is selected; the strip and the pattern
@@ -327,8 +330,13 @@ PanelFrame {
                                 Layout.alignment: Qt.AlignVCenter
                                 glyph: Theme.icons.trash
                                 tooltip: qsTr("Delete tracker")
-                                onClicked: EditorState.tracking.removeTracker(root.target.track, root.target.clip,
-                                                                              trackerRow.modelData.id)
+                                onClicked: {
+                                    if (trackerRow.modelData.targets.length === 0)
+                                        EditorState.tracking.removeTracker(root.target.track, root.target.clip,
+                                                                           trackerRow.modelData.id, false)
+                                    else
+                                        deleteTrackerDialog.openFor(trackerRow.modelData)
+                                }
                             }
                         }
                     }
@@ -577,6 +585,7 @@ PanelFrame {
                             model: trackerRow.modelData.targets
 
                             delegate: RowLayout {
+                                id: targetRow
                                 required property var modelData
                                 width: parent.width
                                 spacing: Theme.spacingSm
@@ -592,11 +601,29 @@ PanelFrame {
                                 }
 
                                 Text {
+                                    visible: targetRow.modelData.mode === "mask"
                                     Layout.alignment: Qt.AlignVCenter
-                                    text: modelData.mode === "mask" ? qsTr("Mask") : qsTr("Follows")
+                                    text: qsTr("Mask")
                                     color: Theme.c.maskingPanel.foregroundMuted
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fontSizeXs
+                                }
+
+                                ThemedComboBox {
+                                    readonly property var labels: ({
+                                        "center": qsTr("Center on track"),
+                                        "offset": qsTr("Keep offset")
+                                    })
+                                    visible: targetRow.modelData.mode !== "mask"
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Layout.preferredWidth: 140
+                                    tooltip: qsTr("Put the clip's centre on the tracked point, or keep the offset it has from it at the reference frame")
+                                    model: ["center", "offset"]
+                                    displayText: labels[model[currentIndex]]
+                                    currentIndex: targetRow.modelData.center ? 0 : 1
+                                    onActivated: (index) => EditorState.tracking.setTargetCenter(
+                                                     root.target.track, root.target.clip, trackerRow.modelData.id,
+                                                     targetRow.modelData.clipId, index === 0)
                                 }
 
                                 IconButton {
@@ -664,6 +691,54 @@ PanelFrame {
                         }
                     }
                 }
+            }
+        }
+    }
+    // Asked only when the tracker drives something: its keys on those clips can stay as plain
+    // animation or go with it.
+    ThemedDialog {
+        id: deleteTrackerDialog
+
+        property string trackerId: ""
+        property string trackerName: ""
+        property int targetCount: 0
+        property bool removeKeys: true
+
+        title: qsTr("Delete tracker")
+        acceptText: qsTr("Delete")
+        acceptVariant: "destructive"
+        preferredWidth: Theme.dialogWidthSm
+        acceptOnReturn: false
+
+        function openFor(tracker) {
+            trackerId = tracker.id
+            trackerName = tracker.name
+            targetCount = tracker.targets.length
+            removeKeys = true
+            open()
+        }
+
+        onAccepted: EditorState.tracking.removeTracker(root.target.track, root.target.clip,
+                                                       deleteTrackerDialog.trackerId, deleteTrackerDialog.removeKeys)
+
+        contentItem: Column {
+            spacing: Theme.spacingMd
+
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("“%1” drives %n clip(s) or mask(s).", "", deleteTrackerDialog.targetCount)
+                          .arg(deleteTrackerDialog.trackerName)
+                color: Theme.c.maskingPanel.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+            }
+
+            ThemedCheckBox {
+                width: parent.width
+                text: qsTr("Also remove the keyframes it added to them")
+                checked: deleteTrackerDialog.removeKeys
+                onToggled: deleteTrackerDialog.removeKeys = checked
             }
         }
     }
