@@ -34,6 +34,15 @@ class SegmentationController : public QObject
     Q_PROPERTY(QString backend READ backend NOTIFY sessionChanged)
     Q_PROPERTY(bool backendUsesPoints READ backendUsesPoints NOTIFY sessionChanged)
     Q_PROPERTY(QSize frameSize READ frameSize NOTIFY sessionChanged)
+    // image://segment URL of the live single-frame mask at the session frame, empty when there is
+    // none. The revision in it changes on every update so QML reloads.
+    Q_PROPERTY(QString previewMaskUrl READ previewMaskUrl NOTIFY previewMaskChanged)
+    // Prompt points as [{x, y, include}], normalized to the clip frame.
+    Q_PROPERTY(QVariantList sessionPoints READ sessionPoints NOTIFY sessionPointsChanged)
+    // Timeline seconds of the frame the prompt belongs to.
+    Q_PROPERTY(double sessionFrameSeconds READ sessionFrameSeconds NOTIFY sessionFrameChanged)
+    // A frame encode or single-frame mask inference is running.
+    Q_PROPERTY(bool previewBusy READ previewBusy NOTIFY previewBusyChanged)
 
 public:
     explicit SegmentationController(AppController *app, QObject *parent = nullptr);
@@ -49,6 +58,10 @@ public:
     QString backend() const { return m_segBackend; }
     bool backendUsesPoints() const { return m_segBackend == QLatin1String("sam2"); }
     QSize frameSize() const { return m_segFrame.size(); }
+    QString previewMaskUrl() const;
+    QVariantList sessionPoints() const { return m_segPoints; }
+    double sessionFrameSeconds() const { return m_segSeconds; }
+    bool previewBusy() const { return m_segEncoding || m_segSeedRunning; }
 
     // Which cutout models are installed: "sam2" (click to pick anything) and/or "rvm" (people,
     // automatic). Empty when neither is.
@@ -68,10 +81,16 @@ public:
     // Interactive prompting session. beginSession encodes the reference frame off the GUI thread.
     Q_INVOKABLE void beginSession(int trackIndex, int clipIndex, double seconds,
                                   bool forTemplate = false);
+    // Starts a session on the frame under the playhead.
+    Q_INVOKABLE void beginSessionAtPlayhead(int trackIndex, int clipIndex);
     Q_INVOKABLE void endSession();
     // Called from AppController's effect-template flow. Not invokable.
     void openSegmentationForTemplate(int trackIndex, int clipIndex);
+    // seconds is timeline time. Asking for the frame the session is already on is a no-op, so a
+    // workspace can feed the playhead in unconditionally without losing the points; a request made
+    // while a frame encodes is applied when it finishes.
     Q_INVOKABLE void setFrame(double seconds);
+    Q_INVOKABLE void setFrameSeconds(double seconds) { setFrame(seconds); }
     // Shows the frame at `seconds` while the frame slider is dragged, without the model pass that
     // setFrame runs on release. Requests made while one decodes collapse into the newest.
     Q_INVOKABLE void scrubFrame(double seconds);
@@ -79,6 +98,12 @@ public:
     Q_INVOKABLE void removePoint(int index);
     Q_INVOKABLE void clearPoints();
     Q_INVOKABLE void runSession(const QString &outputMode);
+    // Propagates the session's prompt from its frame. direction: "forward" (to the clip's end),
+    // "backward" (to its start) or "both". targetAdjustmentId empty creates a new pinned mask;
+    // naming an existing SAM2 media mask on this clip splices the new frames into its matte.
+    // The RVM backend ignores both and cuts out the whole clip.
+    Q_INVOKABLE void propagate(int trackIndex, int clipIndex, const QString &direction,
+                               const QString &targetAdjustmentId = {});
 
 signals:
     void runningChanged();
@@ -86,6 +111,10 @@ signals:
     void statusChanged();
     void finished(bool ok, const QString &message);
     void sessionChanged();
+    void previewMaskChanged();
+    void sessionPointsChanged();
+    void sessionFrameChanged();
+    void previewBusyChanged();
     void openWindowRequested(int trackIndex, int clipIndex, double startSeconds,
                              double durationSeconds);
 
@@ -95,6 +124,17 @@ private:
     friend class EditorStateTest;
 
     void refreshPreview();
+    void setPreviewMask(const QImage &mask);
+    void setSeedRunning(bool running);
+    // promptSourceUs < 0 prompts the clip's first frame.
+    void startCutout(int trackIndex, int clipIndex, const QVariantList &points,
+                     drift::TimeUs promptSourceUs, const QString &direction,
+                     const QString &outputMode, const QString &backend, const QString &quality,
+                     const QString &targetAdjustmentId);
+    // Splices a re-propagated matte into an existing media mask as one undo step.
+    void finalizeRefine(const QString &clipId, const QString &adjustmentId,
+                        const QString &oldMattePath, const QString &newMattePath,
+                        drift::TimeUs newOffsetUs);
     void runSeed(int generation);
     // Completes a segmentation job: pins the matte to the clip as a Mask adjustment on its own
     // lane. Both output modes land here; "clips" is accepted and treated as a mask.
@@ -113,6 +153,10 @@ private:
     int m_segTrack = -1;
     int m_segClip = -1;
     double m_segSeconds = 0.0;
+    drift::TimeUs m_segSourceUs = -1; // source time of the encoded frame; -1 = nothing encoded
+    std::optional<double> m_segFramePending;
+    bool m_segHasMask = false;
+    int m_segPreviewCounter = 0;
     int m_segRevision = 0;
     bool m_segScrubBusy = false;
     std::optional<double> m_segScrubPending;

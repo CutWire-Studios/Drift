@@ -18,6 +18,15 @@ QImage SegmentImageProvider::requestImage(const QString &id, QSize *size, const 
         image = SegmentImageStore::frame();
     else if (kind == QLatin1String("mask"))
         image = SegmentImageStore::mask();
+    else if (kind == QLatin1String("maskAlpha")) {
+        // The mask as coverage in alpha over white, so an overlay can tint just the object.
+        const QImage mask = SegmentImageStore::mask();
+        if (!mask.isNull()) {
+            image = QImage(mask.size(), QImage::Format_ARGB32);
+            image.fill(Qt::white);
+            image.setAlphaChannel(mask.convertToFormat(QImage::Format_Grayscale8));
+        }
+    }
     else if (kind == QLatin1String("restore-original"))
         image = SegmentImageStore::restoreOriginal();
     else if (kind == QLatin1String("restore-enhanced"))

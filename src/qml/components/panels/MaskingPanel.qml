@@ -29,7 +29,19 @@ PanelFrame {
     readonly property bool onAdjustment: target.kind === "adjustment"
 
     // Each tool's own options, shown in toolOptions while that tool is active.
-    readonly property var toolOptionComponents: ({ "brush": brushOptions })
+    readonly property var toolOptionComponents: ({ "brush": brushOptions, "ai": aiOptions })
+
+    // Object cutout (the AI tool). backends() is a plain call, so the list is rebuilt on addon changes.
+    property var aiBackendModel: []
+    property bool aiHasSam2: false
+    property bool aiRuntimeReady: true
+    // Refining reuses the selected cutout by default; unticked it starts a new mask instead.
+    property bool aiRefine: true
+    readonly property var aiPoints: EditorState.segmentation.sessionPoints
+    readonly property int aiIncludeCount: aiPoints.filter(p => p.include).length
+    readonly property int aiExcludeCount: aiPoints.length - aiIncludeCount
+    // Entries carry no backend tag: SAM2 and RVM cutouts are both Media masks named "Cutout".
+    readonly property var aiRefineMask: stack.find(e => e.selected && e.mediaSource === "object") || null
 
     readonly property var tools: [
         { id: "", label: qsTr("Select"), key: "V", glyph: Theme.icons.mousePointer, clipOnly: false },
@@ -101,6 +113,22 @@ PanelFrame {
         function onPlayingChanged() {
             if (!EditorState.playing)
                 root.refreshIfLive()
+        }
+    }
+
+    Connections {
+        target: Addons
+        function onKindChanged(kind) {
+            if (kind === "sam2-model" || kind === "rvm-model" || kind === "onnxruntime")
+                root.refreshAiBackends()
+        }
+    }
+
+    Connections {
+        target: EditorState.segmentation
+        function onFinished(ok, message) {
+            if (!ok && message !== "")
+                Toasts.error(message)
         }
     }
 
@@ -247,6 +275,202 @@ PanelFrame {
         }
     }
 
+    function refreshAiBackends() {
+        const installed = EditorState.segmentation.backends()
+        const model = []
+        if (installed.indexOf("sam2") >= 0)
+            model.push({ label: qsTr("Anything (click to pick)"), value: "sam2" })
+        if (installed.indexOf("rvm") >= 0)
+            model.push({ label: qsTr("People (automatic)"), value: "rvm" })
+        aiBackendModel = model
+        aiHasSam2 = installed.indexOf("sam2") >= 0
+        aiRuntimeReady = Addons.runtimeAvailable()
+    }
+
+    function propagateAi(direction) {
+        const refine = aiRefine && aiRefineMask ? aiRefineMask.id : ""
+        EditorState.segmentation.propagate(target.track, target.clip, direction, refine)
+    }
+
+    Component {
+        id: aiOptions
+
+        Column {
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            Component.onCompleted: root.refreshAiBackends()
+
+            // No cutout model yet: the download comes first, the controls once one is installed.
+            Text {
+                visible: root.aiBackendModel.length === 0
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Object cutout needs a model. The people model is the smaller download.")
+                color: Theme.c.maskingPanel.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedButton {
+                visible: root.aiBackendModel.length === 0
+                width: parent.width
+                variant: "primary"
+                text: root.aiRuntimeReady ? qsTr("Download people cutout (about 20 MB)")
+                                          : qsTr("Install AI engine first")
+                onClicked: ShellBridge.main.openAddonManager(root.aiRuntimeReady ? "rvm-model"
+                                                                                 : "onnxruntime")
+            }
+
+            Column {
+                visible: root.aiBackendModel.length > 1
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                Text {
+                    text: qsTr("Cut out")
+                    color: Theme.c.maskingPanel.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                ThemedComboBox {
+                    id: backendBox
+                    width: parent.width
+                    enabled: !EditorState.segmentation.running
+                    textRole: "label"
+                    valueRole: "value"
+                    model: root.aiBackendModel
+                    currentIndex: backendBox.indexOfValue(EditorState.segmentation.backend)
+                    onActivated: EditorState.segmentation.setBackend(currentValue, "")
+                }
+            }
+
+            Text {
+                visible: EditorState.segmentation.backendUsesPoints && root.aiBackendModel.length > 0
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: Theme.touchInput
+                      ? qsTr("Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.")
+                      : qsTr("Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.")
+                color: Theme.c.maskingPanel.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            RowLayout {
+                visible: EditorState.segmentation.backendUsesPoints && root.aiBackendModel.length > 0
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                Text {
+                    text: qsTr("%n include", "", root.aiIncludeCount)
+                    color: Theme.c.maskingPanel.foreground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                Text {
+                    text: qsTr("%n exclude", "", root.aiExcludeCount)
+                    color: Theme.c.maskingPanel.foreground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                Item { Layout.fillWidth: true }
+
+                ThemedButton {
+                    variant: "secondary"
+                    text: qsTr("Clear points")
+                    enabled: root.aiPoints.length > 0 && !EditorState.segmentation.running
+                    onClicked: EditorState.segmentation.clearPoints()
+                }
+            }
+
+            ThemedButton {
+                visible: !EditorState.segmentation.backendUsesPoints && root.aiBackendModel.length > 0
+                width: parent.width
+                variant: "primary"
+                text: qsTr("Cut out people")
+                enabled: !EditorState.segmentation.running
+                onClicked: EditorState.segmentation.propagate(root.target.track, root.target.clip, "both", "")
+            }
+
+            ThemedCheckBox {
+                visible: EditorState.segmentation.backendUsesPoints && root.aiRefineMask !== null
+                text: qsTr("Refine selected mask")
+                checked: root.aiRefine
+                onToggled: root.aiRefine = checked
+            }
+
+            RowLayout {
+                visible: EditorState.segmentation.backendUsesPoints && root.aiBackendModel.length > 0
+                width: parent.width
+                spacing: Theme.spacingXs
+                enabled: root.aiIncludeCount > 0 && !EditorState.segmentation.running
+
+                ThemedButton {
+                    Layout.fillWidth: true
+                    text: "◀"
+                    tooltip: qsTr("Track backward")
+                    onClicked: root.propagateAi("backward")
+                }
+
+                ThemedButton {
+                    Layout.fillWidth: true
+                    variant: "primary"
+                    text: "⇄"
+                    tooltip: qsTr("Track both ways")
+                    onClicked: root.propagateAi("both")
+                }
+
+                ThemedButton {
+                    Layout.fillWidth: true
+                    text: "▶"
+                    tooltip: qsTr("Track forward")
+                    onClicked: root.propagateAi("forward")
+                }
+            }
+
+            Column {
+                visible: EditorState.segmentation.running
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                ThemedProgressBar {
+                    width: parent.width
+                    value: EditorState.segmentation.progress
+                }
+
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: EditorState.segmentation.status
+                    color: Theme.c.maskingPanel.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                ThemedButton {
+                    width: parent.width
+                    variant: "destructive"
+                    text: qsTr("Cancel")
+                    onClicked: EditorState.segmentation.cancel()
+                }
+            }
+
+            // SAM2 is the click-to-pick model, a much larger download than people; offered once
+            // people works, and on its own when nothing is installed yet.
+            ThemedButton {
+                visible: root.aiRuntimeReady && !root.aiHasSam2
+                width: parent.width
+                variant: "secondary"
+                text: qsTr("Add click-to-pick cutout (about 190 MB)")
+                onClicked: ShellBridge.main.openAddonManager("sam2-model")
+            }
+        }
+    }
+
     function handleAction(id) {
         if (!shown || textFieldFocused())
             return false
@@ -255,8 +479,16 @@ PanelFrame {
             EditorState.preview.maskingTool = ""
             return true
         case "clearSelection":
+            if (ShellBridge.trackerPlaceMode !== "") {
+                ShellBridge.trackerPlaceMode = ""
+                return true
+            }
             if (ShellBridge.pendingPolygonPoints > 0) {
                 ShellBridge.maskingCancelRequested()
+                return true
+            }
+            if (EditorState.segmentation.sessionPoints.length > 0) {
+                EditorState.segmentation.clearPoints()
                 return true
             }
             if (EditorState.preview.maskingTool === "")

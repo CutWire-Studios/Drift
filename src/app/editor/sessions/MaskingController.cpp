@@ -25,6 +25,24 @@
 
 namespace {
 
+// Where a media mask came from, so the panel offers "refine" only on an AI object matte: "brush"
+// (painted PNG), "people" (RVM cutout, the only backend writing a foreground pass), "object" (a
+// SAM2 matte video in the matte cache) or "file" (anything the user pointed at).
+QString mediaSourceKind(const drift::Mask &mask)
+{
+    if (!mask.isMedia())
+        return {};
+    const QString mattes = QDir(drift::matteCacheDir()).absolutePath() + QLatin1Char('/');
+    if (!QFileInfo(mask.mediaPath).absoluteFilePath().startsWith(mattes))
+        return QStringLiteral("file");
+    if (mask.mediaPath.endsWith(QStringLiteral(".png")))
+        return QStringLiteral("brush");
+    if (!mask.mediaFgrPath.isEmpty())
+        return QStringLiteral("people");
+    return QStringLiteral("object");
+}
+
+
 drift::Mask mediaMask(const QString &path, drift::TimeUs srcOffsetUs, drift::MaskMediaChannel channel,
                       const QString &name)
 {
@@ -385,6 +403,7 @@ QVariantList MaskingController::maskStack(int trackIndex, int clipIndex) const
             {QStringLiteral("feather"), mask.feather},
             {QStringLiteral("mediaChannel"), drift::maskMediaChannelToString(mask.mediaChannel)},
             {QStringLiteral("isMedia"), mask.isMedia()},
+            {QStringLiteral("mediaSource"), mediaSourceKind(mask)},
             {QStringLiteral("pinned"), pinned},
             {QStringLiteral("pathAnimated"), !mask.pathKeys.isEmpty()},
             {QStringLiteral("pathKeyCount"), int(mask.pathKeys.size())},

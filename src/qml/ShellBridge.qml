@@ -15,6 +15,12 @@ QtObject {
     // Vertices placed by the polygon tool so far. Escape cancels them before it leaves the tool.
     property int pendingPolygonPoints: 0
     signal maskingCancelRequested()
+    // Armed by the Tracking panel; the tracker overlay consumes the next click.
+    property string trackerPlaceMode: ""
+    // The tracker an "addPoint" click extends.
+    property string trackerPlaceId: ""
+    // Shared by the Tracking panel and the tracker overlay, which can both change the selection.
+    property string selectedTrackerId: ""
     property var subtitleActionHandler: null
     property var sourceLabActionHandler: null
     property var sourceLabRangesHandler: null

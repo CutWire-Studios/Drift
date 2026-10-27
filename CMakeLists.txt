@@ -1074,6 +1074,7 @@ qt_add_executable(drift
     src/app/editor/sessions/SubtitleCueFilterModel.cpp
     src/app/jobs/vision/SegmentationController.h
     src/app/jobs/vision/SegmentationController.cpp
+    src/app/jobs/vision/SegmentationPlan.h
     src/app/jobs/vision/SceneDetectController.h
     src/app/jobs/vision/SceneDetectController.cpp
     src/app/jobs/vision/DepthController.h

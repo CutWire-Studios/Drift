@@ -33,6 +33,7 @@
 #include <filesystem>
 
 #include "playback/preview/CompositorService.h"
+#include "app/jobs/vision/SegmentationPlan.h"
 #include "engine/decode/hw/HwAccel.h"
 #include "engine/encode/MediaEditor.h"
 #include "engine/decode/probe/MediaProbe.h"
@@ -330,6 +331,9 @@ private slots:
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
     void cutoutLandsAsAMaskLayerOnTheClipsOwnLane();
+    void objectMaskPlanSpansTheWholeClip();
+    void objectMaskReverseDecodeOrder();
+    void refiningAnObjectMaskSwapsItsMatteInOneUndoStep();
     void maskRoundTripsThroughTheInspectorMap();
     void maskScalarsKeyframeThroughTheGenericApi();
     void maskEditsKeepTheirKeyframes();
@@ -10418,6 +10422,87 @@ void EditorStateTest::cutoutLandsAsAMaskLayerOnTheClipsOwnLane()
                                          .clips.at(stillPinned.constFirst().clipIndex);
     QCOMPARE(trimmedMask.timelineStart, trimmedClip.timelineStart);
     QCOMPARE(trimmedMask.timelineDuration, trimmedClip.timelineDuration);
+}
+
+// A re-prompt on frame 10 of 30 replaces only what the direction reaches; the matte still spans the
+// whole clip because the compositor clamps media time to the first and last matte frame.
+void EditorStateTest::objectMaskPlanSpansTheWholeClip()
+{
+    using namespace drift::segplan;
+    const drift::TimeUs step = drift::kUsPerSecond / 30;
+    const drift::TimeUs srcIn = drift::secondsToUs(2.0);
+    const int total = frameCount(srcIn, srcIn + 30 * step, step);
+    QCOMPARE(total, 30);
+    QCOMPARE(frameCount(srcIn, srcIn, step), 0);
+
+    QCOMPARE(frameIndexAt(srcIn, step, total, srcIn + 10 * step), 10);
+    QCOMPARE(frameIndexAt(srcIn, step, total, srcIn - step), 0);
+    QCOMPARE(frameIndexAt(srcIn, step, total, srcIn + 99 * step), 29);
+
+    const Range fwd = propagationRange(total, 10, QStringLiteral("forward"));
+    QCOMPARE(fwd.first, 10);
+    QCOMPARE(fwd.last, 29);
+    const Range back = propagationRange(total, 10, QStringLiteral("backward"));
+    QCOMPARE(back.first, 0);
+    QCOMPARE(back.last, 10);
+    const Range both = propagationRange(total, 10, QStringLiteral("both"));
+    QCOMPARE(both.size(), 30);
+
+    const QList<FrameSource> padded = matteLayout(total, fwd, false);
+    QCOMPARE(padded.size(), total);
+    QCOMPARE(padded.at(9), FrameSource::Pad);
+    QCOMPARE(padded.at(10), FrameSource::New);
+    QCOMPARE(padded.at(29), FrameSource::New);
+
+    const QList<FrameSource> spliced = matteLayout(total, back, true);
+    QCOMPARE(spliced.at(0), FrameSource::New);
+    QCOMPARE(spliced.at(10), FrameSource::New);
+    QCOMPARE(spliced.at(11), FrameSource::Old);
+    QCOMPARE(spliced.at(29), FrameSource::Old);
+}
+
+void EditorStateTest::objectMaskReverseDecodeOrder()
+{
+    using namespace drift::segplan;
+    const QList<Chunk> chunks = reverseChunks(0, 9, 4);
+    QCOMPARE(chunks.size(), 3);
+    QCOMPARE(chunks.at(0).first, 6);
+    QCOMPARE(chunks.at(0).last, 9);
+    QCOMPARE(chunks.at(2).first, 0);
+    QCOMPARE(chunks.at(2).last, 1);
+    QCOMPARE(reverseDecodeOrder(0, 9, 4), (QList<int>{6, 7, 8, 9, 2, 3, 4, 5, 0, 1}));
+    QCOMPARE(reverseDecodeOrder(3, 3, 8), (QList<int>{3}));
+    QVERIFY(reverseDecodeOrder(5, 4, 8).isEmpty());
+}
+
+void EditorStateTest::refiningAnObjectMaskSwapsItsMatteInOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    const drift::Clip source = state.project()->tracks().at(0).clips.at(0);
+    state.segmentation()->finalizeSegmentation(source.id, QStringLiteral("/tmp/mattes/old.mp4"), {},
+                                               source.srcIn, QStringLiteral("adjustment"));
+    const drift::ClipRef ref = drift::linkedMaskAdjustments(*state.project(), 0, 0).constFirst();
+    const QString adjustmentId =
+        state.project()->tracks().at(ref.trackIndex).clips.at(ref.clipIndex).id;
+
+    state.segmentation()->finalizeRefine(source.id, adjustmentId, QStringLiteral("/tmp/mattes/old.mp4"),
+                                         QStringLiteral("/tmp/mattes/new.mp4"), source.srcIn);
+    const auto maskPath = [&] {
+        const drift::ClipRef r = drift::linkedMaskAdjustments(*state.project(), 0, 0).constFirst();
+        return state.project()->tracks().at(r.trackIndex).clips.at(r.clipIndex).mask.mediaPath;
+    };
+    QCOMPARE(maskPath(), QStringLiteral("/tmp/mattes/new.mp4"));
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 1);
+
+    // A refine whose source matte has since changed is dropped rather than applied.
+    state.segmentation()->finalizeRefine(source.id, adjustmentId, QStringLiteral("/tmp/mattes/old.mp4"),
+                                         QStringLiteral("/tmp/mattes/stale.mp4"), source.srcIn);
+    QCOMPARE(maskPath(), QStringLiteral("/tmp/mattes/new.mp4"));
+
+    state.undo();
+    QCOMPARE(maskPath(), QStringLiteral("/tmp/mattes/old.mp4"));
 }
 
 // The inspector edits a mask by copying the map clipAt() reports, changing one key and handing it

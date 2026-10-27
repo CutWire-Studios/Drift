@@ -2594,12 +2594,40 @@
     "inlineTextSelectionHandle": {
       "background": "$semantic.primary"
     },
+    "maskAiOverlay": {
+      "badgeBackground": "$semantic.surface.panel",
+      "badgeForeground": "$semantic.foreground",
+      "exclude": "$semantic.destructive",
+      "include": "$semantic.constructive",
+      "pointBorder": "$semantic.onMedia",
+      "tint": "$semantic.primary"
+    },
     "maskBrushOverlay": {
       "borderWidth": "$metrics.borderWidth",
       "cursor": "$semantic.onMedia",
       "cursorInner": "$semantic.onMedia",
       "eraseStroke": "$semantic.destructive",
       "stroke": "$semantic.primary"
+    },
+    "trackingPanel": {
+      "stripEmpty": "$semantic.panel.muted",
+      "stripGood": "$semantic.constructive",
+      "stripWarn": "$semantic.warning",
+      "stripBad": "$semantic.destructive",
+      "stripPlayhead": "$semantic.primary"
+    },
+    "trackerOverlay": {
+      "pattern": "$semantic.primary",
+      "search": "$semantic.mutedForeground",
+      "trail": "$semantic.onMedia",
+      "good": "$semantic.constructive",
+      "warn": "$semantic.warning",
+      "bad": "$semantic.destructive",
+      "userKey": "$semantic.accent",
+      "region": "$semantic.primary",
+      "handle": "$semantic.primary",
+      "badgeBackground": "$semantic.surface.panel",
+      "badgeForeground": "$semantic.foreground"
     },
     "maskDrawOverlay": {
       "borderWidth": "$metrics.borderWidth",
