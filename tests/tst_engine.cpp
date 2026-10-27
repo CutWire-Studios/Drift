@@ -396,6 +396,7 @@ private slots:
     void textAnimationFadesAndSlides();
     void clipBodyAnimationFadeRampsOpacity();
     void maskApplierEllipseMasksCorners();
+    void maskMediaTimeBaseIndexesHostOrAdjustment();
     void maskApplierFoldsAStackByItsOps();
     void maskShapesUseBothSizeAxes();
     void starMaskRotatesOnceNotTwice();
@@ -11291,6 +11292,33 @@ void EngineTest::clipBodyAnimationFadeRampsOpacity()
     const double mid = meanLuminance(compositor.compositeAt(drift::secondsToUs(0.5)));
     const double settled = meanLuminance(compositor.compositeAt(drift::secondsToUs(1.5)));
     QVERIFY2(early < mid && mid < settled, "clip body fade-in did not ramp up");
+}
+
+void EngineTest::maskMediaTimeBaseIndexesHostOrAdjustment()
+{
+    drift::Clip host;
+    host.timelineStart = drift::secondsToUs(10.0);
+    host.timelineDuration = drift::secondsToUs(10.0);
+    host.srcIn = drift::secondsToUs(4.0);
+    host.srcOut = drift::secondsToUs(24.0);
+    host.speed = 2.0;
+
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Media;
+    mask.mediaSrcOffsetUs = drift::secondsToUs(1.0);
+    const drift::TimeUs adjustmentStart = drift::secondsToUs(8.0);
+    const drift::TimeUs t = drift::secondsToUs(13.0);
+
+    // Host source time: 4 + 3 * 2 = 10 s, less the 1 s offset.
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, t), drift::secondsToUs(9.0));
+
+    // Adjustment base ignores the host's trim and speed: (13 - 8) + 1 s.
+    mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, t), drift::secondsToUs(6.0));
+
+    // Before the adjustment starts, the clamp keeps it at 0 once the offset is spent.
+    mask.mediaSrcOffsetUs = 0;
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, drift::secondsToUs(6.0)), 0);
 }
 
 void EngineTest::maskApplierEllipseMasksCorners()

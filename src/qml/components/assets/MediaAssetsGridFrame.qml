@@ -15,6 +15,7 @@ Rectangle {
     required property string duration
     required property string thumbnailPath
     required property int assetIndex
+    required property string maskRole
     required property string liveThumbnailPath
     required property int thumbnailRevision
     required property real cardSize
@@ -321,6 +322,7 @@ Rectangle {
         kind: root.kind
         assetId: root.assetId
         assetIndex: root.assetIndex
+        maskRole: root.maskRole
     }
 
     MediaAssetsFolderMenu {

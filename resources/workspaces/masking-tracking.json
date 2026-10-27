@@ -1,0 +1,34 @@
+{
+  "id": "masking-tracking",
+  "name": "Masking & Tracking",
+  "builtin": true,
+  "order": 9,
+  "windows": [
+    {
+      "id": "main",
+      "root": {
+        "split": "v",
+        "sizes": [0.66, 0.34],
+        "children": [
+          {
+            "split": "h",
+            "sizes": [0.18, 0.52, 0.30],
+            "children": [
+              { "panels": [ { "type": "assets", "tab": "media" } ], "active": 0 },
+              { "panels": [ { "type": "preview" } ], "active": 0 },
+              {
+                "split": "v",
+                "sizes": [0.55, 0.45],
+                "children": [
+                  { "panels": [ { "type": "masking" } ], "active": 0 },
+                  { "panels": [ { "type": "tracking" } ], "active": 0 }
+                ]
+              }
+            ]
+          },
+          { "panels": [ { "type": "timeline" } ], "active": 0 }
+        ]
+      }
+    }
+  ]
+}

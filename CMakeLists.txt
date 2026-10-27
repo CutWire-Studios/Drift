@@ -571,6 +571,7 @@ add_library(driftcore STATIC
     src/core/interchange/subtitles/VttIO.cpp
     src/core/effects/Mask.h
     src/core/effects/Mask.cpp
+    src/core/tracking/MotionTracker.h
     src/core/project/Transition.h
     src/core/project/Transition.cpp
     src/core/text/animation/TextParamSpec.h
@@ -836,6 +837,8 @@ add_library(driftengine STATIC
     src/engine/ml/vision/segmentation/Sam2Segmenter.cpp
     src/engine/ml/vision/segmentation/RvmMatter.h
     src/engine/ml/vision/segmentation/RvmMatter.cpp
+    src/engine/tracking/MotionTracking.h
+    src/engine/tracking/MotionTracking.cpp
     src/engine/ml/vision/depth/VdaDepth.h
     src/engine/ml/vision/depth/VdaDepth.cpp
     src/engine/ml/vision/Restorer.h
@@ -1061,6 +1064,8 @@ qt_add_executable(drift
     src/app/editor/sessions/CurveEditorController.cpp
     src/app/editor/sessions/KeyframeController.h
     src/app/editor/sessions/KeyframeController.cpp
+    src/app/editor/sessions/MaskingController.h
+    src/app/editor/sessions/MaskingController.cpp
     src/app/editor/sessions/SubtitleController.h
     src/app/editor/sessions/SubtitleController.cpp
     src/app/editor/sessions/SubtitleCueModel.h
@@ -1081,6 +1086,8 @@ qt_add_executable(drift
     src/app/jobs/vision/FaceTrackingController.cpp
     src/app/jobs/vision/StabilizeController.h
     src/app/jobs/vision/StabilizeController.cpp
+    src/app/jobs/vision/TrackingController.h
+    src/app/jobs/vision/TrackingController.cpp
     src/app/bin/MediaBinController.h
     src/app/bin/MediaBinController.cpp
     src/app/bin/SourceLabController.h
@@ -1345,6 +1352,7 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/ai.json
         resources/workspaces/color.json
         resources/workspaces/keyframes.json
+        resources/workspaces/masking-tracking.json
 )
 
 set_source_files_properties(src/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
@@ -1478,6 +1486,10 @@ qt_add_qml_module(drift
         src/qml/components/preview/GuidesPopover.qml
         src/qml/components/preview/GuideEditOverlay.qml
         src/qml/components/preview/MaskOverlay.qml
+        src/qml/components/preview/masking/MaskDrawOverlay.qml
+        src/qml/components/preview/masking/MaskBrushOverlay.qml
+        src/qml/components/preview/masking/MaskAiOverlay.qml
+        src/qml/components/preview/masking/TrackerOverlay.qml
         src/qml/components/preview/DepthEffectOverlay.qml
         src/qml/components/preview/DepthLight3dOverlay.qml
         src/qml/components/preview/Checkerboard.qml
@@ -1690,6 +1702,8 @@ qt_add_qml_module(drift
         src/qml/components/panels/LooksPanel.qml
         src/qml/components/panels/ScopesPanel.qml
         src/qml/components/panels/KeyframesPanel.qml
+        src/qml/components/panels/MaskingPanel.qml
+        src/qml/components/panels/TrackingPanel.qml
         src/qml/components/panels/SubtitleLanePanel.qml
         src/qml/components/panels/SubtitleTextPanel.qml
         src/qml/components/subtitles/SubtitleLaneToolbar.qml

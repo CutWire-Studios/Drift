@@ -121,6 +121,9 @@ QtObject {
         { label: qsTr("Keyframe editor"), path: [qsTr("Animation")], hint: qsTr("Open the Keyframes workspace"),
           keywords: "keyframes animation curves graph editor dope sheet", workspace: "keyframes" },
 
+        { label: qsTr("Masking & Tracking"), path: [qsTr("Masks")], hint: qsTr("Open the Masking & Tracking workspace"),
+          keywords: "mask matte rotoscope roto brush polygon tracking tracker motion track planar object follow", workspace: "masking-tracking" },
+
         subtitle(qsTr("Subtitle lane"), "captions cues timeline drag waveform zoom"),
         subtitle(qsTr("Subtitle timing"), "captions tools shift offset sync frame rate speed gaps durations"),
         subtitle(qsTr("Shift times"), "captions offset delay early late move"),

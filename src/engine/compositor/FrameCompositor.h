@@ -82,7 +82,21 @@ public:
             bool operator==(const TextEditDecor &other) const = default;
         };
         TextEditDecor textEdit;
+
+        // The preview's mask view of one clip: its mask drawn as a tinted overlay or as a matte.
+        // Honoured by the GPU path only; export and thumbnails never set it.
+        struct MaskView
+        {
+            QString clipId;
+            MaskViewMode mode = MaskViewMode::Off;
+            bool operator==(const MaskView &other) const = default;
+        };
+        MaskView maskView;
     };
+
+    // The media time a mask reads at (before looping); exposed so tests can pin the time bases.
+    static drift::TimeUs maskMediaSourceTimeUs(const drift::Clip &host, const drift::Mask &mask,
+                                               drift::TimeUs adjustmentStartUs, drift::TimeUs timelineUs);
 
     // How a text clip is laid out at `timelineUs`, as the compositor will draw it: the layout rect
     // (canvas px at renderScale, before any rotation about its centre) and the shaped block for

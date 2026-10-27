@@ -86,6 +86,11 @@ PreviewController::PreviewController(AppController &app, QObject *parent)
     connect(&m_app, &AppController::selectionChanged, this, &PreviewController::maskEditActiveChanged);
     connect(&m_app, &AppController::tracksChanged, this, &PreviewController::maskEditActiveChanged);
     connect(this, &PreviewController::maskEditModeChanged, this, &PreviewController::maskEditActiveChanged);
+    // The mask view targets the media clip behind the selection, which moves with the selection
+    // and, for a mask lane, with whichever of the parent's clips is under the playhead.
+    connect(&m_app, &AppController::selectionChanged, this, &PreviewController::pushMaskView);
+    connect(&m_app, &AppController::tracksChanged, this, &PreviewController::pushMaskView);
+    connect(&m_app, &AppController::playheadSecondsChanged, this, &PreviewController::pushMaskView);
     // The 3D view draws the selection's box and the camera's frame on it.
     connect(&m_app, &AppController::selectionChanged, this, [this] {
         if (m_mode != QLatin1String("3d"))
@@ -122,7 +127,16 @@ void PreviewController::updateActiveTool()
         tool = QStringLiteral("crop");
     else if (!m_guideEditSetId.isEmpty())
         tool = QStringLiteral("guideEdit");
-    else if (maskEditActive() && m_mode != QLatin1String("3d"))
+    else if (!m_maskingTool.isEmpty() && m_mode != QLatin1String("3d")) {
+        if (m_maskingTool == QLatin1String("brush"))
+            tool = QStringLiteral("maskBrush");
+        else if (m_maskingTool == QLatin1String("ai"))
+            tool = QStringLiteral("maskAi");
+        else if (m_maskingTool == QLatin1String("tracker"))
+            tool = QStringLiteral("tracker");
+        else
+            tool = QStringLiteral("maskDraw");
+    } else if (maskEditActive() && m_mode != QLatin1String("3d"))
         tool = QStringLiteral("mask");
     if (tool == m_activeTool)
         return;
@@ -1161,8 +1175,66 @@ bool PreviewController::maskEditActive() const
     if (m_app.m_selectedClip < 0 || m_app.m_selectedClip >= track.clips.size())
         return false;
     const drift::Clip &clip = track.clips.at(m_app.m_selectedClip);
-    return clip.type == drift::ClipType::Adjustment
-           && clip.adjustmentKind == drift::AdjustmentKind::Mask;
+    if (clip.type != drift::ClipType::Adjustment)
+        return false;
+    // A standalone effects layer carries one mask that scopes where its chain lands; selecting it
+    // in the Masking workspace is the same request to edit that mask.
+    return clip.adjustmentKind == drift::AdjustmentKind::Mask
+           || (clip.adjustmentKind == drift::AdjustmentKind::VideoEffects && clip.mask.contributes()
+               && !track.isAdjustmentLane());
+}
+
+void PreviewController::setMaskingTool(const QString &tool)
+{
+    const QString normalized = tool == QLatin1String("rect") || tool == QLatin1String("ellipse")
+                                       || tool == QLatin1String("polygon") || tool == QLatin1String("brush")
+                                       || tool == QLatin1String("ai") || tool == QLatin1String("tracker")
+                                   ? tool
+                                   : QString();
+    if (m_maskingTool == normalized)
+        return;
+    m_maskingTool = normalized;
+    emit maskingToolChanged();
+    updateActiveTool();
+}
+
+void PreviewController::setMaskViewMode(const QString &mode)
+{
+    const QString normalized = mode == QLatin1String("overlay") || mode == QLatin1String("matte")
+                                   ? mode
+                                   : QStringLiteral("off");
+    if (m_maskViewMode == normalized)
+        return;
+    m_maskViewMode = normalized;
+    pushMaskView();
+    emit maskViewModeChanged();
+}
+
+void PreviewController::pushMaskView()
+{
+    FrameCompositor::RenderOptions::MaskView view;
+    if (m_maskViewMode != QLatin1String("off") && m_app.isValidClipIndex(m_app.m_selectedTrack, m_app.m_selectedClip)) {
+        const drift::Track &track = m_app.m_project.tracks().at(m_app.m_selectedTrack);
+        const drift::Clip &selected = track.clips.at(m_app.m_selectedClip);
+        // Same resolution as maskEditorState: a mask in a lane acts on the parent track's clip
+        // under the playhead. A standalone mask adjustment has no media behind it to show.
+        if (selected.type != drift::ClipType::Adjustment) {
+            view.clipId = selected.id;
+        } else if (selected.adjustmentKind == drift::AdjustmentKind::Mask && track.isAdjustmentLane()) {
+            const int parent = drift::adjustmentLaneParentIndex(m_app.m_project, m_app.m_selectedTrack);
+            if (parent >= 0) {
+                for (const drift::Clip &clip : m_app.m_project.tracks().at(parent).clips) {
+                    if (clip.type != drift::ClipType::Adjustment && clip.containsTime(m_app.m_playheadUs)) {
+                        view.clipId = clip.id;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!view.clipId.isEmpty())
+            view.mode = m_maskViewMode == QLatin1String("matte") ? MaskViewMode::Matte : MaskViewMode::Overlay;
+    }
+    m_app.m_playback.setMaskView(view);
 }
 
 void PreviewController::setMaskEditMode(bool active)
@@ -1619,7 +1691,11 @@ QVariantMap PreviewController::maskEditorState() const
     };
 
     if (selectedClip.type == drift::ClipType::Adjustment) {
-        if (selectedClip.adjustmentKind != drift::AdjustmentKind::Mask)
+        // A standalone video-effects adjustment scopes its chain with the same single mask, so it
+        // takes the standalone-mask path. A lane one has no frame of its own and stays out.
+        const bool standaloneEffects = selectedClip.adjustmentKind == drift::AdjustmentKind::VideoEffects
+                                       && !selectedTrack.isAdjustmentLane();
+        if (selectedClip.adjustmentKind != drift::AdjustmentKind::Mask && !standaloneEffects)
             return out;
         selectedAdjustmentId = selectedClip.id;
         // A nested lane borrows the frame of whichever clip of its parent track is under the

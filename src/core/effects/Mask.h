@@ -34,6 +34,14 @@ enum class MaskMediaChannel { Luma, Alpha };
 QString maskMediaChannelToString(MaskMediaChannel channel);
 MaskMediaChannel maskMediaChannelFromString(const QString &channel);
 
+// What a media mask's frames are indexed by. HostSource follows the masked clip's source time
+// (a segmentation matte traced from that clip). Adjustment plays the media from the carrying
+// adjustment's own start, so a matte laid over a span of the track runs straight through cuts.
+enum class MaskMediaTimeBase { HostSource, Adjustment };
+
+QString maskMediaTimeBaseToString(MaskMediaTimeBase base);
+MaskMediaTimeBase maskMediaTimeBaseFromString(const QString &base);
+
 // How an entry folds into the coverage accumulated by the entries before it. The first enabled
 // entry has nothing to combine with, so its op is ignored and it simply seeds the accumulator —
 // otherwise a lone Subtract or Intersect would blank the clip.
@@ -77,6 +85,7 @@ struct Mask
     MaskMediaChannel mediaChannel = MaskMediaChannel::Luma;
     // Wrap video coverage back to the start once it runs out, instead of holding the last frame.
     bool mediaLoop = false;
+    MaskMediaTimeBase mediaTimeBase = MaskMediaTimeBase::HostSource;
 
     // Media only, and only from the people-cutout backend: the colour-decontaminated foreground,
     // which is what removes background spill from hair edges. Same size, timebase and offset as

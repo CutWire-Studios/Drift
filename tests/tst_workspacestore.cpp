@@ -85,7 +85,7 @@ void WorkspaceStoreTest::presetsLoadAndValidate()
 {
     WorkspaceStore store;
     const QVariantList list = store.workspaces();
-    QCOMPARE(list.size(), 9);
+    QCOMPARE(list.size(), 10);
     QCOMPARE(list.at(0).toMap().value("id").toString(), QStringLiteral("edit"));
     QCOMPARE(list.at(1).toMap().value("id").toString(), QStringLiteral("edit-portrait"));
     for (const QVariant &v : list)
@@ -104,7 +104,7 @@ void WorkspaceStoreTest::everyBuiltinPresetValidates()
         ++builtins;
         QCOMPARE(store.validate(ws), QString());
     }
-    QCOMPARE(builtins, 9);
+    QCOMPARE(builtins, 10);
 }
 
 void WorkspaceStoreTest::roundTripAndOverride()
@@ -121,7 +121,7 @@ void WorkspaceStoreTest::roundTripAndOverride()
     QCOMPARE(again.value("name").toString(), QStringLiteral("Mine"));
     QVERIFY(again.value("modified").toBool());
     QVERIFY(again.value("builtin").toBool());
-    QCOMPARE(reloaded.workspaces().size(), 9);
+    QCOMPARE(reloaded.workspaces().size(), 10);
 
     reloaded.resetPreset("edit");
     QCOMPARE(reloaded.workspace("edit").value("name").toString(), QStringLiteral("Edit"));
@@ -134,7 +134,7 @@ void WorkspaceStoreTest::rejectsDuplicatePanels()
                            {"children", QVariantList{slot("preview"), slot("preview")}}};
     QVERIFY(!store.saveWorkspace(workspaceWith(root)).isEmpty());
     QVERIFY(!store.saveWorkspace(workspaceWith(slot("bogus"))).isEmpty());
-    QCOMPARE(store.workspaces().size(), 9);
+    QCOMPARE(store.workspaces().size(), 10);
 }
 
 void WorkspaceStoreTest::acceptsTabPanelTypes()
@@ -265,7 +265,7 @@ void WorkspaceStoreTest::migratesCutTrimToSourceLab()
     QCOMPARE(store.activeId(), QStringLiteral("source-lab"));
     QCOMPARE(QSettings().value("ui/workspaces/active").toString(), QStringLiteral("source-lab"));
     QVERIFY(QSettings().value("ui/workspaces/migratedSourceLab").toBool());
-    QCOMPARE(store.workspaces().size(), 9);
+    QCOMPARE(store.workspaces().size(), 10);
 
     const QVariantMap preset = store.workspace("source-lab");
     QCOMPARE(preset.value("name").toString(), QStringLiteral("Source Lab"));

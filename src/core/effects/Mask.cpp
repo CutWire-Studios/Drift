@@ -85,6 +85,24 @@ MaskMediaChannel maskMediaChannelFromString(const QString &channel)
     return MaskMediaChannel::Luma;
 }
 
+QString maskMediaTimeBaseToString(MaskMediaTimeBase base)
+{
+    switch (base) {
+    case MaskMediaTimeBase::Adjustment:
+        return QStringLiteral("adjustment");
+    case MaskMediaTimeBase::HostSource:
+        break;
+    }
+    return QStringLiteral("host");
+}
+
+MaskMediaTimeBase maskMediaTimeBaseFromString(const QString &base)
+{
+    if (base == QStringLiteral("adjustment"))
+        return MaskMediaTimeBase::Adjustment;
+    return MaskMediaTimeBase::HostSource;
+}
+
 QString maskOpToString(MaskOp op)
 {
     switch (op) {

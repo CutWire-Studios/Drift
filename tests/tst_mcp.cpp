@@ -6673,6 +6673,7 @@ void McpTest::setMaskRoundTripsFreeformPoints()
     QCOMPARE(mask.value(QStringLiteral("points")).toArray().size(), 3);
     QVERIFY(mask.value(QStringLiteral("points")).toArray().at(0).isObject());
     mask.remove(QStringLiteral("animated"));
+    mask.remove(QStringLiteral("pathKeyCount"));
     mask.remove(QStringLiteral("keyframes"));
     mask.insert(QStringLiteral("invert"), true);
     r = dispatcher.applyOne(QStringLiteral("set_mask"), {{QStringLiteral("clip"), id}, {QStringLiteral("mask"), mask}});

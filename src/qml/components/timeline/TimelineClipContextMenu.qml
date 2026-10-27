@@ -125,6 +125,13 @@ ThemedContextMenu {
         onTriggered: EditorState.separateAllAudioTracks(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        text: qsTr("Convert to mask")
+        icon.name: Theme.icons.mask
+        visible: owner.trackType === "video"
+        enabled: EditorState.masking.canConvertClipToMask(owner.trackIndex, owner.clipIndex)
+        onTriggered: EditorState.masking.convertClipToMask(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
         text: qsTr("Convert to edit-friendly format")
         icon.name: Theme.icons.rabbit
         // Converts the bin media, so every clip using it follows along.

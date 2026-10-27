@@ -64,6 +64,7 @@ struct MediaEditSpec;
 #include "app/bin/AssetPreviewController.h"
 #include "app/editor/sessions/CurveEditorController.h"
 #include "app/editor/sessions/KeyframeController.h"
+#include "app/editor/sessions/MaskingController.h"
 #include "app/editor/sessions/SubtitleController.h"
 #include "app/color/ColorController.h"
 #include "app/jobs/audio/DenoiseController.h"
@@ -76,6 +77,7 @@ struct MediaEditSpec;
 #include "app/bin/MediaBinController.h"
 #include "app/bin/SourceLabController.h"
 #include "app/jobs/vision/StabilizeController.h"
+#include "app/jobs/vision/TrackingController.h"
 #include "app/jobs/audio/TtsController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
 #include "app/editor/sessions/SpeedCurveController.h"
@@ -102,10 +104,12 @@ class AppController : public QObject
     friend class DenoiseController;
     friend class ColorController;
     friend class KeyframeController;
+    friend class MaskingController;
     friend class SubtitleController;
     friend class RestoreController;
     friend class FaceTrackingController;
     friend class StabilizeController;
+    friend class TrackingController;
     friend class MediaBinController;
     friend class SourceLabController;
     friend class TtsController;
@@ -143,6 +147,8 @@ class AppController : public QObject
     Q_PROPERTY(ColorController *color READ color CONSTANT)
     // Keyframe panel editing and clip property rows. QML: EditorState.keyframes.
     Q_PROPERTY(KeyframeController *keyframes READ keyframes CONSTANT)
+    // "Use as mask" on bin assets and timeline clips. QML: EditorState.masking.
+    Q_PROPERTY(MaskingController *masking READ masking CONSTANT)
     Q_PROPERTY(SubtitleController *subtitles READ subtitles CONSTANT)
     // Video restore and enhance (decompression, upscaling). QML: EditorState.restore.
     Q_PROPERTY(RestoreController *restore READ restore CONSTANT)
@@ -150,6 +156,7 @@ class AppController : public QObject
     Q_PROPERTY(FaceTrackingController *faces READ faces CONSTANT)
     // Clip stabilization. QML: EditorState.stabilize.
     Q_PROPERTY(StabilizeController *stabilize READ stabilize CONSTANT)
+    Q_PROPERTY(TrackingController *tracking READ tracking CONSTANT)
     // Local text-to-speech and the cloned-voice library. QML: EditorState.tts, EditorState.voices.
     Q_PROPERTY(TtsController *tts READ tts CONSTANT)
     Q_PROPERTY(VoiceLibrary *voices READ voices CONSTANT)
@@ -349,10 +356,12 @@ public:
     DenoiseController *denoise() const { return m_denoise; }
     ColorController *color() const { return m_color; }
     KeyframeController *keyframes() const { return m_keyframes; }
+    MaskingController *masking() const { return m_masking; }
     SubtitleController *subtitles() const { return m_subtitles; }
     RestoreController *restore() const { return m_restore; }
     FaceTrackingController *faces() const { return m_faces; }
     StabilizeController *stabilize() const { return m_stabilize; }
+    TrackingController *tracking() const { return m_tracking; }
     TtsController *tts() const { return m_tts; }
     VoiceLibrary *voices() const { return m_voices; }
     McpController *mcp() const { return m_mcpController; }
@@ -2133,10 +2142,12 @@ protected:
     DenoiseController *m_denoise = nullptr;
     ColorController *m_color = nullptr;
     KeyframeController *m_keyframes = nullptr;
+    MaskingController *m_masking = nullptr;
     SubtitleController *m_subtitles = nullptr;
     RestoreController *m_restore = nullptr;
     FaceTrackingController *m_faces = nullptr;
     StabilizeController *m_stabilize = nullptr;
+    TrackingController *m_tracking = nullptr;
     MediaBinController *m_bin = nullptr;
     SourceLabController *m_sourceLab = nullptr;
     TtsController *m_tts = nullptr;

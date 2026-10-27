@@ -2154,6 +2154,13 @@
       "groupForeground": "$semantic.panel.secondary.foreground",
       "radius": "$metrics.radius.sm"
     },
+    "maskingPanel": {
+      "divider": "$semantic.panel.border",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "rowHover": "$semantic.panel.muted",
+      "rowSelected": "$semantic.panel.accent"
+    },
     "masksInspector": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
@@ -2586,6 +2593,22 @@
     },
     "inlineTextSelectionHandle": {
       "background": "$semantic.primary"
+    },
+    "maskBrushOverlay": {
+      "borderWidth": "$metrics.borderWidth",
+      "cursor": "$semantic.onMedia",
+      "cursorInner": "$semantic.onMedia",
+      "eraseStroke": "$semantic.destructive",
+      "stroke": "$semantic.primary"
+    },
+    "maskDrawOverlay": {
+      "borderWidth": "$metrics.borderWidth",
+      "closeHint": "$semantic.constructive",
+      "fill": "$semantic.primary",
+      "hintBackground": "$semantic.surface.panel",
+      "hintForeground": "$semantic.mutedForeground",
+      "radius": "$metrics.radius.sm",
+      "stroke": "$semantic.primary"
     },
     "maskOverlayBarBand": {
       "border": "$semantic.mutedForeground",

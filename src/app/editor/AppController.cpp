@@ -781,10 +781,12 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_denoise = new DenoiseController(this, this);
     m_color = new ColorController(this, this);
     m_keyframes = new KeyframeController(this, this);
+    m_masking = new MaskingController(this, this);
     m_subtitles = new SubtitleController(this, this);
     m_restore = new RestoreController(this, this);
     m_faces = new FaceTrackingController(this, this);
     m_stabilize = new StabilizeController(this, this);
+    m_tracking = new TrackingController(this, this);
     m_bin = new MediaBinController(this, this);
     m_sourceLab = new SourceLabController(this, this);
     m_tts = new TtsController(this, this);
@@ -2705,10 +2707,12 @@ QVariantMap maskToMap(const drift::Mask &m, drift::TimeUs timelineStart)
         {QStringLiteral("mediaFit"), drift::maskMediaFitToString(m.mediaFit)},
         {QStringLiteral("mediaChannel"), drift::maskMediaChannelToString(m.mediaChannel)},
         {QStringLiteral("mediaLoop"), m.mediaLoop},
+        {QStringLiteral("mediaTimeBase"), drift::maskMediaTimeBaseToString(m.mediaTimeBase)},
         // Read-only, for the inspector and the preview overlay: keyframe edits go through the
         // generic keyframe invokables under "mask.<key>", never through setClipMask, so these are
         // deliberately not parsed back in maskFromMap.
         {QStringLiteral("animated"), m.isAnimated()},
+        {QStringLiteral("pathKeyCount"), int(m.pathKeys.size())},
         {QStringLiteral("keyframes"), maskKeyframes},
     };
 }
@@ -2739,6 +2743,9 @@ drift::Mask maskFromMap(const QVariantMap &m)
     mask.mediaChannel =
         drift::maskMediaChannelFromString(m.value(QStringLiteral("mediaChannel")).toString());
     mask.mediaLoop = m.value(QStringLiteral("mediaLoop"), mask.mediaLoop).toBool();
+    if (m.contains(QStringLiteral("mediaTimeBase")))
+        mask.mediaTimeBase =
+            drift::maskMediaTimeBaseFromString(m.value(QStringLiteral("mediaTimeBase")).toString());
     const QVariantList points = m.value(QStringLiteral("points")).toList();
     for (const QVariant &value : points) {
         // The [x, y] pair form is what this map used to emit, so anything already sending it
@@ -4739,6 +4746,12 @@ QHash<QString, QString> defaultShortcuts()
         // TimelinePanel they were neither.
         {QStringLiteral("selectTool"), QStringLiteral("V")},
         {QStringLiteral("bladeTool"), QStringLiteral("B")},
+        // Masking workspace tools. The masking panel claims these only while it has focus or
+        // hover, so they stay free on the timeline.
+        {QStringLiteral("maskingPolygonTool"), QStringLiteral("P")},
+        {QStringLiteral("maskingAiTool"), QStringLiteral("A")},
+        {QStringLiteral("maskingBrushSmaller"), QStringLiteral("[")},
+        {QStringLiteral("maskingBrushLarger"), QStringLiteral("]")},
         // Timeline zoom is QML state too, so these take the same route as the tool modes.
         {QStringLiteral("zoomIn"), QStringLiteral("Ctrl+=")},
         {QStringLiteral("zoomOut"), QStringLiteral("Ctrl+-")},
@@ -5601,6 +5614,10 @@ QVariantList AppController::actions() const
         action(QStringLiteral("toggleLoop"), tr("Loop work area playback")),
         action(QStringLiteral("selectTool"), tr("Select tool")),
         action(QStringLiteral("bladeTool"), tr("Cut tool")),
+        action(QStringLiteral("maskingPolygonTool"), tr("Polygon mask tool")),
+        action(QStringLiteral("maskingAiTool"), tr("AI object mask tool")),
+        action(QStringLiteral("maskingBrushSmaller"), tr("Decrease brush size")),
+        action(QStringLiteral("maskingBrushLarger"), tr("Increase brush size")),
         action(QStringLiteral("zoomIn"), tr("Zoom in")),
         action(QStringLiteral("zoomOut"), tr("Zoom out")),
         action(QStringLiteral("multicam"), tr("Multicam window")),
@@ -10887,7 +10904,7 @@ bool isClipTargetedKind(const QString &kind)
 {
     return kind == QLatin1String("effect") || kind == QLatin1String("audioEffect")
            || kind == QLatin1String("template") || kind == QLatin1String("effectStack")
-           || kind == QLatin1String("mask");
+           || kind == QLatin1String("mask") || kind == QLatin1String("maskMedia");
 }
 
 } // namespace drift::appdetail
@@ -10973,7 +10990,6 @@ int AppController::transitionJunctionAt(int trackIndex, double seconds) const
 QVariantMap AppController::planAssetDrop(const QString &kind, const QString &payload, int trackIndex,
                                          double seconds, int newTrackIndex) const
 {
-    Q_UNUSED(payload);
     const double at = qMax(0.0, seconds);
     const int trackCount = int(m_project.tracks().size());
     const bool onTrack = trackIndex >= 0 && trackIndex < trackCount;
@@ -11018,11 +11034,12 @@ QVariantMap AppController::planAssetDrop(const QString &kind, const QString &pay
         return rejectDrop(tr("Transform layers take no effects or masks."));
 
     const bool audioTrack = track.type == drift::TrackType::Audio;
+    const bool maskKind = kind == QLatin1String("mask") || kind == QLatin1String("maskMedia");
     const int clipIndex = clipIndexAtTime(track, drift::secondsToUs(at));
     if (clipIndex >= 0) {
         const bool fits = kind == QLatin1String("audioEffect")
                               ? (audioTrack || track.type == drift::TrackType::Video)
-                              : !audioTrack && !(kind == QLatin1String("mask") && track.isAdjustmentLane());
+                              : !audioTrack && !(maskKind && track.isAdjustmentLane());
         if (!fits) {
             return rejectDrop(kind == QLatin1String("audioEffect")
                                   ? tr("Audio effects go on clips with sound.")
@@ -11039,11 +11056,14 @@ QVariantMap AppController::planAssetDrop(const QString &kind, const QString &pay
     if (pictureTrack && kind == QLatin1String("effect") && !effectFitsTrack(-1, payload, &why))
         return rejectDrop(why);
     if (pictureTrack && (kind == QLatin1String("effect") || kind == QLatin1String("effectStack")
-                         || kind == QLatin1String("mask"))) {
+                         || maskKind)) {
+        const drift::TimeUs duration = kind == QLatin1String("maskMedia")
+                                           ? m_masking->assetMaskDurationUs(payload.toInt())
+                                           : drift::imageClipDurationUs();
         return {{QStringLiteral("accepted"), true}, {QStringLiteral("mode"), QStringLiteral("gap")},
                 {QStringLiteral("track"), trackIndex},
                 {QStringLiteral("landingStart"), at},
-                {QStringLiteral("landingDuration"), drift::usToSeconds(drift::imageClipDurationUs())}};
+                {QStringLiteral("landingDuration"), drift::usToSeconds(duration)}};
     }
     return rejectDrop(tr("Drop that onto a clip to apply it."));
 }
@@ -11105,9 +11125,12 @@ QVariantMap AppController::dropAsset(const QString &kind, const QString &payload
             applyEffectPreset(track, clip, payload);
         else if (kind == QLatin1String("mask"))
             addMaskToClip(track, clip, payload);
+        else if (kind == QLatin1String("maskMedia"))
+            m_masking->addAssetMaskToClip(track, clip, payload.toInt());
         // Effects and masks select what they made (the stack's host, the mask clip), which is
         // where their inspector lives; the rest leave the target selected.
-        if (kind != QLatin1String("effect") && kind != QLatin1String("mask"))
+        if (kind != QLatin1String("effect") && kind != QLatin1String("mask")
+            && kind != QLatin1String("maskMedia"))
             selectClip(track, clip);
         return plan;
     }
@@ -11134,6 +11157,8 @@ QVariantMap AppController::dropAsset(const QString &kind, const QString &payload
         m_mcpController->endBatch(tr("Add adjustment layer"), true);
     } else if (kind == QLatin1String("mask")) {
         addMaskLaneClip(track, payload, at);
+    } else if (kind == QLatin1String("maskMedia")) {
+        m_masking->addAssetLaneMask(track, payload.toInt(), at);
     } else if (kind == QLatin1String("effectStack")) {
         m_mcpController->beginBatch();
         addAdjustmentClipWithEffect(QString(), adjustmentTrackAbove(track), at);
@@ -15505,6 +15530,24 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
     seedFreeformMask(seeded);
 
     drift::Clip &clip = track.clips[clipIndex];
+    // maskFromMap never carries animation, so keep what is already there.
+    std::optional<drift::Mask> existing;
+    if (clip.type == drift::ClipType::Adjustment) {
+        existing = clip.mask;
+    } else {
+        const QList<drift::ClipRef> pinned =
+            drift::linkedMaskAdjustments(m_project, trackIndex, clipIndex);
+        if (!pinned.isEmpty()) {
+            const drift::ClipRef &first = pinned.constFirst();
+            existing = m_project.tracks().at(first.trackIndex).clips.at(first.clipIndex).mask;
+        }
+    }
+    if (existing && mask.keyframes.isEmpty() && mask.pathKeys.isEmpty()) {
+        seeded.keyframes = existing->keyframes;
+        if (existing->shape == seeded.shape)
+            seeded.pathKeys = existing->pathKeys;
+    }
+
     if (clip.type == drift::ClipType::Adjustment) {
         // The kind is deliberately left alone. The Masks tab is also offered for a video-effects
         // adjustment, where a mask scopes where the chain lands; flipping it to Mask there would
@@ -15645,7 +15688,19 @@ void AppController::insertMaskPoint(int trackIndex, int clipIndex, int pointInde
         return;
 
     drift::Mask mask = host->mask;
-    mask.points.insert(qBound(0, pointIndex, mask.points.size()), QPointF(x, y));
+    const int index = qBound(0, pointIndex, mask.points.size());
+    // Each shape key gains the vertex at the same slot, placed on that key's own edge, so the
+    // animation keeps its shape. The count check has to run before the static insert below.
+    for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it) {
+        QVector<QPointF> &vertices = it.value();
+        const int n = vertices.size();
+        if (n != mask.points.size() || n == 0)
+            continue;
+        const QPointF prev = vertices.at((index - 1 + n) % n);
+        const QPointF next = vertices.at(index % n);
+        vertices.insert(index, (prev + next) / 2.0);
+    }
+    mask.points.insert(index, QPointF(x, y));
 
     const drift::Project before = m_project;
     writeClipMask(trackIndex, clipIndex, mask);

@@ -8,6 +8,7 @@ ThemedContextMenu {
     required property string kind
     required property string assetId
     required property int assetIndex
+    required property string maskRole
 
     ThemedMenuItem {
         text: qsTr("Open composite")
@@ -39,6 +40,28 @@ ThemedContextMenu {
         icon.name: Theme.icons.refresh
         visible: root.kind !== "composite" && root.host.selectedAssetIds.length <= 1
         onTriggered: root.host.replaceRequested(root.assetIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Use as mask")
+        icon.name: Theme.icons.mask
+        visible: (root.kind === "video" || root.kind === "image") && root.host.selectedAssetIds.length <= 1
+        subMenu: ThemedContextMenu {
+            ThemedMenuItem {
+                text: qsTr("Off")
+                icon.name: root.maskRole === "" ? Theme.icons.check : ""
+                onTriggered: EditorState.masking.setAssetMaskRole(root.assetIndex, "")
+            }
+            ThemedMenuItem {
+                text: qsTr("Luma (brightness)")
+                icon.name: root.maskRole === "luma" ? Theme.icons.check : ""
+                onTriggered: EditorState.masking.setAssetMaskRole(root.assetIndex, "luma")
+            }
+            ThemedMenuItem {
+                text: qsTr("Alpha (transparency)")
+                icon.name: root.maskRole === "alpha" ? Theme.icons.check : ""
+                onTriggered: EditorState.masking.setAssetMaskRole(root.assetIndex, "alpha")
+            }
+        }
     }
     ThemedMenuItem {
         // "the selection" once it covers more than the clicked card — matches

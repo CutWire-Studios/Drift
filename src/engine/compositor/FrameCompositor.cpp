@@ -144,9 +144,14 @@ struct NestedViewsScope
 // later head-trim (which moves srcIn but not mediaSrcOffsetUs) or a speed change would otherwise
 // slide the coverage off the picture. Every reader of a media mask must agree on this number, or
 // the warm request and the composite read land on different frames.
+//
+// MaskMediaTimeBase::Adjustment is for media that is not traced from the host (a hand-placed
+// matte video): it plays from the adjustment's own start, immune to the host's trim and speed.
 drift::TimeUs maskMediaSourceUs(const drift::Clip &host, const drift::Mask &mask,
-                                drift::TimeUs timelineUs)
+                                drift::TimeUs adjustmentStartUs, drift::TimeUs timelineUs)
 {
+    if (mask.mediaTimeBase == drift::MaskMediaTimeBase::Adjustment)
+        return qMax<drift::TimeUs>(0, timelineUs - adjustmentStartUs + mask.mediaSrcOffsetUs);
     return qMax<drift::TimeUs>(0, host.timelineToSourceUs(timelineUs) - mask.mediaSrcOffsetUs);
 }
 
@@ -208,9 +213,10 @@ drift::TimeUs maskMediaDurationUs(const QString &path)
 
 // maskMediaSourceUs, folded into the media's length for a looping mask video. The coverage read,
 // its sidecar and the warm-up all use this, so the warm lands on the frame the read asks for.
-drift::TimeUs maskMediaTimeUs(const drift::Clip &host, const drift::Mask &mask, drift::TimeUs timelineUs)
+drift::TimeUs maskMediaTimeUs(const drift::Clip &host, const drift::Mask &mask,
+                              drift::TimeUs adjustmentStartUs, drift::TimeUs timelineUs)
 {
-    drift::TimeUs mediaUs = maskMediaSourceUs(host, mask, timelineUs);
+    drift::TimeUs mediaUs = maskMediaSourceUs(host, mask, adjustmentStartUs, timelineUs);
     if (mask.mediaLoop && !maskMediaIsStillImage(mask.mediaPath)) {
         // Wrapping needs the media's length, which only a probe knows; asking for it per frame is
         // a cache hit after the first.
@@ -228,7 +234,7 @@ void forEachLaneMediaMask(const drift::Project &project, int trackIndex, const d
 {
     for (const drift::LaneMask &laneMask : drift::laneMasksAt(project, trackIndex, timelineUs, clip.id)) {
         if (laneMask.mask.isMedia())
-            visit(clip, laneMask.mask, streamIdFor(laneMask.adjustmentId));
+            visit(clip, laneMask.mask, streamIdFor(laneMask.adjustmentId), laneMask.adjustmentStartUs);
     }
 }
 
@@ -259,7 +265,7 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
                     continue;
                 if (!clip.containsTime(timelineUs) || !clip.mask.isMedia())
                     continue;
-                visit(clip, clip.mask, streamIdFor(clip.id));
+                visit(clip, clip.mask, streamIdFor(clip.id), clip.timelineStart);
             }
             continue;
         }
@@ -400,7 +406,7 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
     // Retained separately from clip.path: mask media has its own reader, and dropping it here
     // would tear the worker down and re-open the file every frame.
-    const auto retainMask = [&](const drift::Clip &, const drift::Mask &mask, quint64) {
+    const auto retainMask = [&](const drift::Clip &, const drift::Mask &mask, quint64, drift::TimeUs) {
         videoPaths.insert(mask.mediaPath);
         if (!mask.mediaFgrPath.isEmpty() && !mask.invert)
             videoPaths.insert(mask.mediaFgrPath);
@@ -505,8 +511,9 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
 
     // Mask media decodes like any other video, so warm it alongside the sources rather than
     // stalling the composite on a serial read later.
-    const auto warmMask = [&](const drift::Clip &host, const drift::Mask &mask, quint64 streamId) {
-        const drift::TimeUs mediaUs = maskMediaTimeUs(host, mask, timelineUs);
+    const auto warmMask = [&](const drift::Clip &host, const drift::Mask &mask, quint64 streamId,
+                              drift::TimeUs adjustmentStartUs) {
+        const drift::TimeUs mediaUs = maskMediaTimeUs(host, mask, adjustmentStartUs, timelineUs);
         if (!maskMediaIsStillImage(mask.mediaPath)) {
             requests.append(ClipReaderPool::VideoRequest{
                 mask.mediaPath, streamId, mediaUs, maxWidth, maxHeight});
@@ -1204,7 +1211,8 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
             continue;
 
         const quint64 streamId = streamIdFor(laneMasks.at(i).adjustmentId);
-        const drift::TimeUs mediaUs = maskMediaTimeUs(host, mask, timelineUs);
+        const drift::TimeUs mediaUs =
+            maskMediaTimeUs(host, mask, laneMasks.at(i).adjustmentStartUs, timelineUs);
         // Media that failed to decode must not silently blank the clip — a null entry
         // contributes nothing rather than covering nothing.
         layer.maskMedia[i] =
@@ -1906,7 +1914,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                     const drift::Mask resolved = clip.mask.isAnimated()
                                                      ? clip.mask.resolvedAt(maskTimeUs)
                                                      : clip.mask;
-                    fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{resolved, clip.id}},
+                    fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{resolved, clip.id, clip.timelineStart}},
                                       timelineUs, width, height);
                 }
                 item.layer.rect = QRectF(0, 0, width, height);
@@ -1936,6 +1944,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             placeRelief(clip, item.layer);
             placeModelLights(clip, item.layer);
             applyDepthOcclusion(project, scene, item.layer, nearestOccluder, occluders);
+            if (!nested && options.maskView.mode != MaskViewMode::Off && options.maskView.clipId == clip.id)
+                item.layer.maskView = options.maskView.mode;
             scene.items.append(item);
             if (editingText)
                 appendTextEditDecor(scene, item, clip, options.textEdit, timelineUs, projectWidth, projectHeight,
@@ -1955,6 +1965,12 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
 }
 
 } // namespace
+
+drift::TimeUs FrameCompositor::maskMediaSourceTimeUs(const drift::Clip &host, const drift::Mask &mask,
+                                                     drift::TimeUs adjustmentStartUs, drift::TimeUs timelineUs)
+{
+    return maskMediaSourceUs(host, mask, adjustmentStartUs, timelineUs);
+}
 
 FrameCompositor::TextEditGeometry FrameCompositor::textEditGeometry(const drift::Clip &clip,
                                                                     const QString &renderedText,

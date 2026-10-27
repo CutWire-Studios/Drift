@@ -11,6 +11,10 @@ QtObject {
     // request still lands; read on creation too, since the panel may not exist yet.
     property var colorTabRequest: null
     property var keyframesActionHandler: null
+    property var maskingActionHandler: null
+    // Vertices placed by the polygon tool so far. Escape cancels them before it leaves the tool.
+    property int pendingPolygonPoints: 0
+    signal maskingCancelRequested()
     property var subtitleActionHandler: null
     property var sourceLabActionHandler: null
     property var sourceLabRangesHandler: null

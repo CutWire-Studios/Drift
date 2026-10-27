@@ -44,13 +44,18 @@ class PreviewController : public QObject
     // Library set whose guides are being dragged on the preview; empty when not editing.
     Q_PROPERTY(QString guideEditSetId READ guideEditSetId WRITE setGuideEditSetId NOTIFY guideEditSetIdChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
+    Q_PROPERTY(QString maskViewMode READ maskViewMode WRITE setMaskViewMode NOTIFY maskViewModeChanged)
+    // The masking workspace's drawing tool: "" (none), "rect", "ellipse", "polygon", "brush", "ai"
+    // or "tracker". Session state, like the rest of this class.
+    Q_PROPERTY(QString maskingTool READ maskingTool WRITE setMaskingTool NOTIFY maskingToolChanged)
     Q_PROPERTY(bool maskEditMode READ maskEditMode WRITE setMaskEditMode NOTIFY maskEditModeChanged)
     // Whether the preview should be showing mask handles right now. Selecting a mask clip is
     // itself a request to edit it, so the toggle is only needed to keep the handles up while some
     // *other* clip is selected.
     Q_PROPERTY(bool maskEditActive READ maskEditActive NOTIFY maskEditActiveChanged)
-    // The one tool that owns the preview's pointer: "crop", "guideEdit", "mask" or "transform", in
-    // that order of precedence. Masks are a 2D tool, so 3D falls through to "transform".
+    // The one tool that owns the preview's pointer: "crop", "guideEdit", "maskDraw", "maskBrush",
+    // "maskAi", "tracker", "mask" or "transform", in that order of precedence. The masking tools
+    // and the mask editor are 2D tools, so 3D falls through to "transform".
     Q_PROPERTY(QString activeTool READ activeTool NOTIFY activeToolChanged)
     // Grips are drawn only while the picture holds still and there is a canvas to put them on.
     Q_PROPERTY(bool handlesVisible READ handlesVisible NOTIFY handlesVisibleChanged)
@@ -81,8 +86,12 @@ public:
     void setGuideEditSetId(const QString &id);
     bool canvasCropMode() const { return m_canvasCropMode; }
     void setCanvasCropMode(bool active);
+    QString maskViewMode() const { return m_maskViewMode; }
+    void setMaskViewMode(const QString &mode);
     bool maskEditMode() const { return m_maskEditMode; }
     void setMaskEditMode(bool active);
+    QString maskingTool() const { return m_maskingTool; }
+    void setMaskingTool(const QString &tool);
     bool maskEditActive() const;
     QString activeTool() const { return m_activeTool; }
     bool handlesVisible() const { return m_handlesVisible; }
@@ -208,6 +217,8 @@ signals:
     void guideEditSetIdChanged();
     void canvasCropModeChanged();
     void maskEditModeChanged();
+    void maskViewModeChanged();
+    void maskingToolChanged();
     void maskEditActiveChanged();
     void activeToolChanged();
     void handlesVisibleChanged();
@@ -230,6 +241,7 @@ private:
     bool selectedModelLights(SelectedModelLights *out) const;
     // Hands the current mode and viewpoint to the preview renderer.
     void pushView();
+    void pushMaskView();
     void flyCamera(int trackIndex, int clipIndex, double turnRightDeg, double turnUpDeg, double forward,
                    double right, double up);
     void setView(const drift::EditorView3d &view);
@@ -253,6 +265,8 @@ private:
     QString m_guideEditSetId;
     bool m_canvasCropMode = false;
     bool m_maskEditMode = false;
+    QString m_maskViewMode = QStringLiteral("off");
+    QString m_maskingTool;
     QString m_activeTool = QStringLiteral("transform");
     bool m_handlesVisible = false;
 };

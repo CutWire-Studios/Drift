@@ -1011,6 +1011,7 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     options.allowProxies = true;
     options.deferAudioAnalysis = true;
     options.editor = m_editorView;
+    options.maskView = m_maskView;
     if (m_scopeConsumers > 0
         && (!m_playing || !m_scopeTimer.isValid() || m_scopeTimer.hasExpired(kScopeIntervalMs)))
         options.scopeReadbackWidth = kScopeReadbackWidth;
@@ -1040,6 +1041,15 @@ void PlaybackEngine::setEditorView(const FrameCompositor::RenderOptions::EditorV
         && m_editorView.navigating == view.navigating)
         return;
     m_editorView = view;
+    if (!m_playing)
+        refreshFrame();
+}
+
+void PlaybackEngine::setMaskView(const FrameCompositor::RenderOptions::MaskView &view)
+{
+    if (m_maskView == view)
+        return;
+    m_maskView = view;
     if (!m_playing)
         refreshFrame();
 }

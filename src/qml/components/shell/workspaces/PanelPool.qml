@@ -20,6 +20,8 @@ Item {
     property var looksPanel: null
     property var scopesPanel: null
     property var keyframesPanel: null
+    property var maskingPanel: null
+    property var trackingPanel: null
     property var subtitlesPanel: null
     property var subtitleLanePanel: null
     property var subtitleTextPanel: null
@@ -52,6 +54,10 @@ Item {
 
     readonly property bool keyframesShown: root._shownOf("keyframes")
 
+    readonly property bool maskingShown: root._shownOf("masking")
+
+    readonly property bool trackingShown: root._shownOf("tracking")
+
     readonly property bool subtitlesShown: root._shownOf("subtitles")
 
     readonly property bool subtitleLaneShown: root._shownOf("subtitleLane")
@@ -79,6 +85,8 @@ Item {
         "looks": looksC,
         "scopes": scopesC,
         "keyframes": keyframesC,
+        "masking": maskingC,
+        "tracking": trackingC,
         "undoHistory": historyC,
         "sourceViewer": sourceViewerC,
         "sourceLab.bin": sourceLabBinC,
@@ -105,6 +113,8 @@ Item {
     Component { id: looksC; LazyPanel { panel: LooksPanel {} } }
     Component { id: scopesC; LazyPanel { panel: ScopesPanel {} } }
     Component { id: keyframesC; LazyPanel { panel: KeyframesPanel {} } }
+    Component { id: maskingC; LazyPanel { panel: MaskingPanel {} } }
+    Component { id: trackingC; LazyPanel { panel: TrackingPanel {} } }
     Component { id: historyC; LazyPanel { panel: HistoryPanel {} } }
     Component { id: sourceViewerC; LazyPanel { panel: SourceViewerPanel {} } }
     Component { id: sourceLabBinC; LazyPanel { panel: SourceLabBinPanel {} } }
@@ -259,6 +269,12 @@ Item {
             break
         case "keyframes":
             root.keyframesPanel = Qt.binding(() => w.item)
+            break
+        case "masking":
+            root.maskingPanel = Qt.binding(() => w.item)
+            break
+        case "tracking":
+            root.trackingPanel = Qt.binding(() => w.item)
             break
         case "subtitles":
             root.subtitlesPanel = Qt.binding(() => w.item)

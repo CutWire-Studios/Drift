@@ -284,7 +284,11 @@ Item {
                     for (const p of maskBox.dragStartPoints)
                         points.push({ "x": p.x + dx, "y": p.y + dy })
                     mask.points = points
-                    EditorState.previewSetClipMask(maskBox.layerTrack, maskBox.layerClip, mask)
+                    if ((maskBox.maskData.pathKeyCount || 0) > 0)
+                        EditorState.masking.previewSetMaskPathKey(maskBox.layerTrack, maskBox.layerClip,
+                                                                  EditorState.playheadSeconds, points)
+                    else
+                        EditorState.previewSetClipMask(maskBox.layerTrack, maskBox.layerClip, mask)
                 }
 
                 function writePointAt(index, nx, ny) {
@@ -296,7 +300,11 @@ Item {
                                                 : { "x": src[i].x, "y": src[i].y })
                     }
                     mask.points = points
-                    EditorState.previewSetClipMask(maskBox.layerTrack, maskBox.layerClip, mask)
+                    if ((maskBox.maskData.pathKeyCount || 0) > 0)
+                        EditorState.masking.previewSetMaskPathKey(maskBox.layerTrack, maskBox.layerClip,
+                                                                  EditorState.playheadSeconds, points)
+                    else
+                        EditorState.previewSetClipMask(maskBox.layerTrack, maskBox.layerClip, mask)
                 }
 
                 // Arrow keys nudge the selected mask; Shift makes the step coarse. Focus is taken

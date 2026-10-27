@@ -801,6 +801,10 @@ PanelFrame {
     }
 
     function updateAssetDropPreview(assetIndex, dropX, dropY) {
+        if (EditorState.masking.assetMaskRole(assetIndex) !== "") {
+            dropRouter.hover("maskMedia", String(assetIndex), dropX, dropY)
+            return
+        }
         updateDropPreviewForKind(assetKind(assetIndex), assetDurationSeconds(assetIndex),
                                  dropX, dropY)
     }
@@ -834,6 +838,10 @@ PanelFrame {
     function performAssetDrop(assetIndex, dropX, dropY) {
         if (assetIndex < 0)
             return
+        if (EditorState.masking.assetMaskRole(assetIndex) !== "") {
+            dropRouter.drop("maskMedia", String(assetIndex), "", dropX, dropY)
+            return
+        }
         placeAssetAtTarget(assetIndex, Math.max(0, dropX / pxPerSecond),
                            resolveDropTarget(assetKind(assetIndex), dropY))
     }

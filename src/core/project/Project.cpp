@@ -60,6 +60,7 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("mediaFit"), maskMediaFitToString(m.mediaFit)},
         {QStringLiteral("mediaChannel"), maskMediaChannelToString(m.mediaChannel)},
         {QStringLiteral("mediaLoop"), m.mediaLoop},
+        {QStringLiteral("mediaTimeBase"), maskMediaTimeBaseToString(m.mediaTimeBase)},
         {QStringLiteral("keyframes"), maskKeyframesJson},
         {QStringLiteral("pathKeys"), pathKeys},
     };
@@ -94,6 +95,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.mediaFit = maskMediaFitFromString(o.value(QStringLiteral("mediaFit")).toString());
     m.mediaChannel = maskMediaChannelFromString(o.value(QStringLiteral("mediaChannel")).toString());
     m.mediaLoop = o.value(QStringLiteral("mediaLoop")).toBool(m.mediaLoop);
+    m.mediaTimeBase = maskMediaTimeBaseFromString(o.value(QStringLiteral("mediaTimeBase")).toString());
     const QJsonArray points = o.value(QStringLiteral("points")).toArray();
     for (const QJsonValue &value : points) {
         const QJsonArray pair = value.toArray();
@@ -315,6 +317,12 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.sourceFrame != QRectF(0, 0, 1, 1))
         json.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame));
+    if (!clip.motionTrackers.isEmpty()) {
+        QJsonArray trackers;
+        for (const MotionTracker &tracker : clip.motionTrackers)
+            trackers.append(toJson(tracker));
+        json.insert(QStringLiteral("motionTrackers"), trackers);
+    }
     if (clip.layer3d)
         json.insert(QStringLiteral("layer3d"), true);
     if (clip.depthOcclude)
@@ -403,6 +411,8 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.faceTrackSrcOffsetUs =
         TimeUs(object.value(QStringLiteral("faceTrackSrcOffsetUs")).toInteger(0));
     clip.depthPath = object.value(QStringLiteral("depthPath")).toString();
+    for (const QJsonValue &value : object.value(QStringLiteral("motionTrackers")).toArray())
+        clip.motionTrackers.append(motionTrackerFromJson(value.toObject()));
     clip.legacyStabilizePath = object.value(QStringLiteral("stabilizePath")).toString();
     clip.stabilizeMode =
         stabilizeModeFromString(object.value(QStringLiteral("stabilizeMode")).toString());
@@ -547,6 +557,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame));
     if (asset.rating != 0)
         object.insert(QStringLiteral("rating"), asset.rating);
+    if (!asset.maskRole.isEmpty())
+        object.insert(QStringLiteral("maskRole"), asset.maskRole);
     if (!asset.ranges.isEmpty()) {
         QJsonArray ranges;
         for (const drift::SourceRange &range : asset.ranges)
@@ -592,6 +604,7 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.sourceModifiedMs =
         static_cast<qint64>(object.value(QStringLiteral("sourceModifiedMs")).toDouble());
     asset.rating = qBound(-1, object.value(QStringLiteral("rating")).toInt(), 1);
+    asset.maskRole = object.value(QStringLiteral("maskRole")).toString();
     for (const QJsonValue &value : object.value(QStringLiteral("ranges")).toArray())
         asset.ranges.append(drift::sourceRangeFromJson(value.toObject()));
     for (const QJsonValue &value : object.value(QStringLiteral("markers")).toArray())
@@ -1213,6 +1226,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // build would drop the lights and fall back to its default key light.
     // Version 16 added function-eased keyframe segments (elastic/bounce). Nothing to migrate; the
     // bump is a gate, as for versions 6 and 9. An older build would play them as straight lines.
+    // Version 18 added motion trackers, the mask media time base and asset mask roles. Nothing to
+    // migrate; the bump is a gate, as for versions 6 and 9. An older build would drop the
+    // trackers and play a track-spanning matte by the masked clip's source time.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();

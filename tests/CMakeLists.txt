@@ -34,6 +34,7 @@ qt_add_executable(tst_editorstate
     ../src/app/editor/sessions/SpeedCurveController.cpp
     ../src/app/editor/sessions/CurveEditorController.cpp
     ../src/app/editor/sessions/KeyframeController.cpp
+    ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
     ../src/app/editor/sessions/SubtitleCueModel.cpp
     ../src/app/editor/sessions/SubtitleCueFilterModel.cpp
@@ -48,6 +49,7 @@ qt_add_executable(tst_editorstate
     ../src/app/jobs/vision/RestoreController.cpp
     ../src/app/jobs/vision/FaceTrackingController.cpp
     ../src/app/jobs/vision/StabilizeController.cpp
+    ../src/app/jobs/vision/TrackingController.cpp
     ../src/app/bin/MediaBinController.cpp
     ../src/app/bin/SourceLabController.cpp
     ../src/app/jobs/audio/TtsController.cpp
@@ -229,6 +231,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/SpeedCurveController.cpp
     ../src/app/editor/sessions/CurveEditorController.cpp
     ../src/app/editor/sessions/KeyframeController.cpp
+    ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
     ../src/app/editor/sessions/SubtitleCueModel.cpp
     ../src/app/editor/sessions/SubtitleCueFilterModel.cpp
@@ -243,6 +246,7 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/vision/RestoreController.cpp
     ../src/app/jobs/vision/FaceTrackingController.cpp
     ../src/app/jobs/vision/StabilizeController.cpp
+    ../src/app/jobs/vision/TrackingController.cpp
     ../src/app/bin/MediaBinController.cpp
     ../src/app/bin/SourceLabController.cpp
     ../src/app/jobs/audio/TtsController.cpp
@@ -371,5 +375,11 @@ qt_add_resources(tst_workspacestore "workspace_presets"
         ../resources/workspaces/ai.json
         ../resources/workspaces/color.json
         ../resources/workspaces/keyframes.json
+        ../resources/workspaces/masking-tracking.json
 )
 add_test(NAME WorkspaceStore COMMAND tst_workspacestore)
+
+qt_add_executable(tst_tracking tst_tracking.cpp ../src/engine/tracking/MotionTracking.cpp)
+target_include_directories(tst_tracking PRIVATE ../src)
+target_link_libraries(tst_tracking PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
+add_test(NAME Tracking COMMAND tst_tracking)

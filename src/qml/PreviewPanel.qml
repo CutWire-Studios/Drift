@@ -65,7 +65,11 @@ PanelFrame {
                 transform: transformTool,
                 mask: maskTool,
                 crop: cropTool,
-                guideEdit: guideEditTool
+                guideEdit: guideEditTool,
+                maskDraw: maskDrawTool,
+                maskBrush: maskBrushTool,
+                maskAi: maskAiTool,
+                tracker: trackerTool
             })
             toolHost.companion: transformCompanion
 
@@ -219,6 +223,26 @@ PanelFrame {
     Component {
         id: maskTool
         MaskOverlay { }
+    }
+
+    Component {
+        id: maskDrawTool
+        MaskDrawOverlay { }
+    }
+
+    Component {
+        id: maskBrushTool
+        MaskBrushOverlay { }
+    }
+
+    Component {
+        id: maskAiTool
+        MaskAiOverlay { }
+    }
+
+    Component {
+        id: trackerTool
+        TrackerOverlay { }
     }
 
     // Built fresh each crop session, so the frame starts from the whole canvas every time.

@@ -52,6 +52,7 @@ public:
         RatingRole,
         RangeCountRole,
         FavoriteRangeCountRole,
+        MaskRoleRole,
     };
     Q_ENUM(Role)
 
@@ -136,6 +137,9 @@ public:
     // invokable from QML on purpose: like setAssetName, the caller owns the undo snapshot
     // (AppController::setAssetRotation).
     bool setAssetRotation(int index, int degrees);
+    // The matte role the bin's "Use as mask" menu sets: "", "luma" or "alpha". Like
+    // setAssetRotation, the caller owns the undo snapshot (AppController via MaskingController).
+    bool setAssetMaskRole(int index, const QString &role);
     // Redraws every PDF's bin thumbnail; used after the PDF viewer addon is installed, when the
     // ones drawn without it are placeholders.
     void refreshPdfThumbnails();

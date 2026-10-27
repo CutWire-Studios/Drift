@@ -135,6 +135,8 @@ QJsonObject maskSchema()
         {QStringLiteral("mediaChannel"), enumProp(QStringLiteral("matte/media only: which channel is the coverage"),
                                                   {QStringLiteral("luma"), QStringLiteral("alpha")})},
         {QStringLiteral("mediaLoop"), boolProp(QStringLiteral("matte/media only: loop a matte shorter than the clip"))},
+        {QStringLiteral("mediaTimeBase"), enumProp(QStringLiteral("matte/media only: index frames by the masked clip's source time (host) or from the mask's own start (adjustment)"),
+                                                   {QStringLiteral("host"), QStringLiteral("adjustment")})},
     });
     s.insert(QStringLiteral("description"),
              QStringLiteral("The whole mask; every omitted key reverts to its default and omitting shape turns the mask off"));

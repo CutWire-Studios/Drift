@@ -51,6 +51,10 @@ struct MaskMediaFrame
     }
 };
 
+// The preview's mask view: Overlay tints what the mask cuts away, Matte shows the folded coverage
+// as grayscale. Only the preview sets it; export never does.
+enum class MaskViewMode : quint8 { Off, Overlay, Matte };
+
 // A single textured layer: the clip's source pixels plus everything needed to
 // place it on the canvas. Prefer `video` when set (hardware frames stay on the
 // GPU until the importer); then `vector`, drawn by Skia straight into the layer
@@ -109,6 +113,7 @@ struct GpuLayer
     // canvas-sized target): the layer covers the canvas and is not placed a second time.
     bool screenSpace = false;
     double opacity = 1.0;
+    MaskViewMode maskView = MaskViewMode::Off;
     drift::TimeUs clipTimeUs = 0; // effect time base (relative to clip start)
     int frameRate = 0;            // the project's, for u_frameIndex; 0 reads as 30
     // This frame's baked face anchors, one per tracked slot, sampled by FrameCompositor. Carried

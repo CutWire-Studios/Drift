@@ -12,6 +12,7 @@
 #include "core/project/SubtitleCue.h"
 #include "core/text/TextStyle.h"
 #include "core/base/Time.h"
+#include "core/tracking/MotionTracker.h"
 #include "core/project/sources/Model3dSource.h"
 #include "core/project/sources/PdfSource.h"
 #include "core/project/sources/VectorSource.h"
@@ -130,6 +131,8 @@ struct Clip
     // unlike a matte it needs no offset to be looked up; it only has to be dropped whenever the
     // pixels it was estimated from change.
     QString depthPath;
+    // Point/planar trackers analysed on this clip's source. Their samples are in source time.
+    QList<MotionTracker> motionTrackers;
 
     // Stabilize settings, and the ones the last run used. Bake mode renders a new
     // "(stabilized)" bin asset and points the clip at it; keyframe mode writes sparse

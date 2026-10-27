@@ -84,6 +84,9 @@ struct MediaAsset
     QList<SourceRange> ranges;
     QList<SourceMarker> markers;
     int rating = 0;
+    // "luma" or "alpha" when the user flagged this asset as a matte source ("Use as mask"); empty
+    // otherwise. Dropping a flagged asset makes a media mask instead of a clip.
+    QString maskRole;
 
     int sampleRate = 0;
     int channels = 0;
