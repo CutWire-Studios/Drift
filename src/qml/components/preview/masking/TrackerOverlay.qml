@@ -255,18 +255,28 @@ Item {
         MaskOverlayClipBounds { }
 
         MouseArea {
+            id: placeArea
             anchors.fill: parent
             enabled: root.hasClip && (root.placeMode === "point" || root.placeMode === "addPoint" || root.placeMode === "follow")
-            cursorShape: Qt.CrossCursor
             onWheel: (wheel) => { wheel.accepted = false }
             onClicked: (mouse) => root.placeClick(mouse)
         }
 
+        ToolCursor {
+            target: placeArea
+            shape: "trackPoint"
+        }
+
+        ToolCursor {
+            target: planarArea
+            shape: planarDraft.hoverNearFirst ? "polygonClose" : "trackPlanar"
+        }
+
         MouseArea {
+            id: planarArea
             anchors.fill: parent
             enabled: root.hasClip && root.placeMode === "planar"
             hoverEnabled: true
-            cursorShape: Qt.CrossCursor
             onWheel: (wheel) => { wheel.accepted = false }
             onPositionChanged: (mouse) => planarDraft.moveHover(Qt.point(mouse.x, mouse.y), false)
             onPressed: (mouse) => root.planarPress(mouse.x, mouse.y)
@@ -317,6 +327,8 @@ Item {
             visible: root.placeMode === "planar" && planarDraft.count > 0
 
             ShapePath {
+                startX: planarDraft.first.x
+                startY: planarDraft.first.y
                 strokeColor: Theme.c.trackerOverlay.region
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 fillColor: "transparent"
@@ -327,16 +339,14 @@ Item {
             }
 
             ShapePath {
+                startX: planarDraft.last.x
+                startY: planarDraft.last.y
                 strokeColor: Theme.c.trackerOverlay.region
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 strokeStyle: ShapePath.DashLine
                 dashPattern: [4, 3]
                 fillColor: "transparent"
 
-                PathMove {
-                    x: planarDraft.last.x
-                    y: planarDraft.last.y
-                }
                 PathLine {
                     x: planarDraft.hover.x
                     y: planarDraft.hover.y
@@ -377,18 +387,34 @@ Item {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.margins: Theme.spacingSm
-            width: badgeText.width + Theme.spacingMd * 2
-            height: badgeText.height + Theme.spacingXs * 2
+            z: 10
+            width: badgeRow.width + Theme.spacingMd * 2
+            height: badgeRow.height + Theme.spacingXs * 2
             radius: Theme.radiusXs
             color: Theme.c.trackerOverlay.badgeBackground
 
-            Text {
-                id: badgeText
+            Row {
+                id: badgeRow
                 anchors.centerIn: parent
-                text: qsTr("Tracking… %1%").arg(Math.round(EditorState.tracking.progress * 100))
-                color: Theme.c.trackerOverlay.badgeForeground
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                spacing: Theme.spacingSm
+
+                Text {
+                    id: badgeText
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Tracking… %1%").arg(Math.round(EditorState.tracking.progress * 100))
+                    color: Theme.c.trackerOverlay.badgeForeground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                IconButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    glyph: Theme.icons.x
+                    tooltip: qsTr("Stop tracking (Esc)")
+                    buttonSize: Theme.iconButtonSize * 0.75
+                    iconSize: Theme.iconSizeSm
+                    onClicked: ShellBridge.stopTracking()
+                }
             }
         }
     }

@@ -706,6 +706,10 @@ QtObject {
         smartphone: "smartphone",
         monitor: "monitor",
         square: "square",
+        circle: "circle",
+        pentagon: "pentagon",
+        brush: "brush",
+        crosshair: "crosshair",
         ratio: "ratio",
 
         // Brand marks (layout chooser)

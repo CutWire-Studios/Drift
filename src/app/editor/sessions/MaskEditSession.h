@@ -5,6 +5,7 @@
 #include <QList>
 #include <QObject>
 #include <QPointF>
+#include <QRectF>
 #include <QString>
 
 class AppController;
@@ -26,6 +27,8 @@ class MaskEditSession : public QObject
     Q_PROPERTY(double liveH READ liveH NOTIFY liveChanged)
     Q_PROPERTY(double liveRotation READ liveRotation NOTIFY liveChanged)
     Q_PROPERTY(QList<QPointF> livePoints READ livePoints NOTIFY liveChanged)
+    Q_PROPERTY(QList<int> selectedPoints READ selectedPoints NOTIFY selectionChanged)
+    Q_PROPERTY(QString selectionClipId READ selectionClipId NOTIFY selectionChanged)
 
 public:
     explicit MaskEditSession(AppController *app, MaskingController *owner);
@@ -38,6 +41,8 @@ public:
     double liveH() const { return m_h; }
     double liveRotation() const { return m_rotation; }
     QList<QPointF> livePoints() const { return m_points; }
+    QList<int> selectedPoints() const { return m_selected; }
+    QString selectionClipId() const { return m_selClipId; }
 
     // Starts a preview drag on the mask adjustment `clipId`. frameW/frameH are the clip frame's
     // size in pixels: the snap tolerance, nudge steps and rotate angle are screen distances.
@@ -58,19 +63,34 @@ public:
     // Angle of the pointer about the mask centre; snap15 rounds to 15 degrees.
     Q_INVOKABLE void rotate(double nx, double ny, bool snap15);
     Q_INVOKABLE void movePoint(int index, double nx, double ny);
+    // Moves the dragged vertex to the pointer and every other selected vertex by the same offset.
+    // A vertex outside the selection moves alone. Same write path as movePoint.
+    Q_INVOKABLE void movePointGroup(int anchorIndex, double nx, double ny);
     // Bars: both bands derive from h, clamped to 0..2.
     Q_INVOKABLE void setBarsHeight(double h);
 
     // One undo step each; not part of a drag.
     Q_INVOKABLE void insertPoint(const QString &clipId, int index, double nx, double ny);
     Q_INVOKABLE void removePoint(const QString &clipId, int index);
+    // Vertex selection of one polygon mask. mode: 0 replace, 1 add, 2 toggle. Cleared when the
+    // vertex count changes. beginPointMarquee snapshots the selection that selectPointsInRect
+    // (rect normalized to the clip frame) combines with, so a marquee can be re-evaluated per move.
+    Q_INVOKABLE void setPointSelected(const QString &clipId, int index, int mode);
+    Q_INVOKABLE void beginPointMarquee(const QString &clipId);
+    Q_INVOKABLE void selectPointsInRect(const QString &clipId, const QRectF &rect, int mode);
+    Q_INVOKABLE void clearPointSelection();
+    // Drops the selection unless it belongs to `clipId`.
+    Q_INVOKABLE void keepSelectionFor(const QString &clipId);
+
     // Arrow-key step of one pixel (ten when coarse) in the given direction, committed immediately.
+    // Moves only the selected vertices of a polygon when some are selected.
     Q_INVOKABLE void nudge(const QString &clipId, int dirX, int dirY, bool coarse, double frameW, double frameH);
 
     static QPointF bounds(const QList<QPointF> &points, QSizeF *size);
 
 signals:
     void liveChanged();
+    void selectionChanged();
 
 private:
     struct Ref
@@ -85,6 +105,8 @@ private:
     void writeStatic(const drift::Mask &mask);
     void snapCentre(double &nx, double &ny) const;
     void syncFreeformBounds();
+    QList<QPointF> pointsOf(const QString &clipId) const;
+    void setSelection(const QString &clipId, QList<int> indices);
 
     AppController *m_app = nullptr;
     MaskingController *m_owner = nullptr;
@@ -104,6 +126,9 @@ private:
 
     double m_startX = 0, m_startY = 0, m_startW = 0, m_startH = 0;
     QList<QPointF> m_startPoints;
+    QList<int> m_selected;
+    QString m_selClipId;
+    QList<int> m_marqueeBase;
     double m_pressX = 0, m_pressY = 0;
     int m_gripDx = 0, m_gripDy = 0;
 };

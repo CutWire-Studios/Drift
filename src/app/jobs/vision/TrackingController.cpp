@@ -1378,6 +1378,62 @@ QString TrackingController::followWithNewTracker(const QString &hostClipId, cons
     return id;
 }
 
+QString TrackingController::addMaskForTracker(const QString &clipId, const QString &trackerId)
+{
+    int ht = -1;
+    int hc = -1;
+    const Clip *view = locateClip(clipId, &ht, &hc) ? hostView(ht, hc) : nullptr;
+    const MotionTracker *viewTracker = view ? trackerById(*view, trackerId) : nullptr;
+    if (m_busy || !viewTracker || view->type != drift::ClipType::Video)
+        return {};
+
+    const FrameView frame = frameView(ht, hc, trackerId,
+                                      drift::usToSeconds(referenceTimelineUs(*view, *viewTracker)));
+    drift::Mask mask;
+    if (viewTracker->kind == MotionTracker::Kind::Planar) {
+        if (frame.region.size() < 3)
+            return {};
+        mask.shape = drift::MaskShape::Freeform;
+        mask.points = frame.region;
+    } else {
+        if (frame.points.isEmpty())
+            return {};
+        QPointF centre;
+        for (const FramePoint &p : frame.points)
+            centre += QPointF(p.x, p.y);
+        centre /= double(frame.points.size());
+        mask = m_app->maskFromCatalogId(QStringLiteral("rectangle"));
+        mask.x = qBound(0.0, centre.x(), 1.0);
+        mask.y = qBound(0.0, centre.y(), 1.0);
+        mask.w = qBound(0.06, frame.points.first().patternW * 2.0, 0.8);
+        mask.h = qBound(0.06, frame.points.first().patternH * 2.0, 0.8);
+    }
+
+    const drift::Project before = m_app->m_project;
+    const drift::ClipRef added = drift::addLinkedMask(m_app->m_project, ht, hc, mask);
+    if (added.trackIndex < 0)
+        return {};
+    const QString maskId = m_app->m_project.tracks().at(added.trackIndex).clips.at(added.clipIndex).id;
+
+    // addLinkedMask can insert a lane, so the host's index may have moved.
+    if (!locateClip(clipId, &ht, &hc))
+        return {};
+    Clip *host = hostAt(ht, hc);
+    MotionTracker *tracker = trackerById(*host, trackerId);
+    if (!tracker)
+        return {};
+    QString error;
+    addTarget(*host, *tracker, maskId, QStringLiteral("mask"), &error);
+
+    m_app->pushProjectEdit(before, tr("Add mask"));
+    m_app->finishEdit(tr("Mask added"));
+    if (!error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
+    m_app->selectClipById(maskId);
+    emit trackersChanged();
+    return maskId;
+}
+
 QVariantMap TrackingController::clipRefById(const QString &clipId) const
 {
     int t = -1;

@@ -44,6 +44,8 @@ Item {
         // Delegates read their values from here by index; the models below are only swapped
         // when the set of layers changes, so a value edit does not recreate the grips.
         layerValues = layers
+        const polygon = layers.find(l => l.selected && l.mask && l.mask.shape === "freeform")
+        EditorState.masking.editSession.keepSelectionFor(polygon ? polygon.id : "")
         const signature = layers.map(l => l.track + ":" + l.clip + ":" + ((l.mask || {}).shape || ""))
                                 .join("|")
         if (signature === layerSignature)
@@ -58,6 +60,71 @@ Item {
     property var layerValues: []
     property var layerModel: []
     property string layerSignature: ""
+
+    // The selected, editable polygon: the only mask whose vertices a marquee can select.
+    readonly property var polygonLayer: layerValues.find(l => l.selected && l.mask
+                                                              && l.mask.shape === "freeform"
+                                                              && l.mask.enabled !== false) || null
+    property bool marqueeActive: false
+    property rect marqueeRect: Qt.rect(0, 0, 0, 0)
+    property real marqueeX0: 0
+    property real marqueeY0: 0
+    property int marqueeMode: 0
+    property string marqueeId: ""
+    // A plain drag over the polygon's bounds moves the mask, so the marquee handler stands down there.
+    property bool hoverOnBody: false
+
+    function overPolygonBody(pos) {
+        const layer = polygonLayer
+        if (!layer || !layer.bounds)
+            return false
+        const p = clipFrame.mapFromItem(root, pos.x, pos.y)
+        const nx = p.x / Math.max(1, clipFrame.width)
+        const ny = p.y / Math.max(1, clipFrame.height)
+        const b = layer.bounds
+        return Math.abs(nx - b.x) <= b.w / 2 && Math.abs(ny - b.y) <= b.h / 2
+    }
+
+    onPolygonLayerChanged: hoverOnBody = hover.hovered ? overPolygonBody(hover.point.position) : false
+
+    // Ctrl (Cmd on macOS) toggles, Shift adds.
+    function beginMarquee(scenePress, modifiers) {
+        if (!polygonLayer)
+            return
+        const p = clipFrame.mapFromItem(null, scenePress.x, scenePress.y)
+        marqueeX0 = p.x
+        marqueeY0 = p.y
+        marqueeMode = (modifiers & Qt.ControlModifier) ? 2 : ((modifiers & Qt.ShiftModifier) ? 1 : 0)
+        marqueeId = polygonLayer.id
+        EditorState.masking.editSession.beginPointMarquee(marqueeId)
+        marqueeActive = true
+        interacting = true
+        for (let i = 0; i < maskRepeater.count; ++i) {
+            const box = maskRepeater.itemAt(i)
+            if (box && box.layerId === marqueeId)
+                box.forceActiveFocus()
+        }
+        updateMarquee(scenePress)
+    }
+
+    function updateMarquee(scenePos) {
+        const p = clipFrame.mapFromItem(null, scenePos.x, scenePos.y)
+        const x = Math.min(marqueeX0, p.x)
+        const y = Math.min(marqueeY0, p.y)
+        const w = Math.abs(p.x - marqueeX0)
+        const h = Math.abs(p.y - marqueeY0)
+        marqueeRect = Qt.rect(x, y, w, h)
+        const fw = Math.max(1, clipFrame.width)
+        const fh = Math.max(1, clipFrame.height)
+        EditorState.masking.editSession.selectPointsInRect(marqueeId,
+                Qt.rect(x / fw, y / fh, w / fw, h / fh), marqueeMode)
+    }
+
+    function endMarquee() {
+        marqueeActive = false
+        interacting = false
+        Qt.callLater(refreshOverlay)
+    }
 
     function endInteraction() {
         EditorState.masking.editSession.commit()
@@ -95,6 +162,41 @@ Item {
         function onPlayingChanged() {
             if (!EditorState.playing)
                 root.refreshOverlay()
+        }
+    }
+
+    HoverHandler {
+        id: hover
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+        onPointChanged: {
+            if (hover.point.pressedButtons === 0)
+                root.hoverOnBody = root.overPolygonBody(hover.point.position)
+        }
+    }
+
+    DragHandler {
+        id: marqueeDrag
+        target: null
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.Stylus
+        enabled: root.polygonLayer !== null && !root.hoverOnBody
+
+        onActiveChanged: {
+            if (active)
+                root.beginMarquee(marqueeDrag.centroid.scenePressPosition, marqueeDrag.centroid.modifiers)
+            else if (root.marqueeActive)
+                root.endMarquee()
+        }
+
+        onCentroidChanged: {
+            if (active && root.marqueeActive)
+                root.updateMarquee(marqueeDrag.centroid.scenePosition)
+        }
+    }
+
+    TapHandler {
+        onTapped: {
+            if (!(Qt.application.keyboardModifiers & (Qt.ShiftModifier | Qt.ControlModifier)))
+                EditorState.masking.editSession.clearPointSelection()
         }
     }
 
@@ -172,6 +274,8 @@ Item {
                         : (pointBounds ? pointBounds.w : (maskData.w || 0))
                 readonly property real mh: live ? session.liveH
                         : (pointBounds ? pointBounds.h : (maskData.h || 0))
+                readonly property var selectedVertices: session.selectionClipId === layerId
+                                                        ? session.selectedPoints : []
                 readonly property var displayPoints: live && isFreeform ? session.livePoints
                                                                         : (maskData.points || [])
 
@@ -253,6 +357,12 @@ Item {
 
                     onActiveChanged: {
                         if (active) {
+                            if (maskBox.isFreeform
+                                    && (bodyDrag.centroid.modifiers & (Qt.ShiftModifier | Qt.ControlModifier))) {
+                                root.beginMarquee(bodyDrag.centroid.scenePressPosition,
+                                                  bodyDrag.centroid.modifiers)
+                                return
+                            }
                             // Taken at activation rather than at the press, so the drag threshold
                             // is not replayed as a jump.
                             const p = clipFrame.mapFromItem(null,
@@ -265,6 +375,8 @@ Item {
                                                       p.y / Math.max(1, clipFrame.height))
                             root.interacting = true
                             maskBox.forceActiveFocus()
+                        } else if (root.marqueeActive) {
+                            root.endMarquee()
                         } else {
                             root.endInteraction()
                         }
@@ -273,6 +385,10 @@ Item {
                     onCentroidChanged: {
                         if (!active)
                             return
+                        if (root.marqueeActive) {
+                            root.updateMarquee(bodyDrag.centroid.scenePosition)
+                            return
+                        }
                         const p = clipFrame.mapFromItem(null,
                                                         bodyDrag.centroid.scenePosition.x,
                                                         bodyDrag.centroid.scenePosition.y)
@@ -354,6 +470,18 @@ Item {
                     }
                 }
             }
+        }
+
+        Rectangle {
+            z: 300
+            visible: root.marqueeActive
+            x: root.marqueeRect.x
+            y: root.marqueeRect.y
+            width: root.marqueeRect.width
+            height: root.marqueeRect.height
+            color: Qt.alpha(Theme.c.maskDrawOverlay.fill, 0.15)
+            border.width: Theme.c.maskDrawOverlay.borderWidth
+            border.color: Theme.c.maskDrawOverlay.stroke
         }
 
         // Bars, drawn as the two full-width bands it actually is. It has no bounding box to

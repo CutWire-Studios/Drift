@@ -172,15 +172,23 @@ Item {
 
         // Clicks on the frame: left adds an include point; right, Ctrl or Alt adds an exclude point.
         // A click within 8 px of an existing point removes that point instead.
+        ToolCursor {
+            target: pointArea
+            shape: EditorState.segmentation.previewBusy ? "busy" : (pointArea.excludeHeld ? "aiExclude" : "aiInclude")
+        }
+
         MouseArea {
+            id: pointArea
             anchors.fill: parent
             enabled: root.aiActive && !EditorState.segmentation.running && EditorState.segmentation.backendUsesPoints
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: EditorState.segmentation.previewBusy ? Qt.BusyCursor : Qt.CrossCursor
+
+            property bool excludeHeld: false
             onWheel: (wheel) => { wheel.accepted = false }
 
             onPositionChanged: (mouse) => {
+                excludeHeld = (mouse.modifiers & (Qt.ControlModifier | Qt.AltModifier)) !== 0
                 root.hoverIndex = root.pointAt(mouse.x, mouse.y)
             }
             onExited: root.hoverIndex = -1

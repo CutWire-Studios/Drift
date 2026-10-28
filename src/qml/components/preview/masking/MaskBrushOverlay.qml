@@ -25,7 +25,9 @@ Item {
     readonly property real sy: root.height / canvasH
 
     property bool strokeErase: false
-    property bool hovering: false
+    // A passive handler keeps reporting the pointer whatever the paint area grabs or loses, so the ring
+    // cannot stay behind where a stroke ended.
+    readonly property bool hovering: (brushHover.hovered || paintArea.pressed) && paintArea.enabled
     // A touch stroke waits briefly (or for 6 px of movement) so the first finger of a pinch does not
     // leave a dab; this is where it started.
     property bool touchWaiting: false
@@ -151,6 +153,16 @@ Item {
         }
     }
 
+    HoverHandler {
+        id: brushHover
+        onPointChanged: {
+            if (!paintArea.pressed) {
+                const p = clipFrame.mapFromItem(root, point.position.x, point.position.y)
+                root.hoverPoint = Qt.point(p.x, p.y)
+            }
+        }
+    }
+
     // The clip's destination rect on the canvas, rotated with it, as MaskOverlay places it.
     Item {
         id: clipFrame
@@ -207,7 +219,7 @@ Item {
 
         // The circle is the dab's full radius; the inner one marks where the falloff starts.
         Rectangle {
-            visible: root.hovering && root.clipTarget
+            visible: root.hovering && root.clipTarget && root.hasFrame
             width: root.brushDiameter
             height: width
             radius: width / 2
@@ -240,7 +252,7 @@ Item {
         }
 
         Rectangle {
-            visible: root.hovering && root.clipTarget
+            visible: root.hovering && root.clipTarget && root.hasFrame
             width: root.brushDiameter * EditorState.masking.brushHardness
             height: width
             radius: width / 2
@@ -255,18 +267,20 @@ Item {
     // Fills the whole overlay rather than the clip frame, so a stroke can start outside the frame
     // and the cursor ring survives the pointer leaving it mid-stroke. Positions are mapped into
     // clip-frame pixels, the frame mask coordinates are normalized to.
+    ToolCursor {
+        target: paintArea
+        shape: "brush"
+    }
+
     MouseArea {
         id: paintArea
         anchors.fill: parent
         enabled: root.clipTarget && root.hasFrame
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        cursorShape: root.hovering ? Qt.BlankCursor : Qt.ArrowCursor
         // A touch stroke can be taken over by the viewport's pinch.
         preventStealing: !root.touchStroke
         onWheel: (wheel) => { wheel.accepted = false }
-        onContainsMouseChanged: root.hovering = containsMouse || pressed
-        onPressedChanged: root.hovering = containsMouse || pressed
 
         // Only a pen reports pressure; a mouse or finger paints at full size.
         PointHandler {

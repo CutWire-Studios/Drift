@@ -150,6 +150,10 @@ public:
     // tr("Follow object"). Returns the tracker id, or empty.
     Q_INVOKABLE QString followWithNewTracker(const QString &hostClipId, const QString &followerClipId, double x,
                                              double y);
+    // Draws a mask on the tracked clip from this tracker's geometry at its reference frame (the
+    // outline for planar, a rectangle around the point for point trackers), makes it a "mask" target
+    // and applies. One undo step tr("Add mask"). Returns the mask clip id, or empty.
+    Q_INVOKABLE QString addMaskForTracker(const QString &clipId, const QString &trackerId);
     // {track, clip, name} of the clip with this id; empty when there is none.
     Q_INVOKABLE QVariantMap clipRefById(const QString &clipId) const;
     // [{trackerId, trackerName, hostClipId, hostName, mode}] for every tracker that drives this clip.

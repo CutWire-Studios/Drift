@@ -19,10 +19,17 @@ Rectangle {
     width: vs
     height: vs
     radius: vs / 2
-    color: vertexArea.containsMouse || vertexArea.pressed
-           ? Theme.c.maskOverlayVertexHandle.backgroundHover : Theme.c.maskOverlayVertexHandle.background
+    readonly property bool picked: vertex.mask.selectedVertices.indexOf(vertex.index) >= 0
+    readonly property bool hot: vertexArea.containsMouse || vertexArea.pressed
+    // Selected vertices are filled with the accent; the rest are hollow-looking inverses of it.
+    color: vertex.picked
+           ? (vertex.hot ? Theme.c.maskOverlayVertexHandle.backgroundHover
+                         : Theme.c.maskOverlayVertexHandle.background)
+           : (vertex.hot ? Theme.c.maskOverlayVertexHandle.background
+                         : Theme.c.maskOverlayVertexHandle.border)
     border.width: Theme.c.maskOverlayVertexHandle.borderWidth
-    border.color: Theme.c.maskOverlayVertexHandle.border
+    border.color: vertex.picked ? Theme.c.maskOverlayVertexHandle.border
+                                : Theme.c.maskOverlayVertexHandle.background
 
     readonly property var pt: vertex.mask.displayPoints[vertex.index]
     readonly property real vx: pt ? pt.x : 0
@@ -53,6 +60,7 @@ Rectangle {
         property bool pressedByTouch: false
         property bool dragging: false
         property bool moved: false
+        property bool collapseOnClick: false
 
         onPressed: (mouse) => {
             pressedByTouch = mouse.source !== Qt.MouseEventNotSynthesized
@@ -60,13 +68,27 @@ Rectangle {
                 vertex.removeDeferred()
                 return
             }
-            if (!EditorState.masking.editSession.begin(vertex.mask.layerId, vertex.frame.width,
-                                                       vertex.frame.height))
+            const session = EditorState.masking.editSession
+            const id = vertex.mask.layerId
+            collapseOnClick = false
+            if (mouse.modifiers & Qt.ControlModifier) {
+                session.setPointSelected(id, vertex.index, 2)
+            } else if (mouse.modifiers & Qt.ShiftModifier) {
+                session.setPointSelected(id, vertex.index, 1)
+            } else if (vertex.picked) {
+                collapseOnClick = true
+            } else {
+                session.setPointSelected(id, vertex.index, 0)
+            }
+            vertex.mask.forceActiveFocus()
+            // Toggled off: the vertex is no longer part of anything to drag.
+            if (session.selectedPoints.indexOf(vertex.index) < 0)
+                return
+            if (!session.begin(id, vertex.frame.width, vertex.frame.height))
                 return
             dragging = true
             moved = false
             vertex.overlay.interacting = true
-            vertex.mask.forceActiveFocus()
         }
 
         onPositionChanged: (mouse) => {
@@ -74,15 +96,17 @@ Rectangle {
                 return
             moved = true
             const p = mapToItem(vertex.frame, mouse.x, mouse.y)
-            EditorState.masking.editSession.movePoint(vertex.index,
-                                                      p.x / Math.max(1, vertex.frame.width),
-                                                      p.y / Math.max(1, vertex.frame.height))
+            EditorState.masking.editSession.movePointGroup(vertex.index,
+                                                           p.x / Math.max(1, vertex.frame.width),
+                                                           p.y / Math.max(1, vertex.frame.height))
         }
 
         function finish() {
             if (!dragging)
                 return
             dragging = false
+            if (collapseOnClick && !moved)
+                EditorState.masking.editSession.setPointSelected(vertex.mask.layerId, vertex.index, 0)
             vertex.overlay.endInteraction()
         }
 

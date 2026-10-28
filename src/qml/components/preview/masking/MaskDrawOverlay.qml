@@ -241,9 +241,11 @@ Item {
 
         Shape {
             anchors.fill: parent
-            visible: root.polyActive && polyDraft.count > 0
+            visible: root.polyActive && polyDraft.count >= 2
 
             ShapePath {
+                startX: polyDraft.first.x
+                startY: polyDraft.first.y
                 strokeColor: Theme.c.maskDrawOverlay.stroke
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 fillColor: "transparent"
@@ -259,16 +261,14 @@ Item {
             visible: root.polyActive && polyDraft.count > 0
 
             ShapePath {
+                startX: polyDraft.last.x
+                startY: polyDraft.last.y
                 strokeColor: Theme.c.maskDrawOverlay.stroke
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 strokeStyle: ShapePath.DashLine
                 dashPattern: [4, 3]
                 fillColor: "transparent"
 
-                PathMove {
-                    x: polyDraft.last.x
-                    y: polyDraft.last.y
-                }
                 PathLine {
                     x: polyDraft.hover.x
                     y: polyDraft.hover.y
@@ -276,16 +276,14 @@ Item {
             }
 
             ShapePath {
-                strokeColor: Qt.alpha(Theme.c.maskDrawOverlay.stroke, 0.5)
+                startX: polyDraft.hover.x
+                startY: polyDraft.hover.y
+                strokeColor: polyDraft.count >= 2 ? Qt.alpha(Theme.c.maskDrawOverlay.stroke, 0.5) : "transparent"
                 strokeWidth: Theme.c.maskDrawOverlay.borderWidth
                 strokeStyle: ShapePath.DashLine
                 dashPattern: [4, 3]
                 fillColor: "transparent"
 
-                PathMove {
-                    x: polyDraft.hover.x
-                    y: polyDraft.hover.y
-                }
                 PathLine {
                     x: polyDraft.first.x
                     y: polyDraft.first.y
@@ -322,7 +320,6 @@ Item {
         id: boxArea
         anchors.fill: parent
         enabled: root.drawTool && root.target.kind !== "none" && root.hasFrame
-        cursorShape: Qt.CrossCursor
         preventStealing: true
         onWheel: (wheel) => { wheel.accepted = false }
 
@@ -368,13 +365,22 @@ Item {
         }
     }
 
+    ToolCursor {
+        target: boxArea
+        shape: EditorState.preview.maskingTool === "ellipse" ? "ellipse" : "rect"
+    }
+
+    ToolCursor {
+        target: polyArea
+        shape: polyDraft.hoverNearFirst ? "polygonClose" : "polygon"
+    }
+
     MouseArea {
         id: polyArea
         anchors.fill: parent
         enabled: root.polyActive && root.hasFrame
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        cursorShape: Qt.CrossCursor
         onWheel: (wheel) => { wheel.accepted = false }
 
         onPositionChanged: (mouse) => {

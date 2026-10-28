@@ -36,6 +36,7 @@
 #include "ui/keyframes/KeyframeCurvesItem.h"
 #include "ui/keyframes/KeyframeLanesItem.h"
 #include "ui/preview/BrushStrokeItem.h"
+#include "ui/preview/ToolCursor.h"
 #include "ui/preview/ConfidenceStripItem.h"
 #include "ui/preview/TrackerOverlayItem.h"
 #include "ui/preview/PreviewItem.h"
@@ -712,6 +713,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
     qmlRegisterType<KeyframeCurvesModel>("Drift", 1, 0, "KeyframeCurvesModel");
     qmlRegisterType<BrushStrokeItem>("Drift", 1, 0, "BrushStrokeItem");
+    qmlRegisterType<ToolCursor>("Drift", 1, 0, "ToolCursor");
     qmlRegisterType<PolylineDraft>("Drift", 1, 0, "PolylineDraft");
     qmlRegisterType<ColorWheelPad>("Drift", 1, 0, "ColorWheelPad");
     qmlRegisterType<CurvePlot>("Drift", 1, 0, "CurvePlot");

@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <set>
 
 namespace {
 
@@ -128,6 +129,7 @@ bool MaskEditSession::begin(const QString &clipId, double frameW, double frameH)
     m_frameH = std::max(1.0, frameH);
     m_active = true;
     m_bodyMoved = false;
+    m_startPoints = m_points;
     m_app->beginPreviewDrag(tr("Mask changed"));
     emit liveChanged();
     return true;
@@ -315,14 +317,113 @@ void MaskEditSession::movePoint(int index, double nx, double ny)
     if (!m_active || !m_freeform || index < 0 || index >= m_points.size())
         return;
     m_points[index] = QPointF(nx, ny);
+    syncFreeformBounds();
+    write(false);
+    emit liveChanged();
+}
+
+void MaskEditSession::syncFreeformBounds()
+{
     QSizeF size;
     const QPointF centre = bounds(m_points, &size);
     m_x = centre.x();
     m_y = centre.y();
     m_w = size.width();
     m_h = size.height();
+}
+
+void MaskEditSession::movePointGroup(int anchorIndex, double nx, double ny)
+{
+    if (!m_active || !m_freeform || anchorIndex < 0 || anchorIndex >= m_points.size()
+        || m_startPoints.size() != m_points.size()) {
+        return;
+    }
+    const QPointF delta = QPointF(nx, ny) - m_startPoints.at(anchorIndex);
+    m_points = m_startPoints;
+    if (m_selClipId == m_clipId && m_selected.contains(anchorIndex)) {
+        for (const int i : std::as_const(m_selected)) {
+            if (i < m_points.size())
+                m_points[i] += delta;
+        }
+    } else {
+        m_points[anchorIndex] += delta;
+    }
+    syncFreeformBounds();
     write(false);
     emit liveChanged();
+}
+
+QList<QPointF> MaskEditSession::pointsOf(const QString &clipId) const
+{
+    if (m_active && m_clipId == clipId)
+        return m_points;
+    const Ref ref = find(clipId);
+    if (ref.track < 0)
+        return {};
+    const drift::Clip &clip = m_app->m_project.tracks().at(ref.track).clips.at(ref.clip);
+    if (clip.mask.shape != drift::MaskShape::Freeform)
+        return {};
+    const drift::Mask mask =
+        clip.mask.isAnimated() ? clip.mask.resolvedAt(m_app->m_playheadUs - clip.timelineStart) : clip.mask;
+    return QList<QPointF>(mask.points.begin(), mask.points.end());
+}
+
+void MaskEditSession::setSelection(const QString &clipId, QList<int> indices)
+{
+    std::sort(indices.begin(), indices.end());
+    indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
+    if (clipId == m_selClipId && indices == m_selected)
+        return;
+    m_selClipId = clipId;
+    m_selected = indices;
+    emit selectionChanged();
+}
+
+void MaskEditSession::setPointSelected(const QString &clipId, int index, int mode)
+{
+    QList<int> next = clipId == m_selClipId ? m_selected : QList<int>();
+    if (mode == 0) {
+        next = {index};
+    } else if (mode == 1) {
+        next.append(index);
+    } else if (next.contains(index)) {
+        next.removeAll(index);
+    } else {
+        next.append(index);
+    }
+    setSelection(clipId, next);
+}
+
+void MaskEditSession::beginPointMarquee(const QString &clipId)
+{
+    m_marqueeBase = clipId == m_selClipId ? m_selected : QList<int>();
+}
+
+void MaskEditSession::selectPointsInRect(const QString &clipId, const QRectF &rect, int mode)
+{
+    const QList<QPointF> points = pointsOf(clipId);
+    std::set<int> result;
+    if (mode != 0)
+        result.insert(m_marqueeBase.begin(), m_marqueeBase.end());
+    for (int i = 0; i < points.size(); ++i) {
+        if (!rect.contains(points.at(i)))
+            continue;
+        if (mode == 2 && result.erase(i) > 0)
+            continue;
+        result.insert(i);
+    }
+    setSelection(clipId, QList<int>(result.begin(), result.end()));
+}
+
+void MaskEditSession::clearPointSelection()
+{
+    setSelection(QString(), {});
+}
+
+void MaskEditSession::keepSelectionFor(const QString &clipId)
+{
+    if (clipId != m_selClipId)
+        clearPointSelection();
 }
 
 void MaskEditSession::setBarsHeight(double h)
@@ -349,6 +450,7 @@ void MaskEditSession::insertPoint(const QString &clipId, int index, double nx, d
     const Ref ref = find(clipId);
     if (ref.track >= 0)
         m_app->insertMaskPoint(ref.track, ref.clip, index, nx, ny);
+    clearPointSelection();
 }
 
 void MaskEditSession::removePoint(const QString &clipId, int index)
@@ -356,6 +458,7 @@ void MaskEditSession::removePoint(const QString &clipId, int index)
     const Ref ref = find(clipId);
     if (ref.track >= 0)
         m_app->removeMaskPoint(ref.track, ref.clip, index);
+    clearPointSelection();
 }
 
 void MaskEditSession::nudge(const QString &clipId, int dirX, int dirY, bool coarse, double frameW, double frameH)
@@ -365,7 +468,13 @@ void MaskEditSession::nudge(const QString &clipId, int dirX, int dirY, bool coar
     const double step = coarse ? 10.0 : 1.0;
     const double dx = dirX * step / m_frameW;
     const double dy = dirY * step / m_frameH;
-    if (m_freeform) {
+    if (m_freeform && m_selClipId == clipId && !m_selected.isEmpty()) {
+        for (const int i : std::as_const(m_selected)) {
+            if (i < m_points.size())
+                m_points[i] += QPointF(dx, dy);
+        }
+        syncFreeformBounds();
+    } else if (m_freeform) {
         for (QPointF &p : m_points)
             p += QPointF(dx, dy);
         m_x += dx;

@@ -1158,6 +1158,8 @@ qt_add_executable(drift
     src/ui/preview/PreviewItem.cpp
     src/ui/preview/BrushStrokeItem.h
     src/ui/preview/BrushStrokeItem.cpp
+    src/ui/preview/ToolCursor.h
+    src/ui/preview/ToolCursor.cpp
     src/ui/color/ColorWheelMath.h
     src/ui/color/ColorWheelPad.h
     src/ui/color/ColorWheelPad.cpp

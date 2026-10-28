@@ -49,6 +49,7 @@ bool PolylineDraft::add(const QPointF &p, bool constrain45)
     if (!m_points.isEmpty() && QLineF(q, m_points.last()).length() < kDuplicatePx)
         return false;
     m_points.append(q);
+    m_hover = q;
     emit pointsChanged();
     emit hoverChanged();
     return true;

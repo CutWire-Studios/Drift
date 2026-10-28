@@ -24,7 +24,7 @@ PanelFrame {
     readonly property bool onAdjustment: target.kind === "adjustment"
 
     // Each tool's own options, shown in toolOptions while that tool is active.
-    readonly property var toolOptionComponents: ({ "brush": brushOptions, "ai": aiOptions })
+    readonly property var toolOptionComponents: ({ "brush": brushOptions, "ai": aiOptions, "tracker": trackerOptions })
 
     // Object cutout (the AI tool). backends() is a plain call, so the list is rebuilt on addon changes.
     property var aiBackendModel: []
@@ -40,11 +40,11 @@ PanelFrame {
     readonly property var tools: [
         { id: "", label: qsTr("Select"), action: "selectTool", glyph: Theme.icons.mousePointer, clipOnly: false },
         { id: "rect", label: qsTr("Rectangle"), action: "gizmoRotate", glyph: Theme.icons.square, clipOnly: false },
-        { id: "ellipse", label: qsTr("Ellipse"), action: "gizmoScale", glyph: Theme.icons.shapes, clipOnly: false },
-        { id: "polygon", label: qsTr("Polygon"), action: "maskingPolygonTool", glyph: Theme.icons.gem, clipOnly: false },
-        { id: "brush", label: qsTr("Brush"), action: "bladeTool", glyph: Theme.icons.pencil, clipOnly: true },
-        { id: "ai", label: qsTr("AI object"), action: "maskingAiTool", glyph: Theme.icons.sparkles, clipOnly: true },
-        { id: "tracker", label: qsTr("Tracker"), action: "gizmoMove", glyph: Theme.icons.locateFixed, clipOnly: false }
+        { id: "ellipse", label: qsTr("Ellipse"), action: "gizmoScale", glyph: Theme.icons.circle, clipOnly: false },
+        { id: "polygon", label: qsTr("Polygon"), action: "maskingPolygonTool", glyph: Theme.icons.pentagon, clipOnly: false },
+        { id: "brush", label: qsTr("Brush"), action: "bladeTool", glyph: Theme.icons.brush, clipOnly: true },
+        { id: "ai", label: qsTr("AI object"), action: "maskingAiTool", glyph: Theme.icons.wand, clipOnly: true },
+        { id: "tracker", label: qsTr("Tracker"), action: "gizmoMove", glyph: Theme.icons.crosshair, clipOnly: false }
     ]
 
     function withShortcut(label, actionId) {
@@ -137,7 +137,7 @@ PanelFrame {
         function onSelectionChanged() { root.refreshIfLive() }
         function onSelectedClipDataChanged() { root.refreshIfLive() }
         function onPlayheadSecondsChanged() {
-            if (!EditorState.scrubbing)
+            if (!EditorState.scrubbing && !EditorState.tracking.busy)
                 root.refreshIfLive()
         }
         function onScrubbingChanged() {
@@ -146,6 +146,14 @@ PanelFrame {
         }
         function onPlayingChanged() {
             if (!EditorState.playing)
+                root.refreshIfLive()
+        }
+    }
+
+    Connections {
+        target: EditorState.tracking
+        function onBusyChanged() {
+            if (!EditorState.tracking.busy)
                 root.refreshIfLive()
         }
     }
@@ -349,6 +357,83 @@ PanelFrame {
                     tooltip: qsTr("Empty the mask")
                     enabled: root.hasBrushMask
                     onClicked: root.fillBrush(true)
+                }
+            }
+        }
+    }
+
+    // The trackers on the clip the Tracking panel works on (an adjustment layer borrows the clip under it).
+    Component {
+        id: trackerOptions
+
+        Column {
+            id: trackerColumn
+            width: parent.width
+            spacing: Theme.spacingSm
+
+            property string clipId: ""
+            property var trackers: []
+
+            function refresh() {
+                const t = ShellBridge.trackerTarget()
+                clipId = t.kind === "clip" ? EditorState.masking.clipIdAt(t.track, t.clip) : ""
+                trackers = clipId !== "" ? EditorState.tracking.trackers(clipId) : []
+            }
+
+            Component.onCompleted: refresh()
+
+            Connections {
+                target: EditorState.tracking
+                function onTrackersChanged() { trackerColumn.refresh() }
+            }
+
+            Connections {
+                target: EditorState
+                function onTracksChanged() { trackerColumn.refresh() }
+                function onSelectionChanged() { trackerColumn.refresh() }
+            }
+
+            Text {
+                visible: trackerColumn.trackers.length === 0
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("No trackers on this clip yet. Start one with Point or Planar in the Tracking panel.")
+                color: Theme.c.maskingPanel.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            Repeater {
+                model: trackerColumn.trackers
+
+                delegate: RowLayout {
+                    id: trackerOptionRow
+                    required property var modelData
+                    width: trackerColumn.width
+                    spacing: Theme.spacingSm
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        elide: Text.ElideRight
+                        text: trackerOptionRow.modelData.name
+                        color: Theme.c.maskingPanel.foreground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeXs
+                    }
+
+                    ThemedButton {
+                        Layout.alignment: Qt.AlignVCenter
+                        glyph: Theme.icons.plus
+                        text: qsTr("Add mask")
+                        tooltip: qsTr("Draw a mask from this tracker and make it follow the track")
+                        enabled: !EditorState.tracking.busy
+                        onClicked: {
+                            ShellBridge.selectedTrackerId = trackerOptionRow.modelData.id
+                            EditorState.tracking.addMaskForTracker(trackerColumn.clipId,
+                                                                   trackerOptionRow.modelData.id)
+                        }
+                    }
                 }
             }
         }
@@ -802,22 +887,6 @@ PanelFrame {
                 color: Theme.c.maskingPanel.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
-            }
-
-            Text {
-                visible: root.hasTarget && !root.onAdjustment && root.stackModel.count === 0
-                width: parent.width
-                wrapMode: Text.WordWrap
-                text: qsTr("To blur or recolour just part of the picture, put the effect on an adjustment layer above the clip and draw the mask on that layer.")
-                color: Theme.c.maskingPanel.foregroundMuted
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
-            }
-
-            ThemedButton {
-                visible: root.hasTarget && !root.onAdjustment && root.stackModel.count === 0
-                text: qsTr("Add adjustment layer")
-                onClicked: EditorState.addAdjustmentClip(-1, -1)
             }
 
             Repeater {

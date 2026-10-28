@@ -344,33 +344,60 @@ PanelFrame {
                     font.weight: Font.Medium
                 }
 
-                ThemedButton {
+                ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
-                    glyph: Theme.icons.locateFixed
+                    glyph: Theme.icons.crosshair
                     text: qsTr("Point")
+                    checked: root.placeMode === "point"
+                    checkable: false
                     enabled: !EditorState.tracking.busy
                     tooltip: qsTr("Track a feature with one point")
-                    onClicked: root.startPlacing("point", "")
+                    onClicked: {
+                        if (root.placeMode === "point")
+                            ShellBridge.trackerPlaceMode = ""
+                        else
+                            root.startPlacing("point", "")
+                    }
                 }
 
-                ThemedButton {
+                ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
                     glyph: Theme.icons.square
                     text: qsTr("Planar")
+                    checked: root.placeMode === "planar"
+                    checkable: false
                     enabled: !EditorState.tracking.busy
                     tooltip: qsTr("Track a flat surface outlined by its corners")
-                    onClicked: root.startPlacing("planar", "")
+                    onClicked: {
+                        if (root.placeMode === "planar")
+                            ShellBridge.trackerPlaceMode = ""
+                        else
+                            root.startPlacing("planar", "")
+                    }
                 }
             }
 
-            Text {
+            RowLayout {
                 visible: root.hasTarget && root.placeMode !== ""
                 width: parent.width
-                wrapMode: Text.WordWrap
-                text: root.placeHints[root.placeMode] || ""
-                color: Theme.c.maskingPanel.foregroundMuted
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSizeXs
+                spacing: Theme.spacingSm
+
+                Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                    wrapMode: Text.WordWrap
+                    text: root.placeHints[root.placeMode] || ""
+                    color: Theme.c.maskingPanel.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                ThemedButton {
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Cancel")
+                    tooltip: qsTr("Stop placing (Esc)")
+                    onClicked: ShellBridge.trackerPlaceMode = ""
+                }
             }
 
             Rectangle {
@@ -517,6 +544,16 @@ PanelFrame {
                         }
 
                         ThemedButton {
+                            visible: EditorState.tracking.busy
+                            width: parent.width
+                            variant: "destructive"
+                            text: qsTr("Stop tracking")
+                            tooltip: qsTr("Stop tracking (Esc)")
+                            onClicked: ShellBridge.stopTracking()
+                        }
+
+                        ThemedButton {
+                            visible: !EditorState.tracking.busy
                             width: parent.width
                             variant: "primary"
                             text: qsTr("Track whole clip")
@@ -859,6 +896,14 @@ PanelFrame {
                                     else
                                         targetMenu.popup(addTargetButton, 0, addTargetButton.height)
                                 }
+                            }
+
+                            ThemedButton {
+                                glyph: Theme.icons.plus
+                                text: qsTr("Add mask")
+                                tooltip: qsTr("Draw a mask from this tracker and make it follow the track")
+                                enabled: !EditorState.tracking.busy
+                                onClicked: EditorState.tracking.addMaskForTracker(root.clipId, trackerRow.model.id)
                             }
 
                             ThemedButton {
