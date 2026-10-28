@@ -1378,8 +1378,8 @@ set_source_files_properties(src/qml/ShellBridge.qml PROPERTIES QT_QML_SINGLETON_
 file(GLOB DRIFT_LUCIDE_ICONS RELATIVE "${CMAKE_SOURCE_DIR}" CONFIGURE_DEPENDS
      "resources/icons/*.svg")
 
-# Native window backdrops. Linux blur is optional: KF6WindowSystem when the
-# package is present, otherwise the X11 _KDE_NET_WM_BLUR_BEHIND_REGION atom.
+# Native window backdrops. Linux only makes the window translucent; blur is
+# left to the compositor.
 set(DRIFT_BACKDROP_PLATFORM_SOURCES)
 set(DRIFT_BACKDROP_PLATFORM_LIBS)
 set(DRIFT_BACKDROP_PLATFORM_DEFS)
@@ -1394,24 +1394,6 @@ elseif(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     enable_language(OBJCXX)
     list(APPEND DRIFT_BACKDROP_PLATFORM_SOURCES src/ui/theme/backdrop/WindowBackdrop_mac.mm)
     list(APPEND DRIFT_BACKDROP_PLATFORM_LIBS "-framework Cocoa")
-elseif(UNIX AND NOT ANDROID AND NOT EMSCRIPTEN AND NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-    list(APPEND DRIFT_BACKDROP_PLATFORM_SOURCES src/ui/theme/backdrop/WindowBackdrop_linux.cpp)
-    find_package(KF6WindowSystem QUIET)
-    if(KF6WindowSystem_FOUND)
-        list(APPEND DRIFT_BACKDROP_PLATFORM_LIBS KF6::WindowSystem)
-        list(APPEND DRIFT_BACKDROP_PLATFORM_DEFS DRIFT_HAS_KF6_WINDOW_SYSTEM)
-        message(STATUS "Window backdrop: KF6WindowSystem blur")
-    else()
-        message(STATUS "Window backdrop: KF6WindowSystem not found; KDE blur disabled")
-    endif()
-    if(PkgConfig_FOUND)
-        pkg_check_modules(XCB QUIET IMPORTED_TARGET xcb)
-        if(XCB_FOUND)
-            list(APPEND DRIFT_BACKDROP_PLATFORM_LIBS PkgConfig::XCB)
-            list(APPEND DRIFT_BACKDROP_PLATFORM_DEFS DRIFT_HAS_XCB)
-            message(STATUS "Window backdrop: X11 blur atom via xcb")
-        endif()
-    endif()
 endif()
 
 qt_add_qml_module(drift
