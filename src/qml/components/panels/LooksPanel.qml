@@ -14,16 +14,7 @@ PanelFrame {
     readonly property bool hasTarget: !!target.hasTarget
     readonly property var params: target.params || ({})
     readonly property string currentLook: params.look || ""
-    readonly property bool lookMissing: {
-        if (currentLook === "")
-            return false
-        const list = colorState.looks
-        for (let i = 0; i < list.length; ++i) {
-            if (list[i].id === currentLook)
-                return false
-        }
-        return true
-    }
+    readonly property bool lookMissing: !!target.lookMissing
     property string query: ""
     property var live: undefined
     property string pendingId: ""

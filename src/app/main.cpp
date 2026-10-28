@@ -31,6 +31,8 @@
 #include "ui/imageproviders/ShapePreviewImageProvider.h"
 #include "ui/imageproviders/TextStylePreviewImageProvider.h"
 #include "playback/stats/PerfLog.h"
+#include "ui/color/ColorWheelPad.h"
+#include "ui/color/CurvePlot.h"
 #include "ui/preview/BrushStrokeItem.h"
 #include "ui/preview/ConfidenceStripItem.h"
 #include "ui/preview/TrackerOverlayItem.h"
@@ -707,6 +709,8 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
     qmlRegisterType<BrushStrokeItem>("Drift", 1, 0, "BrushStrokeItem");
     qmlRegisterType<PolylineDraft>("Drift", 1, 0, "PolylineDraft");
+    qmlRegisterType<ColorWheelPad>("Drift", 1, 0, "ColorWheelPad");
+    qmlRegisterType<CurvePlot>("Drift", 1, 0, "CurvePlot");
     qmlRegisterType<TrackerOverlayItem>("Drift", 1, 0, "TrackerOverlayItem");
     qmlRegisterType<ConfidenceStripItem>("Drift", 1, 0, "ConfidenceStripItem");
     TimelineTrackItem::installAccessibility();

@@ -187,58 +187,84 @@ std::vector<CurveKey> parseCurveKeys(const QString &json)
 
 } // namespace
 
+namespace {
+
+std::vector<CurveKey> toKeys(const std::vector<CurvePoint> &points)
+{
+    std::vector<CurveKey> keys;
+    keys.reserve(points.size());
+    for (const CurvePoint &p : points)
+        keys.push_back({p.x, p.y, p.ease});
+    return keys;
+}
+
+// A hue curve is evaluated over copies of its keys one period either side, so the spline's
+// tangents at red see the keys across the wrap. A key at 1 tied to the one at 0 is the same
+// key, and keeping both would flatten the tangent there.
+std::vector<CurveKey> periodicKeys(std::vector<CurveKey> keys)
+{
+    if (keys.size() > 1 && keys.front().x <= 0.0 && keys.back().x >= 1.0
+        && std::abs(keys.back().y - keys.front().y) < 1e-9) {
+        keys.pop_back();
+    }
+    std::vector<CurveKey> extended;
+    extended.reserve(keys.size() * 3);
+    for (const double shift : {-1.0, 0.0, 1.0}) {
+        for (const CurveKey &key : keys)
+            extended.push_back({key.x + shift, key.y, key.ease});
+    }
+    std::stable_sort(extended.begin(), extended.end(),
+                     [](const CurveKey &a, const CurveKey &b) { return a.x < b.x; });
+    return extended;
+}
+
+struct PreparedCurve
+{
+    std::vector<CurveKey> keys;
+    std::vector<QPointF> points;
+};
+
+PreparedCurve prepareCurve(std::vector<CurveKey> keys, bool periodic)
+{
+    PreparedCurve out;
+    out.keys = periodic ? periodicKeys(std::move(keys)) : std::move(keys);
+    out.points.reserve(out.keys.size());
+    for (const CurveKey &key : out.keys)
+        out.points.emplace_back(key.x, key.y);
+    return out;
+}
+
+double evalPrepared(const PreparedCurve &curve, double t)
+{
+    const std::vector<CurveKey> &keys = curve.keys;
+    if (t <= keys.front().x)
+        return keys.front().y;
+    if (t >= keys.back().x)
+        return keys.back().y;
+    const auto right = std::lower_bound(keys.begin(), keys.end(), t,
+                                        [](const CurveKey &k, double v) { return k.x < v; });
+    const CurveKey &left = *(right - 1);
+    if (left.ease == QLatin1String("spline"))
+        return evalMonotoneSpline(curve.points, t);
+    if (right->x > left.x) {
+        const double k = (t - left.x) / (right->x - left.x);
+        return left.y + (right->y - left.y) * applyEase(left.ease, k);
+    }
+    return right->y;
+}
+
+} // namespace
+
 QByteArray bakeCurve(const QString &json, bool periodic)
 {
     std::vector<CurveKey> keys = parseCurveKeys(json);
     if (keys.empty())
         return {};
-
-    // A hue curve is evaluated over copies of its keys one period either side, so the spline's
-    // tangents at red see the keys across the wrap. A key at 1 tied to the one at 0 is the same
-    // key, and keeping both would flatten the tangent there.
-    if (periodic) {
-        if (keys.size() > 1 && keys.front().x <= 0.0 && keys.back().x >= 1.0
-            && std::abs(keys.back().y - keys.front().y) < 1e-9) {
-            keys.pop_back();
-        }
-        std::vector<CurveKey> extended;
-        extended.reserve(keys.size() * 3);
-        for (const double shift : {-1.0, 0.0, 1.0}) {
-            for (const CurveKey &key : keys)
-                extended.push_back({key.x + shift, key.y, key.ease});
-        }
-        std::stable_sort(extended.begin(), extended.end(),
-                         [](const CurveKey &a, const CurveKey &b) { return a.x < b.x; });
-        keys = std::move(extended);
-    }
-
-    std::vector<QPointF> points;
-    points.reserve(keys.size());
-    for (const CurveKey &key : keys)
-        points.emplace_back(key.x, key.y);
+    const PreparedCurve curve = prepareCurve(std::move(keys), periodic);
 
     QByteArray out(kTexels * 4, Qt::Uninitialized);
     for (int i = 0; i < kTexels; ++i) {
-        const double t = i / 255.0;
-        double y = 0.0;
-        if (t <= keys.front().x) {
-            y = keys.front().y;
-        } else if (t >= keys.back().x) {
-            y = keys.back().y;
-        } else {
-            const auto right = std::lower_bound(keys.begin(), keys.end(), t,
-                                                [](const CurveKey &k, double v) { return k.x < v; });
-            const CurveKey &left = *(right - 1);
-            if (left.ease == QLatin1String("spline")) {
-                y = evalMonotoneSpline(points, t);
-            } else if (right->x > left.x) {
-                const double k = (t - left.x) / (right->x - left.x);
-                y = left.y + (right->y - left.y) * applyEase(left.ease, k);
-            } else {
-                y = right->y;
-            }
-        }
-        const char value = char(toByte(y));
+        const char value = char(toByte(evalPrepared(curve, i / 255.0)));
         out[i * 4 + 0] = value;
         out[i * 4 + 1] = value;
         out[i * 4 + 2] = value;
@@ -247,21 +273,78 @@ QByteArray bakeCurve(const QString &json, bool periodic)
     return out;
 }
 
-bool curveIsIdentity(const QString &json, bool hue)
+std::vector<CurvePoint> identityCurve(bool hue)
 {
-    const std::vector<CurveKey> keys = parseCurveKeys(json);
-    if (keys.empty())
+    const double y0 = hue ? 0.5 : 0.0;
+    const double y1 = hue ? 0.5 : 1.0;
+    return {{0.0, y0, QStringLiteral("spline")}, {1.0, y1, QStringLiteral("spline")}};
+}
+
+std::vector<CurvePoint> parseCurvePoints(const QString &json, bool hue)
+{
+    QJsonParseError error;
+    const QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &error);
+    if (error.error != QJsonParseError::NoError || !doc.isArray())
+        return identityCurve(hue);
+
+    std::vector<CurvePoint> pts;
+    for (const QJsonValue &value : doc.array()) {
+        const QJsonObject key = value.toObject();
+        const QJsonValue x = key.value(QStringLiteral("x"));
+        const QJsonValue y = key.value(QStringLiteral("y"));
+        if (!x.isDouble() || !y.isDouble() || !std::isfinite(x.toDouble()) || !std::isfinite(y.toDouble()))
+            continue;
+        pts.push_back({std::clamp(x.toDouble(), 0.0, 1.0), std::clamp(y.toDouble(), 0.0, 1.0),
+                       key.value(QStringLiteral("ease")).toString(QStringLiteral("linear"))});
+    }
+    std::stable_sort(pts.begin(), pts.end(), [](const CurvePoint &a, const CurvePoint &b) { return a.x < b.x; });
+
+    std::vector<CurvePoint> out;
+    for (size_t i = 0; i < pts.size(); ++i) {
+        if (!out.empty() && pts[i].x - out.back().x < kMinCurveGap) {
+            if (i + 1 == pts.size() && out.size() > 1)
+                out.back() = pts[i];
+            continue;
+        }
+        out.push_back(pts[i]);
+    }
+    if (out.size() > size_t(kMaxCurvePoints)) {
+        const CurvePoint last = out.back();
+        out.resize(size_t(kMaxCurvePoints) - 1);
+        out.push_back(last);
+    }
+    return out.size() >= 2 ? out : identityCurve(hue);
+}
+
+double evalCurve(const std::vector<CurvePoint> &points, double x, bool periodic)
+{
+    if (points.empty())
+        return std::clamp(x, 0.0, 1.0);
+    return evalPrepared(prepareCurve(toKeys(points), periodic), x);
+}
+
+bool curveIsIdentity(const std::vector<CurvePoint> &points, bool hue)
+{
+    if (points.empty())
         return false;
-    for (size_t i = 0; i < keys.size(); ++i) {
-        const CurveKey &key = keys[i];
+    for (size_t i = 0; i < points.size(); ++i) {
+        const CurvePoint &key = points[i];
         if (std::abs(key.y - (hue ? 0.5 : key.x)) > 1e-9)
             return false;
         if (hue)
             continue;
-        if (i + 1 < keys.size() && key.ease != QLatin1String("linear") && key.ease != QLatin1String("spline"))
+        if (i + 1 < points.size() && key.ease != QLatin1String("linear") && key.ease != QLatin1String("spline"))
             return false;
     }
-    return hue || (keys.front().x <= 0.0 && keys.back().x >= 1.0);
+    return hue || (points.front().x <= 0.0 && points.back().x >= 1.0);
+}
+
+bool curveIsIdentity(const QString &json, bool hue)
+{
+    std::vector<CurvePoint> points;
+    for (const CurveKey &key : parseCurveKeys(json))
+        points.push_back({key.x, key.y, key.ease});
+    return curveIsIdentity(points, hue);
 }
 
 } // namespace drift

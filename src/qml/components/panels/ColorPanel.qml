@@ -3,7 +3,6 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Drift
-import "../color/CurveMath.js" as CurveMath
 
 PanelFrame {
     id: root
@@ -83,51 +82,14 @@ PanelFrame {
         "halation": qsTr("Red glow around highlights, like film")
     })
 
-    readonly property string lookLabel: {
-        const id = params.look || ""
-        const list = colorState.looks
-        for (let i = 0; i < list.length; ++i) {
-            if (list[i].id === id)
-                return list[i].label
-        }
-        return id === "" ? qsTr("None") : qsTr("Missing look")
-    }
-
-    readonly property var curves: ({
-        master: parseCurve(params.curveMaster, false),
-        r: parseCurve(params.curveR, false),
-        g: parseCurve(params.curveG, false),
-        b: parseCurve(params.curveB, false)
-    })
-    readonly property var hueCurves: ({
-        hue: parseCurve(params.curveHueHue, true),
-        sat: parseCurve(params.curveHueSat, true),
-        lum: parseCurve(params.curveHueLum, true)
-    })
-
-    function parseCurve(v, hue) {
-        return CurveMath.sanitize(v, hue)
-    }
-
-    function groupModified(specs) {
-        return specs.some(sp => Math.abs(Number(params[sp.key] ?? sp.def) - sp.def) > 1e-6)
-    }
-
-    function curvesModified(set, hue) {
-        const identity = JSON.stringify(CurveMath.identity(hue))
-        return Object.keys(set).some(k => JSON.stringify(set[k]) !== identity)
-    }
-
-    readonly property bool lightModified: groupModified(lightSliders)
-    readonly property bool colorModified: groupModified(colorSliders)
-    readonly property bool lookModified: (params.look || "") !== "" || Number(params.lookAmount ?? 1) !== 1
-    readonly property bool wheelsModified: wheels.some(w => {
-        const v = params[w.key] || [0, 0]
-        return v[0] !== 0 || v[1] !== 0 || Number(params[w.key + "Luma"] ?? 0) !== 0
-    })
-    readonly property bool curvesAreModified: curvesModified(curves, false)
-    readonly property bool hueCurvesAreModified: curvesModified(hueCurves, true)
-    readonly property bool hslModified: hslBands.some(b => hslBandModified(b.param))
+    readonly property var modifiedGroups: target.modifiedGroups || ([])
+    readonly property bool lightModified: modifiedGroups.indexOf("Light") >= 0
+    readonly property bool colorModified: modifiedGroups.indexOf("Color") >= 0
+    readonly property bool lookModified: modifiedGroups.indexOf("Look") >= 0
+    readonly property bool wheelsModified: modifiedGroups.indexOf("Wheels") >= 0
+    readonly property bool curvesAreModified: modifiedGroups.indexOf("Curves") >= 0
+    readonly property bool hueCurvesAreModified: modifiedGroups.indexOf("Hue Curves") >= 0
+    readonly property bool hslModified: modifiedGroups.indexOf("HSL") >= 0
 
     function isAnimated(key) {
         return animatedKeys.indexOf(key) >= 0
@@ -177,14 +139,12 @@ PanelFrame {
     }
 
     function hslBandModified(param) {
-        return hslSliders.some(s => Number(params["hsl" + param + s.suffix] ?? 0) !== 0)
+        return (target.modifiedHslBands || []).indexOf(param) >= 0
     }
 
     function resetHslBand() {
         const band = hslBands[hslBand]
-        colorState.beginEdit(qsTr("Reset %1").arg(band.label))
-        hslSliders.forEach(s => colorState.setParam("hsl" + band.param + s.suffix, 0))
-        colorState.commitEdit()
+        colorState.resetHslBand(band.param, band.label)
     }
 
     function selectHslBand(i) {
@@ -583,7 +543,7 @@ PanelFrame {
                         readonly property bool none: (root.params.look || "") === ""
                         wrapMode: none ? Text.WordWrap : Text.NoWrap
                         elide: none ? Text.ElideNone : Text.ElideRight
-                        text: none ? qsTr("None. Choose a look in the Looks panel.") : root.lookLabel
+                        text: none ? qsTr("None. Choose a look in the Looks panel.") : root.target.lookLabel
                         color: Theme.mutedForeground
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeXs
@@ -713,7 +673,8 @@ PanelFrame {
                             x: (parent.width - width) / 2
                             width: curveGrid.plot
                             height: implicitHeight
-                            curves: root.curves
+                            curves: ({ master: root.params.curveMaster || "", r: root.params.curveR || "",
+                                      g: root.params.curveG || "", b: root.params.curveB || "" })
                             histogram: root.colorState.scopes.active
                                        ? "image://color/scope/histogram?s=" + root.colorState.scopes.serial : ""
                             onBegan: root.colorState.beginEdit(qsTr("Adjust curves"))
@@ -737,7 +698,8 @@ PanelFrame {
                             width: curveGrid.plot
                             height: implicitHeight
                             hueMode: true
-                            curves: root.hueCurves
+                            curves: ({ hue: root.params.curveHueHue || "", sat: root.params.curveHueSat || "",
+                                      lum: root.params.curveHueLum || "" })
                             onBegan: root.colorState.beginEdit(qsTr("Adjust hue curves"))
                             onChanged: (channel, json) => root.colorState.setText(root.hueCurveKeys[channel], json)
                             onEnded: root.colorState.commitEdit()

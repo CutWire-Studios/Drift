@@ -48,6 +48,7 @@ public:
 
     Q_INVOKABLE void resetGroup(const QString &group);
     Q_INVOKABLE void resetGroups(const QStringList &groups);
+    Q_INVOKABLE void resetHslBand(const QString &band, const QString &label);
     Q_INVOKABLE void resetAll();
     Q_INVOKABLE void setLook(const QString &id);
     Q_INVOKABLE void importLooks(const QList<QUrl> &urls);

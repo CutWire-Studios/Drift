@@ -194,6 +194,8 @@ private slots:
     void effectPackageNewParamTypes();
     void bakeGradientInterpolatesAndHoldsEnds();
     void bakeCurveAppliesEaseAndHoldsEnds();
+    void evalCurveMatchesBakeIncludingPeriodicAndEases();
+    void parseCurvePointsSanitizes();
     void paramSamplerUnitSkipsDepthAndMaskUnits();
     void depthPipelineBindsMapInFrameOrientation();
     void depthEffectsRenderWithDepthAndPassThroughWithout();
@@ -16959,6 +16961,51 @@ void EngineTest::bakeCurveAppliesEaseAndHoldsEnds()
     QCOMPARE(texelChannel(ends, 255, 0), 255);
 
     QVERIFY(drift::bakeCurve(QStringLiteral("[]")).isEmpty());
+}
+
+void EngineTest::evalCurveMatchesBakeIncludingPeriodicAndEases()
+{
+    const struct
+    {
+        QString json;
+        bool periodic;
+    } cases[] = {
+        {QStringLiteral(R"([{"x":0,"y":0,"ease":"spline"},{"x":0.3,"y":0.7,"ease":"spline"},{"x":1,"y":1,"ease":"spline"}])"), false},
+        {QStringLiteral(R"([{"x":0,"y":0,"ease":"hold"},{"x":0.5,"y":0.8,"ease":"smooth"},{"x":1,"y":0.2,"ease":"linear"}])"), false},
+        {QStringLiteral(R"([{"x":0,"y":0.5,"ease":"spline"},{"x":0.25,"y":0.9,"ease":"spline"},{"x":0.8,"y":0.1,"ease":"spline"},{"x":1,"y":0.5,"ease":"spline"}])"), true},
+        {QStringLiteral(R"([{"x":0,"y":0.3,"ease":"linear"},{"x":0.6,"y":0.9,"ease":"in"},{"x":1,"y":0.6,"ease":"spline"}])"), true},
+    };
+    for (const auto &c : cases) {
+        const QByteArray baked = drift::bakeCurve(c.json, c.periodic);
+        const std::vector<drift::CurvePoint> pts = drift::parseCurvePoints(c.json, c.periodic);
+        for (int i = 0; i < 256; ++i) {
+            const double y = drift::evalCurve(pts, i / 255.0, c.periodic) * 255.0;
+            QVERIFY2(std::abs(texelChannel(baked, i, 0) - y) <= 1.0, qPrintable(QStringLiteral("%1 texel %2").arg(c.json).arg(i)));
+        }
+    }
+}
+
+void EngineTest::parseCurvePointsSanitizes()
+{
+    QCOMPARE(drift::parseCurvePoints(QStringLiteral("nope"), false).size(), size_t(2));
+    QCOMPARE(drift::parseCurvePoints(QStringLiteral("[]"), true).front().y, 0.5);
+
+    const auto dup = drift::parseCurvePoints(
+        QStringLiteral(R"([{"x":0,"y":0},{"x":0.5,"y":0.2},{"x":0.5,"y":0.9},{"x":1,"y":1},{"x":"a","y":1},{"x":2,"y":-1}])"), false);
+    QCOMPARE(dup.size(), size_t(3));
+    QCOMPARE(dup[1].x, 0.5);
+    QCOMPARE(dup.back().x, 1.0);
+    QCOMPARE(dup.back().y, 0.0);
+
+    QString many = QStringLiteral("[");
+    for (int i = 0; i < 40; ++i)
+        many += QStringLiteral("%1{\"x\":%2,\"y\":0.5}").arg(i ? "," : "").arg(i / 39.0);
+    many += QLatin1Char(']');
+    const auto capped = drift::parseCurvePoints(many, false);
+    QCOMPARE(capped.size(), size_t(drift::kMaxCurvePoints));
+    QCOMPARE(capped.back().x, 1.0);
+    for (size_t i = 1; i < capped.size(); ++i)
+        QVERIFY(capped[i].x - capped[i - 1].x >= drift::kMinCurveGap - 1e-12);
 }
 
 void EngineTest::paramSamplerUnitSkipsDepthAndMaskUnits()

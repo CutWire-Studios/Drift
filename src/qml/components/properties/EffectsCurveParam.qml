@@ -16,16 +16,9 @@ Column {
         ? [{x: 0, y: 0.5, ease: "spline"}, {x: 1, y: 0.5, ease: "spline"}]
         : [{x: 0, y: 0, ease: "spline"}, {x: 1, y: 1, ease: "spline"}]
 
-    readonly property var points: {
-        let v = row ? row.paramData.value : null
-        if (typeof v === "string") {
-            try {
-                v = JSON.parse(v)
-            } catch (e) {
-                v = null
-            }
-        }
-        return Array.isArray(v) && v.length >= 2 ? v : defaultPoints
+    readonly property string pointsJson: {
+        const v = row ? row.paramData.value : null
+        return typeof v === "string" ? v : JSON.stringify(v ?? root.defaultPoints)
     }
 
     function writePoints(json) {
@@ -70,8 +63,8 @@ Column {
         showTabs: false
         hueMode: root.hue
         curves: root.hue
-            ? ({ hue: root.points })
-            : ({ master: root.points, r: root.points, g: root.points, b: root.points })
+            ? ({ hue: root.pointsJson })
+            : ({ master: root.pointsJson, r: root.pointsJson, g: root.pointsJson, b: root.pointsJson })
         onBegan: EditorState.beginPreviewDrag(qsTr("Edit %1").arg(root.row.paramData.label))
         onChanged: (channel, json) => root.writePoints(json)
         onEnded: EditorState.commitPreviewDrag()

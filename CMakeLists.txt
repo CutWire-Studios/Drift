@@ -1154,6 +1154,13 @@ qt_add_executable(drift
     src/ui/preview/PreviewItem.cpp
     src/ui/preview/BrushStrokeItem.h
     src/ui/preview/BrushStrokeItem.cpp
+    src/ui/color/ColorWheelMath.h
+    src/ui/color/ColorWheelPad.h
+    src/ui/color/ColorWheelPad.cpp
+    src/ui/color/CurveEdit.h
+    src/ui/color/CurveEdit.cpp
+    src/ui/color/CurvePlot.h
+    src/ui/color/CurvePlot.cpp
     src/ui/preview/TrackerOverlayItem.h
     src/ui/preview/TrackerOverlayItem.cpp
     src/ui/preview/TrackerOverlayMath.h
@@ -1742,7 +1749,6 @@ qt_add_qml_module(drift
         src/qml/components/color/GradeSlider.qml
         src/qml/components/color/ColorWheel.qml
         src/qml/components/color/CurveEditor.qml
-        src/qml/components/color/CurveMath.js
         src/qml/components/panels/HistoryPanel.qml
         src/qml/components/panels/SourceViewerPanel.qml
         src/qml/components/panels/sourcelab/SourceLabViewerPanel.qml

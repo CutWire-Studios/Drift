@@ -7,6 +7,7 @@
 #include "core/effects/Effect.h"
 #include "core/project/Project.h"
 #include "engine/color/CubeLut.h"
+#include "engine/gpu/effects/LookupTextures.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/packages/looks/LookCatalog.h"
 #include "engine/packages/looks/LookImport.h"
@@ -15,6 +16,9 @@
 #include <QSet>
 #include <QStringList>
 #include <QtConcurrent>
+
+#include <cmath>
+#include <optional>
 
 namespace {
 
@@ -99,6 +103,39 @@ QVariantMap paramValuesOf(const drift::Effect *effect, const EffectPresetEntry &
         }
     }
     return values;
+}
+
+bool paramModified(const drift::EffectParamSpec &spec, const QVariant &value)
+{
+    if (spec.type == drift::EffectParamType::Curve) {
+        return !drift::curveIsIdentity(
+            drift::parseCurvePoints(value.toString(), spec.curveMode == QLatin1String("hue")),
+            spec.curveMode == QLatin1String("hue"));
+    }
+    if (spec.isVec2()) {
+        const QVariantList v = value.toList();
+        return v.size() == 2 && (std::abs(v.at(0).toDouble() - spec.defaultX) > 1e-6
+                                 || std::abs(v.at(1).toDouble() - spec.defaultY) > 1e-6);
+    }
+    if (spec.isText())
+        return value.toString() != spec.defaultVariant().toString();
+    return std::abs(value.toDouble() - spec.defaultVariant().toDouble()) > 1e-6;
+}
+
+// The groups holding a param off its default, and the HSL bands ("Red", "Orange", ...) among them.
+void modifiedOf(const EffectPresetEntry &def, const QVariantMap &params, QStringList *groups, QStringList *hslBands)
+{
+    for (const drift::EffectParamSpec &spec : def.meta.parameters) {
+        if (spec.group.isEmpty() || !paramModified(spec, params.value(spec.key)))
+            continue;
+        if (!groups->contains(spec.group))
+            groups->append(spec.group);
+        if (spec.group == QLatin1String("HSL") && spec.key.startsWith(QLatin1String("hsl"))) {
+            const QString band = spec.key.mid(3, spec.key.size() - 6);
+            if (!hslBands->contains(band))
+                hslBands->append(band);
+        }
+    }
 }
 
 bool isStandaloneAdjustmentTrack(const drift::Track &track)
@@ -222,8 +259,19 @@ QVariantMap ColorController::buildTarget() const
     out.insert(QStringLiteral("hasGrade"), grade != nullptr);
     out.insert(QStringLiteral("gradeIndex"), gradeIndex);
     if (const EffectPresetEntry *def = effectDefForId(kGradeId)) {
-        out.insert(QStringLiteral("params"), paramValuesOf(grade, *def, relUs));
+        const QVariantMap params = paramValuesOf(grade, *def, relUs);
+        out.insert(QStringLiteral("params"), params);
         out.insert(QStringLiteral("animatedKeys"), animatedKeysOf(grade, *def));
+        QStringList modifiedGroups;
+        QStringList modifiedHslBands;
+        modifiedOf(*def, params, &modifiedGroups, &modifiedHslBands);
+        out.insert(QStringLiteral("modifiedGroups"), modifiedGroups);
+        out.insert(QStringLiteral("modifiedHslBands"), modifiedHslBands);
+        const QString lookId = params.value(QStringLiteral("look")).toString();
+        const std::optional<drift::LookEntry> look = lookId.isEmpty() ? std::nullopt : drift::lookForId(lookId);
+        out.insert(QStringLiteral("lookMissing"), !lookId.isEmpty() && !look);
+        out.insert(QStringLiteral("lookLabel"), lookId.isEmpty() ? tr("None")
+                                                : look ? look->label : tr("Missing look"));
     }
 
     QVariantList finishing;
@@ -292,6 +340,7 @@ void ColorController::rebuildLooks()
     }
     m_looks = list;
     emit looksChanged();
+    publishTarget();
 }
 
 // ---- Edits -------------------------------------------------------------------------------
@@ -527,6 +576,14 @@ void ColorController::resetGroups(const QStringList &groups)
 {
     if (!groups.isEmpty())
         resetParams(groups, tr("Reset %1").arg(groups.join(QStringLiteral(", "))));
+}
+
+void ColorController::resetHslBand(const QString &band, const QString &label)
+{
+    beginEdit(tr("Reset %1").arg(label));
+    for (const QString &suffix : {QStringLiteral("Hue"), QStringLiteral("Sat"), QStringLiteral("Lum")})
+        setParam(QStringLiteral("hsl%1%2").arg(band, suffix), 0);
+    commitEdit();
 }
 
 void ColorController::resetAll()

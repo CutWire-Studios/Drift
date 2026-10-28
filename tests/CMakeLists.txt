@@ -33,6 +33,18 @@ target_include_directories(tst_trackeroverlay PRIVATE ../src)
 target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME TrackerOverlay COMMAND tst_trackeroverlay)
 
+qt_add_executable(tst_curveedit
+    tst_curveedit.cpp
+    ../src/ui/color/CurveEdit.cpp)
+target_include_directories(tst_curveedit PRIVATE ../src)
+target_link_libraries(tst_curveedit PRIVATE Qt6::Test Qt6::Core driftengine)
+add_test(NAME CurveEdit COMMAND tst_curveedit)
+
+qt_add_executable(tst_colorwheel tst_colorwheel.cpp)
+target_include_directories(tst_colorwheel PRIVATE ../src)
+target_link_libraries(tst_colorwheel PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
+add_test(NAME ColorWheel COMMAND tst_colorwheel)
+
 qt_add_executable(tst_pdfsource tst_pdfsource.cpp)
 target_include_directories(tst_pdfsource PRIVATE ../src)
 target_link_libraries(tst_pdfsource PRIVATE Qt6::Test driftcore)
