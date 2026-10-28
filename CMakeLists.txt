@@ -2255,7 +2255,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/workspaces/designer/WorkspaceDesigner.qml
         src/qml/components/shell/SettingsWorkspacesPage.qml
         src/qml/components/shell/EditorHeaderSettingsButton.qml
-        src/qml/components/shell/EditorHeaderWorkspaceButton.qml
         src/qml/components/shell/AppSettingsMenu.qml
         src/qml/components/shell/EditorHeaderSeparator.qml
         src/qml/components/shell/EditorHeaderSearchField.qml

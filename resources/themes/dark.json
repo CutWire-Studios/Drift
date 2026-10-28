@@ -873,7 +873,11 @@
       "foreground": "$semantic.panel.foreground",
       "placeholder": "$semantic.mutedForeground",
       "selectionForeground": "$semantic.primaryForeground",
-      "selection": "$semantic.primary"
+      "selection": "$semantic.primary",
+      "workspacePrefix": "$semantic.mutedForeground",
+      "workspaceForeground": "$semantic.panel.foreground",
+      "workspaceBackgroundHover": "$semantic.popoverHover",
+      "divider": "$semantic.panel.border"
     },
     "editorHeaderHairline": {
       "borderWidth": "$metrics.borderWidth",

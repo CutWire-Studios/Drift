@@ -710,6 +710,10 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | editorHeaderSearchField | placeholder | $semantic.mutedForeground | $semantic.mutedForeground |
 | editorHeaderSearchField | selectionForeground | $semantic.primaryForeground | $semantic.primaryForeground |
 | editorHeaderSearchField | selection | $semantic.primary | $semantic.primary |
+| editorHeaderSearchField | workspacePrefix | $semantic.mutedForeground | $semantic.mutedForeground |
+| editorHeaderSearchField | workspaceForeground | $semantic.panel.foreground | $semantic.panel.foreground |
+| editorHeaderSearchField | workspaceBackgroundHover | $semantic.popoverHover | $semantic.popoverHover |
+| editorHeaderSearchField | divider | $semantic.panel.border | $semantic.panel.border |
 | editorHeaderHairline | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | editorHeaderHairline | border | $semantic.panel.border | $semantic.panel.border |
 | editorHeaderSeparator | borderWidth | $metrics.borderWidth | $metrics.borderWidth |

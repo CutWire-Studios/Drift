@@ -71,6 +71,19 @@ Popup {
         return true
     }
 
+    function _workspaceRows() {
+        const workspaces = Workspaces.workspaces
+        const rows = []
+        for (let i = 0; i < workspaces.length; ++i) {
+            const ws = workspaces[i]
+            rows.push({ kind: "command", label: qsTr("Workspace: %1").arg(ws.name),
+                        sub: ws.id === Workspaces.activeId ? qsTr("Current") : "",
+                        keywords: "workspace layout " + ws.id, shortcut: "", enabled: true,
+                        run: () => { Workspaces.activeId = ws.id } })
+        }
+        return rows
+    }
+
     function buildIndex() {
         // Popup is not an Item, so the Window attached property has to come from its parent.
         const win = ShellBridge.main
@@ -117,13 +130,7 @@ Popup {
                         shortcut: "", enabled: true, run: cmd.run })
         }
 
-        const workspaces = Workspaces.workspaces
-        for (let i = 0; i < workspaces.length; ++i) {
-            const ws = workspaces[i]
-            rows.push({ kind: "command", label: qsTr("Workspace: %1").arg(ws.name), sub: "",
-                        keywords: "workspace layout " + ws.id, shortcut: "", enabled: true,
-                        run: () => { Workspaces.activeId = ws.id } })
-        }
+        rows.push(...root._workspaceRows())
 
         const tabs = ["media", "market", "text", "subtitles", "speech", "stickers", "shapes", "masks",
                       "scenes", "effects", "templates", "transitions", "sounds", "shortcuts"]
@@ -286,8 +293,11 @@ Popup {
     function search(query) {
         const q = query.trim().toLowerCase()
         if (q.length === 0) {
-            results = []
-            close()
+            results = _workspaceRows()
+            highlightIndex = 0
+            list.positionViewAtBeginning()
+            if (!opened)
+                open()
             return
         }
         if (_index.length === 0)
