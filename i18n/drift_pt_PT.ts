@@ -7022,7 +7022,7 @@
     <message numerus="yes">
         <source>Downloads — %n running</source>
         <translation>
-            <numerusform>Transferências — %n em curso</numerusform>
+            <numerusform>Transferência — %n em curso</numerusform>
             <numerusform>Transferências — %n em curso</numerusform>
         </translation>
     </message>
@@ -11904,7 +11904,7 @@
     </message>
     <message>
         <source>Save As…</source>
-        <translation>Guardar como…</translation>
+        <translation>Guardar Como…</translation>
     </message>
     <message numerus="yes">
         <source>Remove %n items from project</source>
