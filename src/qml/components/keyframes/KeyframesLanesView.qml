@@ -54,7 +54,7 @@ Item {
             readonly property bool isGroup: modelData.type === "group"
             readonly property var dots: Model.laneDots(root.panel.rows, index)
             readonly property color dotColor: isGroup ? Theme.c.keyframesKeyDot.summary
-                                                      : Theme.keyframeCurveColor(modelData.keyProp)
+                                                      : Theme.keyframeCurveColor(modelData.keyProp ?? "")
 
             width: laneList.width
             height: root.rowHeight

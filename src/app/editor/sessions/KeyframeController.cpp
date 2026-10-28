@@ -13,6 +13,7 @@
 #include <QSet>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace {
@@ -618,6 +619,37 @@ QVariantList KeyframeController::applyStretch(const QList<KeyTarget> &own, doubl
     return refs;
 }
 
+double KeyframeController::snapKeyTime(double seconds, double pxPerSecond, const QVariantList &otherKeyTimes,
+                                       bool snap) const
+{
+    const double fps = std::max(1, m_app->m_project.fps());
+    const double framed = std::round(seconds * fps) / fps;
+    if (!snap || pxPerSecond <= 0.0)
+        return framed;
+    const double radius = 8.0 / pxPerSecond;
+    double best = framed;
+    double bestDist = radius;
+    auto consider = [&](double target) {
+        const double d = std::abs(target - seconds);
+        if (d <= bestDist) {
+            bestDist = d;
+            best = target;
+        }
+    };
+    consider(drift::usToSeconds(m_app->m_playheadUs));
+    for (const QVariant &t : otherKeyTimes)
+        consider(t.toDouble());
+    return best;
+}
+
+static QStringList propsOf(const QVariantList &keys)
+{
+    QStringList props;
+    for (const QVariant &ref : keys)
+        props.append(ref.toMap().value(QStringLiteral("prop")).toString());
+    return props;
+}
+
 QVariantList KeyframeController::previewMoveKeys(int track, int clip, const QVariantList &keys,
                                                  double dtSeconds)
 {
@@ -628,7 +660,7 @@ QVariantList KeyframeController::previewMoveKeys(int track, int clip, const QVar
     restorePreviewTracks(track, clip, keys);
     bool changed = false;
     const QVariantList refs = applyMove(resolveKeys(track, clip, keys), dtSeconds, &changed);
-    m_app->emitPreviewFrame();
+    m_app->emitPreviewEdit(track, clip, mirrorLinkedProps(propsOf(keys)));
     return refs;
 }
 
@@ -657,7 +689,7 @@ QVariantList KeyframeController::previewStretchKeys(int track, int clip, const Q
         m_app->beginPreviewDrag(tr("Stretch keyframes"));
     restorePreviewTracks(track, clip, keys);
     const QVariantList refs = applyStretch(resolveKeys(track, clip, keys), pivotSeconds, factor);
-    m_app->emitPreviewFrame();
+    m_app->emitPreviewEdit(track, clip, mirrorLinkedProps(propsOf(keys)));
     return refs;
 }
 

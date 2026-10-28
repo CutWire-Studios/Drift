@@ -1,7 +1,6 @@
 .pragma library
 
 const sampleCache = {}
-const sortedCache = new WeakMap()
 
 // Samples depend only on the easing params, so one C++ round trip per distinct
 // spec is enough. `fetch` is EditorState.easingSamples, passed in because a
@@ -20,10 +19,5 @@ function samples(spec, n, fetch) {
 }
 
 function sortedPoints(entry) {
-    let hit = sortedCache.get(entry)
-    if (hit === undefined || hit.src !== entry.points) {
-        hit = { src: entry.points, sorted: entry.points.slice().sort((a, b) => a.seconds - b.seconds) }
-        sortedCache.set(entry, hit)
-    }
-    return hit.sorted
+    return entry.points.slice().sort((a, b) => a.seconds - b.seconds)
 }

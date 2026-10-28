@@ -22,6 +22,7 @@ Item {
     property real pressX: 0
     property real pressY: 0
     property real panStartX: 0
+    property real panLastY: 0
     property var dragRefs: []
     property var dragResult: []
     property real dragOrigin: 0
@@ -88,7 +89,7 @@ Item {
         dotDrag = true
     }
 
-    function updateDotDrag(x, y, shift) {
+    function updateDotDrag(x, y, shift, invertSnap) {
         let dx = x - pressX
         let dy = y - pressY
         if (shift) {
@@ -100,7 +101,7 @@ Item {
         const raw = Math.max(timeView.clipStart,
                              Math.min(timeView.clipStart + timeView.clipDuration,
                                       dragOrigin + dx / timeView.pxPerSecond))
-        const dt = dx === 0 ? 0 : EditorState.snapTime(raw) - dragOrigin
+        const dt = dx === 0 ? 0 : panel.snapKeyTime(raw, dragRefs, invertSnap) - dragOrigin
         const locked = view.lockedRanges || ({})
         const refs = dragRefs.map(r => {
             const range = locked[r.prop]
@@ -191,7 +192,7 @@ Item {
             return
         const s = Math.max(timeView.clipStart,
                            Math.min(timeView.clipStart + timeView.clipDuration,
-                                    EditorState.snapTime(timeView.secondsFor(x))))
+                                    panel.snapKeyTime(timeView.secondsFor(x), [], false)))
         EditorState.keyframes.addKeysAt(panel.track, panel.clip, [view.series[view.focusedIndex].prop], s)
     }
 
@@ -211,7 +212,7 @@ Item {
         id: area
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         pressAndHoldInterval: Theme.touchLiftInterval
         cursorShape: root.dotDrag ? Qt.SizeAllCursor
                                   : (root.view.hoverId !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor)
@@ -228,6 +229,12 @@ Item {
             root.collapseOnRelease = false
             root.pressHit = root.hitTest(mouse.x, mouse.y, root.touch ? 14 : 6)
             root.mode = ""
+            if (mouse.button === Qt.MiddleButton) {
+                root.panStartX = root.timeView.contentX
+                root.panLastY = mouse.y
+                root.mode = "pan"
+                return
+            }
             if (mouse.button === Qt.RightButton) {
                 if (!root.touch)
                     root.openContext(mouse.x, mouse.y, root.pressHit)
@@ -235,6 +242,7 @@ Item {
             }
             if (root.touch) {
                 root.panStartX = root.timeView.contentX
+                root.panLastY = mouse.y
                 root.mode = "touch"
                 return
             }
@@ -276,11 +284,15 @@ Item {
             }
             if (root.mode === "pan") {
                 root.timeView.contentX = root.panStartX - (mouse.x - root.pressX)
+                if (!root.panel.normalize)
+                    root.view.panValuesBy(mouse.y - root.panLastY)
+                root.panLastY = mouse.y
             } else if (root.mode === "dot") {
                 if (!root.dotDrag && moved)
                     root.startDotDrag()
                 if (root.dotDrag)
-                    root.updateDotDrag(mouse.x, mouse.y, mouse.modifiers & Qt.ShiftModifier)
+                    root.updateDotDrag(mouse.x, mouse.y, mouse.modifiers & Qt.ShiftModifier,
+                                       mouse.modifiers & Qt.AltModifier)
             } else if (root.mode === "marquee") {
                 if (!root.marqueeActive && moved)
                     root.marqueeActive = true
@@ -316,12 +328,7 @@ Item {
             }
         }
 
-        onCanceled: {
-            if (root.mode === "dot" && root.dotDrag)
-                root.finishDotDrag()
-            root.marqueeActive = false
-            root.mode = ""
-        }
+        onCanceled: root.cancelDrag()
 
         onExited: root.view.hoverId = ""
 
@@ -339,18 +346,14 @@ Item {
             const mods = wheel.modifiers
             const dx = wheel.pixelDelta.x !== 0 ? wheel.pixelDelta.x : wheel.angleDelta.x / 2
             const dy = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y / 2
-            const delta = dy !== 0 ? dy : dx
             const sharedRange = !root.panel.normalize
-            if (sharedRange && (mods & Qt.AltModifier || (mods & Qt.ControlModifier && mods & Qt.ShiftModifier))) {
-                root.view.panValuesBy(delta)
-                return
-            }
-            if (sharedRange && (mods & Qt.ControlModifier)) {
-                root.view.zoomValuesAt(wheel.y, Math.exp(-delta / 300))
-                return
-            }
             if (mods & Qt.ControlModifier) {
-                root.timeView.zoomAt(wheel.x, Math.exp(wheel.angleDelta.y / 600))
+                if (mods & Qt.ShiftModifier) {
+                    if (sharedRange)
+                        root.view.zoomValuesAt(wheel.y, Math.exp(-(dy !== 0 ? dy : dx) / 300))
+                } else {
+                    root.timeView.zoomAt(wheel.x, Math.exp(wheel.angleDelta.y / 600))
+                }
                 return
             }
             if (mods & Qt.ShiftModifier) {
@@ -359,8 +362,8 @@ Item {
             }
             if (dx !== 0)
                 root.timeView.contentX -= dx
-            if (dy !== 0)
-                root.timeView.zoomAt(wheel.x, Math.exp(wheel.angleDelta.y / 600))
+            if (dy !== 0 && sharedRange)
+                root.view.panValuesBy(dy)
         }
     }
 

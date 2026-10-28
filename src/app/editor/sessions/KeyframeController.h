@@ -33,6 +33,9 @@ public:
     Q_INVOKABLE void removeKeys(int track, int clip, const QVariantList &keys);
     Q_INVOKABLE void clearProperties(int track, int clip, const QStringList &props);
 
+    Q_INVOKABLE double snapKeyTime(double seconds, double pxPerSecond, const QVariantList &otherKeyTimes,
+                                   bool snap) const;
+
     Q_INVOKABLE QVariantList previewMoveKeys(int track, int clip, const QVariantList &keys,
                                              double dtSeconds);
     Q_INVOKABLE QVariantList moveKeys(int track, int clip, const QVariantList &keys,

@@ -71,12 +71,12 @@ Item {
         dotDrag = true
     }
 
-    function updateDotDrag(x) {
+    function updateDotDrag(x, invertSnap) {
         const raw = Math.max(timeView.clipStart,
                              Math.min(timeView.clipStart + timeView.clipDuration,
                                       dragOrigin + (x - pressX) / timeView.pxPerSecond))
         const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clip, dragRefs,
-                                                          EditorState.snapTime(raw) - dragOrigin)
+                                                          panel.snapKeyTime(raw, dragRefs, invertSnap) - dragOrigin)
         if (res && res.length > 0) {
             dragResult = res
             selection.replace(res)
@@ -174,7 +174,7 @@ Item {
         id: area
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         pressAndHoldInterval: Theme.touchLiftInterval
         cursorShape: root.dotDrag ? Qt.SizeHorCursor
                                   : (root.lanes.hoverRow >= 0 ? Qt.PointingHandCursor : Qt.ArrowCursor)
@@ -187,6 +187,12 @@ Item {
             root.collapseOnRelease = false
             root.pressHit = root.hitTest(mouse.x, mouse.y, root.touch ? 14 : 6)
             root.mode = ""
+            if (mouse.button === Qt.MiddleButton) {
+                root.panStartX = root.timeView.contentX
+                root.panStartY = root.lanes.list.contentY
+                root.mode = "pan"
+                return
+            }
             if (mouse.button === Qt.RightButton) {
                 if (!root.touch)
                     root.openContext(mouse.x, mouse.y, root.pressHit)
@@ -243,7 +249,7 @@ Item {
                 if (!root.dotDrag && moved)
                     root.startDotDrag()
                 if (root.dotDrag)
-                    root.updateDotDrag(mouse.x)
+                    root.updateDotDrag(mouse.x, mouse.modifiers & Qt.AltModifier)
             } else if (root.mode === "marquee") {
                 if (!root.marqueeActive && moved)
                     root.marqueeActive = true
@@ -278,12 +284,7 @@ Item {
             }
         }
 
-        onCanceled: {
-            if (root.mode === "dot" && root.dotDrag)
-                root.finishDotDrag()
-            root.marqueeActive = false
-            root.mode = ""
-        }
+        onCanceled: root.cancelDrag()
 
         onExited: root.lanes.hoverRow = -1
 
@@ -297,7 +298,7 @@ Item {
                 EditorState.playheadSeconds = hit.seconds
             else if (hit.rowData.type !== "group")
                 EditorState.keyframes.addKeysAt(root.panel.track, root.panel.clip, hit.rowData.tracks,
-                                                EditorState.snapTime(hit.seconds))
+                                                root.panel.snapKeyTime(hit.seconds, [], false))
         }
 
         onWheel: (wheel) => {

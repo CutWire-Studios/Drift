@@ -1,6 +1,5 @@
 .pragma library
 
-var KEY_TOLERANCE = 1 / 30
 var TIME_EPS = 1e-4
 
 function keyId(prop, seconds) {
@@ -16,7 +15,7 @@ function unionKeys(lists) {
     all.sort(function (a, b) { return a.seconds - b.seconds })
     const out = []
     for (let i = 0; i < all.length; ++i) {
-        if (out.length === 0 || all[i].seconds - out[out.length - 1].seconds > KEY_TOLERANCE)
+        if (out.length === 0 || all[i].seconds - out[out.length - 1].seconds > TIME_EPS)
             out.push(all[i])
     }
     return out
@@ -82,23 +81,21 @@ function buildRows(entries, opts) {
             continue
 
         let count = 0
-        if (!isCollapsed) {
-            for (let i = 0; i < items.length; ++i) {
-                const item = items[i]
-                const lists = []
-                item.trackKeys = {}
-                for (let t = 0; t < item.tracks.length; ++t) {
-                    const track = item.tracks[t]
-                    const own = visibleKeys(item, opts.keysFor(track), clipStart)
-                    item.trackKeys[track] = own
-                    lists.push(own)
-                }
-                item.keys = unionKeys(lists)
-                count += item.keys.length
+        for (let i = 0; i < items.length; ++i) {
+            const item = items[i]
+            const lists = []
+            item.trackKeys = {}
+            for (let t = 0; t < item.tracks.length; ++t) {
+                const track = item.tracks[t]
+                const own = visibleKeys(item, opts.keysFor(track), clipStart)
+                item.trackKeys[track] = own
+                lists.push(own)
             }
+            item.keys = unionKeys(lists)
+            count += item.keys.length
         }
         out.push({ "type": "group", "group": grp.group, "label": grp.label,
-                   "count": count, "collapsed": isCollapsed })
+                   "count": count, "collapsed": isCollapsed, "children": items })
         if (!isCollapsed)
             Array.prototype.push.apply(out, items)
     }
@@ -109,10 +106,13 @@ function allKeyTimes(rows) {
     const times = []
     for (let i = 0; i < rows.length; ++i) {
         const r = rows[i]
-        if (r.type === "group" || !r.keys)
-            continue
-        for (let j = 0; j < r.keys.length; ++j)
-            times.push(r.keys[j].seconds)
+        const list = r.type === "group" ? (r.collapsed ? r.children : []) : [r]
+        for (let k = 0; k < list.length; ++k) {
+            if (!list[k].keys)
+                continue
+            for (let j = 0; j < list[k].keys.length; ++j)
+                times.push(list[k].keys[j].seconds)
+        }
     }
     return times
 }
@@ -139,19 +139,25 @@ function nextKeyTime(rows, t) {
 
 // The key of each of the row's tracks near `seconds`. Scale and colour rows own several tracks,
 // which may not all be keyed at the same instant.
-function refsForRowAt(row, seconds) {
+function refsForRowAt(row, seconds, tolerance) {
+    const tol = tolerance === undefined ? TIME_EPS : tolerance
     const refs = []
     const tracks = row.tracks || [row.prop]
     for (let i = 0; i < tracks.length; ++i) {
         const keys = row.trackKeys ? row.trackKeys[tracks[i]] : null
         if (!keys)
             continue
+        let best = -1
+        let bestDist = tol
         for (let j = 0; j < keys.length; ++j) {
-            if (Math.abs(keys[j].seconds - seconds) <= KEY_TOLERANCE) {
-                refs.push({ "prop": tracks[i], "seconds": keys[j].seconds })
-                break
+            const d = Math.abs(keys[j].seconds - seconds)
+            if (d <= bestDist) {
+                bestDist = d
+                best = j
             }
         }
+        if (best >= 0)
+            refs.push({ "prop": tracks[i], "seconds": keys[best].seconds })
     }
     return refs
 }
@@ -171,10 +177,11 @@ function laneDots(rows, index) {
         return out
     }
     const all = []
-    for (let j = index + 1; j < rows.length && rows[j].type !== "group"; ++j) {
-        const keys = rows[j].keys || []
+    const children = row.children || []
+    for (let j = 0; j < children.length; ++j) {
+        const keys = children[j].keys || []
         for (let i = 0; i < keys.length; ++i)
-            all.push({ "seconds": keys[i].seconds, "refs": refsForRowAt(rows[j], keys[i].seconds) })
+            all.push({ "seconds": keys[i].seconds, "refs": refsForRowAt(children[j], keys[i].seconds) })
     }
     all.sort(function (a, b) { return a.seconds - b.seconds })
     for (let i = 0; i < all.length; ++i) {

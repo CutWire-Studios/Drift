@@ -327,6 +327,8 @@ QtObject {
     readonly property var keyframeCurveColors: ThemeManager.semantic.keyframe.curves
     readonly property var keyframeCurveRamp: ThemeManager.semantic.keyframe.ramp
     function keyframeCurveColor(prop) {
+        if (!prop)
+            return keyframeCurveRamp[0]
         if (keyframeCurveColors[prop])
             return keyframeCurveColors[prop]
         let hash = 0

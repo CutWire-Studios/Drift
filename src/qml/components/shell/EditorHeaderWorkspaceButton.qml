@@ -75,9 +75,9 @@ Item {
         ThemedMenuSeparator { }
 
         ThemedMenuItem {
-            text: qsTr("Edit workspaces…")
+            text: qsTr("Customize layouts in Settings…")
             icon.name: Theme.icons.sliders
-            onTriggered: ShellBridge.main.openSettings("workspaces")
+            onTriggered: Qt.callLater(() => ShellBridge.main.openSettings("workspaces"))
         }
     }
 }

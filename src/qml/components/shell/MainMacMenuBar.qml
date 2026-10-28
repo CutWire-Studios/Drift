@@ -277,8 +277,8 @@ Platform.MenuBar {
             onObjectRemoved: (index, object) => windowMenu.removeItem(object)
         }
         Platform.MenuItem {
-            text: qsTr("Edit Workspaces…")
-            onTriggered: menuBar.appWindow.openSettings("workspaces")
+            text: qsTr("Customize Layouts in Settings…")
+            onTriggered: Qt.callLater(() => menuBar.appWindow.openSettings("workspaces"))
         }
         Platform.MenuSeparator {}
         Platform.MenuItem {

@@ -33,7 +33,7 @@ Item {
         const denom = edgeSeconds - pivot
         if (Math.abs(denom) < 1e-4)
             return
-        const target = EditorState.snapTime(Math.max(0, timeView.secondsFor(x)))
+        const target = panel.snapKeyTime(Math.max(0, timeView.secondsFor(x)), pressRefs, false)
         const factor = Math.max(0.01, (target - pivot) / denom)
         const res = EditorState.keyframes.previewStretchKeys(panel.track, panel.clip, pressRefs, pivot, factor)
         if (res && res.length > 0)
@@ -81,8 +81,8 @@ Item {
 
             required property bool modelData
 
-            x: modelData ? root.spanRight : root.spanLeft - width
-            y: (root.height - height) / 2
+            x: modelData ? root.spanRight + Theme.spacingSm : root.spanLeft - width - Theme.spacingSm
+            y: root.height - height - Theme.spacingXs
             width: Theme.c.keyframesStretchBox.gripWidth
             height: Theme.c.keyframesStretchBox.gripHeight
             radius: Theme.c.keyframesStretchBox.radius

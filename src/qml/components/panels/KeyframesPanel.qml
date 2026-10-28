@@ -32,6 +32,7 @@ PanelFrame {
     readonly property bool wantsActions: shown && (activeFocus || hover.hovered)
 
     readonly property var focusItem: Window.activeFocusItem
+    property string lastRowKeys: ""
     property var entryCache: ({ "key": "", "list": [] })
     property var curveSeen: ({})
 
@@ -50,9 +51,13 @@ PanelFrame {
         }
         return out
     }
+    readonly property real halfFrame: {
+        void EditorState.tracksRevision
+        return 0.5 / Math.max(1, EditorState.projectFile.projectFps())
+    }
     readonly property bool allTargetsKeyed: {
         void playhead
-        return targets.length > 0 && targets.every(r => Model.refsForRowAt(r, playhead).length > 0)
+        return targets.length > 0 && targets.every(r => Model.refsForRowAt(r, playhead, halfFrame).length > 0)
     }
     readonly property bool targetsHaveKeys: targets.some(r => r.keys.length > 0)
 
@@ -78,17 +83,44 @@ PanelFrame {
         return entryCache.list
     }
 
+    function snapKeyTime(raw, excludeRefs, invert) {
+        const skip = {}
+        for (let i = 0; i < excludeRefs.length; ++i)
+            skip[Math.round(excludeRefs[i].seconds * 1e6)] = true
+        const others = Model.allKeyTimes(rows).filter(t => !skip[Math.round(t * 1e6)])
+        return EditorState.keyframes.snapKeyTime(raw, timeViewObject.pxPerSecond, others,
+                                                 EditorState.snapEnabled !== !!invert)
+    }
+
     function rowKey(r) {
         return r.type === "group" ? "g:" + r.group : "p:" + r.group + ":" + r.prop
     }
 
     function applyRows(built) {
         const keys = built.map(rowKey)
-        const wanted = new Set(keys)
+        const joined = keys.join("\n")
+        if (joined === lastRowKeys && rowKeysModel.count === keys.length) {
+            rows = built
+            return
+        }
+        lastRowKeys = joined
+        const wanted = {}
+        for (let i = 0; i < keys.length; ++i)
+            wanted[keys[i]] = true
         for (let i = rowKeysModel.count - 1; i >= 0; --i) {
-            if (!wanted.has(rowKeysModel.get(i).key))
+            if (!wanted[rowKeysModel.get(i).key])
                 rowKeysModel.remove(i)
         }
+        let at = 0
+        let ordered = true
+        for (let i = 0; i < rowKeysModel.count && ordered; ++i) {
+            while (at < keys.length && keys[at] !== rowKeysModel.get(i).key)
+                ++at
+            if (at++ >= keys.length)
+                ordered = false
+        }
+        if (!ordered)
+            rowKeysModel.clear()
         rows = built
         for (let i = 0; i < keys.length; ++i) {
             if (i >= rowKeysModel.count || rowKeysModel.get(i).key !== keys[i])
@@ -319,6 +351,10 @@ PanelFrame {
         target: EditorState
         function onTracksRevisionChanged() { root.scheduleRebuild() }
         function onSizeLinkedChanged() { root.scheduleRebuild() }
+        function onClipPropertiesPreviewed(t, c, keys) {
+            if (t === root.track && c === root.clip)
+                root.scheduleRebuild()
+        }
         function onSelectedClipDataChanged() {
             root.updateClipSpan()
             root.scheduleRebuild()
@@ -487,7 +523,7 @@ PanelFrame {
                 KeyframesStretchBox {
                     id: stretchBox
                     anchors.fill: parent
-                    visible: active
+                    visible: active && root.mode === "lanes"
                     panel: root
                 }
 
