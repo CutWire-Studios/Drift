@@ -125,6 +125,18 @@ QList<Point> KeyframeCurvesItem::livePoints(int index) const
                              || (m_dragProp == QLatin1String("y") && entry.prop == QLatin1String("x")));
     if (!partner && entry.prop != m_dragProp)
         return sortedPoints(entry.points);
+    if (!m_dragKeys.isEmpty()) {
+        if (partner)
+            return sortedPoints(entry.points);
+        QList<Point> live = entry.points;
+        for (const QVariant &v : m_dragKeys) {
+            const Point key = pointFromMap(v.toMap());
+            for (Point &p : live)
+                if (std::abs(p.seconds - key.seconds) < 1e-6)
+                    p = key;
+        }
+        return sortedPoints(live);
+    }
 
     const int focused = focusedIndex();
     const Series *master = focused >= 0 && focused < m_series.size() ? &m_series.at(focused) : nullptr;
@@ -177,6 +189,90 @@ QList<Point> KeyframeCurvesItem::livePoints(int index) const
     return sortedPoints(live);
 }
 
+QVariantMap KeyframeCurvesItem::segmentAt(double x, double y, double slop) const
+{
+    const int fi = focusedIndex();
+    if (fi < 0 || fi >= m_series.size() || m_pxPerSecond <= 0)
+        return {};
+    const Series &entry = m_series.at(fi);
+    const double gh = graphHeight();
+    const QList<Point> points = sortedPoints(entry.points);
+    int bestIndex = -1;
+    double bestSeconds = 0;
+    double bestDist = slop + 0.5;
+    for (int i = 0; i + 1 < points.size(); ++i) {
+        const Point &a = points.at(i);
+        const Point &b = points.at(i + 1);
+        if (a.shaped() || b.seconds <= a.seconds)
+            continue;
+        const double xa = a.seconds * m_pxPerSecond - m_originX;
+        const double xb = b.seconds * m_pxPerSecond - m_originX;
+        for (double sx = std::max(xa, x - slop); sx <= std::min(xb, x + slop); sx += 1.0) {
+            const double seconds = (sx + m_originX) / m_pxPerSecond;
+            const double sy = m_graphMargin + yForValue(segmentValue(a, b, seconds), entry, gh);
+            const double d = std::hypot(sx - x, sy - y);
+            if (d < bestDist) {
+                bestDist = d;
+                bestIndex = i;
+                bestSeconds = seconds;
+            }
+        }
+    }
+    if (bestIndex < 0)
+        return {};
+    const Point &a = points.at(bestIndex);
+    const Point &b = points.at(bestIndex + 1);
+    return {{QStringLiteral("t"), segmentParameter(a, b, bestSeconds)},
+            {QStringLiteral("a"), toMap(a)},
+            {QStringLiteral("b"), toMap(b)}};
+}
+
+QVariantList KeyframeCurvesItem::deformSegment(const QVariantMap &a, const QVariantMap &b, double t, double dSeconds,
+                                               double dValue) const
+{
+    Point pa = pointFromMap(a);
+    Point pb = pointFromMap(b);
+    KeyframeCurves::deformSegment(pa, pb, t, dSeconds, dValue);
+    return {toMap(pa), toMap(pb)};
+}
+
+void KeyframeCurvesItem::paintHandles(QPainter *painter, double gh) const
+{
+    const int fi = focusedIndex();
+    if (fi < 0 || fi >= m_series.size())
+        return;
+    const Series &entry = m_series.at(fi);
+    const auto number = [this](const char *key, qreal fallback) {
+        const QVariant v = m_handleStyleMap.value(QLatin1String(key));
+        return v.isValid() ? v.toReal() : fallback;
+    };
+    const qreal radius = number("radius", 4);
+    const qreal borderWidth = number("borderWidth", 1.5);
+    const QPen leader(entry.color, number("leaderWidth", 1), Qt::SolidLine, Qt::RoundCap);
+    const QPen ring(entry.color, borderWidth);
+    const QColor background = m_handleStyleMap.value(QStringLiteral("background")).value<QColor>();
+    const qreal leaderOpacity = number("leaderOpacity", 0.55);
+    const double w = width();
+
+    const QList<Point> points = livePoints(fi);
+    for (const Handle &h : tangentHandles(points)) {
+        const Point &p = points.at(h.pointIndex);
+        const QPointF key(p.seconds * m_pxPerSecond - m_originX, m_graphMargin + yForValue(p.value, entry, gh));
+        const QPointF tip((p.seconds + handleSeconds(p, h.outgoing)) * m_pxPerSecond - m_originX,
+                          m_graphMargin + yForValue(handleValue(p, h.outgoing), entry, gh));
+        if (std::max(key.x(), tip.x()) < -radius || std::min(key.x(), tip.x()) > w + radius)
+            continue;
+        painter->setOpacity(entry.enabled ? leaderOpacity : leaderOpacity * m_opacityDisabled);
+        painter->setPen(leader);
+        painter->drawLine(key, tip);
+        painter->setOpacity(entry.enabled ? 1.0 : m_opacityDisabled);
+        painter->setPen(ring);
+        painter->setBrush(background);
+        painter->drawEllipse(tip, radius - borderWidth / 2, radius - borderWidth / 2);
+    }
+    painter->setOpacity(1.0);
+}
+
 void KeyframeCurvesItem::paint(QPainter *painter)
 {
     const double w = width();
@@ -203,12 +299,14 @@ void KeyframeCurvesItem::paint(QPainter *painter)
             line.append({p.x() * m_pxPerSecond - m_originX, m_graphMargin + yForValue(p.y(), entry, gh)});
         painter->setOpacity(alpha);
         painter->setPen(QPen(entry.color, focused ? m_lineWidth : m_lineWidthMuted, Qt::SolidLine, Qt::FlatCap,
-                             Qt::MiterJoin));
+                             Qt::RoundJoin));
         painter->setBrush(Qt::NoBrush);
         painter->drawPolyline(line);
     }
     painter->setOpacity(1.0);
 
+    if (m_model ? m_model->showHandles() : m_showHandles)
+        paintHandles(painter, gh);
     if (!m_showKeys)
         return;
     const KeyframeDot::Style style = KeyframeDot::Style::fromMap(m_dotStyleMap);

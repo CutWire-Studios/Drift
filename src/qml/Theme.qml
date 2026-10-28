@@ -675,6 +675,7 @@ QtObject {
         chevronLeft: "chevron-left",
         check: "check",
         pencil: "pencil",
+        spline: "spline",
         clock: "clock",
         lock: "lock",
         lockOpen: "lock-open",

@@ -16,7 +16,8 @@ class KeyframeController;
 // overshoot and handles read as playback does, and optionally the key dots with selection, the
 // collision ring and hover. The series come from a KeyframeCurvesModel (the Keyframes panel) or from
 // a plain list (the clip graph). The `drag*` properties show a key or tangent being dragged before
-// the project catches up, for the dragged curve and, with position linked, its x/y partner.
+// the project catches up, for the dragged curve and, with position linked, its x/y partner. With a
+// model that shows handles, the focused curve's bezier handles are drawn under the key dots.
 class KeyframeCurvesItem : public QQuickPaintedItem
 {
     Q_OBJECT
@@ -51,6 +52,13 @@ class KeyframeCurvesItem : public QQuickPaintedItem
     Q_PROPERTY(qreal keyOpacityContext MEMBER m_keyOpacityContext NOTIFY keysChanged)
     Q_PROPERTY(int animationDuration MEMBER m_animationDuration NOTIFY keysChanged)
     Q_PROPERTY(QVariantMap dotStyle MEMBER m_dotStyleMap NOTIFY keysChanged)
+    // keyframeGraphTangentHandle tokens, for the handles a model with showHandles draws.
+    Q_PROPERTY(QVariantMap handleStyle MEMBER m_handleStyleMap NOTIFY keysChanged)
+    // Without a model: draw the focused series' handles.
+    Q_PROPERTY(bool showHandles MEMBER m_showHandles NOTIFY keysChanged)
+    // Without a model: keys of `dragProp` (point maps) drawn in place of the stored ones at the same
+    // time, for a drag that reshapes more than one key, such as bending a segment.
+    Q_PROPERTY(QVariantList dragKeys MEMBER m_dragKeys NOTIFY dragChanged)
 
 public:
     explicit KeyframeCurvesItem(QQuickItem *parent = nullptr);
@@ -65,6 +73,12 @@ public:
     void setSelection(KeyframeSelection *selection);
     QObject *controller() const;
     void setController(QObject *controller);
+
+    // The handle-shaped segment of the focused series under (x, y): {t, a, b} as
+    // KeyframeCurvesModel::segmentAt, or an empty map.
+    Q_INVOKABLE QVariantMap segmentAt(double x, double y, double slop) const;
+    Q_INVOKABLE QVariantList deformSegment(const QVariantMap &a, const QVariantMap &b, double t, double dSeconds,
+                                           double dValue) const;
 
     void paint(QPainter *painter) override;
 
@@ -86,6 +100,7 @@ private:
     qreal graphHeight() const;
     QList<KeyframeCurves::Point> livePoints(int index) const;
     void pullModel();
+    void paintHandles(QPainter *painter, double gh) const;
 
     QPointer<KeyframeCurvesModel> m_model;
     QPointer<KeyframeSelection> m_selection;
@@ -118,6 +133,9 @@ private:
     qreal m_keyOpacityContext = 0.55;
     int m_animationDuration = 150;
     QVariantMap m_dotStyleMap;
+    QVariantMap m_handleStyleMap;
+    bool m_showHandles = false;
+    QVariantList m_dragKeys;
     KeyframeDot::Tween m_tween;
     bool m_repaintScheduled = false;
 };

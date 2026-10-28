@@ -108,7 +108,8 @@ Item {
         CurvePlot {
             id: plot
             anchors.fill: parent
-            curves: root.curves
+            // Unset for a moment when the plot binds before this item's own default does.
+            curves: root.curves ?? ({})
             channel: root.channel
             hueMode: root.hueMode
             channelColors: root.channelColors

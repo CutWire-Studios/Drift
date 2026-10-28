@@ -6,6 +6,7 @@ Item {
 
     property string mode: "lanes"
     property bool normalize: false
+    property bool showHandles: false
     property bool animatedOnly: false
     property bool hasTargets: false
     property bool allTargetsKeyed: false
@@ -18,6 +19,7 @@ Item {
     signal clearKeys()
     signal modeRequested(string mode)
     signal normalizeToggled()
+    signal showHandlesToggled()
     signal fitAll()
     signal fitSelection()
     signal animatedOnlyToggled()
@@ -106,6 +108,15 @@ Item {
                 checked: root.normalize
                 tooltip: qsTr("Scale every curve to fill the height")
                 onClicked: root.normalizeToggled()
+            }
+
+            ThemedToggleButton {
+                visible: root.mode === "curves"
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Handles")
+                checked: root.showHandles
+                tooltip: qsTr("Show bezier handles on the focused curve. Without them, drag a curve to bend it")
+                onClicked: root.showHandlesToggled()
             }
 
             Rectangle {

@@ -18,54 +18,11 @@ Item {
 
     signal contextRequested(real x, real y, var hit)
 
-    // Host contract of KeyframeGraphTangentHandle.
-    readonly property real defaultHandleSeconds: 0.12
     readonly property var series: curvesModel.series
     readonly property int focusedIndex: curvesModel.focusedIndex
 
-    property bool draggingKey: false
-    property var frozenSeries: []
-    property string dragProp: ""
-    property int dragIndex: -1
-    property real dragSeconds: 0
-    property real dragValue: 0
-    property int dragTangentIndex: -1
-    property real dragTangentInDx: 0
-    property real dragTangentInDy: 0
-    property real dragTangentOutDx: 0
-    property real dragTangentOutDy: 0
-
-    function xForSeconds(seconds) {
-        return seconds * timeView.pxPerSecond
-    }
-
-    function secondsForX(x) {
-        return x / timeView.pxPerSecond
-    }
-
-    // The handles only ever ask about the focused series.
-    function yForValue(v, entry) {
-        return curvesModel.screenY(v, focusedIndex) - graphMargin
-    }
-
-    function valueForY(y, entry) {
-        return curvesModel.valueForY(y, focusedIndex)
-    }
-
-    function handleSeconds(point, outgoing) {
-        return curvesModel.handleSeconds(point, outgoing)
-    }
-
-    function handleValue(point, outgoing) {
-        return curvesModel.handleValue(point, outgoing)
-    }
-
     function fitValues(selectedOnly) {
         curvesModel.fitValues(selectedOnly)
-    }
-
-    function gripAt(x, y) {
-        return curvesModel.gripAt(x, y, Theme.c.keyframesKeyDot.size)
     }
 
     function cancelDrag() {
@@ -73,7 +30,6 @@ Item {
     }
 
     clip: true
-    onDraggingKeyChanged: curvesModel.frozen = draggingKey
 
     KeyframeCurvesModel {
         id: curvesModel
@@ -83,6 +39,7 @@ Item {
         curveShown: root.panel.curveShown
         focusedProp: root.panel.focusedProp
         focusedTrack: root.focusedTrack
+        showHandles: root.panel.showHandles
         graphMargin: root.graphMargin
         viewHeight: root.height
     }
@@ -140,21 +97,12 @@ Item {
         lineWidthMuted: Theme.c.keyframeGraphCurveCanvas.lineWidthMuted
         opacityContext: Theme.c.keyframeGraphCurveCanvas.opacityContext
         opacityDisabled: Theme.c.keyframeGraphCurveCanvas.opacityDisabled
-        positionLinked: EditorState.positionLinked
-        dragProp: root.dragProp
-        dragIndex: root.dragIndex
-        dragSeconds: root.dragSeconds
-        dragValue: root.dragValue
-        dragTangentIndex: root.dragTangentIndex
-        dragTangentInDx: root.dragTangentInDx
-        dragTangentInDy: root.dragTangentInDy
-        dragTangentOutDx: root.dragTangentOutDx
-        dragTangentOutDy: root.dragTangentOutDy
         showKeys: true
         hoverId: root.hoverId
         keyOpacityContext: Theme.c.keyframesCurves.opacityContext
         animationDuration: Theme.durationFast
         dotStyle: Theme.plainMap(Theme.c.keyframesKeyDot)
+        handleStyle: Theme.plainMap(Theme.c.keyframeGraphTangentHandle)
     }
 
     KeyframesCurvesInteraction {
@@ -164,22 +112,6 @@ Item {
         panel: root.panel
         view: root
         onContextRequested: (x, y, hit) => root.contextRequested(x, y, hit)
-    }
-
-    Item {
-        id: handleLayer
-        z: 5
-        x: -root.timeView.contentX
-        y: root.graphMargin
-        width: root.width
-        height: root.graphHeight
-
-        Repeater {
-            model: curvesModel.tangentHandles
-            delegate: KeyframeGraphTangentHandle {
-                host: root
-            }
-        }
     }
 
     Item {

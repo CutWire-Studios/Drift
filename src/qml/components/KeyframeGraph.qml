@@ -161,6 +161,11 @@ Item {
     property real dragTangentInDy: 0
     property real dragTangentOutDx: 0
     property real dragTangentOutDy: 0
+    // A bent segment reshapes two keys at once, so the canvas takes both from here.
+    property var dragKeys: []
+
+    // Bezier handles are opt-in; without them a curve is shaped by dragging the curve itself.
+    property bool showHandles: false
 
     // One entry per animated property of the clip — the chip row's model, hidden curves included.
     // [{ prop, label, color, points, enabled, shown, valueMin, valueMax }, ...]
@@ -237,7 +242,7 @@ Item {
     // would dangle off the ends of the curve where there is no neighbouring segment.
     readonly property var tangentHandles: {
         const out = []
-        if (!curveEditing || focusedIndex < 0 || focusedIndex >= series.length)
+        if (!showHandles || !curveEditing || focusedIndex < 0 || focusedIndex >= series.length)
             return out
         const entry = series[focusedIndex]
         const pts = entry.points
@@ -387,6 +392,41 @@ Item {
         return entry.valueMin + t * span
     }
 
+    // The handle-shaped segment of the focused curve under a graph point, or null.
+    function segmentAt(x, y) {
+        const hit = curvesItem.segmentAt(x - contentX, y, Theme.touchInput ? 14 : 8)
+        return hit.a !== undefined ? hit : null
+    }
+    function beginBend() {
+        frozenSeries = series
+        dragProp = series[focusedIndex].prop
+        dragKeys = []
+        draggingKey = true
+        EditorState.beginPreviewDrag(qsTr("Edit keyframe curve"))
+    }
+    // Shift keeps the segment's handles where they are in time.
+    function updateBend(hit, dx, dy, shift) {
+        const entry = series[focusedIndex]
+        const dSeconds = shift ? 0 : dx / pxPerSecond
+        const dValue = valueForY(dy, entry) - valueForY(0, entry)
+        const keys = curvesItem.deformSegment(hit.a, hit.b, hit.t, dSeconds, dValue)
+        for (const k of keys)
+            EditorState.previewSetKeyframeTangents(EditorState.selectedTrack, EditorState.selectedClip,
+                                                   dragProp, k.seconds, k.inDx, k.inDy, k.outDx, k.outDy,
+                                                   k.corner)
+        dragKeys = keys
+    }
+    function endBend(commit) {
+        // Same ordering as a key drag: reset before unfreezing.
+        dragProp = ""
+        dragKeys = []
+        if (commit)
+            EditorState.commitPreviewDrag()
+        else
+            EditorState.cancelPreviewDrag()
+        draggingKey = false
+    }
+
     KeyframeGraphFrame { anchors.fill: parent }
 
     Row {
@@ -527,6 +567,7 @@ Item {
                     }
 
                     KeyframeCurvesItem {
+                        id: curvesItem
                         x: root.contentX
                         width: viewport.width
                         height: parent.height
@@ -551,15 +592,62 @@ Item {
                         dragTangentInDy: root.dragTangentInDy
                         dragTangentOutDx: root.dragTangentOutDx
                         dragTangentOutDy: root.dragTangentOutDy
+                        dragKeys: root.dragKeys
+                        showHandles: root.showHandles && root.curveEditing
+                        handleStyle: Theme.plainMap(Theme.c.keyframeGraphTangentHandle)
                     }
 
-                    // Below the key dots (z 2) and tangent grips (z 4), so double-clicking an
-                    // existing node grabs it instead of inserting another one on top of it.
+                    // Below the tangent grips and key dots, so double-clicking an existing node
+                    // grabs it instead of inserting another one on top of it. Dragging the focused
+                    // curve bends it; on a touchscreen the lane pans instead.
                     MouseArea {
+                        id: bendArea
                         anchors.fill: parent
                         z: 1
                         acceptedButtons: Qt.LeftButton
+                        hoverEnabled: root.curveEditing
+                        preventStealing: bending
+                        cursorShape: bending ? Qt.SizeAllCursor
+                                             : (hoverBend ? Qt.PointingHandCursor : Qt.ArrowCursor)
+                        property var bend: null
+                        property bool bending: false
+                        property bool hoverBend: false
+                        property point pressPos
+
+                        onPressed: (mouse) => {
+                            pressPos = Qt.point(mouse.x, mouse.y)
+                            bend = root.curveEditing && mouse.source === Qt.MouseEventNotSynthesized
+                                   ? root.segmentAt(mouse.x, mouse.y) : null
+                        }
+                        onPositionChanged: (mouse) => {
+                            if (!pressed) {
+                                hoverBend = root.curveEditing && root.segmentAt(mouse.x, mouse.y) !== null
+                                return
+                            }
+                            if (!bend)
+                                return
+                            const dx = mouse.x - pressPos.x
+                            const dy = mouse.y - pressPos.y
+                            if (!bending) {
+                                if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3)
+                                    return
+                                bending = true
+                                root.beginBend()
+                            }
+                            root.updateBend(bend, dx, dy, mouse.modifiers & Qt.ShiftModifier)
+                        }
+                        onReleased: finish(true)
+                        onCanceled: finish(false)
+                        onExited: hoverBend = false
                         onDoubleClicked: function (mouse) { root.addKeyAt(mouse.x) }
+
+                        function finish(commit) {
+                            bend = null
+                            if (!bending)
+                                return
+                            bending = false
+                            root.endBend(commit)
+                        }
                     }
 
                     Repeater {
@@ -569,13 +657,14 @@ Item {
                         }
                     }
 
-                    // Tangent grips for the focused curve, above the keys so they stay
-                    // grabbable where a handle folds back over its own key.
+                    // Tangent grips for the focused curve, under the key dots (z 2) so a handle
+                    // lying on a key never hides it. The canvas draws them.
                     Repeater {
                         model: root.tangentHandles
 
                         delegate: KeyframeGraphTangentHandle {
                             host: root
+                            z: 1.5
                         }
                     }
                 }

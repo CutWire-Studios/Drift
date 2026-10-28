@@ -1,6 +1,7 @@
 #include "app/editor/sessions/KeyframeCurves.h"
 
 #include "core/animation/Keyframe.h"
+#include "core/base/Bezier.h"
 #include "core/base/Time.h"
 
 #include <algorithm>
@@ -341,6 +342,95 @@ double handleSeconds(const Point &point, bool outgoing)
 double handleValue(const Point &point, bool outgoing)
 {
     return point.value + (outgoing ? point.outDy : point.inDy);
+}
+
+namespace {
+
+void keepSmooth(Point &p, bool outgoingMoved)
+{
+    if (p.corner)
+        return;
+    if (outgoingMoved && std::abs(p.outDx) > 1e-6)
+        p.inDy = p.outDy / p.outDx * p.inDx;
+    else if (!outgoingMoved && std::abs(p.inDx) > 1e-6)
+        p.outDy = p.inDy / p.inDx * p.outDx;
+}
+
+} // namespace
+
+Point withHandle(Point p, bool outgoing, double dx, double value)
+{
+    if (outgoing) {
+        p.outDx = std::max(0.0, dx);
+        p.outDy = value - p.value;
+    } else {
+        p.inDx = std::min(0.0, dx);
+        p.inDy = value - p.value;
+    }
+    keepSmooth(p, outgoing);
+    return p;
+}
+
+namespace {
+
+bool isStraight(const Point &a, const Point &b)
+{
+    return std::abs(a.outDx) < 1e-9 && std::abs(a.outDy) < 1e-9 && std::abs(b.inDx) < 1e-9
+           && std::abs(b.inDy) < 1e-9;
+}
+
+} // namespace
+
+double segmentParameter(const Point &a, const Point &b, double seconds)
+{
+    const double span = b.seconds - a.seconds;
+    if (span <= 0)
+        return 0;
+    if (isStraight(a, b))
+        return std::clamp((seconds - a.seconds) / span, 0.0, 1.0);
+    const double x1 = std::clamp(a.seconds + a.outDx, a.seconds, b.seconds);
+    const double x2 = std::clamp(b.seconds + b.inDx, a.seconds, b.seconds);
+    return drift::bezierParameterForX(a.seconds, x1, x2, b.seconds, seconds);
+}
+
+double segmentValue(const Point &a, const Point &b, double seconds)
+{
+    const double s = segmentParameter(a, b, seconds);
+    if (isStraight(a, b))
+        return a.value + (b.value - a.value) * s;
+    return drift::cubicBezier(a.value, a.value + a.outDy, b.value + b.inDy, b.value, s);
+}
+
+void deformSegment(Point &a, Point &b, double t, double dSeconds, double dValue)
+{
+    const double span = b.seconds - a.seconds;
+    if (span <= 0)
+        return;
+    if (isStraight(a, b)) {
+        a.outDx = span / 3;
+        a.outDy = (b.value - a.value) / 3;
+        b.inDx = -span / 3;
+        b.inDy = -(b.value - a.value) / 3;
+    }
+
+    // Close to a key the weights blow up; past these the drag is all on the nearer handle anyway.
+    t = std::clamp(t, 0.1, 0.9);
+    double weight = 1;
+    if (t <= 1.0 / 6)
+        weight = 0;
+    else if (t <= 0.5)
+        weight = std::pow((6 * t - 1) / 2, 3) / 2;
+    else if (t <= 5.0 / 6)
+        weight = (1 - std::pow((6 * (1 - t) - 1) / 2, 3)) / 2 + 0.5;
+    const double k0 = (1 - weight) / (3 * t * (1 - t) * (1 - t));
+    const double k1 = weight / (3 * t * t * (1 - t));
+
+    a.outDx = std::clamp(a.outDx + k0 * dSeconds, 0.0, span);
+    a.outDy += k0 * dValue;
+    b.inDx = std::clamp(b.inDx + k1 * dSeconds, -span, 0.0);
+    b.inDy += k1 * dValue;
+    keepSmooth(a, true);
+    keepSmooth(b, false);
 }
 
 } // namespace KeyframeCurves

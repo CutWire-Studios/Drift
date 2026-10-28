@@ -109,4 +109,16 @@ QList<Handle> tangentHandles(const QList<Point> &points);
 double handleSeconds(const Point &point, bool outgoing);
 double handleValue(const Point &point, bool outgoing);
 
+// The key with one handle moved to `dx` seconds / `value` (absolute). dx keeps its side of the key,
+// and unless the key is a corner its other handle turns to the same slope.
+Point withHandle(Point point, bool outgoing, double dx, double value);
+// Where a handle-shaped segment `a`..`b` is at `seconds`: its bezier parameter and its value,
+// as the engine evaluates it.
+double segmentParameter(const Point &a, const Point &b, double seconds);
+double segmentValue(const Point &a, const Point &b, double seconds);
+// Inkscape's curve drag: moves the inner handles of the segment `a`..`b` so its point at bezier
+// parameter `t` follows a drag of `dSeconds`/`dValue`, the nearer key's handle taking more of it.
+// A straight segment first gets handles on its chord so the press does not change its shape.
+void deformSegment(Point &a, Point &b, double t, double dSeconds, double dValue);
+
 } // namespace KeyframeCurves

@@ -34,7 +34,8 @@ class KeyframeCurvesModel : public QObject
     Q_PROPERTY(QVariantList series READ series NOTIFY changed)
     Q_PROPERTY(int count READ count NOTIFY changed)
     Q_PROPERTY(int focusedIndex READ focusedIndex NOTIFY changed)
-    Q_PROPERTY(QVariantList tangentHandles READ tangentHandles NOTIFY changed)
+    // The focused curve's bezier handles are drawn and grabbable; off, a curve is shaped by dragging it.
+    Q_PROPERTY(bool showHandles READ showHandles WRITE setShowHandles NOTIFY changed)
     Q_PROPERTY(QVariantList gridTicks READ gridTicks NOTIFY changed)
     Q_PROPERTY(QVariantMap labelRange READ labelRange NOTIFY changed)
 
@@ -69,7 +70,8 @@ public:
     int focusedIndex() const;
     // The series is the focused one, or no series is focused and so every one is.
     bool isFocused(int index) const;
-    QVariantList tangentHandles() const;
+    bool showHandles() const { return m_showHandles; }
+    void setShowHandles(bool show);
     QVariantList gridTicks() const;
     QVariantMap labelRange() const;
 
@@ -90,9 +92,16 @@ public:
     // The refs with the value offset a vertical drag of `dy` px gives each, from the locked axes.
     Q_INVOKABLE QVariantList dragRefs(const QVariantList &refs, double dy) const;
     Q_INVOKABLE double valueDelta(const QString &prop, double dy) const;
-    Q_INVOKABLE bool gripAt(double x, double y, double radius) const;
-    Q_INVOKABLE double handleSeconds(const QVariantMap &point, bool outgoing) const;
-    Q_INVOKABLE double handleValue(const QVariantMap &point, bool outgoing) const;
+    // The shown handle under the pointer: {entryIndex, outgoing, point, dx, value} with the handle's
+    // offset in seconds and its value, or an empty map.
+    Q_INVOKABLE QVariantMap handleAt(double x, double y, double radius) const;
+    // The handle-shaped segment under the pointer, the focused curve first: {entryIndex, t, a, b}
+    // with its bezier parameter and its two keys, or an empty map. Holds and Penner presets have none.
+    Q_INVOKABLE QVariantMap segmentAt(double x, double y, double slop) const;
+    // KeyframeCurves::withHandle / deformSegment on point maps; deformSegment returns [a, b].
+    Q_INVOKABLE QVariantMap moveHandle(const QVariantMap &point, bool outgoing, double dx, double value) const;
+    Q_INVOKABLE QVariantList deformSegment(const QVariantMap &a, const QVariantMap &b, double t, double dSeconds,
+                                           double dValue) const;
 
 signals:
     void rowsModelChanged();
@@ -120,6 +129,7 @@ private:
     qreal m_vMin = 0;
     qreal m_vMax = 1;
     bool m_frozen = false;
+    bool m_showHandles = false;
     bool m_needsFit = true;
     bool m_locked = false;
     QHash<QString, KeyframeCurves::Range> m_lockedRanges;

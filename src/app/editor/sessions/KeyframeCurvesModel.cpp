@@ -139,19 +139,12 @@ const Series *KeyframeCurvesModel::focusedSeries() const
     return i >= 0 && i < m_series.size() ? &m_series.at(i) : nullptr;
 }
 
-QVariantList KeyframeCurvesModel::tangentHandles() const
+void KeyframeCurvesModel::setShowHandles(bool show)
 {
-    QVariantList out;
-    const Series *entry = focusedSeries();
-    if (!entry)
-        return out;
-    for (const Handle &h : KeyframeCurves::tangentHandles(entry->points)) {
-        out.append(QVariantMap{{QStringLiteral("pointIndex"), h.pointIndex},
-                               {QStringLiteral("outgoing"), h.outgoing},
-                               {QStringLiteral("color"), entry->color},
-                               {QStringLiteral("point"), toMap(entry->points.at(h.pointIndex))}});
-    }
-    return out;
+    if (m_showHandles == show)
+        return;
+    m_showHandles = show;
+    emit changed();
 }
 
 QVariantList KeyframeCurvesModel::gridTicks() const
@@ -408,28 +401,90 @@ QVariantList KeyframeCurvesModel::dragRefs(const QVariantList &refs, double dy) 
     return out;
 }
 
-bool KeyframeCurvesModel::gripAt(double x, double y, double radius) const
+QVariantMap KeyframeCurvesModel::handleAt(double x, double y, double radius) const
 {
     const int fi = focusedIndex();
     const Series *entry = focusedSeries();
-    if (!entry)
-        return false;
-    for (const Handle &h : KeyframeCurves::tangentHandles(entry->points)) {
-        const Point &p = entry->points.at(h.pointIndex);
-        const double gx = xFor(p.seconds + KeyframeCurves::handleSeconds(p, h.outgoing));
-        const double gy = screenY(KeyframeCurves::handleValue(p, h.outgoing), fi);
-        if (std::hypot(gx - x, gy - y) <= radius)
-            return true;
+    if (!m_showHandles || !entry)
+        return {};
+    const QList<Point> points = sortedPoints(entry->points);
+    for (const Handle &h : KeyframeCurves::tangentHandles(points)) {
+        const Point &p = points.at(h.pointIndex);
+        const double dx = KeyframeCurves::handleSeconds(p, h.outgoing);
+        const double value = KeyframeCurves::handleValue(p, h.outgoing);
+        if (std::hypot(xFor(p.seconds + dx) - x, screenY(value, fi) - y) <= radius)
+            return {{QStringLiteral("entryIndex"), fi},
+                    {QStringLiteral("outgoing"), h.outgoing},
+                    {QStringLiteral("point"), toMap(p)},
+                    {QStringLiteral("dx"), dx},
+                    {QStringLiteral("value"), value}};
     }
-    return false;
+    return {};
 }
 
-double KeyframeCurvesModel::handleSeconds(const QVariantMap &point, bool outgoing) const
+QVariantMap KeyframeCurvesModel::segmentAt(double x, double y, double slop) const
 {
-    return KeyframeCurves::handleSeconds(pointFromMap(point), outgoing);
+    KeyframeTimeView *view = m_rows ? m_rows->timeView() : nullptr;
+    if (!view)
+        return {};
+    const int fi = focusedIndex();
+    int bestSeries = -1;
+    int bestIndex = -1;
+    double bestSeconds = 0;
+    double bestDist = slop + 0.5;
+    const auto scan = [&](int s) {
+        const QList<Point> points = sortedPoints(m_series.at(s).points);
+        for (int i = 0; i + 1 < points.size(); ++i) {
+            const Point &a = points.at(i);
+            const Point &b = points.at(i + 1);
+            if (a.shaped() || b.seconds <= a.seconds)
+                continue;
+            const double xa = xFor(a.seconds);
+            const double xb = xFor(b.seconds);
+            if (x < xa - slop || x > xb + slop)
+                continue;
+            // The nearest point of the curve within `slop` px either side, so a steep stretch still hits.
+            for (double sx = std::max(xa, x - slop); sx <= std::min(xb, x + slop); sx += 1.0) {
+                const double seconds = view->secondsFor(sx);
+                const double d = std::hypot(sx - x, screenY(segmentValue(a, b, seconds), s) - y);
+                if (d < bestDist) {
+                    bestDist = d;
+                    bestSeries = s;
+                    bestIndex = i;
+                    bestSeconds = seconds;
+                }
+            }
+        }
+    };
+    // The focused curve wins whenever it is in reach, so a context curve crossing it is not grabbed.
+    if (fi >= 0)
+        scan(fi);
+    if (bestSeries < 0) {
+        for (int s = 0; s < m_series.size(); ++s)
+            if (s != fi)
+                scan(s);
+    }
+    if (bestSeries < 0)
+        return {};
+    const QList<Point> points = sortedPoints(m_series.at(bestSeries).points);
+    const Point &a = points.at(bestIndex);
+    const Point &b = points.at(bestIndex + 1);
+    return {{QStringLiteral("entryIndex"), bestSeries},
+            {QStringLiteral("t"), segmentParameter(a, b, bestSeconds)},
+            {QStringLiteral("a"), toMap(a)},
+            {QStringLiteral("b"), toMap(b)}};
 }
 
-double KeyframeCurvesModel::handleValue(const QVariantMap &point, bool outgoing) const
+QVariantMap KeyframeCurvesModel::moveHandle(const QVariantMap &point, bool outgoing, double dx, double value) const
 {
-    return KeyframeCurves::handleValue(pointFromMap(point), outgoing);
+    return toMap(withHandle(pointFromMap(point), outgoing, dx, value));
+}
+
+QVariantList KeyframeCurvesModel::deformSegment(const QVariantMap &a, const QVariantMap &b, double t, double dSeconds,
+                                                double dValue) const
+{
+    Point pa = pointFromMap(a);
+    Point pb = pointFromMap(b);
+    KeyframeCurves::deformSegment(pa, pb, t, dSeconds, dValue);
+    return {toMap(pa), toMap(pb)};
 }

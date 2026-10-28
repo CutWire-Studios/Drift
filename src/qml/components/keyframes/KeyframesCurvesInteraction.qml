@@ -11,11 +11,15 @@ Item {
     readonly property var timeView: panel.timeView
     readonly property var selection: panel.selection
     readonly property var rowsModel: panel.rowsModel
-    readonly property bool busy: dotDrag || marqueeActive
+    readonly property bool busy: dotDrag || marqueeActive || shaping
 
     property string mode: ""
     property bool dotDrag: false
     property bool marqueeActive: false
+    // A handle or a curve segment being dragged: the grab from grabAt() and whether it has moved.
+    property var shapeHit: null
+    property bool shaping: false
+    property bool hoverGrab: false
     property var pressHit: null
     property bool collapseOnRelease: false
     property bool touch: false
@@ -44,12 +48,6 @@ Item {
         const hit = view.curves.hitTest(x, y, slop)
         hit.rowData = hit.row >= 0 ? panel.rows[hit.row] : null
         return hit
-    }
-
-    function focusHit(hit) {
-        const entry = view.series[hit.entryIndex]
-        view.focusedTrack = entry.prop
-        panel.focusedProp = entry.rowProp
     }
 
     function startDotDrag() {
@@ -93,7 +91,60 @@ Item {
         dotDrag = false
     }
 
+    // A shown handle, else a curve segment, under the pointer; null when neither is.
+    function grabAt(x, y) {
+        const handle = view.curves.handleAt(x, y, Theme.c.keyframesKeyDot.size)
+        if (handle.point !== undefined) {
+            handle.kind = "handle"
+            return handle
+        }
+        const segment = view.curves.segmentAt(x, y, slop)
+        if (segment.a !== undefined) {
+            segment.kind = "segment"
+            return segment
+        }
+        return null
+    }
+
+    function focusEntry(entryIndex) {
+        const entry = view.series[entryIndex]
+        view.focusedTrack = entry.prop
+        panel.focusedProp = entry.rowProp
+    }
+
+    function startShape() {
+        view.curves.lockRanges()
+        EditorState.beginPreviewDrag(qsTr("Edit keyframe curve"))
+        shaping = true
+    }
+
+    function updateShape(x, y, shift) {
+        const hit = shapeHit
+        const prop = view.series[hit.entryIndex].prop
+        const dSeconds = (x - pressX + timeView.contentX - pressContentX) / timeView.pxPerSecond
+        const dValue = view.curves.valueDelta(prop, y - pressY)
+        // Shift flattens a handle, and keeps a bent segment's handles where they are in time.
+        const keys = hit.kind === "handle"
+            ? [view.curves.moveHandle(hit.point, hit.outgoing, hit.dx + dSeconds,
+                                      shift ? hit.point.value : hit.value + dValue)]
+            : view.curves.deformSegment(hit.a, hit.b, hit.t, shift ? 0 : dSeconds, dValue)
+        for (const k of keys)
+            EditorState.previewSetKeyframeTangents(panel.track, panel.clip, prop, k.seconds,
+                                                   k.inDx, k.inDy, k.outDx, k.outDy, k.corner)
+    }
+
+    function finishShape() {
+        EditorState.commitPreviewDrag()
+        view.curves.unlockRanges()
+        shaping = false
+    }
+
     function cancelDrag() {
+        if (shaping) {
+            EditorState.cancelPreviewDrag()
+            view.curves.unlockRanges()
+            shaping = false
+        }
         if (dotDrag) {
             EditorState.cancelPreviewDrag()
             EditorState.keyframes.clearCollisions()
@@ -152,7 +203,7 @@ Item {
     }
 
     function pressDot(mods, hit) {
-        focusHit(hit)
+        focusEntry(hit.entryIndex)
         const outcome = selection.press(mods, hit.refs)
         collapseOnRelease = outcome === 2
         return outcome !== 0
@@ -219,14 +270,11 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         pressAndHoldInterval: Theme.touchLiftInterval
-        cursorShape: root.dotDrag ? Qt.SizeAllCursor
-                                  : (root.view.hoverId !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor)
+        cursorShape: root.dotDrag || root.shaping
+                     ? Qt.SizeAllCursor
+                     : (root.view.hoverId !== "" || root.hoverGrab ? Qt.PointingHandCursor : Qt.ArrowCursor)
 
         onPressed: (mouse) => {
-            if (mouse.button === Qt.LeftButton && root.view.gripAt(mouse.x, mouse.y)) {
-                mouse.accepted = false
-                return
-            }
             root.panel.forceActiveFocus()
             root.touch = mouse.source !== Qt.MouseEventNotSynthesized
             root.pressX = mouse.x
@@ -237,6 +285,7 @@ Item {
             root.hoverTip = ""
             root.collapseOnRelease = false
             root.pressHit = root.hitTest(mouse.x, mouse.y, root.slop)
+            root.shapeHit = null
             root.mode = ""
             if (mouse.button === Qt.MiddleButton) {
                 root.panStartX = root.timeView.contentX
@@ -255,9 +304,15 @@ Item {
                 root.mode = "touch"
                 return
             }
+            // Keys win over handles and the curve, so a handle lying on a key never hides it.
+            const grab = root.pressHit.dot ? null : root.grabAt(mouse.x, mouse.y)
             if (root.pressHit.dot) {
                 if (root.pressDot(mouse.modifiers, root.pressHit))
                     root.mode = "dot"
+            } else if (grab) {
+                root.focusEntry(grab.entryIndex)
+                root.shapeHit = grab
+                root.mode = grab.kind
             } else {
                 if (!(mouse.modifiers & Qt.ShiftModifier))
                     root.selection.clear()
@@ -269,10 +324,16 @@ Item {
             if (root.mode !== "touch")
                 return
             Haptics.pickUp()
+            const grab = root.pressHit.dot ? null : root.grabAt(root.pressX, root.pressY)
             if (root.pressHit.dot) {
                 root.pressDot(0, root.pressHit)
                 root.startDotDrag()
                 root.mode = "dot"
+            } else if (grab) {
+                root.focusEntry(grab.entryIndex)
+                root.shapeHit = grab
+                root.startShape()
+                root.mode = grab.kind
             } else {
                 root.beginMarquee(0)
                 root.marqueeActive = true
@@ -286,6 +347,7 @@ Item {
                 const hit = root.hitTest(mouse.x, mouse.y, root.slop)
                 root.hoverTip = root.tipFor(hit)
                 root.view.hoverId = hit.dot ? root.selection.keyId(hit.refs[0].prop, hit.seconds) : ""
+                root.hoverGrab = !hit.dot && root.grabAt(mouse.x, mouse.y) !== null
                 return
             }
             const moved = Math.abs(mouse.x - root.pressX) > 3 || Math.abs(mouse.y - root.pressY) > 3
@@ -305,6 +367,11 @@ Item {
                 if (root.dotDrag)
                     root.updateDotDrag(mouse.x, mouse.y, mouse.modifiers & Qt.ShiftModifier,
                                        mouse.modifiers & Qt.AltModifier)
+            } else if (root.mode === "handle" || root.mode === "segment") {
+                if (!root.shaping && moved)
+                    root.startShape()
+                if (root.shaping)
+                    root.updateShape(mouse.x, mouse.y, mouse.modifiers & Qt.ShiftModifier)
             } else if (root.mode === "marquee") {
                 if (!root.marqueeActive && moved)
                     root.marqueeActive = true
@@ -324,12 +391,17 @@ Item {
                 } else if (root.collapseOnRelease) {
                     root.selection.replace(root.pressHit.refs)
                 }
+            } else if (mode === "handle" || mode === "segment") {
+                if (root.shaping)
+                    root.finishShape()
+                else if (mode === "segment")
+                    root.selection.clear()
             } else if (mode === "marquee") {
                 root.marqueeActive = false
             } else if (mode === "touch") {
                 const hit = root.pressHit
                 if (hit.dot) {
-                    root.focusHit(hit)
+                    root.focusEntry(hit.entryIndex)
                     if (root.selection.hasAll(hit.refs))
                         root.openContext(mouse.x, mouse.y, hit)
                     else
@@ -343,6 +415,7 @@ Item {
         onCanceled: root.cancelDrag()
 
         onExited: {
+            root.hoverGrab = false
             root.view.hoverId = ""
             root.hoverTip = ""
         }

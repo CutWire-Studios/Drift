@@ -10,6 +10,7 @@ PanelFrame {
     property real treeWidth: 300
     property string mode: "lanes"
     property bool normalize: false
+    property bool showHandles: false
     property bool animatedOnly: false
     property var collapsed: ({})
     property var curveShown: ({})
@@ -322,6 +323,7 @@ PanelFrame {
         width: parent.width
         mode: root.mode
         normalize: root.normalize
+        showHandles: root.showHandles
         animatedOnly: root.animatedOnly
         hasTargets: root.targets.length > 0
         allTargetsKeyed: root.allTargetsKeyed
@@ -333,6 +335,7 @@ PanelFrame {
         onClearKeys: root.clearTargetKeys()
         onModeRequested: (m) => root.mode = m
         onNormalizeToggled: root.normalize = !root.normalize
+        onShowHandlesToggled: root.showHandles = !root.showHandles
         onFitAll: root.fitAll()
         onFitSelection: root.fitSelection()
         onAnimatedOnlyToggled: root.animatedOnly = !root.animatedOnly

@@ -63,6 +63,7 @@ private slots:
     void curveSamplingMatchesEngineEasing();
     void curveRangeAndFitIncludeOvershootAndHandles();
     void curveGridTicksAndTangentHandles();
+    void curveDragDeformsSegmentThroughCursor();
 };
 
 void KeyframeViewTest::selectionDedupesByMicrosecond()
@@ -382,6 +383,38 @@ void KeyframeViewTest::curveGridTicksAndTangentHandles()
     a.outDy = 3;
     QCOMPARE(handleSeconds(a, true), 0.4);
     QCOMPARE(handleValue(a, true), a.value + 3);
+}
+
+void KeyframeViewTest::curveDragDeformsSegmentThroughCursor()
+{
+    using namespace KeyframeCurves;
+    Point a;
+    Point b;
+    b.seconds = 1;
+    b.value = 10;
+    // A straight segment gets chord handles, so it still evaluates as the line it was.
+    QCOMPARE(segmentParameter(a, b, 0.25), 0.25);
+    Point sa = a;
+    Point sb = b;
+    deformSegment(sa, sb, 0.5, 0, 0);
+    QVERIFY(std::abs(segmentValue(sa, sb, 0.25) - 2.5) < 1e-6);
+
+    // The dragged point follows the cursor: half way, 4 units up.
+    deformSegment(a, b, 0.5, 0, 4);
+    QVERIFY(std::abs(segmentValue(a, b, 0.5) - 9) < 1e-3);
+    QVERIFY(a.outDx >= 0 && a.outDx <= 1);
+    QVERIFY(b.inDx <= 0 && b.inDx >= -1);
+
+    // A smooth key turns its far handle to the same slope; a corner leaves it.
+    Point k;
+    k.inDx = -0.2;
+    k.inDy = 0;
+    const Point smooth = withHandle(k, true, 0.4, 2);
+    QCOMPARE(smooth.outDy, 2.0);
+    QCOMPARE(smooth.inDy, -1.0);
+    k.corner = true;
+    QCOMPARE(withHandle(k, true, 0.4, 2).inDy, 0.0);
+    QCOMPARE(withHandle(k, true, -0.4, 2).outDx, 0.0);
 }
 
 QTEST_APPLESS_MAIN(KeyframeViewTest)
