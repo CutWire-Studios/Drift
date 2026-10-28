@@ -27,6 +27,7 @@ Item {
 
     readonly property bool gradientActive: gradient && gradient.length >= 2
     readonly property real span: Math.max(1e-9, to - from)
+    readonly property bool modified: Math.abs(value - defaultValue) > stepSize / 2
     readonly property bool curved: curvePower !== 1 && Math.abs(from + to - 2 * defaultValue) < 1e-9
 
     function toSliderValue(v) {
@@ -71,12 +72,22 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             elide: Text.ElideRight
             text: root.label
-            color: Theme.mutedForeground
+            color: root.modified ? Theme.panelForeground : Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
+            font.weight: root.modified ? Font.Medium : Font.Normal
 
             TapHandler {
                 onDoubleTapped: root.resetToDefault()
+            }
+
+            HoverHandler {
+                id: labelHover
+            }
+
+            ThemedToolTip {
+                visible: labelHover.hovered
+                text: qsTr("Double-click to reset. Hold Shift while dragging for fine control.")
             }
         }
 

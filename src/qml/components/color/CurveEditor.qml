@@ -25,8 +25,13 @@ Item {
 
     readonly property var channels: hueMode ? ["hue", "sat", "lum"] : ["master", "r", "g", "b"]
     readonly property var channelNames: hueMode
-        ? ({ hue: qsTr("Hue"), sat: qsTr("Sat"), lum: qsTr("Lum") })
+        ? ({ hue: qsTr("Hue"), sat: qsTr("Saturation"), lum: qsTr("Luminance") })
         : ({ master: qsTr("Master"), r: "R", g: "G", b: "B" })
+    readonly property var channelTips: ({
+        hue: qsTr("Hue vs Hue: shift one color toward another"),
+        sat: qsTr("Hue vs Saturation: make one color more or less vivid"),
+        lum: qsTr("Hue vs Luminance: brighten or darken one color")
+    })
     readonly property var channelColors: hueMode
         ? ({ hue: Theme.c.colorGradeCurveChannels.hue,
              sat: Theme.c.colorGradeCurveChannels.sat,
@@ -90,15 +95,14 @@ Item {
     }
 
     function defaultPoints() {
-        const y = hueMode ? 0.5 : 1
-        return [{x: 0, y: hueMode ? 0.5 : 0, ease: "spline"}, {x: 1, y: y, ease: "spline"}]
+        return CurveMath.identity(hueMode)
     }
 
     function pointsOf(ch) {
         if (ch === channel && livePoints)
             return livePoints
         const p = curves && curves[ch]
-        return p && p.length >= 2 ? p : defaultPoints()
+        return Array.isArray(p) && p.length >= 2 ? p : defaultPoints()
     }
 
     function tieHueEnds(pts, idx) {
@@ -125,7 +129,8 @@ Item {
     }
 
     implicitWidth: 240
-    implicitHeight: tabs.height + (showTabs ? Theme.spacingMd : 0) + width
+    readonly property var selectedPoint: selected >= 0 ? pointsOf(channel)[selected] : undefined
+    implicitHeight: hint.y + hint.height
     activeFocusOnTab: true
 
     Keys.onPressed: event => {
@@ -148,6 +153,7 @@ Item {
 
     onCurvesChanged: canvas.requestPaint()
     onChannelChanged: {
+        area?.finish()
         livePoints = null
         selected = -1
         canvas.requestPaint()
@@ -158,12 +164,13 @@ Item {
     Item {
         id: tabs
         width: parent.width
-        height: root.showTabs ? Theme.controlHeightSm : 0
+        height: root.showTabs ? Math.max(chips.height, channelReset.height) : 0
         visible: root.showTabs
 
-        Row {
+        Flow {
+            id: chips
+            width: parent.width - channelReset.width - Theme.spacingSm
             spacing: Theme.spacingSm
-            anchors.verticalCenter: parent.verticalCenter
             Repeater {
                 model: root.channels
                 delegate: ThemedChip {
@@ -172,6 +179,7 @@ Item {
                     // The maps can still be unset when hueMode flips during creation and the
                     // Repeater builds tabs first; the bindings settle once they are.
                     text: root.channelNames?.[modelData] ?? ""
+                    tooltip: root.hueMode ? (root.channelTips?.[modelData] ?? "") : ""
                     selected: root.channel === modelData
                     onClicked: root.channel = modelData
                     Rectangle {
@@ -188,8 +196,9 @@ Item {
         }
 
         IconButton {
+            id: channelReset
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top: parent.top
             glyph: Theme.icons.reset
             tooltip: qsTr("Reset channel")
             buttonSize: Theme.controlHeightSm
@@ -265,7 +274,8 @@ Item {
 
                 const steps = Math.max(32, Math.floor(w / 2))
                 const drawCurve = (ch, alpha, lineWidth) => {
-                    const pts = root.pointsOf(ch)
+                    const src = root.pointsOf(ch)
+                    const pts = root.hueMode ? CurveMath.periodicPoints(src) : src
                     const tan = CurveMath.tangents(pts)
                     ctx.globalAlpha = alpha
                     ctx.strokeStyle = String(root.channelColors[ch])
@@ -406,7 +416,7 @@ Item {
             }
 
             onPositionChanged: mouse => {
-                if (!dragging || dragIndex < 0)
+                if (!dragging || dragIndex < 0 || !root.livePoints)
                     return
                 root.openGesture()
                 const pts = root.livePoints.slice()
@@ -443,5 +453,40 @@ Item {
                 root.removePoint(idx)
             }
         }
+    }
+
+    Text {
+        id: readout
+        y: frame.y + frame.height + Theme.spacingXs
+        width: parent.width
+        height: Math.ceil(fontMetrics.height)
+        opacity: root.selectedPoint ? 1 : 0
+        text: !root.selectedPoint ? ""
+              : root.hueMode
+                ? qsTr("Hue %1° → %2").arg(Math.round(root.selectedPoint.x * 360))
+                      .arg(((root.selectedPoint.y - 0.5) * 2).toFixed(2))
+                : qsTr("In %1 → Out %2").arg(Math.round(root.selectedPoint.x * 255))
+                      .arg(Math.round(root.selectedPoint.y * 255))
+        color: Theme.mutedForeground
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+    }
+
+    Text {
+        id: hint
+        y: readout.y + readout.height + Theme.spacingXs
+        width: parent.width
+        wrapMode: Text.WordWrap
+        opacity: root.pointsOf(root.channel).length <= 2 ? 1 : 0
+        text: qsTr("Click to add a point. Drag to move it. Double-click or drag it off to remove.")
+        color: Theme.mutedForeground
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+    }
+
+    FontMetrics {
+        id: fontMetrics
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
     }
 }

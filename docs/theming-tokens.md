@@ -104,6 +104,14 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | gradeHue | #f59e0b | #f59e0b |
 | gradeSat | #22d3ee | #22d3ee |
 | gradeLum | #e5e7eb | #374151 |
+| gradeWheelNeutral | #5a5c62 | #9c9ea4 |
+| gradeTempCool | #4f8dff | #4f8dff |
+| gradeTrackNeutral | #d9d9d9 | #d9d9d9 |
+| gradeTempWarm | #ffb347 | #ffb347 |
+| gradeTintGreen | #5ccf7a | #5ccf7a |
+| gradeTintMagenta | #e45cd0 | #e45cd0 |
+| gradeTrackBlack | #000000 | #000000 |
+| gradeTrackWhite | #ffffff | #ffffff |
 | gradeCurveRed | #ef5350 | #ef5350 |
 | gradeCurveGreen | #66bb6a | #66bb6a |
 | gradeCurveBlue | #42a5f5 | #42a5f5 |
@@ -1312,6 +1320,28 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | facePropTile | radius | $metrics.radius.sm | $metrics.radius.sm |
 | scopes | background | $palette.scopesBackground | $palette.scopesBackground |
 | scopes | label | $palette.scopesLabel | $palette.scopesLabel |
+| colorWheel | discNeutral | $palette.gradeWheelNeutral | $palette.gradeWheelNeutral |
+| colorWheel | rimStrength | 0.6 | 0.6 |
+| colorWheel | ring | $semantic.panel.border | $semantic.panel.border |
+| colorWheel | ringActive | $semantic.primary | $semantic.primary |
+| colorWheel | ringWidth | $metrics.borderWidth | $metrics.borderWidth |
+| colorWheel | crosshair | $semantic.panel.foreground | $semantic.panel.foreground |
+| colorWheel | crosshairOpacity | 0.18 | 0.18 |
+| colorWheel | puck | $semantic.primary | $semantic.primary |
+| colorWheel | puckBorder | $semantic.panel.foreground | $semantic.panel.foreground |
+| colorWheel | puckBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| colorWheel | vector | $semantic.panel.foreground | $semantic.panel.foreground |
+| colorWheel | vectorOpacity | 0.5 | 0.5 |
+| colorGradeTracks | temperature | ["$palette.gradeTempCool", "$palette.gradeTrackNeutral", "$palette.gradeTempWarm"] | ["$palette.gradeTempCool", "$palette.gradeTrackNeutral", "$palette.gradeTempWarm"] |
+| colorGradeTracks | tint | ["$palette.gradeTintGreen", "$palette.gradeTrackNeutral", "$palette.gradeTintMagenta"] | ["$palette.gradeTintGreen", "$palette.gradeTrackNeutral", "$palette.gradeTintMagenta"] |
+| colorGradeTracks | luma | ["$palette.gradeTrackBlack", "$palette.gradeTrackWhite"] | ["$palette.gradeTrackBlack", "$palette.gradeTrackWhite"] |
+| lookCard | background | $semantic.panel.secondary.background | $semantic.panel.secondary.background |
+| lookCard | backgroundHover | $semantic.panel.accent | $semantic.panel.accent |
+| lookCard | selectedBorder | $semantic.primary | $semantic.primary |
+| lookCard | selectedBorderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |
+| lookCard | label | $semantic.mutedForeground | $semantic.mutedForeground |
+| lookCard | labelSelected | $semantic.panel.foreground | $semantic.panel.foreground |
+| lookCard | radius | $metrics.radius.md | $metrics.radius.md |
 | colorGradeBands | red | $palette.gradeHslRed | $palette.gradeHslRed |
 | colorGradeBands | orange | $palette.gradeHslOrange | $palette.gradeHslOrange |
 | colorGradeBands | yellow | $palette.gradeHslYellow | $palette.gradeHslYellow |

@@ -99,6 +99,14 @@
     "gradeHue": "#f59e0b",
     "gradeSat": "#22d3ee",
     "gradeLum": "#374151",
+    "gradeWheelNeutral": "#9c9ea4",
+    "gradeTempCool": "#4f8dff",
+    "gradeTrackNeutral": "#d9d9d9",
+    "gradeTempWarm": "#ffb347",
+    "gradeTintGreen": "#5ccf7a",
+    "gradeTintMagenta": "#e45cd0",
+    "gradeTrackBlack": "#000000",
+    "gradeTrackWhite": "#ffffff",
     "gradeCurveRed": "#ef5350",
     "gradeCurveGreen": "#66bb6a",
     "gradeCurveBlue": "#42a5f5",
@@ -1820,6 +1828,34 @@
     "scopes": {
       "background": "$palette.scopesBackground",
       "label": "$palette.scopesLabel"
+    },
+    "colorWheel": {
+      "discNeutral": "$palette.gradeWheelNeutral",
+      "rimStrength": 0.6,
+      "ring": "$semantic.panel.border",
+      "ringActive": "$semantic.primary",
+      "ringWidth": "$metrics.borderWidth",
+      "crosshair": "$semantic.panel.foreground",
+      "crosshairOpacity": 0.18,
+      "puck": "$semantic.primary",
+      "puckBorder": "$semantic.panel.foreground",
+      "puckBorderWidth": "$metrics.borderWidthFocus",
+      "vector": "$semantic.panel.foreground",
+      "vectorOpacity": 0.5
+    },
+    "colorGradeTracks": {
+      "temperature": ["$palette.gradeTempCool", "$palette.gradeTrackNeutral", "$palette.gradeTempWarm"],
+      "tint": ["$palette.gradeTintGreen", "$palette.gradeTrackNeutral", "$palette.gradeTintMagenta"],
+      "luma": ["$palette.gradeTrackBlack", "$palette.gradeTrackWhite"]
+    },
+    "lookCard": {
+      "background": "$semantic.panel.secondary.background",
+      "backgroundHover": "$semantic.panel.accent",
+      "selectedBorder": "$semantic.primary",
+      "selectedBorderWidth": "$metrics.borderWidthFocus",
+      "label": "$semantic.mutedForeground",
+      "labelSelected": "$semantic.panel.foreground",
+      "radius": "$metrics.radius.md"
     },
     "colorGradeBands": {
       "red": "$palette.gradeHslRed",

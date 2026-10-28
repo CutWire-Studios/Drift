@@ -30,7 +30,10 @@ Rectangle {
     Text {
         anchors.left: parent.left
         anchors.leftMargin: Theme.pagePadding
+        anchors.right: root.showActions ? undefined : parent.right
+        anchors.rightMargin: Theme.pagePadding
         anchors.verticalCenter: parent.verticalCenter
+        elide: Text.ElideRight
         // Sheet chrome already shows the tab title.
         visible: root.showTitle
         text: root.title
