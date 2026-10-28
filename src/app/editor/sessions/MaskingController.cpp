@@ -362,6 +362,24 @@ bool MaskingController::canConvertClipToMask(int trackIndex, int clipIndex) cons
     return trackBelow(project, trackIndex) >= 0;
 }
 
+QString MaskingController::convertClipToMaskBlocker(int trackIndex, int clipIndex) const
+{
+    if (canConvertClipToMask(trackIndex, clipIndex))
+        return {};
+    const drift::Project &project = m_app->m_project;
+    if (trackIndex < 0 || trackIndex >= project.tracks().size())
+        return {};
+    const QList<drift::Clip> &clips = project.tracks().at(trackIndex).clips;
+    if (clipIndex < 0 || clipIndex >= clips.size())
+        return {};
+    const drift::Clip &clip = clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
+        return {};
+    if (clip.effectiveSpeed() != 1.0 || clip.reverse || clip.hasSpeedCurve())
+        return tr("Remove speed changes first");
+    return tr("Needs a video track below");
+}
+
 void MaskingController::convertClipToMask(int trackIndex, int clipIndex)
 {
     if (!canConvertClipToMask(trackIndex, clipIndex))
@@ -532,9 +550,19 @@ void MaskingController::brushStroke(int trackIndex, int clipIndex, const QVarian
     commitBrushMatte(trackIndex, clipIndex, image, tr("Brush stroke"));
 }
 
+bool MaskingController::hasSelectedBrushMask(int trackIndex, int clipIndex) const
+{
+    if (!isBrushTarget(trackIndex, clipIndex))
+        return false;
+    return selectedBrushMask(trackIndex, clipIndex).first >= 0;
+}
+
 void MaskingController::brushFill(int trackIndex, int clipIndex, bool clear)
 {
     if (!isBrushTarget(trackIndex, clipIndex))
+        return;
+    // Clearing a mask that does not exist would create one that hides the whole clip.
+    if (clear && !hasSelectedBrushMask(trackIndex, clipIndex))
         return;
 
     QImage image = brushImage(trackIndex, clipIndex);
@@ -604,7 +632,6 @@ QImage MaskingController::brushImage(int trackIndex, int clipIndex) const
         && m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id == m_brushClipId)
         return m_brushImage;
 
-    const QSize size = brushMatteSize(trackIndex, clipIndex);
     const QPair<int, int> brush = selectedBrushMask(trackIndex, clipIndex);
 
     QImage image;
@@ -615,13 +642,12 @@ QImage MaskingController::brushImage(int trackIndex, int clipIndex) const
         else
             image = QImage(path).convertToFormat(QImage::Format_Grayscale8);
     }
+    // An existing matte keeps its own size: rescaling it on every stroke resamples the paint
+    // whenever the clip's frame size is keyframed.
     if (image.isNull()) {
-        image = QImage(size, QImage::Format_Grayscale8);
+        image = QImage(brushMatteSize(trackIndex, clipIndex), QImage::Format_Grayscale8);
         image.fill(0);
-        return image;
     }
-    if (image.size() != size)
-        image = image.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     return image;
 }
 
@@ -633,13 +659,22 @@ void MaskingController::commitBrushMatte(int trackIndex, int clipIndex, const QI
     m_brushImage = image;
     m_brushPendingPath = path;
     m_brushClipId = clipId;
-    ++m_brushSavesInFlight;
+    m_sessionBrushMattes.insert(QFileInfo(path).absoluteFilePath());
+    setBrushSavesInFlight(m_brushSavesInFlight + 1);
     (void)QtConcurrent::run(&m_brushPool, [this, image, path, clipId, undoText] {
         const bool ok = image.convertToFormat(QImage::Format_Grayscale8).save(path, "PNG");
         QMetaObject::invokeMethod(this, [this, ok, path, clipId, undoText] {
             finishBrushSave(ok, path, clipId, undoText);
         }, Qt::QueuedConnection);
     });
+}
+
+void MaskingController::setBrushSavesInFlight(int count)
+{
+    const bool wasSaving = m_brushSavesInFlight > 0;
+    m_brushSavesInFlight = count;
+    if (wasSaving != (count > 0))
+        emit brushSavingChanged();
 }
 
 bool MaskingController::waitForBrushSaves(int timeoutMs)
@@ -654,7 +689,7 @@ bool MaskingController::waitForBrushSaves(int timeoutMs)
 
 void MaskingController::finishBrushSave(bool ok, const QString &path, const QString &clipId, const QString &undoText)
 {
-    --m_brushSavesInFlight;
+    setBrushSavesInFlight(m_brushSavesInFlight - 1);
     const auto applied = qScopeGuard([this, &clipId] { emit brushApplied(clipId); });
     if (path == m_brushPendingPath)
         m_brushSaveFailed = !ok;

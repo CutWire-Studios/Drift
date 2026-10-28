@@ -125,7 +125,8 @@ ThemedContextMenu {
         onTriggered: EditorState.separateAllAudioTracks(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
-        text: qsTr("Convert to mask")
+        readonly property string blocker: EditorState.masking.convertClipToMaskBlocker(owner.trackIndex, owner.clipIndex)
+        text: blocker !== "" ? qsTr("Convert to mask") + " — " + blocker : qsTr("Convert to mask")
         icon.name: Theme.icons.mask
         visible: owner.trackType === "video"
         enabled: EditorState.masking.canConvertClipToMask(owner.trackIndex, owner.clipIndex)
@@ -260,6 +261,16 @@ ThemedContextMenu {
             if (!owner.selected)
                 EditorState.selectClip(owner.trackIndex, owner.clipIndex)
             Workspaces.activeId = "keyframes"
+        }
+    }
+    ThemedMenuItem {
+        text: qsTr("Mask & track…")
+        icon.name: Theme.icons.mask
+        visible: owner.trackType === "video"
+        onTriggered: {
+            if (!owner.selected)
+                EditorState.selectClip(owner.trackIndex, owner.clipIndex)
+            Workspaces.activeId = "masking-tracking"
         }
     }
     ThemedMenuSeparator { visible: owner.clipData.kind === "adjustment" && !owner.isTransformClip }

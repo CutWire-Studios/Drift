@@ -462,4 +462,27 @@ Item {
             font.pixelSize: Theme.fontSizeXs
         }
     }
+
+    Rectangle {
+        readonly property bool replaces: root.target.kind === "adjustment"
+                                         && EditorState.masking.maskStack(root.target.track, root.target.clip).length > 0
+        visible: root.drawTool && root.target.kind !== "none" && root.editorState.inside && !root.drawing
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.spacingLg
+        width: drawHintText.width + Theme.spacingLg * 2
+        height: drawHintText.height + Theme.spacingMd * 2
+        radius: Theme.c.maskDrawOverlay.radius
+        color: Theme.c.maskDrawOverlay.hintBackground
+
+        Text {
+            id: drawHintText
+            anchors.centerIn: parent
+            text: parent.replaces ? qsTr("Drawing replaces this layer's mask")
+                                  : qsTr("Drag to draw · Shift for square/circle · Alt from centre")
+            color: Theme.c.maskDrawOverlay.hintForeground
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeXs
+        }
+    }
 }

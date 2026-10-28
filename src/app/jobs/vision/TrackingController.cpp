@@ -1760,8 +1760,14 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
     const QSizeF px = frameSizeAt(project, host, refTimeline);
     const QVector<FrameXform> frames = frameTransforms(project, host, *tracker, px);
     const bool anyFrame = std::any_of(frames.begin(), frames.end(), [](const FrameXform &f) { return f.has; });
-    if (!anyFrame)
-        return tr("Nothing is tracked yet");
+    if (!anyFrame) {
+        // A tracker that holds only its placement key has not been run yet; attaching to it is
+        // not a failure, the keys appear when it is tracked.
+        qsizetype samples = tracker->homographies.size();
+        for (const drift::TrackPoint &point : tracker->points)
+            samples += point.samples.size();
+        return samples > 1 ? tr("Nothing is tracked yet") : QString();
+    }
 
     const bool planar = tracker->kind == MotionTracker::Kind::Planar;
     const MotionTracker::Solve solve = tracker->solve;

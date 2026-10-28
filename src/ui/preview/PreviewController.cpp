@@ -1159,6 +1159,7 @@ void PreviewController::setCanvasCropMode(bool active)
     if (active) {
         setGuideEditSetId(QString());
         setMode(QStringLiteral("2d"));
+        setMaskingTool(QString());
     }
     emit canvasCropModeChanged();
 }

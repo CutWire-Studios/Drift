@@ -24,7 +24,16 @@ QImage SegmentImageProvider::requestImage(const QString &id, QSize *size, const 
         if (!mask.isNull()) {
             image = QImage(mask.size(), QImage::Format_ARGB32);
             image.fill(Qt::white);
-            image.setAlphaChannel(mask.convertToFormat(QImage::Format_Grayscale8));
+            // Soft low coverage everywhere would tint the whole frame faintly.
+            QImage coverage = mask.convertToFormat(QImage::Format_Grayscale8);
+            for (int y = 0; y < coverage.height(); ++y) {
+                uchar *row = coverage.scanLine(y);
+                for (int x = 0; x < coverage.width(); ++x) {
+                    if (row[x] < 128)
+                        row[x] = 0;
+                }
+            }
+            image.setAlphaChannel(coverage);
         }
     }
     else if (kind == QLatin1String("restore-original"))

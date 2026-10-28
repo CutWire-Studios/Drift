@@ -34,6 +34,12 @@ Item {
     property point hoverPoint: Qt.point(0, 0)
     // Brush diameter in clip-frame pixels; the size is a fraction of the frame width.
     readonly property real brushDiameter: EditorState.masking.brushSize * clipFrame.width
+    readonly property bool eraseNow: interacting ? strokeErase : EditorState.masking.brushErase
+    // Shift-drag resizes the brush instead of painting.
+    property bool resizing: false
+    property real resizeStartX: 0
+    property real resizeStartSize: 0
+    property bool sizeLabelShown: false
 
     function refresh() {
         // Hidden: onVisibleChanged catches up when shown.
@@ -57,7 +63,8 @@ Item {
         const fh = Math.max(1, clipFrame.height)
         const normalized = pts.map(p => ({ "x": p.x / fw, "y": p.y / fh }))
         root.pendingStrokes = root.pendingStrokes.concat([{ "points": normalized, "erase": erase,
-                                                            "size": EditorState.masking.brushSize }])
+                                                            "size": EditorState.masking.brushSize,
+                                                            "opacity": EditorState.masking.brushOpacity }])
         EditorState.masking.brushStroke(t.track, t.clip, normalized, erase)
     }
 
@@ -68,11 +75,27 @@ Item {
             pendingStrokes = []
     }
     Component.onCompleted: refresh()
-    Component.onDestruction: pendingStrokes = []
+    Component.onDestruction: {
+        if (interacting && stroke.length > 0)
+            commitStroke(strokeErase)
+        ShellBridge.brushStrokeActive = false
+        pendingStrokes = []
+    }
+    onInteractingChanged: ShellBridge.brushStrokeActive = interacting
+
+    Timer {
+        id: sizeLabelTimer
+        interval: 800
+        onTriggered: root.sizeLabelShown = false
+    }
 
     Connections {
         target: EditorState.masking
         function onBrushApplied() { root.pendingStrokes = root.pendingStrokes.slice(1) }
+        function onBrushSettingsChanged() {
+            root.sizeLabelShown = true
+            sizeLabelTimer.restart()
+        }
     }
 
     Connections {
@@ -137,24 +160,43 @@ Item {
         Repeater {
             model: root.pendingStrokes
 
-            delegate: Shape {
+            delegate: Item {
                 id: pending
                 required property var modelData
                 anchors.fill: parent
-                visible: modelData.points.length > 1
 
-                ShapePath {
-                    strokeColor: Qt.alpha(pending.modelData.erase ? Theme.c.maskBrushOverlay.eraseStroke
-                                                                  : Theme.c.maskBrushOverlay.stroke, 0.5)
-                    strokeWidth: pending.modelData.size * clipFrame.width
-                    capStyle: ShapePath.RoundCap
-                    joinStyle: ShapePath.RoundJoin
-                    fillColor: "transparent"
+                Shape {
+                    anchors.fill: parent
+                    visible: pending.modelData.points.length > 1
+                    opacity: 0.35 + 0.5 * pending.modelData.opacity
+                    preferredRendererType: Shape.CurveRenderer
 
-                    PathPolyline {
-                        path: pending.modelData.points.map(p => Qt.point(p.x * clipFrame.width,
-                                                                          p.y * clipFrame.height))
+                    ShapePath {
+                        strokeColor: pending.modelData.erase ? Theme.c.maskBrushOverlay.eraseStroke
+                                                             : Theme.c.maskBrushOverlay.stroke
+                        strokeWidth: pending.modelData.size * clipFrame.width
+                        capStyle: ShapePath.RoundCap
+                        joinStyle: ShapePath.RoundJoin
+                        fillColor: "transparent"
+
+                        PathPolyline {
+                            path: pending.modelData.points.map(p => Qt.point(p.x * clipFrame.width,
+                                                                              p.y * clipFrame.height))
+                        }
                     }
+                }
+
+                Rectangle {
+                    readonly property var first: pending.modelData.points[0]
+                    visible: pending.modelData.points.length === 1
+                    width: pending.modelData.size * clipFrame.width
+                    height: width
+                    radius: width / 2
+                    x: (first ? first.x * clipFrame.width : 0) - width / 2
+                    y: (first ? first.y * clipFrame.height : 0) - height / 2
+                    color: pending.modelData.erase ? Theme.c.maskBrushOverlay.eraseStroke
+                                                   : Theme.c.maskBrushOverlay.stroke
+                    opacity: 0.35 + 0.5 * pending.modelData.opacity
                 }
             }
         }
@@ -162,10 +204,12 @@ Item {
         Shape {
             anchors.fill: parent
             visible: root.interacting && root.stroke.length > 1
+            opacity: 0.35 + 0.5 * EditorState.masking.brushOpacity
+            preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-                strokeColor: Qt.alpha(root.strokeErase ? Theme.c.maskBrushOverlay.eraseStroke
-                                                       : Theme.c.maskBrushOverlay.stroke, 0.5)
+                strokeColor: root.strokeErase ? Theme.c.maskBrushOverlay.eraseStroke
+                                              : Theme.c.maskBrushOverlay.stroke
                 strokeWidth: root.brushDiameter
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
@@ -177,6 +221,17 @@ Item {
             }
         }
 
+        Rectangle {
+            visible: root.interacting && !root.resizing && root.stroke.length === 1
+            width: root.brushDiameter
+            height: width
+            radius: width / 2
+            x: (root.stroke.length > 0 ? root.stroke[0].x : 0) - width / 2
+            y: (root.stroke.length > 0 ? root.stroke[0].y : 0) - height / 2
+            color: root.strokeErase ? Theme.c.maskBrushOverlay.eraseStroke : Theme.c.maskBrushOverlay.stroke
+            opacity: 0.35 + 0.5 * EditorState.masking.brushOpacity
+        }
+
         // The circle is the dab's full radius; the inner one marks where the falloff starts.
         Rectangle {
             visible: root.hovering && root.clipTarget
@@ -186,8 +241,29 @@ Item {
             x: root.hoverPoint.x - width / 2
             y: root.hoverPoint.y - height / 2
             color: "transparent"
-            border.color: Theme.c.maskBrushOverlay.cursor
+            border.color: root.eraseNow ? Theme.c.maskBrushOverlay.eraseStroke : Theme.c.maskBrushOverlay.cursor
             border.width: Theme.c.maskBrushOverlay.borderWidth
+
+            Text {
+                visible: root.eraseNow
+                anchors.centerIn: parent
+                text: "−"
+                color: Theme.c.maskBrushOverlay.eraseStroke
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+                font.bold: true
+            }
+
+            Text {
+                visible: root.sizeLabelShown
+                anchors.left: parent.right
+                anchors.leftMargin: Theme.spacingXs
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("%1 %").arg((EditorState.masking.brushSize * 100).toFixed(1))
+                color: Theme.c.maskBrushOverlay.cursor
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
         }
 
         Rectangle {
@@ -221,19 +297,36 @@ Item {
         onPositionChanged: (mouse) => {
             const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
             root.hoverPoint = Qt.point(p.x, p.y)
+            if (root.resizing) {
+                const size = root.resizeStartSize + (p.x - root.resizeStartX) / Math.max(1, clipFrame.width)
+                EditorState.masking.brushSize = Math.max(0.002, Math.min(0.5, size))
+                return
+            }
             if (!root.interacting)
                 return
             const last = root.stroke[root.stroke.length - 1]
-            if (Math.hypot(p.x - last.x, p.y - last.y) >= 2)
-                root.stroke = root.stroke.concat([Qt.point(p.x, p.y)])
+            if (Math.hypot(p.x - last.x, p.y - last.y) >= 2) {
+                root.stroke.push(Qt.point(p.x, p.y))
+                root.strokeChanged()
+            }
         }
         onPressed: (mouse) => {
             const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
+            if (mouse.button === Qt.LeftButton && (mouse.modifiers & Qt.ShiftModifier)) {
+                root.resizing = true
+                root.resizeStartX = p.x
+                root.resizeStartSize = EditorState.masking.brushSize
+                return
+            }
             root.interacting = true
             root.strokeErase = mouse.button === Qt.RightButton || EditorState.masking.brushErase
             root.stroke = [Qt.point(p.x, p.y)]
         }
         onReleased: {
+            if (root.resizing) {
+                root.resizing = false
+                return
+            }
             if (!root.interacting)
                 return
             root.interacting = false
@@ -241,6 +334,7 @@ Item {
             Qt.callLater(root.refresh)
         }
         onCanceled: {
+            root.resizing = false
             root.interacting = false
             root.stroke = []
         }
@@ -261,7 +355,7 @@ Item {
             text: !root.clipTarget
                   ? qsTr("Select a video or image clip to paint a mask")
                   : root.editorState.inside
-                    ? qsTr("Paint to add · Right-drag to erase · [ ] size")
+                    ? qsTr("Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom").arg(EditorState.shortcutFor("maskingBrushToggleErase"))
                     : qsTr("Move the playhead over the selected clip")
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily

@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QPair>
 #include <QPointF>
+#include <QSet>
 #include <QSize>
 #include <QString>
 #include <QThreadPool>
@@ -34,6 +35,8 @@ class MaskingController : public QObject
     Q_PROPERTY(double brushHardness READ brushHardness WRITE setBrushHardness NOTIFY brushSettingsChanged)
     Q_PROPERTY(double brushOpacity READ brushOpacity WRITE setBrushOpacity NOTIFY brushSettingsChanged)
     Q_PROPERTY(bool brushErase READ brushErase WRITE setBrushErase NOTIFY brushSettingsChanged)
+    // True while a stroke's matte is still being written; undo waits for it so the stroke cannot land afterwards.
+    Q_PROPERTY(bool brushSaving READ brushSaving NOTIFY brushSavingChanged)
 
 public:
     explicit MaskingController(AppController *app, QObject *parent = nullptr);
@@ -47,6 +50,7 @@ public:
     void setBrushOpacity(double opacity);
     bool brushErase() const { return m_brushErase; }
     void setBrushErase(bool erase);
+    bool brushSaving() const { return m_brushSavesInFlight > 0; }
 
     Q_INVOKABLE QString assetMaskRole(int assetIndex) const;
     Q_INVOKABLE void setAssetMaskRole(int assetIndex, const QString &role);
@@ -54,6 +58,8 @@ public:
     Q_INVOKABLE void addAssetMaskToClip(int trackIndex, int clipIndex, int assetIndex);
     Q_INVOKABLE void addAssetLaneMask(int trackIndex, int assetIndex, double atSeconds);
     Q_INVOKABLE bool canConvertClipToMask(int trackIndex, int clipIndex) const;
+    // Why canConvertClipToMask is false for a video or image clip; empty when it is allowed or the clip is no candidate.
+    Q_INVOKABLE QString convertClipToMaskBlocker(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void convertClipToMask(int trackIndex, int clipIndex);
 
     // How long a lane matte from this asset lasts: a video's own length, else a still's default.
@@ -98,11 +104,14 @@ public:
     // adjustment gets selected. Updating an existing brush mask sets its mediaPath to the new file.
     // One undo step per stroke: tr("Brush stroke").
     Q_INVOKABLE void brushStroke(int trackIndex, int clipIndex, const QVariantList &points, bool erase);
-    // Fill the selected brush mask entirely (coverage 1) or clear it (0); same target rules, creates
-    // the mask if needed. Undo tr("Fill mask") / tr("Clear mask").
+    // Whether a brush mask pinned to this clip is the current selection, i.e. what brushStroke would paint into.
+    Q_INVOKABLE bool hasSelectedBrushMask(int trackIndex, int clipIndex) const;
+    // Fill the selected brush mask entirely (coverage 1) or clear it (0); same target rules. Fill creates
+    // the mask if needed; clear does nothing without one. Undo tr("Fill mask") / tr("Clear mask").
     Q_INVOKABLE void brushFill(int trackIndex, int clipIndex, bool clear);
     // Test hook: waits until every queued brush save has been applied to the project.
     bool waitForBrushSaves(int timeoutMs = 5000);
+    QSet<QString> &sessionBrushMattes() { return m_sessionBrushMattes; }
 
     // Path keys of the mask on adjustment clip (track, clip), as seconds on the TIMELINE
     // (adjustment.timelineStart + key time), ascending.
@@ -137,6 +146,7 @@ public:
 
 signals:
     void brushSettingsChanged();
+    void brushSavingChanged();
     // One per brush save, in stroke order, whether it succeeded or not.
     void brushApplied(const QString &clipId);
 
@@ -153,6 +163,7 @@ private:
     void commitBrushMatte(int trackIndex, int clipIndex, const QImage &image, const QString &undoText);
     void finishBrushSave(bool ok, const QString &path, const QString &clipId, const QString &undoText);
     bool isBrushTarget(int trackIndex, int clipIndex) const;
+    void setBrushSavesInFlight(int count);
     // The mask label: its own name, else a human label for its shape.
     QString maskLabel(const drift::Mask &mask) const;
     bool canEditMask(int trackIndex, int clipIndex, const QString &key) const;
@@ -173,6 +184,7 @@ private:
     // the project lags m_brushImage, so brushImage() trusts m_brushImage for m_brushClipId instead.
     QImage m_brushImage;
     QString m_brushPendingPath;
+    QSet<QString> m_sessionBrushMattes;
     QString m_brushClipId;
     int m_brushSavesInFlight = 0;
     // The newest save failed: m_brushImage holds strokes no file has, and the next stroke's save retries them.

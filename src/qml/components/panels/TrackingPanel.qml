@@ -25,6 +25,8 @@ PanelFrame {
     readonly property bool followsPlayhead: target.kind === "adjustment" || target.kind === "none"
                                             || target.viaAdjustment !== undefined
     property bool clipAtPlayhead: false
+    // A clip that can follow a tracker (text, sticker, image on another track) is selected instead of a video.
+    property bool followerSelected: false
     // Set when a drag has just replaced the samples after the playhead; cleared by the next track.
     property string correctedId: ""
     readonly property string placeMode: ShellBridge.trackerPlaceMode
@@ -37,8 +39,8 @@ PanelFrame {
     readonly property var solveModes: ["translate", "translateRotate", "translateRotateScale", "perspective"]
     readonly property var solveLabels: ({
         "translate": qsTr("Position"),
-        "translateRotate": qsTr("Position + Rotation"),
-        "translateRotateScale": qsTr("Position + Rotation + Scale"),
+        "translateRotate": qsTr("Position + rotation"),
+        "translateRotateScale": qsTr("Position, rotation + size"),
         "perspective": qsTr("Perspective")
     })
 
@@ -46,6 +48,9 @@ PanelFrame {
         target = ShellBridge.trackerTarget()
         clipAtPlayhead = target.kind === "none"
                          && EditorState.preview.clipsAtPlayhead().some(box => box.kind === "video" || box.kind === "image")
+        const selectedKind = EditorState.selectedClipData.kind
+        followerSelected = target.kind === "none" && !!selectedKind && selectedKind !== "video"
+                           && selectedKind !== "audio" && selectedKind !== "adjustment" && selectedKind !== "subtitle"
         const clip = target.kind === "clip" ? EditorState.clipAt(target.track, target.clip) : ({})
         clipStart = clip.start || 0
         clipDuration = clip.duration || 0
@@ -210,7 +215,9 @@ PanelFrame {
                 title: qsTr("No clip selected")
                 hint: root.target.kind === "adjustment"
                       ? qsTr("No video clip under this adjustment layer at the playhead.")
-                      : qsTr("Select a video clip to track motion in it.")
+                      : root.followerSelected
+                        ? qsTr("Trackers live on the video. Select the video clip under this one, track the object, then use Attach → Make follow.")
+                        : qsTr("Select a video clip to track motion in it.")
             }
 
             ThemedButton {
@@ -249,6 +256,7 @@ PanelFrame {
                     Layout.alignment: Qt.AlignVCenter
                     glyph: Theme.icons.locateFixed
                     text: qsTr("Point")
+                    enabled: !EditorState.tracking.busy
                     tooltip: qsTr("Track a feature with one point")
                     onClicked: root.startPlacing("point", "")
                 }
@@ -257,6 +265,7 @@ PanelFrame {
                     Layout.alignment: Qt.AlignVCenter
                     glyph: Theme.icons.square
                     text: qsTr("Planar")
+                    enabled: !EditorState.tracking.busy
                     tooltip: qsTr("Track a flat surface outlined by its corners")
                     onClicked: root.startPlacing("planar", "")
                 }
@@ -553,7 +562,7 @@ PanelFrame {
                             Text {
                                 Layout.preferredWidth: 56
                                 Layout.alignment: Qt.AlignVCenter
-                                text: qsTr("Solve")
+                                text: qsTr("Follow")
                                 color: Theme.c.maskingPanel.foregroundMuted
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontSizeXs
@@ -587,20 +596,26 @@ PanelFrame {
                             Text {
                                 Layout.preferredWidth: 56
                                 Layout.alignment: Qt.AlignVCenter
-                                text: qsTr("Confidence")
+                                text: qsTr("Stop if")
                                 color: Theme.c.maskingPanel.foregroundMuted
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontSizeXs
+
+                                HoverHandler { id: stopIfHover }
+                                ThemedToolTip {
+                                    visible: stopIfHover.hovered
+                                    text: qsTr("Tracking stops when the match gets worse than this")
+                                }
                             }
 
                             ThemedSlider {
                                 id: minConfSlider
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
-                                label: qsTr("Minimum confidence")
+                                label: qsTr("Stop if match is worse than")
                                 from: 30
                                 to: 95
-                                valueFormatter: function (v) { return Math.round(v) + " %" }
+                                valueFormatter: function (v) { return qsTr("match < %1 %").arg(Math.round(v)) }
                                 Binding on value {
                                     when: !minConfSlider.pressed
                                     value: trackerRow.modelData.minConfidence * 100
@@ -622,17 +637,23 @@ PanelFrame {
                             Text {
                                 Layout.preferredWidth: 56
                                 Layout.alignment: Qt.AlignVCenter
-                                text: qsTr("Pattern")
+                                text: qsTr("Box size")
                                 color: Theme.c.maskingPanel.foregroundMuted
                                 font.family: Theme.fontFamily
                                 font.pixelSize: Theme.fontSizeXs
+
+                                HoverHandler { id: boxSizeHover }
+                                ThemedToolTip {
+                                    visible: boxSizeHover.hovered
+                                    text: qsTr("Size of the area being followed. Bigger is steadier, smaller is more precise.")
+                                }
                             }
 
                             ThemedSlider {
                                 id: patternSlider
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
-                                label: qsTr("Pattern size")
+                                label: qsTr("Box size")
                                 from: 2
                                 to: 20
                                 valueFormatter: function (v) { return Math.round(v) + " %" }
@@ -654,7 +675,7 @@ PanelFrame {
                             spacing: Theme.spacingSm
 
                             ThemedButton {
-                                text: qsTr("Clear ◀")
+                                text: qsTr("Erase before")
                                 tooltip: qsTr("Remove the samples before the playhead")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: EditorState.tracking.clearSamples(root.target.track, root.target.clip,
@@ -662,7 +683,7 @@ PanelFrame {
                             }
 
                             ThemedButton {
-                                text: qsTr("Clear ▶")
+                                text: qsTr("Erase after")
                                 tooltip: qsTr("Remove the samples after the playhead")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: EditorState.tracking.clearSamples(root.target.track, root.target.clip,
@@ -680,7 +701,7 @@ PanelFrame {
                         }
 
                         Text {
-                            text: qsTr("Drives")
+                            text: qsTr("Moves")
                             color: Theme.c.maskingPanel.foregroundMuted
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontSizeXs
@@ -717,8 +738,8 @@ PanelFrame {
 
                                 ThemedComboBox {
                                     readonly property var labels: ({
-                                        "center": qsTr("Center on track"),
-                                        "offset": qsTr("Keep offset")
+                                        "center": qsTr("Stick to the point"),
+                                        "offset": qsTr("Keep current position")
                                     })
                                     visible: targetRow.modelData.mode !== "mask"
                                     Layout.alignment: Qt.AlignVCenter
@@ -750,8 +771,8 @@ PanelFrame {
                             ThemedButton {
                                 id: addTargetButton
                                 glyph: Theme.icons.plus
-                                text: qsTr("Add target…")
-                                tooltip: qsTr("Let a mask or clip follow this tracker")
+                                text: qsTr("Attach…")
+                                tooltip: qsTr("Make a mask or clip move with this tracker")
                                 onClicked: {
                                     const drives = trackerRow.modelData.targets
                                     targetMenu.candidates = EditorState.tracking.targetCandidates(root.target.track,
@@ -767,7 +788,7 @@ PanelFrame {
                             ThemedButton {
                                 glyph: Theme.icons.refresh
                                 text: qsTr("Re-apply")
-                                tooltip: qsTr("Regenerate the keys on the drives")
+                                tooltip: qsTr("Update the attached masks and clips from the current track")
                                 enabled: !EditorState.tracking.busy && trackerRow.modelData.targets.length > 0
                                 onClicked: EditorState.tracking.apply(root.target.track, root.target.clip,
                                                                       trackerRow.modelData.id)

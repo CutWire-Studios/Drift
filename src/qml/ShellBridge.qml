@@ -18,6 +18,8 @@ QtObject {
     // Vertices placed by the polygon tool so far. Escape cancels them before it leaves the tool.
     property int pendingPolygonPoints: 0
     signal maskingCancelRequested()
+    // A brush stroke is being dragged; Escape must not drop the tool and its overlay mid-stroke.
+    property bool brushStrokeActive: false
     // Armed by the Tracking panel; the tracker overlay consumes the next click.
     property string trackerPlaceMode: ""
     // The tracker an "addPoint" click extends.

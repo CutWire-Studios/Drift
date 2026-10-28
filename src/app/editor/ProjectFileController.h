@@ -172,6 +172,7 @@ public:
     void rehydrateMissingSources();
     void reportMissingCatalogEntries();
     void sweepExtractionDirs();
+    void sweepBrushMattes();
     void detectRecoveryFile();
 
 signals:

@@ -24,7 +24,7 @@ Rectangle {
     color: "transparent"
     border.width: Theme.c.maskOverlayEdgeMidpoint.borderWidth
     border.color: Theme.c.maskOverlayEdgeMidpoint.border
-    opacity: midArea.containsMouse ? 1.0 : 0.5
+    opacity: midArea.containsMouse ? 1.0 : 0.8
     x: mxN * midpoint.frame.width - width / 2
     y: myN * midpoint.frame.height - height / 2
     z: 199

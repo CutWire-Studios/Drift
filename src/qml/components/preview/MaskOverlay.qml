@@ -594,4 +594,12 @@ Item {
         visible: !root.hasFrame || root.layers.length === 0
         hasFrame: root.hasFrame
     }
+
+    MaskOverlayEmptyHint {
+        visible: root.hasFrame && root.layers.some(l => l.selected && l.mask && l.mask.shape === "freeform")
+        hasFrame: root.hasFrame
+        message: Theme.touchInput
+                 ? qsTr("Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete")
+                 : qsTr("Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete")
+    }
 }

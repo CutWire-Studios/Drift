@@ -251,6 +251,51 @@ void ProjectFileController::sweepExtractionDirs()
     // there would be data loss rather than a re-derivable cache miss.
 #endif
 }
+// Brush strokes write a new matte PNG each time, and undo keeps the earlier ones reachable, so the
+// cache only grows during a session. The undo stack is in memory and starts empty on every open
+// and new project, so a matte written this session that neither the document, a saved project's
+// manifest nor the recovery snapshot names is unreachable. Only this session's mattes are
+// candidates: older projects that dropped off the recent list may still name earlier files.
+void ProjectFileController::sweepBrushMattes()
+{
+    QSet<QString> &written = m_app->m_masking->sessionBrushMattes();
+    if (written.isEmpty() || drift::instances::otherInstanceRunning())
+        return;
+
+    QSet<QString> live;
+    for (const drift::bundle::MediaEntry &media : drift::bundle::collectMedia(m_app->m_project, false))
+        live.insert(QFileInfo(media.originalPath).absoluteFilePath());
+    for (const drift::MediaAsset &asset : m_app->m_project.assets())
+        live.insert(QFileInfo(asset.path).absoluteFilePath());
+
+    for (const QVariant &entry : recentProjects()) {
+        QString error;
+        const auto info = drift::bundle::readManifest(entry.toMap().value(QStringLiteral("path")).toString(), &error);
+        if (!info)
+            return;
+        for (const drift::bundle::MediaEntry &media : info->media)
+            live.insert(QFileInfo(media.originalPath).absoluteFilePath());
+    }
+
+    QSet<QString> recoveryStrings;
+    {
+        QFile file(recoveryFilePath());
+        if (file.open(QIODevice::ReadOnly))
+            collectJsonStrings(QJsonDocument::fromJson(file.readAll()).object(), &recoveryStrings);
+    }
+    for (const QString &string : std::as_const(recoveryStrings))
+        live.insert(QFileInfo(string).absoluteFilePath());
+
+    for (auto it = written.begin(); it != written.end();) {
+        if (live.contains(*it)) {
+            ++it;
+            continue;
+        }
+        QFile::remove(*it);
+        it = written.erase(it);
+    }
+}
+
 QString ProjectFileController::projectName() const
 {
     return m_app->m_project.name();
@@ -1599,6 +1644,7 @@ void ProjectFileController::newProject(bool silent)
     m_app->m_preferences->setAudioMixerVisible(false);
     setDirty(false);
     deleteRecoveryFile();
+    sweepBrushMattes();
     // Always notify — even when already false — so the layout chooser reopens
     // after "Decide later" + New Project.
     m_app->m_projectLayoutChosen = false;

@@ -72,6 +72,7 @@
 #include "core/edit/TimelineOps.h"
 #include "engine/encode/export/Exporter.h"
 #include "engine/encode/writers/MatteWriter.h"
+#include "app/editor/ProjectFileController.h"
 #include <QPainter>
 #include "core/effects/Mask.h"
 #include "app/editor/sessions/MaskingController.h"
@@ -378,6 +379,9 @@ private slots:
     void trackingCorrectionDropsStaleSamplesAndReappliesTargets();
     void trackingFrameKeepsAGhostMarkerOffTheTrackedSpan();
     void maskingBrushOpacityCapsASingleStroke();
+    void maskingClearWithoutBrushMaskCreatesNothing();
+    void maskingUndoWaitsForBrushSave();
+    void maskingSweepDropsUnreferencedBrushMattes();
     void maskingBrushPaintsAndErases();
     void maskingBrushStrokeCreatesAndUpdatesAMatte();
     void maskingBrushStrokesChainBeforeSaving();
@@ -13231,6 +13235,91 @@ void EditorStateTest::maskingBrushOpacityCapsASingleStroke()
 
     drift::masking::paintBrushStroke(image, line, 10, 1.0, 1.0, true);
     QVERIFY(qGray(image.pixel(100, 50)) < 5);
+}
+
+void EditorStateTest::maskingClearWithoutBrushMaskCreatesNothing()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+
+    QVERIFY(!state.masking()->hasSelectedBrushMask(0, 0));
+    state.masking()->brushFill(0, 0, true);
+    QVERIFY(state.masking()->waitForBrushSaves());
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 0);
+
+    state.masking()->brushFill(0, 0, false);
+    QVERIFY(state.masking()->waitForBrushSaves());
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 1);
+    QVERIFY(state.masking()->hasSelectedBrushMask(0, 0));
+}
+
+void EditorStateTest::maskingUndoWaitsForBrushSave()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+
+    state.masking()->brushStroke(0, 0, QVariantList{maskVertex(0.2, 0.5), maskVertex(0.8, 0.5)}, false);
+    state.undo();
+    QVERIFY(!state.masking()->brushSaving());
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 0);
+}
+
+void EditorStateTest::maskingSweepDropsUnreferencedBrushMattes()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestMatteSweep"));
+    const auto restoreNames = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("recentProjects"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+    QSettings().remove(QStringLiteral("recentProjects"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+
+    state.masking()->brushStroke(0, 0, QVariantList{maskVertex(0.2, 0.5), maskVertex(0.4, 0.5)}, false);
+    QVERIFY(state.masking()->waitForBrushSaves());
+    state.masking()->brushStroke(0, 0, QVariantList{maskVertex(0.6, 0.5), maskVertex(0.8, 0.5)}, false);
+    QVERIFY(state.masking()->waitForBrushSaves());
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    const QString current = state.project()->tracks().at(pinned.constFirst().trackIndex)
+                                .clips.at(pinned.constFirst().clipIndex).mask.mediaPath;
+    QCOMPARE(state.masking()->sessionBrushMattes().size(), 2);
+    QString stale;
+    for (const QString &path : std::as_const(state.masking()->sessionBrushMattes())) {
+        if (path != QFileInfo(current).absoluteFilePath())
+            stale = path;
+    }
+    QVERIFY(QFileInfo::exists(stale));
+
+    // A matte from an earlier session may belong to a project that left the recent list.
+    const QString foreign = QDir(drift::matteCacheDir()).filePath(QStringLiteral("earlier-session.png"));
+    QImage(4, 4, QImage::Format_Grayscale8).save(foreign, "PNG");
+    const auto removeForeign = qScopeGuard([&] { QFile::remove(foreign); });
+
+    state.projectFile()->sweepBrushMattes();
+    QVERIFY(!QFileInfo::exists(stale));
+    QVERIFY(QFileInfo::exists(current));
+    QVERIFY(QFileInfo::exists(foreign));
 }
 
 void EditorStateTest::trackingFollowClipOffsetsTransformKeys()

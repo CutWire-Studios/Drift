@@ -44,14 +44,19 @@ PanelFrame {
     readonly property var aiRefineMask: stack.find(e => e.selected && e.mediaSource === "object") || null
 
     readonly property var tools: [
-        { id: "", label: qsTr("Select"), key: "V", glyph: Theme.icons.mousePointer, clipOnly: false },
-        { id: "rect", label: qsTr("Rectangle"), key: "R", glyph: Theme.icons.square, clipOnly: false },
-        { id: "ellipse", label: qsTr("Ellipse"), key: "E", glyph: Theme.icons.shapes, clipOnly: false },
-        { id: "polygon", label: qsTr("Polygon"), key: "P", glyph: Theme.icons.gem, clipOnly: false },
-        { id: "brush", label: qsTr("Brush"), key: "B", glyph: Theme.icons.pencil, clipOnly: true },
-        { id: "ai", label: qsTr("AI object"), key: "A", glyph: Theme.icons.sparkles, clipOnly: true },
-        { id: "tracker", label: qsTr("Tracker"), key: "T", glyph: Theme.icons.locateFixed, clipOnly: false }
+        { id: "", label: qsTr("Select"), action: "selectTool", glyph: Theme.icons.mousePointer, clipOnly: false },
+        { id: "rect", label: qsTr("Rectangle"), action: "gizmoRotate", glyph: Theme.icons.square, clipOnly: false },
+        { id: "ellipse", label: qsTr("Ellipse"), action: "gizmoScale", glyph: Theme.icons.shapes, clipOnly: false },
+        { id: "polygon", label: qsTr("Polygon"), action: "maskingPolygonTool", glyph: Theme.icons.gem, clipOnly: false },
+        { id: "brush", label: qsTr("Brush"), action: "bladeTool", glyph: Theme.icons.pencil, clipOnly: true },
+        { id: "ai", label: qsTr("AI object"), action: "maskingAiTool", glyph: Theme.icons.sparkles, clipOnly: true },
+        { id: "tracker", label: qsTr("Tracker"), action: "gizmoMove", glyph: Theme.icons.locateFixed, clipOnly: false }
     ]
+
+    function withShortcut(label, actionId) {
+        const key = EditorState.shortcutFor(actionId)
+        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
+    }
 
     readonly property var viewModes: [
         { id: "off", label: qsTr("Off") },
@@ -64,6 +69,10 @@ PanelFrame {
     property bool viewAutoSet: false
     property bool clipAtPlayhead: false
     readonly property bool hasEnabledMask: stack.some(e => e.enabled)
+    readonly property bool hasBrushMask: {
+        stack
+        return target.kind === "clip" && EditorState.masking.hasSelectedBrushMask(target.track, target.clip)
+    }
     readonly property bool paintingTool: EditorState.preview.maskingTool === "brush"
                                          || EditorState.preview.maskingTool === "ai"
 
@@ -242,6 +251,15 @@ PanelFrame {
             width: parent.width
             spacing: Theme.spacingSm
 
+            Text {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.")
+                color: Theme.c.maskingPanel.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
             RowLayout {
                 width: parent.width
                 spacing: Theme.spacingSm
@@ -336,7 +354,7 @@ PanelFrame {
                 ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Paint")
-                    tooltip: qsTr("Left-drag paints")
+                    tooltip: root.withShortcut(qsTr("Left-drag paints"), "maskingBrushToggleErase")
                     checked: !EditorState.masking.brushErase
                     onClicked: EditorState.masking.brushErase = false
                 }
@@ -344,7 +362,7 @@ PanelFrame {
                 ThemedToggleButton {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Erase")
-                    tooltip: qsTr("Left-drag erases")
+                    tooltip: root.withShortcut(qsTr("Left-drag erases"), "maskingBrushToggleErase")
                     checked: EditorState.masking.brushErase
                     onClicked: EditorState.masking.brushErase = true
                 }
@@ -357,7 +375,8 @@ PanelFrame {
                 ThemedButton {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Fill")
-                    tooltip: qsTr("Cover the whole clip with the mask")
+                    tooltip: root.hasBrushMask ? qsTr("Cover the whole clip with the mask")
+                                               : qsTr("Start a new brush mask covering the whole clip")
                     enabled: root.target.kind === "clip"
                     onClicked: EditorState.masking.brushFill(root.target.track, root.target.clip, false)
                 }
@@ -366,7 +385,7 @@ PanelFrame {
                     Layout.alignment: Qt.AlignVCenter
                     text: qsTr("Clear")
                     tooltip: qsTr("Empty the mask")
-                    enabled: root.target.kind === "clip"
+                    enabled: root.hasBrushMask
                     onClicked: EditorState.masking.brushFill(root.target.track, root.target.clip, true)
                 }
             }
@@ -607,6 +626,8 @@ PanelFrame {
                 ShellBridge.trackerPlaceMode = ""
                 return true
             }
+            if (ShellBridge.brushStrokeActive)
+                return true
             if (ShellBridge.pendingPolygonPoints > 0) {
                 ShellBridge.maskingCancelRequested()
                 return true
@@ -628,6 +649,11 @@ PanelFrame {
             if (EditorState.preview.maskingTool !== "brush")
                 return false
             EditorState.masking.brushSize = Math.min(0.5, EditorState.masking.brushSize * 1.25)
+            return true
+        case "maskingBrushToggleErase":
+            if (EditorState.preview.maskingTool !== "brush")
+                return false
+            EditorState.masking.brushErase = !EditorState.masking.brushErase
             return true
         case "gizmoMove":
             EditorState.preview.maskingTool = "tracker"
@@ -730,7 +756,7 @@ PanelFrame {
                         required property var modelData
                         visible: !(modelData.clipOnly && root.onAdjustment)
                         glyph: modelData.glyph
-                        tooltip: modelData.label + " (" + modelData.key + ")"
+                        tooltip: root.withShortcut(modelData.label, modelData.action)
                         active: EditorState.preview.maskingTool === modelData.id
                         onClicked: EditorState.preview.maskingTool = modelData.id
                     }

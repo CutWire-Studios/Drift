@@ -4756,6 +4756,7 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("maskingAiTool"), QStringLiteral("A")},
         {QStringLiteral("maskingBrushSmaller"), QStringLiteral("[")},
         {QStringLiteral("maskingBrushLarger"), QStringLiteral("]")},
+        {QStringLiteral("maskingBrushToggleErase"), QStringLiteral("X")},
         // Timeline zoom is QML state too, so these take the same route as the tool modes.
         {QStringLiteral("zoomIn"), QStringLiteral("Ctrl+=")},
         {QStringLiteral("zoomOut"), QStringLiteral("Ctrl+-")},
@@ -5603,9 +5604,9 @@ QVariantList AppController::actions() const
         action(QStringLiteral("speedUp"), tr("Increase playback speed")),
         action(QStringLiteral("speedDown"), tr("Decrease playback speed")),
         action(QStringLiteral("toggleGuides"), tr("Toggle guides")),
-        action(QStringLiteral("gizmoMove"), tr("3D gizmo: move")),
-        action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate")),
-        action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale")),
+        action(QStringLiteral("gizmoMove"), tr("3D gizmo: move / Tracker tool")),
+        action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate / Rectangle mask")),
+        action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale / Ellipse mask")),
         action(QStringLiteral("gizmoOrientation"), tr("3D gizmo: switch global/local axes")),
         action(QStringLiteral("toggleBookmark"), tr("Add/remove bookmark at current time")),
         action(QStringLiteral("nextBookmark"), tr("Go to next bookmark")),
@@ -5617,11 +5618,12 @@ QVariantList AppController::actions() const
         action(QStringLiteral("clearInOut"), tr("Clear work area")),
         action(QStringLiteral("toggleLoop"), tr("Loop work area playback")),
         action(QStringLiteral("selectTool"), tr("Select tool")),
-        action(QStringLiteral("bladeTool"), tr("Cut tool")),
+        action(QStringLiteral("bladeTool"), tr("Cut tool / Brush mask")),
         action(QStringLiteral("maskingPolygonTool"), tr("Polygon mask tool")),
         action(QStringLiteral("maskingAiTool"), tr("AI object mask tool")),
         action(QStringLiteral("maskingBrushSmaller"), tr("Decrease brush size")),
         action(QStringLiteral("maskingBrushLarger"), tr("Increase brush size")),
+        action(QStringLiteral("maskingBrushToggleErase"), tr("Brush: switch paint / erase")),
         action(QStringLiteral("zoomIn"), tr("Zoom in")),
         action(QStringLiteral("zoomOut"), tr("Zoom out")),
         action(QStringLiteral("multicam"), tr("Multicam window")),
@@ -20971,6 +20973,9 @@ void AppController::triggerAction(const QString &actionId)
 
 void AppController::undo()
 {
+    // A stroke still being written would push its edit after the undo and clear the redo stack.
+    if (m_masking)
+        m_masking->waitForBrushSaves(2000);
     if (!m_undoStack.canUndo())
         return;
     m_undoStack.undo();
@@ -20996,6 +21001,8 @@ void AppController::setUndoIndex(int index)
 
 void AppController::redo()
 {
+    if (m_masking)
+        m_masking->waitForBrushSaves(2000);
     if (!m_undoStack.canRedo())
         return;
     m_undoStack.redo();
@@ -21820,6 +21827,7 @@ void AppController::applyParsedProject(ParsedProject parsed)
     emit undoHistoryChanged();
     clearSelection();
     m_projectFile->setDirty(false);
+    m_projectFile->sweepBrushMattes();
     emit snapEnabledChanged();
     emit rippleEnabledChanged();
     emit allowClipOverlapChanged();

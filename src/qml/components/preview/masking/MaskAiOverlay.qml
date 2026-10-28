@@ -190,10 +190,10 @@ Item {
         // A click within 8 px of an existing point removes that point instead.
         MouseArea {
             anchors.fill: parent
-            enabled: root.aiActive && !EditorState.segmentation.running
+            enabled: root.aiActive && !EditorState.segmentation.running && EditorState.segmentation.backendUsesPoints
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: Qt.CrossCursor
+            cursorShape: EditorState.segmentation.previewBusy ? Qt.BusyCursor : Qt.CrossCursor
             onWheel: (wheel) => { wheel.accepted = false }
 
             onPositionChanged: (mouse) => {
@@ -320,9 +320,13 @@ Item {
         Text {
             id: hintText
             anchors.centerIn: parent
-            text: EditorState.segmentation.sessionPoints.length === 0
-                  ? qsTr("Click the object to select it · Right-click or Ctrl-click to exclude")
-                  : qsTr("Add points to refine · then press “Cut out through whole clip” in the Masking panel")
+            text: EditorState.segmentation.backendUsesPoints
+                  ? (EditorState.segmentation.sessionPoints.length === 0
+                     ? qsTr("Click the object to select it · Right-click or Ctrl-click to exclude")
+                     : qsTr("Add points to refine · then press “Cut out through whole clip” in the Masking panel"))
+                  : (EditorState.segmentation.backends().length === 0
+                     ? qsTr("Install a cutout model in the Masking panel first")
+                     : qsTr("People are found automatically · press “Cut out people” in the Masking panel"))
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

@@ -136,6 +136,8 @@ Item {
                 const id = EditorState.tracking.addPointTracker(t.track, t.clip, n.x, n.y)
                 if (id !== "")
                     ShellBridge.selectedTrackerId = id
+                else
+                    Toasts.info(qsTr("Trackers need a video clip"))
             } else if (placeMode === "addPoint") {
                 EditorState.tracking.addTrackerPoint(t.track, t.clip, ShellBridge.trackerPlaceId, n.x, n.y)
             }
@@ -163,6 +165,8 @@ Item {
         ShellBridge.trackerPlaceMode = ""
         if (id !== "")
             ShellBridge.selectedTrackerId = id
+        else
+            Toasts.info(qsTr("Trackers need a video clip"))
     }
 
     function endPointDrag() {
@@ -426,7 +430,9 @@ Item {
                 }
 
                 MouseArea {
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+                    width: Math.max(24, pointItem.pw)
+                    height: Math.max(24, pointItem.ph)
                     enabled: root.canEdit
                     cursorShape: Qt.SizeAllCursor
                     onWheel: (wheel) => { wheel.accepted = false }
@@ -512,15 +518,15 @@ Item {
                 required property int index
                 readonly property var at: root.cornerAt(index) ?? ({})
 
-                width: 10
-                height: 10
+                width: Theme.spacingLg
+                height: Theme.spacingLg
                 x: at.x * clipFrame.width - width / 2
                 y: at.y * clipFrame.height - height / 2
                 color: Theme.c.trackerOverlay.handle
 
                 MouseArea {
                     anchors.fill: parent
-                    anchors.margins: -4
+                    anchors.margins: -Theme.spacingMd
                     enabled: root.canEdit
                     cursorShape: Qt.SizeAllCursor
                     onWheel: (wheel) => { wheel.accepted = false }
