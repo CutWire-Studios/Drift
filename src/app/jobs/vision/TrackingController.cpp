@@ -1,8 +1,10 @@
 #include "app/jobs/vision/TrackingController.h"
 
 #include "app/editor/AppController.h"
+#include "app/editor/ProjectFileController.h"
 #include "app/jobs/vision/TrackerListModel.h"
 #include "app/mcp/McpDetail.h"
+#include "core/edit/MaskSpace.h"
 #include "core/edit/TimelineOps.h"
 #include "core/tracking/MotionTracker.h"
 #include "engine/compositor/layers/MaskApplier.h"
@@ -21,6 +23,8 @@
 #include <optional>
 
 using drift::Clip;
+using drift::HostFrame;
+using drift::hostFrameAt;
 using drift::MotionTracker;
 using drift::TimeUs;
 using drift::TrackPoint;
@@ -528,28 +532,6 @@ QVector<QPointF> restVertices(const drift::Mask &rest, QSizeF px, QString *error
     return out.size() < 3 ? QVector<QPointF>() : out;
 }
 
-struct HostFrame
-{
-    QPointF centre;
-    double w = 1;
-    double h = 1;
-    double rotation = 0;
-};
-
-HostFrame hostFrameAt(const drift::Project &project, const Clip &host, TimeUs timelineUs)
-{
-    const TimeUs relative = qMax<TimeUs>(0, timelineUs - host.timelineStart);
-    const auto value = [&](const drift::KeyframeTrack<double> &track, double fallback) {
-        return track.isEmpty() ? fallback : track.evaluateAt(relative);
-    };
-    HostFrame f;
-    f.w = qMax(1.0, value(host.transformW, project.width()));
-    f.h = qMax(1.0, value(host.transformH, project.height()));
-    f.centre = QPointF(value(host.transformX, 0.0) + f.w / 2.0, value(host.transformY, 0.0) + f.h / 2.0);
-    f.rotation = value(host.rotation, 0.0);
-    return f;
-}
-
 QPointF rotated(QPointF p, double degrees)
 {
     const double a = qDegreesToRadians(degrees);
@@ -895,6 +877,26 @@ Outcome trackPlanar(const TrackingController::Job &job, FrameFeed &feed, const Q
     return {};
 }
 
+// The timeline span the tracker has samples in (inside the clip's source range); lo > hi when none.
+void trackedSpan(const Clip &host, const MotionTracker &tracker, TimeUs *lo, TimeUs *hi)
+{
+    *lo = std::numeric_limits<TimeUs>::max();
+    *hi = std::numeric_limits<TimeUs>::min();
+    const auto widen = [&](TimeUs key) {
+        if (key < host.srcIn || key > host.srcOut)
+            return;
+        const TimeUs at = sampleTimelineUs(host, key);
+        *lo = qMin(*lo, at);
+        *hi = qMax(*hi, at);
+    };
+    for (const TrackPoint &point : tracker.points) {
+        for (auto it = point.samples.constBegin(); it != point.samples.constEnd(); ++it)
+            widen(it.key());
+    }
+    for (auto it = tracker.homographies.constBegin(); it != tracker.homographies.constEnd(); ++it)
+        widen(it.key());
+}
+
 } // namespace
 
 TrackingController::TrackingController(AppController *app, QObject *parent)
@@ -962,21 +964,9 @@ QVariantList TrackingController::trackers(int trackIndex, int clipIndex) const
                                        {QStringLiteral("name"), name}});
         }
 
-        TimeUs lo = std::numeric_limits<TimeUs>::max();
-        TimeUs hi = std::numeric_limits<TimeUs>::min();
-        const auto widen = [&](TimeUs key) {
-            if (key < host->srcIn || key > host->srcOut)
-                return;
-            const TimeUs at = sampleTimelineUs(*host, key);
-            lo = qMin(lo, at);
-            hi = qMax(hi, at);
-        };
-        for (const TrackPoint &point : tracker.points) {
-            for (auto it = point.samples.constBegin(); it != point.samples.constEnd(); ++it)
-                widen(it.key());
-        }
-        for (auto it = tracker.homographies.constBegin(); it != tracker.homographies.constEnd(); ++it)
-            widen(it.key());
+        TimeUs lo = 0;
+        TimeUs hi = -1;
+        trackedSpan(*host, tracker, &lo, &hi);
 
         out.append(QVariantMap{
             {QStringLiteral("id"), tracker.id},
@@ -1058,6 +1048,404 @@ TrackingController::FrameView TrackingController::frameView(const QString &clipI
     return locateClip(clipId, &t, &c) ? frameView(t, c, id, timelineSeconds) : FrameView{};
 }
 
+QVariantList TrackingController::trackers(const QString &clipId) const
+{
+    int t = -1;
+    int c = -1;
+    return locateClip(clipId, &t, &c) ? trackers(t, c) : QVariantList{};
+}
+
+QString TrackingController::addPointTracker(const QString &clipId, double x, double y)
+{
+    int t = -1;
+    int c = -1;
+    return locateClip(clipId, &t, &c) ? addPointTracker(t, c, x, y) : QString{};
+}
+
+QString TrackingController::addPlanarTracker(const QString &clipId, const QVariantList &region)
+{
+    int t = -1;
+    int c = -1;
+    return locateClip(clipId, &t, &c) ? addPlanarTracker(t, c, region) : QString{};
+}
+
+void TrackingController::addTrackerPoint(const QString &clipId, const QString &id, double x, double y)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        addTrackerPoint(t, c, id, x, y);
+}
+
+void TrackingController::setTrackerProperty(const QString &clipId, const QString &id, const QString &key,
+                                            const QVariant &value)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        setTrackerProperty(t, c, id, key, value);
+}
+
+void TrackingController::removeTracker(const QString &clipId, const QString &id, bool removeKeys)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        removeTracker(t, c, id, removeKeys);
+}
+
+void TrackingController::clearSamples(const QString &clipId, const QString &id, bool forward)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        clearSamples(t, c, id, forward);
+}
+
+void TrackingController::track(const QString &clipId, const QString &id, bool forward, bool singleFrame)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        track(t, c, id, forward, singleFrame);
+}
+
+void TrackingController::setTarget(const QString &clipId, const QString &id, const QString &targetClipId,
+                                   const QString &mode)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        setTarget(t, c, id, targetClipId, mode);
+}
+
+void TrackingController::removeTarget(const QString &clipId, const QString &id, const QString &targetClipId)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        removeTarget(t, c, id, targetClipId);
+}
+
+void TrackingController::setTargetCenter(const QString &clipId, const QString &id, const QString &targetClipId,
+                                         bool center)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        setTargetCenter(t, c, id, targetClipId, center);
+}
+
+void TrackingController::apply(const QString &clipId, const QString &id)
+{
+    int t = -1;
+    int c = -1;
+    if (locateClip(clipId, &t, &c))
+        apply(t, c, id);
+}
+
+void TrackingController::retargetMask(const QString &fromId, const QString &toId)
+{
+    QList<QPair<QString, QString>> moved;
+    for (drift::Track &track : m_app->m_project.tracks()) {
+        for (Clip &host : track.clips) {
+            for (MotionTracker &tracker : host.motionTrackers) {
+                bool changed = false;
+                for (drift::TrackerTarget &target : tracker.targets) {
+                    if (target.clipId == fromId && target.mode == drift::TrackerTarget::Mode::Mask) {
+                        target.clipId = toId;
+                        changed = true;
+                    }
+                }
+                if (changed)
+                    moved.append({host.id, tracker.id});
+            }
+        }
+    }
+    for (const QPair<QString, QString> &pair : std::as_const(moved))
+        applyTargets(pair.first, pair.second, toId);
+}
+
+QString TrackingController::trackerForTarget(const QString &targetClipId) const
+{
+    if (targetClipId.isEmpty())
+        return {};
+    for (const drift::Track &track : std::as_const(m_app->m_project).tracks()) {
+        for (const Clip &host : track.clips) {
+            for (const MotionTracker &tracker : host.motionTrackers) {
+                for (const drift::TrackerTarget &target : tracker.targets) {
+                    if (target.clipId == targetClipId)
+                        return tracker.id;
+                }
+            }
+        }
+    }
+    return {};
+}
+
+bool TrackingController::maskHostIds(const QString &maskClipId, QString *hostId) const
+{
+    const drift::Project &project = m_app->m_project;
+    int t = -1;
+    int c = -1;
+    if (!locateClip(maskClipId, &t, &c))
+        return false;
+    const Clip &mask = project.tracks().at(t).clips.at(c);
+    if (mask.type != drift::ClipType::Adjustment)
+        return false;
+    int ht = -1;
+    int hc = -1;
+    if (!mask.linkedClipId.isEmpty()) {
+        if (!locateClip(mask.linkedClipId, &ht, &hc))
+            return false;
+    } else {
+        ht = drift::adjustmentLaneParentIndex(project, t);
+        if (ht < 0)
+            return false;
+        const QList<Clip> &clips = project.tracks().at(ht).clips;
+        for (hc = 0; hc < clips.size(); ++hc) {
+            if (clips.at(hc).containsTime(m_app->m_playheadUs) && clips.at(hc).type == drift::ClipType::Video)
+                break;
+        }
+        if (hc >= clips.size())
+            return false;
+    }
+    const Clip &host = project.tracks().at(ht).clips.at(hc);
+    if (host.type != drift::ClipType::Video || host.path.isEmpty())
+        return false;
+    *hostId = host.id;
+    return true;
+}
+
+namespace {
+
+// Where a mask sits at a timeline time, normalized to `host`'s frame: its centre (a polygon's
+// centroid).
+QPointF maskCentreInHost(const drift::Project &project, const Clip &host, const Clip &owner, TimeUs timelineUs)
+{
+    const drift::Mask at = owner.mask.resolvedAt(timelineUs - owner.timelineStart);
+    QPointF centre(at.x, at.y);
+    if (at.shape == drift::MaskShape::Freeform && !at.points.isEmpty()) {
+        centre = QPointF();
+        for (const QPointF &p : at.points)
+            centre += p;
+        centre /= double(at.points.size());
+    }
+    return owner.adjustmentKind == drift::AdjustmentKind::VideoEffects
+               ? drift::canvasToHostFrame(project, host, timelineUs, centre)
+               : centre;
+}
+
+bool writePointKey(const drift::Project &project, const Clip &host, MotionTracker &tracker, TimeUs playheadUs,
+                   int pointIndex, double x, double y);
+
+} // namespace
+
+QString TrackingController::ensureMaskTracker(const QString &maskClipId, double x, double y)
+{
+    if (m_busy)
+        return {};
+    const QString existing = trackerForTarget(maskClipId);
+    if (!existing.isEmpty())
+        return existing;
+    QString hostId;
+    int ht = -1;
+    int hc = -1;
+    if (!maskHostIds(maskClipId, &hostId) || !locateClip(hostId, &ht, &hc))
+        return {};
+
+    if (x < 0.0) {
+        int mt = -1;
+        int mc = -1;
+        locateClip(maskClipId, &mt, &mc);
+        const drift::Project &project = std::as_const(m_app->m_project);
+        const Clip &host = project.tracks().at(ht).clips.at(hc);
+        const TimeUs playhead = qBound(host.timelineStart, m_app->m_playheadUs, host.timelineEnd() - 1);
+        const QPointF centre = maskCentreInHost(project, host, project.tracks().at(mt).clips.at(mc), playhead);
+        x = qBound(0.0, centre.x(), 1.0);
+        y = qBound(0.0, centre.y(), 1.0);
+    }
+
+    const drift::Project before = m_app->m_project;
+    Clip *host = hostAt(ht, hc);
+    host->motionTrackers.append(buildPointTracker(*host, x, y));
+    MotionTracker &tracker = host->motionTrackers.last();
+    const QString id = tracker.id;
+    QString error;
+    addTarget(*host, tracker, maskClipId, QStringLiteral("mask"), &error);
+
+    m_app->pushProjectEdit(before, tr("Track mask"));
+    m_app->finishEdit(tr("Tracker added"));
+    if (!error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
+    emit trackersChanged();
+    return id;
+}
+
+void TrackingController::correctFromMask(const QString &maskClipId)
+{
+    const QString id = trackerForTarget(maskClipId);
+    QString hostId;
+    int ht = -1;
+    int hc = -1;
+    int mt = -1;
+    int mc = -1;
+    if (m_busy || id.isEmpty() || !locateClip(maskClipId, &mt, &mc))
+        return;
+    for (const drift::Track &track : std::as_const(m_app->m_project).tracks()) {
+        for (const Clip &clip : track.clips) {
+            if (trackerById(clip, id))
+                hostId = clip.id;
+        }
+    }
+    if (!locateClip(hostId, &ht, &hc))
+        return;
+
+    const drift::Project &project = std::as_const(m_app->m_project);
+    const Clip &hostClip = project.tracks().at(ht).clips.at(hc);
+    const Clip &owner = project.tracks().at(mt).clips.at(mc);
+    const MotionTracker *view = trackerById(hostClip, id);
+    if (view->kind != MotionTracker::Kind::Point || view->points.size() != 1)
+        return;
+    const TimeUs playhead = qBound(hostClip.timelineStart, m_app->m_playheadUs, hostClip.timelineEnd() - 1);
+    const QPointF now = maskCentreInHost(project, hostClip, owner, playhead);
+    const QPointF rest = maskCentreInHost(project, hostClip, owner, referenceTimelineUs(hostClip, *view));
+    const auto reference = view->points.first().samples.constFind(view->referenceUs);
+    if (reference == view->points.first().samples.constEnd())
+        return;
+    const QPointF target(qBound(0.0, reference->pos.x() + now.x() - rest.x(), 1.0),
+                         qBound(0.0, reference->pos.y() + now.y() - rest.y(), 1.0));
+
+    QString error;
+    const bool ok = editTracker(ht, hc, id, tr("Correct track"), [&](Clip &host, MotionTracker &tracker) {
+        if (!writePointKey(m_app->m_project, host, tracker, m_app->m_playheadUs, 0, target.x(), target.y()))
+            return false;
+        error = applyTargets(host.id, tracker.id);
+        return true;
+    });
+    if (ok && !error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
+}
+
+QVariantMap TrackingController::videoUnder(const QString &followerClipId) const
+{
+    const drift::Project &project = m_app->m_project;
+    int ft = -1;
+    int fc = -1;
+    if (!locateClip(followerClipId, &ft, &fc))
+        return {};
+    for (int t = ft + 1; t < project.tracks().size(); ++t) {
+        const drift::Track &track = project.tracks().at(t);
+        if (track.type != drift::TrackType::Video)
+            continue;
+        for (int c = 0; c < track.clips.size(); ++c) {
+            const Clip &clip = track.clips.at(c);
+            if (clip.type == drift::ClipType::Video && !clip.path.isEmpty() && clip.containsTime(m_app->m_playheadUs)) {
+                return QVariantMap{{QStringLiteral("clipId"), clip.id},
+                                   {QStringLiteral("track"), t},
+                                   {QStringLiteral("clip"), c},
+                                   {QStringLiteral("name"), clip.name}};
+            }
+        }
+    }
+    return {};
+}
+
+QString TrackingController::followWithNewTracker(const QString &hostClipId, const QString &followerClipId,
+                                                 double x, double y)
+{
+    int ht = -1;
+    int hc = -1;
+    int ft = -1;
+    int fc = -1;
+    const Clip *view = locateClip(hostClipId, &ht, &hc) ? hostView(ht, hc) : nullptr;
+    if (m_busy || !view || view->type != drift::ClipType::Video || view->path.isEmpty()
+        || !locateClip(followerClipId, &ft, &fc) || followerClipId == hostClipId)
+        return {};
+    const drift::Project before = m_app->m_project;
+    Clip *host = hostAt(ht, hc);
+    host->motionTrackers.append(buildPointTracker(*host, x, y));
+    MotionTracker &tracker = host->motionTrackers.last();
+    const QString id = tracker.id;
+    QString error;
+    addTarget(*host, tracker, followerClipId, QStringLiteral("followClip"), &error);
+
+    m_app->pushProjectEdit(before, tr("Follow object"));
+    m_app->finishEdit(tr("Tracker added"));
+    if (!error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
+    emit trackersChanged();
+    return id;
+}
+
+QVariantMap TrackingController::clipRefById(const QString &clipId) const
+{
+    int t = -1;
+    int c = -1;
+    if (!locateClip(clipId, &t, &c))
+        return {};
+    return QVariantMap{{QStringLiteral("track"), t},
+                       {QStringLiteral("clip"), c},
+                       {QStringLiteral("name"), m_app->m_project.tracks().at(t).clips.at(c).name}};
+}
+
+QVariantList TrackingController::trackersDriving(const QString &clipId) const
+{
+    QVariantList out;
+    if (clipId.isEmpty())
+        return out;
+    for (const drift::Track &track : std::as_const(m_app->m_project).tracks()) {
+        for (const Clip &host : track.clips) {
+            for (const MotionTracker &tracker : host.motionTrackers) {
+                for (const drift::TrackerTarget &target : tracker.targets) {
+                    if (target.clipId != clipId)
+                        continue;
+                    out.append(QVariantMap{{QStringLiteral("trackerId"), tracker.id},
+                                           {QStringLiteral("trackerName"), tracker.name},
+                                           {QStringLiteral("hostClipId"), host.id},
+                                           {QStringLiteral("hostName"), host.name},
+                                           {QStringLiteral("mode"), drift::trackerTargetModeToString(target.mode)}});
+                }
+            }
+        }
+    }
+    return out;
+}
+
+QVariantMap TrackingController::maskTrackInfo(const QString &maskClipId) const
+{
+    QVariantMap out{{QStringLiteral("trackerId"), QString()},
+                    {QStringLiteral("trackState"), QStringLiteral("none")},
+                    {QStringLiteral("solve"), QStringLiteral("translate")},
+                    {QStringLiteral("trackerPoints"), 0}};
+    for (const drift::Track &track : std::as_const(m_app->m_project).tracks()) {
+        for (const Clip &host : track.clips) {
+            for (const MotionTracker &tracker : host.motionTrackers) {
+                const bool drives = std::any_of(tracker.targets.begin(), tracker.targets.end(),
+                    [&](const drift::TrackerTarget &target) {
+                        return target.clipId == maskClipId && target.mode == drift::TrackerTarget::Mode::Mask;
+                    });
+                if (!drives)
+                    continue;
+                out[QStringLiteral("trackerId")] = tracker.id;
+                out[QStringLiteral("solve")] = drift::motionTrackerSolveToString(tracker.solve);
+                out[QStringLiteral("trackerPoints")] = int(tracker.points.size());
+                TimeUs lo = 0;
+                TimeUs hi = -1;
+                trackedSpan(host, tracker, &lo, &hi);
+                if (lo < hi) {
+                    const TimeUs slack = 2 * drift::secondsToUs(1.0 / std::max(1, int(m_app->projectFile()->projectFps())));
+                    out[QStringLiteral("trackState")] = lo <= host.timelineStart + slack && hi >= host.timelineEnd() - slack
+                                                            ? QStringLiteral("full")
+                                                            : QStringLiteral("partial");
+                }
+                return out;
+            }
+        }
+    }
+    return out;
+}
+
 bool TrackingController::locateClip(const QString &clipId, int *trackIndex, int *clipIndex) const
 {
     return !clipId.isEmpty() && findClipById(m_app->m_project, clipId, trackIndex, clipIndex);
@@ -1137,6 +1525,24 @@ QVariantList TrackingController::confidenceStrip(int trackIndex, int clipIndex, 
     return out;
 }
 
+MotionTracker TrackingController::buildPointTracker(Clip &host, double x, double y) const
+{
+    const TimeUs playhead = qBound(host.timelineStart, m_app->m_playheadUs, host.timelineEnd() - 1);
+    const QSizeF px = frameSizeAt(m_app->m_project, host, playhead);
+
+    MotionTracker tracker;
+    tracker.id = QStringLiteral("trk_") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+    tracker.name = tr("Tracker %1").arg(host.motionTrackers.size() + 1);
+    tracker.referenceUs = host.timelineToSourceUs(playhead);
+    TrackPoint point;
+    const double aspect = px.width() / px.height();
+    point.patternSize = QSizeF(0.05, 0.05 * aspect);
+    point.searchSize = QSizeF(0.15, 0.15 * aspect);
+    point.samples.insert(tracker.referenceUs, TrackSample{QPointF(x, y), 1.0f, true});
+    tracker.points.append(point);
+    return tracker;
+}
+
 QString TrackingController::addPointTracker(int trackIndex, int clipIndex, double x, double y)
 {
     const Clip *view = hostView(trackIndex, clipIndex);
@@ -1144,19 +1550,7 @@ QString TrackingController::addPointTracker(int trackIndex, int clipIndex, doubl
         return {};
     const drift::Project before = m_app->m_project;
     Clip *host = hostAt(trackIndex, clipIndex);
-    const TimeUs playhead = qBound(host->timelineStart, m_app->m_playheadUs, host->timelineEnd() - 1);
-    const QSizeF px = frameSizeAt(m_app->m_project, *host, playhead);
-
-    MotionTracker tracker;
-    tracker.id = QStringLiteral("trk_") + QUuid::createUuid().toString(QUuid::WithoutBraces);
-    tracker.name = tr("Tracker %1").arg(host->motionTrackers.size() + 1);
-    tracker.referenceUs = host->timelineToSourceUs(playhead);
-    TrackPoint point;
-    const double aspect = px.width() / px.height();
-    point.patternSize = QSizeF(0.05, 0.05 * aspect);
-    point.searchSize = QSizeF(0.15, 0.15 * aspect);
-    point.samples.insert(tracker.referenceUs, TrackSample{QPointF(x, y), 1.0f, true});
-    tracker.points.append(point);
+    const MotionTracker tracker = buildPointTracker(*host, x, y);
     const QString id = tracker.id;
     host->motionTrackers.append(tracker);
 
@@ -1650,44 +2044,50 @@ QVariantList TrackingController::targetCandidates(int trackIndex, int clipIndex)
     return out;
 }
 
+bool TrackingController::addTarget(Clip &host, MotionTracker &tracker, const QString &targetClipId,
+                                   const QString &mode, QString *error)
+{
+    if (targetClipId.isEmpty() || targetClipId == host.id)
+        return false;
+    const drift::TrackerTarget::Mode targetMode = drift::trackerTargetModeFromString(mode);
+    bool found = false;
+    for (drift::TrackerTarget &target : tracker.targets) {
+        if (target.clipId == targetClipId) {
+            target.mode = targetMode;
+            found = true;
+        }
+    }
+    if (!found) {
+        drift::TrackerTarget target{targetClipId, targetMode};
+        int t = -1;
+        int c = -1;
+        if (targetMode == drift::TrackerTarget::Mode::FollowClip
+            && findClipById(m_app->m_project, targetClipId, &t, &c)) {
+            // A new follower lands on the tracked point; Keep offset is the opt-in.
+            target.centerOnTrack = true;
+            const Clip &owner = m_app->m_project.tracks().at(t).clips.at(c);
+            const TimeUs rel = qMax<TimeUs>(0, referenceTimelineUs(host, tracker) - owner.timelineStart);
+            const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
+                return track.isEmpty() ? fallback : track.evaluateAt(rel);
+            };
+            target.hasRest = true;
+            target.restRect = QRectF(own(owner.transformX, 0.0), own(owner.transformY, 0.0),
+                                     own(owner.transformW, m_app->m_project.width()),
+                                     own(owner.transformH, m_app->m_project.height()));
+            target.restRotation = own(owner.rotation, 0.0);
+        }
+        tracker.targets.append(target);
+    }
+    *error = applyTargets(host.id, tracker.id, targetClipId);
+    return true;
+}
+
 void TrackingController::setTarget(int trackIndex, int clipIndex, const QString &id, const QString &targetClipId,
                                    const QString &mode)
 {
     QString error;
     const bool ok = editTracker(trackIndex, clipIndex, id, tr("Apply track"), [&](Clip &host, MotionTracker &tracker) {
-        if (targetClipId.isEmpty() || targetClipId == host.id)
-            return false;
-        const drift::TrackerTarget::Mode targetMode = drift::trackerTargetModeFromString(mode);
-        bool found = false;
-        for (drift::TrackerTarget &target : tracker.targets) {
-            if (target.clipId == targetClipId) {
-                target.mode = targetMode;
-                found = true;
-            }
-        }
-        if (!found) {
-            drift::TrackerTarget target{targetClipId, targetMode};
-            int t = -1;
-            int c = -1;
-            if (targetMode == drift::TrackerTarget::Mode::FollowClip
-                && findClipById(m_app->m_project, targetClipId, &t, &c)) {
-                // A new follower lands on the tracked point; Keep offset is the opt-in.
-                target.centerOnTrack = true;
-                const Clip &owner = m_app->m_project.tracks().at(t).clips.at(c);
-                const TimeUs rel = qMax<TimeUs>(0, referenceTimelineUs(host, tracker) - owner.timelineStart);
-                const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
-                    return track.isEmpty() ? fallback : track.evaluateAt(rel);
-                };
-                target.hasRest = true;
-                target.restRect = QRectF(own(owner.transformX, 0.0), own(owner.transformY, 0.0),
-                                         own(owner.transformW, m_app->m_project.width()),
-                                         own(owner.transformH, m_app->m_project.height()));
-                target.restRotation = own(owner.rotation, 0.0);
-            }
-            tracker.targets.append(target);
-        }
-        error = applyTargets(host.id, tracker.id, targetClipId);
-        return true;
+        return addTarget(host, tracker, targetClipId, mode, &error);
     });
     if (ok && !error.isEmpty())
         m_app->setLastMessage(error, QStringLiteral("warning"));

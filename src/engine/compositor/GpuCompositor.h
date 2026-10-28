@@ -79,6 +79,8 @@ struct GpuLayer
     // Index-parallel with `masks`: this frame's decoded coverage map for each Media entry, null
     // for parametric ones. Decoded by FrameCompositor, which is the only place that knows the time.
     QList<MaskMediaFrame> maskMedia;
+    // Parallel to maskMedia: a brush fix for this frame (gray = coverage, alpha = painted), else null.
+    QList<QImage> maskPatch;
     // The decontaminated foreground, when a lone media mask carries one. Single rather than
     // index-parallel: it replaces the layer's colour outright, which only makes sense when one
     // media mask owns the coverage — see soleMediaIndex.

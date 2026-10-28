@@ -403,6 +403,8 @@ private slots:
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
     void soleMediaMaskCarriesTheDecontaminatedForeground();
+    void maskFramePatchReachesTheLayerAtItsFrameOnly();
+    void maskFramePatchChangesTheCompositedCoverage();
     void maskEffectReadsTheMaskAndDrawsTheClipWhole();
     void effectsApplyOnTopOfTheCutoutForeground();
     void aVideoEffectsAdjustmentKeepsItsOwnMask();
@@ -11585,6 +11587,105 @@ void EngineTest::maskLaneOpsCombineAcrossLanes()
     QVERIFY(!frame.isNull());
     QVERIFY2(qRed(frame.pixel(2, 2)) > 200, "outside the hole the full-frame mask shows through");
     QVERIFY2(qRed(frame.pixel(32, 32)) < 40, "the subtracted square is carved out");
+}
+
+namespace {
+
+// A 64x64 white image clip under a full-frame white matte, with a black patch (alpha 255) on the
+// matte's frame at `patchSecond`.
+struct PatchedCutout
+{
+    drift::Project project;
+    drift::TimeUs patchUs = 0;
+};
+
+PatchedCutout makePatchedCutout(const QTemporaryDir &dir, double patchSecond)
+{
+    PatchedCutout out;
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    const QString mattePath = dir.filePath(QStringLiteral("matte.png"));
+    const QString patchPath = dir.filePath(QStringLiteral("patch.png"));
+    QImage white(64, 64, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    white.save(imagePath);
+    white.save(mattePath);
+    QImage patch(64, 64, QImage::Format_ARGB32);
+    patch.fill(QColor(0, 0, 0, 255));
+    patch.save(patchPath);
+
+    out.project.setResolution(64, 64);
+    out.project.tracks().clear();
+    out.project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    out.project.tracks()[0].clips.append(clip);
+
+    drift::Mask matte = drift::fullFrameMediaMask(mattePath);
+    out.patchUs = FrameCompositor::maskMediaSourceTimeUs(clip, matte, 0, 0, drift::secondsToUs(patchSecond));
+    matte.mediaPatches.insert(out.patchUs, patchPath);
+    drift::setLinkedMask(out.project, 0, 0, matte);
+    return out;
+}
+
+} // namespace
+
+// A brush fix belongs to one frame of the matte: the layer built for that frame carries it, the
+// frame after does not, and the rest of the stack is unaffected.
+void EngineTest::maskFramePatchReachesTheLayerAtItsFrameOnly()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    PatchedCutout cutout = makePatchedCutout(dir, 1.0);
+    const drift::TimeUs frame = drift::frameDurationUs(cutout.project.fps());
+
+    FrameCompositor compositor;
+    compositor.setProject(&cutout.project);
+
+    GpuScene at;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{}, &at));
+    QCOMPARE(at.items.size(), 1);
+    const GpuLayer &patched = at.items.constFirst().layer;
+    QCOMPARE(patched.maskPatch.size(), 1);
+    QVERIFY(!patched.maskPatch.constFirst().isNull());
+    QVERIFY(!patched.maskMedia.constFirst().isNull());
+    QCOMPARE(qRed(patched.maskPatch.constFirst().pixel(10, 10)), 0);
+
+    GpuScene next;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0) + frame, FrameCompositor::RenderOptions{}, &next));
+    QCOMPARE(next.items.size(), 1);
+    QVERIFY(next.items.constFirst().layer.maskPatch.constFirst().isNull());
+
+    GpuScene before;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0) - frame, FrameCompositor::RenderOptions{}, &before));
+    QVERIFY(before.items.constFirst().layer.maskPatch.constFirst().isNull());
+}
+
+// The patch is mixed over the decoded matte: black here punches the picture out on its frame only.
+void EngineTest::maskFramePatchChangesTheCompositedCoverage()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    PatchedCutout cutout = makePatchedCutout(dir, 1.0);
+    const drift::TimeUs frame = drift::frameDurationUs(cutout.project.fps());
+
+    FrameCompositor compositor;
+    compositor.setProject(&cutout.project);
+
+    const QImage patched = compositor.compositeAt(drift::secondsToUs(1.0));
+    const QImage plain = compositor.compositeAt(drift::secondsToUs(1.0) + frame);
+    QVERIFY(!patched.isNull());
+    QVERIFY(!plain.isNull());
+    QVERIFY2(plain.pixelColor(32, 32).alpha() > 200 && plain.pixelColor(32, 32).red() > 200,
+             "the matte alone shows the picture");
+    QVERIFY2(patched.pixelColor(32, 32).alpha() < 40 || patched.pixelColor(32, 32).red() < 40,
+             "the black patch cuts the picture out on its own frame");
 }
 
 // The decontaminated foreground replaces the layer's colour, which only makes sense while one

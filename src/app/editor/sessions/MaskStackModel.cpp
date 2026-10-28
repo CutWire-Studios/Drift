@@ -3,6 +3,7 @@
 #include "app/editor/AppController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/editor/sessions/MaskingController.h"
+#include "app/jobs/vision/TrackingController.h"
 
 #include <cmath>
 
@@ -16,7 +17,7 @@ constexpr int KeyTimesRole = Qt::UserRole + 100;
 const QList<QByteArray> kKeys = {"track",     "clip",     "id",           "name",         "shape",
                                  "op",        "invert",   "enabled",      "feather",      "mediaChannel",
                                  "isMedia",   "mediaSource", "pinned",    "pathAnimated", "pathKeyCount",
-                                 "selected"};
+                                 "selected",  "trackerId", "trackState", "solve", "trackerPoints"};
 
 } // namespace
 
@@ -71,10 +72,15 @@ void MaskStackModel::refresh()
     QList<Entry> next;
     bool hasEnabled = false;
     QString refineId;
+    QString fixId;
+    QString fixName;
     QVariantList keyTimes;
     for (const QVariant &v : stack) {
         Entry entry;
         entry.map = v.toMap();
+        const QVariantMap tracked = m_app->tracking()->maskTrackInfo(entry.map.value(QStringLiteral("id")).toString());
+        for (auto it = tracked.constBegin(); it != tracked.constEnd(); ++it)
+            entry.map.insert(it.key(), it.value());
         const bool selected = entry.map.value(QStringLiteral("selected")).toBool();
         if (selected && entry.map.value(QStringLiteral("shape")).toString() == QLatin1String("freeform"))
             entry.keyTimes = m_owner->maskPathKeyTimes(entry.map.value(QStringLiteral("track")).toInt(),
@@ -82,6 +88,11 @@ void MaskStackModel::refresh()
         if (selected && refineId.isEmpty()
             && entry.map.value(QStringLiteral("mediaSource")).toString() == QLatin1String("object"))
             refineId = entry.map.value(QStringLiteral("id")).toString();
+        const QString source = entry.map.value(QStringLiteral("mediaSource")).toString();
+        if (selected && fixId.isEmpty() && (source == QLatin1String("object") || source == QLatin1String("people"))) {
+            fixId = entry.map.value(QStringLiteral("id")).toString();
+            fixName = entry.map.value(QStringLiteral("name")).toString();
+        }
         if (selected && keyTimes.isEmpty())
             keyTimes = entry.keyTimes;
         hasEnabled = hasEnabled || entry.map.value(QStringLiteral("enabled")).toBool();
@@ -107,6 +118,8 @@ void MaskStackModel::refresh()
 
     m_hasEnabled = hasEnabled;
     m_refineMaskId = refineId;
+    m_cutoutFixId = fixId;
+    m_cutoutFixName = fixName;
     m_shapeKeyTimes = keyTimes;
     ++m_revision;
     emit summaryChanged();

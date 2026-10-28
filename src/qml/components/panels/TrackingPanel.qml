@@ -28,6 +28,10 @@ PanelFrame {
     property bool clipAtPlayhead: false
     // A clip that can follow a tracker (text, sticker, image on another track) is selected instead of a video.
     property bool followerSelected: false
+    // The video under the selected follower at the playhead ({clipId, name}, empty when none), and the
+    // trackers already driving the selected clip.
+    property var videoUnderFollower: ({})
+    property var drivers: []
     // Set when a drag has just replaced the samples after the playhead; cleared by the next track.
     property string correctedId: ""
     readonly property string placeMode: ShellBridge.trackerPlaceMode
@@ -35,7 +39,8 @@ PanelFrame {
     readonly property var placeHints: ({
         "point": qsTr("Click the feature to track on the preview."),
         "planar": qsTr("Click the corners of a flat surface, Enter to finish."),
-        "addPoint": qsTr("Click the feature to add to this tracker.")
+        "addPoint": qsTr("Click the feature to add to this tracker."),
+        "follow": qsTr("Click the object the clip should follow.")
     })
     readonly property var solveModes: ["translate", "translateRotate", "translateRotateScale", "perspective"]
     readonly property var solveLabels: ({
@@ -45,13 +50,28 @@ PanelFrame {
         "perspective": qsTr("Perspective")
     })
 
+    function withShortcut(label, actionId) {
+        const key = EditorState.shortcutFor(actionId)
+        return key.length > 0 ? qsTr("%1 (%2)").arg(label).arg(key) : label
+    }
+
     function refresh() {
+        const selectedId = EditorState.selectedClipData.id || ""
+        if (ShellBridge.trackerFollowerId !== "" && selectedId !== ShellBridge.trackerFollowerId) {
+            ShellBridge.trackerHostId = ""
+            ShellBridge.trackerFollowerId = ""
+        }
         target = ShellBridge.trackerTarget()
         clipAtPlayhead = target.kind === "none"
                          && EditorState.preview.clipsAtPlayhead().some(box => box.kind === "video" || box.kind === "image")
         const selectedKind = EditorState.selectedClipData.kind
         followerSelected = target.kind === "none" && !!selectedKind && selectedKind !== "video"
                            && selectedKind !== "audio" && selectedKind !== "adjustment" && selectedKind !== "subtitle"
+        const following = ShellBridge.trackerFollowerId !== ""
+        videoUnderFollower = followerSelected && !following && selectedId !== ""
+                             ? EditorState.tracking.videoUnder(selectedId) : ({})
+        drivers = selectedKind && selectedKind !== "video" && selectedId !== ""
+                  ? EditorState.tracking.trackersDriving(selectedId) : []
         const clip = target.kind === "clip" ? EditorState.clipAt(target.track, target.clip) : ({})
         clipStart = clip.start || 0
         clipDuration = clip.duration || 0
@@ -73,18 +93,24 @@ PanelFrame {
         ShellBridge.trackerPlaceMode = mode
     }
 
+    function startFollow() {
+        ShellBridge.trackerFollowerId = EditorState.selectedClipData.id
+        ShellBridge.trackerHostId = videoUnderFollower.clipId
+        EditorState.preview.maskingTool = "tracker"
+        ShellBridge.trackerPlaceMode = "follow"
+        refresh()
+    }
+
     function runTrack(id, forward, singleFrame) {
         correctedId = ""
-        const host = ShellBridge.trackerTarget()
-        if (host.kind === "clip")
-            EditorState.tracking.track(host.track, host.clip, id, forward, singleFrame)
+        if (hasTarget)
+            EditorState.tracking.track(clipId, id, forward, singleFrame)
     }
 
     function trackBoth(id) {
         correctedId = ""
-        const host = ShellBridge.trackerTarget()
-        if (host.kind === "clip")
-            ShellBridge.trackBoth(host.track, host.clip, id)
+        if (hasTarget)
+            ShellBridge.trackBoth(clipId, id)
     }
 
     function useClipAtPlayhead() {
@@ -108,6 +134,21 @@ PanelFrame {
     // Escape stops a running track, or cancels an armed placement, even when the Masking panel is
     // not in the layout.
     function handleAction(id) {
+        switch (id) {
+        case "trackForward":
+        case "trackBackward":
+        case "trackFrameForward":
+        case "trackFrameBackward":
+        case "trackBoth":
+            if (!shown || !hasTarget || selectedId === "" || EditorState.tracking.busy)
+                return false
+            if (id === "trackBoth")
+                trackBoth(selectedId)
+            else
+                runTrack(selectedId, id === "trackForward" || id === "trackFrameForward",
+                         id === "trackFrameForward" || id === "trackFrameBackward")
+            return true
+        }
         if (id !== "clearSelection")
             return false
         if (EditorState.tracking.busy) {
@@ -207,14 +248,68 @@ PanelFrame {
             spacing: Theme.spacingLg
 
             EmptyState {
-                visible: !root.hasTarget
+                visible: !root.hasTarget && !(root.followerSelected && root.videoUnderFollower.clipId !== undefined)
                 compact: true
                 title: qsTr("No clip selected")
                 hint: root.target.kind === "adjustment"
                       ? qsTr("No video clip under this adjustment layer at the playhead.")
                       : root.followerSelected
-                        ? qsTr("Trackers live on the video. Select the video clip under this one, track the object, then use Attach → Make follow.")
+                        ? qsTr("No video under this clip at the playhead. Move the playhead over the video it should follow.")
                         : qsTr("Select a video clip to track motion in it.")
+            }
+
+            Column {
+                visible: root.followerSelected && root.videoUnderFollower.clipId !== undefined
+                         && root.drivers.length === 0
+                width: parent.width
+                spacing: Theme.spacingSm
+
+                Text {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Follow an object in %1").arg(root.videoUnderFollower.name || "")
+                    color: Theme.c.maskingPanel.foreground
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeSm
+                    font.weight: Font.Medium
+                }
+
+                ThemedButton {
+                    width: parent.width
+                    variant: "primary"
+                    text: qsTr("Follow an object")
+                    tooltip: qsTr("Click an object on the video; this clip will follow it through the clip")
+                    onClicked: root.startFollow()
+                }
+            }
+
+            Repeater {
+                model: root.drivers
+
+                delegate: RowLayout {
+                    id: driverRow
+                    required property var modelData
+                    width: column.width
+                    spacing: Theme.spacingSm
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        elide: Text.ElideRight
+                        text: qsTr("Follows %1 on %2").arg(driverRow.modelData.trackerName).arg(driverRow.modelData.hostName)
+                        color: Theme.c.maskingPanel.foreground
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeXs
+                    }
+
+                    ThemedButton {
+                        Layout.alignment: Qt.AlignVCenter
+                        text: qsTr("Stop following")
+                        onClicked: EditorState.tracking.removeTarget(driverRow.modelData.hostClipId,
+                                                                     driverRow.modelData.trackerId,
+                                                                     EditorState.selectedClipData.id)
+                    }
+                }
             }
 
             ThemedButton {
@@ -394,7 +489,7 @@ PanelFrame {
                                 tooltip: qsTr("Delete tracker")
                                 onClicked: {
                                     if (trackerRow.model.targets.length === 0)
-                                        EditorState.tracking.removeTracker(root.target.track, root.target.clip,
+                                        EditorState.tracking.removeTracker(root.clipId,
                                                                            trackerRow.model.id, false)
                                     else
                                         deleteTrackerDialog.openFor(trackerRow.model)
@@ -425,7 +520,7 @@ PanelFrame {
                             width: parent.width
                             variant: "primary"
                             text: qsTr("Track whole clip")
-                            tooltip: qsTr("Follow the feature backward and forward through the whole clip")
+                            tooltip: root.withShortcut(qsTr("Follow the feature backward and forward through the whole clip"), "trackBoth")
                             enabled: !EditorState.tracking.busy
                             onClicked: root.trackBoth(trackerRow.model.id)
                         }
@@ -457,14 +552,14 @@ PanelFrame {
 
                             IconButton {
                                 glyph: Theme.icons.skipBack
-                                tooltip: qsTr("Track back to the start")
+                                tooltip: root.withShortcut(qsTr("Track back to the start"), "trackBackward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, false, false)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.stepBack
-                                tooltip: qsTr("Track one frame back")
+                                tooltip: root.withShortcut(qsTr("Track one frame back"), "trackFrameBackward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, false, true)
                             }
@@ -478,14 +573,14 @@ PanelFrame {
 
                             IconButton {
                                 glyph: Theme.icons.stepForward
-                                tooltip: qsTr("Track one frame forward")
+                                tooltip: root.withShortcut(qsTr("Track one frame forward"), "trackFrameForward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, true, true)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.skipForward
-                                tooltip: qsTr("Track to the end")
+                                tooltip: root.withShortcut(qsTr("Track to the end"), "trackForward")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: root.runTrack(trackerRow.model.id, true, false)
                             }
@@ -566,7 +661,7 @@ PanelFrame {
                                         currentIndex = Math.max(0, model.indexOf(trackerRow.model.solve))
                                         return
                                     }
-                                    EditorState.tracking.setTrackerProperty(root.target.track, root.target.clip,
+                                    EditorState.tracking.setTrackerProperty(root.clipId,
                                                                             trackerRow.model.id,
                                                                             "solve", model[index])
                                 }
@@ -606,7 +701,7 @@ PanelFrame {
                                 }
                                 onPressedChanged: {
                                     if (!pressed)
-                                        EditorState.tracking.setTrackerProperty(root.target.track, root.target.clip,
+                                        EditorState.tracking.setTrackerProperty(root.clipId,
                                                                                 trackerRow.model.id,
                                                                                 "minConfidence", value / 100)
                                 }
@@ -647,7 +742,7 @@ PanelFrame {
                                 }
                                 onPressedChanged: {
                                     if (!pressed)
-                                        EditorState.tracking.setTrackerProperty(root.target.track, root.target.clip,
+                                        EditorState.tracking.setTrackerProperty(root.clipId,
                                                                                 trackerRow.model.id,
                                                                                 "patternSize", value / 100)
                                 }
@@ -662,7 +757,7 @@ PanelFrame {
                                 text: qsTr("Erase before")
                                 tooltip: qsTr("Remove the samples before the playhead")
                                 enabled: !EditorState.tracking.busy
-                                onClicked: EditorState.tracking.clearSamples(root.target.track, root.target.clip,
+                                onClicked: EditorState.tracking.clearSamples(root.clipId,
                                                                              trackerRow.model.id, false)
                             }
 
@@ -670,7 +765,7 @@ PanelFrame {
                                 text: qsTr("Erase after")
                                 tooltip: qsTr("Remove the samples after the playhead")
                                 enabled: !EditorState.tracking.busy
-                                onClicked: EditorState.tracking.clearSamples(root.target.track, root.target.clip,
+                                onClicked: EditorState.tracking.clearSamples(root.clipId,
                                                                              trackerRow.model.id, true)
                             }
 
@@ -733,7 +828,7 @@ PanelFrame {
                                     displayText: labels[model[currentIndex]]
                                     currentIndex: targetRow.modelData.center ? 0 : 1
                                     onActivated: (index) => EditorState.tracking.setTargetCenter(
-                                                     root.target.track, root.target.clip, trackerRow.model.id,
+                                                     root.clipId, trackerRow.model.id,
                                                      targetRow.modelData.clipId, index === 0)
                                 }
 
@@ -741,7 +836,7 @@ PanelFrame {
                                     Layout.alignment: Qt.AlignVCenter
                                     glyph: Theme.icons.x
                                     tooltip: qsTr("Stop driving from this")
-                                    onClicked: EditorState.tracking.removeTarget(root.target.track, root.target.clip,
+                                    onClicked: EditorState.tracking.removeTarget(root.clipId,
                                                                                  trackerRow.model.id,
                                                                                  modelData.clipId)
                                 }
@@ -771,7 +866,7 @@ PanelFrame {
                                 text: qsTr("Re-apply")
                                 tooltip: qsTr("Update the attached masks and clips from the current track")
                                 enabled: !EditorState.tracking.busy && trackerRow.model.targets.length > 0
-                                onClicked: EditorState.tracking.apply(root.target.track, root.target.clip,
+                                onClicked: EditorState.tracking.apply(root.clipId,
                                                                       trackerRow.model.id)
                             }
                         }
@@ -787,7 +882,7 @@ PanelFrame {
                                     required property var modelData
                                     text: modelData.kind === "mask" ? qsTr("Mask: %1").arg(modelData.name)
                                                                     : qsTr("Make follow: %1").arg(modelData.name)
-                                    onTriggered: EditorState.tracking.setTarget(root.target.track, root.target.clip,
+                                    onTriggered: EditorState.tracking.setTarget(root.clipId,
                                                                                 trackerRow.model.id,
                                                                                 modelData.clipId,
                                                                                 modelData.kind === "mask" ? "mask" : "followClip")
@@ -826,7 +921,7 @@ PanelFrame {
             open()
         }
 
-        onAccepted: EditorState.tracking.removeTracker(root.target.track, root.target.clip,
+        onAccepted: EditorState.tracking.removeTracker(root.clipId,
                                                        deleteTrackerDialog.trackerId, deleteTrackerDialog.removeKeys)
 
         contentItem: Column {

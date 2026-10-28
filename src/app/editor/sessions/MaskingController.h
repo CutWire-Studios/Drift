@@ -120,6 +120,15 @@ public:
     // mediaChannel, isMedia, pinned, pathAnimated (mask.pathKeys non-empty), pathKeyCount, selected (== current selection)}.
     Q_INVOKABLE QVariantList maskStack(int trackIndex, int clipIndex) const;
 
+    // "Blur this area": gives the pinned (non-cutout) mask adjustment `maskAdjustmentId` a standalone
+    // effects layer carrying `effectId` (a catalog id) over its host clip's span, directly above the
+    // host's track. The shape moves onto that layer's mask, converted from the host's frame to the
+    // canvas (static values, mask keyframes and polygon keys), trackers that drove the pinned mask
+    // drive the layer's mask instead (their keys are regenerated), and the pinned adjustment goes.
+    // One undo step tr("Blur area"). Returns the new layer's id, or empty (with a message for a
+    // cutout) when nothing changed.
+    Q_INVOKABLE QString moveMaskToEffectLayer(const QString &maskAdjustmentId, const QString &effectId);
+
     // Draws a new parametric mask on the target. kind "clip": addLinkedMask, then select the new
     // adjustment (m_app->selectClipById). kind "adjustment": replace its mask via writeClipMask
     // (keep the adjustment selected). shape: "rectangle" | "ellipse". w/h clamped to >= 0.01.
@@ -164,6 +173,17 @@ public:
     // Test hook: waits until every queued brush save has been applied to the project.
     bool waitForBrushSaves(int timeoutMs = 5000);
     QSet<QString> &sessionBrushMattes() { return m_sessionBrushMattes; }
+
+    // Whether the selected mask pinned to this clip is an AI cutout (object or people), which brush
+    // strokes then fix one frame at a time instead of painting a new matte.
+    Q_INVOKABLE bool hasSelectedCutoutMask(int trackIndex, int clipIndex) const;
+    // Whether the cutout mask adjustment `maskClipId` carries a fix for the frame at the playhead.
+    Q_INVOKABLE bool hasCutoutPatchAtPlayhead(const QString &maskClipId) const;
+    // Drops that fix. One undo step tr("Clear cutout fix").
+    Q_INVOKABLE void clearCutoutPatch(const QString &maskClipId);
+    // The media time (the key into Mask::mediaPatches) the compositor reads a cutout's matte at for
+    // the playhead.
+    drift::TimeUs cutoutMediaUs(const QString &maskClipId) const;
 
     // Path keys of the mask on adjustment clip (track, clip), as seconds on the TIMELINE
     // (adjustment.timelineStart + key time), ascending.
@@ -222,6 +242,12 @@ private:
                          quint64 strokeSeq);
     void paintStroke(int trackIndex, int clipIndex, const BrushPreviewStroke &stroke, quint64 strokeSeq);
     bool isBrushTarget(int trackIndex, int clipIndex) const;
+    // The (track, clip) of the selected AI cutout mask pinned to the target, or {-1, -1}.
+    QPair<int, int> selectedCutoutMask(int trackIndex, int clipIndex) const;
+    // Paints `stroke` into the cutout's fix for the playhead frame and saves it as a new PNG.
+    void paintCutoutPatch(const QString &maskClipId, const BrushPreviewStroke &stroke, quint64 strokeSeq);
+    void finishPatchSave(bool ok, const QString &path, const QString &maskClipId, drift::TimeUs mediaUs,
+                         quint64 strokeSeq);
     void setBrushSavesInFlight(int count);
     // The mask label: its own name, else a human label for its shape.
     QString maskLabel(const drift::Mask &mask) const;
@@ -260,6 +286,13 @@ private:
     QSet<QString> m_sessionBrushMattes;
     QString m_brushClipId;
     int m_brushSavesInFlight = 0;
+    // The frame fix last painted, like m_brushImage: while its saves are in flight the project still
+    // names the older file, so the next stroke on the same frame starts from this copy.
+    QImage m_patchImage;
+    QString m_patchPendingPath;
+    QString m_patchMaskId;
+    drift::TimeUs m_patchMediaUs = -1;
+    bool m_patchSaveFailed = false;
     // The newest save failed: m_brushImage holds strokes no file has, and the next stroke's save retries them.
     bool m_brushSaveFailed = false;
     // Single thread: saves finish in stroke order, so the first commit creates the mask and later ones update it.

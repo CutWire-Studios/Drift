@@ -4757,6 +4757,11 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("maskingBrushSmaller"), QStringLiteral("[")},
         {QStringLiteral("maskingBrushLarger"), QStringLiteral("]")},
         {QStringLiteral("maskingBrushToggleErase"), QStringLiteral("X")},
+        // Tracker runs. Ctrl+Shift+Arrow is free: Ctrl+Arrow is the far jump and Shift+Arrow the 1 s jump.
+        {QStringLiteral("trackForward"), QStringLiteral("Ctrl+T")},
+        {QStringLiteral("trackBackward"), QStringLiteral("Ctrl+Shift+T")},
+        {QStringLiteral("trackFrameForward"), QStringLiteral("Ctrl+Shift+Right")},
+        {QStringLiteral("trackFrameBackward"), QStringLiteral("Ctrl+Shift+Left")},
         // Timeline zoom is QML state too, so these take the same route as the tool modes.
         {QStringLiteral("zoomIn"), QStringLiteral("Ctrl+=")},
         {QStringLiteral("zoomOut"), QStringLiteral("Ctrl+-")},
@@ -5624,6 +5629,11 @@ QVariantList AppController::actions() const
         action(QStringLiteral("maskingBrushSmaller"), tr("Decrease brush size")),
         action(QStringLiteral("maskingBrushLarger"), tr("Increase brush size")),
         action(QStringLiteral("maskingBrushToggleErase"), tr("Brush: switch paint / erase")),
+        action(QStringLiteral("trackForward"), tr("Track forward")),
+        action(QStringLiteral("trackBackward"), tr("Track backward")),
+        action(QStringLiteral("trackFrameForward"), tr("Track one frame forward")),
+        action(QStringLiteral("trackFrameBackward"), tr("Track one frame backward")),
+        action(QStringLiteral("trackBoth"), tr("Track whole clip")),
         action(QStringLiteral("zoomIn"), tr("Zoom in")),
         action(QStringLiteral("zoomOut"), tr("Zoom out")),
         action(QStringLiteral("multicam"), tr("Multicam window")),
@@ -10480,6 +10490,33 @@ void AppController::addAdjustmentClipAt(int trackIndex, double atSeconds, double
     addAdjustmentClipWithEffect(QString(), trackIndex, atSeconds, durationSeconds);
 }
 
+drift::Clip AppController::buildAdjustmentClip(const QString &effectId, drift::TimeUs start, drift::TimeUs durUs) const
+{
+    drift::Clip clip;
+    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    clip.type = drift::ClipType::Adjustment;
+    clip.name = tr("Adjustment Layer");
+    clip.timelineStart = start;
+    clip.timelineDuration = durUs;
+    clip.srcIn = 0;
+    clip.srcOut = durUs;
+
+    if (!effectId.isEmpty()) {
+        if (const EffectPresetEntry *def = effectDefForId(effectId)) {
+            drift::Effect effect;
+            effect.name = def->filterName;
+            effect.catalogId = def->meta.id;
+            for (auto it = def->fixedParams.constBegin(); it != def->fixedParams.constEnd(); ++it)
+                effect.parameters.insert(it.key(), it.value());
+            for (const drift::EffectParamSpec &p : def->meta.parameters)
+                p.insertDefault(effect.parameters);
+            clip.effects.append(effect);
+            clip.name = tr("Adjustment (%1)").arg(def->filterName);
+        }
+    }
+    return clip;
+}
+
 void AppController::addAdjustmentClipWithEffect(const QString &effectId, int trackIndex, double atSeconds, double durationSeconds)
 {
     QString why;
@@ -10535,30 +10572,7 @@ void AppController::addAdjustmentClipWithEffect(const QString &effectId, int tra
     const drift::TimeUs start = drift::resolveClipStart(m_project, track, -1, startSeconds,
                                                         durUs, m_snapEnabled, m_playheadUs);
 
-    drift::Clip clip;
-    clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    clip.type = drift::ClipType::Adjustment;
-    clip.name = tr("Adjustment Layer");
-    clip.timelineStart = start;
-    clip.timelineDuration = durUs;
-    clip.srcIn = 0;
-    clip.srcOut = durUs;
-
-    if (!effectId.isEmpty()) {
-        if (const EffectPresetEntry *def = effectDefForId(effectId)) {
-            drift::Effect effect;
-            effect.name = def->filterName;
-            effect.catalogId = def->meta.id;
-            for (auto it = def->fixedParams.constBegin(); it != def->fixedParams.constEnd(); ++it)
-                effect.parameters.insert(it.key(), it.value());
-            for (const drift::EffectParamSpec &p : def->meta.parameters)
-                p.insertDefault(effect.parameters);
-            clip.effects.append(effect);
-            clip.name = tr("Adjustment (%1)").arg(def->filterName);
-        }
-    }
-
-    track.clips.append(clip);
+    track.clips.append(buildAdjustmentClip(effectId, start, durUs));
     const int newClipIndex = track.clips.size() - 1;
     pushProjectEdit(before, tr("Add adjustment layer"));
     finishEdit(tr("Adjustment layer added"));
@@ -15550,6 +15564,9 @@ void AppController::writeClipMask(int trackIndex, int clipIndex, const drift::Ma
             existing = m_project.tracks().at(first.trackIndex).clips.at(first.clipIndex).mask;
         }
     }
+    // maskFromMap never carries frame fixes either, and a cutout edited from the inspector must keep them.
+    if (existing && seeded.mediaPatches.isEmpty() && seeded.isMedia())
+        seeded.mediaPatches = existing->mediaPatches;
     if (existing && mask.keyframes.isEmpty() && mask.pathKeys.isEmpty()) {
         // An edit of one property keeps the rest of the animation; a caller that supplies a new
         // value or new geometry has replaced that property, so its old keys must not override it.

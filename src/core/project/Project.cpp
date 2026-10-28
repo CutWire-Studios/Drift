@@ -41,7 +41,7 @@ QJsonObject maskToJson(const Mask &m)
         pathKeys.append(QJsonArray{qint64(it.key()), shape});
     }
 
-    return QJsonObject{
+    QJsonObject object{
         {QStringLiteral("shape"), maskShapeToString(m.shape)},
         {QStringLiteral("op"), maskOpToString(m.op)},
         {QStringLiteral("enabled"), m.enabled},
@@ -64,6 +64,13 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("keyframes"), maskKeyframesJson},
         {QStringLiteral("pathKeys"), pathKeys},
     };
+    if (!m.mediaPatches.isEmpty()) {
+        QJsonArray patches;
+        for (auto it = m.mediaPatches.constBegin(); it != m.mediaPatches.constEnd(); ++it)
+            patches.append(QJsonObject{{QStringLiteral("t"), qint64(it.key())}, {QStringLiteral("path"), it.value()}});
+        object.insert(QStringLiteral("patches"), patches);
+    }
+    return object;
 }
 
 Mask maskFromJson(const QJsonObject &o)
@@ -118,6 +125,13 @@ Mask maskFromJson(const QJsonObject &o)
                 shape.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
         }
         m.pathKeys.insert(TimeUs(entry.at(0).toInteger()), shape);
+    }
+
+    for (const QJsonValue &value : o.value(QStringLiteral("patches")).toArray()) {
+        const QJsonObject patch = value.toObject();
+        const QString path = patch.value(QStringLiteral("path")).toString();
+        if (!path.isEmpty())
+            m.mediaPatches.insert(TimeUs(patch.value(QStringLiteral("t")).toInteger()), path);
     }
 
     // A pre-v5 "matte" had no geometry: every consumer bailed out before reading the rect and
@@ -785,6 +799,7 @@ void detachClip(Clip &clip)
     clip.speedCurve.detachSharedData();
     clip.mask.points.detach();
     clip.mask.pathKeys.detach();
+    clip.mask.mediaPatches.detach();
     for (auto it = clip.mask.pathKeys.begin(); it != clip.mask.pathKeys.end(); ++it)
         it.value().detach();
     clip.mask.keyframes.detach();

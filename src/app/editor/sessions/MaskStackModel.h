@@ -20,6 +20,9 @@ class MaskStackModel : public QAbstractListModel
     Q_PROPERTY(bool hasEnabled READ hasEnabled NOTIFY summaryChanged)
     // Id of the selected object cutout, which "Refine selected mask" reuses; empty when none is selected.
     Q_PROPERTY(QString refineMaskId READ refineMaskId NOTIFY summaryChanged)
+    // Id and name of the selected AI cutout (object or people), which brush strokes fix per frame.
+    Q_PROPERTY(QString cutoutFixId READ cutoutFixId NOTIFY summaryChanged)
+    Q_PROPERTY(QString cutoutFixName READ cutoutFixName NOTIFY summaryChanged)
     // Shape key times (timeline seconds) of the selected freeform mask.
     Q_PROPERTY(QVariantList shapeKeyTimes READ shapeKeyTimes NOTIFY summaryChanged)
     Q_PROPERTY(int shapeKeyCount READ shapeKeyCount NOTIFY summaryChanged)
@@ -38,6 +41,8 @@ public:
 
     bool hasEnabled() const { return m_hasEnabled; }
     QString refineMaskId() const { return m_refineMaskId; }
+    QString cutoutFixId() const { return m_cutoutFixId; }
+    QString cutoutFixName() const { return m_cutoutFixName; }
     QVariantList shapeKeyTimes() const { return m_shapeKeyTimes; }
     int shapeKeyCount() const { return int(m_shapeKeyTimes.size()); }
     bool earlierShapeKey() const { return m_earlier; }
@@ -72,6 +77,8 @@ private:
     QList<Entry> m_rows;
     bool m_hasEnabled = false;
     QString m_refineMaskId;
+    QString m_cutoutFixId;
+    QString m_cutoutFixName;
     QVariantList m_shapeKeyTimes;
     bool m_earlier = false;
     bool m_later = false;

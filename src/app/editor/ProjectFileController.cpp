@@ -1514,6 +1514,8 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
                 // Masks live on adjustment clips, which this flat walk already covers.
                 repoint(clip.mask.mediaPath);
                 repoint(clip.mask.mediaFgrPath);
+                for (QString &patch : clip.mask.mediaPatches)
+                    repoint(patch);
                 repoint(clip.faceTrackPath);
                 repoint(clip.depthPath);
                 repoint(clip.legacyStabilizePath);

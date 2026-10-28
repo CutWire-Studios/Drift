@@ -1898,6 +1898,8 @@ protected:
     // Select the clip with this id. Pinning a mask inserts a lane and normalization reorders, so
     // an index captured before the edit is stale by the time there is something to select.
     void selectClipById(const QString &clipId);
+    // An adjustment clip carrying `effectId` (empty for none), not yet placed on any track.
+    drift::Clip buildAdjustmentClip(const QString &effectId, drift::TimeUs start, drift::TimeUs durUs) const;
     // Re-establishes the two structural invariants the adjustment model rests on: no stack sits
     // on a media clip, and every lane is adjacent to and directly above its parent. Both passes
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and

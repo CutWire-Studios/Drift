@@ -2,6 +2,7 @@
 
 #include "app/editor/AppController.h"
 #include "app/editor/sessions/MaskingController.h"
+#include "app/jobs/vision/TrackingController.h"
 #include "core/project/Project.h"
 #include "core/project/Track.h"
 
@@ -126,6 +127,7 @@ bool MaskEditSession::begin(const QString &clipId, double frameW, double frameH)
     m_frameW = std::max(1.0, frameW);
     m_frameH = std::max(1.0, frameH);
     m_active = true;
+    m_bodyMoved = false;
     m_app->beginPreviewDrag(tr("Mask changed"));
     emit liveChanged();
     return true;
@@ -135,10 +137,16 @@ void MaskEditSession::commit()
 {
     if (!m_active)
         return;
+    const QString clipId = m_clipId;
+    const bool movedBody = m_bodyMoved;
     m_active = false;
+    m_bodyMoved = false;
     m_clipId.clear();
     emit liveChanged();
     m_app->commitPreviewDrag();
+    // Dragging a tracked mask back onto the object is the correction gesture.
+    if (movedBody)
+        m_app->tracking()->correctFromMask(clipId);
 }
 
 void MaskEditSession::cancel()
@@ -146,6 +154,7 @@ void MaskEditSession::cancel()
     if (!m_active)
         return;
     m_active = false;
+    m_bodyMoved = false;
     m_clipId.clear();
     emit liveChanged();
     m_app->cancelPreviewDrag();
@@ -208,6 +217,7 @@ void MaskEditSession::beginBody(double nx, double ny)
 {
     m_pressX = nx;
     m_pressY = ny;
+    m_bodyMoved = false;
     m_startX = m_x;
     m_startY = m_y;
     m_startPoints = m_points;
@@ -236,6 +246,7 @@ void MaskEditSession::moveBody(double nx, double ny, bool bypassSnap)
         snapCentre(x, y);
     m_x = x;
     m_y = y;
+    m_bodyMoved = true;
     if (m_freeform) {
         const double dx = x - m_startX;
         const double dy = y - m_startY;

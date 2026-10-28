@@ -1202,7 +1202,7 @@ MaskMediaFrame decodeMaskMedia(const QString &path, quint64 streamId, drift::Tim
 // because this is the only place that knows the frame time; the GPU fold consumes the pair.
 void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
                        const QList<drift::LaneMask> &laneMasks, drift::TimeUs timelineUs,
-                       int canvasWidth, int canvasHeight)
+                       int canvasWidth, int canvasHeight, int fps)
 {
     if (laneMasks.isEmpty())
         return;
@@ -1212,6 +1212,7 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
         layer.masks.append(laneMask.mask);
 
     layer.maskMedia.resize(layer.masks.size());
+    layer.maskPatch.resize(layer.masks.size());
     for (int i = 0; i < laneMasks.size(); ++i) {
         const drift::Mask &mask = laneMasks.at(i).mask;
         if (!mask.isMedia())
@@ -1225,6 +1226,14 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
         // contributes nothing rather than covering nothing.
         layer.maskMedia[i] =
             decodeMaskMedia(mask.mediaPath, streamId, mediaUs, canvasWidth, canvasHeight);
+
+        // A brush fix of this frame. It is drawn over the decoded coverage by the GPU fold, so the
+        // matte video keeps decoding as usual.
+        if (!mask.mediaPatches.isEmpty()) {
+            const QString patch = mask.patchAt(mediaUs, drift::frameDurationUs(fps) / 2);
+            if (!patch.isEmpty())
+                layer.maskPatch[i] = decodedStillImage(patch, canvasWidth, canvasHeight);
+        }
 
         // The decontaminated foreground, when the cutout produced one. Bound only for a lone
         // media mask, which is what a segmentation makes: with a stack there is no single entry
@@ -1512,7 +1521,7 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     if (!editingText)
         applyClipBodyAnimation(clip, timelineUs, w, h, &destRect, &opacity, &rotation);
 
-    fillGpuLayerMasks(layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight);
+    fillGpuLayerMasks(layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight, projectFps);
     layer.rect = destRect;
     layer.rotation = rotation;
     // Depth sorting needs a pose to sort by, and the dest-reading blend modes copy the canvas
@@ -1575,6 +1584,7 @@ void appendTextEditDecor(GpuScene &scene, const GpuItem &textItem, const drift::
     layer.effects.clear();
     layer.masks.clear();
     layer.maskMedia.clear();
+    layer.maskPatch.clear();
     layer.fgr = {};
     layer.faceSlots.clear();
     layer.depth.reset();
@@ -1923,7 +1933,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                                                      ? clip.mask.resolvedAt(maskTimeUs)
                                                      : clip.mask;
                     fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{resolved, clip.id, clip.timelineStart, clip.srcIn}},
-                                      timelineUs, width, height);
+                                      timelineUs, width, height, fps);
                 }
                 item.layer.rect = QRectF(0, 0, width, height);
                 item.layer.opacity = opacityForClip(clip, timelineUs);

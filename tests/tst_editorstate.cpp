@@ -50,6 +50,8 @@
 #include "engine/tracking/MotionTracking.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "app/editor/AppController.h"
+#include "app/editor/AppControllerDetail.h"
+#include "app/mcp/McpDetail.h"
 #include "app/editor/TimelineClipsModel.h"
 #include "app/editor/sessions/SubtitleCueFilterModel.h"
 #include "ui/timeline/TimelineLayout.h"
@@ -386,6 +388,16 @@ private slots:
     void trackingCorrectionDropsStaleSamplesAndReappliesTargets();
     void trackingFrameKeepsAGhostMarkerOffTheTrackedSpan();
     void maskStackModelListsRolesAndShapeKeys();
+    void trackerShortcutsAreRegistered();
+    void trackingClipIdOverloadsMatchTheIndexCalls();
+    void maskStackModelCarriesTrackerRoles();
+    void maskingBlurAreaMovesMaskToEffectLayerInOneUndoStep();
+    void maskingBlurAreaRefusesCutouts();
+    void trackingEnsureMaskTrackerReusesAndIsOneUndoStep();
+    void trackingDraggingATrackedMaskWritesAUserKey();
+    void trackingFollowFromTheFollowersSide();
+    void maskingBrushFixesACutoutFrameAsAPatch();
+    void maskingCutoutPatchSurvivesInspectorEdits();
     void trackerListModelKeepsSelectionAndFiltersCandidates();
     void segmentationNearestPointPicksTheClosestWithinTolerance();
     void maskingBrushOpacityCapsASingleStroke();
@@ -14017,6 +14029,473 @@ void EditorStateTest::trackingUndoRevertsOnlyTheTracker()
     state.undo();
     QCOMPARE(fx.tracker(QStringLiteral("clip-0"), id).points[0].samples.size(), before);
     QVERIFY(fx.tracker(QStringLiteral("clip-0"), id).points[0].samples.contains(15 * fx.frame));
+}
+
+void EditorStateTest::trackerShortcutsAreRegistered()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestTrackerShortcuts"));
+    const auto restore = qScopeGuard([&] {
+        QSettings().remove(QStringLiteral("shortcuts"));
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+    QSettings().remove(QStringLiteral("shortcuts"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    QCOMPARE(state.shortcutFor(QStringLiteral("trackForward")), QStringLiteral("Ctrl+T"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("trackBackward")), QStringLiteral("Ctrl+Shift+T"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("trackFrameForward")), QStringLiteral("Ctrl+Shift+Right"));
+    QCOMPARE(state.shortcutFor(QStringLiteral("trackFrameBackward")), QStringLiteral("Ctrl+Shift+Left"));
+    QVERIFY(state.shortcutFor(QStringLiteral("trackBoth")).isEmpty());
+
+    QStringList registered;
+    QSet<QString> trackerKeys;
+    for (const QVariant &action : state.actions()) {
+        const QVariantMap map = action.toMap();
+        registered.append(map.value(QStringLiteral("id")).toString());
+        if (map.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("track")))
+            trackerKeys.insert(map.value(QStringLiteral("shortcut")).toString());
+    }
+    for (const char *id : {"trackForward", "trackBackward", "trackFrameForward", "trackFrameBackward", "trackBoth"})
+        QVERIFY2(registered.contains(QLatin1String(id)), id);
+    trackerKeys.remove(QString());
+    for (const QVariant &action : state.actions()) {
+        const QVariantMap map = action.toMap();
+        if (map.value(QStringLiteral("id")).toString().startsWith(QStringLiteral("track")))
+            continue;
+        QVERIFY2(!trackerKeys.contains(map.value(QStringLiteral("shortcut")).toString()),
+                 qPrintable(map.value(QStringLiteral("id")).toString()));
+    }
+
+    QCOMPARE(state.actionForArrowChord(Qt::Key_Right, Qt::ControlModifier | Qt::ShiftModifier),
+             QStringLiteral("trackFrameForward"));
+    QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier),
+             QStringLiteral("trackFrameBackward"));
+    QCOMPARE(state.actionForArrowChord(Qt::Key_Left, Qt::ControlModifier), QStringLiteral("jumpBackFar"));
+}
+
+void EditorStateTest::trackingClipIdOverloadsMatchTheIndexCalls()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+
+    QVERIFY(state.tracking()->addPointTracker(QStringLiteral("missing"), 0.5, 0.5).isEmpty());
+    QVERIFY(state.tracking()->trackers(QStringLiteral("missing")).isEmpty());
+
+    const QString id = state.tracking()->addPointTracker(host, 0.5, 0.5);
+    QVERIFY(!id.isEmpty());
+    QCOMPARE(state.tracking()->trackers(host).size(), 1);
+
+    state.tracking()->setTrackerProperty(host, id, QStringLiteral("solve"), QStringLiteral("translateRotate"));
+    QCOMPARE(fx.tracker(host, id).solve, drift::MotionTracker::Solve::TranslateRotate);
+
+    state.tracking()->addTrackerPoint(host, id, 0.6, 0.6);
+    QCOMPARE(fx.tracker(host, id).points.size(), 2);
+
+    drift::MotionTracker &tracker = fx.tracker(host, id);
+    for (int k = 1; k < 10; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5, 0.5), 0.9f, false});
+    state.setPlayheadUs(5 * fx.frame);
+    state.tracking()->clearSamples(host, id, true);
+    QVERIFY(!fx.tracker(host, id).points[0].samples.contains(8 * fx.frame));
+    QVERIFY(fx.tracker(host, id).points[0].samples.contains(3 * fx.frame));
+
+    const QString maskId = fx.addMask(host);
+    state.tracking()->setTarget(host, id, maskId, QStringLiteral("mask"));
+    QCOMPARE(fx.tracker(host, id).targets.size(), 1);
+    state.tracking()->setTargetCenter(host, id, maskId, false);
+    state.tracking()->apply(host, id);
+    state.tracking()->removeTarget(host, id, maskId);
+    QCOMPARE(fx.tracker(host, id).targets.size(), 0);
+
+    state.tracking()->removeTracker(host, id, false);
+    QVERIFY(state.tracking()->trackers(host).isEmpty());
+}
+
+void EditorStateTest::maskStackModelCarriesTrackerRoles()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+    const QString maskId = fx.addMask(host);
+    state.selectClip(0, 0);
+    MaskStackModel *model = state.masking()->stackModel();
+    model->refresh();
+    QCOMPARE(model->rowCount(), 1);
+
+    const QHash<int, QByteArray> roles = model->roleNames();
+    for (const char *name : {"trackerId", "trackState", "solve"})
+        QVERIFY2(roles.values().contains(name), name);
+    QVERIFY(model->rowAt(0).value(QStringLiteral("trackerId")).toString().isEmpty());
+    QCOMPARE(model->rowAt(0).value(QStringLiteral("trackState")).toString(), QStringLiteral("none"));
+
+    const QString id = state.tracking()->addPointTracker(host, 0.5, 0.5);
+    state.tracking()->setTarget(host, id, maskId, QStringLiteral("mask"));
+    model->refresh();
+    QCOMPARE(model->rowAt(0).value(QStringLiteral("trackerId")).toString(), id);
+    QCOMPARE(model->rowAt(0).value(QStringLiteral("trackState")).toString(), QStringLiteral("none"));
+    QCOMPARE(model->rowAt(0).value(QStringLiteral("solve")).toString(), QStringLiteral("translate"));
+
+    drift::MotionTracker &tracker = fx.tracker(host, id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5, 0.5), 0.9f, false});
+    model->refresh();
+    QCOMPARE(model->rowAt(0).value(QStringLiteral("trackState")).toString(), QStringLiteral("partial"));
+
+    for (int k = 30; k < 60; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5, 0.5), 0.9f, false});
+    model->refresh();
+    QCOMPARE(model->rowAt(0).value(QStringLiteral("trackState")).toString(), QStringLiteral("full"));
+
+    state.tracking()->setTrackerProperty(host, id, QStringLiteral("solve"), QStringLiteral("translateRotate"));
+    model->refresh();
+    QCOMPARE(model->rowAt(0).value(QStringLiteral("solve")).toString(), QStringLiteral("translateRotate"));
+}
+
+void EditorStateTest::maskingBlurAreaMovesMaskToEffectLayerInOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+    const double canvasW = state.project()->width();
+    const double canvasH = state.project()->height();
+    state.project()->tracks()[0].clips[0].transformX.setKeyframe(0, 100.0);
+    state.project()->tracks()[0].clips[0].transformW.setKeyframe(0, canvasW / 2.0);
+
+    const QString maskId = fx.addMask(host);
+    {
+        int t = 0;
+        int c = 0;
+        fx.clipById(maskId, &t, &c);
+        drift::Mask &mask = state.project()->tracks()[t].clips[c].mask;
+        mask.shape = drift::MaskShape::Ellipse;
+        mask.x = 0.25;
+        mask.y = 0.5;
+        mask.w = 0.2;
+        mask.h = 0.4;
+        mask.feather = 7.0;
+    }
+
+    const QString id = state.tracking()->addPointTracker(host, 0.25, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(host, id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.25 + 0.01 * k, 0.5), 0.95f, false});
+    state.tracking()->setTarget(host, id, maskId, QStringLiteral("mask"));
+
+    const int tracksBefore = state.project()->tracks().size();
+    state.setPlayheadUs(0);
+    const QString layerId =
+        state.masking()->moveMaskToEffectLayer(maskId, QStringLiteral("builtin.effects.gaussian_blur"));
+    QVERIFY(!layerId.isEmpty());
+
+    const drift::Clip *layer = fx.clipById(layerId);
+    QVERIFY(layer);
+    QCOMPARE(layer->type, drift::ClipType::Adjustment);
+    QCOMPARE(layer->adjustmentKind, drift::AdjustmentKind::VideoEffects);
+    QCOMPARE(layer->mask.shape, drift::MaskShape::Ellipse);
+    QCOMPARE(layer->mask.feather, 7.0);
+    QCOMPARE(layer->effects.size(), 1);
+    QCOMPARE(layer->effects.first().catalogId, QStringLiteral("builtin.effects.gaussian_blur"));
+    int hostTrack = 0;
+    const drift::Clip *hostClip = fx.clipById(host, &hostTrack);
+    QCOMPARE(layer->timelineStart, hostClip->timelineStart);
+    QCOMPARE(layer->timelineDuration, hostClip->timelineDuration);
+
+    // The host sits at x = 100 and is half the canvas wide, so its 0.25 is canvas (100 + 0.25 * W / 2) / W.
+    const drift::KeyframeTrack<double> xTrack = layer->mask.keyframes.value(QStringLiteral("x"));
+    const auto &xKeys = xTrack.keyframes();
+    QVERIFY(xKeys.size() >= 2);
+    QVERIFY(qAbs(xKeys.first().value - (100.0 + 0.25 * canvasW / 2.0) / canvasW) < 1e-6);
+    QVERIFY(qAbs(xKeys.last().value - xKeys.first().value - 0.29 * 0.5) < 1e-6);
+    QVERIFY(qAbs(layer->mask.w - 0.2 * 0.5) < 1e-6);
+    QVERIFY(qAbs(layer->mask.h - 0.4) < 1e-6);
+    Q_UNUSED(canvasH);
+
+    QVERIFY(!fx.clipById(maskId));
+    QCOMPARE(state.tracking()->trackers(host).first().toMap().value(QStringLiteral("targets")).toList()
+                 .first().toMap().value(QStringLiteral("clipId")).toString(),
+             layerId);
+    QVERIFY(drift::linkedMaskAdjustments(*state.project(), hostTrack, 0).isEmpty());
+    QVERIFY(hostTrack > 0);
+    QCOMPARE(state.selectedClipData().value(QStringLiteral("id")).toString(), layerId);
+
+    state.undo();
+    QVERIFY(fx.clipById(maskId));
+    QVERIFY(!fx.clipById(layerId));
+    QCOMPARE(state.project()->tracks().size(), tracksBefore);
+    QCOMPARE(state.tracking()->trackers(host).first().toMap().value(QStringLiteral("targets")).toList()
+                 .first().toMap().value(QStringLiteral("clipId")).toString(),
+             maskId);
+    QCOMPARE(fx.clipById(maskId)->mask.shape, drift::MaskShape::Ellipse);
+}
+
+void EditorStateTest::maskingBlurAreaRefusesCutouts()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    int t = 0;
+    int c = 0;
+    fx.clipById(QStringLiteral("clip-0"), &t, &c);
+    const drift::ClipRef added = drift::addLinkedMask(
+        *state.project(), t, c, drift::fullFrameMediaMask(QStringLiteral("/tmp/cutout-matte.mp4")));
+    const QString cutoutId = state.project()->tracks().at(added.trackIndex).clips.at(added.clipIndex).id;
+    const int tracks = state.project()->tracks().size();
+
+    QVERIFY(state.masking()->moveMaskToEffectLayer(cutoutId, QStringLiteral("builtin.effects.gaussian_blur")).isEmpty());
+    QVERIFY(fx.clipById(cutoutId));
+    QCOMPARE(state.project()->tracks().size(), tracks);
+    QVERIFY(!state.undoAvailable());
+}
+
+void EditorStateTest::trackingEnsureMaskTrackerReusesAndIsOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+    const QString maskId = fx.addMask(host);
+    {
+        int t = 0;
+        int c = 0;
+        fx.clipById(maskId, &t, &c);
+        state.project()->tracks()[t].clips[c].mask.x = 0.3;
+        state.project()->tracks()[t].clips[c].mask.y = 0.6;
+    }
+    QVERIFY(state.tracking()->trackerForTarget(maskId).isEmpty());
+
+    const QString id = state.tracking()->ensureMaskTracker(maskId, -1.0, -1.0);
+    QVERIFY(!id.isEmpty());
+    QCOMPARE(state.tracking()->trackerForTarget(maskId), id);
+    const drift::MotionTracker &tracker = fx.tracker(host, id);
+    QCOMPARE(tracker.targets.size(), 1);
+    QCOMPARE(tracker.targets.first().clipId, maskId);
+    QCOMPARE(tracker.targets.first().mode, drift::TrackerTarget::Mode::Mask);
+    QVERIFY(qAbs(tracker.points[0].samples.first().pos.x() - 0.3) < 1e-9);
+    QVERIFY(qAbs(tracker.points[0].samples.first().pos.y() - 0.6) < 1e-9);
+
+    QCOMPARE(state.tracking()->ensureMaskTracker(maskId, 0.1, 0.1), id);
+    QCOMPARE(state.tracking()->trackers(host).size(), 1);
+
+    state.undo();
+    QVERIFY(state.tracking()->trackers(host).isEmpty());
+    QVERIFY(state.tracking()->trackerForTarget(maskId).isEmpty());
+    QVERIFY(fx.clipById(maskId));
+}
+
+void EditorStateTest::trackingDraggingATrackedMaskWritesAUserKey()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+    const QString maskId = fx.addMask(host);
+    {
+        int t = 0;
+        int c = 0;
+        fx.clipById(maskId, &t, &c);
+        state.project()->tracks()[t].clips[c].mask.x = 0.5;
+        state.project()->tracks()[t].clips[c].mask.y = 0.5;
+    }
+    const QString id = state.tracking()->addPointTracker(host, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(host, id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5), 0.95f, false});
+    state.tracking()->setTarget(host, id, maskId, QStringLiteral("mask"));
+
+    state.setPlayheadUs(10 * fx.frame);
+    MaskEditSession *session = state.masking()->editSession();
+    QVERIFY(session->begin(maskId, 400, 200));
+    session->beginBody(0.5, 0.5);
+    session->moveBody(0.6, 0.5, true);
+    session->commit();
+
+    const auto &samples = fx.tracker(host, id).points[0].samples;
+    QVERIFY(samples.contains(10 * fx.frame));
+    QVERIFY(samples.value(10 * fx.frame).userKey);
+    QVERIFY(samples.value(10 * fx.frame).pos.x() > 0.55);
+    QVERIFY(!samples.contains(20 * fx.frame));
+    const auto &xKeys = fx.clipById(maskId)->mask.keyframes.value(QStringLiteral("x"));
+    QVERIFY(qAbs(xKeys.evaluateAt(10 * fx.frame) - samples.value(10 * fx.frame).pos.x()) < 1e-6);
+}
+
+void EditorStateTest::trackingFollowFromTheFollowersSide()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+    state.addTextClip(QStringLiteral("Tag"), 0.0);
+    QString textId;
+    for (const drift::Track &track : state.project()->tracks()) {
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.type == drift::ClipType::Text)
+                textId = clip.id;
+        }
+    }
+    QVERIFY(!textId.isEmpty());
+    state.setPlayheadUs(5 * fx.frame);
+
+    const QVariantMap below = state.tracking()->videoUnder(textId);
+    QCOMPARE(below.value(QStringLiteral("clipId")).toString(), host);
+    QCOMPARE(below.value(QStringLiteral("name")).toString(), fx.clipById(host)->name);
+    QVERIFY(state.tracking()->videoUnder(host).isEmpty());
+    QVERIFY(state.tracking()->videoUnder(QStringLiteral("missing")).isEmpty());
+    QCOMPARE(state.tracking()->clipRefById(host).value(QStringLiteral("name")).toString(), fx.clipById(host)->name);
+
+    const QString id = state.tracking()->followWithNewTracker(host, textId, 0.4, 0.5);
+    QVERIFY(!id.isEmpty());
+    const drift::MotionTracker &tracker = fx.tracker(host, id);
+    QCOMPARE(tracker.targets.size(), 1);
+    QCOMPARE(tracker.targets.first().clipId, textId);
+    QCOMPARE(tracker.targets.first().mode, drift::TrackerTarget::Mode::FollowClip);
+
+    const QVariantList driving = state.tracking()->trackersDriving(textId);
+    QCOMPARE(driving.size(), 1);
+    QCOMPARE(driving.first().toMap().value(QStringLiteral("hostClipId")).toString(), host);
+    QCOMPARE(driving.first().toMap().value(QStringLiteral("trackerId")).toString(), id);
+    QVERIFY(state.tracking()->trackersDriving(host).isEmpty());
+
+    state.undo();
+    QVERIFY(state.tracking()->trackersDriving(textId).isEmpty());
+    QVERIFY(state.tracking()->trackers(host).isEmpty());
+
+    state.redo();
+    state.tracking()->removeTarget(host, id, textId);
+    QVERIFY(state.tracking()->trackersDriving(textId).isEmpty());
+}
+
+namespace {
+
+QString addCutout(AppController &state, TrackingFixture &fx, const QString &host, bool people = false)
+{
+    int t = 0;
+    int c = 0;
+    fx.clipById(host, &t, &c);
+    drift::Mask cutout = drift::fullFrameMediaMask(
+        QDir(drift::matteCacheDir()).filePath(QStringLiteral("test-cutout-%1.mkv").arg(QUuid::createUuid().toString(QUuid::WithoutBraces))));
+    if (people)
+        cutout.mediaFgrPath = QDir(drift::matteCacheDir()).filePath(QStringLiteral("test-cutout-fgr.mkv"));
+    const drift::ClipRef added = drift::addLinkedMask(*state.project(), t, c, cutout);
+    return state.project()->tracks().at(added.trackIndex).clips.at(added.clipIndex).id;
+}
+
+} // namespace
+
+// Brush strokes on a selected AI cutout paint a PNG for the playhead's matte frame instead of a
+// new matte: gray is the corrected coverage, alpha how much was painted.
+void EditorStateTest::maskingBrushFixesACutoutFrameAsAPatch()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+    const QString cutoutId = addCutout(state, fx, host);
+    state.selectClipById(cutoutId);
+    MaskingController *masking = state.masking();
+    QVERIFY(masking->hasSelectedCutoutMask(0, 0) || masking->hasSelectedCutoutMask(1, 0));
+    QVERIFY(!masking->hasCutoutPatchAtPlayhead(cutoutId));
+
+    state.setPlayheadUs(5 * fx.frame);
+    const drift::TimeUs mediaUs = masking->cutoutMediaUs(cutoutId);
+    QCOMPARE(mediaUs, 5 * fx.frame);
+
+    const auto strokeAcross = [&](double y, bool erase) {
+        QVERIFY(masking->strokeBegin(host, 100, y * 200, 400, 200, erase));
+        masking->strokeAdd(300, y * 200, 1.0);
+        masking->strokeEnd();
+        QVERIFY(masking->waitForBrushSaves());
+    };
+    const auto cutoutMask = [&]() { return fx.clipById(cutoutId)->mask; };
+    const int tracksBefore = state.project()->tracks().size();
+
+    strokeAcross(0.25, false);
+    QCOMPARE(state.project()->tracks().size(), tracksBefore);
+    QCOMPARE(cutoutMask().mediaPatches.size(), 1);
+    QCOMPARE(cutoutMask().mediaPatches.firstKey(), mediaUs);
+    QVERIFY(cutoutMask().mediaPath.endsWith(QStringLiteral(".mkv")));
+    QVERIFY(masking->hasCutoutPatchAtPlayhead(cutoutId));
+    const QString first = cutoutMask().mediaPatches.first();
+    QImage patch(first);
+    QVERIFY(!patch.isNull());
+    patch = patch.convertToFormat(QImage::Format_ARGB32);
+    QVERIFY(qAlpha(patch.pixel(patch.width() / 2, patch.height() / 4)) > 240);
+    QVERIFY(qGray(patch.pixel(patch.width() / 2, patch.height() / 4)) > 240);
+    QCOMPARE(qAlpha(patch.pixel(patch.width() / 2, patch.height() * 3 / 4)), 0);
+
+    // An erase stroke elsewhere joins the same frame's patch and leaves the first stroke alone.
+    strokeAcross(0.75, true);
+    QCOMPARE(cutoutMask().mediaPatches.size(), 1);
+    QVERIFY(cutoutMask().mediaPatches.first() != first);
+    QImage both = QImage(cutoutMask().mediaPatches.first()).convertToFormat(QImage::Format_ARGB32);
+    QVERIFY(qAlpha(both.pixel(both.width() / 2, both.height() / 4)) > 240);
+    QVERIFY(qGray(both.pixel(both.width() / 2, both.height() / 4)) > 240);
+    QVERIFY(qAlpha(both.pixel(both.width() / 2, both.height() * 3 / 4)) > 240);
+    QVERIFY(qGray(both.pixel(both.width() / 2, both.height() * 3 / 4)) < 15);
+
+    // A stroke on another frame keeps its own patch.
+    state.setPlayheadUs(9 * fx.frame);
+    strokeAcross(0.5, false);
+    QCOMPARE(cutoutMask().mediaPatches.size(), 2);
+    QVERIFY(cutoutMask().mediaPatches.contains(9 * fx.frame));
+
+    // One undo step per stroke.
+    state.undo();
+    QCOMPARE(cutoutMask().mediaPatches.size(), 1);
+    QVERIFY(!cutoutMask().mediaPatches.contains(9 * fx.frame));
+
+    // Clearing the fix on the frame at the playhead is one undo step as well.
+    state.setPlayheadUs(5 * fx.frame);
+    masking->clearCutoutPatch(cutoutId);
+    QVERIFY(cutoutMask().mediaPatches.isEmpty());
+    QVERIFY(!masking->hasCutoutPatchAtPlayhead(cutoutId));
+    state.undo();
+    QCOMPARE(cutoutMask().mediaPatches.size(), 1);
+
+    // The saved project keeps the fix.
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(state.project()->toJson(), &error);
+    QVERIFY(error.isEmpty());
+    int lt = 0;
+    int lc = 0;
+    QVERIFY(drift::mcpdetail::findClipById(loaded, cutoutId, &lt, &lc));
+    QCOMPARE(loaded.tracks().at(lt).clips.at(lc).mask.mediaPatches.size(), 1);
+}
+
+void EditorStateTest::maskingCutoutPatchSurvivesInspectorEdits()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString host = QStringLiteral("clip-0");
+    const QString cutoutId = addCutout(state, fx, host);
+    int t = 0;
+    int c = 0;
+    fx.clipById(cutoutId, &t, &c);
+    state.project()->tracks()[t].clips[c].mask.mediaPatches.insert(5 * fx.frame, QStringLiteral("/tmp/fix.png"));
+
+    // The inspector hands the mask back as a map that has no patches in it.
+    QVariantMap map = drift::appdetail::maskToMap(fx.clipById(cutoutId)->mask);
+    map.insert(QStringLiteral("invert"), true);
+    state.setClipMask(t, c, map);
+    const drift::Mask edited = fx.clipById(cutoutId)->mask;
+    QVERIFY(edited.invert);
+    QCOMPARE(edited.mediaPatches.size(), 1);
+    QCOMPARE(edited.mediaPatches.firstKey(), 5 * fx.frame);
 }
 
 QTEST_MAIN(EditorStateTest)

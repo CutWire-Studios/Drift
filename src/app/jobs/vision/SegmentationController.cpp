@@ -1091,11 +1091,17 @@ void SegmentationController::finalizeRefine(const QString &clipId, const QString
                 return;
             }
             const drift::Project before = m_app->m_project;
+            // Frame fixes are keyed by media time, which moves with the offset; the host frame each fixes stays put.
+            const bool keepsFixes = !adjustment.mask.mediaPatches.isEmpty();
+            QMap<drift::TimeUs, QString> rebased;
+            for (auto it = adjustment.mask.mediaPatches.constBegin(); it != adjustment.mask.mediaPatches.constEnd(); ++it)
+                rebased.insert(it.key() + adjustment.mask.mediaSrcOffsetUs - newOffsetUs, it.value());
             adjustment.mask.mediaPath = newMattePath;
             adjustment.mask.mediaSrcOffsetUs = newOffsetUs;
             adjustment.mask.mediaFgrPath.clear();
+            adjustment.mask.mediaPatches = rebased;
             m_app->pushProjectEdit(before, tr("Refine object mask"));
-            m_app->finishEdit(tr("Refine object mask"));
+            m_app->finishEdit(keepsFixes ? tr("Object mask refined. Frame fixes were kept") : tr("Refine object mask"));
             return;
         }
     }

@@ -109,6 +109,16 @@ struct Mask
     // linearly; a mismatch holds the earlier key rather than inventing a correspondence.
     QMap<TimeUs, QVector<QPointF>> pathKeys;
 
+    // Media only, and only for AI cutouts: brush fixes of single frames. Keyed by *media* time, the
+    // index the compositor reads the matte frame at. Each value is a PNG the size of the matte whose
+    // gray is the corrected coverage and whose alpha is how much of the pixel the user painted;
+    // the compositor mixes it over the decoded frame. A fix does not follow motion.
+    QMap<TimeUs, QString> mediaPatches;
+    // The patch for the frame at `mediaUs`, or empty when none lies within `tolerance` of it.
+    QString patchAt(TimeUs mediaUs, TimeUs tolerance) const;
+    // The key `patchAt` would use, else -1.
+    TimeUs patchKeyAt(TimeUs mediaUs, TimeUs tolerance) const;
+
     // Media coverage is decoded per frame by the compositor, so it has no rasterizable path.
     bool isMedia() const { return shape == MaskShape::Media && !mediaPath.isEmpty(); }
     bool contributes() const { return enabled && shape != MaskShape::None; }

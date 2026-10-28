@@ -26,9 +26,18 @@ QtObject {
     property string trackerPlaceId: ""
     // Shared by the Tracking panel and the tracker overlay, which can both change the selection.
     property string selectedTrackerId: ""
+    // "Follow an object" flow: trackers are placed on the host video while the follower clip stays
+    // selected. Both clear when the selection moves off the follower.
+    property string trackerHostId: ""
+    property string trackerFollowerId: ""
     // Where trackers live for the selection. An adjustment layer has none of its own, so it uses
     // the topmost video clip under the playhead and carries the layer's name as viaAdjustment.
     function trackerTarget() {
+        if (trackerHostId !== "") {
+            const ref = EditorState.tracking.clipRefById(trackerHostId)
+            if (ref.track !== undefined)
+                return { kind: "clip", track: ref.track, clip: ref.clip, name: ref.name }
+        }
         const selected = EditorState.masking.maskTarget()
         if (selected.kind !== "adjustment")
             return selected
@@ -43,22 +52,20 @@ QtObject {
     }
     // The frame trackers work in for trackerTarget().
     function trackerFrame(target) {
-        return target.viaAdjustment !== undefined
+        return target.viaAdjustment !== undefined || trackerHostId !== ""
                ? EditorState.preview.trackerFrameOf(target.track, target.clip)
                : EditorState.preview.maskingFrame()
     }
 
     // Tracking in both directions: backward from the playhead, then forward from where it started.
     property string bothTrackerId: ""
-    property int bothTrack: -1
-    property int bothClip: -1
+    property string bothClipId: ""
     property real bothStartSeconds: 0
-    function trackBoth(track, clip, id) {
-        bothTrack = track
-        bothClip = clip
+    function trackBoth(clipId, id) {
+        bothClipId = clipId
         bothTrackerId = id
         bothStartSeconds = EditorState.playheadSeconds
-        EditorState.tracking.track(track, clip, id, false, false)
+        EditorState.tracking.track(clipId, id, false, false)
         if (!EditorState.tracking.busy)
             continueBoth()
     }
@@ -66,7 +73,7 @@ QtObject {
         const id = bothTrackerId
         bothTrackerId = ""
         EditorState.playheadSeconds = bothStartSeconds
-        EditorState.tracking.track(bothTrack, bothClip, id, true, false)
+        EditorState.tracking.track(bothClipId, id, true, false)
     }
     function stopTracking() {
         bothTrackerId = ""

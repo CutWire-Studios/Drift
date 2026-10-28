@@ -57,7 +57,7 @@ Item {
     }
 
     function refreshTracker() {
-        const list = hasClip ? EditorState.tracking.trackers(target.track, target.clip) : []
+        const list = hasClip ? EditorState.tracking.trackers(clipId) : []
         trackerCount = list.length
         const tracker = list.find(t => t.id === ShellBridge.selectedTrackerId)
         minConfidence = tracker ? tracker.minConfidence : 0.5
@@ -72,16 +72,23 @@ Item {
 
     function placeClick(mouse) {
         const n = normAt(mouse.x, mouse.y)
-        const t = ShellBridge.trackerTarget()
-        if (t.kind === "clip") {
+        if (hasClip) {
             if (placeMode === "point") {
-                const id = EditorState.tracking.addPointTracker(t.track, t.clip, n.x, n.y)
+                const id = EditorState.tracking.addPointTracker(clipId, n.x, n.y)
                 if (id !== "")
                     ShellBridge.selectedTrackerId = id
                 else
                     Toasts.info(qsTr("Trackers need a video clip"))
+            } else if (placeMode === "follow") {
+                const id = EditorState.tracking.followWithNewTracker(clipId, ShellBridge.trackerFollowerId, n.x, n.y)
+                if (id !== "") {
+                    ShellBridge.selectedTrackerId = id
+                    ShellBridge.trackBoth(clipId, id)
+                } else {
+                    Toasts.info(qsTr("Trackers need a video clip"))
+                }
             } else if (placeMode === "addPoint") {
-                EditorState.tracking.addTrackerPoint(t.track, t.clip, ShellBridge.trackerPlaceId, n.x, n.y)
+                EditorState.tracking.addTrackerPoint(clipId, ShellBridge.trackerPlaceId, n.x, n.y)
             }
         }
         ShellBridge.trackerPlaceMode = ""
@@ -99,8 +106,7 @@ Item {
     function finishPlanar() {
         if (planarDraft.count < 4 || !hasClip)
             return
-        const t = ShellBridge.trackerTarget()
-        const id = t.kind === "clip" ? EditorState.tracking.addPlanarTracker(t.track, t.clip, planarDraft.normalized(clipFrame.width, clipFrame.height, true)) : ""
+        const id = EditorState.tracking.addPlanarTracker(clipId, planarDraft.normalized(clipFrame.width, clipFrame.height, true))
         ShellBridge.trackerPlaceMode = ""
         if (id !== "")
             ShellBridge.selectedTrackerId = id
@@ -127,6 +133,8 @@ Item {
             return qsTr("Click the feature to track on the preview.")
         case "addPoint":
             return qsTr("Click the feature to add to this tracker.")
+        case "follow":
+            return qsTr("Click the object the clip should follow.")
         case "planar":
             return planarDraft.count === 0
                    ? qsTr("Click the corners of a flat surface, Enter to finish.")
@@ -194,6 +202,7 @@ Item {
     Connections {
         target: ShellBridge
         function onSelectedTrackerIdChanged() { root.refresh() }
+        function onTrackerHostIdChanged() { root.refresh() }
     }
 
     // Keys reach this item only while it has focus, which the planar tool asks for.
@@ -247,7 +256,7 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            enabled: root.hasClip && (root.placeMode === "point" || root.placeMode === "addPoint")
+            enabled: root.hasClip && (root.placeMode === "point" || root.placeMode === "addPoint" || root.placeMode === "follow")
             cursorShape: Qt.CrossCursor
             onWheel: (wheel) => { wheel.accepted = false }
             onClicked: (mouse) => root.placeClick(mouse)

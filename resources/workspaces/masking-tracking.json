@@ -18,7 +18,7 @@
               { "panels": [ { "type": "preview" } ], "active": 0 },
               {
                 "split": "v",
-                "sizes": [0.55, 0.45],
+                "sizes": [0.7, 0.3],
                 "children": [
                   { "panels": [ { "type": "masking" }, { "type": "properties.effects" } ], "active": 0 },
                   { "panels": [ { "type": "tracking" } ], "active": 0 }

@@ -4,6 +4,10 @@
 #include "app/editor/AppController.h"
 #include "app/editor/sessions/MaskEditSession.h"
 #include "app/editor/sessions/MaskStackModel.h"
+#include "app/jobs/vision/TrackingController.h"
+#include "app/mcp/McpDetail.h"
+#include "core/edit/MaskSpace.h"
+#include "engine/compositor/FrameCompositor.h"
 #include "core/edit/TimelineOps.h"
 #include "core/effects/Mask.h"
 #include "core/project/Project.h"
@@ -426,6 +430,106 @@ void MaskingController::convertClipToMask(int trackIndex, int clipIndex)
     m_app->selectClipById(addedId);
 }
 
+QString MaskingController::moveMaskToEffectLayer(const QString &maskAdjustmentId, const QString &effectId)
+{
+    drift::Project &project = m_app->m_project;
+    int maskTrack = -1;
+    int maskIndex = -1;
+    if (!drift::mcpdetail::findClipById(project, maskAdjustmentId, &maskTrack, &maskIndex))
+        return {};
+    const drift::Clip pinned = project.tracks().at(maskTrack).clips.at(maskIndex);
+    int hostTrack = -1;
+    int hostIndex = -1;
+    if (pinned.adjustmentKind != drift::AdjustmentKind::Mask || pinned.linkedClipId.isEmpty()
+        || !drift::mcpdetail::findClipById(project, pinned.linkedClipId, &hostTrack, &hostIndex))
+        return {};
+    if (pinned.mask.isMedia()) {
+        m_app->setLastMessage(tr("Cutouts can't be moved yet"), QStringLiteral("warning"));
+        return {};
+    }
+    QString why;
+    if (!m_app->effectFitsTrack(-1, effectId, &why)) {
+        m_app->setLastMessage(why, QStringLiteral("warning"));
+        return {};
+    }
+    const drift::Clip host = project.tracks().at(hostTrack).clips.at(hostIndex);
+
+    const drift::Project before = project;
+    drift::Clip layer = m_app->buildAdjustmentClip(effectId, host.timelineStart, host.timelineDuration);
+    const QString layerId = layer.id;
+
+    drift::Mask mask = pinned.mask;
+    const drift::TimeUs rest = qBound(host.timelineStart, m_app->m_playheadUs, host.timelineEnd() - 1);
+    const auto canvasPoint = [&](drift::TimeUs at, QPointF p) {
+        return drift::hostFrameToCanvas(project, host, at, p);
+    };
+
+    const QPointF centre = canvasPoint(rest, QPointF(pinned.mask.valueAt(QStringLiteral("x"), rest - pinned.timelineStart),
+                                                     pinned.mask.valueAt(QStringLiteral("y"), rest - pinned.timelineStart)));
+    const QSizeF size = drift::hostFrameSizeToCanvas(
+        project, host, rest,
+        QSizeF(pinned.mask.valueAt(QStringLiteral("w"), rest - pinned.timelineStart),
+               pinned.mask.valueAt(QStringLiteral("h"), rest - pinned.timelineStart)));
+    mask.x = centre.x();
+    mask.y = centre.y();
+    mask.w = size.width();
+    mask.h = size.height();
+
+    const bool animated = std::any_of(pinned.mask.keyframes.begin(), pinned.mask.keyframes.end(),
+                                      [](const drift::KeyframeTrack<double> &k) { return !k.isEmpty(); });
+    if (animated) {
+        QSet<drift::TimeUs> centreKeys;
+        QSet<drift::TimeUs> sizeKeys;
+        for (const QString &key : {QStringLiteral("x"), QStringLiteral("y")}) {
+            for (auto it = pinned.mask.keyframes.value(key).keyframes().constBegin();
+                 it != pinned.mask.keyframes.value(key).keyframes().constEnd(); ++it)
+                centreKeys.insert(it.key());
+        }
+        for (const QString &key : {QStringLiteral("w"), QStringLiteral("h")}) {
+            for (auto it = pinned.mask.keyframes.value(key).keyframes().constBegin();
+                 it != pinned.mask.keyframes.value(key).keyframes().constEnd(); ++it)
+                sizeKeys.insert(it.key());
+        }
+        for (const drift::TimeUs t : std::as_const(centreKeys)) {
+            const QPointF p = canvasPoint(host.timelineStart + t,
+                                          QPointF(pinned.mask.valueAt(QStringLiteral("x"), t),
+                                                  pinned.mask.valueAt(QStringLiteral("y"), t)));
+            mask.keyframes[QStringLiteral("x")].setKeyframe(t, p.x());
+            mask.keyframes[QStringLiteral("y")].setKeyframe(t, p.y());
+        }
+        for (const drift::TimeUs t : std::as_const(sizeKeys)) {
+            const QSizeF s = drift::hostFrameSizeToCanvas(project, host, host.timelineStart + t,
+                                                          QSizeF(pinned.mask.valueAt(QStringLiteral("w"), t),
+                                                                 pinned.mask.valueAt(QStringLiteral("h"), t)));
+            mask.keyframes[QStringLiteral("w")].setKeyframe(t, s.width());
+            mask.keyframes[QStringLiteral("h")].setKeyframe(t, s.height());
+        }
+    }
+
+    for (QPointF &p : mask.points)
+        p = canvasPoint(rest, p);
+    for (auto it = mask.pathKeys.begin(); it != mask.pathKeys.end(); ++it) {
+        for (QPointF &p : it.value())
+            p = canvasPoint(host.timelineStart + it.key(), p);
+    }
+
+    layer.mask = mask;
+    const int at = drift::insertTrackAboveForClipType(project, hostTrack, drift::ClipType::Adjustment);
+    project.tracks()[at].clips.append(layer);
+
+    m_app->m_tracking->retargetMask(maskAdjustmentId, layerId);
+
+    int removeTrack = -1;
+    int removeIndex = -1;
+    if (drift::mcpdetail::findClipById(project, maskAdjustmentId, &removeTrack, &removeIndex))
+        removeClipWithPartners(project, removeTrack, removeIndex);
+
+    m_app->pushProjectEdit(before, tr("Blur area"));
+    m_app->finishEdit(tr("Mask moved to an effect layer"));
+    m_app->selectClipById(layerId);
+    return layerId;
+}
+
 QVariantMap MaskingController::maskTarget() const
 {
     const drift::Project &project = m_app->m_project;
@@ -576,6 +680,11 @@ void MaskingController::brushStroke(int trackIndex, int clipIndex, const QVarian
 void MaskingController::paintStroke(int trackIndex, int clipIndex, const BrushPreviewStroke &stroke,
                                     quint64 strokeSeq)
 {
+    const QPair<int, int> cutout = selectedCutoutMask(trackIndex, clipIndex);
+    if (cutout.first >= 0) {
+        paintCutoutPatch(m_app->m_project.tracks().at(cutout.first).clips.at(cutout.second).id, stroke, strokeSeq);
+        return;
+    }
     QImage image = brushImage(trackIndex, clipIndex);
     QVector<QPointF> pixels;
     QVector<double> radii;
@@ -721,6 +830,181 @@ bool MaskingController::isBrushTarget(int trackIndex, int clipIndex) const
     return m_app->isValidClipIndex(trackIndex, clipIndex)
            && m_app->m_project.tracks().at(trackIndex).type == drift::TrackType::Video
            && m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).type != drift::ClipType::Adjustment;
+}
+
+QPair<int, int> MaskingController::selectedCutoutMask(int trackIndex, int clipIndex) const
+{
+    const int selTrack = m_app->m_selectedTrack;
+    const int selClip = m_app->m_selectedClip;
+    if (!m_app->isValidClipIndex(selTrack, selClip) || !m_app->isValidClipIndex(trackIndex, clipIndex))
+        return {-1, -1};
+    const drift::Project &project = m_app->m_project;
+    const drift::Clip &adjustment = project.tracks().at(selTrack).clips.at(selClip);
+    if (adjustment.type != drift::ClipType::Adjustment || adjustment.adjustmentKind != drift::AdjustmentKind::Mask
+        || adjustment.linkedClipId.isEmpty()
+        || adjustment.linkedClipId != project.tracks().at(trackIndex).clips.at(clipIndex).id)
+        return {-1, -1};
+    const QString kind = mediaSourceKind(adjustment.mask);
+    return kind == QLatin1String("object") || kind == QLatin1String("people") ? QPair<int, int>(selTrack, selClip)
+                                                                              : QPair<int, int>(-1, -1);
+}
+
+bool MaskingController::hasSelectedCutoutMask(int trackIndex, int clipIndex) const
+{
+    return isBrushTarget(trackIndex, clipIndex) && selectedCutoutMask(trackIndex, clipIndex).first >= 0;
+}
+
+drift::TimeUs MaskingController::cutoutMediaUs(const QString &maskClipId) const
+{
+    const drift::Project &project = m_app->m_project;
+    int t = -1;
+    int c = -1;
+    if (!drift::mcpdetail::findClipById(project, maskClipId, &t, &c))
+        return -1;
+    const drift::Clip &adjustment = project.tracks().at(t).clips.at(c);
+    int ht = -1;
+    int hc = -1;
+    if (!drift::mcpdetail::findClipById(project, adjustment.linkedClipId, &ht, &hc))
+        return -1;
+    return FrameCompositor::maskMediaSourceTimeUs(project.tracks().at(ht).clips.at(hc), adjustment.mask,
+                                                  adjustment.timelineStart, adjustment.srcIn, m_app->m_playheadUs);
+}
+
+bool MaskingController::hasCutoutPatchAtPlayhead(const QString &maskClipId) const
+{
+    int t = -1;
+    int c = -1;
+    const drift::TimeUs mediaUs = cutoutMediaUs(maskClipId);
+    if (mediaUs < 0 || !drift::mcpdetail::findClipById(m_app->m_project, maskClipId, &t, &c))
+        return false;
+    return m_app->m_project.tracks().at(t).clips.at(c).mask.patchKeyAt(mediaUs, halfFrameUs()) >= 0;
+}
+
+void MaskingController::clearCutoutPatch(const QString &maskClipId)
+{
+    int t = -1;
+    int c = -1;
+    const drift::TimeUs mediaUs = cutoutMediaUs(maskClipId);
+    if (mediaUs < 0 || !drift::mcpdetail::findClipById(m_app->m_project, maskClipId, &t, &c))
+        return;
+    const drift::TimeUs key = m_app->m_project.tracks().at(t).clips.at(c).mask.patchKeyAt(mediaUs, halfFrameUs());
+    if (key < 0)
+        return;
+    const drift::Project before = m_app->m_project;
+    // Straight into the clip: writeClipMask hands an emptied set back from the previous mask.
+    m_app->m_project.tracks()[t].clips[c].mask.mediaPatches.remove(key);
+    m_app->pushProjectEdit(before, tr("Clear cutout fix"));
+    m_app->finishEdit(tr("Cutout fix cleared"));
+}
+
+void MaskingController::paintCutoutPatch(const QString &maskClipId, const BrushPreviewStroke &stroke,
+                                         quint64 strokeSeq)
+{
+    int t = -1;
+    int c = -1;
+    const drift::TimeUs mediaUs = cutoutMediaUs(maskClipId);
+    if (mediaUs < 0 || !drift::mcpdetail::findClipById(m_app->m_project, maskClipId, &t, &c))
+        return;
+    const drift::Mask &mask = m_app->m_project.tracks().at(t).clips.at(c).mask;
+    int ht = -1;
+    int hc = -1;
+    drift::mcpdetail::findClipById(m_app->m_project, m_app->m_project.tracks().at(t).clips.at(c).linkedClipId, &ht, &hc);
+
+    QImage image;
+    if ((m_brushSavesInFlight > 0 || m_patchSaveFailed) && !m_patchImage.isNull() && m_patchMaskId == maskClipId
+        && m_patchMediaUs == mediaUs) {
+        image = m_patchImage;
+    } else {
+        const QString existing = mask.patchAt(mediaUs, halfFrameUs());
+        if (!existing.isEmpty())
+            image = QImage(existing).convertToFormat(QImage::Format_ARGB32);
+    }
+    if (image.isNull()) {
+        image = QImage(brushMatteSize(ht, hc), QImage::Format_ARGB32);
+        image.fill(Qt::transparent);
+    }
+
+    QVector<QPointF> pixels;
+    QVector<double> radii;
+    for (int i = 0; i < stroke.points.size(); ++i) {
+        pixels.append(QPointF(stroke.points.at(i).x() * image.width(), stroke.points.at(i).y() * image.height()));
+        radii.append(stroke.size * image.width() / 2.0
+                     * brushPressureScale(stroke.pressures.value(i, 1.0), stroke.pressureSize));
+    }
+    QImage cover(image.size(), QImage::Format_Grayscale8);
+    cover.fill(0);
+    drift::masking::paintBrushStroke(cover, pixels, radii, stroke.hardness, stroke.opacity, false);
+
+    // The stroke goes over the fix: alpha unions and the gray becomes the alpha-weighted mix of the
+    // old fix and the stroke's target value.
+    const int target = stroke.erase ? 0 : 255;
+    for (int y = 0; y < image.height(); ++y) {
+        QRgb *row = reinterpret_cast<QRgb *>(image.scanLine(y));
+        const uchar *coverRow = cover.constScanLine(y);
+        for (int x = 0; x < image.width(); ++x) {
+            const double s = coverRow[x] / 255.0;
+            if (s <= 0.0)
+                continue;
+            const double a = qAlpha(row[x]) / 255.0;
+            const double merged = 1.0 - (1.0 - a) * (1.0 - s);
+            const double gray = (qGray(row[x]) * a * (1.0 - s) + target * s) / merged;
+            const int g = qBound(0, int(std::lround(gray)), 255);
+            row[x] = qRgba(g, g, g, qBound(0, int(std::lround(merged * 255.0)), 255));
+        }
+    }
+
+    const QString path = QDir(drift::matteCacheDir())
+                             .filePath(QUuid::createUuid().toString(QUuid::WithoutBraces) + QStringLiteral(".png"));
+    m_patchImage = image;
+    m_patchPendingPath = path;
+    m_patchMaskId = maskClipId;
+    m_patchMediaUs = mediaUs;
+    m_sessionBrushMattes.insert(QFileInfo(path).absoluteFilePath());
+    setBrushSavesInFlight(m_brushSavesInFlight + 1);
+    (void)QtConcurrent::run(&m_brushPool, [this, image, path, maskClipId, mediaUs, strokeSeq] {
+        const bool ok = image.save(path, "PNG");
+        QMetaObject::invokeMethod(this, [this, ok, path, maskClipId, mediaUs, strokeSeq] {
+            finishPatchSave(ok, path, maskClipId, mediaUs, strokeSeq);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void MaskingController::finishPatchSave(bool ok, const QString &path, const QString &maskClipId,
+                                        drift::TimeUs mediaUs, quint64 strokeSeq)
+{
+    setBrushSavesInFlight(m_brushSavesInFlight - 1);
+    const auto applied = qScopeGuard([this, &maskClipId, strokeSeq] {
+        for (int i = 0; strokeSeq != 0 && i < m_pendingStrokes.size(); ++i) {
+            if (m_pendingStrokes.at(i).seq == strokeSeq) {
+                m_pendingStrokes.removeAt(i);
+                emit strokePreviewChanged();
+                break;
+            }
+        }
+        emit brushApplied(maskClipId);
+    });
+    if (path == m_patchPendingPath)
+        m_patchSaveFailed = !ok;
+    if (!ok) {
+        qWarning() << "Could not save cutout fix" << path;
+        m_app->setLastMessage(tr("Could not save the cutout fix. The next stroke will try again"),
+                              QStringLiteral("error"));
+        return;
+    }
+
+    int t = -1;
+    int c = -1;
+    if (!drift::mcpdetail::findClipById(m_app->m_project, maskClipId, &t, &c))
+        return;
+    const drift::Project before = m_app->m_project;
+    drift::Mask mask = m_app->m_project.tracks().at(t).clips.at(c).mask;
+    const drift::TimeUs old = mask.patchKeyAt(mediaUs, halfFrameUs());
+    if (old >= 0)
+        mask.mediaPatches.remove(old);
+    mask.mediaPatches.insert(mediaUs, path);
+    m_app->writeClipMask(t, c, mask);
+    m_app->pushProjectEdit(before, tr("Fix cutout frame"));
+    m_app->finishEdit(tr("Cutout frame fixed"));
 }
 
 QSize MaskingController::brushMatteSize(int trackIndex, int clipIndex) const

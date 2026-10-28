@@ -18,6 +18,7 @@ PanelFrame {
     // What the panel edits and the masks on it. Read from the controller on the selection and
     // playback signals below rather than bound, because each call returns a fresh snapshot.
     property var target: ({ kind: "none" })
+    property string hostClipId: ""
     readonly property var stackModel: EditorState.masking.stackModel
     readonly property bool hasTarget: target.kind !== "none"
     readonly property bool onAdjustment: target.kind === "adjustment"
@@ -71,6 +72,7 @@ PanelFrame {
 
     function refresh() {
         target = EditorState.masking.maskTarget()
+        hostClipId = target.kind === "clip" ? EditorState.masking.clipIdAt(target.track, target.clip) : ""
         stackModel.refresh()
         clipAtPlayhead = target.kind === "none"
                          && EditorState.preview.clipsAtPlayhead().some(box => box.kind === "video" || box.kind === "image")
@@ -89,57 +91,23 @@ PanelFrame {
             EditorState.selectClip(pick.track, pick.clip)
     }
 
-    function trackerFor(entry) {
-        if (target.kind !== "clip")
-            return null
-        return EditorState.tracking.trackers(target.track, target.clip)
-                   .find(t => t.targets.some(d => d.clipId === entry.id)) || null
-    }
-
-    function maskCentre(entry) {
-        const layer = EditorState.preview.maskEditorState().layers.find(l => l.track === entry.track && l.clip === entry.clip)
-        const mask = layer ? layer.mask : null
-        if (!mask)
-            return null
-        if (mask.shape !== "freeform")
-            return { x: mask.x, y: mask.y }
-        const points = mask.points || []
-        if (points.length === 0)
-            return null
-        let sumX = 0
-        let sumY = 0
-        for (const p of points) {
-            sumX += p.x
-            sumY += p.y
-        }
-        return { x: sumX / points.length, y: sumY / points.length }
-    }
-
     // Follows the mask's own centre with a point tracker, reusing the one already driving it.
     function trackMask(entry, direction) {
-        const host = EditorState.masking.maskTarget()
-        if (host.kind !== "clip")
-            return
-        const existing = EditorState.tracking.trackers(host.track, host.clip)
-                             .find(t => t.targets.some(d => d.clipId === entry.id))
-        let id = existing ? existing.id : ""
+        const id = EditorState.tracking.ensureMaskTracker(entry.id, -1, -1)
         if (id === "") {
-            const centre = maskCentre(entry)
-            if (!centre)
-                return
-            id = EditorState.tracking.addPointTracker(host.track, host.clip, centre.x, centre.y)
-            if (id === "") {
-                Toasts.info(qsTr("Trackers need a video clip"))
-                return
-            }
-            EditorState.tracking.setTarget(host.track, host.clip, id, entry.id, "mask")
+            Toasts.info(qsTr("Trackers need a video clip"))
+            return
         }
         ShellBridge.selectedTrackerId = id
-        EditorState.preview.maskingTool = "tracker"
         if (direction === "both")
-            ShellBridge.trackBoth(host.track, host.clip, id)
+            ShellBridge.trackBoth(hostClipId, id)
         else
-            EditorState.tracking.track(host.track, host.clip, id, direction === "forward", false)
+            EditorState.tracking.track(hostClipId, id, direction === "forward", false)
+    }
+
+    function blurArea(entry, effectId) {
+        if (EditorState.masking.moveMaskToEffectLayer(entry.id, effectId) !== "")
+            Toasts.info(qsTr("Blur added on an adjustment layer. Adjust the amount in the Effects tab."))
     }
 
     function refreshIfLive() {
@@ -227,7 +195,9 @@ PanelFrame {
             Text {
                 width: parent.width
                 wrapMode: Text.WordWrap
-                text: qsTr("Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.")
+                text: root.stackModel.cutoutFixId !== ""
+                      ? qsTr("Fixing this frame of “%1”. Brush fixes don't follow motion.").arg(root.stackModel.cutoutFixName)
+                      : qsTr("Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.")
                 color: Theme.c.maskingPanel.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -347,7 +317,20 @@ PanelFrame {
                 onToggled: EditorState.masking.brushPressureSize = checked
             }
 
+            ThemedButton {
+                visible: root.stackModel.cutoutFixId !== ""
+                text: qsTr("Clear fix on this frame")
+                tooltip: qsTr("Remove the brush fix from the frame at the playhead")
+                enabled: {
+                    root.stackModel.revision
+                    EditorState.playheadSeconds
+                    return EditorState.masking.hasCutoutPatchAtPlayhead(root.stackModel.cutoutFixId)
+                }
+                onClicked: EditorState.masking.clearCutoutPatch(root.stackModel.cutoutFixId)
+            }
+
             RowLayout {
+                visible: root.stackModel.cutoutFixId === ""
                 width: parent.width
                 spacing: Theme.spacingSm
 
@@ -1006,20 +989,14 @@ PanelFrame {
                                 width: parent.width
                                 spacing: Theme.spacingXs
 
-                                readonly property var driver: {
-                                    root.stackModel.revision
-                                    return maskEntry.model.selected ? root.trackerFor(maskEntry.model) : null
-                                }
-
-                                Text {
-                                    visible: trackRow.driver !== null
-                                    width: parent.width
-                                    elide: Text.ElideRight
-                                    text: qsTr("Follows %1").arg(trackRow.driver ? trackRow.driver.name : "")
-                                    color: Theme.c.maskingPanel.foregroundMuted
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSizeXs
-                                }
+                                readonly property bool tracked: maskEntry.model.trackerId !== ""
+                                readonly property var solveModes: ["translate", "translateRotate", "translateRotateScale", "perspective"]
+                                readonly property var solveLabels: ({
+                                    "translate": qsTr("Position"),
+                                    "translateRotate": qsTr("Position + rotation"),
+                                    "translateRotateScale": qsTr("Position, rotation + size"),
+                                    "perspective": qsTr("Perspective")
+                                })
 
                                 RowLayout {
                                     visible: !EditorState.tracking.busy
@@ -1066,6 +1043,84 @@ PanelFrame {
                                         text: qsTr("Stop")
                                         tooltip: qsTr("Stop tracking (Esc)")
                                         onClicked: ShellBridge.stopTracking()
+                                    }
+                                }
+
+                                ConfidenceStripItem {
+                                    visible: trackRow.tracked
+                                    width: parent.width
+                                    height: 14
+                                    tracking: EditorState.tracking
+                                    clipId: root.hostClipId
+                                    trackerId: maskEntry.model.trackerId ?? ""
+                                    emptyColor: Theme.c.trackingPanel.stripEmpty
+                                    goodColor: Theme.c.trackingPanel.stripGood
+                                    warnColor: Theme.c.trackingPanel.stripWarn
+                                    badColor: Theme.c.trackingPanel.stripBad
+                                }
+
+                                RowLayout {
+                                    visible: trackRow.tracked
+                                    width: parent.width
+                                    spacing: Theme.spacingSm
+
+                                    Text {
+                                        Layout.preferredWidth: 56
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: qsTr("Follow")
+                                        color: Theme.c.maskingPanel.foregroundMuted
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeXs
+                                    }
+
+                                    ThemedComboBox {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        tooltip: qsTr("What the mask copies from the tracked object")
+                                        model: trackRow.solveModes
+                                        displayText: trackRow.solveLabels[model[currentIndex]] || ""
+                                        currentIndex: Math.max(0, model.indexOf(maskEntry.model.solve))
+                                        onActivated: (index) => {
+                                            if (model[index] !== "translate" && maskEntry.model.trackerPoints < 2) {
+                                                Toasts.info(qsTr("Add more points to this tracker in the Tracking panel for rotation, scale and perspective"))
+                                                currentIndex = Math.max(0, model.indexOf(maskEntry.model.solve))
+                                                return
+                                            }
+                                            EditorState.tracking.setTrackerProperty(
+                                                root.hostClipId, maskEntry.model.trackerId, "solve", model[index])
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    visible: trackRow.tracked
+                                    width: parent.width
+                                    wrapMode: Text.WordWrap
+                                    text: qsTr("Drag the mask on the preview to correct it, then track again.")
+                                    color: Theme.c.maskingPanel.foregroundMuted
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                }
+                            }
+
+                            ThemedButton {
+                                id: blurButton
+                                visible: !maskEntry.model.isMedia && maskEntry.model.pinned && root.target.kind === "clip"
+                                text: qsTr("Blur this area ▾")
+                                tooltip: qsTr("Apply a blur or pixelate effect inside this shape")
+                                onClicked: blurMenu.popup(blurButton, 0, blurButton.height)
+
+                                ThemedContextMenu {
+                                    id: blurMenu
+
+                                    ThemedMenuItem {
+                                        text: qsTr("Blur")
+                                        onTriggered: root.blurArea(maskEntry.model, "builtin.effects.gaussian_blur")
+                                    }
+
+                                    ThemedMenuItem {
+                                        text: qsTr("Pixelate")
+                                        onTriggered: root.blurArea(maskEntry.model, "stylize.pixelate")
                                     }
                                 }
                             }

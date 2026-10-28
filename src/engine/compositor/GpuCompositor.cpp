@@ -834,7 +834,8 @@ int soleMediaIndex(const GpuLayer &layer)
         const bool plainMedia = mask.shape == drift::MaskShape::Media && mask.feather <= 0.0
                                 && fullFrame && mask.mediaFit == drift::MaskMediaFit::Stretch
                                 && mask.mediaChannel == drift::MaskMediaChannel::Luma
-                                && i < layer.maskMedia.size() && !layer.maskMedia.at(i).isNull();
+                                && i < layer.maskMedia.size() && !layer.maskMedia.at(i).isNull()
+                                && (i >= layer.maskPatch.size() || layer.maskPatch.at(i).isNull());
         if (!plainMedia || found >= 0)
             return -1;
         found = i;
@@ -1000,6 +1001,17 @@ GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
             placed.rect = maskMediaRect(mask, media.size(), size);
             drawLayerOnCanvas(rt, gl, coverage, src, placed, drift::BlendMode::Normal, size);
             release(src);
+
+            // A brush fix of this frame goes over the placed coverage: gray where it was painted,
+            // weighted by its alpha, which is mix(coverage, gray, alpha) under a normal blend.
+            if (i < layer.maskPatch.size() && !layer.maskPatch.at(i).isNull()) {
+                const QImage &patch = layer.maskPatch.at(i);
+                GlTarget patchSrc = promoteImageToTargetCached(rt, gl, patch, patch.size());
+                if (patchSrc.isValid()) {
+                    drawLayerOnCanvas(rt, gl, coverage, patchSrc, placed, drift::BlendMode::Normal, size);
+                    release(patchSrc);
+                }
+            }
         } else {
             // Feather and invert are applied below, so they are deliberately excluded from the
             // rasterized (and therefore cached) shape.

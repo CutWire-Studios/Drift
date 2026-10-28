@@ -97,6 +97,7 @@ private:
     bool m_animated = false;
     bool m_freeform = false;
     bool m_pathAnimated = false;
+    bool m_bodyMoved = false;
 
     double m_x = 0, m_y = 0, m_w = 0, m_h = 0, m_rotation = 0;
     QList<QPointF> m_points;

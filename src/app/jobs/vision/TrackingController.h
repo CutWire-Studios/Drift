@@ -111,6 +111,55 @@ public:
     // Regenerates the keys on every target. One undo step.
     Q_INVOKABLE void apply(int trackIndex, int clipIndex, const QString &id);
 
+    // The same calls addressed by the tracked clip's id, so callers need not keep (track, clip) in
+    // step with the timeline. They do nothing (or return empty) when the id names no clip.
+    Q_INVOKABLE QVariantList trackers(const QString &clipId) const;
+    Q_INVOKABLE QString addPointTracker(const QString &clipId, double x, double y);
+    Q_INVOKABLE QString addPlanarTracker(const QString &clipId, const QVariantList &region);
+    Q_INVOKABLE void addTrackerPoint(const QString &clipId, const QString &id, double x, double y);
+    Q_INVOKABLE void setTrackerProperty(const QString &clipId, const QString &id, const QString &key,
+                                        const QVariant &value);
+    Q_INVOKABLE void removeTracker(const QString &clipId, const QString &id, bool removeKeys);
+    Q_INVOKABLE void clearSamples(const QString &clipId, const QString &id, bool forward);
+    Q_INVOKABLE void track(const QString &clipId, const QString &id, bool forward, bool singleFrame);
+    Q_INVOKABLE void setTarget(const QString &clipId, const QString &id, const QString &targetClipId,
+                               const QString &mode);
+    Q_INVOKABLE void removeTarget(const QString &clipId, const QString &id, const QString &targetClipId);
+    Q_INVOKABLE void setTargetCenter(const QString &clipId, const QString &id, const QString &targetClipId,
+                                     bool center);
+    Q_INVOKABLE void apply(const QString &clipId, const QString &id);
+
+    // Points every tracker that drives mask adjustment `fromId` at `toId` instead and regenerates
+    // the keys there. Edits the project in place: the caller owns the undo step.
+    void retargetMask(const QString &fromId, const QString &toId);
+
+    // Id of the tracker (on any clip) that drives clip `targetClipId`, else empty.
+    Q_INVOKABLE QString trackerForTarget(const QString &targetClipId) const;
+    // The tracker following this mask adjustment, creating a point tracker on its host (the clip the
+    // mask is pinned to) when none does. x/y are the point's place in the host frame; a negative x
+    // puts it on the mask's own centre at the playhead. One undo step tr("Track mask"). Returns the
+    // tracker id, or empty when the mask has no video host.
+    Q_INVOKABLE QString ensureMaskTracker(const QString &maskClipId, double x = -1.0, double y = -1.0);
+    // The mask was dragged at the playhead: writes the tracker's key there so the track passes where
+    // the mask now is, and regenerates the mask's keys. Single-point trackers only.
+    Q_INVOKABLE void correctFromMask(const QString &maskClipId);
+    // {clipId, track, clip, name} of the topmost video clip below the follower's track that covers
+    // the playhead; empty when there is none.
+    Q_INVOKABLE QVariantMap videoUnder(const QString &followerClipId) const;
+    // A point tracker on `hostClipId` at (x, y) that makes `followerClipId` follow it. One undo step
+    // tr("Follow object"). Returns the tracker id, or empty.
+    Q_INVOKABLE QString followWithNewTracker(const QString &hostClipId, const QString &followerClipId, double x,
+                                             double y);
+    // {track, clip, name} of the clip with this id; empty when there is none.
+    Q_INVOKABLE QVariantMap clipRefById(const QString &clipId) const;
+    // [{trackerId, trackerName, hostClipId, hostName, mode}] for every tracker that drives this clip.
+    Q_INVOKABLE QVariantList trackersDriving(const QString &clipId) const;
+
+    // {trackerId, trackState: "none"|"partial"|"full", solve} of the tracker driving this mask
+    // adjustment (wherever it lives); trackerId is empty when none does. "full" = samples span the
+    // host clip, "none" = nothing tracked beyond the reference.
+    QVariantMap maskTrackInfo(const QString &maskClipId) const;
+
     struct FramePoint
     {
         double x = 0;
@@ -149,6 +198,12 @@ signals:
     void samplesUpdated(const QString &trackerId);
 
 private:
+    drift::MotionTracker buildPointTracker(drift::Clip &host, double x, double y) const;
+    // Adds (or re-modes) a target and applies it; the caller owns the undo step. False when the target is unusable.
+    bool addTarget(drift::Clip &host, drift::MotionTracker &tracker, const QString &targetClipId,
+                   const QString &mode, QString *error);
+    // The video clip a mask adjustment is pinned to (else the one under it on its lane's track at the playhead).
+    bool maskHostIds(const QString &maskClipId, QString *hostId) const;
     drift::Clip *hostAt(int trackIndex, int clipIndex) const;
     const drift::Clip *hostView(int trackIndex, int clipIndex) const;
     // Runs `edit` on the tracker as one undo step. Refused while a track job runs.

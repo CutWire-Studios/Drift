@@ -133,6 +133,31 @@ const QStringList &maskKeyframeProperties()
     return props;
 }
 
+TimeUs Mask::patchKeyAt(TimeUs mediaUs, TimeUs tolerance) const
+{
+    if (mediaPatches.isEmpty())
+        return -1;
+    auto it = mediaPatches.lowerBound(mediaUs);
+    TimeUs best = -1;
+    TimeUs bestDistance = tolerance + 1;
+    if (it != mediaPatches.constEnd() && it.key() - mediaUs < bestDistance) {
+        best = it.key();
+        bestDistance = it.key() - mediaUs;
+    }
+    if (it != mediaPatches.constBegin()) {
+        --it;
+        if (mediaUs - it.key() < bestDistance)
+            best = it.key();
+    }
+    return best;
+}
+
+QString Mask::patchAt(TimeUs mediaUs, TimeUs tolerance) const
+{
+    const TimeUs key = patchKeyAt(mediaUs, tolerance);
+    return key < 0 ? QString() : mediaPatches.value(key);
+}
+
 bool Mask::isAnimated() const
 {
     // One path key is a static shape, not an animation — two are needed before anything moves.
