@@ -106,10 +106,9 @@ Item {
                 pixelRatio: 1
                 compactStatus: true
 
-                // Masks have no touch editor, so a selected mask keeps the clip grips.
                 toolHost.tools: ({
                     transform: transformTool,
-                    mask: transformTool,
+                    mask: maskTool,
                     crop: cropTool
                 })
                 toolHost.companion: dropCompanion
@@ -239,6 +238,11 @@ Item {
         AndroidTransformOverlay {
             onTextEditRequested: (track, clip) => viewport.textEditor.start(track, clip, false)
         }
+    }
+
+    Component {
+        id: maskTool
+        MaskOverlay { }
     }
 
     Component {
