@@ -5,27 +5,27 @@
     <name>AboutDialog</name>
     <message>
         <source>About Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>Sobre Drift</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Cerrar</translation>
+        <translation>Cerrar</translation>
     </message>
     <message>
         <source>Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift</translation>
     </message>
     <message>
         <source>Version %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Versión %1</translation>
     </message>
     <message>
         <source>Open-source video editor by CutWire Studios.</source>
-        <translation type="unfinished"></translation>
+        <translation>Editor de vídeo en código abierto por CutWire Studios.</translation>
     </message>
     <message>
         <source>Licensed under GPLv3. Copyright © CutWire Studios.</source>
-        <translation type="unfinished"></translation>
+        <translation>Licensiado bajo GPLv3. Copyright © CutWire Studios.</translation>
     </message>
 </context>
 <context>
@@ -48,27 +48,27 @@
     </message>
     <message>
         <source>Could not open that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>No se pudo abrir el archivo.</translation>
     </message>
     <message>
         <source>Could not read that file.</source>
-        <translation type="unfinished"></translation>
+        <translation>No se pudo leer el archivo.</translation>
     </message>
     <message>
         <source>This is not a Drift effect file (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>Este no es un archivo de efectos de Drift (%1).</translation>
     </message>
     <message>
         <source>Another addon is still installing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Otra extensión aún se está instalando.</translation>
     </message>
     <message>
         <source>This is not a Drift addon file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Este no es un archivo de extensiones de Drift.</translation>
     </message>
     <message>
         <source>Could not use this addon (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>No se pudo usar esta extensión (%1).</translation>
     </message>
 </context>
 <context>
@@ -95,59 +95,59 @@
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Instalar esta transición?</translation>
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Instalar este efecto de audio?</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Instalar este efecto?</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; por %2</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalar extensión</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation>Extensiones de Drift (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Instalar una extensión no oficial?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation type="unfinished"></translation>
+        <translation>Instalar de todos modos</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 no está firmado por el equipo de Drift. Instale solo archivos en los que confíe.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished"></translation>
+        <translation>Contiene código que se ejecuta en su equipo.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation type="unfinished"></translation>
+        <translation>Reemplazará a &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 fue creado por un usuario, no por el equipo de Drift, y no ha sido verificado. Instale solo archivos en los que confíe.</translation>
     </message>
     <message>
         <source>Could not install “%1”: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>No se pudo instalar “%1”: %2</translation>
     </message>
     <message>
         <source>Installed “%1”</source>
