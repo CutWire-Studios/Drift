@@ -4885,7 +4885,7 @@
     </message>
     <message>
         <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Mag-install ng custom na epektong audio o epekto mula sa isang .driftfx file na ginawa sa Drift Forge</translation>
+        <translation type="unfinished">Mag-import ng visual o audio effect (.driftfx) na ginawa sa Drift Forge</translation>
     </message>
     <message>
         <source>My Audio Effects</source>

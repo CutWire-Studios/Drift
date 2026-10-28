@@ -21,11 +21,11 @@
     </message>
     <message>
         <source>Open-source video editor by CutWire Studios.</source>
-        <translation>CutWire Studios 推出的开源视频编辑器。</translation>
+        <translation>CutWire Studios 出品的开源视频编辑器。</translation>
     </message>
     <message>
         <source>Licensed under GPLv3. Copyright © CutWire Studios.</source>
-        <translation>根据 GPLv3 许可发布。版权所有 © CutWire Studios。</translation>
+        <translation>基于 GPLv3 授权。版权所有 © CutWire Studios。</translation>
     </message>
 </context>
 <context>
@@ -60,15 +60,15 @@
     </message>
     <message>
         <source>Another addon is still installing.</source>
-        <translation>另一个附加组件仍在安装中。</translation>
+        <translation>另一个附加包仍在安装中。</translation>
     </message>
     <message>
         <source>This is not a Drift addon file.</source>
-        <translation>这不是 Drift 附加组件文件。</translation>
+        <translation>这不是 Drift 附加包文件。</translation>
     </message>
     <message>
         <source>Could not use this addon (%1).</source>
-        <translation>无法使用此附加组件（%1）。</translation>
+        <translation>无法使用此附加包（%1）。</translation>
     </message>
 </context>
 <context>
@@ -99,7 +99,7 @@
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation>安装此音频效果？</translation>
+        <translation>安装此音效？</translation>
     </message>
     <message>
         <source>Install this effect?</source>
@@ -111,19 +111,19 @@
     </message>
     <message>
         <source>Install Addon</source>
-        <translation>安装附加组件</translation>
+        <translation>安装附加包</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Drift 附加组件 (*.driftpkg *.driftfx *.zip)</translation>
+        <translation>Drift 附加包 (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation>安装非官方附加组件？</translation>
+        <translation>安装非官方附加包？</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation>仍然安装</translation>
+        <translation>仍要安装</translation>
     </message>
     <message>
         <source>“%1”</source>
@@ -131,11 +131,11 @@
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>%1 未由 Drift 团队签名。请仅安装您信任的文件。</translation>
+        <translation>%1 未由 Drift 团队签名。请只安装你信任的文件。</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation>它包含在您计算机上运行的代码。</translation>
+        <translation>其中包含会在你的电脑上运行的代码。</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
@@ -143,7 +143,7 @@
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>%1 由用户制作而非 Drift 团队，且未经审查。请仅安装您信任的文件。</translation>
+        <translation>%1 由用户制作，并非来自 Drift 团队，且未经任何检查。请只安装你信任的文件。</translation>
     </message>
     <message>
         <source>Could not install “%1”: %2</source>
@@ -243,11 +243,11 @@
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation>打开附加组件文件夹</translation>
+        <translation>打开附加包文件夹</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation>将附加组件文件夹放在此处，然后重新打开“附加项”</translation>
+        <translation>将附加包文件夹放到这里，然后重新打开“扩展”</translation>
     </message>
 </context>
 <context>
@@ -266,7 +266,7 @@
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation>需要 Drift %1 或更高版本</translation>
+        <translation>需要 Drift %1 或更新版本</translation>
     </message>
     <message>
         <source>Unofficial</source>
@@ -274,15 +274,15 @@
     </message>
     <message>
         <source>Installed from file</source>
-        <translation>已从文件安装</translation>
+        <translation>从文件安装</translation>
     </message>
     <message>
         <source>%1 download</source>
-        <translation>%1 已下载</translation>
+        <translation>%1 次下载</translation>
     </message>
     <message>
         <source>%1 items</source>
-        <translation>%1 件对象</translation>
+        <translation>%1 项</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -387,15 +387,15 @@
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
-        <translation>仅允许本次会话</translation>
+        <translation>本次会话允许</translation>
     </message>
     <message>
         <source>Let an assistant on this device edit this project until you turn it off or quit.</source>
-        <translation>允许此设备上的助手编辑此项目，直到您将其关闭或退出。</translation>
+        <translation>允许此设备上的助手编辑此项目，直到你关闭该权限或退出。</translation>
     </message>
     <message>
         <source>Turn this on, then copy the setup for Cursor or Claude and paste it into that app.</source>
-        <translation>开启此项，然后复制适用于 Cursor 或 Claude 的配置并粘贴到相应应用中。</translation>
+        <translation>开启后，复制 Cursor 或 Claude 的配置，粘贴到对应应用中。</translation>
     </message>
     <message>
         <source>Access is on</source>
@@ -407,19 +407,19 @@
     </message>
     <message>
         <source>New key</source>
-        <translation>新建密钥</translation>
+        <translation>新密钥</translation>
     </message>
     <message>
         <source>Replace the key. Every assistant set up with the old one stops working until you copy the setup again.</source>
-        <translation>更换密钥。所有使用旧密钥配置的助手都将停止工作，直到您重新复制配置。</translation>
+        <translation>替换密钥。使用旧密钥配置的所有助手都会失效，直到你重新复制配置。</translation>
     </message>
     <message>
         <source>New key made — copy the setup again</source>
-        <translation>新密钥已生成 — 请重新复制配置</translation>
+        <translation>新密钥已生成——请重新复制配置</translation>
     </message>
     <message>
         <source>Copy the setup for the assistant you use. You only need one.</source>
-        <translation>复制适用于您所使用助手的配置。您只需配置一个。</translation>
+        <translation>复制你所用助手的配置，只需其中一种。</translation>
     </message>
     <message>
         <source>Copy for Cursor</source>
@@ -427,7 +427,7 @@
     </message>
     <message>
         <source>Copy a setup snippet to paste into Cursor</source>
-        <translation>复制配置代码段以粘贴到 Cursor</translation>
+        <translation>复制配置片段，粘贴到 Cursor 中</translation>
     </message>
     <message>
         <source>Copied for Cursor</source>
@@ -439,7 +439,7 @@
     </message>
     <message>
         <source>Copy a command to paste into Claude Code</source>
-        <translation>复制命令以粘贴到 Claude Code</translation>
+        <translation>复制命令，粘贴到 Claude Code 中</translation>
     </message>
     <message>
         <source>Copied for Claude</source>
@@ -447,19 +447,19 @@
     </message>
     <message>
         <source>Paste that into the assistant. To help it use this editor, copy the how-to next and paste it into the chat.</source>
-        <translation>将其粘贴到助手中。为了帮助它使用此编辑器，接下来请复制操作指南并粘贴到聊天中。</translation>
+        <translation>将其粘贴到助手中。要帮助它使用此编辑器，接着复制使用指南并粘贴到对话中。</translation>
     </message>
     <message>
         <source>Copy a how-to for the agent</source>
-        <translation>复制智能体操作指南</translation>
+        <translation>复制智能体使用指南</translation>
     </message>
     <message>
         <source>A short list of what the agent can do here — paste it into the chat</source>
-        <translation>智能体在此处可执行操作的简短列表 — 请将其粘贴到聊天中</translation>
+        <translation>简要列出智能体在此可执行的操作——粘贴到对话中</translation>
     </message>
     <message>
         <source>Copied how-to</source>
-        <translation>已复制操作指南</translation>
+        <translation>已复制使用指南</translation>
     </message>
     <message>
         <source>More options</source>
@@ -467,7 +467,7 @@
     </message>
     <message>
         <source>For a different assistant, copy a one-time setup. The address and key are already in the Cursor and Claude copies above.</source>
-        <translation>对于其他助手，请复制一次性配置。上述 Cursor 和 Claude 配置中已包含地址和密钥。</translation>
+        <translation>对于其他助手，可复制一次性配置。地址和密钥已包含在上面的 Cursor 和 Claude 配置中。</translation>
     </message>
     <message>
         <source>Copy one-time setup</source>
@@ -475,7 +475,7 @@
     </message>
     <message>
         <source>Add this once to the assistant’s config. Access still has to be turned on here.</source>
-        <translation>将此项添加到助手的配置中一次。此处仍需开启访问权限。</translation>
+        <translation>将此内容添加一次到助手配置中。仍需在此处开启访问权限。</translation>
     </message>
     <message>
         <source>Copied one-time setup</source>
@@ -487,11 +487,11 @@
     </message>
     <message>
         <source>Skip the manual toggle next time you open Drift. Turning access off resets this.</source>
-        <translation>下次打开 Drift 时跳过手动开启。关闭访问将重置此设置。</translation>
+        <translation>下次打开 Drift 时跳过手动开关。关闭访问权限会重置此设置。</translation>
     </message>
     <message>
         <source>Let Cursor or Claude edit this project for you — add clips, change the timeline, and check how it looks. Only programs on this device. Off by default each time you open Drift, unless you turn on “Start agent on startup” below; turn it off here when you finish. The key stays the same between sessions, so a setup you pasted once keeps working.</source>
-        <translation>允许 Cursor 或 Claude 为您编辑此项目 — 添加剪辑、修改时间线并查看效果。仅限此设备上的程序。每次打开 Drift 时默认关闭，除非您在下方开启“启动时开启智能体”；完成后请在此处关闭。密钥在会话间保持不变，因此粘贴过一次的配置可持续生效。</translation>
+        <translation>让 Cursor 或 Claude 代你编辑此项目——添加片段、修改时间线、查看效果。仅限此设备上的程序。每次打开 Drift 时默认关闭，除非你开启下方的“启动时开启智能体”；用完后可在此处关闭。密钥在各会话间保持不变，因此粘贴过一次的配置会持续有效。</translation>
     </message>
 </context>
 <context>
@@ -541,19 +541,19 @@
     </message>
     <message>
         <source>No tool calls yet. What a connected agent does will show up here.</source>
-        <translation>尚无工具调用。已连接智能体的操作将显示在此处。</translation>
+        <translation>暂无工具调用。已连接智能体的操作将显示在这里。</translation>
     </message>
     <message>
         <source>Turn on agent access to let an assistant edit this project.</source>
-        <translation>开启智能体访问以允许助手编辑此项目。</translation>
+        <translation>开启智能体访问，让助手编辑此项目。</translation>
     </message>
     <message>
         <source>running…</source>
-        <translation>正在运行…</translation>
+        <translation>运行中…</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation>撤消</translation>
+        <translation>撤销</translation>
     </message>
     <message>
         <source>Redo</source>
@@ -576,11 +576,11 @@
     </message>
     <message>
         <source>Market</source>
-        <translation>素材集市</translation>
+        <translation>素材市场</translation>
     </message>
     <message>
         <source>Stock photos, video and audio</source>
-        <translation>素材图片、视频和音频</translation>
+        <translation>库存照片、视频和音频</translation>
     </message>
     <message>
         <source>Text</source>
@@ -604,7 +604,7 @@
     </message>
     <message>
         <source>Turn a script into a voiceover</source>
-        <translation>将脚本转换为画外音</translation>
+        <translation>将脚本转为配音</translation>
     </message>
     <message>
         <source>Stickers</source>
@@ -628,7 +628,7 @@
     </message>
     <message>
         <source>Saved stacks of effects to drop on a clip</source>
-        <translation>可直接应用到剪辑的已保存效果组</translation>
+        <translation>保存的效果组合，可应用到片段</translation>
     </message>
     <message>
         <source>Scenes</source>
@@ -636,7 +636,7 @@
     </message>
     <message>
         <source>Jump between the sections of this edit</source>
-        <translation>在此剪辑工程的各个片段间跳转</translation>
+        <translation>在此剪辑的各部分之间跳转</translation>
     </message>
     <message>
         <source>Masks</source>
@@ -644,7 +644,7 @@
     </message>
     <message>
         <source>Cut a shape or a subject out of the selected clip</source>
-        <translation>从所选剪辑中抠出形状或主体</translation>
+        <translation>从所选片段中抠出形状或主体</translation>
     </message>
     <message>
         <source>Transform layer</source>
@@ -652,7 +652,7 @@
     </message>
     <message>
         <source>Move, scale or tilt several tracks as one</source>
-        <translation>统一移动、缩放或倾斜多个轨道</translation>
+        <translation>将多条轨道作为整体移动、缩放或倾斜</translation>
     </message>
 </context>
 <context>
@@ -675,7 +675,7 @@
     </message>
     <message>
         <source>Tap a clip to edit it</source>
-        <translation>轻点剪辑进行编辑</translation>
+        <translation>点按片段进行编辑</translation>
     </message>
 </context>
 <context>
@@ -710,7 +710,7 @@
     </message>
     <message>
         <source>Edit text</source>
-        <translation>编辑文本</translation>
+        <translation>编辑文字</translation>
     </message>
     <message>
         <source>Fade</source>
@@ -722,7 +722,7 @@
     </message>
     <message>
         <source>Duplicate</source>
-        <translation>复制</translation>
+        <translation>复制副本</translation>
     </message>
     <message>
         <source>More</source>
@@ -734,14 +734,14 @@
     </message>
     <message>
         <source>Move the playhead over the clip to split it</source>
-        <translation>将播放头移至剪辑上方以进行分割</translation>
+        <translation>将播放头移到片段上以进行分割</translation>
     </message>
 </context>
 <context>
     <name>AndroidClipToolbarHint</name>
     <message>
         <source>Tap a clip to edit</source>
-        <translation>轻点剪辑进行编辑</translation>
+        <translation>点按片段进行编辑</translation>
     </message>
 </context>
 <context>
@@ -759,7 +759,7 @@
     <name>AndroidCropHint</name>
     <message>
         <source>Drag the edges to reframe · pinch to zoom</source>
-        <translation>拖动边缘来重新构图 · 捏合来缩放</translation>
+        <translation>拖动边缘调整构图 · 捏合缩放</translation>
     </message>
 </context>
 <context>
@@ -796,11 +796,11 @@
     </message>
     <message>
         <source>Nothing downloading right now.</source>
-        <translation>当前没有正在下载的内容。</translation>
+        <translation>当前没有正在下载的任务。</translation>
     </message>
     <message>
         <source>Clear finished</source>
-        <translation>清除已完成项</translation>
+        <translation>清除已完成</translation>
     </message>
 </context>
 <context>
@@ -838,15 +838,15 @@
     </message>
     <message>
         <source>Your timeline is empty</source>
-        <translation>您的时间线为空</translation>
+        <translation>时间线为空</translation>
     </message>
     <message>
         <source>Import media or open the Media library to start editing.</source>
-        <translation>导入媒体或打开媒体库以开始编辑。</translation>
+        <translation>导入媒体或打开媒体库开始剪辑。</translation>
     </message>
     <message>
         <source>Open Media</source>
-        <translation>打开媒体库</translation>
+        <translation>打开媒体</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -908,7 +908,7 @@
     </message>
     <message>
         <source>That project file is missing.</source>
-        <translation>该项目文件缺失。</translation>
+        <translation>该项目文件已丢失。</translation>
     </message>
     <message>
         <source>Project actions</source>
@@ -923,7 +923,7 @@
     <name>AndroidHomeWordmark</name>
     <message>
         <source>Create polished videos fast</source>
-        <translation>快速创作精美视频</translation>
+        <translation>快速制作精美视频</translation>
     </message>
 </context>
 <context>
@@ -950,11 +950,11 @@
     </message>
     <message>
         <source>Quality</source>
-        <translation>质量</translation>
+        <translation>画质</translation>
     </message>
     <message>
         <source>Frames per second</source>
-        <translation>每秒帧数</translation>
+        <translation>帧率</translation>
     </message>
     <message>
         <source>%1×%2 · %3 · %4 fps</source>
@@ -973,7 +973,7 @@
     </message>
     <message>
         <source>Couldn’t reach the marketplace.</source>
-        <translation>无法访问素材集市。</translation>
+        <translation>无法连接素材市场。</translation>
     </message>
     <message>
         <source>“%1” is ready.</source>
@@ -985,23 +985,23 @@
     </message>
     <message>
         <source>No source in the marketplace can open links.</source>
-        <translation>素材集市中没有可打开链接的源。</translation>
+        <translation>素材市场没有可打开链接的来源。</translation>
     </message>
     <message>
         <source>That source didn’t recognise this link.</source>
-        <translation>该源无法识别此链接。</translation>
+        <translation>该来源无法识别此链接。</translation>
     </message>
     <message>
         <source>Which source should open this link?</source>
-        <translation>使用哪个源打开此链接？</translation>
+        <translation>由哪个来源打开此链接？</translation>
     </message>
     <message>
         <source>Loading sources…</source>
-        <translation>正在加载源…</translation>
+        <translation>正在加载来源…</translation>
     </message>
     <message>
         <source>Asking that source…</source>
-        <translation>正在请求该源…</translation>
+        <translation>正在询问该来源…</translation>
     </message>
     <message>
         <source>Try again</source>
@@ -1009,7 +1009,7 @@
     </message>
     <message>
         <source>Pick another source</source>
-        <translation>选择其他源</translation>
+        <translation>选择其他来源</translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1032,7 +1032,7 @@
     </message>
     <message>
         <source>Name your project</source>
-        <translation>命名您的项目</translation>
+        <translation>为项目命名</translation>
     </message>
     <message>
         <source>Save Project</source>
@@ -1044,19 +1044,19 @@
     </message>
     <message>
         <source>Canvas set to %1×%2 at %3 fps from your first clip.</source>
-        <translation>画布已根据您的第一个剪辑设置为 %1×%2，%3 fps。</translation>
+        <translation>已根据第一个片段将画布设为 %1×%2、%3 fps。</translation>
     </message>
     <message>
         <source>That share had no link in it.</source>
-        <translation>该分享内容中不包含链接。</translation>
+        <translation>该分享内容中没有链接。</translation>
     </message>
     <message>
         <source>Links can’t be opened in this build.</source>
-        <translation>当前版本无法打开链接。</translation>
+        <translation>此版本无法打开链接。</translation>
     </message>
     <message>
         <source>That download is no longer in your media.</source>
-        <translation>该下载内容已不在您的媒体库中。</translation>
+        <translation>该下载已不在你的媒体中。</translation>
     </message>
     <message>
         <source>Open Project</source>
@@ -1068,7 +1068,7 @@
     </message>
     <message>
         <source>Saved to %1</source>
-        <translation>已保存至 %1</translation>
+        <translation>已保存到 %1</translation>
     </message>
     <message>
         <source>Project closed</source>
@@ -1104,14 +1104,14 @@
     </message>
     <message>
         <source>Imported from the marketplace.</source>
-        <translation>已从素材集市导入。</translation>
+        <translation>已从素材市场导入。</translation>
     </message>
 </context>
 <context>
     <name>AndroidMediaPreview</name>
     <message>
         <source>Audio only — trim it below</source>
-        <translation>仅限音频 — 在下方修剪</translation>
+        <translation>仅音频——在下方修剪</translation>
     </message>
     <message>
         <source>Unlock crop ratio</source>
@@ -1131,27 +1131,27 @@
     </message>
     <message>
         <source>Keeping %1 to %2  ·  %3s</source>
-        <translation>保留 %1 至 %2  ·  %3秒</translation>
+        <translation>保留 %1 至 %2 · %3s</translation>
     </message>
     <message>
         <source>Start here</source>
-        <translation>从此处开始</translation>
+        <translation>从此开始</translation>
     </message>
     <message>
         <source>End here</source>
-        <translation>在此处结束</translation>
+        <translation>到此结束</translation>
     </message>
     <message>
         <source>Undo trim</source>
-        <translation>撤消修剪</translation>
+        <translation>撤销修剪</translation>
     </message>
     <message>
         <source>Drag inside the box to move it, corners to resize</source>
-        <translation>在框内拖动可移动，拖动角标可调整大小</translation>
+        <translation>拖动选框移动位置，拖动角点调整大小</translation>
     </message>
     <message>
         <source>Undo crop</source>
-        <translation>撤消裁剪</translation>
+        <translation>撤销裁剪</translation>
     </message>
     <message>
         <source>Saving…</source>
@@ -1159,15 +1159,15 @@
     </message>
     <message>
         <source>Save keeps the original file and stores this crop.</source>
-        <translation>保存将保留原始文件并存储此裁剪。</translation>
+        <translation>保存会保留原始文件并记录此次裁剪。</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this trim.</source>
-        <translation>保存将保留原始文件并存储此修剪。</translation>
+        <translation>保存会保留原始文件并记录此次修剪。</translation>
     </message>
     <message>
         <source>Nothing changed yet. Trim or crop above, or go back and drag this onto the timeline.</source>
-        <translation>尚未更改任何内容。请在上方修剪或裁剪，或返回并将其拖动到时间线上。</translation>
+        <translation>尚未做任何更改。可在上方修剪或裁剪，或返回后将其拖到时间线上。</translation>
     </message>
     <message>
         <source>Rotate</source>
@@ -1200,7 +1200,7 @@
     </message>
     <message>
         <source>Clip</source>
-        <translation>剪辑</translation>
+        <translation>片段</translation>
     </message>
     <message>
         <source>Select multiple</source>
@@ -1208,7 +1208,7 @@
     </message>
     <message>
         <source>Tap clips to add them to the selection</source>
-        <translation>轻点剪辑将其添加到所选内容</translation>
+        <translation>点按片段将其加入选择</translation>
     </message>
     <message>
         <source>Cut</source>
@@ -1216,7 +1216,7 @@
     </message>
     <message>
         <source>Remove the clip and keep it to paste</source>
-        <translation>移除剪辑并保留以供粘贴</translation>
+        <translation>移除片段并保留以供粘贴</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -1232,7 +1232,7 @@
     </message>
     <message>
         <source>Apply what you copied from another clip</source>
-        <translation>应用从另一个剪辑复制的属性</translation>
+        <translation>应用从其他片段复制的内容</translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -1244,27 +1244,27 @@
     </message>
     <message>
         <source>Open composite</source>
-        <translation>打开复合剪辑</translation>
+        <translation>打开合成</translation>
     </message>
     <message>
         <source>Edit the clips inside</source>
-        <translation>编辑内部的剪辑</translation>
+        <translation>编辑其中的片段</translation>
     </message>
     <message>
         <source>Flatten composite</source>
-        <translation>拼合复合剪辑</translation>
+        <translation>压平合成</translation>
     </message>
     <message>
         <source>Render it into a single video clip</source>
-        <translation>将其渲染为单个视频剪辑</translation>
+        <translation>将其渲染为单个视频片段</translation>
     </message>
     <message>
         <source>Make composite</source>
-        <translation>创建复合剪辑</translation>
+        <translation>创建合成</translation>
     </message>
     <message>
         <source>Group the selected clips into one</source>
-        <translation>将所选剪辑组合为一个</translation>
+        <translation>将所选片段合为一组</translation>
     </message>
     <message>
         <source>Transform together</source>
@@ -1280,23 +1280,23 @@
     </message>
     <message>
         <source>The layer moving this clip</source>
-        <translation>移动此剪辑的图层</translation>
+        <translation>移动此片段的图层</translation>
     </message>
     <message>
         <source>Select covered clips</source>
-        <translation>选择所涵盖的剪辑</translation>
+        <translation>选择覆盖的片段</translation>
     </message>
     <message>
         <source>Every clip this layer moves</source>
-        <translation>此图层移动的每个剪辑</translation>
+        <translation>此图层移动的所有片段</translation>
     </message>
     <message>
         <source>Covers</source>
-        <translation>涵盖</translation>
+        <translation>覆盖范围</translation>
     </message>
     <message>
         <source>Choose which tracks this layer moves</source>
-        <translation>选择此图层移动的轨道</translation>
+        <translation>选择此图层移动哪些轨道</translation>
     </message>
     <message>
         <source>Unlink</source>
@@ -1304,31 +1304,31 @@
     </message>
     <message>
         <source>Edit video and its audio separately</source>
-        <translation>分别编辑视频及其音频</translation>
+        <translation>分开编辑视频及其音频</translation>
     </message>
     <message>
         <source>Separate all audio tracks</source>
-        <translation>分离所有音频轨道</translation>
+        <translation>分离所有音轨</translation>
     </message>
     <message>
         <source>One audio clip per audio track in the file</source>
-        <translation>文件中每个音频轨道对应一个音频剪辑</translation>
+        <translation>文件中的每条音轨各生成一个音频片段</translation>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
-        <translation>转换为适合编辑的格式</translation>
+        <translation>转换为易于剪辑的格式</translation>
     </message>
     <message>
         <source>Smoother editing for phone and screen recordings</source>
-        <translation>使手机和屏幕录制的编辑更流畅</translation>
+        <translation>让手机和屏幕录制剪辑更流畅</translation>
     </message>
     <message>
         <source>Merge subtitle clips</source>
-        <translation>合并字幕剪辑</translation>
+        <translation>合并字幕片段</translation>
     </message>
     <message>
         <source>Join the selected subtitle clips</source>
-        <translation>合并所选字幕剪辑</translation>
+        <translation>连接所选的字幕片段</translation>
     </message>
     <message>
         <source>Merge all subtitles on this track</source>
@@ -1336,15 +1336,15 @@
     </message>
     <message>
         <source>Join every subtitle clip on the track</source>
-        <translation>合并轨道上的每个字幕剪辑</translation>
+        <translation>连接轨道上的每个字幕片段</translation>
     </message>
     <message>
         <source>Convert to text clips</source>
-        <translation>转换为文本剪辑</translation>
+        <translation>转换为文字片段</translation>
     </message>
     <message>
         <source>One text clip per cue</source>
-        <translation>每个提示点对应一个文本剪辑</translation>
+        <translation>每条字幕生成一个文字片段</translation>
     </message>
     <message>
         <source>Convert to subtitle</source>
@@ -1352,23 +1352,23 @@
     </message>
     <message>
         <source>Turn text clips into subtitle cues</source>
-        <translation>将文本剪辑转换为字幕提示</translation>
+        <translation>将文字片段转为字幕条目</translation>
     </message>
     <message>
         <source>Unlink from clip</source>
-        <translation>从剪辑取消链接</translation>
+        <translation>与片段解除链接</translation>
     </message>
     <message>
         <source>Stop following the clip it is attached to</source>
-        <translation>停止跟随其附加的剪辑</translation>
+        <translation>停止跟随其附加的片段</translation>
     </message>
     <message>
         <source>Move to its own track</source>
-        <translation>移至其独立轨道</translation>
+        <translation>移至独立轨道</translation>
     </message>
     <message>
         <source>Take the adjustment out of this lane</source>
-        <translation>将调整效果从该轨道移出</translation>
+        <translation>将调整移出此通道</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -1388,7 +1388,7 @@
     </message>
     <message>
         <source>Add the copied effects to this clip</source>
-        <translation>将复制的效果添加到此剪辑</translation>
+        <translation>将已复制的效果添加到此片段</translation>
     </message>
     <message>
         <source>Save effects as preset…</source>
@@ -1396,11 +1396,11 @@
     </message>
     <message>
         <source>Reuse this look on other clips</source>
-        <translation>在其他剪辑上复用此外观</translation>
+        <translation>在其他片段上重复使用此效果</translation>
     </message>
     <message>
         <source>Trim &amp; timing</source>
-        <translation>修剪与计时</translation>
+        <translation>修剪与时间</translation>
     </message>
     <message>
         <source>Split all tracks</source>
@@ -1408,23 +1408,23 @@
     </message>
     <message>
         <source>Cut every clip under the playhead</source>
-        <translation>切割播放头下方的每个剪辑</translation>
+        <translation>在播放头处切开所有片段</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation>修剪起始</translation>
+        <translation>修剪开头</translation>
     </message>
     <message>
         <source>Drop everything before the playhead</source>
-        <translation>丢弃播放头之前的所有内容</translation>
+        <translation>舍弃播放头之前的内容</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation>修剪末尾</translation>
+        <translation>修剪结尾</translation>
     </message>
     <message>
         <source>Drop everything after the playhead</source>
-        <translation>丢弃播放头之后的所有内容</translation>
+        <translation>舍弃播放头之后的内容</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -1432,15 +1432,15 @@
     </message>
     <message>
         <source>Change how fast this clip plays</source>
-        <translation>更改此剪辑的播放速度</translation>
+        <translation>更改此片段的播放速度</translation>
     </message>
     <message>
         <source>Freeze frame</source>
-        <translation>静止帧</translation>
+        <translation>定格</translation>
     </message>
     <message>
         <source>Freeze frame at current time</source>
-        <translation>在当前时间创建静止帧</translation>
+        <translation>在当前时间定格画面</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -1448,15 +1448,15 @@
     </message>
     <message>
         <source>Merge adjacent clips</source>
-        <translation>合并相邻剪辑</translation>
+        <translation>合并相邻片段</translation>
     </message>
     <message>
         <source>Close gap</source>
-        <translation>消除间隙</translation>
+        <translation>闭合间隙</translation>
     </message>
     <message>
         <source>Close gap after clip</source>
-        <translation>消除剪辑后的间隙</translation>
+        <translation>闭合片段后的间隙</translation>
     </message>
     <message>
         <source>Audio</source>
@@ -1468,7 +1468,7 @@
     </message>
     <message>
         <source>Separate audio from video</source>
-        <translation>从视频中分离音频</translation>
+        <translation>将音频与视频分离</translation>
     </message>
     <message>
         <source>Timeline</source>
@@ -1480,7 +1480,7 @@
     </message>
     <message>
         <source>Line clip edges up with cuts and markers</source>
-        <translation>将剪辑边缘与剪切点和标记对齐</translation>
+        <translation>让片段边缘与剪切点和标记对齐</translation>
     </message>
     <message>
         <source>Ripple</source>
@@ -1488,7 +1488,7 @@
     </message>
     <message>
         <source>Close gaps when trimming</source>
-        <translation>修剪时自动消除间隙</translation>
+        <translation>修剪时自动闭合间隙</translation>
     </message>
     <message>
         <source>Overlap</source>
@@ -1496,7 +1496,7 @@
     </message>
     <message>
         <source>Allow clip overlap</source>
-        <translation>允许剪辑重叠</translation>
+        <translation>允许片段重叠</translation>
     </message>
     <message>
         <source>Beat markers</source>
@@ -1504,7 +1504,7 @@
     </message>
     <message>
         <source>Find the beat and show markers</source>
-        <translation>检测节拍并显示标记</translation>
+        <translation>识别节拍并显示标记</translation>
     </message>
     <message>
         <source>Markers &amp; view</source>
@@ -1520,11 +1520,11 @@
     </message>
     <message>
         <source>Bookmark</source>
-        <translation>书签</translation>
+        <translation>标记</translation>
     </message>
     <message>
         <source>Add or remove a bookmark here</source>
-        <translation>在此处添加或移除书签</translation>
+        <translation>在此处添加或移除标记</translation>
     </message>
     <message>
         <source>Work area in</source>
@@ -1532,7 +1532,7 @@
     </message>
     <message>
         <source>Mark work area in at current time</source>
-        <translation>在当前时间标记工作区入点</translation>
+        <translation>在当前时间设置工作区入点</translation>
     </message>
     <message>
         <source>Work area out</source>
@@ -1540,7 +1540,7 @@
     </message>
     <message>
         <source>Mark work area out at current time</source>
-        <translation>在当前时间标记工作区出点</translation>
+        <translation>在当前时间设置工作区出点</translation>
     </message>
     <message>
         <source>Clear work area</source>
@@ -1548,15 +1548,15 @@
     </message>
     <message>
         <source>Shorter layers</source>
-        <translation>矮图层</translation>
+        <translation>缩短图层</translation>
     </message>
     <message>
         <source>Taller layers</source>
-        <translation>高图层</translation>
+        <translation>增高图层</translation>
     </message>
     <message>
         <source>Analyzing…</source>
-        <translation>正在分析…</translation>
+        <translation>分析中…</translation>
     </message>
 </context>
 <context>
@@ -1570,7 +1570,7 @@
     <name>AndroidPreview</name>
     <message>
         <source>Seek</source>
-        <translation>定位</translation>
+        <translation>跳转</translation>
     </message>
 </context>
 <context>
@@ -1581,15 +1581,15 @@
     </message>
     <message>
         <source>Half</source>
-        <translation>1/2</translation>
+        <translation>一半</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>1/4</translation>
+        <translation>四分之一</translation>
     </message>
     <message>
         <source>1/8 (Eco)</source>
-        <translation>1/8（节能）</translation>
+        <translation>1/8（省电）</translation>
     </message>
     <message>
         <source>Auto</source>
@@ -1597,7 +1597,7 @@
     </message>
     <message>
         <source>Quality: %1</source>
-        <translation>质量：%1</translation>
+        <translation>画质：%1</translation>
     </message>
     <message>
         <source>Guides</source>
@@ -1628,11 +1628,11 @@
     </message>
     <message>
         <source>Loop work area on — tap to turn off</source>
-        <translation>循环播放工作区已开启 — 轻点可关闭</translation>
+        <translation>工作区循环已开启 — 点按关闭</translation>
     </message>
     <message>
         <source>Loop work area off — tap to turn on</source>
-        <translation>循环播放工作区已关闭 — 轻点可开启</translation>
+        <translation>工作区循环已关闭 — 点按开启</translation>
     </message>
     <message>
         <source>Forward 1 second</source>
@@ -1663,7 +1663,7 @@
     </message>
     <message>
         <source>Render the finished video</source>
-        <translation>渲染已完成的视频</translation>
+        <translation>渲染完成的视频</translation>
     </message>
     <message>
         <source>Save</source>
@@ -1671,7 +1671,7 @@
     </message>
     <message>
         <source>Keep this project on the device</source>
-        <translation>在设备上保留此项目</translation>
+        <translation>将此项目保存在设备上</translation>
     </message>
     <message>
         <source>Save as</source>
@@ -1679,7 +1679,7 @@
     </message>
     <message>
         <source>Keep the original and carry on in a copy</source>
-        <translation>保留原文件并以副本继续编辑</translation>
+        <translation>保留原项目并在副本中继续编辑</translation>
     </message>
     <message>
         <source>Share a copy</source>
@@ -1687,7 +1687,7 @@
     </message>
     <message>
         <source>One file with the media packed inside</source>
-        <translation>包含打包媒体的单个文件</translation>
+        <translation>生成包含媒体的单个文件</translation>
     </message>
     <message>
         <source>Canvas &amp; layout</source>
@@ -1703,7 +1703,7 @@
     </message>
     <message>
         <source>Drag the preview edges to change what’s included</source>
-        <translation>拖动预览边缘以调整包含的内容</translation>
+        <translation>拖动预览边缘以更改保留的画面范围</translation>
     </message>
     <message>
         <source>Project properties</source>
@@ -1711,7 +1711,7 @@
     </message>
     <message>
         <source>Name, resolution and timebase</source>
-        <translation>名称、分辨率和时基</translation>
+        <translation>名称、分辨率和时间基准</translation>
     </message>
     <message>
         <source>Multicam</source>
@@ -1719,7 +1719,7 @@
     </message>
     <message>
         <source>Sync and switch between angles</source>
-        <translation>同步机位并在机位间切换</translation>
+        <translation>同步并在多个机位间切换</translation>
     </message>
     <message>
         <source>Extras</source>
@@ -1727,7 +1727,7 @@
     </message>
     <message>
         <source>Add-ons and model packs</source>
-        <translation>附加组件与模型包</translation>
+        <translation>附加包与模型包</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -1743,7 +1743,7 @@
     </message>
     <message>
         <source>Switch the app’s colour scheme</source>
-        <translation>切换应用配色方案</translation>
+        <translation>切换应用的配色方案</translation>
     </message>
     <message>
         <source>Switch to desktop layout</source>
@@ -1759,7 +1759,7 @@
     </message>
     <message>
         <source>A newer version of Drift is ready</source>
-        <translation>Drift 的新版本已就绪</translation>
+        <translation>新版本的 Drift 已就绪</translation>
     </message>
     <message>
         <source>Debug info</source>
@@ -1775,11 +1775,11 @@
     </message>
     <message>
         <source>Version, licence and credits</source>
-        <translation>版本、许可和制作人员</translation>
+        <translation>版本、许可和致谢</translation>
     </message>
     <message>
         <source>Appearance, extras and agent access</source>
-        <translation>外观、附加项和智能体访问</translation>
+        <translation>外观、附加项与 AI 助手访问</translation>
     </message>
 </context>
 <context>
@@ -1790,7 +1790,7 @@
     </message>
     <message>
         <source>Pick a clip, start now</source>
-        <translation>选择剪辑，立即开始</translation>
+        <translation>选个片段，即刻开始</translation>
     </message>
     <message>
         <source>New project</source>
@@ -1814,21 +1814,21 @@
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>此处暂无内容 — 您保存的项目将显示在此列表中。</translation>
+        <translation>这里还是空的——保存的项目会显示在此列表中。</translation>
     </message>
 </context>
 <context>
     <name>AndroidRailAddButton</name>
     <message>
         <source>Add to timeline</source>
-        <translation>加入进轨道内</translation>
+        <translation>添加到时间线</translation>
     </message>
 </context>
 <context>
     <name>AndroidShareTargetSheet</name>
     <message>
         <source>Add shared media</source>
-        <translation>添加分享的媒体</translation>
+        <translation>添加共享媒体</translation>
     </message>
     <message>
         <source>Add to this project</source>
@@ -1836,7 +1836,7 @@
     </message>
     <message>
         <source>Import at the playhead and stay here</source>
-        <translation>在播放头处导入并停留在当前页面</translation>
+        <translation>导入到播放头位置并留在此处</translation>
     </message>
     <message>
         <source>New quick edit</source>
@@ -1844,14 +1844,14 @@
     </message>
     <message>
         <source>Start a new project from this clip</source>
-        <translation>根据此剪辑创建新项目</translation>
+        <translation>用此片段新建项目</translation>
     </message>
 </context>
 <context>
     <name>AndroidSheetHeader</name>
     <message>
         <source>Sheet</source>
-        <translation>表格</translation>
+        <translation>面板</translation>
     </message>
     <message>
         <source>Close</source>
@@ -1928,11 +1928,11 @@
     </message>
     <message>
         <source>The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.</source>
-        <translation>所选文本剪辑将被替换为一个字幕剪辑。所有字幕都将采用第一个文本剪辑的位置和样式。</translation>
+        <translation>所选文字片段将被替换为一个字幕片段。每条字幕都将使用第一个文字片段的位置和样式。</translation>
     </message>
     <message>
         <source>Rename clip</source>
-        <translation>重命名剪辑</translation>
+        <translation>重命名片段</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -1944,11 +1944,11 @@
     </message>
     <message>
         <source>Clip name</source>
-        <translation>剪辑名称</translation>
+        <translation>片段名称</translation>
     </message>
     <message>
         <source>Rename bookmark</source>
-        <translation>重命名书签</translation>
+        <translation>重命名标记</translation>
     </message>
     <message>
         <source>Label</source>
@@ -1956,15 +1956,15 @@
     </message>
     <message>
         <source>Bookmark name</source>
-        <translation>书签名称</translation>
+        <translation>标记名称</translation>
     </message>
     <message>
         <source>Bookmark</source>
-        <translation>书签</translation>
+        <translation>标记</translation>
     </message>
     <message>
         <source>My look</source>
-        <translation>我的外观</translation>
+        <translation>我的样式</translation>
     </message>
     <message>
         <source>Proxy</source>
@@ -1972,31 +1972,31 @@
     </message>
     <message>
         <source>Previewing from a low-resolution proxy. Export uses the original.</source>
-        <translation>正在使用低分辨率代理进行预览。导出时将使用原始文件。</translation>
+        <translation>正在以低分辨率代理预览，导出时使用原始素材。</translation>
     </message>
     <message>
         <source>Edit-friendly</source>
-        <translation>适合编辑</translation>
+        <translation>易于剪辑</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
-        <translation>已转换为恒定帧率以实现流畅编辑</translation>
+        <translation>已转换为恒定帧率，剪辑更流畅</translation>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
-        <translation>可变帧率。此剪辑可能会与其音频不同步。右键单击并选择“转换为适合编辑的格式”。</translation>
+        <translation>可变帧率。此片段可能会与其音频失去同步。右键点击它并选择“转换为易于剪辑的格式”。</translation>
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
-        <translation>变换图层：移动、缩放和旋转其范围涵盖的每个轨道</translation>
+        <translation>变换图层：移动、缩放并旋转其括号范围内的所有轨道</translation>
     </message>
     <message>
         <source>Add new track</source>
-        <translation>添加新轨道</translation>
+        <translation>新建轨道</translation>
     </message>
     <message>
         <source>Go to bookmark</source>
-        <translation>转到书签</translation>
+        <translation>转到标记</translation>
     </message>
     <message>
         <source>Move to playhead</source>
@@ -2012,7 +2012,7 @@
     </message>
     <message>
         <source>Close gap</source>
-        <translation>消除间隙</translation>
+        <translation>闭合间隙</translation>
     </message>
 </context>
 <context>
@@ -2024,12 +2024,12 @@
     <message numerus="yes">
         <source>%n clip(s)</source>
         <translation>
-            <numerusform>%n 个剪辑</numerusform>
+            <numerusform>%n 个片段</numerusform>
         </translation>
     </message>
     <message>
         <source>All</source>
-        <translation>所有</translation>
+        <translation>全部</translation>
     </message>
     <message>
         <source>None</source>
@@ -2044,11 +2044,11 @@
     <name>AndroidTimelineLiveRecording</name>
     <message>
         <source>PAUSED </source>
-        <translation>已暂停 </translation>
+        <translation>已暂停</translation>
     </message>
     <message>
         <source>REC </source>
-        <translation>录制 </translation>
+        <translation>录制</translation>
     </message>
 </context>
 <context>
@@ -2078,7 +2078,7 @@
     </message>
     <message>
         <source>Undo</source>
-        <translation>撤消</translation>
+        <translation>撤销</translation>
     </message>
     <message>
         <source>Redo</source>
@@ -2112,7 +2112,7 @@
     <message numerus="yes">
         <source>%1 · %n clip(s)</source>
         <translation>
-            <numerusform>%1 · %n 个剪辑</numerusform>
+            <numerusform>%1 · %n 个片段</numerusform>
         </translation>
     </message>
     <message>
@@ -2143,19 +2143,19 @@
     </message>
     <message>
         <source>Slide up</source>
-        <translation>向上滑入</translation>
+        <translation>上滑</translation>
     </message>
     <message>
         <source>Slide down</source>
-        <translation>向下滑入</translation>
+        <translation>下滑</translation>
     </message>
     <message>
         <source>Slide left</source>
-        <translation>向左滑入</translation>
+        <translation>左滑</translation>
     </message>
     <message>
         <source>Slide right</source>
-        <translation>向右滑入</translation>
+        <translation>右滑</translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -2207,7 +2207,7 @@
     </message>
     <message>
         <source>Animation applies to video, image, shape, text, and audio.</source>
-        <translation>动画适用于视频、图像、形状、文本和音频。</translation>
+        <translation>动画适用于视频、图像、形状、文字和音频。</translation>
     </message>
     <message>
         <source>Fade in / out (volume)</source>
@@ -2219,7 +2219,7 @@
     </message>
     <message>
         <source>Pick how the clip enters and leaves. Fade is one option — same style controls as slide or zoom.</source>
-        <translation>选择剪辑切入和退出的方式。淡入淡出是其中一种选项 — 具有与滑动或缩放相同的样式控制。</translation>
+        <translation>选择片段的进入和离开方式。淡入淡出是其中一种——与滑动、缩放使用相同的样式控件。</translation>
     </message>
     <message>
         <source>Clear</source>
@@ -2227,11 +2227,11 @@
     </message>
     <message>
         <source>In</source>
-        <translation>切入</translation>
+        <translation>入场</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation>退出</translation>
+        <translation>出场</translation>
     </message>
     <message>
         <source>Edit custom curve…</source>
@@ -2239,14 +2239,14 @@
     </message>
     <message>
         <source>Letter and word animations live in the Text tab, under Animate. This moves the whole clip.</source>
-        <translation>字符和单字动画位于“文本”选项卡的“动画”下。此项移动整个剪辑。</translation>
+        <translation>文字和单词动画位于“文字”选项卡的“动画”下。此处移动的是整个片段。</translation>
     </message>
 </context>
 <context>
     <name>AppController</name>
     <message>
         <source>Media removed</source>
-        <translation>媒体已移除</translation>
+        <translation>已移除媒体</translation>
     </message>
     <message>
         <source>Rename media</source>
@@ -2258,7 +2258,7 @@
     </message>
     <message>
         <source>Crop clip</source>
-        <translation>裁剪剪辑</translation>
+        <translation>裁剪片段</translation>
     </message>
     <message>
         <source>Crop saved</source>
@@ -2286,7 +2286,7 @@
     </message>
     <message>
         <source>Undo</source>
-        <translation>撤消</translation>
+        <translation>撤销</translation>
     </message>
     <message>
         <source>Redo</source>
@@ -2302,11 +2302,11 @@
     </message>
     <message>
         <source>Paste at current time</source>
-        <translation>在当前时间粘贴</translation>
+        <translation>粘贴到当前时间</translation>
     </message>
     <message>
         <source>Duplicate selected clip</source>
-        <translation>复制所选剪辑</translation>
+        <translation>创建所选片段副本</translation>
     </message>
     <message>
         <source>Split at current time</source>
@@ -2314,7 +2314,7 @@
     </message>
     <message>
         <source>Merge adjacent clips</source>
-        <translation>合并相邻剪辑</translation>
+        <translation>合并相邻片段</translation>
     </message>
     <message>
         <source>Separate audio</source>
@@ -2322,27 +2322,27 @@
     </message>
     <message>
         <source>Unlink audio</source>
-        <translation>取消链接音频</translation>
+        <translation>取消音频链接</translation>
     </message>
     <message>
         <source>Link clips</source>
-        <translation>链接剪辑</translation>
+        <translation>链接片段</translation>
     </message>
     <message>
         <source>Clear selection</source>
-        <translation>清除选择</translation>
+        <translation>取消选择</translation>
     </message>
     <message>
         <source>Select all clips</source>
-        <translation>选择所有剪辑</translation>
+        <translation>全选片段</translation>
     </message>
     <message>
         <source>Move selection left a little</source>
-        <translation>将所选内容向左微移</translation>
+        <translation>将所选内容左移少许</translation>
     </message>
     <message>
         <source>Move selection right a little</source>
-        <translation>将所选内容向右微移</translation>
+        <translation>将所选内容右移少许</translation>
     </message>
     <message>
         <source>Go to end of timeline</source>
@@ -2350,19 +2350,19 @@
     </message>
     <message>
         <source>Toggle guides</source>
-        <translation>切换参考线</translation>
+        <translation>显示/隐藏参考线</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
-        <translation>在当前时间添加/移除书签</translation>
+        <translation>在当前时间添加/移除标记</translation>
     </message>
     <message>
         <source>Go to next bookmark</source>
-        <translation>转到下一个书签</translation>
+        <translation>转到下一个标记</translation>
     </message>
     <message>
         <source>Go to previous bookmark</source>
-        <translation>转到上一个书签</translation>
+        <translation>转到上一个标记</translation>
     </message>
     <message>
         <source>Mark work area in</source>
@@ -2454,23 +2454,23 @@
     </message>
     <message>
         <source>Select a clip to measure</source>
-        <translation>选择要测量的剪辑</translation>
+        <translation>请选择要测量的片段</translation>
     </message>
     <message>
         <source>Select a clip to normalize</source>
-        <translation>选择要标准化的剪辑</translation>
+        <translation>请选择要进行响度归一化的片段</translation>
     </message>
     <message>
         <source>Clip added</source>
-        <translation>剪辑已添加</translation>
+        <translation>已添加片段</translation>
     </message>
     <message>
         <source>Clip added on new track</source>
-        <translation>剪辑已添加到新轨道</translation>
+        <translation>已在新轨道上添加片段</translation>
     </message>
     <message>
         <source>Clip deleted</source>
-        <translation>剪辑已删除</translation>
+        <translation>已删除片段</translation>
     </message>
     <message>
         <source>A clip can&apos;t completely cover another</source>
@@ -2478,23 +2478,23 @@
     </message>
     <message>
         <source>Clip moved</source>
-        <translation>剪辑已移动</translation>
+        <translation>片段已移动</translation>
     </message>
     <message>
         <source>Nothing to split here — move to a clip first</source>
-        <translation>此处无可分割内容 — 请先移动到剪辑上</translation>
+        <translation>此处没有可分割的内容，请先将播放头移到片段上</translation>
     </message>
     <message>
         <source>Split clip</source>
-        <translation>分割剪辑</translation>
+        <translation>分割片段</translation>
     </message>
     <message>
         <source>Split left</source>
-        <translation>向左分割</translation>
+        <translation>分割左侧</translation>
     </message>
     <message>
         <source>Split right</source>
-        <translation>向右分割</translation>
+        <translation>分割右侧</translation>
     </message>
     <message>
         <source>Trim updated</source>
@@ -2502,15 +2502,15 @@
     </message>
     <message>
         <source>Clip duplicated</source>
-        <translation>剪辑已复制</translation>
+        <translation>已创建片段副本</translation>
     </message>
     <message>
         <source>Your text here</source>
-        <translation>在此输入文本</translation>
+        <translation>在此输入文字</translation>
     </message>
     <message>
         <source>Text clip added</source>
-        <translation>文本剪辑已添加</translation>
+        <translation>已添加文字片段</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -2518,7 +2518,7 @@
     </message>
     <message>
         <source>Subtitle clip added</source>
-        <translation>字幕剪辑已添加</translation>
+        <translation>已添加字幕片段</translation>
     </message>
     <message>
         <source>No subtitle file selected</source>
@@ -2534,15 +2534,15 @@
     </message>
     <message>
         <source>Select a subtitle clip to import into</source>
-        <translation>选择要导入的目标字幕剪辑</translation>
+        <translation>请选择要导入的字幕片段</translation>
     </message>
     <message>
         <source>Select a subtitle clip to export</source>
-        <translation>选择要导出的字幕剪辑</translation>
+        <translation>请选择要导出的字幕片段</translation>
     </message>
     <message>
         <source>This subtitle clip has no captions</source>
-        <translation>此字幕剪辑不包含字幕</translation>
+        <translation>此字幕片段没有字幕内容</translation>
     </message>
     <message>
         <source>No save location selected</source>
@@ -2566,11 +2566,11 @@
     </message>
     <message>
         <source>Select a video or audio clip to create captions</source>
-        <translation>选择视频或音频剪辑以创建字幕</translation>
+        <translation>请选择视频或音频片段以生成字幕</translation>
     </message>
     <message>
         <source>This clip has no sound</source>
-        <translation>此剪辑没有声音</translation>
+        <translation>此片段没有声音</translation>
     </message>
     <message>
         <source>Starting…</source>
@@ -2598,7 +2598,7 @@
     </message>
     <message>
         <source>No audio decoded</source>
-        <translation>未解码任何音频</translation>
+        <translation>未解码出音频</translation>
     </message>
     <message>
         <source>Transcribing…</source>
@@ -2606,11 +2606,11 @@
     </message>
     <message>
         <source>Transcribing (%1)…</source>
-        <translation>正在转录 (%1)…</translation>
+        <translation>正在转录（%1）…</translation>
     </message>
     <message>
         <source>Building caption track…</source>
-        <translation>正在构建字幕轨道…</translation>
+        <translation>正在生成字幕轨道…</translation>
     </message>
     <message>
         <source>No speech detected</source>
@@ -2626,7 +2626,7 @@
     </message>
     <message>
         <source>Clip</source>
-        <translation>剪辑</translation>
+        <translation>片段</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n subtitles</source>
@@ -2636,7 +2636,7 @@
     </message>
     <message>
         <source>No audio output devices were found, so playback will be silent.</source>
-        <translation>未找到音频输出设备，播放将静音。</translation>
+        <translation>未找到音频输出设备，播放将没有声音。</translation>
     </message>
     <message>
         <source>Multicam window</source>
@@ -2657,28 +2657,28 @@
     <message numerus="yes">
         <source>Multicam ready: %n camera(s) lined up at the start. Drag a clip to adjust its sync, then pick a shot.</source>
         <translation>
-            <numerusform>多机位已就绪：%n 台摄像机已在起始处对齐。拖动剪辑以调整同步，然后选择镜头。</numerusform>
+            <numerusform>多机位已就绪：%n 台摄像机已在开头对齐。拖动片段可调整同步，然后选择镜头。</numerusform>
         </translation>
     </message>
     <message>
         <source>Select at least two video clips on different tracks.</source>
-        <translation>请至少选择不同轨道上的两个视频剪辑。</translation>
+        <translation>请选择不同轨道上的至少两个视频片段。</translation>
     </message>
     <message>
         <source>Hardware decoding failed on this clip; using software decoding instead.</source>
-        <translation>此剪辑的硬件解码失败；已改用软件解码。</translation>
+        <translation>此片段硬件解码失败，已改用软件解码。</translation>
     </message>
     <message>
         <source>%1 decoding failed on this clip; using software decoding instead.</source>
-        <translation>此剪辑的 %1 解码失败；已改用软件解码。</translation>
+        <translation>此片段的 %1 解码失败，已改用软件解码。</translation>
     </message>
     <message>
         <source>Copy effects from clip</source>
-        <translation>从剪辑复制效果</translation>
+        <translation>从片段复制效果</translation>
     </message>
     <message>
         <source>Paste effects onto clip</source>
-        <translation>将效果粘贴到剪辑</translation>
+        <translation>将效果粘贴到片段</translation>
     </message>
     <message>
         <source>That angle has nothing at the current time.</source>
@@ -2686,7 +2686,7 @@
     </message>
     <message>
         <source>Too close to the edge of the shot to cut here.</source>
-        <translation>距离镜头边缘过近，无法在此处剪切。</translation>
+        <translation>距离镜头边缘太近，无法在此切换。</translation>
     </message>
     <message>
         <source>Save multicam as separate tracks</source>
@@ -2702,29 +2702,29 @@
     </message>
     <message>
         <source>Media and referenced clips removed</source>
-        <translation>媒体及引用的剪辑已移除</translation>
+        <translation>已移除媒体及其引用片段</translation>
     </message>
     <message numerus="yes">
         <source>%n media items and referenced clips removed</source>
         <translation>
-            <numerusform>已移除 %n 个媒体项及引用的剪辑</numerusform>
+            <numerusform>已移除 %n 个媒体项及其引用片段</numerusform>
         </translation>
     </message>
     <message>
         <source>Media and referenced clip removed</source>
-        <translation>媒体及引用的剪辑已移除</translation>
+        <translation>已移除媒体及其引用片段</translation>
     </message>
     <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
-        <translation>您的显卡驱动版本过旧，无法运行需要 OpenGL 3.3 的预览。请参阅“帮助 → 调试信息”。</translation>
+        <translation>您的显卡驱动过旧，无法支持需要 OpenGL 3.3 的预览。请参见帮助 → 调试信息。</translation>
     </message>
     <message>
         <source>%1 isn’t a folder on this computer (a phone, camera or remote location). Export to a local folder, then copy the file there.</source>
-        <translation>%1 不是此计算机上的本地文件夹（为手机、相机或远程位置）。请先导出到本地文件夹，然后再将文件复制到此处。</translation>
+        <translation>%1 不是此计算机上的文件夹（可能是手机、相机或远程位置）。请先导出到本地文件夹，再将文件复制到该位置。</translation>
     </message>
     <message>
         <source>%1 is on a phone or camera connected over MTP, which can’t be written to directly. Export to a local folder, then copy the file there.</source>
-        <translation>%1 位于通过 MTP 连接的手机或相机上，无法直接写入。请先导出到本地文件夹，然后再将文件复制到此处。</translation>
+        <translation>%1 位于通过 MTP 连接的手机或相机上，无法直接写入。请先导出到本地文件夹，再将文件复制到该位置。</translation>
     </message>
     <message>
         <source>The folder %1 doesn’t exist anymore.</source>
@@ -2732,19 +2732,19 @@
     </message>
     <message>
         <source>%1 is on a read-only drive. Choose another folder.</source>
-        <translation>%1 位于只读驱动器上。请选择其他文件夹。</translation>
+        <translation>%1 位于只读驱动器上，请选择其他文件夹。</translation>
     </message>
     <message>
         <source>Can’t replace %1. It may be read-only or open in another app.</source>
-        <translation>无法替换 %1。它可能为只读或已在其他应用中打开。</translation>
+        <translation>无法替换 %1，它可能是只读的或已在其他应用中打开。</translation>
     </message>
     <message>
         <source>Can’t write to the network location %1. Check that it’s connected and that you have permission to save there.</source>
-        <translation>无法写入网络位置 %1。请检查网络是否已连接以及您是否有权在此保存。</translation>
+        <translation>无法写入网络位置 %1。请检查其是否已连接，以及您是否有保存权限。</translation>
     </message>
     <message>
         <source>You don’t have permission to save in %1. Choose another folder.</source>
-        <translation>您没有权限保存在 %1。请选择其他文件夹。</translation>
+        <translation>您没有在 %1 中保存的权限，请选择其他文件夹。</translation>
     </message>
     <message>
         <source>Can’t write to %1: %2</source>
@@ -2752,7 +2752,7 @@
     </message>
     <message>
         <source>There isn’t enough free space in %1.</source>
-        <translation>%1 中没有足够的可用空间。</translation>
+        <translation>%1 的可用空间不足。</translation>
     </message>
     <message>
         <source>Could not create a proxy for %1: %2</source>
@@ -2760,11 +2760,11 @@
     </message>
     <message>
         <source>Your graphics driver only provides %1; the preview needs OpenGL 3.3. See Help → Debug info.</source>
-        <translation>您的显卡驱动仅提供 %1；预览需要 OpenGL 3.3。请参阅“帮助 → 调试信息”。</translation>
+        <translation>您的显卡驱动仅支持 %1，而预览需要 OpenGL 3.3。请参见帮助 → 调试信息。</translation>
     </message>
     <message>
         <source>GPU preview rendering is unavailable on this machine. See Help → Debug info.</source>
-        <translation>此计算机上 GPU 预览渲染不可用。请参阅“帮助 → 调试信息”。</translation>
+        <translation>此计算机无法使用 GPU 预览渲染。请参见帮助 → 调试信息。</translation>
     </message>
     <message>
         <source>-inf dB</source>
@@ -2820,7 +2820,7 @@
     </message>
     <message>
         <source>Go to start of timeline</source>
-        <translation>转到时间线起始处</translation>
+        <translation>转到时间线开头</translation>
     </message>
     <message>
         <source>Delete left of the playhead</source>
@@ -2832,11 +2832,11 @@
     </message>
     <message>
         <source>Increase playback speed</source>
-        <translation>提高播放速度</translation>
+        <translation>加快播放速度</translation>
     </message>
     <message>
         <source>Decrease playback speed</source>
-        <translation>降低播放速度</translation>
+        <translation>减慢播放速度</translation>
     </message>
     <message>
         <source>Polygon mask tool</source>
@@ -2864,15 +2864,15 @@
     </message>
     <message>
         <source>No audio in range</source>
-        <translation>范围内无音频</translation>
+        <translation>该范围内没有音频</translation>
     </message>
     <message>
         <source>The clip is no longer in the timeline</source>
-        <translation>剪辑已不在时间线上</translation>
+        <translation>该片段已不在时间线中</translation>
     </message>
     <message>
         <source>No audio track available for recording</source>
-        <translation>没有可用于录音的音频轨道</translation>
+        <translation>没有可用于录制的音轨</translation>
     </message>
     <message>
         <source>Failed to create audio recording file</source>
@@ -2880,7 +2880,7 @@
     </message>
     <message>
         <source>Failed to start audio recording</source>
-        <translation>启动音频录制失败</translation>
+        <translation>无法开始音频录制</translation>
     </message>
     <message>
         <source>Recording audio…</source>
@@ -2892,7 +2892,7 @@
     </message>
     <message>
         <source>Voiceover %1</source>
-        <translation>画外音 %1</translation>
+        <translation>配音 %1</translation>
     </message>
     <message>
         <source>Record audio</source>
@@ -2900,11 +2900,11 @@
     </message>
     <message>
         <source>Recorded voiceover</source>
-        <translation>已录制画外音</translation>
+        <translation>已录制的配音</translation>
     </message>
     <message>
         <source>Voiceover recorded</source>
-        <translation>画外音录制完成</translation>
+        <translation>配音已录制</translation>
     </message>
     <message>
         <source>Recording cancelled</source>
@@ -2912,11 +2912,11 @@
     </message>
     <message>
         <source>Clips moved</source>
-        <translation>剪辑已移动</translation>
+        <translation>片段已移动</translation>
     </message>
     <message>
         <source>Select video or audio clips to create captions</source>
-        <translation>选择视频或音频剪辑以创建字幕</translation>
+        <translation>请选择视频或音频片段以生成字幕</translation>
     </message>
     <message>
         <source>The caption range is empty</source>
@@ -2924,15 +2924,15 @@
     </message>
     <message>
         <source>No video or audio clips in that range</source>
-        <translation>该范围内没有视频或音频剪辑</translation>
+        <translation>该范围内没有视频或音频片段</translation>
     </message>
     <message>
         <source>One of these clips has no sound</source>
-        <translation>这些剪辑中有一个没有声音</translation>
+        <translation>其中一个片段没有声音</translation>
     </message>
     <message>
         <source>These clips overlap in time — caption them separately</source>
-        <translation>这些剪辑在时间上重叠 — 请分别创建字幕</translation>
+        <translation>这些片段在时间上重叠，请分别生成字幕</translation>
     </message>
     <message>
         <source>Transition curve</source>
@@ -2944,7 +2944,7 @@
     </message>
     <message>
         <source>Shape added</source>
-        <translation>形状已添加</translation>
+        <translation>已添加形状</translation>
     </message>
     <message>
         <source>Adjustment Layer</source>
@@ -2952,7 +2952,7 @@
     </message>
     <message>
         <source>Adjustment (%1)</source>
-        <translation>调整 (%1)</translation>
+        <translation>调整（%1）</translation>
     </message>
     <message>
         <source>Add adjustment layer</source>
@@ -2960,7 +2960,7 @@
     </message>
     <message>
         <source>Adjustment layer added</source>
-        <translation>调整图层已添加</translation>
+        <translation>已添加调整图层</translation>
     </message>
     <message>
         <source>Add adjustment track</source>
@@ -2968,7 +2968,7 @@
     </message>
     <message>
         <source>Adjustment track added</source>
-        <translation>调整轨道已添加</translation>
+        <translation>已添加调整轨道</translation>
     </message>
     <message>
         <source>Add adjustment lane</source>
@@ -2976,83 +2976,83 @@
     </message>
     <message>
         <source>Adjustment lane added</source>
-        <translation>调整通道已添加</translation>
+        <translation>已添加调整通道</translation>
     </message>
     <message>
         <source>Nest adjustment in track</source>
-        <translation>在轨道中嵌套调整</translation>
+        <translation>将调整图层嵌入轨道</translation>
     </message>
     <message>
         <source>Adjustment nested</source>
-        <translation>调整已嵌套</translation>
+        <translation>已嵌入调整图层</translation>
     </message>
     <message>
         <source>Detach adjustment to its own track</source>
-        <translation>将调整分离至独立轨道</translation>
+        <translation>将调整图层分离到独立轨道</translation>
     </message>
     <message>
         <source>Adjustment detached</source>
-        <translation>调整已分离</translation>
+        <translation>已分离调整图层</translation>
     </message>
     <message>
         <source>Unlink adjustment</source>
-        <translation>取消链接调整</translation>
+        <translation>取消调整图层链接</translation>
     </message>
     <message>
         <source>Adjustment unlinked</source>
-        <translation>调整链接已取消</translation>
+        <translation>已取消调整图层链接</translation>
     </message>
     <message>
         <source>Link adjustment to clip</source>
-        <translation>将调整链接到剪辑</translation>
+        <translation>将调整图层链接到片段</translation>
     </message>
     <message>
         <source>Adjustment linked</source>
-        <translation>调整已链接</translation>
+        <translation>已链接调整图层</translation>
     </message>
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
-        <translation>安装 Emoji 贴纸包以添加表情符号</translation>
+        <translation>安装表情贴纸包以添加表情</translation>
     </message>
     <message>
         <source>Edit clip</source>
-        <translation>编辑剪辑</translation>
+        <translation>编辑片段</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to move this</source>
-        <translation>开启自动关键帧以移动此项</translation>
+        <translation>开启自动关键帧后才能移动此项</translation>
     </message>
     <message>
         <source>Move clip</source>
-        <translation>移动剪辑</translation>
+        <translation>移动片段</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to resize this</source>
-        <translation>开启自动关键帧以调整此项大小</translation>
+        <translation>开启自动关键帧后才能调整此项大小</translation>
     </message>
     <message>
         <source>Resize clip</source>
-        <translation>调整剪辑大小</translation>
+        <translation>调整片段大小</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to change this</source>
-        <translation>开启自动关键帧以更改此项</translation>
+        <translation>开启自动关键帧后才能更改此项</translation>
     </message>
     <message>
         <source>Transform clip</source>
-        <translation>变换剪辑</translation>
+        <translation>变换片段</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to rotate this</source>
-        <translation>开启自动关键帧以旋转此项</translation>
+        <translation>开启自动关键帧后才能旋转此项</translation>
     </message>
     <message>
         <source>Rotate clip</source>
-        <translation>旋转剪辑</translation>
+        <translation>旋转片段</translation>
     </message>
     <message>
         <source>Turn on Auto keyframes to edit this</source>
-        <translation>开启自动关键帧以编辑此项</translation>
+        <translation>开启自动关键帧后才能编辑此项</translation>
     </message>
     <message>
         <source>Edit keyframe</source>
@@ -3088,7 +3088,7 @@
     </message>
     <message>
         <source>Start updated</source>
-        <translation>开始时间已更新</translation>
+        <translation>起点已更新</translation>
     </message>
     <message>
         <source>Duration updated</source>
@@ -3100,11 +3100,11 @@
     </message>
     <message>
         <source>Rename clip</source>
-        <translation>重命名剪辑</translation>
+        <translation>重命名片段</translation>
     </message>
     <message>
         <source>Clip renamed</source>
-        <translation>剪辑已重命名</translation>
+        <translation>片段已重命名</translation>
     </message>
     <message>
         <source>Edit text</source>
@@ -3116,11 +3116,11 @@
     </message>
     <message>
         <source>Adjust subtitle timing</source>
-        <translation>调整字幕时序</translation>
+        <translation>调整字幕时间</translation>
     </message>
     <message>
         <source>Subtitle cue updated</source>
-        <translation>字幕提示已更新</translation>
+        <translation>字幕条目已更新</translation>
     </message>
     <message>
         <source>Edit text style</source>
@@ -3208,27 +3208,27 @@
     </message>
     <message>
         <source>Clip speed updated</source>
-        <translation>剪辑速度已更新</translation>
+        <translation>片段速度已更新</translation>
     </message>
     <message>
         <source>Reverse on</source>
-        <translation>开启倒放</translation>
+        <translation>倒放开启</translation>
     </message>
     <message>
         <source>Reverse off</source>
-        <translation>关闭倒放</translation>
+        <translation>倒放关闭</translation>
     </message>
     <message>
         <source>Clip reversed</source>
-        <translation>剪辑已倒放</translation>
+        <translation>片段已倒放</translation>
     </message>
     <message>
         <source>Clip forward</source>
-        <translation>剪辑正向播放</translation>
+        <translation>片段恢复正放</translation>
     </message>
     <message>
         <source>A clip is already being reversed</source>
-        <translation>已有剪辑正在进行倒放处理</translation>
+        <translation>已有片段正在倒放处理中</translation>
     </message>
     <message>
         <source>Could not create a reversed file</source>
@@ -3244,7 +3244,7 @@
     </message>
     <message>
         <source>Clip flip updated</source>
-        <translation>剪辑翻转已更新</translation>
+        <translation>片段翻转已更新</translation>
     </message>
     <message>
         <source>Pan changed</source>
@@ -3252,7 +3252,7 @@
     </message>
     <message>
         <source>Clip pan updated</source>
-        <translation>剪辑平移已更新</translation>
+        <translation>片段平移已更新</translation>
     </message>
     <message>
         <source>Rotation snapped</source>
@@ -3260,11 +3260,11 @@
     </message>
     <message>
         <source>Rotation set to %1°</source>
-        <translation>旋转已设置为 %1°</translation>
+        <translation>旋转已设为 %1°</translation>
     </message>
     <message>
         <source>Clips merged</source>
-        <translation>剪辑已合并</translation>
+        <translation>片段已合并</translation>
     </message>
     <message>
         <source>Subtitles merged</source>
@@ -3276,55 +3276,55 @@
     </message>
     <message>
         <source>Composite %1</source>
-        <translation>复合 %1</translation>
+        <translation>合成 %1</translation>
     </message>
     <message>
         <source>Composite created</source>
-        <translation>复合剪辑已创建</translation>
+        <translation>已创建合成</translation>
     </message>
     <message>
         <source>Composite</source>
-        <translation>复合剪辑</translation>
+        <translation>合成</translation>
     </message>
     <message>
         <source>Flattening composite…</source>
-        <translation>正在拼合复合剪辑…</translation>
+        <translation>正在合并合成…</translation>
     </message>
     <message>
         <source>Flattening was cancelled</source>
-        <translation>拼合已取消</translation>
+        <translation>合并已取消</translation>
     </message>
     <message>
         <source>Could not flatten the composite: %1</source>
-        <translation>无法拼合复合剪辑：%1</translation>
+        <translation>无法合并合成：%1</translation>
     </message>
     <message>
         <source>The composite clip was removed before flattening finished</source>
-        <translation>复合剪辑在拼合完成前已被移除</translation>
+        <translation>合成片段在合并完成前已被移除</translation>
     </message>
     <message>
         <source>The composite clip was trimmed while flattening; try again</source>
-        <translation>复合剪辑在拼合过程中被修剪；请重试</translation>
+        <translation>合并期间合成片段被修剪，请重试</translation>
     </message>
     <message>
         <source>%1 (flattened)</source>
-        <translation>%1 (已拼合)</translation>
+        <translation>%1（已合并）</translation>
     </message>
     <message>
         <source>Composite flattened</source>
-        <translation>复合剪辑已拼合</translation>
+        <translation>合成已合并</translation>
     </message>
     <message>
         <source>All audio tracks separated</source>
-        <translation>所有音频轨道已分离</translation>
+        <translation>所有音轨已分离</translation>
     </message>
     <message>
         <source>Change audio track</source>
-        <translation>更改音频轨道</translation>
+        <translation>更改音轨</translation>
     </message>
     <message>
         <source>Clips unlinked</source>
-        <translation>剪辑已取消链接</translation>
+        <translation>已取消片段链接</translation>
     </message>
     <message>
         <source>Audio unlinked</source>
@@ -3332,7 +3332,7 @@
     </message>
     <message>
         <source>Clips linked</source>
-        <translation>剪辑已链接</translation>
+        <translation>已链接片段</translation>
     </message>
     <message>
         <source>Fade updated</source>
@@ -3340,19 +3340,19 @@
     </message>
     <message>
         <source>Fade curve changed</source>
-        <translation>淡入淡出曲线已更改</translation>
+        <translation>淡化曲线已更改</translation>
     </message>
     <message>
         <source>Fade curve updated</source>
-        <translation>淡入淡出曲线已更新</translation>
+        <translation>淡化曲线已更新</translation>
     </message>
     <message>
         <source>Clip animation changed</source>
-        <translation>剪辑动画已更改</translation>
+        <translation>片段动画已更改</translation>
     </message>
     <message>
         <source>Clip animation updated</source>
-        <translation>剪辑动画已更新</translation>
+        <translation>片段动画已更新</translation>
     </message>
     <message>
         <source>Shape style changed</source>
@@ -3364,7 +3364,7 @@
     </message>
     <message>
         <source>3D model added</source>
-        <translation>3D 模型已添加</translation>
+        <translation>已添加 3D 模型</translation>
     </message>
     <message>
         <source>3D model replaced</source>
@@ -3384,7 +3384,7 @@
     </message>
     <message>
         <source>Animation added</source>
-        <translation>动画已添加</translation>
+        <translation>已添加动画</translation>
     </message>
     <message>
         <source>Animation replaced</source>
@@ -3408,15 +3408,15 @@
     </message>
     <message>
         <source>Animation slot</source>
-        <translation>动画插槽</translation>
+        <translation>动画槽位</translation>
     </message>
     <message>
         <source>Animation slot updated</source>
-        <translation>动画插槽已更新</translation>
+        <translation>动画槽位已更新</translation>
     </message>
     <message>
         <source>Clip mask updated</source>
-        <translation>剪辑蒙版已更新</translation>
+        <translation>片段蒙版已更新</translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -3436,7 +3436,7 @@
     </message>
     <message>
         <source>Bars</source>
-        <translation>条纹</translation>
+        <translation>条形</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -3448,27 +3448,27 @@
     </message>
     <message>
         <source>Mask added</source>
-        <translation>蒙版已添加</translation>
+        <translation>已添加蒙版</translation>
     </message>
     <message>
         <source>Add mask point</source>
-        <translation>添加蒙版锚点</translation>
+        <translation>添加蒙版点</translation>
     </message>
     <message>
         <source>Mask point added</source>
-        <translation>蒙版锚点已添加</translation>
+        <translation>已添加蒙版点</translation>
     </message>
     <message>
         <source>Remove mask point</source>
-        <translation>移除蒙版锚点</translation>
+        <translation>移除蒙版点</translation>
     </message>
     <message>
         <source>Mask point removed</source>
-        <translation>蒙版锚点已移除</translation>
+        <translation>已移除蒙版点</translation>
     </message>
     <message>
         <source>That transition has no sound; audio tracks take crossfade or dip</source>
-        <translation>该转场没有声音；音频轨道将使用交叉淡化或淡入淡出</translation>
+        <translation>该转场没有声音；音轨请使用交叉淡化或渐隐</translation>
     </message>
     <message>
         <source>Replace transition</source>
@@ -3512,23 +3512,23 @@
     </message>
     <message>
         <source>Track pan</source>
-        <translation>轨道声相</translation>
+        <translation>轨道声像</translation>
     </message>
     <message>
         <source>Track pan changed</source>
-        <translation>轨道声相已更改</translation>
+        <translation>轨道声像已更改</translation>
     </message>
     <message>
         <source>Keep ranges</source>
-        <translation>保留范围</translation>
+        <translation>保留区间</translation>
     </message>
     <message>
         <source>Assemble</source>
-        <translation>装配</translation>
+        <translation>拼接</translation>
     </message>
     <message>
         <source>Cut words</source>
-        <translation>剪切单字</translation>
+        <translation>剪切字词</translation>
     </message>
     <message>
         <source>Add transition</source>
@@ -3540,11 +3540,11 @@
     </message>
     <message>
         <source>%1 (off)</source>
-        <translation>%1 (已关闭)</translation>
+        <translation>%1（关闭）</translation>
     </message>
     <message>
         <source>Transform selection together</source>
-        <translation>统一变换所选内容</translation>
+        <translation>整体变换所选内容</translation>
     </message>
     <message>
         <source>Select transform layer</source>
@@ -3580,23 +3580,23 @@
     </message>
     <message>
         <source>Drop a transition where two clips meet.</source>
-        <translation>将转场拖放到两个剪辑的交接处。</translation>
+        <translation>将转场拖到两个片段的衔接处</translation>
     </message>
     <message>
         <source>Transform layers take no effects or masks.</source>
-        <translation>变换图层不接受效果或蒙版。</translation>
+        <translation>变换图层不支持效果或蒙版</translation>
     </message>
     <message>
         <source>Audio effects go on clips with sound.</source>
-        <translation>音频效果只能应用到包含声音的剪辑上。</translation>
+        <translation>音效应添加到有声音的片段上</translation>
     </message>
     <message>
         <source>That goes on a video, image, shape or text clip.</source>
-        <translation>该项只能应用到视频、图像、形状或文本剪辑上。</translation>
+        <translation>该项应添加到视频、图像、形状或文本片段上</translation>
     </message>
     <message>
         <source>Drop that onto a clip to apply it.</source>
-        <translation>将其拖放到剪辑上以应用。</translation>
+        <translation>将其拖到片段上即可应用</translation>
     </message>
     <message>
         <source>Add to new track</source>
@@ -3604,31 +3604,31 @@
     </message>
     <message>
         <source>Move clip in 3D</source>
-        <translation>在 3D 空间移动剪辑</translation>
+        <translation>在 3D 中移动片段</translation>
     </message>
     <message>
         <source>Rotate clip in 3D</source>
-        <translation>在 3D 空间旋转剪辑</translation>
+        <translation>在 3D 中旋转片段</translation>
     </message>
     <message>
         <source>Scale clip</source>
-        <translation>缩放剪辑</translation>
+        <translation>缩放片段</translation>
     </message>
     <message>
         <source>Fly camera</source>
-        <translation>漫游摄像机</translation>
+        <translation>摄像机漫游</translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
-        <translation>音频效果应放置在时间线上。</translation>
+        <translation>音效应拖放到时间线上</translation>
     </message>
     <message>
         <source>Audio goes on the timeline.</source>
-        <translation>音频应放置在时间线上。</translation>
+        <translation>音频应拖放到时间线上</translation>
     </message>
     <message>
         <source>Drop that onto a clip in the preview.</source>
-        <translation>将其拖放到预览中的剪辑上。</translation>
+        <translation>将其拖到预览中的片段上</translation>
     </message>
     <message>
         <source>Add to preview</source>
@@ -3644,11 +3644,11 @@
     </message>
     <message>
         <source>Clip is a 3D layer</source>
-        <translation>剪辑为 3D 图层</translation>
+        <translation>片段为 3D 图层</translation>
     </message>
     <message>
         <source>Clip is flat</source>
-        <translation>剪辑为平面图层</translation>
+        <translation>片段为平面</translation>
     </message>
     <message>
         <source>Enable depth occlusion</source>
@@ -3660,11 +3660,11 @@
     </message>
     <message>
         <source>Clip is occluded by depth</source>
-        <translation>剪辑受深度遮挡</translation>
+        <translation>片段已被深度遮挡</translation>
     </message>
     <message>
         <source>Clip uses track order</source>
-        <translation>剪辑遵循轨道顺序</translation>
+        <translation>片段按轨道顺序显示</translation>
     </message>
     <message>
         <source>Subtitles converted to text</source>
@@ -3673,7 +3673,7 @@
     <message numerus="yes">
         <source>Created %n text clips</source>
         <translation>
-            <numerusform>已创建 %n 个文本剪辑</numerusform>
+            <numerusform>已创建 %n 个文本片段</numerusform>
         </translation>
     </message>
     <message>
@@ -3686,15 +3686,15 @@
     </message>
     <message>
         <source>Transform layer added</source>
-        <translation>变换图层已添加</translation>
+        <translation>已添加变换图层</translation>
     </message>
     <message>
         <source>Add transform clip</source>
-        <translation>添加变换剪辑</translation>
+        <translation>添加变换片段</translation>
     </message>
     <message>
         <source>Transform clip added</source>
-        <translation>变换剪辑已添加</translation>
+        <translation>已添加变换片段</translation>
     </message>
     <message>
         <source>Add camera</source>
@@ -3702,33 +3702,33 @@
     </message>
     <message>
         <source>Add camera clip</source>
-        <translation>添加摄像机剪辑</translation>
+        <translation>添加摄像机片段</translation>
     </message>
     <message>
         <source>Camera added</source>
-        <translation>摄像机已添加</translation>
+        <translation>已添加摄像机</translation>
     </message>
     <message>
         <source>Camera clip added</source>
-        <translation>摄像机剪辑已添加</translation>
+        <translation>已添加摄像机片段</translation>
     </message>
     <message>
         <source>Transform together</source>
-        <translation>统一变换</translation>
+        <translation>整体变换</translation>
     </message>
     <message>
         <source>Change transform span</source>
-        <translation>更改变换跨度</translation>
+        <translation>更改变换区间</translation>
     </message>
     <message numerus="yes">
         <source>Transform layer now covers %n track(s)</source>
         <translation>
-            <numerusform>变换图层现已涵盖 %n 个轨道</numerusform>
+            <numerusform>变换图层现覆盖 %n 个轨道</numerusform>
         </translation>
     </message>
     <message>
         <source>Transition added</source>
-        <translation>转场已添加</translation>
+        <translation>已添加转场</translation>
     </message>
     <message>
         <source>Remove transition</source>
@@ -3812,11 +3812,11 @@
     </message>
     <message>
         <source>Keyframe hold changed</source>
-        <translation>关键帧保持已更改</translation>
+        <translation>关键帧定格已更改</translation>
     </message>
     <message>
         <source>Keyframe holds</source>
-        <translation>关键帧保持</translation>
+        <translation>关键帧定格</translation>
     </message>
     <message>
         <source>Keyframe interpolates</source>
@@ -3856,7 +3856,7 @@
     </message>
     <message>
         <source>Effect added</source>
-        <translation>效果已添加</translation>
+        <translation>已添加效果</translation>
     </message>
     <message>
         <source>Apply effect template</source>
@@ -3868,7 +3868,7 @@
     </message>
     <message>
         <source>This effect needs a subject cutout — open Extras to install it</source>
-        <translation>此效果需要主体抠图 — 请打开“附加项”进行安装</translation>
+        <translation>此效果需要人物抠图——请打开附加内容进行安装</translation>
     </message>
     <message>
         <source>Remove effect</source>
@@ -3896,11 +3896,11 @@
     </message>
     <message>
         <source>Reorder effect</source>
-        <translation>重新排列效果</translation>
+        <translation>调整效果顺序</translation>
     </message>
     <message>
         <source>Effect reordered</source>
-        <translation>效果已重新排列</translation>
+        <translation>效果顺序已调整</translation>
     </message>
     <message>
         <source>Effect updated</source>
@@ -3919,7 +3919,7 @@
     <message numerus="yes">
         <source>Imported %n face prop(s); %1 skipped: %2</source>
         <translation>
-            <numerusform>已导入 %n 个面部道具；已跳过 %1 个：%2</numerusform>
+            <numerusform>已导入 %n 个面部道具；跳过 %1 个：%2</numerusform>
         </translation>
     </message>
     <message>
@@ -3928,7 +3928,7 @@
     </message>
     <message>
         <source>That style shares its folder with other styles</source>
-        <translation>该样式与其他样式共享文件夹</translation>
+        <translation>该样式与其他样式共用一个文件夹</translation>
     </message>
     <message>
         <source>Could not delete the face prop</source>
@@ -3952,59 +3952,59 @@
     </message>
     <message>
         <source>Add audio effect</source>
-        <translation>添加音频效果</translation>
+        <translation>添加音效</translation>
     </message>
     <message>
         <source>Audio effect added</source>
-        <translation>音频效果已添加</translation>
+        <translation>已添加音效</translation>
     </message>
     <message>
         <source>Remove audio effect</source>
-        <translation>移除音频效果</translation>
+        <translation>移除音效</translation>
     </message>
     <message>
         <source>Audio effect removed</source>
-        <translation>音频效果已移除</translation>
+        <translation>音效已移除</translation>
     </message>
     <message>
         <source>Enable audio effect</source>
-        <translation>启用音频效果</translation>
+        <translation>启用音效</translation>
     </message>
     <message>
         <source>Disable audio effect</source>
-        <translation>禁用音频效果</translation>
+        <translation>禁用音效</translation>
     </message>
     <message>
         <source>Audio effect enabled</source>
-        <translation>音频效果已启用</translation>
+        <translation>音效已启用</translation>
     </message>
     <message>
         <source>Audio effect disabled</source>
-        <translation>音频效果已禁用</translation>
+        <translation>已禁用音效</translation>
     </message>
     <message>
         <source>Reorder audio effect</source>
-        <translation>重新排列音频效果</translation>
+        <translation>调整音效顺序</translation>
     </message>
     <message>
         <source>Audio effect reordered</source>
-        <translation>音频效果已重新排列</translation>
+        <translation>已调整音效顺序</translation>
     </message>
     <message>
         <source>Edit audio effect</source>
-        <translation>编辑音频效果</translation>
+        <translation>编辑音效</translation>
     </message>
     <message>
         <source>Audio effect updated</source>
-        <translation>音频效果已更新</translation>
+        <translation>音效已更新</translation>
     </message>
     <message>
         <source>This stack uses “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>此效果组使用了未安装的“%1” — 将无法显示。请打开“附加项”进行安装。</translation>
+        <translation>此效果堆栈使用了未安装的“%1”，将不会显示。请打开 Extras 安装它。</translation>
     </message>
     <message>
         <source>This stack uses %1 effects that aren’t installed — they won’t show. Open Extras to install them.</source>
-        <translation>此效果组使用了 %1 个未安装的效果 — 将无法显示。请打开“附加项”进行安装。</translation>
+        <translation>此效果堆栈使用了 %1 个未安装的效果，将不会显示。请打开 Extras 安装它们。</translation>
     </message>
     <message>
         <source>Effect copied</source>
@@ -4012,7 +4012,7 @@
     </message>
     <message>
         <source>Audio effect copied</source>
-        <translation>音频效果已复制</translation>
+        <translation>音效已复制</translation>
     </message>
     <message>
         <source>Effects copied</source>
@@ -4020,11 +4020,11 @@
     </message>
     <message>
         <source>This clip has no effects to copy</source>
-        <translation>此剪辑没有可复制的效果</translation>
+        <translation>此片段没有可复制的效果</translation>
     </message>
     <message>
         <source>No effects on the clipboard</source>
-        <translation>剪贴板上没有效果</translation>
+        <translation>剪贴板中没有效果</translation>
     </message>
     <message>
         <source>Paste effects</source>
@@ -4032,7 +4032,7 @@
     </message>
     <message>
         <source>Copy a clip and select target clips first</source>
-        <translation>请先复制一个剪辑并选择目标剪辑</translation>
+        <translation>请先复制片段并选择目标片段</translation>
     </message>
     <message>
         <source>Paste attributes</source>
@@ -4041,16 +4041,16 @@
     <message numerus="yes">
         <source>Pasted attributes onto %n clip(s)</source>
         <translation>
-            <numerusform>已将属性粘贴到 %n 个剪辑</numerusform>
+            <numerusform>已将属性粘贴到 %n 个片段</numerusform>
         </translation>
     </message>
     <message>
         <source>Pasted effects use “%1”, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>粘贴的效果使用了未安装的“%1” — 将无法显示。请打开“附加项”进行安装。</translation>
+        <translation>粘贴的效果使用了未安装的“%1”，将不会显示。请打开 Extras 安装它。</translation>
     </message>
     <message>
         <source>Pasted effects use %1 packs that aren’t installed — they won’t show. Open Extras to install them.</source>
-        <translation>粘贴的效果使用了 %1 个未安装的扩展包 — 将无法显示。请打开“附加项”进行安装。</translation>
+        <translation>粘贴的效果使用了 %1 个未安装的附加包，将不会显示。请打开 Extras 安装它们。</translation>
     </message>
     <message>
         <source>There are no effects to save</source>
@@ -4086,7 +4086,7 @@
     </message>
     <message>
         <source>Only effects you imported can be deleted</source>
-        <translation>只有您导入的效果才能删除</translation>
+        <translation>只能删除自己导入的效果</translation>
     </message>
     <message>
         <source>Could not delete %1</source>
@@ -4162,11 +4162,11 @@
     </message>
     <message>
         <source>Work area in marked</source>
-        <translation>工作区入点已标记</translation>
+        <translation>已标记工作区入点</translation>
     </message>
     <message>
         <source>Work area out marked</source>
-        <translation>工作区出点已标记</translation>
+        <translation>已标记工作区出点</translation>
     </message>
     <message>
         <source>Work area cleared</source>
@@ -4174,31 +4174,31 @@
     </message>
     <message>
         <source>Add bookmark</source>
-        <translation>添加书签</translation>
+        <translation>添加标记</translation>
     </message>
     <message>
         <source>Bookmark added</source>
-        <translation>书签已添加</translation>
+        <translation>标记已添加</translation>
     </message>
     <message>
         <source>Remove bookmark</source>
-        <translation>移除书签</translation>
+        <translation>移除标记</translation>
     </message>
     <message>
         <source>Bookmark removed</source>
-        <translation>书签已移除</translation>
+        <translation>标记已移除</translation>
     </message>
     <message>
         <source>Edit bookmark</source>
-        <translation>编辑书签</translation>
+        <translation>编辑标记</translation>
     </message>
     <message>
         <source>Bookmark updated</source>
-        <translation>书签已更新</translation>
+        <translation>标记已更新</translation>
     </message>
     <message>
         <source>No video at the current time</source>
-        <translation>当前时间无视频</translation>
+        <translation>当前时间没有视频</translation>
     </message>
     <message>
         <source>Couldn’t capture a still frame</source>
@@ -4206,11 +4206,11 @@
     </message>
     <message>
         <source>Capturing freeze frame…</source>
-        <translation>正在捕获静止帧…</translation>
+        <translation>正在捕获定格帧…</translation>
     </message>
     <message>
         <source>Freeze frame added</source>
-        <translation>静止帧已添加</translation>
+        <translation>定格帧已添加</translation>
     </message>
     <message>
         <source>Paste</source>
@@ -4219,7 +4219,7 @@
     <message numerus="yes">
         <source>Pasted %n clips</source>
         <translation>
-            <numerusform>已粘贴 %n 个剪辑</numerusform>
+            <numerusform>已粘贴 %n 个片段</numerusform>
         </translation>
     </message>
     <message>
@@ -4232,23 +4232,23 @@
     </message>
     <message>
         <source>Opening your video…</source>
-        <translation>正在打开视频…</translation>
+        <translation>正在打开你的视频…</translation>
     </message>
     <message>
         <source>Nothing on this device can play that file</source>
-        <translation>此设备上没有任何应用可以播放该文件</translation>
+        <translation>此设备无法播放该文件</translation>
     </message>
     <message>
         <source>Getting your video ready to share…</source>
-        <translation>正在准备分享视频…</translation>
+        <translation>正在准备要分享的视频…</translation>
     </message>
     <message>
         <source>Nothing on this device can share that file</source>
-        <translation>此设备上没有任何应用可以分享该文件</translation>
+        <translation>此设备无法分享该文件</translation>
     </message>
     <message>
         <source>Remove silence</source>
-        <translation>移除静音片段</translation>
+        <translation>移除静音</translation>
     </message>
     <message>
         <source>Add layer</source>
@@ -4264,7 +4264,7 @@
     </message>
     <message>
         <source>Reorder layers</source>
-        <translation>重新排列图层</translation>
+        <translation>调整图层顺序</translation>
     </message>
     <message>
         <source>Edit layer</source>
@@ -4288,11 +4288,11 @@
     </message>
     <message>
         <source>Edit text animation</source>
-        <translation>编辑文本动画</translation>
+        <translation>编辑文字动画</translation>
     </message>
     <message>
         <source>Text animation updated</source>
-        <translation>文本动画已更新</translation>
+        <translation>文字动画已更新</translation>
     </message>
     <message>
         <source>Basic</source>
@@ -4304,19 +4304,19 @@
     </message>
     <message>
         <source>By word</source>
-        <translation>按单词</translation>
+        <translation>按词语</translation>
     </message>
     <message>
         <source>Kinetic</source>
-        <translation>动态</translation>
+        <translation>动感</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation>光影</translation>
+        <translation>轻盈</translation>
     </message>
     <message>
         <source>Colour</source>
-        <translation>颜色</translation>
+        <translation>色彩</translation>
     </message>
     <message>
         <source>Hold</source>
@@ -4328,7 +4328,7 @@
     </message>
     <message>
         <source>Apply text look</source>
-        <translation>应用文本外观</translation>
+        <translation>应用文字外观</translation>
     </message>
     <message>
         <source>Look applied</source>
@@ -4336,7 +4336,7 @@
     </message>
     <message>
         <source>Adjust text look</source>
-        <translation>调整文本外观</translation>
+        <translation>调整文字外观</translation>
     </message>
     <message>
         <source>Look updated</source>
@@ -4349,20 +4349,20 @@
     <message numerus="yes">
         <source>Applied to %n caption clip(s)</source>
         <translation>
-            <numerusform>已应用到 %n 个字幕剪辑</numerusform>
+            <numerusform>已应用到 %n 个字幕片段</numerusform>
         </translation>
     </message>
     <message>
         <source>Red</source>
-        <translation>红</translation>
+        <translation>红色</translation>
     </message>
     <message>
         <source>Green</source>
-        <translation>绿</translation>
+        <translation>绿色</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation>蓝</translation>
+        <translation>蓝色</translation>
     </message>
     <message>
         <source>Alpha</source>
@@ -4370,7 +4370,7 @@
     </message>
     <message>
         <source>Could not unpack the bundle</source>
-        <translation>无法解包文件包</translation>
+        <translation>无法解压缩该资源包</translation>
     </message>
     <message>
         <source>Could not read %1</source>
@@ -4390,7 +4390,7 @@
     </message>
     <message>
         <source>Selection nudged</source>
-        <translation>所选内容已微移</translation>
+        <translation>已微移所选内容</translation>
     </message>
     <message>
         <source>That save location isn’t valid</source>
@@ -4406,17 +4406,17 @@
     </message>
     <message>
         <source>Close gap</source>
-        <translation>消除间隙</translation>
+        <translation>关闭间隙</translation>
     </message>
     <message numerus="yes">
         <source>%n items removed</source>
         <translation>
-            <numerusform>已移除 %n 项</numerusform>
+            <numerusform>已移除 %n 个项目</numerusform>
         </translation>
     </message>
     <message>
         <source>Clips added</source>
-        <translation>剪辑已添加</translation>
+        <translation>片段已添加</translation>
     </message>
     <message>
         <source>Track renamed</source>
@@ -4428,7 +4428,7 @@
     </message>
     <message>
         <source>Clip orientation set to %1°</source>
-        <translation>剪辑方向已设置为 %1°</translation>
+        <translation>片段方向已设为 %1°</translation>
     </message>
     <message>
         <source>Crop canvas</source>
@@ -4462,18 +4462,18 @@
     </message>
     <message>
         <source>Favorites</source>
-        <translation>收藏夹</translation>
+        <translation>收藏</translation>
     </message>
 </context>
 <context>
     <name>AssetFavoriteButton</name>
     <message>
         <source>Remove from favorites</source>
-        <translation>从收藏夹移除</translation>
+        <translation>从收藏中移除</translation>
     </message>
     <message>
         <source>Add to favorites</source>
-        <translation>添加到收藏夹</translation>
+        <translation>添加到收藏</translation>
     </message>
 </context>
 <context>
@@ -4492,25 +4492,25 @@
     </message>
     <message>
         <source>“%1” is %2 long but the source is %3 — it can’t be its proxy.</source>
-        <translation>“%1”的时长为 %2，但源文件时长为 %3 — 无法作为其代理。</translation>
+        <translation>“%1”的时长为 %2，但源文件为 %3，不能作为其代理。</translation>
     </message>
     <message>
         <source>The proxy’s name must contain “%1” and sit in the source’s folder or a subfolder of it.</source>
-        <translation>代理名称必须包含“%1”，且必须位于源文件的文件夹或其子文件夹中。</translation>
+        <translation>代理文件的名称必须包含“%1”，且位于源文件所在文件夹或其子文件夹中。</translation>
     </message>
 </context>
 <context>
     <name>AssetQuickAddButton</name>
     <message>
         <source>Add to timeline</source>
-        <translation>加入进轨道内</translation>
+        <translation>添加到时间线</translation>
     </message>
 </context>
 <context>
     <name>AssetsPanel</name>
     <message>
         <source>Remove this media?</source>
-        <translation>移除此媒体？</translation>
+        <translation>要移除此媒体吗？</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -4567,7 +4567,7 @@
     <message numerus="yes">
         <source>Replaced with “%1”. %n clips were shortened to fit the new file.</source>
         <translation>
-            <numerusform>已替换为“%1”。%n 个剪辑已被缩短以适应新文件。</numerusform>
+            <numerusform>已替换为“%1”。%n 个片段已缩短以适配新文件。</numerusform>
         </translation>
     </message>
     <message>
@@ -4576,11 +4576,11 @@
     </message>
     <message>
         <source>“%1” is now in an edit-friendly format.</source>
-        <translation>“%1”现已转换为适合编辑的格式。</translation>
+        <translation>“%1”现已转换为便于剪辑的格式。</translation>
     </message>
     <message>
         <source>Saved “%1”. Drag it onto the timeline.</source>
-        <translation>已保存“%1”。可将其拖动到时间线上。</translation>
+        <translation>已保存“%1”。可将其拖到时间线上。</translation>
     </message>
     <message>
         <source>Import Media</source>
@@ -4592,11 +4592,11 @@
     </message>
     <message>
         <source>“%1” is used by 1 clip on the timeline. Removing this media will also remove that clip and any transitions connected to it. The file on disk is not deleted.</source>
-        <translation>“%1”正在时间线上的 1 个剪辑中使用。移除此媒体还将移除该剪辑以及与其关联的所有转场。磁盘上的文件不会被删除。</translation>
+        <translation>时间线上有 1 个片段正在使用“%1”。移除此媒体将同时移除该片段及其连接的所有转场。磁盘上的文件不会被删除。</translation>
     </message>
     <message>
         <source>“%1” is used by %2 clips on the timeline. Removing this media will also remove those clips and any transitions connected to them. The files on disk are not deleted.</source>
-        <translation>“%1”正在时间线上的 %2 个剪辑中使用。移除此媒体还将移除这些剪辑以及与其关联的所有转场。磁盘上的文件不会被删除。</translation>
+        <translation>时间线上有 %2 个片段正在使用“%1”。移除此媒体将同时移除这些片段及其连接的所有转场。磁盘上的文件不会被删除。</translation>
     </message>
     <message>
         <source>%1 file (*.%2)</source>
@@ -4632,7 +4632,7 @@
     </message>
     <message>
         <source>Link proxies by pattern?</source>
-        <translation>按命名模式链接代理？</translation>
+        <translation>按名称模式链接代理？</translation>
     </message>
     <message>
         <source>Link</source>
@@ -4641,18 +4641,18 @@
     <message numerus="yes">
         <source>“%1” matches this clip and %n other clips in the project. Drift will link them all, and link future imports whose proxy follows the same name.</source>
         <translation>
-            <numerusform>“%1”与此剪辑以及项目中的 %n 个其他剪辑匹配。Drift 将链接所有这些剪辑，并自动链接未来遵循相同名称模式导入的代理。</numerusform>
+            <numerusform>“%1”与此片段及项目中的另外 %n 个片段匹配。Drift 会将它们全部链接，今后导入时代理符合同一命名的片段也会自动链接。</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Linked this clip and %n other clips.</source>
         <translation>
-            <numerusform>已链接此剪辑和 %n 个其他剪辑。</numerusform>
+            <numerusform>已链接此片段及另外 %n 个片段。</numerusform>
         </translation>
     </message>
     <message>
         <source>Couldn’t save files next to the media</source>
-        <translation>无法在媒体旁保存文件</translation>
+        <translation>无法保存到媒体所在文件夹</translation>
     </message>
     <message>
         <source>OK</source>
@@ -4660,28 +4660,28 @@
     </message>
     <message>
         <source>Drift can’t write to the folders listed below, because of their permissions or because they are on a read-only network share. The proxies or reversed clips were saved to Drift’s cache instead.</source>
-        <translation>由于权限问题或位于只读网络共享上，Drift 无法写入下列文件夹。代理或倒放剪辑已改存至 Drift 的缓存中。</translation>
+        <translation>由于权限限制或这些文件夹位于只读的网络共享上，Drift 无法写入下列文件夹。代理和倒放片段已改存至 Drift 的缓存。</translation>
     </message>
     <message>
         <source>Linked the proxy. Future imports named like “%1” will link automatically.</source>
-        <translation>已链接代理。未来命名类似于“%1”的导入项将自动链接。</translation>
+        <translation>已链接代理。今后导入名称类似“%1”的文件时将自动链接。</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders — as many as one folder import takes. Import the remaining subfolders separately.</source>
         <translation>
-            <numerusform>已将 %n 个文件导入到 %1 个文件夹中（单次文件夹导入的最大容量）。请分别导入剩余的子文件夹。</numerusform>
+            <numerusform>已将 %n 个文件导入 %1 个文件夹，这已是一次文件夹导入的上限。请分别导入其余子文件夹。</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders. %2 files were skipped — Drift does not recognize their format. Drag them onto the bin to try anyway.</source>
         <translation>
-            <numerusform>已将 %n 个文件导入到 %1 个文件夹中。已跳过 %2 个文件 — Drift 无法识别其格式。仍可尝试将其拖入素材箱。</numerusform>
+            <numerusform>已将 %n 个文件导入 %1 个文件夹。有 %2 个文件被跳过——Drift 无法识别其格式。可将它们拖到素材箱强制尝试导入。</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files into %1 folders.</source>
         <translation>
-            <numerusform>已将 %n 个文件导入到 %1 个文件夹中。</numerusform>
+            <numerusform>已将 %n 个文件导入 %1 个文件夹。</numerusform>
         </translation>
     </message>
     <message>
@@ -4694,11 +4694,11 @@
     </message>
     <message>
         <source>Collect Media to Folder</source>
-        <translation>打包媒体到文件夹</translation>
+        <translation>收集媒体到文件夹</translation>
     </message>
     <message>
         <source>Market</source>
-        <translation>素材集市</translation>
+        <translation>市场</translation>
     </message>
     <message>
         <source>Text</source>
@@ -4767,17 +4767,17 @@
     <message numerus="yes">
         <source>%n items</source>
         <translation>
-            <numerusform>%n 项</numerusform>
+            <numerusform>%n 个项目</numerusform>
         </translation>
     </message>
     <message>
         <source>Remove these items?</source>
-        <translation>移除这些项目？</translation>
+        <translation>要移除这些项目吗？</translation>
     </message>
     <message numerus="yes">
         <source>Removed %n items.</source>
         <translation>
-            <numerusform>已移除 %n 项。</numerusform>
+            <numerusform>已移除 %n 个项目。</numerusform>
         </translation>
     </message>
 </context>
@@ -4785,7 +4785,7 @@
     <name>AssetsPanelDropOverlay</name>
     <message>
         <source>Drop to import</source>
-        <translation>拖放以导入</translation>
+        <translation>拖放到此处导入</translation>
     </message>
     <message>
         <source>Video, audio and image files</source>
@@ -4800,7 +4800,7 @@
     </message>
     <message>
         <source>Create a new folder here</source>
-        <translation>在此处创建新文件夹</translation>
+        <translation>在此处新建文件夹</translation>
     </message>
 </context>
 <context>
@@ -4815,7 +4815,7 @@
     </message>
     <message>
         <source>Collect Media to Folder…</source>
-        <translation>打包媒体到文件夹…</translation>
+        <translation>收集媒体到文件夹…</translation>
     </message>
 </context>
 <context>
@@ -4848,43 +4848,43 @@
     <name>AudioEffectBrowser</name>
     <message>
         <source>No audio effects</source>
-        <translation>无音频效果</translation>
+        <translation>暂无音效</translation>
     </message>
     <message>
         <source>Install the Audio Effects pack from Extras to browse presets here.</source>
-        <translation>从“附加项”中安装音频效果包以在此浏览预设。</translation>
+        <translation>请从 Extras 安装音效附加包，即可在此浏览预设。</translation>
     </message>
     <message>
         <source>Install audio effects</source>
-        <translation>安装音频效果</translation>
+        <translation>安装音效</translation>
     </message>
     <message>
         <source>Search audio effects</source>
-        <translation>搜索音频效果</translation>
+        <translation>搜索音效</translation>
     </message>
     <message>
         <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation>安装自定义音频效果，或安装在 Drift Forge 中制作的 .driftfx 文件效果</translation>
+        <translation>安装自定义音效，或从 Drift Forge 制作的 .driftfx 文件中安装效果</translation>
     </message>
     <message>
         <source>My Audio Effects</source>
-        <translation>我的音频效果</translation>
+        <translation>我的音效</translation>
     </message>
     <message>
         <source>No audio effects match “%1”.</source>
-        <translation>没有与“%1”匹配的音频效果。</translation>
+        <translation>没有匹配“%1”的音效。</translation>
     </message>
     <message>
         <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>此处暂无内容。导入 .driftfx 文件以添加您自己的效果。</translation>
+        <translation>这里还是空的。导入 .driftfx 文件即可添加自己的音效。</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
-        <translation>暂无收藏项。将预设标星即可保存在此处。</translation>
+        <translation>暂无收藏。收藏预设即可保存在这里。</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
-        <translation>此类别中暂无内容。</translation>
+        <translation>此分类下没有内容。</translation>
     </message>
     <message>
         <source>%1 is empty</source>
@@ -4892,7 +4892,7 @@
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>导入在 Drift Forge 中制作的 .driftfx 文件以添加您自己的效果。</translation>
+        <translation>导入用 Drift Forge 制作的 .driftfx 文件即可添加自己的音效。</translation>
     </message>
     <message>
         <source>Import</source>
@@ -4907,7 +4907,7 @@
     </message>
     <message>
         <source>Transmission</source>
-        <translation>广播/电台</translation>
+        <translation>通讯</translation>
     </message>
     <message>
         <source>Texture</source>
@@ -4915,7 +4915,7 @@
     </message>
     <message>
         <source>Space</source>
-        <translation>空间/混响</translation>
+        <translation>空间</translation>
     </message>
     <message>
         <source>Other</source>
@@ -4926,54 +4926,54 @@
     <name>AudioEffectHeader</name>
     <message>
         <source>%1 (not installed)</source>
-        <translation>%1 (未安装)</translation>
+        <translation>%1（未安装）</translation>
     </message>
     <message>
         <source>Move audio effect up</source>
-        <translation>向上移动音频效果</translation>
+        <translation>上移音效</translation>
     </message>
     <message>
         <source>Move audio effect down</source>
-        <translation>向下移动音频效果</translation>
+        <translation>下移音效</translation>
     </message>
     <message>
         <source>Disable audio effect</source>
-        <translation>禁用音频效果</translation>
+        <translation>禁用音效</translation>
     </message>
     <message>
         <source>Enable audio effect</source>
-        <translation>启用音频效果</translation>
+        <translation>启用音效</translation>
     </message>
     <message>
         <source>Copy this audio effect</source>
-        <translation>复制此音频效果</translation>
+        <translation>复制此音效</translation>
     </message>
     <message>
         <source>Remove audio effect</source>
-        <translation>移除音频效果</translation>
+        <translation>移除音效</translation>
     </message>
 </context>
 <context>
     <name>AudioEffectPresetCard</name>
     <message>
         <source>%1 — click to apply to the selection, or drag onto a clip</source>
-        <translation>%1 — 点击应用到所选内容，或拖放到剪辑上</translation>
+        <translation>%1——点击可应用到所选内容，或拖到片段上</translation>
     </message>
     <message>
         <source>%1 — drag onto a clip in the timeline</source>
-        <translation>%1 — 拖放到时间线上的剪辑</translation>
+        <translation>%1 — 拖到时间线中的片段上</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation>应用到所选剪辑</translation>
+        <translation>应用到所选片段</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
-        <translation>从收藏夹移除</translation>
+        <translation>从收藏中移除</translation>
     </message>
     <message>
         <source>Add to favorites</source>
-        <translation>添加到收藏夹</translation>
+        <translation>添加到收藏</translation>
     </message>
 </context>
 <context>
@@ -4984,11 +4984,11 @@
     </message>
     <message>
         <source>Audio effects apply to clips with an audio track.</source>
-        <translation>音频效果适用于包含音频轨道的剪辑。</translation>
+        <translation>音频效果仅适用于含音轨的片段。</translation>
     </message>
     <message>
         <source>No audio effects installed. Get the Audio Effects pack from Extras.</source>
-        <translation>未安装音频效果。请从“附加项”中获取音频效果包。</translation>
+        <translation>尚未安装音频效果。请从“附加内容”获取音频效果包。</translation>
     </message>
     <message>
         <source>Install audio effects</source>
@@ -4996,11 +4996,11 @@
     </message>
     <message>
         <source>No audio effects yet</source>
-        <translation>暂无音频效果</translation>
+        <translation>还没有音频效果</translation>
     </message>
     <message>
         <source>Drag a preset from Audio FX onto this clip, or click a preset card.</source>
-        <translation>从“音效”中将预设拖到此剪辑上，或点击预设卡片。</translation>
+        <translation>将 Audio FX 中的预设拖到此片段上，或点击预设卡片。</translation>
     </message>
     <message>
         <source>Browse audio effects</source>
@@ -5008,7 +5008,7 @@
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
-        <translation>移动到某个时间点，设置数值，然后点击菱形图标添加关键帧。开启自动关键帧后，拖动滑块也会自动创建关键帧。</translation>
+        <translation>移动到某个时间点并设置数值，然后点击菱形按钮添加关键帧。开启自动关键帧后，拖动滑块也会自动创建关键帧。</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
@@ -5031,27 +5031,27 @@
     </message>
     <message>
         <source>%1 words per caption</source>
-        <translation>%1 个词/字幕</translation>
+        <translation>每条字幕 %1 个词</translation>
     </message>
     <message>
         <source>Pan</source>
-        <translation>声相</translation>
+        <translation>声像</translation>
     </message>
     <message>
         <source>C</source>
-        <translation>中</translation>
+        <translation>C</translation>
     </message>
     <message>
         <source>L %1</source>
-        <translation>左 %1</translation>
+        <translation>L %1</translation>
     </message>
     <message>
         <source>R %1</source>
-        <translation>右 %1</translation>
+        <translation>R %1</translation>
     </message>
     <message>
         <source>Pan changed</source>
-        <translation>声相已更改</translation>
+        <translation>声像已更改</translation>
     </message>
     <message>
         <source>Centre</source>
@@ -5059,11 +5059,11 @@
     </message>
     <message>
         <source>Audio track</source>
-        <translation>音频轨道</translation>
+        <translation>音轨</translation>
     </message>
     <message>
         <source>Extract all audio tracks</source>
-        <translation>提取所有音频轨道</translation>
+        <translation>提取所有音轨</translation>
     </message>
     <message>
         <source>Noise</source>
@@ -5071,11 +5071,11 @@
     </message>
     <message>
         <source>Remove noise…</source>
-        <translation>降噪…</translation>
+        <translation>移除噪声…</translation>
     </message>
     <message>
         <source>Download noise removal (about 9 MB)</source>
-        <translation>下载降噪模型（约 9 MB）</translation>
+        <translation>下载降噪功能（约 9 MB）</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
@@ -5087,7 +5087,7 @@
     </message>
     <message>
         <source>Shorter captions are timed by splitting each phrase evenly, so they can drift slightly out of sync with the speech.</source>
-        <translation>短字幕是通过均匀分割每个短语来计时的，因此可能与实际语音存在轻微不同步。</translation>
+        <translation>较短的字幕是通过均分每个短语的时长来定时的，因此可能与语音略有不同步。</translation>
     </message>
     <message>
         <source>Creating captions… %1%</source>
@@ -5099,11 +5099,11 @@
     </message>
     <message>
         <source>Several selected clips become one caption clip</source>
-        <translation>多个选中的剪辑将合并为一个字幕剪辑</translation>
+        <translation>多个选中的片段将合并为一个字幕片段</translation>
     </message>
     <message>
         <source>Download speech recognition (about 670 MB)</source>
-        <translation>下载语音识别模型（约 670 MB）</translation>
+        <translation>下载语音识别（约 670 MB）</translation>
     </message>
 </context>
 <context>
@@ -5118,15 +5118,15 @@
     </message>
     <message>
         <source>Loudness: %1 LUFS, true peak %2 dBTP</source>
-        <translation>响度：%1 LUFS，真实峰值 %2 dBTP</translation>
+        <translation>响度：%1 LUFS，真峰值 %2 dBTP</translation>
     </message>
     <message>
         <source>Normalized to %1 LUFS, but peaks clip</source>
-        <translation>已标准化至 %1 LUFS，但峰值出现削波</translation>
+        <translation>已归一化到 %1 LUFS，但峰值削波</translation>
     </message>
     <message>
         <source>Normalized to %1 LUFS</source>
-        <translation>已标准化至 %1 LUFS</translation>
+        <translation>已归一化到 %1 LUFS</translation>
     </message>
     <message>
         <source>Audio Mixer</source>
@@ -5142,15 +5142,15 @@
     </message>
     <message>
         <source>Measure loudness of the selected clip</source>
-        <translation>测量所选剪辑的响度</translation>
+        <translation>测量所选片段的响度</translation>
     </message>
     <message>
         <source>Select a clip first</source>
-        <translation>请先选择一个剪辑</translation>
+        <translation>请先选择一个片段</translation>
     </message>
     <message>
         <source>Normalize to</source>
-        <translation>标准化至</translation>
+        <translation>归一化到</translation>
     </message>
     <message>
         <source>-14 LUFS</source>
@@ -5166,7 +5166,7 @@
     </message>
     <message>
         <source>Normalize</source>
-        <translation>标准化</translation>
+        <translation>归一化</translation>
     </message>
     <message>
         <source>Set the selected clip&apos;s volume to the chosen loudness</source>
@@ -5217,38 +5217,38 @@
     </message>
     <message>
         <source>Add audio track</source>
-        <translation>添加音频轨道</translation>
+        <translation>添加音轨</translation>
     </message>
     <message>
         <source>Drag to resize — double-click to fit</source>
-        <translation>拖动调整大小 — 双击以自适应</translation>
+        <translation>拖动调整大小 — 双击适应</translation>
     </message>
     <message>
         <source>Master</source>
-        <translation>总输出</translation>
+        <translation>主控</translation>
     </message>
     <message>
         <source>C</source>
-        <translation>中</translation>
+        <translation>C</translation>
     </message>
     <message>
         <source>L%1</source>
-        <translation>左%1</translation>
+        <translation>L%1</translation>
     </message>
     <message>
         <source>R%1</source>
-        <translation>右%1</translation>
+        <translation>R%1</translation>
     </message>
 </context>
 <context>
     <name>AudioOutputChannel</name>
     <message>
         <source>The audio device could not be opened. Another program may be using it exclusively.</source>
-        <translation>无法打开音频设备。可能有其他程序正在独占使用。</translation>
+        <translation>无法打开音频设备。可能有其他程序正在以独占方式使用它。</translation>
     </message>
     <message>
         <source>The audio device stopped responding.</source>
-        <translation>音频设备停止响应。</translation>
+        <translation>音频设备已停止响应。</translation>
     </message>
     <message>
         <source>The audio device was disconnected.</source>
@@ -5260,7 +5260,7 @@
     </message>
     <message>
         <source>The audio device does not support playback of this project.</source>
-        <translation>音频设备不支持此项目的播放。</translation>
+        <translation>音频设备不支持播放此项目。</translation>
     </message>
 </context>
 <context>
@@ -5310,7 +5310,7 @@
     </message>
     <message>
         <source>How this clip blends with the layers below</source>
-        <translation>此剪辑与下方图层的混合方式</translation>
+        <translation>此片段如何与下方图层混合</translation>
     </message>
     <message>
         <source>Reset to Normal</source>
@@ -5321,11 +5321,11 @@
     <name>CameraInspector</name>
     <message>
         <source>Pan X</source>
-        <translation>水平平移 X</translation>
+        <translation>平移 X</translation>
     </message>
     <message>
         <source>Pan Y</source>
-        <translation>垂直平移 Y</translation>
+        <translation>平移 Y</translation>
     </message>
     <message>
         <source>Dolly</source>
@@ -5349,11 +5349,11 @@
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
-        <translation>选择摄像机剪辑以构图镜头。</translation>
+        <translation>选择一个摄影机片段以调整取景。</translation>
     </message>
     <message>
         <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
-        <translation>在剪辑持续期间，时间线上的所有内容都通过此摄像机呈现。静止的摄像机与无摄像机效果完全相同，因此以下数值均相对于正常视图的偏移量。</translation>
+        <translation>在该片段持续期间，时间线上的所有内容都通过这台摄影机观看。摄影机处于静止状态时与没有摄影机完全相同，因此以下数值都是相对正常视图的偏移量。</translation>
     </message>
     <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
@@ -5361,11 +5361,11 @@
     </message>
     <message>
         <source>Reset camera position</source>
-        <translation>重置摄像机位置</translation>
+        <translation>重置摄影机位置</translation>
     </message>
     <message>
         <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
-        <translation>恢复初始状态：无平移、推拉或转动，正对画布构图。保留当前镜头设置。</translation>
+        <translation>回到静止状态：无平移、推拉或转动，正对画布取景。焦距保持不变。</translation>
     </message>
 </context>
 <context>
@@ -5394,23 +5394,23 @@
     <name>CollectMediaDialog</name>
     <message>
         <source>Collecting media</source>
-        <translation>正在打包媒体</translation>
+        <translation>正在收集媒体</translation>
     </message>
     <message>
         <source>Collect media to folder</source>
-        <translation>打包媒体到文件夹</translation>
+        <translation>收集媒体到文件夹</translation>
     </message>
     <message>
         <source>Gathering your media into one folder.</source>
-        <translation>正在将您的媒体收集到一个文件夹中。</translation>
+        <translation>正在将媒体收集到一个文件夹中。</translation>
     </message>
     <message>
         <source>Every file this project uses goes into Video, Audio, Images, Derived and Other folders inside “%1”, and the project is relinked to them.</source>
-        <translation>此项目使用的每个文件都将放入“%1”内的“Video”、“Audio”、“Images”、“Derived”和“Other”文件夹中，并且项目将重新链接至这些文件。</translation>
+        <translation>此项目使用的每个文件都会放入“%1”内的 Video、Audio、Images、Derived 和 Other 文件夹，项目会重新链接到这些文件。</translation>
     </message>
     <message>
         <source>Copy leaves the originals where they are. Move deletes them once everything has landed, and clears undo history.</source>
-        <translation>“复制”将保留原文件在原处。“移动”会在所有文件移动完成后删除原文件，并清除撤消历史。</translation>
+        <translation>复制会保留原文件的位置。移动会在全部完成后删除原文件，并清除撤销历史。</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -5477,20 +5477,20 @@
     </message>
     <message>
         <source>Grade this clip before applying it to others</source>
-        <translation>在将调色应用到其他剪辑前，请先对此剪辑进行调色</translation>
+        <translation>先调色此片段，再应用到其他片段</translation>
     </message>
     <message>
         <source>No other clips to apply the grade to</source>
-        <translation>没有其他可应用调色的剪辑</translation>
+        <translation>没有其他片段可应用调色</translation>
     </message>
     <message>
         <source>Apply grade to all clips</source>
-        <translation>将调色应用到所有剪辑</translation>
+        <translation>将调色应用到所有片段</translation>
     </message>
     <message numerus="yes">
         <source>Grade applied to %n clip(s)</source>
         <translation>
-            <numerusform>已将调色应用到 %n 个剪辑</numerusform>
+            <numerusform>调色已应用到 %n 个片段</numerusform>
         </translation>
     </message>
 </context>
@@ -5498,11 +5498,11 @@
     <name>ColorEyedropper</name>
     <message>
         <source>Drag to a colour and lift to pick it</source>
-        <translation>拖动到某种颜色并释放以吸取</translation>
+        <translation>拖到颜色处松开即可取色</translation>
     </message>
     <message>
         <source>Click a colour to pick it. Esc cancels.</source>
-        <translation>点击某种颜色以吸取。按 Esc 取消。</translation>
+        <translation>点击颜色进行取色。按 Esc 取消。</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -5525,7 +5525,7 @@
     </message>
     <message>
         <source>Finishing</source>
-        <translation>效果处理</translation>
+        <translation>精修</translation>
     </message>
     <message>
         <source>HSL</source>
@@ -5577,31 +5577,31 @@
     </message>
     <message>
         <source>Red</source>
-        <translation>红</translation>
+        <translation>红色</translation>
     </message>
     <message>
         <source>Orange</source>
-        <translation>橙</translation>
+        <translation>橙色</translation>
     </message>
     <message>
         <source>Yellow</source>
-        <translation>黄</translation>
+        <translation>黄色</translation>
     </message>
     <message>
         <source>Green</source>
-        <translation>绿</translation>
+        <translation>绿色</translation>
     </message>
     <message>
         <source>Aqua</source>
-        <translation>青</translation>
+        <translation>青色</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation>蓝</translation>
+        <translation>蓝色</translation>
     </message>
     <message>
         <source>Purple</source>
-        <translation>紫</translation>
+        <translation>紫色</translation>
     </message>
     <message>
         <source>Magenta</source>
@@ -5613,7 +5613,7 @@
     </message>
     <message>
         <source>Luminance</source>
-        <translation>亮度</translation>
+        <translation>明度</translation>
     </message>
     <message>
         <source>Film Grain</source>
@@ -5621,7 +5621,7 @@
     </message>
     <message>
         <source>Glow</source>
-        <translation>发光</translation>
+        <translation>辉光</translation>
     </message>
     <message>
         <source>Chromatic Aberration</source>
@@ -5641,7 +5641,7 @@
     </message>
     <message>
         <source>Missing look</source>
-        <translation>外观缺失</translation>
+        <translation>缺少外观</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -5649,7 +5649,7 @@
     </message>
     <message>
         <source>No clip selected</source>
-        <translation>未选择剪辑</translation>
+        <translation>未选择片段</translation>
     </message>
     <message>
         <source>Compare</source>
@@ -5657,19 +5657,19 @@
     </message>
     <message>
         <source>Click to toggle the original. Hold to see it while pressed ( key)</source>
-        <translation>点击切换原画。按住可查看原画（按键）</translation>
+        <translation>点击切换原始画面，按住可临时查看（按住键期间）</translation>
     </message>
     <message>
         <source>Copy this grade to every video, image and other visual clip on the timeline</source>
-        <translation>将此调色复制到时间线上的每个视频、图像及其他视觉剪辑</translation>
+        <translation>将此调色复制到时间线上的每个视频、图片及其他视觉片段</translation>
     </message>
     <message>
         <source>This grade already applies to the whole timeline. Select a clip to copy its grade to the others.</source>
-        <translation>此调色已应用于整个时间线。选择一个剪辑可将其调色复制到其他剪辑。</translation>
+        <translation>此调色已应用于整个时间线。请选择一个片段，将其调色复制到其他片段。</translation>
     </message>
     <message>
         <source>Apply to all…</source>
-        <translation>应用到所有…</translation>
+        <translation>应用到全部…</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -5681,7 +5681,7 @@
     </message>
     <message>
         <source>Reset this tab</source>
-        <translation>重置此选项卡</translation>
+        <translation>重置此标签页</translation>
     </message>
     <message>
         <source>Editing &quot;%1&quot; only. Use Apply to all to copy its grade to other clips.</source>
@@ -5697,15 +5697,15 @@
     </message>
     <message>
         <source>Timeline grade also applies.</source>
-        <translation>时间线调色也会生效。</translation>
+        <translation>时间线调色同样生效。</translation>
     </message>
     <message>
         <source>Select it</source>
-        <translation>选择它</translation>
+        <translation>选中它</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation>光影</translation>
+        <translation>亮度</translation>
     </message>
     <message>
         <source>Adjust %1</source>
@@ -5713,7 +5713,7 @@
     </message>
     <message>
         <source>Color</source>
-        <translation>色彩</translation>
+        <translation>颜色</translation>
     </message>
     <message>
         <source>Look</source>
@@ -5741,19 +5741,19 @@
     </message>
     <message>
         <source>Select a clip to color grade it</source>
-        <translation>选择一个剪辑以进行调色</translation>
+        <translation>选择一个片段进行调色</translation>
     </message>
     <message>
         <source>Or grade the whole timeline at once.</source>
-        <translation>或一次性对整个时间线调色。</translation>
+        <translation>也可一次调色整个时间线。</translation>
     </message>
     <message>
         <source>Grade whole timeline</source>
-        <translation>对整个时间线调色</translation>
+        <translation>调色整个时间线</translation>
     </message>
     <message>
         <source>Apply to all clips</source>
-        <translation>应用到所有剪辑</translation>
+        <translation>应用到所有片段</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -5762,12 +5762,12 @@
     <message numerus="yes">
         <source>Applied to %n clip(s)</source>
         <translation>
-            <numerusform>已应用到 %n 个剪辑</numerusform>
+            <numerusform>已应用到 %n 个片段</numerusform>
         </translation>
     </message>
     <message>
         <source>Include finishing effects</source>
-        <translation>包含效果处理</translation>
+        <translation>包含精修效果</translation>
     </message>
 </context>
 <context>
@@ -5785,7 +5785,7 @@
     </message>
     <message>
         <source>Enter a color like #FF0000</source>
-        <translation>输入形如 #FF0000 的颜色</translation>
+        <translation>输入颜色值，如 #FF0000</translation>
     </message>
     <message>
         <source>Select Color</source>
@@ -5796,7 +5796,7 @@
     <name>ColorWheel</name>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
-        <translation>已设置动画。编辑将生成关键帧（需开启自动关键帧）。</translation>
+        <translation>已启用动画。调整时会设置关键帧（需开启自动关键帧）。</translation>
     </message>
     <message>
         <source>Reset %1</source>
@@ -5815,7 +5815,7 @@
     </message>
     <message>
         <source>Recentre and reset zoom</source>
-        <translation>重新居中并重置缩放</translation>
+        <translation>居中并重置缩放</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -5834,7 +5834,7 @@
     <name>CropOverlayHint</name>
     <message>
         <source>Drag the edges to reframe</source>
-        <translation>拖动边缘以重新构图</translation>
+        <translation>拖动边缘重新构图</translation>
     </message>
     <message>
         <source>Ctrl + scroll to zoom</source>
@@ -5853,15 +5853,15 @@
     </message>
     <message>
         <source>Sat</source>
-        <translation>饱和度</translation>
+        <translation>饱和</translation>
     </message>
     <message>
         <source>Lum</source>
-        <translation>亮度</translation>
+        <translation>明度</translation>
     </message>
     <message>
         <source>Master</source>
-        <translation>主通道</translation>
+        <translation>主</translation>
     </message>
     <message>
         <source>Reset channel</source>
@@ -5880,15 +5880,15 @@
     </message>
     <message>
         <source>Custom transition curve applied</source>
-        <translation>自定义转场曲线已应用</translation>
+        <translation>已应用自定义转场曲线</translation>
     </message>
     <message>
         <source>That clip moved — open Custom fade again</source>
-        <translation>该剪辑已移动 — 请重新打开自定义淡入淡出</translation>
+        <translation>该片段已移动 — 请重新打开自定义淡入淡出</translation>
     </message>
     <message>
         <source>Custom fade applied</source>
-        <translation>自定义淡入淡出已应用</translation>
+        <translation>已应用自定义淡入淡出</translation>
     </message>
 </context>
 <context>
@@ -5931,11 +5931,11 @@
     </message>
     <message>
         <source>Need help? Copy the report above when you file an issue.</source>
-        <translation>需要帮助？提交 Issue 时请复制上方的报告。</translation>
+        <translation>需要帮助？提交问题时请附上上面的报告。</translation>
     </message>
     <message>
         <source>Report a bug</source>
-        <translation>报告缺陷</translation>
+        <translation>报告错误</translation>
     </message>
     <message>
         <source>Documentation</source>
@@ -5943,7 +5943,7 @@
     </message>
     <message>
         <source>Questions and support on Discord</source>
-        <translation>在 Discord 上咨询与获取支持</translation>
+        <translation>在 Discord 提问与获取支持</translation>
     </message>
 </context>
 <context>
@@ -5954,23 +5954,23 @@
     </message>
     <message>
         <source>Delivered well above displayed means frames are being produced that the display never shows — a cadence problem rather than a slow machine.</source>
-        <translation>“交付帧数”远高于“显示帧数”意味着生成的帧从未被显示 — 这是显示节奏问题，而非机器性能不足。</translation>
+        <translation>“送达远高于显示”表示生成的帧从未被屏幕显示出来——这是节奏问题，而不是机器性能不足。</translation>
     </message>
     <message>
         <source>Show live stats on the preview</source>
-        <translation>在预览上显示实时统计数据</translation>
+        <translation>在预览上显示实时统计</translation>
     </message>
     <message>
         <source>Stays on after this dialog closes, so you can watch the numbers while the timeline plays.</source>
-        <translation>此对话框关闭后仍保持开启，以便在时间线播放时观察数值。</translation>
+        <translation>此对话框关闭后仍保持开启，可在时间线播放时查看这些数字。</translation>
     </message>
     <message>
         <source>Where the time goes</source>
-        <translation>耗时分析</translation>
+        <translation>时间都花在哪里</translation>
     </message>
     <message>
         <source>Decodes a fixed 1080p60 clip, and the first clip on the timeline, through each stage of the preview. Takes a few seconds.</source>
-        <translation>对固定的 1080p60 剪辑以及时间线上的第一个剪辑在预览各阶段进行解码测试。耗时几秒钟。</translation>
+        <translation>将固定的 1080p60 片段和时间线上的第一个片段通过预览的每个阶段进行解码测试。需要几秒钟。</translation>
     </message>
     <message>
         <source>Measuring…</source>
@@ -5982,11 +5982,11 @@
     </message>
     <message>
         <source>Reference clip (1080p60)</source>
-        <translation>参考剪辑 (1080p60)</translation>
+        <translation>参考片段（1080p60）</translation>
     </message>
     <message>
         <source>Timeline clip</source>
-        <translation>时间线剪辑</translation>
+        <translation>时间线片段</translation>
     </message>
     <message>
         <source>Source</source>
@@ -5998,11 +5998,11 @@
     </message>
     <message>
         <source> (hardware)</source>
-        <translation> (硬件)</translation>
+        <translation>（硬件）</translation>
     </message>
     <message>
         <source> (software)</source>
-        <translation> (软件)</translation>
+        <translation>（软件）</translation>
     </message>
     <message>
         <source>Preview upload</source>
@@ -6014,27 +6014,27 @@
     </message>
     <message>
         <source>Readback to CPU costs</source>
-        <translation>读回 CPU 耗时</translation>
+        <translation>回读至 CPU 的开销</translation>
     </message>
     <message>
         <source>Compositing costs</source>
-        <translation>合成耗时</translation>
+        <translation>合成开销</translation>
     </message>
     <message>
         <source>Total per frame</source>
-        <translation>每帧总耗时</translation>
+        <translation>每帧总计</translation>
     </message>
     <message>
         <source>Budget at this frame rate</source>
-        <translation>此帧率下的耗时预算</translation>
+        <translation>此帧率下的预算</translation>
     </message>
     <message>
         <source>Findings</source>
-        <translation>分析结论</translation>
+        <translation>检测结果</translation>
     </message>
     <message>
         <source>Nothing stood out. Turn on the live stats above, play the timeline for a few seconds, then reopen this.</source>
-        <translation>未发现明显异常。请开启上方的实时统计，播放时间线数秒后重新打开此处。</translation>
+        <translation>未发现异常。开启上方的实时统计，播放时间线几秒钟，然后重新打开此页。</translation>
     </message>
 </context>
 <context>
@@ -6077,11 +6077,11 @@
     </message>
     <message>
         <source>Checks</source>
-        <translation>检查项</translation>
+        <translation>检查</translation>
     </message>
     <message>
         <source>Open Add-ons</source>
-        <translation>打开附加组件</translation>
+        <translation>打开附加包</translation>
     </message>
     <message>
         <source>System</source>
@@ -6100,11 +6100,11 @@
     </message>
     <message>
         <source>Removing noise (left)…</source>
-        <translation>正在降噪（左声道）…</translation>
+        <translation>正在去除噪声（左声道）…</translation>
     </message>
     <message>
         <source>Removing noise (right)…</source>
-        <translation>正在降噪（右声道）…</translation>
+        <translation>正在去除噪声（右声道）…</translation>
     </message>
     <message>
         <source>Writing audio…</source>
@@ -6112,15 +6112,15 @@
     </message>
     <message>
         <source>Noise removal already in progress</source>
-        <translation>降噪处理已在进行中</translation>
+        <translation>降噪已在进行中</translation>
     </message>
     <message>
         <source>Select a video or audio clip</source>
-        <translation>选择视频或音频剪辑</translation>
+        <translation>请选择视频或音频片段</translation>
     </message>
     <message>
         <source>Clip has no audio</source>
-        <translation>剪辑没有音频</translation>
+        <translation>片段没有音频</translation>
     </message>
     <message>
         <source>Starting…</source>
@@ -6136,7 +6136,7 @@
     </message>
     <message>
         <source>Removing noise…</source>
-        <translation>正在降噪…</translation>
+        <translation>正在去除噪声…</translation>
     </message>
     <message>
         <source>Could not create an output file</source>
@@ -6148,19 +6148,19 @@
     </message>
     <message>
         <source>Clip</source>
-        <translation>剪辑</translation>
+        <translation>片段</translation>
     </message>
     <message>
         <source> (denoised)</source>
-        <translation> (已降噪)</translation>
+        <translation>（已降噪）</translation>
     </message>
     <message>
         <source>Remove noise</source>
-        <translation>移除噪声</translation>
+        <translation>去除噪声</translation>
     </message>
     <message>
         <source>Noise removed</source>
-        <translation>噪声已移除</translation>
+        <translation>已去除噪声</translation>
     </message>
 </context>
 <context>
@@ -6171,7 +6171,7 @@
     </message>
     <message>
         <source>Download noise removal (about 9 MB)</source>
-        <translation>下载降噪模型（约 9 MB）</translation>
+        <translation>下载降噪组件（约 9 MB）</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
@@ -6179,18 +6179,18 @@
     </message>
     <message>
         <source>Select an audio or video clip to remove noise</source>
-        <translation>选择音频或视频剪辑以进行降噪</translation>
+        <translation>请选择音频或视频片段以去除噪声</translation>
     </message>
     <message>
         <source>Open Add-ons</source>
-        <translation>打开附加组件</translation>
+        <translation>打开附加包</translation>
     </message>
 </context>
 <context>
     <name>DenoiseView</name>
     <message>
         <source>A short section of the clip is previewed here. Confirming runs the whole clip and adds the result as a new audio track above this one — the original is left untouched.</source>
-        <translation>此处可预览剪辑的一小段。确认后将处理整个剪辑，并将结果作为新音频轨道添加到当前轨道上方 — 原始文件保持不变。</translation>
+        <translation>此处仅预览片段的一小段。确认后将处理整个片段，并把结果作为新音轨添加到当前音轨上方——原始音频保持不变。</translation>
     </message>
     <message>
         <source>Original</source>
@@ -6198,7 +6198,7 @@
     </message>
     <message>
         <source>Noise removed</source>
-        <translation>已降噪</translation>
+        <translation>已去除噪声</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -6222,40 +6222,40 @@
     </message>
     <message>
         <source>Remove noise</source>
-        <translation>移除噪声</translation>
+        <translation>去除噪声</translation>
     </message>
 </context>
 <context>
     <name>DenoiseWaveformLane</name>
     <message>
         <source>· playing</source>
-        <translation>· 正在播放</translation>
+        <translation>· 播放中</translation>
     </message>
 </context>
 <context>
     <name>DenoiseWindow</name>
     <message>
         <source>Remove noise</source>
-        <translation>移除噪声</translation>
+        <translation>去除噪声</translation>
     </message>
 </context>
 <context>
     <name>DepthController</name>
     <message>
         <source>Select a video or image clip to estimate depth for</source>
-        <translation>选择视频或图像剪辑以估算深度</translation>
+        <translation>请选择要估算深度的视频或图像片段</translation>
     </message>
     <message>
         <source>Clip has no video to estimate depth for</source>
-        <translation>剪辑没有可用于估算深度的视频</translation>
+        <translation>片段没有可估算深度的视频</translation>
     </message>
     <message>
         <source>Depth estimation needs the Depth addon</source>
-        <translation>深度估算需要深度（Depth）附加组件</translation>
+        <translation>深度估算需要 Depth 附加包</translation>
     </message>
     <message>
         <source>Depth is already being estimated for this clip</source>
-        <translation>已在为此剪辑估算深度</translation>
+        <translation>此片段已在估算深度</translation>
     </message>
     <message>
         <source>Estimating depth…</source>
@@ -6263,7 +6263,7 @@
     </message>
     <message>
         <source>Clip no longer exists</source>
-        <translation>剪辑已不存在</translation>
+        <translation>片段已不存在</translation>
     </message>
     <message>
         <source>Estimate Depth</source>
@@ -6278,7 +6278,7 @@
     <name>DepthEffectAimRing</name>
     <message>
         <source>Aim light</source>
-        <translation>瞄准光源</translation>
+        <translation>调整光照方向</translation>
     </message>
 </context>
 <context>
@@ -6289,7 +6289,7 @@
     </message>
     <message>
         <source>Pick focus</source>
-        <translation>拾取焦点</translation>
+        <translation>选择焦点</translation>
     </message>
     <message>
         <source>Move focus</source>
@@ -6307,7 +6307,7 @@
     <name>DepthLight3dAimRing</name>
     <message>
         <source>Aim light</source>
-        <translation>瞄准光源</translation>
+        <translation>调整光照方向</translation>
     </message>
 </context>
 <context>
@@ -6336,7 +6336,7 @@
     </message>
     <message>
         <source>Active</source>
-        <translation>当前活动</translation>
+        <translation>活动</translation>
     </message>
     <message>
         <source>Not saved yet</source>
@@ -6348,7 +6348,7 @@
     </message>
     <message>
         <source>Duplicate</source>
-        <translation>创建副本</translation>
+        <translation>复制副本</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -6368,7 +6368,7 @@
     </message>
     <message>
         <source>Set active</source>
-        <translation>设为活动</translation>
+        <translation>设为当前</translation>
     </message>
 </context>
 <context>
@@ -6411,15 +6411,15 @@
     </message>
     <message>
         <source>Waiting for a free slot</source>
-        <translation>正在等待空闲通道</translation>
+        <translation>等待空闲任务位</translation>
     </message>
     <message>
         <source>%1 · in the media bin</source>
-        <translation>%1 · 在素材箱中</translation>
+        <translation>%1 · 已在媒体库中</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation>在素材箱中</translation>
+        <translation>已在媒体库中</translation>
     </message>
     <message>
         <source>%1 of %2</source>
@@ -6446,28 +6446,28 @@
     <message numerus="yes">
         <source>%n active</source>
         <translation>
-            <numerusform>%n 项进行中</numerusform>
+            <numerusform>%n 个进行中</numerusform>
         </translation>
     </message>
     <message>
         <source>No downloads running</source>
-        <translation>没有正在运行的下载</translation>
+        <translation>没有正在进行的下载</translation>
     </message>
     <message>
         <source>%1 at a time</source>
-        <translation>每次 %1 个</translation>
+        <translation>每次最多 %1 个</translation>
     </message>
     <message>
         <source>Clear finished</source>
-        <translation>清除已完成项</translation>
+        <translation>清除已完成</translation>
     </message>
     <message>
         <source>Nothing downloaded yet</source>
-        <translation>暂无下载内容</translation>
+        <translation>还没有下载内容</translation>
     </message>
     <message>
         <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>来自“素材集市”标签页的下载在运行时将显示在此处。</translation>
+        <translation>“市场”标签页中的下载任务进行时会显示在这里。</translation>
     </message>
 </context>
 <context>
@@ -6506,7 +6506,7 @@
     </message>
     <message>
         <source>Downloaded, works offline</source>
-        <translation>已下载，支持离线使用</translation>
+        <translation>已下载，可离线使用</translation>
     </message>
 </context>
 <context>
@@ -6517,11 +6517,11 @@
     </message>
     <message>
         <source>Plays in, then holds</source>
-        <translation>切入播放后保持</translation>
+        <translation>播放入场后保持</translation>
     </message>
     <message>
         <source>Plays in, holds, plays out</source>
-        <translation>切入播放、保持、切出播放</translation>
+        <translation>播放入场、保持、播放出场</translation>
     </message>
     <message>
         <source>Back</source>
@@ -6545,15 +6545,15 @@
     </message>
     <message>
         <source>room for your text</source>
-        <translation>预留文本空间</translation>
+        <translation>可容纳你的文字</translation>
     </message>
     <message>
         <source>3D model, loops every %1 s</source>
-        <translation>3D 模型，每 %1 秒循环一次</translation>
+        <translation>3D 模型，每 %1 秒循环</translation>
     </message>
     <message>
         <source>Tracks a face in the clip it is applied to</source>
-        <translation>跟踪所应用剪辑中的面部</translation>
+        <translation>跟踪所应用片段中的人脸</translation>
     </message>
     <message>
         <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
@@ -6561,11 +6561,11 @@
     </message>
     <message>
         <source>Licence %1</source>
-        <translation>许可 %1</translation>
+        <translation>许可协议 %1</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation>应用到所选剪辑</translation>
+        <translation>应用到所选片段</translation>
     </message>
     <message>
         <source>Add at playhead</source>
@@ -6573,19 +6573,19 @@
     </message>
     <message>
         <source>Select a clip with a face on the timeline first</source>
-        <translation>请先在时间线上选择包含人脸的剪辑</translation>
+        <translation>请先在时间线上选择含人脸的片段</translation>
     </message>
     <message>
         <source>Add to Face props</source>
-        <translation>添加到面部道具</translation>
+        <translation>添加到人脸道具</translation>
     </message>
     <message>
         <source>Add to media bin</source>
-        <translation>添加到素材箱</translation>
+        <translation>添加到媒体库</translation>
     </message>
     <message>
         <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>在时间线上选择包含人脸的剪辑以应用此道具。</translation>
+        <translation>请在时间线上选择含人脸的片段以应用此道具。</translation>
     </message>
     <message>
         <source>Choose colour</source>
@@ -6596,11 +6596,11 @@
     <name>DriftAssetStore</name>
     <message>
         <source>The marketplace is not available in this build.</source>
-        <translation>当前版本不支持素材集市。</translation>
+        <translation>素材市场在此版本中不可用。</translation>
     </message>
     <message>
         <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>无法加载 Drift 素材。请检查您的连接并重试。</translation>
+        <translation>无法加载 Drift 素材。请检查网络连接后重试。</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -6612,19 +6612,19 @@
     </message>
     <message>
         <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>无法下载该素材。请检查您的连接并重试。</translation>
+        <translation>无法下载该素材。请检查网络连接后重试。</translation>
     </message>
     <message>
         <source>That download was damaged. Try again.</source>
-        <translation>该下载文件已损坏。请重试。</translation>
+        <translation>下载内容已损坏，请重试。</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
-        <translation>无法添加该面部道具。</translation>
+        <translation>无法添加该人脸道具。</translation>
     </message>
     <message>
         <source>Could not add that asset to the media bin.</source>
-        <translation>无法将该素材添加到素材箱。</translation>
+        <translation>无法将该素材添加到媒体库。</translation>
     </message>
 </context>
 <context>
@@ -6639,15 +6639,15 @@
     </message>
     <message>
         <source>Added to Face props</source>
-        <translation>已添加到面部道具</translation>
+        <translation>已添加到人脸道具</translation>
     </message>
     <message>
         <source>Select a video or image clip to apply a face prop</source>
-        <translation>选择视频或图像剪辑以应用面部道具</translation>
+        <translation>请选择视频或图像片段以应用人脸道具</translation>
     </message>
     <message>
         <source>Added to the media bin</source>
-        <translation>已添加到素材箱</translation>
+        <translation>已添加到媒体库</translation>
     </message>
     <message>
         <source>Couldn’t load Drift Assets</source>
@@ -6659,11 +6659,11 @@
     </message>
     <message>
         <source>No assets here yet</source>
-        <translation>此处暂无素材</translation>
+        <translation>这里还没有素材</translation>
     </message>
     <message>
         <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Drift 素材仍在发布中。请稍后再来查看。</translation>
+        <translation>Drift 素材仍在陆续发布中，请稍后再来看看。</translation>
     </message>
     <message>
         <source>Refresh</source>
@@ -6675,7 +6675,7 @@
     </message>
     <message>
         <source>All assets</source>
-        <translation>所有素材</translation>
+        <translation>全部素材</translation>
     </message>
     <message>
         <source>No Drift Assets match “%1”.</source>
@@ -6694,7 +6694,7 @@
     </message>
     <message>
         <source>Add another keyframe to shape the motion between them</source>
-        <translation>添加另一个关键帧以塑造它们之间的运动效果</translation>
+        <translation>添加另一个关键帧以调整它们之间的运动</translation>
     </message>
     <message>
         <source>Edit easing</source>
@@ -6710,19 +6710,19 @@
     </message>
     <message>
         <source>Holds until the next keyframe</source>
-        <translation>保持直到下一个关键帧</translation>
+        <translation>保持到下一个关键帧</translation>
     </message>
     <message>
         <source>In</source>
-        <translation>入点/渐入</translation>
+        <translation>入</translation>
     </message>
     <message>
         <source>Out</source>
-        <translation>出点/渐出</translation>
+        <translation>出</translation>
     </message>
     <message>
         <source>In-Out</source>
-        <translation>入点-出点</translation>
+        <translation>入-出</translation>
     </message>
     <message>
         <source>My easings</source>
@@ -6742,7 +6742,7 @@
     </message>
     <message>
         <source>Keep this curve as one of your easings</source>
-        <translation>将此曲线保存为您自定的缓动之一</translation>
+        <translation>将此曲线保存为一个自定义缓动</translation>
     </message>
     <message>
         <source>Copy easing</source>
@@ -6754,11 +6754,11 @@
     </message>
     <message>
         <source>Apply to all</source>
-        <translation>应用到所有</translation>
+        <translation>应用到全部</translation>
     </message>
     <message>
         <source>Use this easing between every keyframe of %1</source>
-        <translation>在 %1 的每个关键帧之间使用此缓动</translation>
+        <translation>将此缓动用于 %1 的所有关键帧之间</translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -6777,11 +6777,11 @@
     <name>EasingPresets</name>
     <message>
         <source>Straight</source>
-        <translation>直线/线性</translation>
+        <translation>直线</translation>
     </message>
     <message>
         <source>Jump</source>
-        <translation>跳跃/突变</translation>
+        <translation>跳跃</translation>
     </message>
     <message>
         <source>Ease</source>
@@ -6789,123 +6789,123 @@
     </message>
     <message>
         <source>Sine In</source>
-        <translation>正弦切入</translation>
+        <translation>正弦入</translation>
     </message>
     <message>
         <source>Sine Out</source>
-        <translation>正弦切出</translation>
+        <translation>正弦出</translation>
     </message>
     <message>
         <source>Sine In-Out</source>
-        <translation>正弦切入切出</translation>
+        <translation>正弦入出</translation>
     </message>
     <message>
         <source>Quad In</source>
-        <translation>二次方切入</translation>
+        <translation>二次入</translation>
     </message>
     <message>
         <source>Quad Out</source>
-        <translation>二次方切出</translation>
+        <translation>二次出</translation>
     </message>
     <message>
         <source>Quad In-Out</source>
-        <translation>二次方切入切出</translation>
+        <translation>二次入出</translation>
     </message>
     <message>
         <source>Cubic In</source>
-        <translation>三次方切入</translation>
+        <translation>三次入</translation>
     </message>
     <message>
         <source>Cubic Out</source>
-        <translation>三次方切出</translation>
+        <translation>三次出</translation>
     </message>
     <message>
         <source>Cubic In-Out</source>
-        <translation>三次方切入切出</translation>
+        <translation>三次入出</translation>
     </message>
     <message>
         <source>Quart In</source>
-        <translation>四次方切入</translation>
+        <translation>四次入</translation>
     </message>
     <message>
         <source>Quart Out</source>
-        <translation>四次方切出</translation>
+        <translation>四次出</translation>
     </message>
     <message>
         <source>Quart In-Out</source>
-        <translation>四次方切入切出</translation>
+        <translation>四次入出</translation>
     </message>
     <message>
         <source>Quint In</source>
-        <translation>五次方切入</translation>
+        <translation>五次入</translation>
     </message>
     <message>
         <source>Quint Out</source>
-        <translation>五次方切出</translation>
+        <translation>五次出</translation>
     </message>
     <message>
         <source>Quint In-Out</source>
-        <translation>五次方切入切出</translation>
+        <translation>五次入出</translation>
     </message>
     <message>
         <source>Expo In</source>
-        <translation>指数切入</translation>
+        <translation>指数入</translation>
     </message>
     <message>
         <source>Expo Out</source>
-        <translation>指数切出</translation>
+        <translation>指数出</translation>
     </message>
     <message>
         <source>Expo In-Out</source>
-        <translation>指数切入切出</translation>
+        <translation>指数入出</translation>
     </message>
     <message>
         <source>Circ In</source>
-        <translation>圆形切入</translation>
+        <translation>圆形入</translation>
     </message>
     <message>
         <source>Circ Out</source>
-        <translation>圆形切出</translation>
+        <translation>圆形出</translation>
     </message>
     <message>
         <source>Circ In-Out</source>
-        <translation>圆形切入切出</translation>
+        <translation>圆形入出</translation>
     </message>
     <message>
         <source>Back In</source>
-        <translation>回退切入</translation>
+        <translation>回弹入</translation>
     </message>
     <message>
         <source>Back Out</source>
-        <translation>回退切出</translation>
+        <translation>回弹出</translation>
     </message>
     <message>
         <source>Back In-Out</source>
-        <translation>回退切入切出</translation>
+        <translation>回弹入出</translation>
     </message>
     <message>
         <source>Elastic In</source>
-        <translation>弹性切入</translation>
+        <translation>弹性入</translation>
     </message>
     <message>
         <source>Elastic Out</source>
-        <translation>弹性切出</translation>
+        <translation>弹性出</translation>
     </message>
     <message>
         <source>Elastic In-Out</source>
-        <translation>弹性切入切出</translation>
+        <translation>弹性入出</translation>
     </message>
     <message>
         <source>Bounce In</source>
-        <translation>弹跳切入</translation>
+        <translation>弹跳入</translation>
     </message>
     <message>
         <source>Bounce Out</source>
-        <translation>弹跳切出</translation>
+        <translation>弹跳出</translation>
     </message>
     <message>
         <source>Bounce In-Out</source>
-        <translation>弹跳切入切出</translation>
+        <translation>弹跳入出</translation>
     </message>
 </context>
 <context>
@@ -6936,7 +6936,7 @@
     </message>
     <message>
         <source>Name your project</source>
-        <translation>命名您的项目</translation>
+        <translation>为项目命名</translation>
     </message>
     <message>
         <source>Save Project As</source>
@@ -6948,7 +6948,7 @@
     </message>
     <message>
         <source>Save Shareable Copy</source>
-        <translation>保存可分享副本</translation>
+        <translation>保存共享副本</translation>
     </message>
     <message>
         <source>Untitled Project</source>
@@ -6976,15 +6976,15 @@
     </message>
     <message>
         <source>Agent</source>
-        <translation>智能体</translation>
+        <translation>Agent</translation>
     </message>
     <message>
         <source>Agent access is on</source>
-        <translation>智能体访问已开启</translation>
+        <translation>Agent 访问已开启</translation>
     </message>
     <message>
         <source>Agent access</source>
-        <translation>智能体访问</translation>
+        <translation>Agent 访问</translation>
     </message>
 </context>
 <context>
@@ -6992,7 +6992,7 @@
     <message numerus="yes">
         <source>Downloads — %n running</source>
         <translation>
-            <numerusform>下载 — %n 个正在进行</numerusform>
+            <numerusform>下载 — %n 个进行中</numerusform>
         </translation>
     </message>
     <message>
@@ -7030,14 +7030,14 @@
     </message>
     <message>
         <source>Recommended packs and updates</source>
-        <translation>推荐扩展包与更新</translation>
+        <translation>推荐资源包与更新</translation>
     </message>
 </context>
 <context>
     <name>EditorHeaderNotificationsButton</name>
     <message>
         <source>Notifications — Drift %1 is available</source>
-        <translation>通知 — Drift %1 已发布</translation>
+        <translation>通知 — Drift %1 现已可用</translation>
     </message>
     <message>
         <source>Notifications</source>
@@ -7056,7 +7056,7 @@
     </message>
     <message>
         <source>Unsaved changes</source>
-        <translation>有未保存的更改</translation>
+        <translation>未保存更改</translation>
     </message>
     <message>
         <source>Projects — click to switch or start new</source>
@@ -7064,14 +7064,14 @@
     </message>
     <message>
         <source>Unsaved changes — click to switch or start new</source>
-        <translation>有未保存的更改 — 点击切换或新建</translation>
+        <translation>有未保存更改 — 点击切换或新建</translation>
     </message>
 </context>
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
         <source>Search  %1</source>
-        <translation>搜索  %1</translation>
+        <translation>搜索 %1</translation>
     </message>
     <message>
         <source>Search</source>
@@ -7128,7 +7128,7 @@
     </message>
     <message>
         <source>Install the Effects pack from Extras to browse presets here.</source>
-        <translation>从“附加项”中安装效果包以在此浏览预设。</translation>
+        <translation>从附加项中安装效果包，即可在此浏览预设。</translation>
     </message>
     <message>
         <source>Get extras</source>
@@ -7148,11 +7148,11 @@
     </message>
     <message>
         <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation>安装自定义效果，或安装在 Drift Forge 中制作的 .driftfx 文件转场</translation>
+        <translation>从 Drift Forge 制作的 .driftfx 文件安装自定义效果或转场</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
-        <translation>添加调整图层 — 点击，或将其拖放到轨道上</translation>
+        <translation>添加调整图层 — 点击，或将其拖到轨道上</translation>
     </message>
     <message>
         <source>My Effects</source>
@@ -7160,19 +7160,19 @@
     </message>
     <message>
         <source>No effects match “%1”.</source>
-        <translation>没有与“%1”匹配的效果。</translation>
+        <translation>没有匹配“%1”的效果。</translation>
     </message>
     <message>
         <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>此处暂无内容。导入 .driftfx 文件以添加您自己的效果。</translation>
+        <translation>这里还没有内容。导入 .driftfx 文件即可添加自己的效果。</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
-        <translation>暂无收藏项。将预设标星即可保存在此处。</translation>
+        <translation>暂无收藏。为预设加星标即可保存到这里。</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
-        <translation>此类别中暂无内容。</translation>
+        <translation>此分类下暂无内容。</translation>
     </message>
     <message>
         <source>%1 is empty</source>
@@ -7180,7 +7180,7 @@
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>导入在 Drift Forge 中制作的 .driftfx 文件以添加您自己的效果。</translation>
+        <translation>导入用 Drift Forge 制作的 .driftfx 文件即可添加自己的效果。</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -7193,23 +7193,23 @@
     <message numerus="yes">
         <source>Delete “%1” from My Effects? It is used %n time(s) in this project, and those clips will play without it.</source>
         <translation>
-            <numerusform>是否从“我的效果”中删除“%1”？该效果在此项目中被使用了 %n 次，这些剪辑将在缺少该效果的情况下播放。</numerusform>
+            <numerusform>从“我的效果”中删除“%1”？它在本项目中使用了 %n 次，相关片段播放时将不含此效果。</numerusform>
         </translation>
     </message>
     <message>
         <source>Delete “%1” from My Effects? You can import its .driftfx file again later.</source>
-        <translation>是否从“我的效果”中删除“%1”？您可以稍后重新导入其 .driftfx 文件。</translation>
+        <translation>从“我的效果”中删除“%1”？之后可重新导入其 .driftfx 文件。</translation>
     </message>
 </context>
 <context>
     <name>EffectCatalog</name>
     <message>
         <source>Color</source>
-        <translation>色彩</translation>
+        <translation>颜色</translation>
     </message>
     <message>
         <source>Glitch &amp; Distortion</source>
-        <translation>故障与扭曲</translation>
+        <translation>故障与失真</translation>
     </message>
     <message>
         <source>Retro / Analog</source>
@@ -7225,15 +7225,15 @@
     </message>
     <message>
         <source>Blurs &amp; Distortions</source>
-        <translation>模糊与扭曲</translation>
+        <translation>模糊与变形</translation>
     </message>
     <message>
         <source>Funny Face</source>
-        <translation>搞笑面部</translation>
+        <translation>趣味面孔</translation>
     </message>
     <message>
         <source>Beauty &amp; Makeup</source>
-        <translation>美颜与美妆</translation>
+        <translation>美颜与妆容</translation>
     </message>
     <message>
         <source>Face Props</source>
@@ -7241,11 +7241,11 @@
     </message>
     <message>
         <source>Artistic</source>
-        <translation>艺术</translation>
+        <translation>艺术风格</translation>
     </message>
     <message>
         <source>Depth &amp; Lighting</source>
-        <translation>深度与光效</translation>
+        <translation>景深与光照</translation>
     </message>
     <message>
         <source>Other</source>
@@ -7256,23 +7256,23 @@
     <name>EffectPresetCard</name>
     <message>
         <source>%1 — click to apply to the selection, or drag onto a clip</source>
-        <translation>%1 — 点击应用到所选内容，或拖放到剪辑上</translation>
+        <translation>%1 — 点击应用到所选内容，或拖到片段上</translation>
     </message>
     <message>
         <source>%1 — click to add as an adjustment layer, or drag onto a clip</source>
-        <translation>%1 — 点击添加为调整图层，或拖放到剪辑上</translation>
+        <translation>%1 — 点击添加为调整图层，或拖到片段上</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation>应用到所选剪辑</translation>
+        <translation>应用到所选片段</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
-        <translation>从收藏夹移除</translation>
+        <translation>从收藏中移除</translation>
     </message>
     <message>
         <source>Add to favorites</source>
-        <translation>添加到收藏夹</translation>
+        <translation>添加到收藏</translation>
     </message>
     <message>
         <source>Delete from My Effects</source>
@@ -7291,11 +7291,11 @@
     <name>EffectStackCard</name>
     <message>
         <source>+%1 more</source>
-        <translation>+%1 更多</translation>
+        <translation>+%1 项</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation>应用到所选剪辑</translation>
+        <translation>应用到所选片段</translation>
     </message>
     <message>
         <source>Preset options</source>
@@ -7318,19 +7318,19 @@
     <name>EffectStacksSection</name>
     <message>
         <source>Drift effect stack (*.drifteffects)</source>
-        <translation>Drift 效果组 (*.drifteffects)</translation>
+        <translation>Drift 效果堆栈 (*.drifteffects)</translation>
     </message>
     <message>
         <source>Import effect stack</source>
-        <translation>导入效果组</translation>
+        <translation>导入效果堆栈</translation>
     </message>
     <message>
         <source>Export effect stack</source>
-        <translation>导出效果组</translation>
+        <translation>导出效果堆栈</translation>
     </message>
     <message>
         <source>No saved presets</source>
-        <translation>没有保存的预设</translation>
+        <translation>暂无已保存的预设</translation>
     </message>
     <message>
         <source>Tune a clip&apos;s effects, then use “Save as preset…” in the properties Effects tab to keep them here.</source>
@@ -7354,18 +7354,18 @@
     </message>
     <message>
         <source>Remove “%1” from your saved presets? Clips already using it keep their effects.</source>
-        <translation>是否从保存的预设中移除“%1”？已在使用它的剪辑将保留其效果。</translation>
+        <translation>从已保存的预设中移除“%1”？已在使用的片段会保留其效果。</translation>
     </message>
 </context>
 <context>
     <name>EffectTemplateBrowser</name>
     <message>
         <source>No effect templates</source>
-        <translation>无效果模板</translation>
+        <translation>暂无效果模板</translation>
     </message>
     <message>
         <source>Install the Effect Templates pack from Extras to browse presets here.</source>
-        <translation>从“附加项”中安装效果模板包以在此浏览预设。</translation>
+        <translation>从附加项中安装效果模板包，即可在此浏览预设。</translation>
     </message>
     <message>
         <source>Get extras</source>
@@ -7377,7 +7377,7 @@
     </message>
     <message>
         <source>Import an effect stack…</source>
-        <translation>导入效果组…</translation>
+        <translation>导入效果堆栈…</translation>
     </message>
     <message>
         <source>My presets</source>
@@ -7385,15 +7385,15 @@
     </message>
     <message>
         <source>No templates match “%1”.</source>
-        <translation>没有与“%1”匹配的模板。</translation>
+        <translation>没有匹配“%1”的模板。</translation>
     </message>
     <message>
         <source>No favorites yet. Star templates to save them here.</source>
-        <translation>暂无收藏项。将模板标星即可保存在此处。</translation>
+        <translation>暂无收藏。为模板加星标即可保存到这里。</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
-        <translation>此类别中暂无内容。</translation>
+        <translation>此分类下暂无内容。</translation>
     </message>
 </context>
 <context>
@@ -7404,30 +7404,30 @@
     </message>
     <message>
         <source>%1 — select a clip, then click to apply</source>
-        <translation>%1 — 选择一个剪辑，然后点击应用</translation>
+        <translation>%1 — 选择片段后点击应用</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation>应用到所选剪辑</translation>
+        <translation>应用到所选片段</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
-        <translation>从收藏夹移除</translation>
+        <translation>从收藏中移除</translation>
     </message>
     <message>
         <source>Add to favorites</source>
-        <translation>添加到收藏夹</translation>
+        <translation>添加到收藏</translation>
     </message>
     <message>
         <source>Needs cutout</source>
-        <translation>需要主体抠图</translation>
+        <translation>需要抠图</translation>
     </message>
 </context>
 <context>
     <name>EffectTemplateCatalog</name>
     <message>
         <source>Hype</source>
-        <translation>炫动</translation>
+        <translation>动感</translation>
     </message>
     <message>
         <source>Dreamy</source>
@@ -7439,7 +7439,7 @@
     </message>
     <message>
         <source>Clone</source>
-        <translation>克隆/分身</translation>
+        <translation>克隆</translation>
     </message>
     <message>
         <source>Anime</source>
@@ -7451,7 +7451,7 @@
     </message>
     <message>
         <source>Chaos</source>
-        <translation>混乱/故障</translation>
+        <translation>混乱</translation>
     </message>
     <message>
         <source>Drama</source>
@@ -7470,7 +7470,7 @@
     <name>EffectsAutoKeyHint</name>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider also creates them.</source>
-        <translation>移动到某个时间点，设置数值，然后点击菱形图标添加关键帧。开启自动关键帧后，拖动滑块也会自动创建关键帧。</translation>
+        <translation>将播放头移到某个时间点，设置数值，然后点击菱形图标添加关键帧。开启自动关键帧后，拖动滑块也会自动创建关键帧。</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
@@ -7492,7 +7492,7 @@
     <name>EffectsClipParam</name>
     <message>
         <source>Automatic (clip beneath)</source>
-        <translation>自动（下方剪辑）</translation>
+        <translation>自动（下方片段）</translation>
     </message>
 </context>
 <context>
@@ -7529,7 +7529,7 @@
     </message>
     <message>
         <source>Sharper depth edges, about twice as slow</source>
-        <translation>深度边缘更清晰，处理速度约慢一倍</translation>
+        <translation>深度边缘更清晰，速度约慢一倍</translation>
     </message>
     <message>
         <source>Re-estimate depth</source>
@@ -7579,19 +7579,19 @@
     </message>
     <message>
         <source>Save as preset…</source>
-        <translation>保存为预设…</translation>
+        <translation>另存为预设…</translation>
     </message>
     <message>
         <source>%1 (not installed)</source>
-        <translation>%1 (未安装)</translation>
+        <translation>%1（未安装）</translation>
     </message>
     <message>
         <source>Move effect up</source>
-        <translation>向上移动效果</translation>
+        <translation>上移效果</translation>
     </message>
     <message>
         <source>Move effect down</source>
-        <translation>向下移动效果</translation>
+        <translation>下移效果</translation>
     </message>
     <message>
         <source>Disable effect</source>
@@ -7610,14 +7610,14 @@
     <name>EffectsFaceIndexParam</name>
     <message>
         <source>Face %1</source>
-        <translation>面部 %1</translation>
+        <translation>人脸 %1</translation>
     </message>
 </context>
 <context>
     <name>EffectsFaceSection</name>
     <message>
         <source>Face tracking</source>
-        <translation>面部跟踪</translation>
+        <translation>人脸追踪</translation>
     </message>
     <message>
         <source>Face effects follow one clip&apos;s faces. Add this to a clip rather than to an adjustment layer.</source>
@@ -7625,27 +7625,27 @@
     </message>
     <message>
         <source>These effects follow a face, so the clip has to be scanned before they do anything.</source>
-        <translation>这些效果需要跟踪面部，因此在生效前必须先扫描剪辑。</translation>
+        <translation>这些效果需要跟随人脸，因此必须先对片段进行扫描才能生效。</translation>
     </message>
     <message>
         <source>This clip was scanned before makeup was supported. Re-detect faces to enable the Beauty effects.</source>
-        <translation>此剪辑在支持美妆之前已完成扫描。请重新检测面部以启用美颜效果。</translation>
+        <translation>此片段扫描时还不支持妆容。重新检测人脸以启用美颜效果。</translation>
     </message>
     <message>
         <source>This clip was scanned before the face mesh was supported. Re-detect faces to enable 3D Face Mesh and Face Retouch.</source>
-        <translation>此剪辑在支持面部网格之前已完成扫描。请重新检测面部以启用 3D 面部网格和面部修饰。</translation>
+        <translation>此片段扫描时还不支持面部网格。重新检测人脸以启用 3D 面部网格和面部修饰。</translation>
     </message>
     <message>
         <source>Re-detect faces</source>
-        <translation>重新检测面部</translation>
+        <translation>重新检测人脸</translation>
     </message>
     <message>
         <source>Scan for faces…</source>
-        <translation>扫描面部…</translation>
+        <translation>扫描人脸…</translation>
     </message>
     <message>
         <source>Clear face track</source>
-        <translation>清除面部跟踪</translation>
+        <translation>清除人脸轨迹</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -7653,7 +7653,7 @@
     </message>
     <message>
         <source>Download face detection (about 5 MB)</source>
-        <translation>下载面部检测模型（约 5 MB）</translation>
+        <translation>下载人脸检测模型（约 5 MB）</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
@@ -7683,7 +7683,7 @@
     <name>EffectsHueParam</name>
     <message>
         <source>Pick %1</source>
-        <translation>拾取 %1</translation>
+        <translation>选取 %1</translation>
     </message>
     <message>
         <source>Choose %1</source>
@@ -7702,7 +7702,7 @@
     </message>
     <message>
         <source>Drag a preset from the Effects library onto this clip, or click a preset card.</source>
-        <translation>从效果库中将预设拖到此剪辑上，或点击预设卡片。</translation>
+        <translation>从效果库中将预设拖到此片段上，或点击预设卡片。</translation>
     </message>
     <message>
         <source>Browse effects</source>
@@ -7721,7 +7721,7 @@
     </message>
     <message>
         <source>Import looks</source>
-        <translation>导入外观</translation>
+        <translation>导入调色</translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
@@ -7729,26 +7729,26 @@
     </message>
     <message>
         <source>Missing look</source>
-        <translation>外观缺失</translation>
+        <translation>缺少调色文件</translation>
     </message>
 </context>
 <context>
     <name>EffectsOccludeSection</name>
     <message>
         <source>Anything in “%1” nearer than Distance passes in front of this layer.</source>
-        <translation>“%1”中距离小于“距离”的任何内容都将穿过此图层的前方。</translation>
+        <translation>“%1”中比距离值更近的内容都会显示在此图层前面。</translation>
     </message>
     <message>
         <source>Anything in “%1” (the clip beneath at the playhead) nearer than Distance passes in front of this layer.</source>
-        <translation>“%1”（播放头下方剪辑）中距离小于“距离”的任何内容都将穿过此图层的前方。</translation>
+        <translation>“%1”（播放头处的下方片段）中比距离值更近的内容都会显示在此图层前面。</translation>
     </message>
     <message>
         <source>Place this layer above a video or image clip. It goes behind whatever in that clip is nearer than Distance.</source>
-        <translation>将此图层放置在视频或图像剪辑上方。它将置于该剪辑中距离小于“距离”的任何内容之后。</translation>
+        <translation>将此图层放在视频或图片片段上方。该片段中比距离值更近的内容会显示在此图层前面。</translation>
     </message>
     <message>
         <source>“%1” needs its depth estimated before anything in it can pass in front. It runs in the background and takes roughly half a second per frame.</source>
-        <translation>“%1”需要先估算深度，其中的内容才能穿过前方。估算在后台运行，每帧大约耗时半秒。</translation>
+        <translation>需要先估算“%1”的深度，其中的内容才能显示在前面。估算在后台进行，每帧约需半秒。</translation>
     </message>
 </context>
 <context>
@@ -7759,18 +7759,18 @@
     </message>
     <message>
         <source>Save as preset…</source>
-        <translation>保存为预设…</translation>
+        <translation>另存为预设…</translation>
     </message>
 </context>
 <context>
     <name>EmojiPicker</name>
     <message>
         <source>No emoji pack installed</source>
-        <translation>未安装表情符号包</translation>
+        <translation>未安装表情包</translation>
     </message>
     <message>
         <source>Install the sticker pack to use emoji.</source>
-        <translation>安装贴纸包以使用表情符号。</translation>
+        <translation>安装贴纸包后即可使用表情。</translation>
     </message>
     <message>
         <source>Get extras</source>
@@ -7785,7 +7785,7 @@
     <name>EmojiPickerEmptyLabel</name>
     <message>
         <source>No emoji match “%1”.</source>
-        <translation>没有与“%1”匹配的表情符号。</translation>
+        <translation>没有匹配“%1”的表情。</translation>
     </message>
 </context>
 <context>
@@ -7851,7 +7851,7 @@
     <name>ExportDialogAudioSection</name>
     <message>
         <source>Exports the timeline audio mix only — no video track.</source>
-        <translation>仅导出时间线混音 — 不包含视频轨道。</translation>
+        <translation>仅导出时间线的音频混合内容 — 不含视频轨。</translation>
     </message>
     <message>
         <source>Audio encoder</source>
@@ -7859,7 +7859,7 @@
     </message>
     <message>
         <source>Bitrate</source>
-        <translation>码率</translation>
+        <translation>比特率</translation>
     </message>
     <message>
         <source>kbps</source>
@@ -7887,22 +7887,22 @@
     </message>
     <message>
         <source>Comment</source>
-        <translation>注释</translation>
+        <translation>备注</translation>
     </message>
 </context>
 <context>
     <name>ExportDialogGifSection</name>
     <message>
         <source>Animated GIF — no audio. Mark a work area for short loops, or export up to 60 seconds.</source>
-        <translation>动态 GIF — 无音频。可标记工作区用于简短循环，或导出最长 60 秒的内容。</translation>
+        <translation>动画 GIF — 无音频。标记工作区域可导出短循环，或最长导出 60 秒。</translation>
     </message>
     <message>
         <source>Downscale</source>
-        <translation>缩小分辨率</translation>
+        <translation>缩小尺寸</translation>
     </message>
     <message>
         <source>Export at %1×%2</source>
-        <translation>按 %1×%2 导出</translation>
+        <translation>以 %1×%2 导出</translation>
     </message>
     <message>
         <source>Frame rate</source>
@@ -7914,7 +7914,7 @@
     </message>
     <message>
         <source>15 fps is a good default for small file sizes. GIF export is limited to 60 seconds.</source>
-        <translation>15 fps 是兼顾小文件体积的推荐默认值。GIF 导出时长限制为 60 秒。</translation>
+        <translation>15 fps 是小文件体积的不错默认值。GIF 导出最长 60 秒。</translation>
     </message>
 </context>
 <context>
@@ -7933,14 +7933,14 @@
     </message>
     <message>
         <source>GIF encoder is not available in this build</source>
-        <translation>此版本中 GIF 编码器不可用</translation>
+        <translation>当前版本不含 GIF 编码器</translation>
     </message>
 </context>
 <context>
     <name>ExportDialogVideoSection</name>
     <message>
         <source>Saves what you see in the preview. Pick a size — the picture shape stays the same.</source>
-        <translation>保存预览中看到的内容。选择分辨率大小 — 画面宽高比保持不变。</translation>
+        <translation>导出预览中看到的画面。选择一个尺寸，画面比例保持不变。</translation>
     </message>
     <message>
         <source>Downscale</source>
@@ -7948,7 +7948,7 @@
     </message>
     <message>
         <source>Export at %1×%2</source>
-        <translation>按 %1×%2 导出</translation>
+        <translation>以 %1×%2 导出</translation>
     </message>
     <message>
         <source>Frame rate</source>
@@ -7976,7 +7976,7 @@
     </message>
     <message>
         <source>Keeps a transparent canvas. Set the project background to Transparent so holes stay empty.</source>
-        <translation>保留透明画布。请将项目背景设为“透明”，以便留空区域保持透明。</translation>
+        <translation>保留透明画布。请将项目背景设为透明，镂空处才会保持透明。</translation>
     </message>
     <message>
         <source>Constant Quality</source>
@@ -7984,7 +7984,7 @@
     </message>
     <message>
         <source>Bitrate</source>
-        <translation>码率</translation>
+        <translation>比特率</translation>
     </message>
     <message>
         <source>RF %1</source>
@@ -7992,19 +7992,19 @@
     </message>
     <message>
         <source>Quality (RF)</source>
-        <translation>质量 (RF)</translation>
+        <translation>质量（RF）</translation>
     </message>
     <message>
         <source>Higher quality</source>
-        <translation>更高质量</translation>
+        <translation>质量更高</translation>
     </message>
     <message>
         <source>Lower quality</source>
-        <translation>更低质量</translation>
+        <translation>质量更低</translation>
     </message>
     <message>
         <source>Bitrate (kbps)</source>
-        <translation>码率 (kbps)</translation>
+        <translation>比特率（kbps）</translation>
     </message>
     <message>
         <source>kbps</source>
@@ -8023,11 +8023,11 @@
     <name>ExportDialogWorkAreaCheck</name>
     <message>
         <source>Export work area only (%1 – %2)</source>
-        <translation>仅导出工作区 (%1 – %2)</translation>
+        <translation>仅导出工作区域（%1 – %2）</translation>
     </message>
     <message>
         <source>Encode only the marked In/Out range instead of the full timeline</source>
-        <translation>仅编码标记的入点/出点范围，而非整个时间线</translation>
+        <translation>仅编码标记的入点/出点范围，而不是整个时间线</translation>
     </message>
 </context>
 <context>
@@ -8050,7 +8050,7 @@
     </message>
     <message>
         <source>Rendering your video. Close to keep editing, or cancel to stop.</source>
-        <translation>正在渲染视频。关闭此窗口可继续编辑，或点击取消停止渲染。</translation>
+        <translation>正在渲染你的视频。关闭窗口可继续编辑，或取消以停止导出。</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -8089,7 +8089,7 @@
     </message>
     <message>
         <source>invalid prop id “%1”</source>
-        <translation>无效的道具 ID“%1”</translation>
+        <translation>无效的道具 id “%1”</translation>
     </message>
     <message>
         <source>prop.json must name a .glb model in the prop folder</source>
@@ -8097,35 +8097,35 @@
     </message>
     <message>
         <source>prop.json thumbnail must be a file in the prop folder</source>
-        <translation>prop.json 缩略图必须是道具文件夹中的文件</translation>
+        <translation>prop.json 的缩略图必须是道具文件夹中的文件</translation>
     </message>
     <message>
         <source>prop.json names the same file twice</source>
-        <translation>prop.json 引用了相同文件两次</translation>
+        <translation>prop.json 重复指定了同一个文件</translation>
     </message>
     <message>
         <source>param “%1” must be a number</source>
-        <translation>参数“%1”必须为数字</translation>
+        <translation>参数 “%1” 必须是数字</translation>
     </message>
     <message>
         <source>param “occlusion” must be true or false</source>
-        <translation>参数“occlusion”必须为 true 或 false</translation>
+        <translation>参数 “occlusion” 必须为 true 或 false</translation>
     </message>
     <message>
         <source>variants must be a list</source>
-        <translation>variants 必须为列表</translation>
+        <translation>variants 必须是列表</translation>
     </message>
     <message>
         <source>a variant must be an object</source>
-        <translation>变体必须为对象</translation>
+        <translation>每个变体必须是对象</translation>
     </message>
     <message>
         <source>invalid variant id “%1”</source>
-        <translation>无效的变体 ID“%1”</translation>
+        <translation>无效的变体 id “%1”</translation>
     </message>
     <message>
         <source>a variant must name a .glb model in the prop folder</source>
-        <translation>变体必须指定道具文件夹中的 .glb 模型</translation>
+        <translation>每个变体必须指定道具文件夹中的 .glb 模型</translation>
     </message>
     <message>
         <source>a variant thumbnail must be a file in the prop folder</source>
@@ -8133,7 +8133,7 @@
     </message>
     <message>
         <source>a variant names the same file twice</source>
-        <translation>变体引用了相同文件两次</translation>
+        <translation>变体重复指定了同一个文件</translation>
     </message>
     <message>
         <source>Could not open %1</source>
@@ -8145,19 +8145,19 @@
     </message>
     <message>
         <source>%1 has too many files</source>
-        <translation>%1 中的文件过多</translation>
+        <translation>%1 包含的文件过多</translation>
     </message>
     <message>
         <source>No face props (prop.json) found in %1</source>
-        <translation>在 %1 中未找到面部道具 (prop.json)</translation>
+        <translation>在 %1 中未找到面部道具（prop.json）</translation>
     </message>
     <message>
         <source>%1 has too many props</source>
-        <translation>%1 中的道具过多</translation>
+        <translation>%1 包含的道具过多</translation>
     </message>
     <message>
         <source>%1 is missing</source>
-        <translation>%1 缺失</translation>
+        <translation>缺少 %1</translation>
     </message>
     <message>
         <source>%1 is too large or damaged</source>
@@ -8169,11 +8169,11 @@
     </message>
     <message>
         <source>“%1” is not an imported face prop</source>
-        <translation>“%1”不是导入的面部道具</translation>
+        <translation>“%1” 不是已导入的面部道具</translation>
     </message>
     <message>
         <source>Could not delete “%1”</source>
-        <translation>无法删除“%1”</translation>
+        <translation>无法删除 “%1”</translation>
     </message>
 </context>
 <context>
@@ -8208,11 +8208,11 @@
     </message>
     <message>
         <source>No face props installed. Import a .zip from Drift-Assets, or any folder of props that carry a prop.json.</source>
-        <translation>未安装面部道具。请从 Drift-Assets 导入 .zip，或导入包含 prop.json 的道具文件夹。</translation>
+        <translation>尚未安装面部道具。请从 Drift-Assets 导入 .zip，或导入任何包含 prop.json 的道具文件夹。</translation>
     </message>
     <message>
         <source>Custom model: %1 (missing)</source>
-        <translation>自定义模型：%1 (缺失)</translation>
+        <translation>自定义模型：%1（缺失）</translation>
     </message>
     <message>
         <source>Custom model: %1</source>
@@ -8232,26 +8232,26 @@
     </message>
     <message>
         <source>“%1” will be removed from your face props. Effects using it will show it as missing until it is imported again.</source>
-        <translation>“%1”将从您的面部道具中移除。使用它的效果将显示为缺失，直到重新导入。</translation>
+        <translation>“%1” 将从你的面部道具中移除。使用它的效果会显示为缺失，直到重新导入。</translation>
     </message>
 </context>
 <context>
     <name>FaceTrackingController</name>
     <message>
         <source>Clear Face Track</source>
-        <translation>清除面部跟踪</translation>
+        <translation>清除人脸跟踪</translation>
     </message>
     <message>
         <source>Face detection already in progress</source>
-        <translation>面部检测已在进行中</translation>
+        <translation>人脸检测已在进行中</translation>
     </message>
     <message>
         <source>Select a video clip to detect faces in</source>
-        <translation>选择视频剪辑以检测面部</translation>
+        <translation>请选择要检测人脸的视频片段</translation>
     </message>
     <message>
         <source>Clip has no video to scan</source>
-        <translation>剪辑没有可扫描的视频</translation>
+        <translation>片段没有可扫描的视频</translation>
     </message>
     <message>
         <source>Getting ready…</source>
@@ -8259,7 +8259,7 @@
     </message>
     <message>
         <source>Detecting faces…</source>
-        <translation>正在检测面部…</translation>
+        <translation>正在检测人脸…</translation>
     </message>
     <message>
         <source>Done</source>
@@ -8267,11 +8267,11 @@
     </message>
     <message>
         <source>Clip is too short to scan</source>
-        <translation>剪辑时长过短，无法扫描</translation>
+        <translation>片段太短，无法扫描</translation>
     </message>
     <message>
         <source>Face detection cancelled</source>
-        <translation>面部检测已取消</translation>
+        <translation>人脸检测已取消</translation>
     </message>
     <message>
         <source>Could not decode frame %1</source>
@@ -8279,31 +8279,31 @@
     </message>
     <message>
         <source>Scanning frame %1 of %2…</source>
-        <translation>正在扫描第 %1 帧，共 %2 帧…</translation>
+        <translation>正在扫描第 %1 / %2 帧…</translation>
     </message>
     <message>
         <source>No faces found in this clip</source>
-        <translation>此剪辑中未找到面部</translation>
+        <translation>此片段中未检测到人脸</translation>
     </message>
     <message>
         <source>Could not write the face track</source>
-        <translation>无法写入面部跟踪数据</translation>
+        <translation>无法写入人脸跟踪数据</translation>
     </message>
     <message>
         <source>Face detection complete — a face was visible in %1 of %2 frames</source>
-        <translation>面部检测完成 — %2 帧中有 %1 帧检测到面部</translation>
+        <translation>人脸检测完成——%2 帧中有 %1 帧出现了人脸</translation>
     </message>
     <message>
         <source>Face detection complete</source>
-        <translation>面部检测完成</translation>
+        <translation>人脸检测完成</translation>
     </message>
     <message>
         <source>Scanned clip no longer exists</source>
-        <translation>扫描的剪辑已不存在</translation>
+        <translation>被扫描的片段已不存在</translation>
     </message>
     <message>
         <source>Detect Faces</source>
-        <translation>检测面部</translation>
+        <translation>检测人脸</translation>
     </message>
 </context>
 <context>
@@ -8322,11 +8322,11 @@
     </message>
     <message>
         <source>Fade shape — %1</source>
-        <translation>淡入淡出形态 — %1</translation>
+        <translation>淡入淡出形状 — %1</translation>
     </message>
     <message>
         <source>Fade shape</source>
-        <translation>淡入淡出形态</translation>
+        <translation>淡入淡出形状</translation>
     </message>
     <message>
         <source>Points</source>
@@ -8362,11 +8362,11 @@
     </message>
     <message>
         <source>Drag the two handles to shape the cubic. The ends stay pinned, and handles are held inside the box so the curve cannot fold back on itself.</source>
-        <translation>拖动两个控制柄以调整三次贝塞尔曲线形状。两端固定，控制柄限制在方框内以防止曲线回折。</translation>
+        <translation>拖动两个手柄调整三次曲线形状。端点保持固定，手柄被限制在方框内，因此曲线不会回折自交。</translation>
     </message>
     <message>
         <source>Drag the middle points to shape the ramp (ends stay silent→full). Double-click to add a point; Delete removes the selection.</source>
-        <translation>拖动中间控制点调整渐变形态（两端保持静音→满音量）。双击添加控制点；按 Delete 键删除所选点。</translation>
+        <translation>拖动中间的点调整斜坡形状（两端保持静音→满音量）。双击可添加点；按 Delete 删除选中的点。</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -8396,7 +8396,7 @@
     <name>FontCatalog</name>
     <message>
         <source>Choose a .ttf, .otf or .ttc font file</source>
-        <translation>选择 .ttf、.otf 或 .ttc 字体文件</translation>
+        <translation>请选择 .ttf、.otf 或 .ttc 字体文件</translation>
     </message>
     <message>
         <source>Could not create the fonts folder</source>
@@ -8412,19 +8412,19 @@
     </message>
     <message>
         <source>High-Impact &amp; Bold</source>
-        <translation>强烈与粗体</translation>
+        <translation>醒目加粗</translation>
     </message>
     <message>
         <source>Clean &amp; Minimal</source>
-        <translation>简洁与极简</translation>
+        <translation>简洁极简</translation>
     </message>
     <message>
         <source>Classy &amp; Editorial</source>
-        <translation>典雅与出版</translation>
+        <translation>优雅文艺</translation>
     </message>
     <message>
         <source>Creative &amp; Playful</source>
-        <translation>创意与活泼</translation>
+        <translation>创意活泼</translation>
     </message>
 </context>
 <context>
@@ -8468,7 +8468,7 @@
     <name>FontPickerPackBanner</name>
     <message>
         <source>Install the font pack for curated families →</source>
-        <translation>安装字体包以获取精选字体族 →</translation>
+        <translation>安装字体包，获取精选字体 →</translation>
     </message>
 </context>
 <context>
@@ -8507,15 +8507,15 @@
     </message>
     <message>
         <source>Clip name</source>
-        <translation>剪辑名称</translation>
+        <translation>片段名称</translation>
     </message>
     <message>
         <source>Untitled clip</source>
-        <translation>未命名剪辑</translation>
+        <translation>未命名片段</translation>
     </message>
     <message>
         <source>Rename clip</source>
-        <translation>重命名剪辑</translation>
+        <translation>重命名片段</translation>
     </message>
     <message>
         <source>Type</source>
@@ -8539,7 +8539,7 @@
     </message>
     <message>
         <source>Starts at</source>
-        <translation>起始于</translation>
+        <translation>开始于</translation>
     </message>
     <message>
         <source>Duration</source>
@@ -8551,7 +8551,7 @@
     </message>
     <message>
         <source>To</source>
-        <translation>至</translation>
+        <translation>到</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -8579,15 +8579,15 @@
     </message>
     <message>
         <source>Which part of the original file this clip plays</source>
-        <translation>此剪辑播放原文件的哪个部分</translation>
+        <translation>此片段播放原文件中的哪一部分</translation>
     </message>
     <message>
         <source>Seconds into the file where this clip starts</source>
-        <translation>剪辑在原文件中的起始秒数</translation>
+        <translation>此片段在原文件中的起始秒数</translation>
     </message>
     <message>
         <source>Seconds into the file where this clip ends</source>
-        <translation>剪辑在原文件中的结束秒数</translation>
+        <translation>此片段在原文件中的结束秒数</translation>
     </message>
     <message>
         <source>File</source>
@@ -8610,31 +8610,31 @@
     </message>
     <message>
         <source>Color</source>
-        <translation>调色</translation>
+        <translation>颜色</translation>
     </message>
     <message>
         <source>Source Lab</source>
-        <translation>源素材实验室</translation>
+        <translation>素材实验室</translation>
     </message>
     <message>
         <source>Select a clip</source>
-        <translation>选择剪辑</translation>
+        <translation>选择一个片段</translation>
     </message>
     <message>
         <source>Select a video, image, text or shape clip</source>
-        <translation>选择视频、图像、文本或形状剪辑</translation>
+        <translation>请选择视频、图像、文本或形状片段</translation>
     </message>
     <message>
         <source>Select a video clip</source>
-        <translation>选择视频剪辑</translation>
+        <translation>请选择视频片段</translation>
     </message>
     <message>
         <source>Select a video or audio clip</source>
-        <translation>选择视频或音频剪辑</translation>
+        <translation>请选择视频或音频片段</translation>
     </message>
     <message>
         <source>Select a text or subtitle clip</source>
-        <translation>选择文本或字幕剪辑</translation>
+        <translation>请选择文本或字幕片段</translation>
     </message>
     <message>
         <source>Select a clip&apos;s effects layer</source>
@@ -8650,7 +8650,7 @@
     </message>
     <message>
         <source>Select the clip before a cut</source>
-        <translation>选择剪切点之前的剪辑</translation>
+        <translation>选择剪切点前的片段</translation>
     </message>
     <message>
         <source>Open the Subtitles workspace</source>
@@ -8658,7 +8658,7 @@
     </message>
     <message>
         <source>Open the Source Lab workspace</source>
-        <translation>打开源素材实验室工作区</translation>
+        <translation>打开素材实验室工作区</translation>
     </message>
     <message>
         <source>General</source>
@@ -8666,7 +8666,7 @@
     </message>
     <message>
         <source>Clip name</source>
-        <translation>剪辑名称</translation>
+        <translation>片段名称</translation>
     </message>
     <message>
         <source>Crop</source>
@@ -8710,11 +8710,11 @@
     </message>
     <message>
         <source>Reset position &amp; size</source>
-        <translation>重置位置与大小</translation>
+        <translation>重置位置和大小</translation>
     </message>
     <message>
         <source>Stabilization</source>
-        <translation>防抖稳定</translation>
+        <translation>防抖</translation>
     </message>
     <message>
         <source>Stabilize</source>
@@ -8722,7 +8722,7 @@
     </message>
     <message>
         <source>Smoothing</source>
-        <translation>平滑度</translation>
+        <translation>平滑</translation>
     </message>
     <message>
         <source>Tripod mode</source>
@@ -8754,7 +8754,7 @@
     </message>
     <message>
         <source>Pan</source>
-        <translation>声相</translation>
+        <translation>声像</translation>
     </message>
     <message>
         <source>Remove noise…</source>
@@ -8766,7 +8766,7 @@
     </message>
     <message>
         <source>Audio track</source>
-        <translation>音频轨道</translation>
+        <translation>音轨</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -8818,11 +8818,11 @@
     </message>
     <message>
         <source>Face tracking</source>
-        <translation>面部跟踪</translation>
+        <translation>人脸跟踪</translation>
     </message>
     <message>
         <source>Save as preset…</source>
-        <translation>保存为预设…</translation>
+        <translation>另存为预设…</translation>
     </message>
     <message>
         <source>Audio FX</source>
@@ -8830,7 +8830,7 @@
     </message>
     <message>
         <source>Audio effect settings</source>
-        <translation>音频效果设置</translation>
+        <translation>音效设置</translation>
     </message>
     <message>
         <source>Transition</source>
@@ -8866,19 +8866,19 @@
     </message>
     <message>
         <source>Select a shape clip</source>
-        <translation>选择形状剪辑</translation>
+        <translation>选择一个形状片段</translation>
     </message>
     <message>
         <source>Camera</source>
-        <translation>摄像机</translation>
+        <translation>相机</translation>
     </message>
     <message>
         <source>Camera position</source>
-        <translation>摄像机位置</translation>
+        <translation>相机位置</translation>
     </message>
     <message>
         <source>Select the camera layer</source>
-        <translation>选择摄像机图层</translation>
+        <translation>选择相机图层</translation>
     </message>
     <message>
         <source>PDF</source>
@@ -8886,11 +8886,11 @@
     </message>
     <message>
         <source>PDF page</source>
-        <translation>PDF 页面</translation>
+        <translation>PDF 页</translation>
     </message>
     <message>
         <source>Select a PDF clip</source>
-        <translation>选择 PDF 剪辑</translation>
+        <translation>选择一个 PDF 片段</translation>
     </message>
     <message>
         <source>3D Model</source>
@@ -8902,7 +8902,7 @@
     </message>
     <message>
         <source>Select a 3D model clip</source>
-        <translation>选择 3D 模型剪辑</translation>
+        <translation>选择一个 3D 模型片段</translation>
     </message>
     <message>
         <source>Exposure</source>
@@ -8946,7 +8946,7 @@
     </message>
     <message>
         <source>Color wheels</source>
-        <translation>色轮</translation>
+        <translation>色彩轮</translation>
     </message>
     <message>
         <source>Curves</source>
@@ -8966,11 +8966,11 @@
     </message>
     <message>
         <source>Looks</source>
-        <translation>外观</translation>
+        <translation>风格</translation>
     </message>
     <message>
         <source>Import looks</source>
-        <translation>导入外观</translation>
+        <translation>导入风格</translation>
     </message>
     <message>
         <source>Scopes</source>
@@ -8986,7 +8986,7 @@
     </message>
     <message>
         <source>Glow</source>
-        <translation>发光</translation>
+        <translation>辉光</translation>
     </message>
     <message>
         <source>Vignette</source>
@@ -9002,7 +9002,7 @@
     </message>
     <message>
         <source>Apply to all clips</source>
-        <translation>应用到所有剪辑</translation>
+        <translation>应用到所有片段</translation>
     </message>
     <message>
         <source>Keyframe editor</source>
@@ -9022,7 +9022,7 @@
     </message>
     <message>
         <source>Subtitle lane</source>
-        <translation>字幕通道</translation>
+        <translation>字幕轨</translation>
     </message>
     <message>
         <source>Subtitle timing</source>
@@ -9042,7 +9042,7 @@
     </message>
     <message>
         <source>Bridge gaps</source>
-        <translation>桥接间隙</translation>
+        <translation>填补间隙</translation>
     </message>
     <message>
         <source>Subtitle text editor</source>
@@ -9050,27 +9050,27 @@
     </message>
     <message>
         <source>Trim source clip</source>
-        <translation>修剪源剪辑</translation>
+        <translation>修剪源片段</translation>
     </message>
     <message>
         <source>Crop / reframe source</source>
-        <translation>裁剪 / 重新构图源素材</translation>
+        <translation>裁剪 / 重新构图源片段</translation>
     </message>
     <message>
         <source>Speed and loudness</source>
-        <translation>速度与响度</translation>
+        <translation>速度和响度</translation>
     </message>
     <message>
         <source>Denoise and stabilize source</source>
-        <translation>源素材降噪与防抖</translation>
+        <translation>源片段降噪与防抖</translation>
     </message>
     <message>
         <source>Upscale source clip</source>
-        <translation>超分辨率放大源剪辑</translation>
+        <translation>放大源片段</translation>
     </message>
     <message>
         <source>Export trimmed clip</source>
-        <translation>导出修剪后的剪辑</translation>
+        <translation>导出已修剪片段</translation>
     </message>
     <message>
         <source>Workspaces</source>
@@ -9094,7 +9094,7 @@
     </message>
     <message>
         <source>Subtitles</source>
-        <translation>子标题</translation>
+        <translation>字幕</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -9134,7 +9134,7 @@
     </message>
     <message>
         <source>AI &amp; Cloud</source>
-        <translation>AI 与云服务</translation>
+        <translation>AI 与云</translation>
     </message>
     <message>
         <source>Network</source>
@@ -9146,7 +9146,7 @@
     </message>
     <message>
         <source>Upscale…</source>
-        <translation>超分辨率放大…</translation>
+        <translation>放大…</translation>
     </message>
     <message>
         <source>Extras</source>
@@ -9157,7 +9157,7 @@
     <name>GlobalSearchPopup</name>
     <message>
         <source>Action</source>
-        <translation>动作</translation>
+        <translation>操作</translation>
     </message>
     <message>
         <source>Command</source>
@@ -9177,7 +9177,7 @@
     </message>
     <message>
         <source>Effect stack</source>
-        <translation>效果组</translation>
+        <translation>效果堆栈</translation>
     </message>
     <message>
         <source>Audio FX</source>
@@ -9197,7 +9197,7 @@
     </message>
     <message>
         <source>Sticker</source>
-        <translation>贴纸</translation>
+        <translation>贴纸图案</translation>
     </message>
     <message>
         <source>Text style</source>
@@ -9205,7 +9205,7 @@
     </message>
     <message>
         <source>Add-on</source>
-        <translation>附加组件</translation>
+        <translation>附加包</translation>
     </message>
     <message>
         <source>Control</source>
@@ -9213,11 +9213,11 @@
     </message>
     <message>
         <source>Select a clip first</source>
-        <translation>请先选择一个剪辑</translation>
+        <translation>请先选择一个片段</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation>应用到所选剪辑</translation>
+        <translation>应用到所选片段</translation>
     </message>
     <message>
         <source>Add at playhead</source>
@@ -9225,7 +9225,7 @@
     </message>
     <message>
         <source>Not available now</source>
-        <translation>当前不可用</translation>
+        <translation>暂不可用</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -9237,7 +9237,7 @@
     </message>
     <message>
         <source>Add-on manager</source>
-        <translation>附加组件管理器</translation>
+        <translation>附加包管理器</translation>
     </message>
     <message>
         <source>Debug info…</source>
@@ -9265,15 +9265,15 @@
     </message>
     <message>
         <source>Add as adjustment clip</source>
-        <translation>添加为调整剪辑</translation>
+        <translation>添加为调整片段</translation>
     </message>
     <message>
         <source>Add after selected clip</source>
-        <translation>添加到所选剪辑之后</translation>
+        <translation>添加到所选片段之后</translation>
     </message>
     <message>
         <source>Not available on this track</source>
-        <translation>在此轨道上不可用</translation>
+        <translation>此轨道不可用</translation>
     </message>
     <message>
         <source>No matches</source>
@@ -9284,25 +9284,25 @@
     <name>GradeSlider</name>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
-        <translation>已设置动画。编辑将生成关键帧（需开启自动关键帧）。</translation>
+        <translation>已启用动画。编辑时会设置关键帧（需开启自动关键帧）。</translation>
     </message>
 </context>
 <context>
     <name>GradientStopChip</name>
     <message>
         <source>Drag to move, tap for colour, hold or right-click to remove</source>
-        <translation>拖动以移动，轻点更改颜色，按住或右键单击以移除</translation>
+        <translation>拖动移动，点按更改颜色，长按或右键点击移除</translation>
     </message>
     <message>
         <source>Move gradient stop</source>
-        <translation>移动渐变控制点</translation>
+        <translation>移动渐变节点</translation>
     </message>
 </context>
 <context>
     <name>GradientStopEditor</name>
     <message>
         <source>Add a colour stop</source>
-        <translation>添加颜色控制点</translation>
+        <translation>添加颜色节点</translation>
     </message>
     <message>
         <source>Presets</source>
@@ -9322,7 +9322,7 @@
     </message>
     <message>
         <source>Sweep</source>
-        <translation>角度/雷达</translation>
+        <translation>扫描</translation>
     </message>
     <message>
         <source>Angle</source>
@@ -9334,11 +9334,11 @@
     </message>
     <message>
         <source>What one run of the gradient spans: the whole block, each line, word or glyph</source>
-        <translation>一次渐变跨越的范围：整个文本块、每行、每个词或每个字形</translation>
+        <translation>渐变一次覆盖的范围：整个文本块、每行、单词或字符</translation>
     </message>
     <message>
         <source>Block</source>
-        <translation>整块</translation>
+        <translation>文本块</translation>
     </message>
     <message>
         <source>Line</source>
@@ -9346,7 +9346,7 @@
     </message>
     <message>
         <source>Word</source>
-        <translation>词</translation>
+        <translation>单词</translation>
     </message>
     <message>
         <source>Glyph</source>
@@ -9366,7 +9366,7 @@
     </message>
     <message>
         <source>Slides the gradient along its axis, in cycles per second</source>
-        <translation>沿其轴线滑动渐变，单位为周期/秒</translation>
+        <translation>沿渐变轴滑动渐变，单位为每秒循环次数</translation>
     </message>
     <message>
         <source>Options</source>
@@ -9378,7 +9378,7 @@
     </message>
     <message>
         <source>Tile the gradient past its ends instead of clamping</source>
-        <translation>超出端点时平铺渐变而不是限制截止</translation>
+        <translation>超出渐变两端后平铺渐变，而非固定在端点颜色</translation>
     </message>
     <message>
         <source>OKLab</source>
@@ -9386,11 +9386,11 @@
     </message>
     <message>
         <source>Blend stops in OKLab for even, muddy-free transitions</source>
-        <translation>在 OKLab 色彩空间中混合渐变点，实现均匀、清澈的色彩过渡</translation>
+        <translation>在 OKLab 色彩空间中混合节点，过渡均匀且不浑浊</translation>
     </message>
     <message>
         <source>Stop colour</source>
-        <translation>控制点颜色</translation>
+        <translation>节点颜色</translation>
     </message>
 </context>
 <context>
@@ -9401,7 +9401,7 @@
     </message>
     <message>
         <source>Drag from the top or left edge to add a guide, off the canvas to remove one. Shift steps by 1%.</source>
-        <translation>从顶部或左边缘拖动可添加参考线，拖出画布可移除参考线。按住 Shift 键以 1% 为步长吸附。</translation>
+        <translation>从顶部或左边缘拖出以添加参考线，拖出画布外即可移除。按住 Shift 每次移动 1%。</translation>
     </message>
     <message>
         <source>Done</source>
@@ -9419,7 +9419,7 @@
     <name>GuideSet</name>
     <message>
         <source>Rule of thirds</source>
-        <translation>三分线</translation>
+        <translation>三分构图</translation>
     </message>
     <message>
         <source>Center cross</source>
@@ -9431,15 +9431,15 @@
     </message>
     <message>
         <source>9:16 frame</source>
-        <translation>9:16 画幅</translation>
+        <translation>9:16 边框</translation>
     </message>
     <message>
         <source>4:5 frame</source>
-        <translation>4:5 画幅</translation>
+        <translation>4:5 边框</translation>
     </message>
     <message>
         <source>1:1 frame</source>
-        <translation>1:1 画幅</translation>
+        <translation>1:1 边框</translation>
     </message>
 </context>
 <context>
@@ -9454,27 +9454,27 @@
     </message>
     <message>
         <source>Guide sets</source>
-        <translation>参考线集合</translation>
+        <translation>参考线集</translation>
     </message>
     <message>
         <source>New guide set</source>
-        <translation>新建参考线集合</translation>
+        <translation>新建参考线集</translation>
     </message>
     <message>
         <source>Duplicate set</source>
-        <translation>复制集合</translation>
+        <translation>复制副本</translation>
     </message>
     <message>
         <source>Save to my guide sets</source>
-        <translation>保存到我的参考线集合</translation>
+        <translation>保存到我的参考线集</translation>
     </message>
     <message>
         <source>Delete set</source>
-        <translation>删除集合</translation>
+        <translation>删除参考线集</translation>
     </message>
     <message>
         <source>Set name</source>
-        <translation>集合名称</translation>
+        <translation>参考线集名称</translation>
     </message>
     <message>
         <source>Edit on preview</source>
@@ -9490,7 +9490,7 @@
     </message>
     <message>
         <source>Frame</source>
-        <translation>画幅</translation>
+        <translation>边框</translation>
     </message>
     <message>
         <source>Add a guide</source>
@@ -9524,15 +9524,15 @@
     </message>
     <message>
         <source>Aspect frame</source>
-        <translation>画幅框</translation>
+        <translation>宽高比边框</translation>
     </message>
     <message>
         <source>Unlock so it can be dragged on the preview</source>
-        <translation>解锁以使其可在预览中拖动</translation>
+        <translation>解锁以在预览中拖动</translation>
     </message>
     <message>
         <source>Lock so it cannot be dragged on the preview</source>
-        <translation>锁定以防止在预览中被拖动</translation>
+        <translation>锁定以防止在预览中拖动</translation>
     </message>
     <message>
         <source>Remove guide</source>
@@ -9577,14 +9577,14 @@
     </message>
     <message>
         <source>This set came with the project. Save it to your guide sets to edit it.</source>
-        <translation>此集合随项目附带。将其保存到您的参考线集合中即可编辑。</translation>
+        <translation>此参考线集来自项目。保存到你的参考线集后才能编辑。</translation>
     </message>
 </context>
 <context>
     <name>GuidesPopoverSetRow</name>
     <message>
         <source>Show this set</source>
-        <translation>显示此集合</translation>
+        <translation>显示此参考线集</translation>
     </message>
     <message>
         <source>Built-in</source>
@@ -9607,7 +9607,7 @@
     </message>
     <message>
         <source>Nothing to undo yet. Your edits will be listed here.</source>
-        <translation>尚无撤消项。您的编辑操作将在此列出。</translation>
+        <translation>暂无可撤销的操作。你的编辑将显示在这里。</translation>
     </message>
 </context>
 <context>
@@ -9635,7 +9635,7 @@
     <message numerus="yes">
         <source>%n selected frame(s) after a gap in the numbering will be skipped.</source>
         <translation>
-            <numerusform>编号中断之后的 %n 个所选帧将被跳过。</numerusform>
+            <numerusform>编号不连续处之后的 %n 个所选帧将被跳过。</numerusform>
         </translation>
     </message>
     <message>
@@ -9644,18 +9644,18 @@
     </message>
     <message>
         <source>Import as stills</source>
-        <translation>作为静止图像导入</translation>
+        <translation>导入为静帧</translation>
     </message>
     <message>
         <source>Import as sequence</source>
-        <translation>作为序列导入</translation>
+        <translation>导入为序列</translation>
     </message>
 </context>
 <context>
     <name>JobRegistry</name>
     <message>
         <source>Queued</source>
-        <translation>已排队</translation>
+        <translation>排队中</translation>
     </message>
 </context>
 <context>
@@ -9678,11 +9678,11 @@
     </message>
     <message>
         <source>Tilt X</source>
-        <translation>倾斜 X</translation>
+        <translation>X 轴倾斜</translation>
     </message>
     <message>
         <source>Tilt Y</source>
-        <translation>倾斜 Y</translation>
+        <translation>Y 轴倾斜</translation>
     </message>
     <message>
         <source>Depth</source>
@@ -9750,7 +9750,7 @@
     </message>
     <message>
         <source>Keyframes added</source>
-        <translation>关键帧已添加</translation>
+        <translation>已添加关键帧</translation>
     </message>
     <message>
         <source>Remove keyframes</source>
@@ -9758,7 +9758,7 @@
     </message>
     <message>
         <source>Keyframes removed</source>
-        <translation>关键帧已移除</translation>
+        <translation>已移除关键帧</translation>
     </message>
     <message>
         <source>Delete keyframes</source>
@@ -9766,7 +9766,7 @@
     </message>
     <message>
         <source>Keyframes deleted</source>
-        <translation>关键帧已删除</translation>
+        <translation>已删除关键帧</translation>
     </message>
     <message>
         <source>Clear keyframes</source>
@@ -9774,7 +9774,7 @@
     </message>
     <message>
         <source>Keyframes cleared</source>
-        <translation>关键帧已清除</translation>
+        <translation>已清除关键帧</translation>
     </message>
     <message>
         <source>Move keyframes</source>
@@ -9782,7 +9782,7 @@
     </message>
     <message>
         <source>Keyframes moved</source>
-        <translation>关键帧已移动</translation>
+        <translation>已移动关键帧</translation>
     </message>
     <message>
         <source>Stretch keyframes</source>
@@ -9794,7 +9794,7 @@
     </message>
     <message>
         <source>Easing set</source>
-        <translation>缓动已设置</translation>
+        <translation>已设置缓动</translation>
     </message>
     <message>
         <source>Paste keyframes</source>
@@ -9802,12 +9802,12 @@
     </message>
     <message>
         <source>Keyframes pasted</source>
-        <translation>关键帧已粘贴</translation>
+        <translation>已粘贴关键帧</translation>
     </message>
     <message numerus="yes">
         <source>%n keyframe(s) not pasted</source>
         <translation>
-            <numerusform>%n 个关键帧未粘贴</numerusform>
+            <numerusform>%n 个关键帧未能粘贴</numerusform>
         </translation>
     </message>
 </context>
@@ -9815,11 +9815,11 @@
     <name>KeyframeGraph</name>
     <message>
         <source>X position</source>
-        <translation>X 坐标</translation>
+        <translation>X 位置</translation>
     </message>
     <message>
         <source>Y position</source>
-        <translation>Y 坐标</translation>
+        <translation>Y 位置</translation>
     </message>
     <message>
         <source>Width</source>
@@ -9835,11 +9835,11 @@
     </message>
     <message>
         <source>Tilt X</source>
-        <translation>倾斜 X</translation>
+        <translation>X 倾斜</translation>
     </message>
     <message>
         <source>Tilt Y</source>
-        <translation>倾斜 Y</translation>
+        <translation>Y 倾斜</translation>
     </message>
     <message>
         <source>Depth</source>
@@ -9883,7 +9883,7 @@
     </message>
     <message>
         <source>%1 (keyframes off)</source>
-        <translation>%1 (关键帧已关闭)</translation>
+        <translation>%1（关键帧已关闭）</translation>
     </message>
     <message>
         <source>%1 — click to hide this curve</source>
@@ -9899,7 +9899,7 @@
     </message>
     <message>
         <source>Straight</source>
-        <translation>直线/线性</translation>
+        <translation>直线</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -9911,7 +9911,7 @@
     </message>
     <message>
         <source>Jump</source>
-        <translation>跳跃/突变</translation>
+        <translation>跳变</translation>
     </message>
 </context>
 <context>
@@ -9922,11 +9922,11 @@
     </message>
     <message>
         <source>Collapse curve editor to compact view (88px)</source>
-        <translation>折叠曲线编辑器为紧凑视图 (88px)</translation>
+        <translation>将曲线编辑器折叠为紧凑视图（88px）</translation>
     </message>
     <message>
         <source>Expand curve editor to view and edit Bezier handles (180px)</source>
-        <translation>展开曲线编辑器以查看和编辑贝塞尔控制柄 (180px)</translation>
+        <translation>展开曲线编辑器以查看和编辑贝塞尔手柄（180px）</translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -9938,15 +9938,15 @@
     </message>
     <message>
         <source>Find the beat and show markers</source>
-        <translation>检测节拍并显示标记</translation>
+        <translation>查找节拍并显示标记</translation>
     </message>
     <message>
         <source>Hide hits</source>
-        <translation>隐藏重音点</translation>
+        <translation>隐藏拍点</translation>
     </message>
     <message>
         <source>Find beats and hits in the audio under this clip</source>
-        <translation>在此剪辑下方的音频中检测节拍和重音</translation>
+        <translation>查找此片段音频中的节拍与拍点</translation>
     </message>
 </context>
 <context>
@@ -9970,15 +9970,15 @@
     </message>
     <message>
         <source>Expand for handles</source>
-        <translation>展开以查看控制柄</translation>
+        <translation>展开以显示手柄</translation>
     </message>
     <message>
         <source> BPM</source>
-        <translation> BPM</translation>
+        <translation>BPM</translation>
     </message>
     <message>
         <source> · no beat found</source>
-        <translation> · 未检测到节拍</translation>
+        <translation>· 未找到节拍</translation>
     </message>
 </context>
 <context>
@@ -9992,11 +9992,11 @@
     <name>KeyframesContextMenu</name>
     <message>
         <source>Straight</source>
-        <translation>直线/线性</translation>
+        <translation>直线</translation>
     </message>
     <message>
         <source>Jump</source>
-        <translation>跳跃/突变</translation>
+        <translation>跳变</translation>
     </message>
     <message>
         <source>Easing…</source>
@@ -10008,7 +10008,7 @@
     </message>
     <message>
         <source>Paste at playhead</source>
-        <translation>在播放头处粘贴</translation>
+        <translation>粘贴到播放头</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -10016,11 +10016,11 @@
     </message>
     <message>
         <source>Select all keys in row</source>
-        <translation>选择该行中的所有关键帧</translation>
+        <translation>全选该行关键帧</translation>
     </message>
     <message>
         <source>Set playhead here</source>
-        <translation>将播放头移至此处</translation>
+        <translation>将播放头移到此处</translation>
     </message>
 </context>
 <context>
@@ -10045,15 +10045,15 @@
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
-        <translation>选择一个剪辑以编辑其关键帧</translation>
+        <translation>选择一个片段以编辑其关键帧</translation>
     </message>
     <message>
         <source>No animated properties on this clip</source>
-        <translation>此剪辑上没有动画属性</translation>
+        <translation>此片段没有动画属性</translation>
     </message>
     <message>
         <source>This clip has no animatable properties</source>
-        <translation>此剪辑没有可进行动画处理的属性</translation>
+        <translation>此片段无可设置动画的属性</translation>
     </message>
 </context>
 <context>
@@ -10067,19 +10067,19 @@
     <name>KeyframesToolbar</name>
     <message>
         <source>Previous keyframe (Alt+Left)</source>
-        <translation>上一个关键帧 (Alt+左方向键)</translation>
+        <translation>上一个关键帧（Alt+Left）</translation>
     </message>
     <message>
         <source>Remove keyframes at the playhead (K)</source>
-        <translation>移除播放头处的关键帧 (K)</translation>
+        <translation>移除播放头处的关键帧（K）</translation>
     </message>
     <message>
         <source>Add keyframes at the playhead (K)</source>
-        <translation>在播放头处添加关键帧 (K)</translation>
+        <translation>在播放头处添加关键帧（K）</translation>
     </message>
     <message>
         <source>Next keyframe (Alt+Right)</source>
-        <translation>下一个关键帧 (Alt+右方向键)</translation>
+        <translation>下一个关键帧（Alt+Right）</translation>
     </message>
     <message>
         <source>Clear all keyframes of the selected properties</source>
@@ -10087,11 +10087,11 @@
     </message>
     <message>
         <source>Lanes</source>
-        <translation>通道</translation>
+        <translation>属性栏</translation>
     </message>
     <message>
         <source>Show keyframes as diamonds on lanes</source>
-        <translation>在通道上以菱形显示关键帧</translation>
+        <translation>在属性栏上以菱形显示关键帧</translation>
     </message>
     <message>
         <source>Curves</source>
@@ -10099,11 +10099,11 @@
     </message>
     <message>
         <source>Show keyframes as value curves</source>
-        <translation>以数值曲线形式显示关键帧</translation>
+        <translation>以数值曲线显示关键帧</translation>
     </message>
     <message>
         <source>Normalize</source>
-        <translation>正规化</translation>
+        <translation>归一化</translation>
     </message>
     <message>
         <source>Scale every curve to fill the height</source>
@@ -10111,15 +10111,15 @@
     </message>
     <message>
         <source>Fit the clip in view</source>
-        <translation>使剪辑适应视图</translation>
+        <translation>缩放至完整显示片段</translation>
     </message>
     <message>
         <source>Fit the selected keyframes in view</source>
-        <translation>使所选关键帧适应视图</translation>
+        <translation>缩放至完整显示所选关键帧</translation>
     </message>
     <message>
         <source>Animated only</source>
-        <translation>仅显示已动画属性</translation>
+        <translation>仅显示动画属性</translation>
     </message>
     <message>
         <source>Hide properties that have no keyframes</source>
@@ -10150,7 +10150,7 @@
     </message>
     <message>
         <source>Add a keyframe for %1 at the playhead</source>
-        <translation>在播放头处为 %1 添加关键帧</translation>
+        <translation>为 %1 在播放头处添加关键帧</translation>
     </message>
     <message>
         <source>Next keyframe</source>
@@ -10165,7 +10165,7 @@
     <name>KeyframesValueScrubber</name>
     <message>
         <source>Change %1</source>
-        <translation>更改 %1</translation>
+        <translation>调整 %1</translation>
     </message>
 </context>
 <context>
@@ -10188,18 +10188,18 @@
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
-        <translation>菜单与标签的语言。立即生效。</translation>
+        <translation>菜单和标签的语言。立即生效。</translation>
     </message>
     <message>
         <source>Pick the language for menus and labels. You can change this later.</source>
-        <translation>选择菜单与标签的语言。您可以稍后更改。</translation>
+        <translation>选择菜单和标签的语言，之后可随时更改。</translation>
     </message>
 </context>
 <context>
     <name>LayoutChooserDialog</name>
     <message>
         <source>Choose your video layout</source>
-        <translation>选择视频布局</translation>
+        <translation>选择你的视频版式</translation>
     </message>
     <message>
         <source>Continue</source>
@@ -10211,15 +10211,15 @@
     </message>
     <message>
         <source>Decide later</source>
-        <translation>稍后决定</translation>
+        <translation>以后再选</translation>
     </message>
     <message>
         <source>Pick a platform template and quality. This updates the project video size.</source>
-        <translation>选择平台模板和画质。这将更新项目的视频尺寸。</translation>
+        <translation>选择平台模板和画质。这将更新项目视频尺寸。</translation>
     </message>
     <message>
         <source>Pick a category, then a template and quality. You can change this anytime in Settings → Choose layout.</source>
-        <translation>选择类别，然后选择模板和画质。您可以随时在“设置 → 选择布局”中更改。</translation>
+        <translation>选择分类、模板和画质。之后可在 设置 → 选择版式 中随时更改。</translation>
     </message>
     <message>
         <source>Template</source>
@@ -10262,39 +10262,39 @@
     </message>
     <message>
         <source>YT Video</source>
-        <translation>YouTube 视频</translation>
+        <translation>YT 视频</translation>
     </message>
     <message>
         <source>YT Short</source>
-        <translation>YouTube Short</translation>
+        <translation>YT Shorts</translation>
     </message>
     <message>
         <source>IG Reel</source>
-        <translation>Instagram Reel</translation>
+        <translation>IG Reels</translation>
     </message>
     <message>
         <source>IG Story</source>
-        <translation>Instagram Story</translation>
+        <translation>IG 快拍</translation>
     </message>
     <message>
         <source>IG Post</source>
-        <translation>Instagram 帖子</translation>
+        <translation>IG 帖子</translation>
     </message>
     <message>
         <source>IG Feed</source>
-        <translation>Instagram 动态</translation>
+        <translation>IG 动态</translation>
     </message>
     <message>
         <source>FB Reel</source>
-        <translation>Facebook Reel</translation>
+        <translation>FB Reels</translation>
     </message>
     <message>
         <source>FB Video</source>
-        <translation>Facebook 视频</translation>
+        <translation>FB 视频</translation>
     </message>
     <message>
         <source>FB Story</source>
-        <translation>Facebook 快拍</translation>
+        <translation>FB 快拍</translation>
     </message>
     <message>
         <source>Snapchat</source>
@@ -10310,7 +10310,7 @@
     </message>
     <message>
         <source>Square</source>
-        <translation>正方形</translation>
+        <translation>方形</translation>
     </message>
     <message>
         <source>Landscape</source>
@@ -10353,15 +10353,15 @@
     <name>LooksPanel</name>
     <message>
         <source>Looks</source>
-        <translation>外观</translation>
+        <translation>调色风格</translation>
     </message>
     <message>
         <source>My Looks</source>
-        <translation>我的外观</translation>
+        <translation>我的调色风格</translation>
     </message>
     <message>
         <source>Import looks</source>
-        <translation>导入外观</translation>
+        <translation>导入调色风格</translation>
     </message>
     <message>
         <source>LUT files (*.cube)</source>
@@ -10369,11 +10369,11 @@
     </message>
     <message>
         <source>Search looks</source>
-        <translation>搜索外观</translation>
+        <translation>搜索调色风格</translation>
     </message>
     <message>
         <source>Look Intensity</source>
-        <translation>外观强度</translation>
+        <translation>调色强度</translation>
     </message>
     <message>
         <source>Adjust %1</source>
@@ -10381,7 +10381,7 @@
     </message>
     <message>
         <source>Get free looks</source>
-        <translation>获取免费外观</translation>
+        <translation>获取免费调色风格</translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -10389,11 +10389,11 @@
     </message>
     <message>
         <source>Import .cube looks</source>
-        <translation>导入 .cube 外观</translation>
+        <translation>导入 .cube 调色风格</translation>
     </message>
     <message>
         <source>Missing look</source>
-        <translation>外观缺失</translation>
+        <translation>调色风格缺失</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -10401,15 +10401,15 @@
     </message>
     <message>
         <source>No looks match “%1”.</source>
-        <translation>没有与“%1”匹配的外观。</translation>
+        <translation>没有符合“%1”的调色风格。</translation>
     </message>
     <message>
         <source>No favorites yet. Star looks to save them here.</source>
-        <translation>暂无收藏项。将外观标星即可保存在此处。</translation>
+        <translation>暂无收藏。点星收藏调色风格后即会显示在此处。</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
-        <translation>此类别中暂无内容。</translation>
+        <translation>该分类下暂无内容。</translation>
     </message>
     <message>
         <source>%1 is empty</source>
@@ -10417,7 +10417,7 @@
     </message>
     <message>
         <source>Import a .cube file to add your own.</source>
-        <translation>导入 .cube 文件以添加您自己的外观。</translation>
+        <translation>导入 .cube 文件即可添加自己的调色风格。</translation>
     </message>
     <message>
         <source>Import</source>
@@ -10425,29 +10425,29 @@
     </message>
     <message>
         <source>No looks</source>
-        <translation>无外观</translation>
+        <translation>暂无调色风格</translation>
     </message>
     <message>
         <source>Download a free pack of ready-made looks, or import your own .cube files.</source>
-        <translation>下载包含现成外观的免费扩展包，或导入您自己的 .cube 文件。</translation>
+        <translation>下载免费现成的调色风格包，或导入自己的 .cube 文件。</translation>
     </message>
     <message>
         <source>Select a clip to try looks on it</source>
-        <translation>选择剪辑以预览外观效果</translation>
+        <translation>选择一个片段以试色调色风格</translation>
     </message>
     <message>
         <source>Remove this look?</source>
-        <translation>移除此外观？</translation>
+        <translation>移除此调色风格？</translation>
     </message>
     <message numerus="yes">
         <source>“%1” is used by %n clip(s). They will show it as missing until it is imported again.</source>
         <translation>
-            <numerusform>“%1”正在被 %n 个剪辑使用。在重新导入之前，这些剪辑将显示为外观缺失。</numerusform>
+            <numerusform>%n 个片段正在使用“%1”。在重新导入之前，它们会显示为缺失。</numerusform>
         </translation>
     </message>
     <message>
         <source>Rename look</source>
-        <translation>重命名外观</translation>
+        <translation>重命名调色风格</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -10462,7 +10462,7 @@
     </message>
     <message>
         <source>Still opening a project — try again in a moment.</source>
-        <translation>项目仍在打开中 — 请稍后重试。</translation>
+        <translation>正在打开项目——请稍后重试。</translation>
     </message>
     <message>
         <source>Open Project</source>
@@ -10474,7 +10474,7 @@
     </message>
     <message>
         <source>Already checking for updates…</source>
-        <translation>已在检查更新中…</translation>
+        <translation>已在检查更新…</translation>
     </message>
     <message>
         <source>Checking for updates…</source>
@@ -10482,7 +10482,7 @@
     </message>
     <message>
         <source>Links can’t be opened in this layout.</source>
-        <translation>在此布局中无法打开链接。</translation>
+        <translation>此版式下无法打开链接。</translation>
     </message>
     <message>
         <source>Export finished.</source>
@@ -10514,7 +10514,7 @@
     </message>
     <message>
         <source>Imported from the marketplace.</source>
-        <translation>已从素材集市导入。</translation>
+        <translation>已从素材市场导入。</translation>
     </message>
 </context>
 <context>
@@ -10541,7 +10541,7 @@
     </message>
     <message>
         <source>Save Project &amp;JSON…</source>
-        <translation>保存项目 &amp;JSON…</translation>
+        <translation>保存项目 JSON(&amp;J)…</translation>
     </message>
     <message>
         <source>Open Project JSON…</source>
@@ -10565,7 +10565,7 @@
     </message>
     <message>
         <source>&amp;Undo</source>
-        <translation>撤消(&amp;U)</translation>
+        <translation>撤销(&amp;U)</translation>
     </message>
     <message>
         <source>&amp;Redo</source>
@@ -10593,15 +10593,15 @@
     </message>
     <message>
         <source>Clear Selection</source>
-        <translation>清除选择</translation>
+        <translation>取消选择</translation>
     </message>
     <message>
         <source>Split Clip</source>
-        <translation>分割剪辑</translation>
+        <translation>分割片段</translation>
     </message>
     <message>
         <source>Duplicate Clip</source>
-        <translation>创建剪辑副本</translation>
+        <translation>复制片段副本</translation>
     </message>
     <message>
         <source>Copy Effects</source>
@@ -10645,27 +10645,27 @@
     </message>
     <message>
         <source>Previous Cut Point</source>
-        <translation>上一个剪切点</translation>
+        <translation>上一个剪辑点</translation>
     </message>
     <message>
         <source>Next Cut Point</source>
-        <translation>下一个剪切点</translation>
+        <translation>下一个剪辑点</translation>
     </message>
     <message>
         <source>Go to Start of Timeline</source>
-        <translation>转到时间线起始处</translation>
+        <translation>转到时间线开头</translation>
     </message>
     <message>
         <source>Toggle Bookmark</source>
-        <translation>切换书签</translation>
+        <translation>切换标记</translation>
     </message>
     <message>
         <source>Next Bookmark</source>
-        <translation>下一个书签</translation>
+        <translation>下一个标记</translation>
     </message>
     <message>
         <source>Previous Bookmark</source>
-        <translation>上一个书签</translation>
+        <translation>上一个标记</translation>
     </message>
     <message>
         <source>&amp;View</source>
@@ -10689,7 +10689,7 @@
     </message>
     <message>
         <source>Switch to Mobile Layout…</source>
-        <translation>切换到移动端布局…</translation>
+        <translation>切换到移动版式…</translation>
     </message>
     <message>
         <source>&amp;Window</source>
@@ -10725,11 +10725,11 @@
     </message>
     <message>
         <source>Keyboard Shortcuts</source>
-        <translation>键盘快捷键</translation>
+        <translation>快捷键</translation>
     </message>
     <message>
         <source>Extras…</source>
-        <translation>附加项…</translation>
+        <translation>附加内容…</translation>
     </message>
     <message>
         <source>Debug Info…</source>
@@ -10740,11 +10740,11 @@
     <name>MarketClient</name>
     <message>
         <source>Marketplace is not available in this build.</source>
-        <translation>当前版本不支持素材集市。</translation>
+        <translation>此版本不支持素材市场。</translation>
     </message>
     <message>
         <source>Waiting…</source>
-        <translation>正在等待…</translation>
+        <translation>等待中…</translation>
     </message>
     <message>
         <source>Starting…</source>
@@ -10760,11 +10760,11 @@
     </message>
     <message>
         <source>Could not connect the marketplace account.</source>
-        <translation>无法连接素材集市账号。</translation>
+        <translation>无法连接素材市场帐户。</translation>
     </message>
     <message>
         <source>Nothing is available from the marketplace right now.</source>
-        <translation>素材集市当前暂无可用内容。</translation>
+        <translation>素材市场当前暂无可获取的内容。</translation>
     </message>
     <message>
         <source>Downloading…</source>
@@ -10776,7 +10776,7 @@
     </message>
     <message>
         <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>下载的文件与素材集市发送的不一致。</translation>
+        <translation>下载的文件与素材市场发送的内容不符</translation>
     </message>
     <message>
         <source>Importing…</source>
@@ -10784,90 +10784,90 @@
     </message>
     <message>
         <source>Could not import that file.</source>
-        <translation>无法导入该文件。</translation>
+        <translation>无法导入该文件</translation>
     </message>
     <message>
         <source>In the media bin</source>
-        <translation>在素材箱中</translation>
+        <translation>在媒体库中</translation>
     </message>
     <message>
         <source>Marketplace account connected.</source>
-        <translation>素材集市账号已连接。</translation>
+        <translation>素材市场帐户已连接</translation>
     </message>
     <message>
         <source>Daily limit reached for this source. Try again later.</source>
-        <translation>该源已达每日限额。请稍后再试。</translation>
+        <translation>该来源已达到每日上限，请稍后重试</translation>
     </message>
     <message>
         <source>This item needs a connected account.</source>
-        <translation>此项目需要连接账号。</translation>
+        <translation>此条目需要连接帐户</translation>
     </message>
     <message>
         <source>Not enough coins.</source>
-        <translation>硬币不足。</translation>
+        <translation>金币不足</translation>
     </message>
     <message>
         <source>This source is temporarily unavailable.</source>
-        <translation>该源暂时不可用。</translation>
+        <translation>该来源暂时不可用</translation>
     </message>
     <message>
         <source>That item is no longer available.</source>
-        <translation>该项目已不再可用。</translation>
+        <translation>该条目已不可用</translation>
     </message>
     <message>
         <source>Could not reach the marketplace.</source>
-        <translation>无法连接素材集市。</translation>
+        <translation>无法连接素材市场</translation>
     </message>
     <message>
         <source>Could not prepare that file.</source>
-        <translation>无法准备该文件。</translation>
+        <translation>无法准备该文件</translation>
     </message>
     <message>
         <source>Could not complete that request.</source>
-        <translation>无法完成该请求。</translation>
+        <translation>无法完成该请求</translation>
     </message>
     <message>
         <source>The marketplace took too long to answer. Try again.</source>
-        <translation>素材集市响应超时。请重试。</translation>
+        <translation>素材市场响应超时，请重试</translation>
     </message>
     <message>
         <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>无法连接素材集市。请检查您的连接并重试。</translation>
+        <translation>无法连接素材市场，请检查网络连接后重试</translation>
     </message>
 </context>
 <context>
     <name>MarketConsentPanel</name>
     <message>
         <source>The marketplace is experimental</source>
-        <translation>素材集市为实验性功能</translation>
+        <translation>素材市场为实验性功能</translation>
     </message>
     <message>
         <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>此功能仍在构建中，可能会随时更改或停止工作。在使用之前，请了解其支持和不支持的操作。</translation>
+        <translation>此功能仍在开发中，可能随时更改或停止工作。使用前请先阅读它能做什么、不能做什么</translation>
     </message>
     <message>
         <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>您每天可获得有限的下载次数。限额较小，可能会在不另行通知的情况下变动，用尽后需等待恢复。</translation>
+        <translation>每天可下载的数量有限。上限较小，可能随时更改，用完后需要等待</translation>
     </message>
     <message>
         <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>我们无法保证任何源始终可用。源可能会随时在无预警的情况下被移除、受到速率限制或因目标网站变动而失效。</translation>
+        <translation>我们无法保证任何来源始终可用。来源可能随时被移除、限速，或因所抓取的网站而发生故障，且不会提前通知</translation>
     </message>
     <message>
         <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>我们无法保证下载必定成功、完成或提供所选画质。部分项目可能会直接失败。</translation>
+        <translation>我们无法保证下载一定成功、完成，或达到你选择的画质。有些条目就是会失败</translation>
     </message>
     <message>
         <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>此处的所有内容均来自第三方。Drift 不托管、不拥有也不审查这些内容 — 您有责任确保自己拥有使用所下载内容的权利。</translation>
+        <translation>这里的所有内容均来自第三方。Drift 不托管、不拥有也不审核它们——请自行确保你有权使用下载的内容</translation>
     </message>
     <message>
         <source>I understand</source>
-        <translation>我了解</translation>
+        <translation>我已理解</translation>
     </message>
     <message>
         <source>Continue to the marketplace</source>
-        <translation>继续前往素材集市</translation>
+        <translation>继续前往素材市场</translation>
     </message>
 </context>
 <context>
@@ -10885,15 +10885,15 @@
     <name>MarketTab</name>
     <message>
         <source>Stock</source>
-        <translation>素材</translation>
+        <translation>图库</translation>
     </message>
     <message>
         <source>Marketplace unavailable</source>
-        <translation>素材集市不可用</translation>
+        <translation>素材市场不可用</translation>
     </message>
     <message>
         <source>This build does not include the marketplace.</source>
-        <translation>此版本未包含素材集市。</translation>
+        <translation>此版本不包含素材市场</translation>
     </message>
     <message>
         <source>Search assets</source>
@@ -10917,15 +10917,15 @@
     </message>
     <message>
         <source>Stock footage</source>
-        <translation>视频素材</translation>
+        <translation>库存视频</translation>
     </message>
     <message>
         <source>Loading sources…</source>
-        <translation>正在加载源…</translation>
+        <translation>正在加载来源…</translation>
     </message>
     <message>
         <source>Couldn’t reach the marketplace</source>
-        <translation>无法连接素材集市</translation>
+        <translation>无法连接素材市场</translation>
     </message>
     <message>
         <source>Try again</source>
@@ -11015,11 +11015,11 @@
     <name>MaskOverlayEmptyHint</name>
     <message>
         <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
-        <translation>从“蒙版”选项卡将蒙版拖到剪辑上以在此编辑</translation>
+        <translation>将蒙版从“蒙版”标签页拖到片段上即可在此处编辑</translation>
     </message>
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
-        <translation>选择播放头处的剪辑以编辑其蒙版</translation>
+        <translation>选中播放头处的片段以编辑其蒙版</translation>
     </message>
 </context>
 <context>
@@ -11047,19 +11047,19 @@
     <name>MaskPresetCard</name>
     <message>
         <source>%1 — click to apply, or drag onto a clip</source>
-        <translation>%1 — 点击应用，或拖放到剪辑上</translation>
+        <translation>%1 — 点击应用，或拖到片段上</translation>
     </message>
     <message>
         <source>%1 — drag onto a clip</source>
-        <translation>%1 — 拖放到剪辑上</translation>
+        <translation>%1 — 拖到片段上</translation>
     </message>
     <message>
         <source>Select a clip first, or drag the mask onto one</source>
-        <translation>请先选择剪辑，或将蒙版拖放到剪辑上</translation>
+        <translation>请先选择一个片段，或将蒙版拖到片段上</translation>
     </message>
     <message>
         <source>Apply to selected clip</source>
-        <translation>应用到所选剪辑</translation>
+        <translation>应用到所选片段</translation>
     </message>
 </context>
 <context>
@@ -11522,7 +11522,7 @@
     </message>
     <message>
         <source>Bars</source>
-        <translation>条纹</translation>
+        <translation>条形</translation>
     </message>
     <message>
         <source>Freeform</source>
@@ -11530,15 +11530,15 @@
     </message>
     <message>
         <source>Combine</source>
-        <translation>合并</translation>
+        <translation>组合</translation>
     </message>
     <message>
         <source>Add</source>
-        <translation>相加</translation>
+        <translation>添加</translation>
     </message>
     <message>
         <source>Subtract</source>
-        <translation>相减</translation>
+        <translation>减去</translation>
     </message>
     <message>
         <source>Intersect</source>
@@ -11585,11 +11585,11 @@
     <name>MasksTab</name>
     <message>
         <source>Click to apply to the selection, or drag onto a clip</source>
-        <translation>点击应用到所选内容，或拖放到剪辑上</translation>
+        <translation>点击应用到所选内容，或拖到片段上</translation>
     </message>
     <message>
         <source>Select a clip, or drag a mask onto one</source>
-        <translation>选择剪辑，或将蒙版拖放到剪辑上</translation>
+        <translation>选择一个片段，或将蒙版拖到片段上</translation>
     </message>
     <message>
         <source>Subject</source>
@@ -11597,7 +11597,7 @@
     </message>
     <message>
         <source>Cut out subject…</source>
-        <translation>主体抠图…</translation>
+        <translation>抠出主体…</translation>
     </message>
     <message>
         <source>Trace the subject and pin the result as a mask layer</source>
@@ -11605,11 +11605,11 @@
     </message>
     <message>
         <source>Select a video clip first</source>
-        <translation>请先选择视频剪辑</translation>
+        <translation>请先选择视频片段</translation>
     </message>
     <message>
         <source>Download people cutout (about 20 MB)</source>
-        <translation>下载人物抠图模型（约 20 MB）</translation>
+        <translation>下载人物抠图（约 20 MB）</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
@@ -11617,11 +11617,11 @@
     </message>
     <message>
         <source>Add click-to-pick cutout (about 190 MB)</source>
-        <translation>添加点击选取抠图模型（约 190 MB）</translation>
+        <translation>添加点击选取抠图（约 190 MB）</translation>
     </message>
     <message>
         <source>Image or video as mask…</source>
-        <translation>使用图像或视频作为蒙版…</translation>
+        <translation>图像或视频作为蒙版…</translation>
     </message>
     <message>
         <source>Use a file&apos;s own pixels as the coverage map</source>
@@ -11648,7 +11648,7 @@
     </message>
     <message>
         <source>Import files or drop them here, then drag them onto the timeline. Right-click a clip to preview and trim it first.</source>
-        <translation>导入文件或将其拖放到此处，然后拖到时间线上。右键单击剪辑可先进行预览和修剪。</translation>
+        <translation>导入文件或拖放到此处，然后拖到时间线上。右键点击片段可先预览和修剪</translation>
     </message>
     <message>
         <source>Import media</source>
@@ -11684,7 +11684,7 @@
     </message>
     <message>
         <source>glTF binary (.glb) · Gaussian splats (.sog, .ply, .zip)</source>
-        <translation>glTF 二进制 (.glb) · 高斯泼溅 (.sog, .ply, .zip)</translation>
+        <translation>glTF 二进制（.glb）· 高斯泼溅（.sog、.ply、.zip）</translation>
     </message>
     <message>
         <source>PDF</source>
@@ -11692,7 +11692,7 @@
     </message>
     <message>
         <source>PDF (needs the PDF Viewer addon)</source>
-        <translation>PDF（需要 PDF 查看器附加组件）</translation>
+        <translation>PDF（需要 PDF 查看器附加包）</translation>
     </message>
 </context>
 <context>
@@ -11718,14 +11718,14 @@
     <name>MediaAssetsGridCard</name>
     <message>
         <source>%1 — drag to the timeline, right-click to preview</source>
-        <translation>%1 — 拖动到时间线，右键单击以预览</translation>
+        <translation>%1 — 拖到时间线，右键预览</translation>
     </message>
 </context>
 <context>
     <name>MediaAssetsGridFrame</name>
     <message>
         <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
-        <translation>未找到媒体文件。请对此项目使用“替换媒体…”重新指向该文件。</translation>
+        <translation>找不到媒体文件。使用此条目上的“替换媒体…”重新指向该文件</translation>
     </message>
     <message>
         <source>Added</source>
@@ -11733,7 +11733,7 @@
     </message>
     <message>
         <source>Add to timeline</source>
-        <translation>加入进轨道内</translation>
+        <translation>添加到时间线</translation>
     </message>
 </context>
 <context>
@@ -11748,7 +11748,7 @@
     </message>
     <message>
         <source>Using a proxy file found next to the original</source>
-        <translation>正在使用在原文件旁找到的代理文件</translation>
+        <translation>使用原文件旁边的代理文件</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11760,36 +11760,36 @@
     </message>
     <message>
         <source>Edit-friendly</source>
-        <translation>适合编辑</translation>
+        <translation>便于剪辑</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
-        <translation>已转换为恒定帧率以实现流畅编辑</translation>
+        <translation>已转换为恒定帧率，剪辑更流畅</translation>
     </message>
 </context>
 <context>
     <name>MediaAssetsItemMenu</name>
     <message>
         <source>Open composite</source>
-        <translation>打开复合剪辑</translation>
+        <translation>打开合成</translation>
     </message>
     <message numerus="yes">
         <source>Add %n items to timeline</source>
         <translation>
-            <numerusform>添加 %n 项到时间线</numerusform>
+            <numerusform>将 %n 个条目添加到时间线</numerusform>
         </translation>
     </message>
     <message>
         <source>Add to timeline</source>
-        <translation>加入进轨道内</translation>
+        <translation>添加到时间线</translation>
     </message>
     <message>
         <source>Trim, crop and upscale…</source>
-        <translation>修剪、裁剪与超分辨率放大…</translation>
+        <translation>修剪、裁剪和放大…</translation>
     </message>
     <message>
         <source>Preview and edit…</source>
-        <translation>预览与编辑…</translation>
+        <translation>预览和编辑…</translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -11818,7 +11818,7 @@
     <message numerus="yes">
         <source>Move %n items to folder…</source>
         <translation>
-            <numerusform>移动 %n 项到文件夹…</numerusform>
+            <numerusform>将 %n 个条目移至文件夹…</numerusform>
         </translation>
     </message>
     <message>
@@ -11851,7 +11851,7 @@
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
-        <translation>转换为适合编辑的格式</translation>
+        <translation>转换为便于剪辑的格式</translation>
     </message>
     <message>
         <source>Export image…</source>
@@ -11864,7 +11864,7 @@
     <message numerus="yes">
         <source>Remove %n items from project</source>
         <translation>
-            <numerusform>从项目中移除 %n 项</numerusform>
+            <numerusform>从项目中移除 %n 个条目</numerusform>
         </translation>
     </message>
     <message>
@@ -11884,7 +11884,7 @@
     </message>
     <message>
         <source>Using a proxy file found next to the original</source>
-        <translation>正在使用在原文件旁找到的代理文件</translation>
+        <translation>使用原文件旁边的代理文件</translation>
     </message>
     <message>
         <source>Mask</source>
@@ -11896,22 +11896,22 @@
     </message>
     <message>
         <source>Edit-friendly</source>
-        <translation>适合编辑</translation>
+        <translation>便于剪辑</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
-        <translation>已转换为恒定帧率以实现流畅编辑</translation>
+        <translation>已转换为恒定帧率，剪辑更流畅</translation>
     </message>
 </context>
 <context>
     <name>MediaAssetsListRow</name>
     <message>
         <source>%1 — drag to the timeline, right-click to preview</source>
-        <translation>%1 — 拖动到时间线，右键单击以预览</translation>
+        <translation>%1 — 拖到时间线，右键预览</translation>
     </message>
     <message>
         <source>Add to timeline</source>
-        <translation>加入进轨道内</translation>
+        <translation>添加到时间线</translation>
     </message>
     <message>
         <source>Added</source>
@@ -11930,7 +11930,7 @@
     <name>MediaAssetsListThumb</name>
     <message>
         <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
-        <translation>未找到媒体文件。请对此项目使用“替换媒体…”重新指向该文件。</translation>
+        <translation>找不到媒体文件。使用此条目上的“替换媒体…”重新指向该文件</translation>
     </message>
 </context>
 <context>
@@ -11953,11 +11953,11 @@
     </message>
     <message>
         <source>Try a different name.</source>
-        <translation>请尝试其他名称。</translation>
+        <translation>试试其他名称</translation>
     </message>
     <message>
         <source>Creating proxy for %1 (%2 more)</source>
-        <translation>正在为 %1 创建代理（还剩 %2 个）</translation>
+        <translation>正在为 %1 创建代理（还有 %2 个）</translation>
     </message>
     <message>
         <source>Creating proxy for %1</source>
@@ -11969,7 +11969,7 @@
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format</source>
-        <translation>正在将 %1 转换为适合编辑的格式</translation>
+        <translation>正在将 %1 转换为便于剪辑的格式</translation>
     </message>
     <message>
         <source>Stop converting</source>
@@ -11981,7 +11981,7 @@
     </message>
     <message>
         <source>Drag media here, or import more.</source>
-        <translation>将媒体拖到此处，或导入更多媒体。</translation>
+        <translation>将媒体拖到这里，或导入更多</translation>
     </message>
 </context>
 <context>
@@ -12011,41 +12011,41 @@
     <name>MediaBinController</name>
     <message>
         <source>Folder created</source>
-        <translation>文件夹已创建</translation>
+        <translation>已创建文件夹</translation>
     </message>
     <message>
         <source>Folder renamed</source>
-        <translation>文件夹已重命名</translation>
+        <translation>已重命名文件夹</translation>
     </message>
     <message>
         <source>Folder moved</source>
-        <translation>文件夹已移动</translation>
+        <translation>已移动文件夹</translation>
     </message>
     <message>
         <source>Folder deleted</source>
-        <translation>文件夹已删除</translation>
+        <translation>已删除文件夹</translation>
     </message>
     <message>
         <source>Media moved</source>
-        <translation>媒体已移动</translation>
+        <translation>已移动媒体</translation>
     </message>
     <message numerus="yes">
         <source>%n items moved</source>
         <translation>
-            <numerusform>已移动 %n 项</numerusform>
+            <numerusform>已移动 %n 个条目</numerusform>
         </translation>
     </message>
     <message>
         <source>That file could not be read.</source>
-        <translation>无法读取该文件。</translation>
+        <translation>无法读取该文件</translation>
     </message>
     <message>
         <source>That file is already in this project.</source>
-        <translation>该文件已存在于此项目中。</translation>
+        <translation>该文件已在此项目中</translation>
     </message>
     <message>
         <source>An edit is already saving</source>
-        <translation>已有编辑内容正在保存</translation>
+        <translation>已有编辑正在保存</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
@@ -12065,7 +12065,7 @@
     </message>
     <message>
         <source>Media trimmed</source>
-        <translation>媒体已修剪</translation>
+        <translation>已修剪媒体</translation>
     </message>
     <message>
         <source>Trim saved</source>
@@ -12077,7 +12077,7 @@
     </message>
     <message>
         <source>%1 (trimmed)</source>
-        <translation>%1 (已修剪)</translation>
+        <translation>%1（已修剪）</translation>
     </message>
     <message>
         <source>Rendering…</source>
@@ -12093,11 +12093,11 @@
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <translation>%1（%2）</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
-        <translation>子剪辑已添加</translation>
+        <translation>已添加子片段</translation>
     </message>
     <message>
         <source>Converting…</source>
@@ -12109,7 +12109,7 @@
     </message>
     <message>
         <source>Converting %1 to an edit-friendly format…</source>
-        <translation>正在将 %1 转换为适合编辑的格式…</translation>
+        <translation>正在将 %1 转换为便于剪辑的格式…</translation>
     </message>
     <message>
         <source>Saving media…</source>
@@ -12129,30 +12129,30 @@
     </message>
     <message>
         <source>That media is no longer in this project.</source>
-        <translation>该媒体已不再在此项目中。</translation>
+        <translation>该媒体已不在此项目中</translation>
     </message>
     <message>
         <source>“%1” is %2, but this slot holds %3.</source>
-        <translation>“%1”为 %2，但此插槽容纳 %3。</translation>
+        <translation>“%1”是 %2，但此槽位存放的是 %3</translation>
     </message>
     <message>
         <source>Media edited</source>
-        <translation>媒体已编辑</translation>
+        <translation>已编辑媒体</translation>
     </message>
     <message>
         <source>Media replaced</source>
-        <translation>媒体已替换</translation>
+        <translation>已替换媒体</translation>
     </message>
     <message>
         <source>Media refreshed</source>
-        <translation>媒体已刷新</translation>
+        <translation>已刷新媒体</translation>
     </message>
 </context>
 <context>
     <name>MediaImport</name>
     <message>
         <source>An import is already running.</source>
-        <translation>已有导入任务正在运行。</translation>
+        <translation>已有导入正在进行</translation>
     </message>
     <message>
         <source>Import Media</source>
@@ -12160,32 +12160,32 @@
     </message>
     <message>
         <source>Could not open that file. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation>无法打开该文件。此安装包无法读取从其他应用拖入的文件 — 请改用“导入”来选取文件。</translation>
+        <translation>无法打开该文件。此程序包无法读取从其他应用拖放的文件——请改用“导入”来选择</translation>
     </message>
     <message>
         <source>Could not open those files. This package cannot read files dropped from other apps — use Import to pick them instead.</source>
-        <translation>无法打开这些文件。此安装包无法读取从其他应用拖入的文件 — 请改用“导入”来选取文件。</translation>
+        <translation>无法打开这些文件。此程序包无法读取从其他应用拖放的文件——请改用“导入”来选择</translation>
     </message>
     <message>
         <source>Could not open that file. It may have been moved, or you may not have permission to read it.</source>
-        <translation>无法打开该文件。文件可能已被移动，或者您没有读取权限。</translation>
+        <translation>无法打开该文件。文件可能已被移动，或你没有读取权限</translation>
     </message>
     <message>
         <source>Could not open any of the selected files.</source>
-        <translation>无法打开任何选中的文件。</translation>
+        <translation>无法打开任何所选文件</translation>
     </message>
     <message>
         <source>Could not read %1 — that image format is not supported by this build.</source>
-        <translation>无法读取 %1 — 此版本不支持该图像格式。</translation>
+        <translation>无法读取 %1——此版本不支持该图像格式</translation>
     </message>
     <message>
         <source>Could not read that file — the format is not supported by this build.</source>
-        <translation>无法读取该文件 — 此版本不支持该格式。</translation>
+        <translation>无法读取该文件——此版本不支持该格式</translation>
     </message>
     <message numerus="yes">
         <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
         <translation>
-            <numerusform>%n 个剪辑播放可能较慢。使用代理可使预览更流畅；导出时仍使用原始文件。</numerusform>
+            <numerusform>%n 个片段可能播放缓慢。创建代理可让预览更流畅；导出仍使用原始文件</numerusform>
         </translation>
     </message>
     <message>
@@ -12195,7 +12195,7 @@
     <message numerus="yes">
         <source>%n clip(s) have a variable frame rate, which can drift out of sync with audio. Convert them to an edit-friendly format to fix it.</source>
         <translation>
-            <numerusform>%n 个剪辑具有可变帧率，可能会导致音画不同步。将其转换为适合编辑的格式以解决此问题。</numerusform>
+            <numerusform>%n 个片段的帧率可变，可能与音频逐渐失去同步。将其转换为便于剪辑的格式即可修复</numerusform>
         </translation>
     </message>
     <message>
@@ -12204,26 +12204,26 @@
     </message>
     <message>
         <source>Imported %1 of %2 files. The rest could not be opened — this package cannot read files dropped from other apps. Use Import instead.</source>
-        <translation>已导入 %2 个文件中的 %1 个。其余文件无法打开 — 此安装包无法读取从其他应用拖入的文件。请改用“导入”。</translation>
+        <translation>已导入 %1/%2 个文件。其余文件无法打开——此程序包无法读取从其他应用拖放的文件，请改用“导入”</translation>
     </message>
     <message>
         <source>Imported %1 of %2 files. %3 could not be read.</source>
-        <translation>已导入 %2 个文件中的 %1 个。%3 个文件无法读取。</translation>
+        <translation>已导入 %1/%2 个文件，%3 个无法读取</translation>
     </message>
     <message numerus="yes">
         <source>Imported %n files.</source>
         <translation>
-            <numerusform>已导入 %n 个文件。</numerusform>
+            <numerusform>已导入 %n 个文件</numerusform>
         </translation>
     </message>
     <message>
         <source>Could not import that file — the format may be unsupported.</source>
-        <translation>无法导入该文件 — 格式可能不受支持。</translation>
+        <translation>无法导入该文件——格式可能不受支持</translation>
     </message>
     <message numerus="yes">
         <source>Could not import any of the %n selected files.</source>
         <translation>
-            <numerusform>无法导入所选的全部 %n 个文件。</numerusform>
+            <numerusform>无法导入任何所选的 %n 个文件</numerusform>
         </translation>
     </message>
 </context>
@@ -12238,15 +12238,15 @@
     <name>MediaPreviewView</name>
     <message>
         <source>Play the clip and drag the ends to keep only the part you want. Save replaces this item in the media bin.</source>
-        <translation>播放剪辑并拖动两端以仅保留所需部分。“保存”将替换素材箱中的此项目。</translation>
+        <translation>播放片段并拖动两端，仅保留需要的部分。保存后会在媒体库中替换此条目</translation>
     </message>
     <message>
         <source>Drag the box to crop. The original image stays available, so the crop can be changed later.</source>
-        <translation>拖动方框进行裁剪。原始图像保持保留，因此稍后仍可更改裁剪。</translation>
+        <translation>拖动选框进行裁剪。原图保留可用，之后可更改裁剪</translation>
     </message>
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
-        <translation>拖动方框进行裁剪。原始视频保持保留，因此稍后仍可更改裁剪。</translation>
+        <translation>拖动选框进行裁剪。原视频保留可用，之后可更改裁剪</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -12258,19 +12258,19 @@
     </message>
     <message>
         <source>Set In</source>
-        <translation>设置入点</translation>
+        <translation>设定入点</translation>
     </message>
     <message>
         <source>Set Out</source>
-        <translation>设置出点</translation>
+        <translation>设定出点</translation>
     </message>
     <message>
         <source>Add sub-clip</source>
-        <translation>添加子剪辑</translation>
+        <translation>添加子片段</translation>
     </message>
     <message>
         <source>Sub-clip added</source>
-        <translation>子剪辑已添加</translation>
+        <translation>已添加子片段</translation>
     </message>
     <message>
         <source>Rotate</source>
@@ -12294,23 +12294,23 @@
     </message>
     <message>
         <source>Upscale this video?</source>
-        <translation>超分辨率放大此视频？</translation>
+        <translation>要对此视频进行超分吗？</translation>
     </message>
     <message>
         <source>Length %1</source>
-        <translation>时长 %1</translation>
+        <translation>长度 %1</translation>
     </message>
     <message>
         <source>This video is under 700 pixels on its shorter side. Upscaling it with an AI model can make it look sharper.</source>
-        <translation>此视频较短边的分辨率低于 700 像素。使用 AI 模型进行超分辨率放大可使其画面更清晰。</translation>
+        <translation>此视频较短的一边不足 700 像素。使用 AI 模型进行超分可以让画面更清晰。</translation>
     </message>
     <message>
         <source>This resolution is already good for most projects. You can still upscale it.</source>
-        <translation>此分辨率已能满足多数项目的需求。您仍可选择对其进行超分辨率放大。</translation>
+        <translation>此分辨率对大多数项目来说已经足够，你仍可以选择超分。</translation>
     </message>
     <message>
         <source>Done keeps the original video and stores this range and crop. Upscale renders them as a new video in the media bin, then opens it in the Enhance window.</source>
-        <translation>“完成”将保留原始视频并存储此范围和裁剪。“超分辨率放大”会将其渲染为素材箱中的新视频，然后在增强窗口中打开。</translation>
+        <translation>“完成”会保留原视频，并保存此范围和裁剪。“超分”会将它们渲染为素材库中的新视频，然后在“增强”窗口中打开它。</translation>
     </message>
     <message>
         <source>Saving…</source>
@@ -12318,23 +12318,23 @@
     </message>
     <message>
         <source>Choose the part and crop to keep, then Next.</source>
-        <translation>选择要保留的部分和裁剪区域，然后点击“下一步”。</translation>
+        <translation>选择要保留的部分和裁剪范围，然后点击“下一步”。</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this crop.</source>
-        <translation>“保存”将保留原始文件并存储此裁剪。</translation>
+        <translation>“保存”会保留原文件，并保存此裁剪。</translation>
     </message>
     <message>
         <source>Save keeps the original file and stores this trim.</source>
-        <translation>“保存”将保留原始文件并存储此修剪。</translation>
+        <translation>“保存”会保留原文件，并保存此修剪。</translation>
     </message>
     <message>
         <source>Adjust the crop or Reset to restore the full picture.</source>
-        <translation>调整裁剪或点击“重置”以恢复完整画面。</translation>
+        <translation>调整裁剪，或点击“重置”恢复完整画面。</translation>
     </message>
     <message>
         <source>Nothing to save — drag this item onto the timeline when you are ready.</source>
-        <translation>无需保存 — 准备就绪后直接将此项目拖动到时间线上。</translation>
+        <translation>没有可保存的内容——准备好后，将此项目拖到时间线上。</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -12346,11 +12346,11 @@
     </message>
     <message>
         <source>Back</source>
-        <translation>返回</translation>
+        <translation>上一步</translation>
     </message>
     <message>
         <source>Upscale…</source>
-        <translation>超分辨率放大…</translation>
+        <translation>超分…</translation>
     </message>
     <message>
         <source>Save</source>
@@ -12388,7 +12388,7 @@
     <name>MissingAddonsDialog</name>
     <message>
         <source>Extra packs needed</source>
-        <translation>需要额外扩展包</translation>
+        <translation>需要附加包</translation>
     </message>
     <message>
         <source>Install all</source>
@@ -12404,7 +12404,7 @@
     </message>
     <message>
         <source>Reopen the project once they finish installing.</source>
-        <translation>安装完成后请重新打开该项目。</translation>
+        <translation>这些附加包安装完成后，请重新打开此项目。</translation>
     </message>
 </context>
 <context>
@@ -12415,7 +12415,7 @@
     </message>
     <message>
         <source>used version %1</source>
-        <translation>使用的版本：%1</translation>
+        <translation>使用版本 %1</translation>
     </message>
     <message>
         <source>Install</source>
@@ -12426,18 +12426,18 @@
     <name>MixerChannelName</name>
     <message>
         <source> (recording)</source>
-        <translation> (录音中)</translation>
+        <translation>（录音中）</translation>
     </message>
 </context>
 <context>
     <name>MixerChannelStrip</name>
     <message>
         <source>Unmute master</source>
-        <translation>取消主声道静音</translation>
+        <translation>取消主通道静音</translation>
     </message>
     <message>
         <source>Mute master</source>
-        <translation>主声道静音</translation>
+        <translation>静音主通道</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -12457,15 +12457,15 @@
     </message>
     <message>
         <source>Recording paused — click to finish</source>
-        <translation>录音已暂停 — 点击完成</translation>
+        <translation>录音已暂停 —— 点击以完成</translation>
     </message>
     <message>
         <source>Recording — click to finish</source>
-        <translation>正在录音 — 点击完成</translation>
+        <translation>录音中 —— 点击以完成</translation>
     </message>
     <message>
         <source>Record voiceover on %1</source>
-        <translation>在 %1 上录制画外音</translation>
+        <translation>在 %1 上录制配音</translation>
     </message>
 </context>
 <context>
@@ -12488,25 +12488,25 @@
     </message>
     <message>
         <source> — Shift-drag for fine, double-click for 0 dB</source>
-        <translation> — Shift-拖动微调，双击恢复 0 dB</translation>
+        <translation>——按住 Shift 拖动可微调，双击恢复 0 dB</translation>
     </message>
 </context>
 <context>
     <name>MixerLevelReadout</name>
     <message>
         <source>Mic gain %1 dB (%2%) — scroll to adjust, double-click for 0 dB</source>
-        <translation>麦克风增益 %1 dB (%2%) — 滚动调节，双击恢复 0 dB</translation>
+        <translation>麦克风增益 %1 dB（%2%）——滚动调整，双击恢复 0 dB</translation>
     </message>
     <message>
         <source>%1 dB — scroll to adjust, double-click for 0 dB</source>
-        <translation>%1 dB — 滚动调节，双击恢复 0 dB</translation>
+        <translation>%1 dB ——滚动调整，双击恢复 0 dB</translation>
     </message>
 </context>
 <context>
     <name>MixerPanControl</name>
     <message>
         <source>Pan %1 — drag to adjust, double-click to center</source>
-        <translation>声相 %1 — 拖动调节，双击居中</translation>
+        <translation>声像 %1 ——拖动调整，双击回到中间</translation>
     </message>
 </context>
 <context>
@@ -12539,7 +12539,7 @@
     </message>
     <message>
         <source>3D models and Gaussian splats (*.glb *.sog *.ply *.zip meta.json lod-meta.json)</source>
-        <translation>3D 模型与高斯泼溅 (*.glb *.sog *.ply *.zip meta.json lod-meta.json)</translation>
+        <translation>3D 模型和高斯泼溅（*.glb *.sog *.ply *.zip meta.json lod-meta.json）</translation>
     </message>
     <message>
         <source>Gaussian splat</source>
@@ -12547,7 +12547,7 @@
     </message>
     <message>
         <source>Load another model or splat; position, length, pose and lighting stay</source>
-        <translation>加载另一个模型或泼溅文件；位置、时长、姿态和光照将保持不变</translation>
+        <translation>加载其他模型或泼溅；位置、时长、姿态和光照保持不变</translation>
     </message>
     <message>
         <source>Playback</source>
@@ -12567,7 +12567,7 @@
     </message>
     <message>
         <source>After the end</source>
-        <translation>播放结束之后</translation>
+        <translation>结束后</translation>
     </message>
     <message>
         <source>Hold last frame</source>
@@ -12579,7 +12579,7 @@
     </message>
     <message>
         <source>Ping-pong</source>
-        <translation>往复循环</translation>
+        <translation>往返循环</translation>
     </message>
     <message>
         <source>Hide</source>
@@ -12587,7 +12587,7 @@
     </message>
     <message>
         <source>What plays once the animation has run its length</source>
-        <translation>动画播放完毕后如何呈现</translation>
+        <translation>动画播完后的行为</translation>
     </message>
     <message>
         <source>Start offset</source>
@@ -12595,7 +12595,7 @@
     </message>
     <message>
         <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
-        <translation>位置、大小、旋转和深度遮挡位于“变换”选项卡中。</translation>
+        <translation>位置、大小、旋转和深度遮挡位于“变换”选项卡。</translation>
     </message>
     <message>
         <source>Lighting</source>
@@ -12603,15 +12603,15 @@
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation>在 3D 视图中拖动光源，或在此处设置。光源随剪辑一起移动和缩放；旋转模型时光源保持相对位置。</translation>
+        <translation>在 3D 视图中拖动灯光，或在此处设置。灯光会随片段移动和缩放；旋转模型时，模型会在这些灯光下转动。</translation>
     </message>
     <message>
         <source>Light %1</source>
-        <translation>光源 %1</translation>
+        <translation>灯光 %1</translation>
     </message>
     <message>
         <source>Light %1 colour</source>
-        <translation>光源 %1 颜色</translation>
+        <translation>灯光 %1 颜色</translation>
     </message>
     <message>
         <source>Left / right</source>
@@ -12631,19 +12631,19 @@
     </message>
     <message>
         <source>Reach</source>
-        <translation>照射范围</translation>
+        <translation>照射距离</translation>
     </message>
     <message>
         <source>Spot angle</source>
-        <translation>聚光灯角度</translation>
+        <translation>聚光角度</translation>
     </message>
     <message>
         <source>Aim left / right</source>
-        <translation>瞄准 左 / 右</translation>
+        <translation>左右朝向</translation>
     </message>
     <message>
         <source>Aim up / down</source>
-        <translation>瞄准 上 / 下</translation>
+        <translation>上下朝向</translation>
     </message>
     <message>
         <source>Ambient</source>
@@ -12674,41 +12674,41 @@
     </message>
     <message>
         <source>reach</source>
-        <translation>照射范围</translation>
+        <translation>照射距离</translation>
     </message>
     <message>
         <source>spot angle</source>
-        <translation>聚光灯角度</translation>
+        <translation>聚光角度</translation>
     </message>
     <message>
         <source>aim left / right</source>
-        <translation>瞄准 左 / 右</translation>
+        <translation>左右朝向</translation>
     </message>
     <message>
         <source>aim up / down</source>
-        <translation>瞄准 上 / 下</translation>
+        <translation>上下朝向</translation>
     </message>
     <message>
         <source>Light %1 %2</source>
-        <translation>光源 %1 %2</translation>
+        <translation>灯光 %1 %2</translation>
     </message>
 </context>
 <context>
     <name>MulticamAngleTile</name>
     <message>
         <source>Nothing here</source>
-        <translation>此处无内容</translation>
+        <translation>此处为空</translation>
     </message>
     <message>
         <source>Switch the program to %1 (key %2)</source>
-        <translation>将主监视画面切换到 %1（按键 %2）</translation>
+        <translation>将节目切换到 %1（按键 %2）</translation>
     </message>
 </context>
 <context>
     <name>MulticamProgramBadge</name>
     <message>
         <source>Program</source>
-        <translation>主输出 (PGM)</translation>
+        <translation>节目</translation>
     </message>
 </context>
 <context>
@@ -12719,35 +12719,35 @@
     </message>
     <message>
         <source>Pick the camera. Cuts stay staged until you save.</source>
-        <translation>选择摄像机机位。剪切点在保存前均处于暂存状态。</translation>
+        <translation>选择摄像机。剪切会暂存，直到你保存。</translation>
     </message>
     <message>
         <source>Ready to set up</source>
-        <translation>准备设置</translation>
+        <translation>准备就绪，可以设置</translation>
     </message>
     <message>
         <source>No angles to switch between</source>
-        <translation>没有可供切换的机位</translation>
+        <translation>没有可切换的机位</translation>
     </message>
     <message>
         <source>Your imported videos will go on a track each, stacked so the top camera is the program.</source>
-        <translation>导入的视频将各自占用一个轨道，堆叠放置，最顶层的摄像机作为主输出画面。</translation>
+        <translation>你导入的视频将各占一条轨道并上下堆叠，最上方的摄像机即为节目画面。</translation>
     </message>
     <message>
         <source>Select at least two video clips on different tracks, then open Multicam again.</source>
-        <translation>请至少选择不同轨道上的两个视频剪辑，然后重新打开多机位。</translation>
+        <translation>请在不同轨道上选择至少两个视频片段，然后重新打开多机位。</translation>
     </message>
     <message>
         <source>Set up from my media</source>
-        <translation>从我的媒体设置</translation>
+        <translation>从我的素材设置</translation>
     </message>
     <message>
         <source>No clip at the current time</source>
-        <translation>当前时间无剪辑</translation>
+        <translation>当前时间没有片段</translation>
     </message>
     <message>
         <source>GPU preview unavailable — see Help → Debug info</source>
-        <translation>GPU 预览不可用 — 请参阅“帮助 → 调试信息”</translation>
+        <translation>GPU 预览不可用——请查看“帮助 → 调试信息”</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -12767,7 +12767,7 @@
     </message>
     <message>
         <source>Seek</source>
-        <translation>定位</translation>
+        <translation>跳转</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -12775,11 +12775,11 @@
     </message>
     <message>
         <source>Save as separate tracks</source>
-        <translation>保存为独立轨道</translation>
+        <translation>保存为单独轨道</translation>
     </message>
     <message>
         <source>Save combined</source>
-        <translation>保存合并</translation>
+        <translation>合并保存</translation>
     </message>
 </context>
 <context>
@@ -12859,7 +12859,7 @@
     </message>
     <message>
         <source>No notifications yet.</source>
-        <translation>暂无通知。</translation>
+        <translation>暂无通知</translation>
     </message>
 </context>
 <context>
@@ -12870,7 +12870,7 @@
     </message>
     <message>
         <source>Drift %1 is available</source>
-        <translation>Drift %1 现已推出</translation>
+        <translation>Drift %1 现已可用</translation>
     </message>
     <message>
         <source>Update</source>
@@ -12881,7 +12881,7 @@
     <name>PackageProgressDialog</name>
     <message>
         <source>Preparing shareable copy</source>
-        <translation>正在准备可分享副本</translation>
+        <translation>正在准备可分享的副本</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -12889,7 +12889,7 @@
     </message>
     <message>
         <source>Copying your media into one file so it opens on any computer.</source>
-        <translation>正在将您的媒体复制到单个文件中，以便在任何计算机上打开。</translation>
+        <translation>正在将你的媒体复制到一个文件中，以便在任何电脑上打开。</translation>
     </message>
 </context>
 <context>
@@ -12900,11 +12900,11 @@
     </message>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp)</source>
-        <translation>图像 (*.png *.jpg *.jpeg *.webp)</translation>
+        <translation>图像（*.png *.jpg *.jpeg *.webp）</translation>
     </message>
     <message>
         <source>Paint</source>
-        <translation>着色</translation>
+        <translation>绘制</translation>
     </message>
     <message>
         <source>Solid</source>
@@ -12928,7 +12928,7 @@
     </message>
     <message>
         <source>Choose the paint colour</source>
-        <translation>选择着色颜色</translation>
+        <translation>选择绘制颜色</translation>
     </message>
     <message>
         <source>Change image…</source>
@@ -12952,7 +12952,7 @@
     </message>
     <message>
         <source>Repeat the image across the layer</source>
-        <translation>在图层上重复平铺图像</translation>
+        <translation>在整个图层上重复显示图像</translation>
     </message>
     <message>
         <source>Cover</source>
@@ -12960,7 +12960,7 @@
     </message>
     <message>
         <source>Stretch one copy of the image over the layer</source>
-        <translation>将单张图像拉伸覆盖在图层上</translation>
+        <translation>将单张图像拉伸铺满整个图层</translation>
     </message>
     <message>
         <source>Scale</source>
@@ -12972,7 +12972,7 @@
     </message>
     <message>
         <source>Adjust paint effect</source>
-        <translation>调整着色效果</translation>
+        <translation>调整绘制效果</translation>
     </message>
 </context>
 <context>
@@ -12983,7 +12983,7 @@
     </message>
     <message>
         <source>Volume &amp; Fades (volume keyframes, in/out ramps)</source>
-        <translation>音量与淡入淡出（音量关键帧、淡入/淡出斜坡）</translation>
+        <translation>音量和淡入淡出（音量关键帧、入点/出点渐变）</translation>
     </message>
     <message numerus="yes">
         <source>Audio Effects (%n effect(s))</source>
@@ -13012,12 +13012,12 @@
     </message>
     <message>
         <source>Clip</source>
-        <translation>剪辑</translation>
+        <translation>片段</translation>
     </message>
     <message numerus="yes">
         <source>Pasting from “%1” onto %n selected clip(s):</source>
         <translation>
-            <numerusform>正在从“%1”粘贴到 %n 个选中的剪辑：</numerusform>
+            <numerusform>将“%1”粘贴到 %n 个所选片段：</numerusform>
         </translation>
     </message>
     <message>
@@ -13058,19 +13058,19 @@
     </message>
     <message>
         <source>, reverse</source>
-        <translation>、倒放</translation>
+        <translation>，倒放</translation>
     </message>
     <message>
         <source>, speed curve</source>
-        <translation>、速度曲线</translation>
+        <translation>，速度曲线</translation>
     </message>
     <message>
         <source>Speed / Retime (%1x%2%3)</source>
-        <translation>速度 / 重置时间 (%1x%2%3)</translation>
+        <translation>速度 / 变速（%1x%2%3）</translation>
     </message>
     <message>
         <source>Speed / Retime</source>
-        <translation>速度 / 重置时间</translation>
+        <translation>速度 / 变速</translation>
     </message>
     <message numerus="yes">
         <source>Video Effects (%n effect(s))</source>
@@ -13087,7 +13087,7 @@
     <name>PdfClipRenderer</name>
     <message>
         <source>Install the PDF viewer addon to show this PDF</source>
-        <translation>安装 PDF 查看器附加组件以显示此 PDF</translation>
+        <translation>安装 PDF 查看器附加包以显示此 PDF</translation>
     </message>
     <message>
         <source>Can&apos;t open this PDF</source>
@@ -13098,7 +13098,7 @@
     <name>PdfInspector</name>
     <message>
         <source>PDF pages need the PDF Viewer addon.</source>
-        <translation>PDF 页面需要 PDF 查看器附加组件。</translation>
+        <translation>PDF 页面需要 PDF 查看器附加包。</translation>
     </message>
     <message>
         <source>Install PDF Viewer</source>
@@ -13116,11 +13116,11 @@
     </message>
     <message>
         <source>First page</source>
-        <translation>首页</translation>
+        <translation>第一页</translation>
     </message>
     <message>
         <source>Last page</source>
-        <translation>末页</translation>
+        <translation>最后一页</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -13148,7 +13148,7 @@
     </message>
     <message>
         <source>Gap</source>
-        <translation>间隙</translation>
+        <translation>间距</translation>
     </message>
     <message>
         <source>Viewport</source>
@@ -13156,11 +13156,11 @@
     </message>
     <message>
         <source>Scroll X</source>
-        <translation>水平滚动 X</translation>
+        <translation>水平滚动</translation>
     </message>
     <message>
         <source>Scroll Y</source>
-        <translation>垂直滚动 Y</translation>
+        <translation>垂直滚动</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -13171,11 +13171,11 @@
     <name>PdfSource</name>
     <message>
         <source>Scroll X</source>
-        <translation>水平滚动 X</translation>
+        <translation>水平滚动</translation>
     </message>
     <message>
         <source>Scroll Y</source>
-        <translation>垂直滚动 Y</translation>
+        <translation>垂直滚动</translation>
     </message>
     <message>
         <source>Zoom</source>
@@ -13186,11 +13186,11 @@
     <name>PlaybackEngine</name>
     <message>
         <source>%1 decodes on %2, but Drift draws on %3. Every frame is copied through system memory, which is slower than decoding on the graphics card that draws.</source>
-        <translation>%1 在 %2 上解码，但 Drift 在 %3 上绘制。每帧都需要通过系统内存复制，这比直接在负责绘制的显卡上解码更慢。</translation>
+        <translation>%1 在 %2 上解码，但 Drift 在 %3 上绘制。每一帧都要经过系统内存复制，比在与绘制相同的显卡上解码更慢。</translation>
     </message>
     <message>
         <source>%1 decodes on a different graphics card than the one Drift draws on. Every frame is copied through system memory, which is slower than decoding on the graphics card that draws.</source>
-        <translation>%1 在不同于 Drift 绘制显卡的另一块显卡上解码。每帧都需要通过系统内存复制，这比直接在负责绘制的显卡上解码更慢。</translation>
+        <translation>%1 使用的解码显卡与 Drift 绘制所用的显卡不同。每一帧都要经过系统内存复制，比在与绘制相同的显卡上解码更慢。</translation>
     </message>
     <message>
         <source>Auto</source>
@@ -13202,18 +13202,18 @@
     </message>
     <message>
         <source>Hardware (%1)</source>
-        <translation>硬件 (%1)</translation>
+        <translation>硬件（%1）</translation>
     </message>
 </context>
 <context>
     <name>PlaybackStats</name>
     <message>
         <source>Delivered frames</source>
-        <translation>已交付帧数</translation>
+        <translation>送达帧数</translation>
     </message>
     <message>
         <source>Displayed frames</source>
-        <translation>已显示帧数</translation>
+        <translation>显示帧数</translation>
     </message>
     <message>
         <source>Display refresh</source>
@@ -13221,15 +13221,15 @@
     </message>
     <message>
         <source>Delivery jitter</source>
-        <translation>交付抖动</translation>
+        <translation>送达抖动</translation>
     </message>
     <message>
         <source>Composite (median)</source>
-        <translation>合成耗时（中位数）</translation>
+        <translation>合成（中位数）</translation>
     </message>
     <message>
         <source>Composite (p95)</source>
-        <translation>合成耗时（p95）</translation>
+        <translation>合成（p95）</translation>
     </message>
     <message>
         <source>Decode wait (median)</source>
@@ -13237,7 +13237,7 @@
     </message>
     <message>
         <source>Preview scale</source>
-        <translation>预览缩放比例</translation>
+        <translation>预览缩放</translation>
     </message>
     <message>
         <source>Frames dropped</source>
@@ -13245,11 +13245,11 @@
     </message>
     <message>
         <source>Requests coalesced</source>
-        <translation>已合并请求数</translation>
+        <translation>合并的请求数</translation>
     </message>
     <message>
         <source>Composites in flight (peak)</source>
-        <translation>处理中合成数（峰值）</translation>
+        <translation>进行中的合成（峰值）</translation>
     </message>
     <message>
         <source>Preview upload</source>
@@ -13276,7 +13276,7 @@
     <name>PreferencesController</name>
     <message>
         <source>Faster preview takes effect after you restart Drift.</source>
-        <translation>更快预览将在重启 Drift 后生效。</translation>
+        <translation>更快的预览将在重启 Drift 后生效。</translation>
     </message>
     <message>
         <source>The graphics card choice takes effect after you restart Drift.</source>
@@ -13292,26 +13292,26 @@
     </message>
     <message>
         <source>Could not open the settings file.</source>
-        <translation>无法打开设置文件。</translation>
+        <translation>无法打开设置文件</translation>
     </message>
     <message>
         <source>That file is not a Drift settings export.</source>
-        <translation>该文件不是 Drift 设置导出文件。</translation>
+        <translation>该文件不是 Drift 设置导出文件</translation>
     </message>
     <message>
         <source>Settings imported. Restart Drift to apply them all.</source>
-        <translation>设置已导入。请重启 Drift 以全部应用。</translation>
+        <translation>设置已导入。重启 Drift 以应用全部设置</translation>
     </message>
 </context>
 <context>
     <name>Preview3DMode</name>
     <message>
         <source>W/A/S/D move · Q/E down/up · Shift faster · Wheel speed (%1×) · Esc or click to finish</source>
-        <translation>W/A/S/D 移动 · Q/E 下降/上升 · Shift 加速 · 滚轮调速 (%1×) · Esc 或单击结束</translation>
+        <translation>W/A/S/D 移动 · Q/E 下降/上升 · Shift 加速 · 滚轮调速度（%1×）· Esc 或点击结束</translation>
     </message>
     <message>
         <source>Move the pointer to the centre ring to start steering</source>
-        <translation>将光标移至中心圆环以开始操纵视角</translation>
+        <translation>将指针移到中心圆环以开始转向</translation>
     </message>
 </context>
 <context>
@@ -13342,11 +13342,11 @@
     </message>
     <message>
         <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation>漫游视角（WASD 移动，Q/E 下降/上升，朝光标方向移动）</translation>
+        <translation>飞行（WASD 移动，Q/E 下降/上升，朝指针方向转向）</translation>
     </message>
     <message>
         <source>Look through the camera</source>
-        <translation>穿过摄像机视角观察</translation>
+        <translation>透过摄像机查看</translation>
     </message>
     <message>
         <source>Numpad 0</source>
@@ -13358,7 +13358,7 @@
     </message>
     <message>
         <source>Frame the selection</source>
-        <translation>将所选内容居中构图</translation>
+        <translation>聚焦所选内容</translation>
     </message>
     <message>
         <source>Reset the view</source>
@@ -13388,14 +13388,14 @@
     </message>
     <message>
         <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms, and the corner pad steps the view.</source>
-        <translation>包含摄像机的自由视角场景。中键或右键拖动旋转视角，Shift 拖动平移，滚轮缩放，角标按钮微调视角。</translation>
+        <translation>从自由视角查看场景，摄像机也在场景中。中键或右键拖动环绕，Shift 平移，滚轮缩放，角落的方向垫可微调视角。</translation>
     </message>
 </context>
 <context>
     <name>PreviewOptionsDecodeDialog</name>
     <message>
         <source>Decoding on a different graphics card</source>
-        <translation>在不同的显卡上进行解码</translation>
+        <translation>解码用的是另一块显卡</translation>
     </message>
     <message>
         <source>Use anyway</source>
@@ -13407,15 +13407,15 @@
     </message>
     <message>
         <source>Launching Drift with prime-run (or DRI_PRIME=1) puts OpenGL on the same card as the decoder.</source>
-        <translation>使用 prime-run（或 DRI_PRIME=1）启动 Drift 可使 OpenGL 与解码器运行在同一张显卡上。</translation>
+        <translation>使用 prime-run（或 DRI_PRIME=1）启动 Drift，可让 OpenGL 与解码器位于同一块显卡上。</translation>
     </message>
     <message>
         <source>Run Drift on the high-performance graphics card</source>
-        <translation>在高性能独立显卡上运行 Drift</translation>
+        <translation>让 Drift 运行在高性能显卡上</translation>
     </message>
     <message>
         <source>Set Drift to High performance in Windows Settings &gt; Display &gt; Graphics, then restart Drift.</source>
-        <translation>在 Windows 设置 &gt; 屏幕 &gt; 图形设置 中将 Drift 设为“高性能”，然后重启 Drift。</translation>
+        <translation>在 Windows 设置 &gt; 显示 &gt; 图形中将 Drift 设为“高性能”，然后重启 Drift。</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
@@ -13426,7 +13426,7 @@
     <name>PreviewOptionsMenu</name>
     <message>
         <source>Quality</source>
-        <translation>质量</translation>
+        <translation>画质</translation>
     </message>
     <message>
         <source>Full</source>
@@ -13434,15 +13434,15 @@
     </message>
     <message>
         <source>Half</source>
-        <translation>1/2</translation>
+        <translation>一半</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>1/4</translation>
+        <translation>四分之一</translation>
     </message>
     <message>
         <source>1/8 (Eco)</source>
-        <translation>1/8（节能）</translation>
+        <translation>1/8（经济）</translation>
     </message>
     <message>
         <source>Auto</source>
@@ -13453,10 +13453,10 @@
 Full, Half, Quarter and 1/8 are fixed fractions of the project resolution: Full composites exactly what an export would.
 1/8 (Eco) is for older laptops with integrated graphics.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
-        <translation>预览质量 — 降低可在编辑时获得更流畅的体验。
-“完整”、“1/2”、“1/4”和“1/8”为项目分辨率的固定比例：“完整”与导出画面的合成完全一致。
-“1/8（节能）”适用于配备集成显卡的旧款笔记本。
-“自动”仅渲染预览实际显示的像素数，并在播放卡顿时进一步降低分辨率。</translation>
+        <translation>预览画质——数值越低，剪辑时越流畅。
+完整、一半、四分之一和 1/8 是项目分辨率的固定比例：完整即为导出时的合成效果。
+1/8（经济）适合使用集成显卡的旧笔记本电脑。
+自动只渲染预览实际显示的像素，并在播放跟不上时进一步降低。</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -13476,11 +13476,11 @@ Auto picks per clip: hardware for high-quality 4K, software otherwise.
 Software is smoother for most clips. It uses more CPU.
 Hardware is better for high-quality 4K, and forces one GPU decoder.
 If playback stutters, try another.</source>
-        <translation>用于预览的视频解码方式。
-“自动”按剪辑自动选择：高质量 4K 使用硬件解码，其余使用软件解码。
-“软件解码”对大多数剪辑更流畅，但占用较多 CPU。
-“硬件解码”更适合高质量 4K，强制使用 GPU 解码器。
-如果播放卡顿，请尝试切换。</translation>
+        <translation>视频预览的解码方式。
+自动会按片段选择：高质量 4K 用硬件解码，其余用软件解码。
+软件解码对大多数片段更流畅，但占用更多 CPU。
+硬件解码更适合高质量 4K，并强制使用一个 GPU 解码器。
+如果播放卡顿，可以尝试其他选项。</translation>
     </message>
     <message>
         <source>Keep mask handles up</source>
@@ -13488,14 +13488,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Keep mask handles on the preview while another clip is selected</source>
-        <translation>当选中其他剪辑时，仍保持在预览中显示蒙版控制柄</translation>
+        <translation>选择其他片段时，在预览中保留蒙版控制柄</translation>
     </message>
 </context>
 <context>
     <name>PreviewOsdGuideMenuButton</name>
     <message>
         <source>Guide sets</source>
-        <translation>参考线集合</translation>
+        <translation>参考线组</translation>
     </message>
 </context>
 <context>
@@ -13516,7 +13516,7 @@ If playback stutters, try another.</source>
     <name>PreviewOsdZoomChip</name>
     <message>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
-        <translation>预览缩放 — 在预览区域按住 Ctrl+滚轮进行缩放，按住鼠标中键拖动进行平移。点击重置为 100%。</translation>
+        <translation>预览缩放——在预览上按住 Ctrl 并滚动缩放，中键拖动平移。点击恢复 100%。</translation>
     </message>
 </context>
 <context>
@@ -13527,18 +13527,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Seek</source>
-        <translation>定位</translation>
+        <translation>跳转</translation>
     </message>
 </context>
 <context>
     <name>PreviewStatusLayer</name>
     <message>
         <source>Nothing to preview yet</source>
-        <translation>暂无可预览内容</translation>
+        <translation>暂无可预览的内容</translation>
     </message>
     <message>
         <source>Import media and drag it onto the timeline below to see it here.</source>
-        <translation>导入媒体并将其拖放到下方的时间线上，即可在此预览。</translation>
+        <translation>导入媒体并拖到下方的时间线上，即可在此查看。</translation>
     </message>
     <message>
         <source>GPU preview unavailable</source>
@@ -13550,7 +13550,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drift could not start its GPU renderer, so the preview cannot draw.</source>
-        <translation>Drift 无法启动其 GPU 渲染器，因此预览无法绘制画面。</translation>
+        <translation>Drift 无法启动 GPU 渲染器，因此预览无法绘制。</translation>
     </message>
     <message>
         <source>Debug info</source>
@@ -13558,11 +13558,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Audio only</source>
-        <translation>仅限音频</translation>
+        <translation>仅音频</translation>
     </message>
     <message>
         <source>No clip at the current time</source>
-        <translation>当前时间无剪辑</translation>
+        <translation>当前时间没有片段</translation>
     </message>
 </context>
 <context>
@@ -13573,7 +13573,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Go to start</source>
-        <translation>转到起始</translation>
+        <translation>跳到开头</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -13585,21 +13585,21 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Go to end</source>
-        <translation>转到末尾</translation>
+        <translation>跳到结尾</translation>
     </message>
 </context>
 <context>
     <name>PreviewTransportFastForwardButton</name>
     <message>
         <source>Jump forward 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>快进 1秒 · Shift 快进 5秒 · Ctrl 快进 10秒</translation>
+        <translation>前进 1 秒 · Shift 为 5 秒 · Ctrl 为 10 秒</translation>
     </message>
 </context>
 <context>
     <name>PreviewTransportFullscreenButton</name>
     <message>
         <source>Exit fullscreen preview (Esc)</source>
-        <translation>退出全屏预览 (Esc)</translation>
+        <translation>退出全屏预览（Esc）</translation>
     </message>
     <message>
         <source>Fullscreen preview</source>
@@ -13610,11 +13610,11 @@ If playback stutters, try another.</source>
     <name>PreviewTransportLoopButton</name>
     <message>
         <source>Loop work area on — click to turn off</source>
-        <translation>循环播放工作区已开启 — 点击关闭</translation>
+        <translation>工作区域循环已开启——点击关闭</translation>
     </message>
     <message>
         <source>Loop work area off — click to turn on</source>
-        <translation>循环播放工作区已关闭 — 点击开启</translation>
+        <translation>工作区域循环已关闭——点击开启</translation>
     </message>
 </context>
 <context>
@@ -13632,7 +13632,7 @@ If playback stutters, try another.</source>
     <name>PreviewTransportRewindButton</name>
     <message>
         <source>Jump back 1s · Shift for 5s · Ctrl for 10s</source>
-        <translation>快退 1秒 · Shift 快退 5秒 · Ctrl 快退 10秒</translation>
+        <translation>后退 1 秒 · Shift 为 5 秒 · Ctrl 为 10 秒</translation>
     </message>
 </context>
 <context>
@@ -13646,29 +13646,29 @@ If playback stutters, try another.</source>
     <name>PreviewVoiceoverBadge</name>
     <message>
         <source>PAUSED %1s</source>
-        <translation>已暂停 %1秒</translation>
+        <translation>已暂停 %1 秒</translation>
     </message>
     <message>
         <source>REC %1s</source>
-        <translation>录制中 %1秒</translation>
+        <translation>录制中 %1 秒</translation>
     </message>
 </context>
 <context>
     <name>Project</name>
     <message>
         <source>This project was saved by a newer version of Drift (project format %1; this build reads up to %2).</source>
-        <translation>此项目是由更新版本的 Drift 保存的（项目格式为 %1；此版本最高支持 %2）。</translation>
+        <translation>此项目由更新版本的 Drift 保存（项目格式 %1；当前版本最高读取到 %2）</translation>
     </message>
     <message>
         <source>This file isn’t a Drift project.</source>
-        <translation>此文件不是 Drift 项目。</translation>
+        <translation>该文件不是 Drift 项目。</translation>
     </message>
 </context>
 <context>
     <name>ProjectBundle</name>
     <message>
         <source>compressed block is corrupt</source>
-        <translation>压缩数据块已损坏</translation>
+        <translation>压缩块已损坏</translation>
     </message>
     <message>
         <source>cannot open %1</source>
@@ -13676,11 +13676,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>file is too short to be a Drift project</source>
-        <translation>文件过小，不是有效的 Drift 项目</translation>
+        <translation>文件过短，不是 Drift 项目</translation>
     </message>
     <message>
         <source>not a Drift project (bad magic)</source>
-        <translation>不是 Drift 项目（标识头错误）</translation>
+        <translation>不是 Drift 项目（魔数错误）</translation>
     </message>
     <message>
         <source>unsupported container revision</source>
@@ -13688,15 +13688,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>project manifest has an implausible size</source>
-        <translation>项目清单文件大小异常</translation>
+        <translation>项目清单大小异常</translation>
     </message>
     <message>
         <source>project file is truncated</source>
-        <translation>项目文件不完整（已被截断）</translation>
+        <translation>项目文件已截断</translation>
     </message>
     <message>
         <source>project manifest is corrupt</source>
-        <translation>项目清单文件已损坏</translation>
+        <translation>项目清单已损坏</translation>
     </message>
     <message>
         <source>project manifest is not valid JSON: %1</source>
@@ -13704,35 +13704,35 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>project manifest has no format version</source>
-        <translation>项目清单缺少格式版本号</translation>
+        <translation>项目清单缺少格式版本</translation>
     </message>
     <message>
         <source>this project was saved by a newer version of Drift (format %1) — update to open it</source>
-        <translation>此项目是由更新版本的 Drift 保存的（格式 %1）— 请更新软件后再打开</translation>
+        <translation>此项目由更新版本的 Drift 保存（格式 %1）——请更新后打开</translation>
     </message>
     <message>
         <source>project blob table is not contiguous</source>
-        <translation>项目 Blob 数据表不连续</translation>
+        <translation>项目 blob 表不连续</translation>
     </message>
     <message>
         <source>project blob table is implausible</source>
-        <translation>项目 Blob 数据表异常</translation>
+        <translation>项目 blob 表异常</translation>
     </message>
     <message>
         <source>project media entry names no blob</source>
-        <translation>项目媒体条目未关联 Blob 数据</translation>
+        <translation>项目媒体条目缺少对应的 blob</translation>
     </message>
     <message>
         <source>unsafe file name in project: %1</source>
-        <translation>项目中包含不安全的文件名：%1</translation>
+        <translation>项目中存在不安全的文件名：%1</translation>
     </message>
     <message>
         <source>project file contains no timeline</source>
-        <translation>项目文件中不包含时间线</translation>
+        <translation>项目文件不包含时间线</translation>
     </message>
     <message>
         <source>project file is truncated or has trailing data</source>
-        <translation>项目文件已被截断或包含多余尾随数据</translation>
+        <translation>项目文件被截断或含有多余数据</translation>
     </message>
     <message>
         <source>cannot compress %1</source>
@@ -13768,11 +13768,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 changed while saving</source>
-        <translation>%1 在保存时被修改</translation>
+        <translation>保存期间 %1 发生了变化</translation>
     </message>
     <message>
         <source>cannot finish writing %1</source>
-        <translation>无法完成 %1 的写入</translation>
+        <translation>无法完成对 %1 的写入</translation>
     </message>
     <message>
         <source>cannot create %1</source>
@@ -13807,11 +13807,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
-        <translation>此项目使用了 %1 个未安装的效果或转场 (%2%3) — 将无法显示。请打开“附加项”进行安装。</translation>
+        <translation>此项目使用了 %1 个未安装的效果或转场（%2%3）——它们不会显示。打开“附加包”进行安装。</translation>
     </message>
     <message>
         <source>, …</source>
-        <translation>、…</translation>
+        <translation>，…</translation>
     </message>
     <message>
         <source>Frame rate</source>
@@ -13847,12 +13847,12 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Still opening a project — try again in a moment.</source>
-        <translation>项目仍在打开中 — 请稍后重试。</translation>
+        <translation>正在打开项目——请稍后再试。</translation>
     </message>
     <message numerus="yes">
         <source>Project JSON loaded, but %n media file(s) could not be found</source>
         <translation>
-            <numerusform>项目 JSON 已加载，但未能找到 %n 个媒体文件</numerusform>
+            <numerusform>项目 JSON 已加载，但有 %n 个媒体文件未找到</numerusform>
         </translation>
     </message>
     <message>
@@ -13873,7 +13873,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Premiere Pro project imported: %1</source>
-        <translation>Premiere Pro 项目已导入：%1</translation>
+        <translation>已导入 Premiere Pro 项目：%1</translation>
     </message>
     <message>
         <source>That template location isn’t valid</source>
@@ -13901,7 +13901,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Kdenlive project imported: %1</source>
-        <translation>Kdenlive 项目已导入：%1</translation>
+        <translation>已导入 Kdenlive 项目：%1</translation>
     </message>
     <message>
         <source>Failed to open DaVinci Resolve project / timeline</source>
@@ -13909,11 +13909,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>DaVinci Resolve project imported: %1</source>
-        <translation>DaVinci Resolve 项目已导入：%1</translation>
+        <translation>已导入 DaVinci Resolve 项目：%1</translation>
     </message>
     <message>
         <source>Failed to open Edit Decision List (.edl)</source>
-        <translation>打开剪辑决策表 (.edl) 失败</translation>
+        <translation>打开编辑决策列表（.edl）失败</translation>
     </message>
     <message>
         <source>EDL imported: %1</source>
@@ -13921,7 +13921,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Failed to open OpenTimelineIO (.otio) sequence</source>
-        <translation>打开 OpenTimelineIO (.otio) 序列失败</translation>
+        <translation>打开 OpenTimelineIO（.otio）序列失败</translation>
     </message>
     <message>
         <source>OpenTimelineIO imported: %1</source>
@@ -13933,16 +13933,16 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>All media is already in that folder</source>
-        <translation>所有媒体已存在于该文件夹中</translation>
+        <translation>所有媒体已在该文件夹中</translation>
     </message>
     <message>
         <source>Collect media</source>
-        <translation>打包媒体</translation>
+        <translation>归集媒体</translation>
     </message>
     <message numerus="yes">
         <source>Media collected, but %n original(s) couldn’t be deleted</source>
         <translation>
-            <numerusform>媒体已打包，但 %n 个原文件无法被删除</numerusform>
+            <numerusform>媒体已归集，但有 %n 个原文件无法删除</numerusform>
         </translation>
     </message>
     <message>
@@ -13959,7 +13959,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Already saving</source>
-        <translation>已在保存中</translation>
+        <translation>正在保存中</translation>
     </message>
     <message>
         <source>Project saved</source>
@@ -13976,7 +13976,7 @@ If playback stutters, try another.</source>
     <message numerus="yes">
         <source>Project loaded, but %n media file(s) could not be found</source>
         <translation>
-            <numerusform>项目已加载，但未能找到 %n 个媒体文件</numerusform>
+            <numerusform>项目已加载，但有 %n 个媒体文件未找到</numerusform>
         </translation>
     </message>
     <message>
@@ -13997,7 +13997,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Started new session</source>
-        <translation>已开启新会话</translation>
+        <translation>已开始新会话</translation>
     </message>
 </context>
 <context>
@@ -14035,7 +14035,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Your name</source>
-        <translation>您的姓名</translation>
+        <translation>你的姓名</translation>
     </message>
     <message>
         <source>Description</source>
@@ -14058,7 +14058,7 @@ If playback stutters, try another.</source>
     <name>ProjectSetupDialog</name>
     <message>
         <source>Set up your video</source>
-        <translation>设置视频</translation>
+        <translation>设置你的视频</translation>
     </message>
     <message>
         <source>Create</source>
@@ -14066,11 +14066,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>First clip “%1”. Choose the video size before it is placed.</source>
-        <translation>第一个剪辑“%1”。请在放置之前选择视频尺寸。</translation>
+        <translation>首个片段为“%1”。请在放置前选择视频尺寸。</translation>
     </message>
     <message>
         <source>Choose the video size before adding your first clip.</source>
-        <translation>添加第一个剪辑之前请选择视频尺寸。</translation>
+        <translation>请在添加首个片段前选择视频尺寸。</translation>
     </message>
     <message>
         <source>Aspect ratio</source>
@@ -14078,7 +14078,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Match clip</source>
-        <translation>匹配剪辑</translation>
+        <translation>匹配片段</translation>
     </message>
     <message>
         <source>Custom</source>
@@ -14098,7 +14098,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Video: %1×%2, %3 frames per second</source>
-        <translation>视频：%1×%2，每秒 %3 帧</translation>
+        <translation>视频：%1×%2，%3 帧/秒</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -14106,7 +14106,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Restore the size suggested by your first clip</source>
-        <translation>恢复由第一个剪辑建议的尺寸</translation>
+        <translation>恢复首个片段建议的尺寸</translation>
     </message>
 </context>
 <context>
@@ -14117,11 +14117,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Tap a clip on the timeline to edit its properties</source>
-        <translation>轻点时间线上的剪辑以编辑其属性</translation>
+        <translation>点按时间线上的片段以编辑其属性</translation>
     </message>
     <message>
         <source>Click a clip on the timeline to edit its properties</source>
-        <translation>点击时间线上的剪辑以编辑其属性</translation>
+        <translation>点击时间线上的片段以编辑其属性</translation>
     </message>
 </context>
 <context>
@@ -14164,7 +14164,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stabilization</source>
-        <translation>防抖稳定</translation>
+        <translation>防抖</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -14200,7 +14200,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select a clip to edit its %1</source>
-        <translation>选择剪辑以编辑其 %1</translation>
+        <translation>选择一个片段以编辑其 %1</translation>
     </message>
     <message>
         <source>%1 doesn&apos;t apply to this clip</source>
@@ -14216,14 +14216,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>My look</source>
-        <translation>我的外观</translation>
+        <translation>我的样式</translation>
     </message>
 </context>
 <context>
     <name>PropertyKeyframeRow</name>
     <message>
         <source>%1 has no keyframes yet</source>
-        <translation>%1 尚无关键帧</translation>
+        <translation>%1 还没有关键帧</translation>
     </message>
     <message>
         <source>Turn off %1&apos;s keyframes — they are kept, but stop animating</source>
@@ -14239,7 +14239,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Easing: %1 — click to change</source>
-        <translation>缓动：%1 — 点击更改</translation>
+        <translation>缓动：%1——点击更改</translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -14259,7 +14259,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag to adjust, click to type an exact %1</source>
-        <translation>拖动以调整，点击以输入精确的 %1</translation>
+        <translation>拖动调整，点击输入精确的 %1</translation>
     </message>
     <message>
         <source>Edit %1</source>
@@ -14290,7 +14290,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not open the proxy file for writing</source>
-        <translation>无法打开代理文件以进行写入</translation>
+        <translation>无法打开代理文件进行写入</translation>
     </message>
     <message>
         <source>Could not write the proxy header</source>
@@ -14298,7 +14298,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not allocate proxy frame buffers</source>
-        <translation>无法分配代理帧缓冲区</translation>
+        <translation>无法分配代理帧缓冲</translation>
     </message>
     <message>
         <source>Could not allocate the proxy frame</source>
@@ -14310,19 +14310,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not convert a frame for the proxy encoder</source>
-        <translation>无法为代理编码器转换帧格式</translation>
+        <translation>无法为代理编码器转换帧</translation>
     </message>
     <message>
         <source>Could not make the proxy frame writable</source>
-        <translation>无法使代理帧可写</translation>
+        <translation>无法将代理帧设为可写</translation>
     </message>
     <message>
         <source>Proxy encoder rejected a frame</source>
-        <translation>代理编码器拒绝了一帧</translation>
+        <translation>代理编码器拒绝了某一帧</translation>
     </message>
     <message>
         <source>Failed to read an encoded proxy packet</source>
-        <translation>读取已编码代理数据包失败</translation>
+        <translation>读取编码后的代理数据包失败</translation>
     </message>
     <message>
         <source>Failed to write a proxy packet</source>
@@ -14330,19 +14330,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not flush the proxy encoder</source>
-        <translation>无法清空代理编码器缓冲区</translation>
+        <translation>无法清空代理编码器</translation>
     </message>
     <message>
         <source>Could not write the proxy trailer</source>
-        <translation>无法写入代理文件尾</translation>
+        <translation>无法写入代理文件尾部</translation>
     </message>
     <message>
         <source>Could not move the proxy into place</source>
-        <translation>无法将代理文件移动到目标位置</translation>
+        <translation>无法将代理文件移动到位</translation>
     </message>
     <message>
         <source>Could not open the clip</source>
-        <translation>无法打开剪辑</translation>
+        <translation>无法打开片段</translation>
     </message>
     <message>
         <source>Could not read the clip&apos;s streams</source>
@@ -14350,11 +14350,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The clip has no video</source>
-        <translation>剪辑没有视频</translation>
+        <translation>该片段没有视频</translation>
     </message>
     <message>
         <source>No decoder for this clip</source>
-        <translation>此剪辑没有适用的解码器</translation>
+        <translation>此片段没有可用的解码器</translation>
     </message>
     <message>
         <source>Could not allocate the decoder</source>
@@ -14370,7 +14370,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The clip has no usable video size</source>
-        <translation>剪辑没有可用的视频尺寸</translation>
+        <translation>该片段没有可用的视频尺寸</translation>
     </message>
     <message>
         <source>Clips with transparency can&apos;t use a proxy</source>
@@ -14382,11 +14382,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Proxy cancelled</source>
-        <translation>代理创建已取消</translation>
+        <translation>已取消代理</translation>
     </message>
     <message>
         <source>No frames could be decoded from this clip</source>
-        <translation>无法从此剪辑解码任何帧</translation>
+        <translation>无法从该片段解码出任何帧</translation>
     </message>
 </context>
 <context>
@@ -14397,11 +14397,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Identifying objects in scene %1 of %2…</source>
-        <translation>正在识别场景 %1/%2 中的目标…</translation>
+        <translation>正在识别第 %1/%2 个场景中的对象…</translation>
     </message>
     <message>
         <source>Nothing to scan in this clip</source>
-        <translation>此剪辑中无可扫描内容</translation>
+        <translation>此片段中没有可扫描的内容</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
@@ -14417,7 +14417,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No cache directory</source>
-        <translation>无缓存目录</translation>
+        <translation>没有缓存目录</translation>
     </message>
     <message>
         <source>Could not decode frame %1</source>
@@ -14445,15 +14445,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enhancing… %1% — about %2 left</source>
-        <translation>正在增强… %1% — 约剩余 %2</translation>
+        <translation>增强中… %1% —— 剩余约 %2</translation>
     </message>
     <message>
         <source>Enhancing… %1%</source>
-        <translation>正在增强… %1%</translation>
+        <translation>增强中… %1%</translation>
     </message>
     <message>
         <source>Enhancing this frame… %1%</source>
-        <translation>正在增强当前帧… %1%</translation>
+        <translation>正在增强此帧… %1%</translation>
     </message>
     <message>
         <source>Scanning frame %1 of %2…</source>
@@ -14461,7 +14461,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Clip</source>
-        <translation>剪辑</translation>
+        <translation>片段</translation>
     </message>
     <message>
         <source>Cannot open file: %1</source>
@@ -14473,15 +14473,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Failed to decompress Premiere project archive</source>
-        <translation>解压 Premiere 项目归档失败</translation>
+        <translation>解压 Premiere 项目压缩包失败</translation>
     </message>
     <message>
         <source>XML parse error at line %1: %2</source>
-        <translation>第 %1 行 XML 解析错误：%2</translation>
+        <translation>XML 解析错误，第 %1 行：%2</translation>
     </message>
     <message>
         <source>Imported Premiere Project</source>
-        <translation>已导入 Premiere 项目</translation>
+        <translation>已导入的 Premiere 项目</translation>
     </message>
     <message>
         <source>V%1</source>
@@ -14497,7 +14497,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>MOGRT archive is empty or invalid</source>
-        <translation>MOGRT 归档为空或无效</translation>
+        <translation>MOGRT 压缩包为空或无效</translation>
     </message>
     <message>
         <source>Could not open file: %1</source>
@@ -14505,7 +14505,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Invalid or corrupt MLT / Kdenlive project</source>
-        <translation>无效或已损坏的 MLT / Kdenlive 项目</translation>
+        <translation>MLT / Kdenlive 项目无效或已损坏</translation>
     </message>
     <message>
         <source>Failed to parse MLT XML document</source>
@@ -14517,7 +14517,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>XML parse error at line %1, column %2: %3</source>
-        <translation>第 %1 行第 %2 列 XML 解析错误：%3</translation>
+        <translation>XML 解析错误，第 %1 行第 %2 列：%3</translation>
     </message>
     <message>
         <source>Root element is &lt;%1&gt;, expected &lt;fcpxml&gt;</source>
@@ -14525,15 +14525,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cannot open DaVinci Resolve project archive: %1</source>
-        <translation>无法打开 DaVinci Resolve 项目归档：%1</translation>
+        <translation>无法打开 DaVinci Resolve 项目压缩包：%1</translation>
     </message>
     <message>
         <source>DaVinci Resolve project archive is empty or invalid</source>
-        <translation>DaVinci Resolve 项目归档为空或无效</translation>
+        <translation>DaVinci Resolve 项目压缩包为空或无效</translation>
     </message>
     <message>
         <source>No edit events found in EDL</source>
-        <translation>EDL 中未找到编辑事件</translation>
+        <translation>EDL 中未找到剪辑事件</translation>
     </message>
     <message>
         <source>Failed to parse OpenTimelineIO JSON: %1</source>
@@ -14549,7 +14549,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not save the voice</source>
-        <translation>无法保存声音</translation>
+        <translation>无法保存该语音</translation>
     </message>
     <message>
         <source>Copying streams…</source>
@@ -14561,7 +14561,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Analysing camera motion…</source>
-        <translation>正在分析摄像机运动…</translation>
+        <translation>正在分析镜头运动…</translation>
     </message>
     <message>
         <source>Stabilization analysis failed</source>
@@ -14569,7 +14569,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reducing noise…</source>
-        <translation>正在降低噪声…</translation>
+        <translation>正在降噪…</translation>
     </message>
     <message>
         <source>Rendering…</source>
@@ -14577,11 +14577,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enhancing…</source>
-        <translation>正在增强…</translation>
+        <translation>增强中…</translation>
     </message>
     <message>
         <source>The rendered file could not be read</source>
-        <translation>渲染的文件无法读取</translation>
+        <translation>无法读取渲染后的文件</translation>
     </message>
 </context>
 <context>
@@ -14596,15 +14596,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Previous projects</source>
-        <translation>以往项目</translation>
+        <translation>以前的项目</translation>
     </message>
     <message>
         <source>No previous projects</source>
-        <translation>无以往项目</translation>
+        <translation>没有以前的项目</translation>
     </message>
     <message>
         <source> (missing)</source>
-        <translation> (缺失)</translation>
+        <translation>（缺失）</translation>
     </message>
     <message>
         <source>This file has been moved or deleted:
@@ -14614,7 +14614,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Initialize new project</source>
-        <translation>初始化新项目</translation>
+        <translation>新建项目</translation>
     </message>
     <message>
         <source>Open project…</source>
@@ -14649,14 +14649,14 @@ If playback stutters, try another.</source>
     <name>RecentProjectsProjectRow</name>
     <message>
         <source>Remove from recents</source>
-        <translation>从最近项目中移除</translation>
+        <translation>从最近列表中移除</translation>
     </message>
 </context>
 <context>
     <name>RecorderPanel</name>
     <message>
         <source>Recorder</source>
-        <translation>录音机</translation>
+        <translation>录制</translation>
     </message>
     <message>
         <source>READY</source>
@@ -14668,7 +14668,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>REC</source>
-        <translation>录制中</translation>
+        <translation>REC</translation>
     </message>
     <message>
         <source>Default Mic</source>
@@ -14680,27 +14680,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Resume recording</source>
-        <translation>继续录音</translation>
+        <translation>继续录制</translation>
     </message>
     <message>
         <source>Pause recording</source>
-        <translation>暂停录音</translation>
+        <translation>暂停录制</translation>
     </message>
     <message>
         <source>Stop - finish recording and save to track</source>
-        <translation>停止 - 完成录音并保存到轨道</translation>
+        <translation>停止 —— 结束录制并保存到轨道</translation>
     </message>
     <message>
         <source>Stop recording</source>
-        <translation>停止录音</translation>
+        <translation>停止录制</translation>
     </message>
     <message>
         <source>Cancel - discard recording</source>
-        <translation>取消 - 放弃录音</translation>
+        <translation>取消 —— 放弃录制</translation>
     </message>
     <message>
         <source>Start recording</source>
-        <translation>开始录音</translation>
+        <translation>开始录制</translation>
     </message>
 </context>
 <context>
@@ -14715,11 +14715,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>New session</source>
-        <translation>新建会话</translation>
+        <translation>新会话</translation>
     </message>
     <message>
         <source>Your last session had unsaved changes. You can restore them or start a new empty session.</source>
-        <translation>您上次的会话有未保存的更改。您可以恢复这些更改，也可以开始新的空白会话。</translation>
+        <translation>上次会话有未保存的更改，可以恢复它们，或开始一个新的空会话</translation>
     </message>
     <message>
         <source>Untitled project</source>
@@ -14738,7 +14738,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enhanced — out of date, preview again</source>
-        <translation>已增强 — 已过期，请重新预览</translation>
+        <translation>已增强 —— 已过期，请重新预览</translation>
     </message>
     <message>
         <source>Enhanced %1 × %2</source>
@@ -14750,11 +14750,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Working…</source>
-        <translation>正在处理…</translation>
+        <translation>处理中…</translation>
     </message>
     <message>
         <source>Choose models, then Preview to compare this frame</source>
-        <translation>选择模型，然后点击“预览”以对比此帧</translation>
+        <translation>选择模型后，点击“预览”比较此帧</translation>
     </message>
     <message>
         <source>Frame</source>
@@ -14773,19 +14773,19 @@ If playback stutters, try another.</source>
     <name>RestoreControlColumn</name>
     <message>
         <source>Preview one frame, then enhance the whole video. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation>先预览单帧，然后增强整个视频。结果将添加到素材箱中。增强处理速度较慢 — 在没有 GPU 的情况下每秒视频需耗时数分钟。</translation>
+        <translation>先预览一帧，再增强整个视频。结果会添加到素材库。增强速度较慢 —— 没有 GPU 时，每秒视频可能需要数分钟</translation>
     </message>
     <message>
         <source>Preview one frame, then enhance the part of the clip used on the timeline. The result is added to the media bin. Enhancing is slow — minutes per second of video without a GPU.</source>
-        <translation>先预览单帧，然后增强时间线上所使用的剪辑片段。结果将添加到素材箱中。增强处理速度较慢 — 在没有 GPU 的情况下每秒视频需耗时数分钟。</translation>
+        <translation>先预览一帧，再增强片段在时间线上使用的部分。结果会添加到素材库。增强速度较慢 —— 没有 GPU 时，每秒视频可能需要数分钟</translation>
     </message>
     <message>
         <source>Remove compression</source>
-        <translation>消除压缩失真</translation>
+        <translation>去除压缩</translation>
     </message>
     <message>
         <source>Upscale</source>
-        <translation>超分辨率放大</translation>
+        <translation>放大</translation>
     </message>
     <message>
         <source>Output: %1 × %2</source>
@@ -14793,7 +14793,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source> — larger than 4K, which is slow to edit and export</source>
-        <translation> — 大于 4K，编辑和导出速度较慢</translation>
+        <translation>—— 超过 4K，剪辑和导出都会变慢</translation>
     </message>
     <message>
         <source>Up to about %1 on this computer&apos;s CPU.</source>
@@ -14801,7 +14801,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Up to about %1 on a typical laptop CPU. Preview a frame for an estimate for this computer.</source>
-        <translation>在典型的笔记本 CPU 上大约需要 %1。预览一帧以估算此计算机的耗时。</translation>
+        <translation>在典型笔记本 CPU 上最高约 %1。预览一帧即可估算此电脑的速度</translation>
     </message>
     <message>
         <source>Preview this frame</source>
@@ -14817,30 +14817,30 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enhance clip</source>
-        <translation>增强剪辑</translation>
+        <translation>增强片段</translation>
     </message>
 </context>
 <context>
     <name>RestoreController</name>
     <message>
         <source>Select a video clip to enhance</source>
-        <translation>选择视频剪辑以进行增强</translation>
+        <translation>请选择要增强的视频片段</translation>
     </message>
     <message>
         <source>Choose a model to enhance with</source>
-        <translation>选择用于增强的模型</translation>
+        <translation>请选择用于增强的模型</translation>
     </message>
     <message>
         <source>This clip is already being enhanced</source>
-        <translation>此剪辑已在增强处理中</translation>
+        <translation>此片段正在增强中</translation>
     </message>
     <message>
         <source>%1 (enhanced %2x)</source>
-        <translation>%1 (已增强 %2x)</translation>
+        <translation>%1（已增强 %2 倍）</translation>
     </message>
     <message>
         <source>%1 (enhanced)</source>
-        <translation>%1 (已增强)</translation>
+        <translation>%1（已增强）</translation>
     </message>
     <message>
         <source>Enhance Video</source>
@@ -14848,7 +14848,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enhanced video added to the media bin</source>
-        <translation>增强后的视频已添加到素材箱</translation>
+        <translation>已增强的视频已添加到素材库</translation>
     </message>
     <message>
         <source>Enhancing video…</source>
@@ -14859,11 +14859,11 @@ If playback stutters, try another.</source>
     <name>RestoreUpscalerPicker</name>
     <message>
         <source>Anime and drawings</source>
-        <translation>动漫与绘画</translation>
+        <translation>动漫与手绘</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation>真人实拍</translation>
+        <translation>实拍</translation>
     </message>
     <message>
         <source>3D animation and games</source>
@@ -14875,7 +14875,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Choose an upscaler</source>
-        <translation>选择超分辨率放大模型</translation>
+        <translation>选择放大模型</translation>
     </message>
     <message>
         <source>Close</source>
@@ -14883,7 +14883,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>All</source>
-        <translation>所有</translation>
+        <translation>全部</translation>
     </message>
     <message>
         <source>Speeds are per frame of this clip. Custom models are experimental and may not work. Drop an ONNX export (fp32 or fp16, RGB, 1x/2x/4x) into the folder; put the scale in the file name, e.g. &quot;2x_Name.onnx&quot;.</source>
@@ -14891,7 +14891,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Get models (openmodeldb.info)</source>
-        <translation>获取模型 (openmodeldb.info)</translation>
+        <translation>获取模型（openmodeldb.info）</translation>
     </message>
     <message>
         <source>Install AI engine first</source>
@@ -14918,11 +14918,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 (custom, experimental)</source>
-        <translation>%1 (自定义，实验性)</translation>
+        <translation>%1（自定义，实验性）</translation>
     </message>
     <message>
         <source>under a second</source>
-        <translation>少于 1 秒</translation>
+        <translation>不到一秒</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -14946,34 +14946,34 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Keep the original size.</source>
-        <translation>保持原始尺寸。</translation>
+        <translation>保持原始尺寸</translation>
     </message>
 </context>
 <context>
     <name>ReverseProgressDialog</name>
     <message>
         <source>Reversing clip</source>
-        <translation>正在倒放剪辑</translation>
+        <translation>正在倒放片段</translation>
     </message>
     <message>
         <source>Reverse clip</source>
-        <translation>倒放剪辑</translation>
+        <translation>倒放片段</translation>
     </message>
     <message>
         <source>Working…</source>
-        <translation>正在处理…</translation>
+        <translation>处理中…</translation>
     </message>
     <message>
         <source>Drift will render a reversed copy of this clip so it plays back smoothly. You can keep editing while it runs.</source>
-        <translation>Drift 将渲染此剪辑的倒放副本以确保流畅播放。渲染在后台进行，您可以继续编辑。</translation>
+        <translation>Drift 将渲染该片段的倒放副本，使其流畅播放。渲染期间可继续编辑</translation>
     </message>
     <message>
         <source>This can take a few minutes on longer clips.</source>
-        <translation>对于较长的剪辑，这可能需要几分钟。</translation>
+        <translation>较长的片段可能需要几分钟</translation>
     </message>
     <message>
         <source>About %1 of video to render.</source>
-        <translation>大约需渲染 %1 的视频。</translation>
+        <translation>需渲染约 %1 的视频</translation>
     </message>
     <message>
         <source>%1 min</source>
@@ -14996,7 +14996,7 @@ If playback stutters, try another.</source>
     <name>ReverseRenderer</name>
     <message>
         <source>Nothing to reverse</source>
-        <translation>无要倒放的内容</translation>
+        <translation>没有可倒放的内容</translation>
     </message>
     <message>
         <source>Could not allocate decode buffers</source>
@@ -15004,11 +15004,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reversing cancelled</source>
-        <translation>倒放已取消</translation>
+        <translation>已取消倒放</translation>
     </message>
     <message>
         <source>No frames could be decoded from this clip</source>
-        <translation>无法从此剪辑解码任何帧</translation>
+        <translation>无法从该片段解码出任何帧</translation>
     </message>
 </context>
 <context>
@@ -15019,11 +15019,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select a video clip to find scenes in</source>
-        <translation>选择视频剪辑以查找场景</translation>
+        <translation>请选择要查找场景的视频片段</translation>
     </message>
     <message>
         <source>Clip has no video to scan</source>
-        <translation>剪辑没有可扫描的视频</translation>
+        <translation>片段没有可扫描的视频</translation>
     </message>
     <message numerus="yes">
         <source>Found %n scene(s)</source>
@@ -15045,7 +15045,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Scene detection cancelled</source>
-        <translation>场景检测已取消</translation>
+        <translation>已取消场景检测</translation>
     </message>
 </context>
 <context>
@@ -15063,7 +15063,7 @@ If playback stutters, try another.</source>
     <name>ScenesTab</name>
     <message>
         <source>Finds where the picture cuts in the selected video clip, and ranks each shot by movement and loudness. Click a shot to jump to it.</source>
-        <translation>在选中的视频剪辑中查找画面剪切点，并按画面运动和响度对每个镜头进行排序。点击镜头即可跳转。</translation>
+        <translation>查找所选视频片段中画面切换的位置，并按运动和响度为每个镜头排序。点击镜头即可跳转</translation>
     </message>
     <message>
         <source>Find scenes</source>
@@ -15071,11 +15071,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Scan the selected clip for shot boundaries</source>
-        <translation>扫描所选剪辑以检测镜头边界</translation>
+        <translation>扫描所选片段的镜头边界</translation>
     </message>
     <message>
         <source>Select a video clip first</source>
-        <translation>请先选择视频剪辑</translation>
+        <translation>请先选择视频片段</translation>
     </message>
     <message>
         <source>Clear</source>
@@ -15083,15 +15083,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Identify objects</source>
-        <translation>识别物体</translation>
+        <translation>识别对象</translation>
     </message>
     <message>
         <source>Also label each shot with what is in it. Slower.</source>
-        <translation>同时标注每个镜头中包含的内容。处理速度较慢。</translation>
+        <translation>同时标注每个镜头中的内容，速度较慢</translation>
     </message>
     <message>
         <source>Needs the Scene Labels add-on — install it from Extras</source>
-        <translation>需要“场景标签”附加组件 — 请从“附加项”安装</translation>
+        <translation>需要 Scene Labels 附加包 —— 请从 Extras 安装</translation>
     </message>
     <message>
         <source>Sensitivity</source>
@@ -15107,15 +15107,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Most active first</source>
-        <translation>最活跃优先</translation>
+        <translation>动态最多在前</translation>
     </message>
     <message>
         <source>In order</source>
-        <translation>按时间顺序</translation>
+        <translation>按顺序</translation>
     </message>
     <message>
         <source>Switch between timeline order and activity ranking</source>
-        <translation>在时间线顺序与活跃度排序之间切换</translation>
+        <translation>在时间线顺序和动态排序之间切换</translation>
     </message>
     <message>
         <source>%1 scenes</source>
@@ -15123,30 +15123,30 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>These scenes are from another clip. Select it again, or run Find scenes on the current one.</source>
-        <translation>这些场景来自另一个剪辑。请重新选择该剪辑，或在当前剪辑上运行“查找场景”。</translation>
+        <translation>这些场景来自另一个片段。请重新选择它，或对当前片段运行“查找场景”</translation>
     </message>
     <message>
         <source>No scenes yet</source>
-        <translation>暂无场景</translation>
+        <translation>尚无场景</translation>
     </message>
     <message>
         <source>No video clip selected</source>
-        <translation>未选择视频剪辑</translation>
+        <translation>未选择视频片段</translation>
     </message>
     <message>
         <source>Run Find scenes to split this clip into its shots.</source>
-        <translation>运行“查找场景”以将此剪辑拆分为镜头片段。</translation>
+        <translation>运行“查找场景”即可将此片段拆分为各个镜头</translation>
     </message>
     <message>
         <source>Select a video clip on the timeline to scan it.</source>
-        <translation>在时间线上选择视频剪辑以进行扫描。</translation>
+        <translation>在时间线上选择一个视频片段以进行扫描</translation>
     </message>
 </context>
 <context>
     <name>ScopesPanel</name>
     <message>
         <source>All</source>
-        <translation>所有</translation>
+        <translation>全部</translation>
     </message>
     <message>
         <source>Histogram</source>
@@ -15173,19 +15173,19 @@ If playback stutters, try another.</source>
     <name>SegmentationControlColumn</name>
     <message>
         <source>Tap marks the subject, press and hold marks what to exclude. Tap a marker to remove it.</source>
-        <translation>轻点标记主体，长按标记要排除的内容。轻点标记可将其移除。</translation>
+        <translation>点按标记主体，长按标记要排除的部分。点按标记可将其移除</translation>
     </message>
     <message>
         <source>Left-click marks the subject, right-click marks what to exclude. Click a marker to remove it.</source>
-        <translation>左键单击标记主体，右键单击标记要排除的内容。单击标记可将其移除。</translation>
+        <translation>左键单击标记主体，右键单击标记要排除的部分。单击标记可将其移除</translation>
     </message>
     <message>
         <source>Everyone in the shot is cut out automatically — there is nothing to click.</source>
-        <translation>镜头中的每个人物都将被自动抠出 — 无需手动点击。</translation>
+        <translation>镜头中的所有人都会自动抠出，无需点击</translation>
     </message>
     <message>
         <source>Cut out</source>
-        <translation>抠图</translation>
+        <translation>抠出</translation>
     </message>
     <message>
         <source>Quality</source>
@@ -15205,23 +15205,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Adds a mask layer under the clip. The clip itself is left alone — flip it to the background, or remove it, from the Masks tab.</source>
-        <translation>在剪辑下方添加蒙版图层。剪辑本身保持不变 — 可从“蒙版”选项卡将其置于背景或移除。</translation>
+        <translation>在片段下方添加蒙版图层。片段本身保持不变 —— 可在“蒙版”标签页中将其切换为背景或移除</translation>
     </message>
     <message>
         <source>The cutout is only for this effect — no extra tracks are added.</source>
-        <translation>抠图仅用于此效果 — 不会添加额外轨道。</translation>
+        <translation>抠出仅用于此效果 —— 不会添加额外轨道</translation>
     </message>
     <message>
         <source>Clear points</source>
-        <translation>清除选点</translation>
+        <translation>清除标记点</translation>
     </message>
     <message>
         <source>Cutting out… %1%</source>
-        <translation>正在抠图… %1%</translation>
+        <translation>抠出中… %1%</translation>
     </message>
     <message>
         <source>Cut out &amp; apply effect</source>
-        <translation>抠图并应用效果</translation>
+        <translation>抠出并应用效果</translation>
     </message>
     <message>
         <source>Cut out subject</source>
@@ -15233,14 +15233,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Each moment is processed, so longer clips take longer.</source>
-        <translation>系统会逐帧处理，因此较长的剪辑耗时更多。</translation>
+        <translation>每个瞬间都需单独处理，片段越长耗时越久</translation>
     </message>
 </context>
 <context>
     <name>SegmentationController</name>
     <message>
         <source>Select a video clip to cut out</source>
-        <translation>选择视频剪辑以进行抠图</translation>
+        <translation>请选择要抠出的视频片段</translation>
     </message>
     <message>
         <source>Wait for the frame to finish loading</source>
@@ -15248,15 +15248,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cutout is already running</source>
-        <translation>抠图任务已在运行</translation>
+        <translation>抠出已在进行中</translation>
     </message>
     <message>
         <source>This clip has no video to cut out</source>
-        <translation>此剪辑没有可用于抠图的视频</translation>
+        <translation>此片段没有可抠图的视频</translation>
     </message>
     <message>
         <source>Click the subject first</source>
-        <translation>请先点击选取主体</translation>
+        <translation>请先点击主体</translation>
     </message>
     <message>
         <source>That object mask no longer exists</source>
@@ -15276,7 +15276,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Clip is too short to cut out</source>
-        <translation>剪辑过短，无法抠图</translation>
+        <translation>片段太短，无法抠图</translation>
     </message>
     <message>
         <source>Could not create a cutout file</source>
@@ -15292,7 +15292,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Processing frame %1 of %2…</source>
-        <translation>正在处理第 %1 帧，共 %2 帧…</translation>
+        <translation>正在处理第 %1/%2 帧…</translation>
     </message>
     <message>
         <source>Object mask refined</source>
@@ -15300,7 +15300,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cutout complete — subject cut out on %1 of %2 frames</source>
-        <translation>抠图完成 — %2 帧中有 %1 帧完成主体抠图</translation>
+        <translation>抠图完成 — 已在 %1/%2 帧中抠出主体</translation>
     </message>
     <message>
         <source>Cutout complete</source>
@@ -15316,7 +15316,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>That clip no longer exists</source>
-        <translation>该剪辑已不存在</translation>
+        <translation>该片段已不存在</translation>
     </message>
     <message>
         <source>Cutout</source>
@@ -15331,7 +15331,7 @@ If playback stutters, try another.</source>
     <name>SegmentationFrameColumn</name>
     <message>
         <source>Looking at this moment…</source>
-        <translation>正在观察当前画面…</translation>
+        <translation>正在分析此帧…</translation>
     </message>
     <message>
         <source>Frame</source>
@@ -15350,7 +15350,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Anything (click to pick)</source>
-        <translation>任意物体（点击选取）</translation>
+        <translation>任意对象（点击选择）</translation>
     </message>
     <message>
         <source>People (automatic)</source>
@@ -15389,7 +15389,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Once a day, check whether a newer Drift has been released.</source>
-        <translation>每天检查一次是否有新版 Drift 发布。</translation>
+        <translation>每天检查一次是否有新版本的 Drift 发布</translation>
     </message>
     <message>
         <source>Check for updates</source>
@@ -15417,7 +15417,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Open-source video editor by CutWire Studios.</source>
-        <translation>CutWire Studios 推出的开源视频编辑器。</translation>
+        <translation>CutWire Studios 出品的开源视频编辑器</translation>
     </message>
     <message>
         <source>Show about dialog</source>
@@ -15429,7 +15429,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>System, playback and codec details for bug reports.</source>
-        <translation>用于错误报告的系统、播放及编解码器详情。</translation>
+        <translation>用于错误报告的系统、播放和编解码器详细信息</translation>
     </message>
     <message>
         <source>Open debug info…</source>
@@ -15440,7 +15440,7 @@ If playback stutters, try another.</source>
     <name>SettingsAiPage</name>
     <message>
         <source>AI &amp; Cloud</source>
-        <translation>AI 与云服务</translation>
+        <translation>AI 与云</translation>
     </message>
     <message>
         <source>Agent access</source>
@@ -15448,7 +15448,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Let Cursor or Claude edit this project for you. Only programs on this device can connect.</source>
-        <translation>允许 Cursor 或 Claude 为您编辑此项目。仅限此设备上的程序连接。</translation>
+        <translation>让 Cursor 或 Claude 替你编辑此项目。仅本设备上的程序可以连接</translation>
     </message>
     <message>
         <source>Start agent access on launch</source>
@@ -15456,7 +15456,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
-        <translation>下次打开 Drift 时自动开启智能体访问。关闭访问将重置此设置。</translation>
+        <translation>下次打开 Drift 时自动开启智能体访问。关闭访问会重置此设置</translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -15468,18 +15468,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Higher finds more cuts. When a clip is flat or heavily graded, Drift still falls back to an adaptive threshold.</source>
-        <translation>较高的数值会检测出更多剪切点。当剪辑对比度较低或调色较重时，Drift 会自动采用自适应阈值。</translation>
+        <translation>越高检测到的切点越多。当片段画面平淡或调色较重时，Drift 仍会改用自适应阈值</translation>
     </message>
 </context>
 <context>
     <name>SettingsAppearanceActions</name>
     <message>
         <source>Could not import that theme.</source>
-        <translation>无法导入该主题。</translation>
+        <translation>无法导入该主题</translation>
     </message>
     <message>
         <source>Imported “%1”.</source>
-        <translation>已导入“%1”。</translation>
+        <translation>已导入“%1”</translation>
     </message>
     <message>
         <source>Import theme…</source>
@@ -15519,11 +15519,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not export this theme.</source>
-        <translation>无法导出此主题。</translation>
+        <translation>无法导出此主题</translation>
     </message>
     <message>
         <source>Exported the current theme.</source>
-        <translation>已导出当前主题。</translation>
+        <translation>已导出当前主题</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -15531,15 +15531,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reload themes when files change</source>
-        <translation>文件更改时重载主题</translation>
+        <translation>文件更改时重新加载主题</translation>
     </message>
     <message>
         <source>Watches the selected user theme and applies edits when its files change. Built-in themes are not watched.</source>
-        <translation>监视选中的用户主题，并在其文件发生变动时应用更改。内置主题不在此监视范围内。</translation>
+        <translation>监视所选用户主题，并在其文件更改时应用修改。内置主题不会被监视</translation>
     </message>
     <message>
         <source>Hot reload applies the next time a user theme is selected.</source>
-        <translation>热重载将在下次选择用户主题时生效。</translation>
+        <translation>热重载将在下次选择用户主题时生效</translation>
     </message>
     <message>
         <source>Remove theme?</source>
@@ -15551,15 +15551,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not remove that theme.</source>
-        <translation>无法移除该主题。</translation>
+        <translation>无法移除该主题</translation>
     </message>
     <message>
         <source>Removed “%1”.</source>
-        <translation>已移除“%1”。</translation>
+        <translation>已移除“%1”</translation>
     </message>
     <message>
         <source>Remove “%1” from this device? Its files are deleted.</source>
-        <translation>是否从此设备移除“%1”？其文件将被删除。</translation>
+        <translation>从此设备移除“%1”？其文件将被删除</translation>
     </message>
 </context>
 <context>
@@ -15570,7 +15570,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not use that theme.</source>
-        <translation>无法使用该主题。</translation>
+        <translation>无法使用该主题</translation>
     </message>
     <message>
         <source>Theme</source>
@@ -15578,15 +15578,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Color theme</source>
-        <translation>颜色主题</translation>
+        <translation>配色主题</translation>
     </message>
     <message>
         <source>Light and Dark follow your system. Other themes can be installed or imported.</source>
-        <translation>“浅色”和“深色”跟随系统设置。也可以安装或导入其他主题。</translation>
+        <translation>浅色和深色跟随系统。其他主题可安装或导入</translation>
     </message>
     <message>
         <source>This theme is %1 only. Light and Dark leave it and return to the system theme.</source>
-        <translation>此主题仅支持%1模式。“浅色”和“深色”将离开此主题并返回系统主题。</translation>
+        <translation>此主题只有%1模式。浅色和深色会离开它并返回系统主题</translation>
     </message>
     <message>
         <source>dark</source>
@@ -15598,7 +15598,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>This theme has a dark and a light variant. The header toggle switches between them.</source>
-        <translation>此主题具有深色和浅色变体。标题栏开关可在二者之间切换。</translation>
+        <translation>此主题有深色和浅色两个变体，顶栏开关可在二者间切换</translation>
     </message>
     <message>
         <source>Translucent windows</source>
@@ -15606,7 +15606,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Lets the desktop show through panels when a theme asks for it. Takes effect after restart.</source>
-        <translation>当主题需要时，允许桌面透过面板透显。重启后生效。</translation>
+        <translation>当主题需要时让桌面透过面板显示。重启后生效</translation>
     </message>
     <message>
         <source>Interface</source>
@@ -15618,15 +15618,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Restart Drift to apply this size.</source>
-        <translation>重启 Drift 以应用此大小。</translation>
+        <translation>重启 Drift 以应用此大小</translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
-        <translation>在显示设置的基础上，放大按钮、文本和图标。</translation>
+        <translation>在显示设置的基础上放大按钮、文字和图标</translation>
     </message>
     <message>
         <source>100% (system)</source>
-        <translation>100%（跟随系统）</translation>
+        <translation>100%（系统）</translation>
     </message>
     <message>
         <source>Layout</source>
@@ -15634,11 +15634,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Restart Drift to switch layouts.</source>
-        <translation>重启 Drift 以切换布局。</translation>
+        <translation>重启 Drift 以切换布局</translation>
     </message>
     <message>
         <source>Desktop suits a mouse and keyboard. Mobile is the touch layout made for phones.</source>
-        <translation>“桌面”适合鼠标和键盘操作。“移动端”是专为手机打造的触控布局。</translation>
+        <translation>桌面布局适合鼠标和键盘，移动布局是为手机设计的触控布局</translation>
     </message>
     <message>
         <source>Automatic</source>
@@ -15646,11 +15646,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Desktop</source>
-        <translation>桌面端</translation>
+        <translation>桌面</translation>
     </message>
     <message>
         <source>Mobile</source>
-        <translation>移动端</translation>
+        <translation>移动</translation>
     </message>
     <message>
         <source>Restart now</source>
@@ -15666,7 +15666,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Landscape or portrait workspace. Auto follows the shape of the canvas.</source>
-        <translation>横屏或竖屏工作区。“自动”跟随画布的形状。</translation>
+        <translation>横向或纵向工作区。自动会跟随画布形状</translation>
     </message>
     <message>
         <source>Auto (follow canvas)</source>
@@ -15674,22 +15674,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Landscape</source>
-        <translation>横屏</translation>
+        <translation>横向</translation>
     </message>
     <message>
         <source>Portrait</source>
-        <translation>竖屏</translation>
+        <translation>纵向</translation>
     </message>
 </context>
 <context>
     <name>SettingsAppearanceTranslucency</name>
     <message>
         <source>Restart Drift to apply window transparency.</source>
-        <translation>重启 Drift 以应用窗口透明效果。</translation>
+        <translation>重启 Drift 以应用窗口透明效果</translation>
     </message>
     <message>
         <source>Backdrops on this system: %1. Effective backdrop: %2.</source>
-        <translation>当前系统上的背景特效：%1。当前生效的背景特效：%2。</translation>
+        <translation>本系统可用的背景效果：%1，实际生效：%2</translation>
     </message>
     <message>
         <source>none</source>
@@ -15697,11 +15697,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>This system has no translucent backdrop.</source>
-        <translation>当前系统不支持半透明背景特效。</translation>
+        <translation>此系统没有半透明背景效果</translation>
     </message>
     <message>
         <source>This theme uses a translucent window. Turn on translucent windows to show its backdrop.</source>
-        <translation>此主题使用了半透明窗口。请开启半透明窗口以显示其背景特效。</translation>
+        <translation>此主题使用半透明窗口。开启半透明窗口以显示其背景效果</translation>
     </message>
 </context>
 <context>
@@ -15720,7 +15720,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.</source>
-        <translation>播放声音的输出设备。“系统默认”跟随计算机的当前设置，并在系统更改时自动切换。</translation>
+        <translation>播放声音的输出位置。“系统默认”会跟随电脑的设置，包括设置变更时</translation>
     </message>
     <message>
         <source>Microphone input</source>
@@ -15728,7 +15728,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Audio device used for recording voiceovers onto audio tracks.</source>
-        <translation>用于将画外音录制到音频轨道上的音频设备。</translation>
+        <translation>用于录制配音到音轨的音频设备</translation>
     </message>
 </context>
 <context>
@@ -15739,11 +15739,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transcription (Scribe), voiceover, sound effects</source>
-        <translation>转录 (Scribe)、画外音、音效</translation>
+        <translation>文字记录（Scribe）、配音、音效</translation>
     </message>
     <message>
         <source>Voiceover</source>
-        <translation>画外音</translation>
+        <translation>配音</translation>
     </message>
     <message>
         <source>No key</source>
@@ -15783,19 +15783,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Needed before Drift or a connected agent can transcribe or generate audio with this service</source>
-        <translation>在 Drift 或连接的智能体使用此服务转录或生成音频前必须授权</translation>
+        <translation>Drift 或已连接的智能体使用此服务转写或生成音频前需要开启此项</translation>
     </message>
     <message>
         <source>Default voice id</source>
-        <translation>默认声音 ID</translation>
+        <translation>默认语音 ID</translation>
     </message>
     <message>
         <source>Voice model</source>
-        <translation>声音模型</translation>
+        <translation>语音模型</translation>
     </message>
     <message>
         <source>Transcription model</source>
-        <translation>转录模型</translation>
+        <translation>转写模型</translation>
     </message>
 </context>
 <context>
@@ -15825,7 +15825,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Language &amp; region</source>
-        <translation>语言与地区</translation>
+        <translation>语言和地区</translation>
     </message>
     <message>
         <source>Language</source>
@@ -15833,7 +15833,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Language for menus and labels. Takes effect immediately.</source>
-        <translation>菜单与标签的语言。立即生效。</translation>
+        <translation>菜单和标签使用的语言。立即生效</translation>
     </message>
     <message>
         <source>Startup</source>
@@ -15841,11 +15841,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reopen last project on startup</source>
-        <translation>启动时重新打开上次的项目</translation>
+        <translation>启动时重新打开上个项目</translation>
     </message>
     <message>
         <source>Restores the last open project. Closing still asks you to save.</source>
-        <translation>恢复上次打开的项目。关闭时仍会提示保存。</translation>
+        <translation>恢复上次打开的项目。关闭时仍会询问是否保存</translation>
     </message>
     <message>
         <source>Saving</source>
@@ -15857,11 +15857,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>How often unsaved work is snapshotted for crash recovery.</source>
-        <translation>用于崩溃恢复的未保存工作快照保存频率。</translation>
+        <translation>未保存的工作每隔多久保存一次快照以用于崩溃恢复</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation>关</translation>
+        <translation>关闭</translation>
     </message>
     <message>
         <source>Every 15 seconds</source>
@@ -15885,31 +15885,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remind about essential packs</source>
-        <translation>提醒安装必备扩展包</translation>
+        <translation>提醒必备附加包</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when the video, transitions, and audio packs are not installed.</source>
-        <translation>未安装视频、转场和音频扩展包时，使“附加项”图标闪烁提示。</translation>
+        <translation>未安装视频、转场和音频附加包时，“附加项”图标会闪烁提示</translation>
     </message>
     <message>
         <source>Remind about pack updates</source>
-        <translation>提醒扩展包更新</translation>
+        <translation>提醒附加包更新</translation>
     </message>
     <message>
         <source>Pulse the Extras icon when updates are available for packs you already have installed.</source>
-        <translation>已安装的扩展包有可用更新时，使“附加项”图标闪烁提示。</translation>
+        <translation>已安装的附加包有可用更新时，“附加项”图标会闪烁提示</translation>
     </message>
     <message>
         <source>Feedback</source>
-        <translation>反馈与振动</translation>
+        <translation>反馈</translation>
     </message>
     <message>
         <source>Haptic feedback</source>
-        <translation>触觉反馈</translation>
+        <translation>触感反馈</translation>
     </message>
     <message>
         <source>Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.</source>
-        <translation>在轻点、吸附和编辑时振动。如果设备支持，将使用其自身的触觉效果。</translation>
+        <translation>点按、吸附和编辑时振动。设备自带触感效果时将优先使用</translation>
     </message>
     <message>
         <source>Storage</source>
@@ -15921,7 +15921,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 used, stored in %2</source>
-        <translation>%1 已使用，存储在 %2</translation>
+        <translation>已用 %1，存储于 %2</translation>
     </message>
     <message>
         <source>Clear cache</source>
@@ -15933,11 +15933,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Export and import</source>
-        <translation>导出与导入</translation>
+        <translation>导出和导入</translation>
     </message>
     <message>
         <source>Save your preferences to a JSON file, or load them from one.</source>
-        <translation>将您的偏好设置保存为 JSON 文件，或从 JSON 文件中加载。</translation>
+        <translation>将偏好设置保存为 JSON 文件，或从文件加载</translation>
     </message>
     <message>
         <source>Export settings…</source>
@@ -15972,38 +15972,38 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Click a shortcut, then press the keys. Esc cancels, Backspace clears.</source>
-        <translation>点击某个快捷键，然后按下按键。Esc 取消，Backspace 清除。</translation>
+        <translation>点击一个快捷键，然后按下新按键。Esc 取消，Backspace 清除</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>恢复默认值</translation>
+        <translation>重置为默认值</translation>
     </message>
     <message>
         <source>Restores every shortcut to its original key.</source>
-        <translation>将每个快捷键恢复为其原始按键。</translation>
+        <translation>将所有快捷键恢复为原始按键</translation>
     </message>
     <message>
         <source>Shortcuts reset to defaults.</source>
-        <translation>快捷键已重置为默认值。</translation>
+        <translation>快捷键已重置为默认值</translation>
     </message>
 </context>
 <context>
     <name>SettingsMarketplacePage</name>
     <message>
         <source>Marketplace</source>
-        <translation>素材集市</translation>
+        <translation>素材市场</translation>
     </message>
     <message>
         <source>Account</source>
-        <translation>账号</translation>
+        <translation>帐户</translation>
     </message>
     <message>
         <source>Account connected (%1)</source>
-        <translation>账号已连接 (%1)</translation>
+        <translation>已连接帐户（%1）</translation>
     </message>
     <message>
         <source>Marketplace account connected</source>
-        <translation>素材集市账号已连接</translation>
+        <translation>已连接素材市场帐户</translation>
     </message>
     <message>
         <source>Disconnect</source>
@@ -16011,7 +16011,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlink the marketplace account from this device</source>
-        <translation>从此设备取消链接素材集市账号</translation>
+        <translation>将素材市场帐户与此设备解除关联</translation>
     </message>
 </context>
 <context>
@@ -16030,7 +16030,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>How Drift reaches the internet for downloads, updates, and online services. Applies immediately.</source>
-        <translation>Drift 访问互联网以进行下载、更新和在线服务的方式。立即生效。</translation>
+        <translation>Drift 用于下载、更新和在线服务的联网方式。立即生效</translation>
     </message>
     <message>
         <source>System proxy</source>
@@ -16054,7 +16054,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Host and port of the proxy. The username and password are optional.</source>
-        <translation>代理的主机和端口。用户名和密码为选填。</translation>
+        <translation>代理的主机与端口，用户名和密码可选</translation>
     </message>
     <message>
         <source>Proxy host</source>
@@ -16113,7 +16113,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>AI &amp; Cloud</source>
-        <translation>AI 与云服务</translation>
+        <translation>AI 与云</translation>
     </message>
     <message>
         <source>Network</source>
@@ -16121,7 +16121,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation>素材集市</translation>
+        <translation>素材市场</translation>
     </message>
     <message>
         <source>About</source>
@@ -16133,7 +16133,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No settings match “%1”</source>
-        <translation>没有与“%1”匹配的设置</translation>
+        <translation>没有匹配“%1”的设置</translation>
     </message>
 </context>
 <context>
@@ -16144,15 +16144,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>For advanced users</source>
-        <translation>高级用户选项</translation>
+        <translation>面向高级用户</translation>
     </message>
     <message>
         <source>These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately.</source>
-        <translation>这些选项用于调整内存占用和播放行为。默认值适用于绝大多数机器；修改它们可能会导致播放卡顿或消耗过多内存。大部分更改立即生效。</translation>
+        <translation>这些选项用于调整内存占用和播放行为。默认值适合大多数设备；更改后可能导致播放卡顿或占用大量内存。多数更改会立即生效</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>恢复默认值</translation>
+        <translation>重置为默认值</translation>
     </message>
     <message>
         <source>Playback</source>
@@ -16160,15 +16160,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drop late frames</source>
-        <translation>丢弃落后帧</translation>
+        <translation>丢弃延迟帧</translation>
     </message>
     <message>
         <source>Skip preview frames that finish this far behind the playhead, instead of showing them late. Can reduce slow-motion at clip cuts on slow machines. Off never drops a frame for being late.</source>
-        <translation>当预览帧严重滞后于播放头时直接跳过，而不是延迟显示。可在较慢的机器上减少剪辑交接处的慢动作现象。“关”表示绝不因延迟而丢帧。</translation>
+        <translation>跳过比播放头落后超过此时长的预览帧，而不是延迟显示。在低性能设备上可减少片段切换处的慢动作现象。关闭时绝不因延迟而丢帧</translation>
     </message>
     <message>
         <source>Drop frames lagging behind playback by more than</source>
-        <translation>丢弃滞后播放超过指定时长的帧</translation>
+        <translation>丢弃落后于播放超过此时长的帧</translation>
     </message>
     <message>
         <source>ms</source>
@@ -16176,15 +16176,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Off</source>
-        <translation>关</translation>
+        <translation>关闭</translation>
     </message>
     <message>
         <source>Read-ahead</source>
-        <translation>预读缓存</translation>
+        <translation>预读</translation>
     </message>
     <message>
         <source>How much video each clip decodes ahead of the playhead during playback. More absorbs slow-to-decode footage but competes with the frames on screen. Default 2000 ms.</source>
-        <translation>播放过程中每个剪辑在播放头前提前解码的视频时长。较大的值可缓冲解码较慢的素材，但会占用屏幕渲染资源。默认为 2000 毫秒。</translation>
+        <translation>播放时每个片段在播放头之前预先解码的视频量。越大越能消化解码慢的素材，但会与屏幕上正在显示的帧争抢解码资源。默认 2000 毫秒</translation>
     </message>
     <message>
         <source>Continuous read-ahead</source>
@@ -16192,7 +16192,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Keep decoding until the whole read-ahead window is full. Off decodes one frame ahead per displayed frame, which leaves more decoder time for the clip on screen but buffers less.</source>
-        <translation>持续解码直至整个预读窗口填满。“关”表示每显示一帧仅提前解码一帧，这能为屏幕上正在显示的剪辑留出更多解码时间，但缓冲较少。</translation>
+        <translation>持续解码直到整个预读窗口填满。关闭时每显示一帧只提前解码一帧，为屏幕上的片段留出更多解码时间，但缓冲更少</translation>
     </message>
     <message>
         <source>Memory &amp; caches</source>
@@ -16204,7 +16204,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Memory shared by all clips for decoded preview frames. Automatic uses an eighth of system memory (a sixteenth on Android), at least 128 MiB.</source>
-        <translation>所有剪辑共享用于存储已解码预览帧的内存。“自动”使用系统内存的 1/8（Android 上为 1/16），至少 128 MiB。</translation>
+        <translation>所有片段共享的已解码预览帧内存。“自动”使用系统内存的八分之一（Android 上为十六分之一），且不低于 128 MiB。</translation>
     </message>
     <message>
         <source>MiB</source>
@@ -16216,11 +16216,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>CPU frame history per clip</source>
-        <translation>每剪辑 CPU 帧历史记录</translation>
+        <translation>每个片段的 CPU 帧历史</translation>
     </message>
     <message>
         <source>Limit the decoded images each clip keeps in memory for scrubbing and effects. Unlimited keeps up to 16 frames per clip, which is large for 4K footage.</source>
-        <translation>限制每个剪辑在内存中保留的用于拖动时间线和效果计算的已解码图像数量。“无限制”每个剪辑最多保留 16 帧，这对于 4K 素材来说占用较大。</translation>
+        <translation>限制每个片段在内存中保留的已解码图像数量，用于拖动浏览和效果。无限制时每个片段最多保留 16 帧，对 4K 素材来说占用很大。</translation>
     </message>
     <message>
         <source>Unlimited</source>
@@ -16232,19 +16232,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Idle GPU render targets kept for reuse. Fewer saves video memory; more avoids reallocating while effects and transitions play.</source>
-        <translation>空闲 GPU 渲染目标保留供复用。数量较少可节省显存；数量较多可避免在播放效果和转场时频繁重新分配。</translation>
+        <translation>保留以备复用的空闲 GPU 渲染目标。较少可节省显存；较多可避免播放效果和转场时重新分配。</translation>
     </message>
     <message>
         <source>targets</source>
-        <translation>个目标</translation>
+        <translation>个</translation>
     </message>
     <message>
         <source>Render target pool: size</source>
-        <translation>渲染目标池：显存大小</translation>
+        <translation>渲染目标池：大小</translation>
     </message>
     <message>
         <source>Cap on the video memory held by idle render targets, in addition to the count.</source>
-        <translation>除数量限制外，空闲渲染目标所占显存的上限。</translation>
+        <translation>在数量之外，限制空闲渲染目标占用的显存。</translation>
     </message>
     <message>
         <source>Image upload cache: count</source>
@@ -16252,19 +16252,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stills and converted frames kept on the GPU so they are not uploaded again every frame.</source>
-        <translation>在 GPU 上保留静止图像和转换后的帧，避免每帧重复上传。</translation>
+        <translation>保留在 GPU 上的静态图像和已转换帧，以免每帧都重新上传。</translation>
     </message>
     <message>
         <source>images</source>
-        <translation>张图像</translation>
+        <translation>张</translation>
     </message>
     <message>
         <source>Image upload cache: size</source>
-        <translation>图像上传缓存：显存大小</translation>
+        <translation>图像上传缓存：大小</translation>
     </message>
     <message>
         <source>Cap on the video memory used by the image upload cache, in addition to the count. 48 uploads of 4K frames take about 1.5 GiB.</source>
-        <translation>除数量限制外，图像上传缓存所用显存的上限。上传 48 帧 4K 图像约占用 1.5 GiB。</translation>
+        <translation>在数量之外，限制图像上传缓存占用的显存。48 个 4K 帧的上传约占用 1.5 GiB。</translation>
     </message>
     <message>
         <source>Export</source>
@@ -16272,11 +16272,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Prefer hardware encoder for new exports</source>
-        <translation>新导出首选硬件编码器</translation>
+        <translation>新导出优先使用硬件编码器</translation>
     </message>
     <message>
         <source>Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder.</source>
-        <translation>在可用时使用 GPU H.264 编码器执行新导出。速度更快，但在相同码率下的画质通常略逊于默认的软件编码器。</translation>
+        <translation>有可用的 GPU H.264 编码器时，新导出将使用它。速度更快，但同码率下的画质通常低于默认的软件编码器。</translation>
     </message>
 </context>
 <context>
@@ -16295,15 +16295,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Alignment guides drawn over the preview.</source>
-        <translation>在预览上方绘制的对齐参考线。</translation>
+        <translation>在预览画面上绘制的对齐参考线。</translation>
     </message>
     <message>
         <source>Guide sets</source>
-        <translation>参考线集合</translation>
+        <translation>参考线集</translation>
     </message>
     <message>
         <source>Choose which guide sets are drawn over the preview.</source>
-        <translation>选择在预览上方绘制哪些参考线集合。</translation>
+        <translation>选择在预览画面上绘制哪些参考线集。</translation>
     </message>
     <message>
         <source>Background</source>
@@ -16311,7 +16311,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Fill behind clips that don’t cover the whole screen.</source>
-        <translation>未铺满全屏剪辑的背景填充方式。</translation>
+        <translation>片段未铺满整个画面时其背后的填充。</translation>
     </message>
     <message>
         <source>Solid color</source>
@@ -16339,19 +16339,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>How much the background is blurred behind clips.</source>
-        <translation>剪辑后方背景的模糊程度。</translation>
+        <translation>片段背后背景的模糊程度。</translation>
     </message>
     <message>
         <source>Playback quality</source>
-        <translation>播放画质</translation>
+        <translation>播放质量</translation>
     </message>
     <message>
         <source>Preview quality</source>
-        <translation>预览画质</translation>
+        <translation>预览质量</translation>
     </message>
     <message>
         <source>Lower is smoother while editing. Full matches an export exactly; Auto renders only the pixels on screen.</source>
-        <translation>降低画质可使编辑更流畅。“完整”与导出的画质完全一致；“自动”仅渲染屏幕实际显示的像素。</translation>
+        <translation>越低剪辑时越流畅。“完整”与导出画面完全一致；“自动”只渲染屏幕上的像素。</translation>
     </message>
     <message>
         <source>Full</source>
@@ -16359,15 +16359,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Half</source>
-        <translation>1/2</translation>
+        <translation>一半</translation>
     </message>
     <message>
         <source>Quarter</source>
-        <translation>1/4</translation>
+        <translation>四分之一</translation>
     </message>
     <message>
         <source>1/8 (Eco)</source>
-        <translation>1/8（节能）</translation>
+        <translation>1/8（经济）</translation>
     </message>
     <message>
         <source>Auto</source>
@@ -16379,7 +16379,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.</source>
-        <translation>预览视频的解码方式。“软件解码”对大多数剪辑更流畅但占用更多 CPU。“硬件解码”更适合高质量 4K。</translation>
+        <translation>预览视频的解码方式。软件解码对大多数片段更流畅，但占用更多 CPU。硬件解码适合高质量 4K 素材。</translation>
     </message>
     <message>
         <source>Faster preview (experimental)</source>
@@ -16387,7 +16387,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.</source>
-        <translation>通过将视频保留在显卡上使播放更流畅。如果画面显示异常请将其关闭。重启后生效。</translation>
+        <translation>将视频保留在显卡上可使播放更流畅。如果画面显示异常，请关闭此选项。重启后生效。</translation>
     </message>
     <message>
         <source>Graphics card</source>
@@ -16395,7 +16395,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.</source>
-        <translation>Drift 所运行的显卡。“高性能”将 NVIDIA 显卡解码的视频保留在该显卡上；“节能”更省电。重启后生效。</translation>
+        <translation>Drift 运行所用的显卡。“高性能”让 NVIDIA 卡上的视频解码留在该卡上；“省电”更省电池。重启后生效。</translation>
     </message>
     <message>
         <source>Windows default</source>
@@ -16403,7 +16403,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Power saving (integrated GPU)</source>
-        <translation>节能（集成显卡）</translation>
+        <translation>省电（集成显卡）</translation>
     </message>
     <message>
         <source>High performance (discrete GPU)</source>
@@ -16411,7 +16411,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Choose which graphics card Drift runs on in Windows Settings, under Display &gt; Graphics. Takes effect after restart.</source>
-        <translation>在 Windows 设置的“显示 &gt; 图形”中选择 Drift 运行的显卡。重启后生效。</translation>
+        <translation>在 Windows 设置的“显示 &gt; 图形”中选择 Drift 运行所用的显卡。重启后生效。</translation>
     </message>
     <message>
         <source>Open graphics settings</source>
@@ -16423,11 +16423,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Use proxies for preview</source>
-        <translation>使用代理进行预览</translation>
+        <translation>预览使用代理</translation>
     </message>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
-        <translation>存在代理时使用低分辨率代理播放剪辑。导出时始终使用原始媒体。</translation>
+        <translation>存在代理时，从其低分辨率代理播放片段。导出始终使用原始媒体。</translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -16435,7 +16435,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Size of new proxies. Proxies made at another size are not used until you create them again.</source>
-        <translation>新建代理的分辨率大小。以其他尺寸制作的代理在重新创建前不会被使用。</translation>
+        <translation>新代理的尺寸。以其他尺寸创建的代理在重新创建之前不会被使用。</translation>
     </message>
     <message>
         <source>360p</source>
@@ -16455,26 +16455,26 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Proxy name patterns</source>
-        <translation>代理名称命名模式</translation>
+        <translation>代理名称模式</translation>
     </message>
     <message>
         <source>Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically.</source>
-        <translation>链接代理会使 Drift 记录其命名模式。媒体旁符合下方模式的代理将自动链接。</translation>
+        <translation>关联代理会让 Drift 记住其命名模式。位于媒体旁边且符合以下模式的代理将自动关联。</translation>
     </message>
     <message>
         <source>Remove pattern</source>
-        <translation>移除命名模式</translation>
+        <translation>移除模式</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
-        <translation>恢复默认值</translation>
+        <translation>恢复默认</translation>
     </message>
 </context>
 <context>
     <name>SettingsThemeEntry</name>
     <message>
         <source>Overrides</source>
-        <translation>覆盖项</translation>
+        <translation>覆盖</translation>
     </message>
     <message>
         <source>Trusted</source>
@@ -16493,11 +16493,11 @@ If playback stutters, try another.</source>
     <name>SettingsThemeList</name>
     <message>
         <source>Follows light and dark</source>
-        <translation>跟随浅色与深色</translation>
+        <translation>跟随浅色和深色</translation>
     </message>
     <message>
         <source>Dark and light</source>
-        <translation>深色与浅色</translation>
+        <translation>深色和浅色</translation>
     </message>
     <message>
         <source>Light</source>
@@ -16528,11 +16528,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Mouse wheel scrolls</source>
-        <translation>鼠标滚轮滚动方式</translation>
+        <translation>鼠标滚轮滚动</translation>
     </message>
     <message>
         <source>What the mouse wheel moves on the timeline. Hold Shift for the other direction; middle-click drag also pans.</source>
-        <translation>鼠标滚轮在时间线上移动的方向。按住 Shift 沿另一方向移动；中键拖动也可平移。</translation>
+        <translation>鼠标滚轮在时间线上移动的内容。按住 Shift 可朝另一方向滚动；中键拖动也可平移。</translation>
     </message>
     <message>
         <source>Tracks (up and down)</source>
@@ -16548,19 +16548,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Auto-crossfade overlapping clips</source>
-        <translation>重叠剪辑自动交叉淡化</translation>
+        <translation>自动交叉淡化重叠片段</translation>
     </message>
     <message>
         <source>When a move creates an overlap with a neighbouring clip on the same track, add a crossfade across it.</source>
-        <translation>当移动导致同一轨道上的相邻剪辑发生重叠时，自动在重叠处添加交叉淡化。</translation>
+        <translation>当移动造成与同轨道相邻片段重叠时，在其间添加交叉淡化。</translation>
     </message>
     <message>
         <source>Auto-select clip under playhead</source>
-        <translation>自动选择播放头下的剪辑</translation>
+        <translation>自动选中播放头下的片段</translation>
     </message>
     <message>
         <source>Select the clip under the playhead as the playhead moves.</source>
-        <translation>随播放头移动自动选中播放头下方的剪辑。</translation>
+        <translation>播放头移动时自动选中其下方的片段。</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
@@ -16568,15 +16568,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Dragging a slider also creates keyframes.</source>
-        <translation>拖动滑块时自动创建关键帧。</translation>
+        <translation>拖动滑块时同时创建关键帧。</translation>
     </message>
     <message>
         <source>Loop work area</source>
-        <translation>循环播放工作区</translation>
+        <translation>循环工作区</translation>
     </message>
     <message>
         <source>Playback repeats between the work area in and out points.</source>
-        <translation>在工作区入点和出点之间重复循环播放。</translation>
+        <translation>播放会在工作区的入点和出点之间循环。</translation>
     </message>
     <message>
         <source>Defaults</source>
@@ -16584,19 +16584,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Still image duration</source>
-        <translation>静止图像时长</translation>
+        <translation>静态图像时长</translation>
     </message>
     <message>
         <source>Length of images and stills when added to the timeline.</source>
-        <translation>图像和静止帧添加到时间线时的初始时长。</translation>
+        <translation>图像和静帧添加到时间线时的长度。</translation>
     </message>
     <message>
         <source>Transition length</source>
-        <translation>转长时长</translation>
+        <translation>转场长度</translation>
     </message>
     <message>
         <source>Length of new transitions dropped between clips.</source>
-        <translation>拖放到剪辑之间的新转场的初始时长。</translation>
+        <translation>拖放到片段之间的新转场的长度。</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -16604,11 +16604,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Show timeline overview</source>
-        <translation>显示时间线总览小地图</translation>
+        <translation>显示时间线概览</translation>
     </message>
     <message>
         <source>A minimap of the whole project. Click or drag it to jump the view.</source>
-        <translation>整个项目的小地图。点击或拖动可快速跳转视图。</translation>
+        <translation>整个项目的缩略地图。点击或拖动它可跳转视图。</translation>
     </message>
     <message>
         <source>Show audio mixer</source>
@@ -16616,7 +16616,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Show the audio mixer strip beside the timeline.</source>
-        <translation>在时间线旁显示音频混音器通道条。</translation>
+        <translation>在时间线旁显示音频混音器条。</translation>
     </message>
 </context>
 <context>
@@ -16631,7 +16631,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.</source>
-        <translation>选择显示在时间线上方工具栏上的操作项以及放入溢出菜单中的操作项。</translation>
+        <translation>选择哪些操作显示在时间线上方的工具栏上，哪些放入溢出菜单。</translation>
     </message>
 </context>
 <context>
@@ -16642,7 +16642,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Arrange panels into layouts, optionally across several windows. Drag a panel onto an edge of another block to split it, or onto its middle to add a tab. Nothing changes in the editor until you save.</source>
-        <translation>将面板排列成不同布局，可选择跨多个窗口。将面板拖到另一块区域的边缘可进行分割，拖到中心可添加标签页。在保存前编辑器不会发生更改。</translation>
+        <translation>将面板排列成布局，也可以跨多个窗口。将面板拖到另一区块的边缘可拆分，拖到中间可添加标签页。保存之前编辑器不会有任何变化。</translation>
     </message>
     <message>
         <source>Layout designer</source>
@@ -16650,14 +16650,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Built-in presets keep a copy of the original, so Reset brings them back.</source>
-        <translation>内置预设保留了原始副本，点击“重置”即可恢复。</translation>
+        <translation>内置预设会保留一份原始副本，因此“重置”可以将其恢复。</translation>
     </message>
 </context>
 <context>
     <name>SfxBrowser</name>
     <message>
         <source>Added to the media bin</source>
-        <translation>已添加到素材箱</translation>
+        <translation>已添加到媒体库</translation>
     </message>
     <message>
         <source>Loading sound effects…</source>
@@ -16677,18 +16677,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No sound effects match “%1”.</source>
-        <translation>没有与“%1”匹配的音效。</translation>
+        <translation>没有匹配“%1”的音效。</translation>
     </message>
     <message>
         <source>No sound effects here.</source>
-        <translation>此处暂无音效。</translation>
+        <translation>这里没有音效。</translation>
     </message>
 </context>
 <context>
     <name>SfxLibrary</name>
     <message>
         <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>无法加载音效。请检查您的连接并重试。</translation>
+        <translation>无法加载音效。请检查网络连接后重试。</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
@@ -16696,15 +16696,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>无法下载该声音。请检查您的连接并重试。</translation>
+        <translation>无法下载该音效。请检查网络连接后重试。</translation>
     </message>
     <message>
         <source>That download was damaged. Try again.</source>
-        <translation>该下载文件已损坏。请重试。</translation>
+        <translation>下载的文件已损坏。请重试。</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
-        <translation>无法将该声音添加到素材箱。</translation>
+        <translation>无法将该音效添加到媒体库。</translation>
     </message>
 </context>
 <context>
@@ -16719,7 +16719,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add to the media bin</source>
-        <translation>添加到素材箱</translation>
+        <translation>添加到媒体库</translation>
     </message>
     <message>
         <source>Add to the timeline</source>
@@ -16754,7 +16754,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Duplicate layer</source>
-        <translation>创建图层副本</translation>
+        <translation>复制图层</translation>
     </message>
     <message>
         <source>Remove layer</source>
@@ -16777,11 +16777,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Glow</source>
-        <translation>发光</translation>
+        <translation>辉光</translation>
     </message>
     <message>
         <source>Extrude</source>
-        <translation>凸出</translation>
+        <translation>挤出</translation>
     </message>
     <message>
         <source>Solid</source>
@@ -16833,11 +16833,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Outside</source>
-        <translation>居外</translation>
+        <translation>外侧</translation>
     </message>
     <message>
         <source>Inside</source>
-        <translation>居内</translation>
+        <translation>内侧</translation>
     </message>
     <message>
         <source>Dashed</source>
@@ -16869,11 +16869,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Centre the stroke on the outline, grow it outward, or keep it inside</source>
-        <translation>将描边居中于轮廓、向外扩展或保留在内部</translation>
+        <translation>将描边居中于轮廓、向外扩展或保留在内侧</translation>
     </message>
     <message>
         <source>Dash</source>
-        <translation>虚线</translation>
+        <translation>虚线长度</translation>
     </message>
     <message>
         <source>Dash offset</source>
@@ -16881,19 +16881,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Trim start</source>
-        <translation>修剪起点</translation>
+        <translation>起点修剪</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation>修剪终点</translation>
+        <translation>终点修剪</translation>
     </message>
     <message>
         <source>Sketchy</source>
-        <translation>素描</translation>
+        <translation>手绘</translation>
     </message>
     <message>
         <source>Segment</source>
-        <translation>线段</translation>
+        <translation>分段</translation>
     </message>
     <message>
         <source>Wobble</source>
@@ -16901,7 +16901,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Seed</source>
-        <translation>随机种子</translation>
+        <translation>种子</translation>
     </message>
     <message>
         <source>Colour</source>
@@ -16913,11 +16913,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Offset X</source>
-        <translation>偏移 X</translation>
+        <translation>X 偏移</translation>
     </message>
     <message>
         <source>Offset Y</source>
-        <translation>偏移 Y</translation>
+        <translation>Y 偏移</translation>
     </message>
     <message>
         <source>Radius</source>
@@ -16941,11 +16941,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>How much the extruded side fades toward black</source>
-        <translation>凸出面变暗至黑色的程度</translation>
+        <translation>挤出侧向黑色渐隐的程度</translation>
     </message>
     <message>
         <source>Adjust extrude</source>
-        <translation>调整凸出</translation>
+        <translation>调整挤出</translation>
     </message>
 </context>
 <context>
@@ -16956,7 +16956,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shape drawn by this clip</source>
-        <translation>此剪辑绘制的形状</translation>
+        <translation>此片段绘制的形状</translation>
     </message>
     <message>
         <source>Fill</source>
@@ -16968,7 +16968,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Swapping the shape keeps its position, size, style and effects.</source>
-        <translation>替换形状将保留其位置、大小、样式和效果。</translation>
+        <translation>更换形状会保留其位置、大小、样式和效果。</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -16980,7 +16980,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add a fill, stroke, shadow, glow or extrude layer</source>
-        <translation>添加填充、描边、阴影、发光或凸出图层</translation>
+        <translation>添加填充、描边、阴影、辉光或挤出图层</translation>
     </message>
     <message>
         <source>Shadow</source>
@@ -16988,19 +16988,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Glow</source>
-        <translation>发光</translation>
+        <translation>辉光</translation>
     </message>
     <message>
         <source>Extrude</source>
-        <translation>凸出</translation>
+        <translation>挤出</translation>
     </message>
     <message>
         <source>No layers. Add a fill to start.</source>
-        <translation>无图层。添加填充以开始。</translation>
+        <translation>暂无图层。请先添加填充。</translation>
     </message>
     <message>
         <source>Geometry</source>
-        <translation>几何属性</translation>
+        <translation>几何</translation>
     </message>
     <message>
         <source>Corner radius</source>
@@ -17035,7 +17035,7 @@ If playback stutters, try another.</source>
     <name>ShapePresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
-        <translation>%1 — 单击添加，或拖动到时间线或预览</translation>
+        <translation>%1 — 点击添加，或拖到时间线或预览</translation>
     </message>
     <message>
         <source>Add at playhead</source>
@@ -17043,11 +17043,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove from favorites</source>
-        <translation>从收藏夹中移除</translation>
+        <translation>取消收藏</translation>
     </message>
     <message>
         <source>Add to favorites</source>
-        <translation>添加到收藏夹</translation>
+        <translation>添加到收藏</translation>
     </message>
 </context>
 <context>
@@ -17114,15 +17114,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Block arrow</source>
-        <translation>粗箭头</translation>
+        <translation>块状箭头</translation>
     </message>
     <message>
         <source>Curved arrow</source>
-        <translation>弧形箭头</translation>
+        <translation>弯曲箭头</translation>
     </message>
     <message>
         <source>Chevron</source>
-        <translation>V形折线</translation>
+        <translation>人字形</translation>
     </message>
     <message>
         <source>Speech bubble</source>
@@ -17170,7 +17170,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Basic</source>
-        <translation>基本</translation>
+        <translation>基础</translation>
     </message>
     <message>
         <source>Arrows</source>
@@ -17210,7 +17210,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Points</source>
-        <translation>点数</translation>
+        <translation>顶点数</translation>
     </message>
 </context>
 <context>
@@ -17225,22 +17225,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No favorites yet. Star shapes to save them here.</source>
-        <translation>尚无收藏。为形状加星标以在此保存。</translation>
+        <translation>暂无收藏，为形状加星即可保存到这里。</translation>
     </message>
     <message>
         <source>Nothing in this category.</source>
-        <translation>此分类中没有任何内容。</translation>
+        <translation>此分类暂无内容。</translation>
     </message>
 </context>
 <context>
     <name>ShellSwitchDialog</name>
     <message>
         <source>Switch to the mobile layout?</source>
-        <translation>切换到移动端布局？</translation>
+        <translation>切换到移动版布局？</translation>
     </message>
     <message>
         <source>Switch to the desktop layout?</source>
-        <translation>切换到桌面端布局？</translation>
+        <translation>切换到桌面版布局？</translation>
     </message>
     <message>
         <source>Restart now</source>
@@ -17256,7 +17256,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Later</source>
-        <translation>请稍后</translation>
+        <translation>稍后</translation>
     </message>
     <message>
         <source>Restart Drift to switch layouts.</source>
@@ -17264,15 +17264,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>A mouse is connected. The desktop layout has full menus, panels and precise timeline editing. Drift restarts to switch, and your project is kept.</source>
-        <translation>已连接鼠标。桌面端布局具有完整的菜单、面板和精确的时间线编辑。Drift 将重启以切换，并保留您的项目。</translation>
+        <translation>检测到已连接鼠标。桌面版布局拥有完整菜单、面板和精确的时间线编辑。切换时 Drift 会重启，项目会保留。</translation>
     </message>
     <message>
         <source>The mobile layout is the touch interface made for phones. Drift restarts to switch.</source>
-        <translation>移动端布局是专为手机打造的触控界面。Drift 将重启以切换。</translation>
+        <translation>移动版布局是为手机设计的触控界面。切换时 Drift 会重启。</translation>
     </message>
     <message>
         <source>The desktop layout suits a mouse and keyboard. Drift restarts to switch.</source>
-        <translation>桌面端布局适合鼠标和键盘操作。Drift 将重启以切换。</translation>
+        <translation>桌面版布局适合鼠标和键盘操作。切换时 Drift 会重启。</translation>
     </message>
 </context>
 <context>
@@ -17287,11 +17287,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Press keys…</source>
-        <translation>按下按键…</translation>
+        <translation>请按键…</translation>
     </message>
     <message>
         <source>Click to set</source>
-        <translation>单击以设置</translation>
+        <translation>点击设置</translation>
     </message>
     <message>
         <source>“%1” is already used by %2.</source>
@@ -17326,7 +17326,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Normalize</source>
-        <translation>标准化</translation>
+        <translation>响度归一化</translation>
     </message>
     <message>
         <source>Target</source>
@@ -17338,7 +17338,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The noise-removal model is not installed</source>
-        <translation>未安装降噪模型</translation>
+        <translation>降噪模型未安装</translation>
     </message>
 </context>
 <context>
@@ -17349,15 +17349,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Favorites</source>
-        <translation>收藏夹</translation>
+        <translation>收藏</translation>
     </message>
     <message>
         <source>Has ranges</source>
-        <translation>包含范围</translation>
+        <translation>含区间</translation>
     </message>
     <message>
         <source>Hide rejected</source>
-        <translation>隐藏已拒绝项</translation>
+        <translation>隐藏已拒绝</translation>
     </message>
     <message>
         <source>Video</source>
@@ -17376,7 +17376,7 @@ If playback stutters, try another.</source>
     <name>SourceLabBinPanel</name>
     <message>
         <source>Sources</source>
-        <translation>素材源</translation>
+        <translation>素材来源</translation>
     </message>
     <message>
         <source>Import Media</source>
@@ -17400,19 +17400,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No media yet</source>
-        <translation>尚无媒体</translation>
+        <translation>暂无媒体</translation>
     </message>
     <message>
         <source>Import video, audio or image files to start.</source>
-        <translation>导入视频、音频或图像文件以开始。</translation>
+        <translation>导入视频、音频或图像文件即可开始。</translation>
     </message>
     <message>
         <source>Nothing matches</source>
-        <translation>无匹配项</translation>
+        <translation>没有匹配项</translation>
     </message>
     <message>
         <source>Try a different name or filter.</source>
-        <translation>尝试其他名称或筛选条件。</translation>
+        <translation>请尝试其他名称或筛选条件。</translation>
     </message>
 </context>
 <context>
@@ -17438,7 +17438,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Press Preview frame to see the enhanced picture.</source>
-        <translation>按“预览帧”查看增强后的图像。</translation>
+        <translation>点击“预览帧”查看增强后的画面。</translation>
     </message>
     <message>
         <source>Rendering preview...</source>
@@ -17446,11 +17446,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Press Render preview to see the result here.</source>
-        <translation>按“渲染预览”在此查看结果。</translation>
+        <translation>点击“渲染预览”在此处查看结果。</translation>
     </message>
     <message>
         <source>The settings changed. Render the preview again.</source>
-        <translation>设置已更改。请重新渲染预览。</translation>
+        <translation>设置已更改，请重新渲染预览。</translation>
     </message>
     <message>
         <source>B</source>
@@ -17461,31 +17461,31 @@ If playback stutters, try another.</source>
     <name>SourceLabController</name>
     <message>
         <source>Add range</source>
-        <translation>添加范围</translation>
+        <translation>添加区间</translation>
     </message>
     <message>
         <source>Edit range</source>
-        <translation>编辑范围</translation>
+        <translation>编辑区间</translation>
     </message>
     <message>
         <source>Rate range</source>
-        <translation>评分范围</translation>
+        <translation>评价区间</translation>
     </message>
     <message>
         <source>Rename range</source>
-        <translation>重命名范围</translation>
+        <translation>重命名区间</translation>
     </message>
     <message>
         <source>Edit range note</source>
-        <translation>编辑范围备注</translation>
+        <translation>编辑区间备注</translation>
     </message>
     <message>
         <source>Remove range</source>
-        <translation>移除范围</translation>
+        <translation>移除区间</translation>
     </message>
     <message>
         <source>Replace ranges</source>
-        <translation>替换范围</translation>
+        <translation>替换区间</translation>
     </message>
     <message>
         <source>Add marker</source>
@@ -17509,19 +17509,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rate source</source>
-        <translation>评分素材源</translation>
+        <translation>评价素材来源</translation>
     </message>
     <message>
         <source>Make sub-clips</source>
-        <translation>创建子剪辑</translation>
+        <translation>创建子片段</translation>
     </message>
     <message>
         <source>Open a source first</source>
-        <translation>请先打开素材源</translation>
+        <translation>请先打开一个素材来源</translation>
     </message>
     <message>
         <source>Only video and audio can be processed</source>
-        <translation>只能处理视频和音频</translation>
+        <translation>仅视频和音频可进行处理</translation>
     </message>
     <message>
         <source>Could not open the media file</source>
@@ -17533,23 +17533,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Only a plain trim can be copied without re-encoding</source>
-        <translation>只有简单修剪才可在不重新编码的情况下复制</translation>
+        <translation>仅简单修剪可在不重新编码的情况下复制</translation>
     </message>
     <message>
         <source>Trim by copying the streams (no re-encode)</source>
-        <translation>通过复制流修剪（无需重新编码）</translation>
+        <translation>通过复制流进行修剪（不重新编码）</translation>
     </message>
     <message>
         <source>This build of Drift has no video stabilization support</source>
-        <translation>此 Drift 版本不支持视频防抖</translation>
+        <translation>此版本的 Drift 不支持视频防抖</translation>
     </message>
     <message>
         <source>The noise-removal model is not installed</source>
-        <translation>未安装降噪模型</translation>
+        <translation>降噪模型未安装</translation>
     </message>
     <message>
         <source>Stabilize the camera motion</source>
-        <translation>稳定摄像机抖动</translation>
+        <translation>稳定镜头运动</translation>
     </message>
     <message>
         <source>Reduce audio noise</source>
@@ -17557,7 +17557,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Trim to the kept range</source>
-        <translation>修剪至保留范围</translation>
+        <translation>修剪到保留区间</translation>
     </message>
     <message>
         <source>Crop the picture</source>
@@ -17565,11 +17565,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove compression artifacts</source>
-        <translation>消除压缩伪影</translation>
+        <translation>去除压缩伪影</translation>
     </message>
     <message>
         <source>Upscale the picture</source>
-        <translation>提升画面分辨率</translation>
+        <translation>放大画面</translation>
     </message>
     <message>
         <source>Change the speed to %1x</source>
@@ -17577,11 +17577,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Change the volume by %1 dB</source>
-        <translation>将音量更改 %1 dB</translation>
+        <translation>将音量调整 %1 dB</translation>
     </message>
     <message>
         <source>Normalize the loudness to %1 LUFS</source>
-        <translation>将响度标准化至 %1 LUFS</translation>
+        <translation>将响度归一化到 %1 LUFS</translation>
     </message>
     <message>
         <source>Re-encode the result</source>
@@ -17589,27 +17589,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add a sub-clip with the trim and crop (no re-encode)</source>
-        <translation>添加包含修剪和裁剪的子剪辑（无需重新编码）</translation>
+        <translation>添加包含修剪和裁剪的子片段（不重新编码）</translation>
     </message>
     <message>
         <source>Set the trim and crop on the source (no re-encode)</source>
-        <translation>在素材源上应用修剪和裁剪（无需重新编码）</translation>
+        <translation>在素材来源上设置修剪和裁剪（不重新编码）</translation>
     </message>
     <message>
         <source>Apply source edit</source>
-        <translation>应用素材源编辑</translation>
+        <translation>应用素材来源编辑</translation>
     </message>
     <message>
         <source>%1 (edited)</source>
-        <translation>%1 (已编辑)</translation>
+        <translation>%1（已编辑）</translation>
     </message>
     <message>
         <source>Could not add the edited copy</source>
-        <translation>无法添加已编辑的副本</translation>
+        <translation>无法添加编辑后的副本</translation>
     </message>
     <message>
         <source>Add edited copy</source>
-        <translation>添加已编辑副本</translation>
+        <translation>添加编辑后的副本</translation>
     </message>
     <message>
         <source>Unknown action</source>
@@ -17617,7 +17617,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Another operation is still running</source>
-        <translation>另一个操作仍在运行中</translation>
+        <translation>另一个操作仍在进行中</translation>
     </message>
     <message>
         <source>Copying an image is not supported</source>
@@ -17645,31 +17645,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Exported to %1</source>
-        <translation>已导出至 %1</translation>
+        <translation>已导出到 %1</translation>
     </message>
     <message>
         <source>The source left the project while it was being processed</source>
-        <translation>处理过程中素材源已从项目中移除</translation>
+        <translation>处理期间素材来源已从项目中移除</translation>
     </message>
     <message>
         <source>Edited copy added to the media bin</source>
-        <translation>已将编辑后的副本添加到媒体箱</translation>
+        <translation>已将编辑后的副本添加到媒体库</translation>
     </message>
     <message>
         <source>Updating the library…</source>
-        <translation>正在更新媒体库…</translation>
+        <translation>正在更新素材库…</translation>
     </message>
     <message>
         <source>Could not update the library</source>
-        <translation>无法更新媒体库</translation>
+        <translation>无法更新素材库</translation>
     </message>
     <message>
         <source>Source replaced</source>
-        <translation>素材源已替换</translation>
+        <translation>素材来源已替换</translation>
     </message>
     <message>
         <source>Auto-split needs a video</source>
-        <translation>自动分割需要视频素材</translation>
+        <translation>自动分割需要视频</translation>
     </message>
     <message>
         <source>The trim leaves nothing to scan</source>
@@ -17688,7 +17688,7 @@ If playback stutters, try another.</source>
     <name>SourceLabCropSection</name>
     <message>
         <source>Crop / Reframe</source>
-        <translation>裁剪 / 重新构图</translation>
+        <translation>裁剪 / 调整构图</translation>
     </message>
     <message>
         <source>Free</source>
@@ -17704,11 +17704,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>W</source>
-        <translation>宽</translation>
+        <translation>W</translation>
     </message>
     <message>
         <source>H</source>
-        <translation>高</translation>
+        <translation>H</translation>
     </message>
     <message>
         <source>Reset crop</source>
@@ -17747,7 +17747,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No enhance models are installed.</source>
-        <translation>未安装增强模型。</translation>
+        <translation>未安装任何增强模型。</translation>
     </message>
     <message>
         <source>Get models</source>
@@ -17759,11 +17759,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove compression</source>
-        <translation>消除压缩</translation>
+        <translation>去除压缩伪影</translation>
     </message>
     <message>
         <source>Upscale</source>
-        <translation>超分辨率</translation>
+        <translation>放大</translation>
     </message>
     <message>
         <source>Output size: %1 x %2</source>
@@ -17771,7 +17771,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enhancing this range takes about %1. Trim to the part you need first.</source>
-        <translation>增强此范围大约需要 %1。请先修剪至所需部分。</translation>
+        <translation>增强此区间约需 %1，建议先修剪到所需部分。</translation>
     </message>
 </context>
 <context>
@@ -17806,7 +17806,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Source</source>
-        <translation>源</translation>
+        <translation>与源相同</translation>
     </message>
     <message>
         <source>%1 kbps</source>
@@ -17834,15 +17834,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cut without re-encoding. Starts at the previous keyframe.</source>
-        <translation>无需重新编码即可剪切。从前一个关键帧开始。</translation>
+        <translation>不重新编码即可剪切，从上一个关键帧开始。</translation>
     </message>
     <message>
         <source>Only a plain trim can be copied without re-encoding</source>
-        <translation>只有简单修剪才可在不重新编码的情况下复制</translation>
+        <translation>仅简单修剪可在不重新编码的情况下复制</translation>
     </message>
     <message>
         <source>Container</source>
-        <translation>封装格式</translation>
+        <translation>容器</translation>
     </message>
     <message>
         <source>Codec</source>
@@ -17869,7 +17869,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Summary for</source>
-        <translation>摘要针对</translation>
+        <translation>摘要：</translation>
     </message>
     <message>
         <source>Replace</source>
@@ -17885,25 +17885,25 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Replace in bin</source>
-        <translation>在媒体箱中替换</translation>
+        <translation>在媒体库中替换</translation>
     </message>
     <message>
         <source>The source becomes the result; clips on the timeline follow it</source>
-        <translation>源将替换为处理结果；时间线上的剪辑将随之同步</translation>
+        <translation>素材来源将变为处理结果，时间线上的片段会随之更新</translation>
     </message>
     <message numerus="yes">
         <source>%n clip(s) on the timeline will be rebased onto the result.</source>
         <translation>
-            <numerusform>时间线上的 %n 个剪辑将基于此结果进行重建。</numerusform>
+            <numerusform>时间线上的 %n 个片段将重新指向处理结果。</numerusform>
         </translation>
     </message>
     <message>
         <source>Add as copy</source>
-        <translation>作为副本添加</translation>
+        <translation>添加为副本</translation>
     </message>
     <message>
         <source>Add the result to the media bin as a new item</source>
-        <translation>将结果作为新项添加到媒体箱</translation>
+        <translation>将结果作为新条目添加到媒体库</translation>
     </message>
     <message>
         <source>Export file...</source>
@@ -17911,7 +17911,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Write the result to a file, leaving the project untouched</source>
-        <translation>将结果写入文件，不影响当前项目</translation>
+        <translation>将结果写入文件，项目保持不变</translation>
     </message>
     <message>
         <source>Exported</source>
@@ -17927,7 +17927,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select a clip in the media bin</source>
-        <translation>在媒体箱中选择一个剪辑</translation>
+        <translation>请在媒体库中选择一个片段</translation>
     </message>
 </context>
 <context>
@@ -17954,7 +17954,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Starts at the previous keyframe, %1</source>
-        <translation>从前一个关键帧开始，%1</translation>
+        <translation>从上一个关键帧开始，%1</translation>
     </message>
 </context>
 <context>
@@ -17969,7 +17969,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select a clip in the media bin</source>
-        <translation>在媒体箱中选择一个剪辑</translation>
+        <translation>请在媒体库中选择一个片段</translation>
     </message>
 </context>
 <context>
@@ -17980,7 +17980,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 min %2 s</source>
-        <translation>%1 分钟 %2 秒</translation>
+        <translation>%1 分 %2 秒</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -17988,7 +17988,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 - %2 left</source>
-        <translation>%1 - 剩余 %2</translation>
+        <translation>剩余 %1 - %2</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -18003,11 +18003,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Range</source>
-        <translation>范围</translation>
+        <translation>区间</translation>
     </message>
     <message>
         <source>%1 - %2  (%3)</source>
-        <translation>%1 - %2  (%3)</translation>
+        <translation>%1 - %2（%3）</translation>
     </message>
     <message>
         <source>Note</source>
@@ -18022,7 +18022,7 @@ If playback stutters, try another.</source>
     <name>SourceLabRangesPanel</name>
     <message>
         <source>Ranges &amp; Markers</source>
-        <translation>范围和标记</translation>
+        <translation>区间与标记</translation>
     </message>
     <message>
         <source>Auto-split</source>
@@ -18030,7 +18030,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Detect shots and replace the ranges with one per shot</source>
-        <translation>检测镜头并将范围替换为每个镜头一个范围</translation>
+        <translation>检测镜头，并将区间替换为每个镜头一个区间</translation>
     </message>
     <message>
         <source>All</source>
@@ -18050,11 +18050,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Make subclips (%1)</source>
-        <translation>创建子剪辑 (%1)</translation>
+        <translation>创建子片段（%1）</translation>
     </message>
     <message>
         <source>Add each selected range to the media bin as its own clip</source>
-        <translation>将每个选定的范围作为独立剪辑添加到媒体箱</translation>
+        <translation>将每个选中的范围作为独立片段添加到素材箱</translation>
     </message>
     <message>
         <source>Favorite</source>
@@ -18074,7 +18074,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Make subclip(s)</source>
-        <translation>创建子剪辑</translation>
+        <translation>创建子片段</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -18087,24 +18087,24 @@ If playback stutters, try another.</source>
     <message numerus="yes">
         <source>Auto-split replaces all %n existing ranges with one per detected shot. You can undo it.</source>
         <translation>
-            <numerusform>自动分割会将所有现有的 %n 个范围替换为每个检测到的镜头一个范围。您可以撤消此操作。</numerusform>
+            <numerusform>自动分割将用每个检测到的镜头替换 %n 个现有范围。您可以撤销此操作。</numerusform>
         </translation>
     </message>
     <message>
         <source>Select a clip in the media bin</source>
-        <translation>在媒体箱中选择一个剪辑</translation>
+        <translation>在素材箱中选择一个片段</translation>
     </message>
     <message>
         <source>No ranges or markers yet</source>
-        <translation>尚无范围或标记</translation>
+        <translation>暂无范围或标记</translation>
     </message>
     <message>
         <source>Nothing matches this filter</source>
-        <translation>无匹配此筛选条件的项</translation>
+        <translation>没有匹配此筛选的内容</translation>
     </message>
     <message>
         <source>Press M to drop a marker, or save the trimmed part as a range.</source>
-        <translation>按 M 添加标记，或将修剪部分保存为范围。</translation>
+        <translation>按 M 添加标记，或将修剪后的部分保存为范围。</translation>
     </message>
 </context>
 <context>
@@ -18137,42 +18137,42 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Smooth camera shake</source>
-        <translation>平滑摄像机抖动</translation>
+        <translation>平滑相机抖动</translation>
     </message>
     <message>
         <source>This build of Drift has no video stabilization support</source>
-        <translation>此 Drift 版本不支持视频防抖</translation>
+        <translation>此版本的 Drift 不支持视频防抖</translation>
     </message>
 </context>
 <context>
     <name>SourceLabTransport</name>
     <message>
         <source>Play backward (J)</source>
-        <translation>反向播放 (J)</translation>
+        <translation>倒放（J）</translation>
     </message>
     <message>
         <source>Previous frame (Left)</source>
-        <translation>上一帧 (Left)</translation>
+        <translation>上一帧（左）</translation>
     </message>
     <message>
         <source>Pause (Space)</source>
-        <translation>暂停 (Space)</translation>
+        <translation>暂停（空格）</translation>
     </message>
     <message>
         <source>Play (Space)</source>
-        <translation>播放 (Space)</translation>
+        <translation>播放（空格）</translation>
     </message>
     <message>
         <source>Next frame (Right)</source>
-        <translation>下一帧 (Right)</translation>
+        <translation>下一帧（右）</translation>
     </message>
     <message>
         <source>Play forward, faster each press (L)</source>
-        <translation>向前播放，每按一次加速 (L)</translation>
+        <translation>快放，每次按加速（L）</translation>
     </message>
     <message>
         <source>In %1   Out %2   Dur %3</source>
-        <translation>入点 %1   出点 %2   时长 %3</translation>
+        <translation>入 %1   出 %2   时长 %3</translation>
     </message>
 </context>
 <context>
@@ -18183,11 +18183,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Range from In/Out</source>
-        <translation>基于入点/出点创建范围</translation>
+        <translation>从入点/出点创建范围</translation>
     </message>
     <message>
         <source>Save the trimmed part as a range</source>
-        <translation>将修剪部分保存为范围</translation>
+        <translation>将修剪后的部分保存为范围</translation>
     </message>
     <message>
         <source>Marker</source>
@@ -18195,19 +18195,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add a marker at the playhead (M)</source>
-        <translation>在播放头处添加标记 (M)</translation>
+        <translation>在播放头处添加标记（M）</translation>
     </message>
     <message>
         <source>Show the whole source</source>
-        <translation>显示完整素材源</translation>
+        <translation>显示完整素材</translation>
     </message>
     <message>
         <source>Zoom in (Ctrl+scroll)</source>
-        <translation>放大 (Ctrl+滚轮)</translation>
+        <translation>放大（Ctrl+滚轮）</translation>
     </message>
     <message>
         <source>Zoom out (Ctrl+scroll)</source>
-        <translation>缩小 (Ctrl+滚轮)</translation>
+        <translation>缩小（Ctrl+滚轮）</translation>
     </message>
     <message>
         <source>Snap to the playhead, markers, ranges and trim</source>
@@ -18219,18 +18219,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Snap cuts to where the waveform crosses zero</source>
-        <translation>将剪切点吸附到波形过零点</translation>
+        <translation>将切割点吸附到波形过零处</translation>
     </message>
     <message>
         <source>Select a clip in the media bin</source>
-        <translation>在媒体箱中选择一个剪辑</translation>
+        <translation>在素材箱中选择一个片段</translation>
     </message>
 </context>
 <context>
     <name>SourceLabViewerPanel</name>
     <message>
         <source>Source Lab Viewer</source>
-        <translation>素材实验室查看器</translation>
+        <translation>素材实验室监视器</translation>
     </message>
     <message>
         <source>%1 x %2  %3 fps</source>
@@ -18254,7 +18254,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Split</source>
-        <translation>分屏</translation>
+        <translation>分割</translation>
     </message>
     <message>
         <source>Side by side</source>
@@ -18266,7 +18266,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Switch between A and B with </source>
-        <translation>在 A 和 B 之间切换：</translation>
+        <translation>在 A 和 B 之间切换</translation>
     </message>
     <message>
         <source>Rendering...</source>
@@ -18278,7 +18278,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Render a few seconds around the playhead with these settings</source>
-        <translation>使用这些设置渲染播放头周围的数秒画面</translation>
+        <translation>使用当前设置渲染播放头附近数秒内容</translation>
     </message>
     <message>
         <source>Enhancing...</source>
@@ -18290,26 +18290,26 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Run the enhance models on the frame under the playhead</source>
-        <translation>对播放头所在的帧运行增强模型</translation>
+        <translation>对播放头所在帧运行增强模型</translation>
     </message>
     <message>
         <source>Select a clip in the media bin</source>
-        <translation>在媒体箱中选择一个剪辑</translation>
+        <translation>在素材箱中选择一个片段</translation>
     </message>
 </context>
 <context>
     <name>SourceViewerPanel</name>
     <message>
         <source>Source: %1</source>
-        <translation>素材源：%1</translation>
+        <translation>素材：%1</translation>
     </message>
     <message>
         <source>Source Viewer</source>
-        <translation>素材查看器</translation>
+        <translation>素材监视器</translation>
     </message>
     <message>
         <source>Select a clip in the media bin to preview it here.</source>
-        <translation>在媒体箱中选择剪辑以在此预览。</translation>
+        <translation>在素材箱中选择一个片段以在此处预览。</translation>
     </message>
 </context>
 <context>
@@ -18320,11 +18320,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Turn a script into speech with a built-in or cloned voice. It is generated on this device and added at the playhead.</source>
-        <translation>使用内置或克隆的声音将文稿转换为语音。语音将在本设备上生成并添加到播放头处。</translation>
+        <translation>使用内置或克隆语音将文稿转换为语音。语音在本设备生成，并添加至播放头位置。</translation>
     </message>
     <message>
         <source>Speech generation runs on this device and needs the voice model.</source>
-        <translation>语音生成在本设备上运行，需要语音模型。</translation>
+        <translation>语音生成在本设备运行，需要语音模型。</translation>
     </message>
     <message>
         <source>Download voice model</source>
@@ -18340,7 +18340,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Type what the voice should say</source>
-        <translation>输入需要朗读的内容</translation>
+        <translation>输入语音要说的内容</translation>
     </message>
     <message>
         <source>%1 characters, about %2 s</source>
@@ -18348,11 +18348,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speech longer than 30 seconds often ends in gibberish or silence. Split the script into shorter parts.</source>
-        <translation>超过 30 秒的语音通常会以乱码或静音结束。请将文本分割为较短的部分。</translation>
+        <translation>超过 30 秒的语音常以乱码或静音结尾。请将文稿分成较短的部分。</translation>
     </message>
     <message>
         <source>Voice</source>
-        <translation>声音</translation>
+        <translation>语音</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -18360,11 +18360,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Play the voice sample</source>
-        <translation>播放声音样本</translation>
+        <translation>播放语音样本</translation>
     </message>
     <message>
         <source>Rename or delete this voice</source>
-        <translation>重命名或删除此声音</translation>
+        <translation>重命名或删除此语音</translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -18372,7 +18372,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename voice</source>
-        <translation>重命名声音</translation>
+        <translation>重命名语音</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -18380,15 +18380,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>New voice</source>
-        <translation>新建声音</translation>
+        <translation>新建语音</translation>
     </message>
     <message>
         <source>Clone a voice from a recording</source>
-        <translation>从录音克隆声音</translation>
+        <translation>从录音克隆语音</translation>
     </message>
     <message>
         <source>From selected clip</source>
-        <translation>从选定剪辑</translation>
+        <translation>从选中片段</translation>
     </message>
     <message>
         <source>Record…</source>
@@ -18400,11 +18400,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Loading voice model (first use takes a while)…</source>
-        <translation>正在加载语音模型（首次使用需要一些时间）…</translation>
+        <translation>正在加载语音模型（首次使用需要一段时间）…</translation>
     </message>
     <message>
         <source>Learning the voice…</source>
-        <translation>正在学习声音…</translation>
+        <translation>正在学习语音…</translation>
     </message>
     <message>
         <source>Language</source>
@@ -18416,7 +18416,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Higher values sound more dramatic and speak faster</source>
-        <translation>较高的值语调更戏剧化且语速更快</translation>
+        <translation>值越高听起来越有戏剧性，语速也越快</translation>
     </message>
     <message>
         <source>Generate speech</source>
@@ -18424,7 +18424,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Generate speech and add it at the playhead</source>
-        <translation>生成语音并添加到播放头处</translation>
+        <translation>生成语音并添加至播放头位置</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -18436,15 +18436,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Record a voice</source>
-        <translation>录制声音</translation>
+        <translation>录制语音</translation>
     </message>
     <message>
         <source>Import a voice</source>
-        <translation>导入声音</translation>
+        <translation>导入语音</translation>
     </message>
     <message>
         <source>Voice from clip</source>
-        <translation>来自剪辑的声音</translation>
+        <translation>来自片段的语音</translation>
     </message>
     <message>
         <source>Save</source>
@@ -18452,11 +18452,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>My voice</source>
-        <translation>我的声音</translation>
+        <translation>我的语音</translation>
     </message>
     <message>
         <source>Import a voice sample</source>
-        <translation>导入声音样本</translation>
+        <translation>导入语音样本</translation>
     </message>
     <message>
         <source>Audio files (*.wav *.mp3 *.flac *.ogg *.m4a *.aac *.opus)</source>
@@ -18472,11 +18472,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The clip is longer than 20 seconds, so 20 seconds are used. Starting at %1 s.</source>
-        <translation>剪辑长度超过 20 秒，将使用 20 秒。起始于 %1 秒。</translation>
+        <translation>片段长度超过 20 秒，因此使用 20 秒。从 %1 秒开始。</translation>
     </message>
     <message>
         <source>Using %1 seconds of the selected clip.</source>
-        <translation>使用选定剪辑的 %1 秒。</translation>
+        <translation>使用选中片段的 %1 秒。</translation>
     </message>
     <message>
         <source>Start offset</source>
@@ -18488,11 +18488,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Record 5 to 20 seconds in a quiet room. Read this aloud in your natural voice:</source>
-        <translation>在安静的房间录制 5 到 20 秒。请用自然的声调大声朗读以下内容：</translation>
+        <translation>在安静环境中录制 5 到 20 秒。用自然的嗓音朗读以下内容：</translation>
     </message>
     <message>
         <source>The quick brown fox jumps over the lazy dog, while a gentle breeze moves through the quiet garden and the evening light fades slowly.</source>
-        <translation>敏捷的棕色狐狸跃过懒惰的狗，微风拂过宁静的花园，夜幕渐渐低垂。</translation>
+        <translation>那只敏捷的棕色狐狸跳过了懒狗，微风轻拂宁静的花园，夕阳光线渐渐消逝。</translation>
     </message>
     <message>
         <source>Recording…</source>
@@ -18511,19 +18511,19 @@ If playback stutters, try another.</source>
     <name>SpeedCurveController</name>
     <message>
         <source>Custom speed works on video and audio clips</source>
-        <translation>自定义速度适用于视频和音频剪辑</translation>
+        <translation>自定义速度适用于视频和音频片段</translation>
     </message>
     <message>
         <source>This clip has no media to speed up or slow down</source>
-        <translation>此剪辑没有可加速或减速的媒体</translation>
+        <translation>此片段没有可加速或减速的媒体</translation>
     </message>
     <message>
         <source>That clip moved — open Custom speed again</source>
-        <translation>该剪辑已移动 — 请重新打开自定义速度</translation>
+        <translation>片段已移动——请重新打开自定义速度</translation>
     </message>
     <message>
         <source>Custom speed applied</source>
-        <translation>已应用自定义速度</translation>
+        <translation>自定义速度已应用</translation>
     </message>
 </context>
 <context>
@@ -18549,7 +18549,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>s / </source>
-        <translation>秒 / </translation>
+        <translation>秒 /</translation>
     </message>
     <message>
         <source>s</source>
@@ -18557,15 +18557,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>s → </source>
-        <translation>秒 → </translation>
+        <translation>秒 →</translation>
     </message>
     <message>
         <source>Add point</source>
-        <translation>添加点</translation>
+        <translation>添加控制点</translation>
     </message>
     <message>
         <source>Sharp</source>
-        <translation>尖锐</translation>
+        <translation>锐利</translation>
     </message>
     <message>
         <source>Smooth</source>
@@ -18573,7 +18573,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Delete point</source>
-        <translation>删除点</translation>
+        <translation>删除控制点</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -18581,7 +18581,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Applied as a copy on a new track — the original clip is left alone.</source>
-        <translation>作为副本应用到新轨道上 — 原始剪辑保持不变。</translation>
+        <translation>已作为副本应用到新轨道——原始片段保持不变。</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -18604,7 +18604,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Custom speed active — remove</source>
-        <translation>自定义速度已激活 — 移除</translation>
+        <translation>自定义速度已启用——移除</translation>
     </message>
     <message>
         <source>Speed</source>
@@ -18620,15 +18620,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source> (reversed)</source>
-        <translation> (倒放)</translation>
+        <translation>（反转）</translation>
     </message>
     <message>
         <source>Reverse</source>
-        <translation>倒放</translation>
+        <translation>反转</translation>
     </message>
     <message>
         <source>Not rendered — playback may stutter</source>
-        <translation>未渲染 — 播放可能会卡顿</translation>
+        <translation>尚未渲染——播放可能卡顿</translation>
     </message>
     <message>
         <source>Render</source>
@@ -18647,7 +18647,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Invalid subtitle timing line</source>
-        <translation>无效的字幕时间行</translation>
+        <translation>无效的字幕时间码行</translation>
     </message>
     <message>
         <source>Invalid subtitle timestamp</source>
@@ -18659,7 +18659,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Subtitle cue has no text</source>
-        <translation>字幕提示没有文本</translation>
+        <translation>字幕提示无文本</translation>
     </message>
     <message>
         <source>No subtitle cues found</source>
@@ -18678,27 +18678,27 @@ If playback stutters, try another.</source>
     <name>StabilizeController</name>
     <message>
         <source>%1 (stabilized)</source>
-        <translation>%1 (已防抖)</translation>
+        <translation>%1（已防抖）</translation>
     </message>
     <message>
         <source>Select a video clip to stabilize</source>
-        <translation>选择要防抖的视频剪辑</translation>
+        <translation>选择视频片段以进行防抖</translation>
     </message>
     <message>
         <source>Clip has no video file</source>
-        <translation>剪辑没有视频文件</translation>
+        <translation>片段没有视频文件</translation>
     </message>
     <message>
         <source>Stabilization already in progress for this clip</source>
-        <translation>此剪辑的防抖处理已在进行中</translation>
+        <translation>此片段正在进行防抖处理</translation>
     </message>
     <message>
         <source>This build of Drift has no video stabilization support</source>
-        <translation>此 Drift 版本不支持视频防抖</translation>
+        <translation>此版本的 Drift 不支持视频防抖</translation>
     </message>
     <message>
         <source>The video this clip was stabilized from is no longer in the media bin</source>
-        <translation>用于防抖此剪辑的原始视频已不在媒体箱中</translation>
+        <translation>该片段防抖所用的视频已不在素材箱中</translation>
     </message>
     <message>
         <source>Could not create stabilization cache directory</source>
@@ -18710,19 +18710,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rendering stabilized video…</source>
-        <translation>正在渲染防抖后的视频…</translation>
+        <translation>正在渲染防抖视频…</translation>
     </message>
     <message>
         <source>Analyzing camera motion…</source>
-        <translation>正在分析摄像机运动…</translation>
+        <translation>正在分析相机运动…</translation>
     </message>
     <message>
         <source>Stabilization cancelled.</source>
-        <translation>防抖处理已取消。</translation>
+        <translation>防抖已取消。</translation>
     </message>
     <message>
         <source>Could not read camera motion from the analysis file.</source>
-        <translation>无法从分析文件中读取摄像机运动。</translation>
+        <translation>无法从分析文件中读取相机运动数据。</translation>
     </message>
     <message>
         <source>Stabilize with Keyframes</source>
@@ -18730,11 +18730,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stabilization keyframes applied.</source>
-        <translation>已应用防抖关键帧。</translation>
+        <translation>防抖关键帧已应用。</translation>
     </message>
     <message>
         <source>Stabilization analysis file is missing.</source>
-        <translation>缺少防抖分析文件。</translation>
+        <translation>防抖分析文件缺失。</translation>
     </message>
     <message>
         <source>Could not create an output file</source>
@@ -18754,7 +18754,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stabilized video added to the media bin</source>
-        <translation>已将防抖后的视频添加到媒体箱</translation>
+        <translation>防抖视频已添加到素材箱</translation>
     </message>
     <message>
         <source>Stabilization analysis failed.</source>
@@ -18813,7 +18813,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Smooths camera shake by writing position keyframes. Linear pans stay as two keys far apart; only direction changes get extra keys. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>通过写入位置关键帧来平滑摄像机抖动。线性摇镜保持为两个相距较远的关键帧；仅方向变化时才添加额外关键帧。更改平滑度或三脚架模式在应用前不会更新预览。</translation>
+        <translation>通过写入位置关键帧来平滑相机抖动。线性平移保持为两个相距较远的关键帧；仅方向变化处添加额外关键帧。更改平滑度或三脚架设置不会在应用前更新预览。</translation>
     </message>
     <message>
         <source>Mode</source>
@@ -18821,11 +18821,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Smooths camera shake. Drift scans the clip once, then renders a stabilized copy into the media bin and switches the clip to it. Changing smoothness or tripod does not update the preview until you apply.</source>
-        <translation>平滑摄像机抖动。Drift 会扫描剪辑一次，然后将防抖副本渲染到媒体箱并将剪辑切换为该副本。更改平滑度或三脚架模式在应用前不会更新预览。</translation>
+        <translation>平滑相机抖动。Drift 扫描一次片段，然后渲染防抖副本到素材箱并将片段切换到它。更改平滑度或三脚架设置不会在应用前更新预览。</translation>
     </message>
     <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
-        <translation>渲染防抖副本，或使用稀疏变换关键帧为剪辑制作动画</translation>
+        <translation>渲染防抖副本，或使用稀疏变换关键帧为片段添加动画</translation>
     </message>
     <message>
         <source>Smoothing</source>
@@ -18833,7 +18833,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>How many frames the smoother looks ahead and behind. Higher values hide more shake but crop the picture more.</source>
-        <translation>平滑器向前和向后查看的帧数。较高的值可以消除更多抖动，但会对画面进行更多裁剪。</translation>
+        <translation>平滑算法向前和向后查看的帧数。值越高越能消除抖动，但裁剪画面也越多。</translation>
     </message>
     <message>
         <source>Tripod mode</source>
@@ -18841,15 +18841,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Locks the framing as if the camera were on a tripod. Crops more aggressively than smoothing alone.</source>
-        <translation>锁定画面构图，就像摄像机安装在三脚架上一样。比单纯平滑裁剪幅度更大。</translation>
+        <translation>像固定在三脚架上一样锁定取景。比单独使用平滑度裁剪更激进。</translation>
     </message>
     <message>
         <source>Position keys still use the last run. Update to apply these settings.</source>
-        <translation>位置关键帧仍使用上次运行的结果。更新以应用这些设置。</translation>
+        <translation>位置关键帧仍使用上次运行的结果。更新以应用当前设置。</translation>
     </message>
     <message>
         <source>Preview still uses the last run. Update to apply these settings.</source>
-        <translation>预览仍使用上次运行的结果。更新以应用这些设置。</translation>
+        <translation>预览仍使用上次运行的结果。更新以应用当前设置。</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -18857,7 +18857,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stabilizing…</source>
-        <translation>正在防抖处理…</translation>
+        <translation>正在防抖…</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -18876,7 +18876,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>System, playback and codec details for bug reports</source>
-        <translation>用于错误报告的系统、播放和编解码器详细信息</translation>
+        <translation>系统、播放和编解码器详细信息，用于提交 bug 报告</translation>
     </message>
     <message>
         <source>Agent</source>
@@ -18906,54 +18906,54 @@ If playback stutters, try another.</source>
     <name>StartScreenProjectRow</name>
     <message>
         <source> (missing)</source>
-        <translation> (缺失)</translation>
+        <translation>（已丢失）</translation>
     </message>
     <message>
         <source>This file has been moved or deleted:
 %1</source>
-        <translation>此文件已被移动或删除：
+        <translation>此文件已移动或删除：
 %1</translation>
     </message>
     <message>
         <source>Remove from recents</source>
-        <translation>从最近项目中移除</translation>
+        <translation>从最近列表中移除</translation>
     </message>
 </context>
 <context>
     <name>StartScreenRecents</name>
     <message>
         <source>Recent Projects</source>
-        <translation>最近的项目</translation>
+        <translation>最近项目</translation>
     </message>
     <message>
         <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>这里尚无内容 — 保存的项目将显示在此列表中。</translation>
+        <translation>这里还没有内容——您保存的项目将显示在此列表中。</translation>
     </message>
 </context>
 <context>
     <name>StartScreenTitle</name>
     <message>
         <source>Create polished videos fast</source>
-        <translation>快速创作精美视频</translation>
+        <translation>快速创作精致视频</translation>
     </message>
 </context>
 <context>
     <name>StickerPresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
-        <translation>%1 — 单击添加，或拖动到时间线或预览</translation>
+        <translation>%1 — 单击添加，或拖至时间线或监视器</translation>
     </message>
     <message>
         <source>Add at playhead</source>
-        <translation>在播放头处添加</translation>
+        <translation>添加至播放头</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
-        <translation>从收藏夹中移除</translation>
+        <translation>从收藏中移除</translation>
     </message>
     <message>
         <source>Add to favorites</source>
-        <translation>添加到收藏夹</translation>
+        <translation>添加到收藏</translation>
     </message>
 </context>
 <context>
@@ -18964,7 +18964,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>More emoji</source>
-        <translation>更多表情符号</translation>
+        <translation>更多表情</translation>
     </message>
     <message>
         <source>No sticker packs installed</source>
@@ -18972,19 +18972,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Install the emoji pack to add stickers.</source>
-        <translation>安装表情符号包以添加贴纸。</translation>
+        <translation>安装表情包以添加贴纸。</translation>
     </message>
     <message>
         <source>Get extras</source>
-        <translation>获取附加组件</translation>
+        <translation>获取附加包</translation>
     </message>
     <message>
         <source>No stickers match “%1”</source>
-        <translation>没有与“%1”匹配的贴纸</translation>
+        <translation>没有与 "%1" 匹配的贴纸</translation>
     </message>
     <message>
         <source>No favorites yet</source>
-        <translation>尚无收藏</translation>
+        <translation>暂无收藏</translation>
     </message>
     <message>
         <source>Nothing in this category</source>
@@ -18992,15 +18992,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Try a different name.</source>
-        <translation>尝试其他名称。</translation>
+        <translation>请尝试其他名称。</translation>
     </message>
     <message>
         <source>Star stickers to save them here.</source>
-        <translation>为贴纸加星标以在此保存。</translation>
+        <translation>将贴纸标记为星标以在此保存。</translation>
     </message>
     <message>
         <source>Pick another category.</source>
-        <translation>选择另一个分类。</translation>
+        <translation>请选择其他分类。</translation>
     </message>
 </context>
 <context>
@@ -19018,7 +19018,7 @@ If playback stutters, try another.</source>
     <name>StockBrowser</name>
     <message>
         <source>Save downloads to</source>
-        <translation>将下载内容保存至</translation>
+        <translation>下载保存至</translation>
     </message>
     <message>
         <source>All</source>
@@ -19026,12 +19026,12 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 (%2 left)</source>
-        <translation>%1 (剩余 %2)</translation>
+        <translation>%1（剩余 %2）</translation>
     </message>
     <message numerus="yes">
         <source>Filters — %n applied</source>
         <translation>
-            <numerusform>筛选条件 — 已应用 %n 个</numerusform>
+            <numerusform>筛选 — %n 个已应用</numerusform>
         </translation>
     </message>
     <message>
@@ -19064,11 +19064,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No results for “%1”</source>
-        <translation>没有“%1”的结果</translation>
+        <translation>没有「%1」的结果</translation>
     </message>
     <message>
         <source>Search this source</source>
-        <translation>搜索此来源</translation>
+        <translation>搜索此素材源</translation>
     </message>
     <message>
         <source>Paste a link</source>
@@ -19076,15 +19076,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Try different words, another source, or clear a filter.</source>
-        <translation>尝试不同的词语、其他来源或清除筛选条件。</translation>
+        <translation>尝试其他关键词、切换素材源，或清除筛选条件。</translation>
     </message>
     <message>
         <source>Type above and press Enter.</source>
-        <translation>在上方输入并按 Enter。</translation>
+        <translation>在上方输入并按回车。</translation>
     </message>
     <message>
         <source>Paste a page link above and press Enter.</source>
-        <translation>在上方粘贴页面链接并按 Enter。</translation>
+        <translation>在上方粘贴页面链接并按回车。</translation>
     </message>
 </context>
 <context>
@@ -19095,12 +19095,12 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>By %1</source>
-        <translation>作者：%1</translation>
+        <translation>%1 制作</translation>
     </message>
     <message numerus="yes">
         <source>%n coin(s)</source>
         <translation>
-            <numerusform>%n 个金币</numerusform>
+            <numerusform>%n 个积分</numerusform>
         </translation>
     </message>
     <message>
@@ -19117,7 +19117,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>You have used today’s downloads from this source</source>
-        <translation>您已用完今天从该来源的下载配额</translation>
+        <translation>今日从此素材源的下载次数已用完</translation>
     </message>
     <message>
         <source>Saves to %1</source>
@@ -19125,7 +19125,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>You’ll choose a folder the first time</source>
-        <translation>首次使用时您将选择一个文件夹</translation>
+        <translation>首次使用时将选择文件夹</translation>
     </message>
     <message>
         <source>Change</source>
@@ -19151,7 +19151,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shift subtitles</source>
-        <translation>移动字幕</translation>
+        <translation>偏移字幕</translation>
     </message>
     <message>
         <source>Resync subtitles</source>
@@ -19163,19 +19163,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Bridge subtitle gaps</source>
-        <translation>填补字幕间隙</translation>
+        <translation>桥接字幕间隔</translation>
     </message>
     <message>
         <source>Set minimum subtitle gap</source>
-        <translation>设置最小字幕间隙</translation>
+        <translation>设置最小字幕间隔</translation>
     </message>
     <message>
         <source>Add subtitle lead-in/out</source>
-        <translation>添加字幕片头/片尾延长</translation>
+        <translation>添加字幕提前/延后时间</translation>
     </message>
     <message>
         <source>Adjust subtitle durations</source>
-        <translation>调整字幕持续时间</translation>
+        <translation>调整字幕时长</translation>
     </message>
     <message>
         <source>Fix subtitle overlaps</source>
@@ -19190,21 +19190,21 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Subtitles (%1)</source>
-        <translation>字幕 (%1)</translation>
+        <translation>字幕（%1）</translation>
     </message>
 </context>
 <context>
     <name>SubtitleCueBlock</name>
     <message>
         <source>(empty)</source>
-        <translation>(空)</translation>
+        <translation>（空）</translation>
     </message>
 </context>
 <context>
     <name>SubtitleCueCard</name>
     <message>
         <source>(empty)</source>
-        <translation>(空)</translation>
+        <translation>（空）</translation>
     </message>
     <message>
         <source>Delete this subtitle</source>
@@ -19212,14 +19212,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add a subtitle after this one</source>
-        <translation>在此字幕之后添加字幕</translation>
+        <translation>在此字幕后添加一条字幕</translation>
     </message>
 </context>
 <context>
     <name>SubtitleCueEmptyState</name>
     <message>
         <source>No subtitles yet. Move to a time inside this clip and add one below.</source>
-        <translation>尚无字幕。移动到此剪辑内的时间并在下方添加一条。</translation>
+        <translation>尚无字幕。将播放头移至该片段内的时间点，然后在下方添加字幕。</translation>
     </message>
 </context>
 <context>
@@ -19238,7 +19238,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Duration</source>
-        <translation>持续时间</translation>
+        <translation>时长</translation>
     </message>
     <message>
         <source>Text</source>
@@ -19249,23 +19249,23 @@ If playback stutters, try another.</source>
     <name>SubtitleCueGridToolbar</name>
     <message>
         <source>Add a cue at the playhead</source>
-        <translation>在播放头处添加提示</translation>
+        <translation>在播放头位置添加提示</translation>
     </message>
     <message>
         <source>Insert a cue after the selected one</source>
-        <translation>在所选项后插入提示</translation>
+        <translation>在选中的提示后插入一条提示</translation>
     </message>
     <message>
         <source>Delete the selected cues (Delete)</source>
-        <translation>删除选定的提示 (Delete)</translation>
+        <translation>删除选中的提示（Delete）</translation>
     </message>
     <message>
         <source>Scroll to the current cue during playback</source>
-        <translation>播放期间滚动到当前提示</translation>
+        <translation>播放时滚动到当前提示</translation>
     </message>
     <message>
         <source>Show timeline times instead of times within the clip</source>
-        <translation>显示时间线时间而非剪辑内时间</translation>
+        <translation>显示时间线时间而非片段内时间</translation>
     </message>
     <message>
         <source>Filter cues</source>
@@ -19279,14 +19279,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 selected</source>
-        <translation>已选择 %1 项</translation>
+        <translation>已选 %1</translation>
     </message>
 </context>
 <context>
     <name>SubtitleCueGutter</name>
     <message>
         <source>Subtitles</source>
-        <translation>子标题</translation>
+        <translation>字幕</translation>
     </message>
     <message numerus="yes">
         <source>%n captions</source>
@@ -19299,7 +19299,7 @@ If playback stutters, try another.</source>
     <name>SubtitleEditorHeader</name>
     <message>
         <source>Subtitles</source>
-        <translation>子标题</translation>
+        <translation>字幕</translation>
     </message>
     <message>
         <source>%1 captions</source>
@@ -19307,11 +19307,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Play the timeline — the line on screen lights up. Tap any line to edit it.</source>
-        <translation>播放时间线 — 屏幕上的对应行会亮起。轻点任意行进行编辑。</translation>
+        <translation>播放时间线——屏幕上对应的行会高亮。轻点任意一行即可编辑。</translation>
     </message>
     <message>
         <source>Play the timeline — the line on screen lights up. Click any line to jump to it and edit it below.</source>
-        <translation>播放时间线 — 屏幕上的对应行会亮起。单击任意行跳转并在下方编辑。</translation>
+        <translation>播放时间线——屏幕上对应的行会高亮。单击任意一行可跳转到该行并在下方编辑。</translation>
     </message>
     <message>
         <source>Import</source>
@@ -19335,7 +19335,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Replace these captions from a .srt or .vtt file</source>
-        <translation>使用 .srt 或 .vtt 文件替换这些字幕</translation>
+        <translation>从 .srt 或 .vtt 文件替换这些字幕</translation>
     </message>
     <message>
         <source>Subtitles (*.srt *.vtt)</source>
@@ -19355,7 +19355,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Timestamps from the start of the video</source>
-        <translation>从视频开头的绝对时间戳</translation>
+        <translation>从视频开头计算的时间戳</translation>
     </message>
     <message>
         <source>Offset the exported captions by this clip&apos;s start so they match the exported video</source>
@@ -19394,11 +19394,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>At %1</source>
-        <translation>在 %1 处</translation>
+        <translation>位于 %1</translation>
     </message>
     <message>
         <source>Move to a time inside this clip to add a subtitle</source>
-        <translation>移动到此剪辑内的时间以添加字幕</translation>
+        <translation>将播放头移至该片段内的时间点以添加字幕</translation>
     </message>
     <message>
         <source>Add subtitle at current time</source>
@@ -19409,18 +19409,18 @@ If playback stutters, try another.</source>
     <name>SubtitleLaneCueBlock</name>
     <message>
         <source>(empty)</source>
-        <translation>(空)</translation>
+        <translation>（空）</translation>
     </message>
 </context>
 <context>
     <name>SubtitleLanePanel</name>
     <message>
         <source>Select a subtitle clip</source>
-        <translation>选择字幕剪辑</translation>
+        <translation>选一个字幕片段</translation>
     </message>
     <message>
         <source>Pick a subtitle clip on the timeline to edit its cues here.</source>
-        <translation>在时间线上选择一个字幕剪辑以在此编辑其提示。</translation>
+        <translation>在时间线上选一个字幕片段以在此编辑其提示。</translation>
     </message>
 </context>
 <context>
@@ -19431,7 +19431,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Fit the clip in view</source>
-        <translation>适应视图中的剪辑</translation>
+        <translation>适应窗口大小</translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -19443,11 +19443,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add a cue at the playhead</source>
-        <translation>在播放头处添加提示</translation>
+        <translation>在播放头位置添加提示</translation>
     </message>
     <message>
         <source>Delete the selected cues (Delete)</source>
-        <translation>删除选定的提示 (Delete)</translation>
+        <translation>删除选中的提示（Delete）</translation>
     </message>
     <message numerus="yes">
         <source>%n cue(s)</source>
@@ -19479,11 +19479,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Working…</source>
-        <translation>正在处理…</translation>
+        <translation>处理中…</translation>
     </message>
     <message>
         <source>This can take a few minutes on longer clips.</source>
-        <translation>在较长的剪辑上这可能需要几分钟。</translation>
+        <translation>较长的片段可能需要几分钟。</translation>
     </message>
 </context>
 <context>
@@ -19526,7 +19526,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Show times from the start of the timeline instead of the start of the clip</source>
-        <translation>显示从时间线开头计算的时间，而非从剪辑开头</translation>
+        <translation>显示从时间线开头计算的时间，而非从片段开头计算</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -19534,15 +19534,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Replace the cues with this text (Ctrl+S)</source>
-        <translation>使用此文本替换提示 (Ctrl+S)</translation>
+        <translation>用此文本替换所有提示（Ctrl+S）</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation>还原</translation>
+        <translation>撤销</translation>
     </message>
     <message>
         <source>Discard edits and reload the text from the cues</source>
-        <translation>放弃编辑并从提示重新加载文本</translation>
+        <translation>放弃编辑，从提示重新加载文本</translation>
     </message>
     <message>
         <source>Import</source>
@@ -19570,11 +19570,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>A different clip is selected</source>
-        <translation>已选择不同的剪辑</translation>
+        <translation>已选择不同的片段</translation>
     </message>
     <message>
         <source>Subtitles changed outside this editor</source>
-        <translation>字幕已在此编辑器之外被更改</translation>
+        <translation>字幕在此编辑器之外发生了更改</translation>
     </message>
     <message>
         <source>Discard</source>
@@ -19590,7 +19590,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Keep mine</source>
-        <translation>保留我的更改</translation>
+        <translation>保留我的</translation>
     </message>
     <message numerus="yes">
         <source>%n cue(s)</source>
@@ -19610,26 +19610,26 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select a subtitle clip</source>
-        <translation>选择字幕剪辑</translation>
+        <translation>选一个字幕片段</translation>
     </message>
     <message>
         <source>Pick a subtitle clip on the timeline to edit its text here.</source>
-        <translation>在时间线上选择一个字幕剪辑以在此编辑其文本。</translation>
+        <translation>在时间线上选一个字幕片段以在此编辑其文本。</translation>
     </message>
 </context>
 <context>
     <name>SubtitleTimingPanel</name>
     <message>
         <source>Pick two existing cues</source>
-        <translation>选择两条现有提示</translation>
+        <translation>选择两条已有提示</translation>
     </message>
     <message>
         <source>Points A and B must start at different times</source>
-        <translation>点 A 和点 B 必须在不同时间开始</translation>
+        <translation>A 点和 B 点必须在不同时间开始</translation>
     </message>
     <message>
         <source>Invalid time</source>
-        <translation>无效时间</translation>
+        <translation>时间无效</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -19638,7 +19638,7 @@ If playback stutters, try another.</source>
     <message numerus="yes">
         <source>%n cue(s) will change</source>
         <translation>
-            <numerusform>将更改 %n 条提示</numerusform>
+            <numerusform>%n 条提示将更改</numerusform>
         </translation>
     </message>
     <message>
@@ -19647,23 +19647,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>All</source>
-        <translation>所有</translation>
+        <translation>全部</translation>
     </message>
     <message>
         <source>Selected (%1)</source>
-        <translation>已选 (%1)</translation>
+        <translation>已选（%1）</translation>
     </message>
     <message>
         <source>From playhead</source>
-        <translation>从播放头起</translation>
+        <translation>从播放头开始</translation>
     </message>
     <message>
         <source>Shift</source>
-        <translation>平移</translation>
+        <translation>偏移</translation>
     </message>
     <message>
         <source>Amount</source>
-        <translation>量</translation>
+        <translation>偏移量</translation>
     </message>
     <message>
         <source>ms</source>
@@ -19683,11 +19683,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Later</source>
-        <translation>请稍后</translation>
+        <translation>延后</translation>
     </message>
     <message>
         <source>Edges</source>
-        <translation>边缘</translation>
+        <translation>边沿</translation>
     </message>
     <message>
         <source>Both</source>
@@ -19731,23 +19731,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Point A cue</source>
-        <translation>点 A 提示</translation>
+        <translation>A 点提示</translation>
     </message>
     <message>
         <source>Point B cue</source>
-        <translation>点 B 提示</translation>
+        <translation>B 点提示</translation>
     </message>
     <message>
         <source>Use selected</source>
-        <translation>使用所选</translation>
+        <translation>使用已选</translation>
     </message>
     <message>
         <source>Currently starts at</source>
-        <translation>当前开始于</translation>
+        <translation>当前开始时间</translation>
     </message>
     <message>
         <source>Should start at</source>
-        <translation>应开始于</translation>
+        <translation>应该开始于</translation>
     </message>
     <message>
         <source>Use playhead</source>
@@ -19763,11 +19763,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>From fps</source>
-        <translation>原 fps</translation>
+        <translation>原帧率</translation>
     </message>
     <message>
         <source>To fps</source>
-        <translation>目标 fps</translation>
+        <translation>目标帧率</translation>
     </message>
     <message>
         <source>Swap</source>
@@ -19775,7 +19775,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Swap the from and to frame rates</source>
-        <translation>交换原帧率与目标帧率</translation>
+        <translation>交换原帧率和目标帧率</translation>
     </message>
     <message>
         <source>Speed %</source>
@@ -19783,59 +19783,59 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Gaps and durations</source>
-        <translation>间隙与持续时间</translation>
+        <translation>间隔与时长</translation>
     </message>
     <message>
         <source>Bridge small gaps</source>
-        <translation>填补小间隙</translation>
+        <translation>桥接小间隔</translation>
     </message>
     <message>
         <source>Shorter than (ms)</source>
-        <translation>短于 (毫秒)</translation>
+        <translation>小于（毫秒）</translation>
     </message>
     <message>
         <source>Keep min gap (ms)</source>
-        <translation>保持最小间隙 (毫秒)</translation>
+        <translation>保持最小间隔（毫秒）</translation>
     </message>
     <message>
         <source>Given to previous</source>
-        <translation>分配给上一项</translation>
+        <translation>分配给上一条</translation>
     </message>
     <message>
         <source>Share of the gap given to the previous cue</source>
-        <translation>分配给上一条提示的间隙比例</translation>
+        <translation>间隔分配给上一条提示的比例</translation>
     </message>
     <message>
         <source>Minimum gap</source>
-        <translation>最小间隙</translation>
+        <translation>最小间隔</translation>
     </message>
     <message>
         <source>Gap (ms)</source>
-        <translation>间隙 (毫秒)</translation>
+        <translation>间隔（毫秒）</translation>
     </message>
     <message>
         <source>Lead-in / lead-out</source>
-        <translation>片头 / 片尾</translation>
+        <translation>提前 / 延后</translation>
     </message>
     <message>
         <source>Lead-in (ms)</source>
-        <translation>片头延长 (毫秒)</translation>
+        <translation>提前（毫秒）</translation>
     </message>
     <message>
         <source>Lead-out (ms)</source>
-        <translation>片尾延长 (毫秒)</translation>
+        <translation>延后（毫秒）</translation>
     </message>
     <message>
         <source>Duration limits</source>
-        <translation>持续时间限制</translation>
+        <translation>时长限制</translation>
     </message>
     <message>
         <source>Min duration (ms)</source>
-        <translation>最短持续时间 (毫秒)</translation>
+        <translation>最小时长（毫秒）</translation>
     </message>
     <message>
         <source>Max duration (ms, 0 = off)</source>
-        <translation>最长持续时间 (毫秒，0 = 关闭)</translation>
+        <translation>最长时间（毫秒，0 表示关闭）</translation>
     </message>
     <message>
         <source>Overlaps</source>
@@ -19847,11 +19847,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select a subtitle clip</source>
-        <translation>选择字幕剪辑</translation>
+        <translation>选一个字幕片段</translation>
     </message>
     <message>
         <source>Pick a subtitle clip on the timeline to adjust its timing here.</source>
-        <translation>在时间线上选择一个字幕剪辑以在此调整其时间。</translation>
+        <translation>在时间线上选一个字幕片段以在此调整其时间。</translation>
     </message>
 </context>
 <context>
@@ -19862,15 +19862,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No cues match the filter</source>
-        <translation>没有匹配筛选条件的提示</translation>
+        <translation>没有提示匹配筛选条件</translation>
     </message>
     <message>
         <source>Add a cue at the playhead with the + button.</source>
-        <translation>使用 + 按钮在播放头处添加提示。</translation>
+        <translation>使用 + 按钮在播放头位置添加提示。</translation>
     </message>
     <message>
         <source>Select a subtitle clip, or generate subtitles</source>
-        <translation>选择字幕剪辑，或生成字幕</translation>
+        <translation>选一个字幕片段，或生成字幕</translation>
     </message>
     <message>
         <source>Generate subtitles</source>
@@ -19881,11 +19881,11 @@ If playback stutters, try another.</source>
     <name>SubtitlesTab</name>
     <message>
         <source>Subtitle track — one clip holds many timed captions. Place it on the timeline, trim its length, then add caption lines at each moment in the clip panel.</source>
-        <translation>字幕轨道 — 一个剪辑包含多条定时字幕。将其放置在时间线上，修剪其长度，然后在剪辑面板中为每个时刻添加字幕行。</translation>
+        <translation>字幕轨道——一个片段可包含多条定时字幕行。将其放置到时间线上，修剪长度，然后在片段面板中的每个时刻添加字幕行。</translation>
     </message>
     <message>
         <source>Add subtitle clip</source>
-        <translation>添加字幕剪辑</translation>
+        <translation>添加字幕片段</translation>
     </message>
     <message>
         <source>Import subtitle file</source>
@@ -19897,7 +19897,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Import a .srt or .vtt file as a subtitle clip</source>
-        <translation>将 .srt 或 .vtt 文件作为字幕剪辑导入</translation>
+        <translation>导入 .srt 或 .vtt 文件作为字幕片段</translation>
     </message>
     <message>
         <source>All files (*)</source>
@@ -19913,15 +19913,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Creates captions from the speech in the selected clip.</source>
-        <translation>从选定剪辑中的语音创建字幕。</translation>
+        <translation>根据所选片段中的语音生成字幕。</translation>
     </message>
     <message>
         <source>Select a video or audio clip on the timeline first.</source>
-        <translation>请先在时间线上选择视频或音频剪辑。</translation>
+        <translation>请先在时间线上选一个视频或音频片段。</translation>
     </message>
     <message>
         <source>Shorter captions are timed by splitting each phrase evenly, so they can drift slightly out of sync with the speech.</source>
-        <translation>较短的字幕通过均匀拆分每个短语来确定时间，因此可能会与语音略有脱节。</translation>
+        <translation>较短的字幕会通过均匀分割每个短语来定时，因此可能略微与语音不同步。</translation>
     </message>
     <message>
         <source>Create captions from the selected clips&apos; speech — several clips become one caption clip</source>
@@ -19929,7 +19929,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select a video or audio clip first</source>
-        <translation>请先选择视频或音频剪辑</translation>
+        <translation>请先选一个视频或音频片段</translation>
     </message>
     <message>
         <source>Creating captions… %1%</source>
@@ -19957,7 +19957,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Recommended caption length</source>
-        <translation>建议的字幕长度</translation>
+        <translation>推荐字幕长度</translation>
     </message>
     <message>
         <source>1 word per caption</source>
@@ -20006,7 +20006,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Style some text, then use “Save style…” in the properties Text tab to keep it here.</source>
-        <translation>为文本设置样式，然后在属性“文本”选项卡中使用“保存样式…”将其保留在此处。</translation>
+        <translation>设置一段文字的样式，然后在属性面板的文本选项卡中使用「保存样式…」将其保存在此处。</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -20030,26 +20030,26 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename text style</source>
-        <translation>重命名文本样式</translation>
+        <translation>重命名文字样式</translation>
     </message>
     <message>
         <source>Delete text style</source>
-        <translation>删除文本样式</translation>
+        <translation>删除文字样式</translation>
     </message>
     <message>
         <source>Remove “%1” from your saved styles? Clips already using it keep their look.</source>
-        <translation>是否从保存的样式中移除“%1”？已使用该样式的剪辑将保留其外观。</translation>
+        <translation>要从已保存的样式中移除 "%1" 吗？已使用该样式的片段将保持外观不变。</translation>
     </message>
 </context>
 <context>
     <name>TextEffects</name>
     <message>
         <source>Shine sweep</source>
-        <translation>光泽扫过</translation>
+        <translation>光泽扫光</translation>
     </message>
     <message>
         <source>Holographic shimmer</source>
-        <translation>全息微光</translation>
+        <translation>全息闪烁</translation>
     </message>
     <message>
         <source>Neon pulse</source>
@@ -20061,7 +20061,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Chrome</source>
-        <translation>金属铬</translation>
+        <translation>镀铬</translation>
     </message>
     <message>
         <source>Dissolve</source>
@@ -20080,31 +20080,31 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Whole block</source>
-        <translation>整块</translation>
+        <translation>整段</translation>
     </message>
     <message>
         <source>Character</source>
-        <translation>字符</translation>
+        <translation>按字符</translation>
     </message>
     <message>
         <source>Word</source>
-        <translation>词</translation>
+        <translation>按词</translation>
     </message>
     <message>
         <source>Line</source>
-        <translation>行</translation>
+        <translation>按行</translation>
     </message>
     <message>
         <source>Forward</source>
-        <translation>向前</translation>
+        <translation>正向</translation>
     </message>
     <message>
         <source>Backward</source>
-        <translation>向后</translation>
+        <translation>反向</translation>
     </message>
     <message>
         <source>Center out</source>
-        <translation>从中心向外</translation>
+        <translation>从中间向外</translation>
     </message>
     <message>
         <source>Random</source>
@@ -20120,11 +20120,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Snappy</source>
-        <translation>爽快</translation>
+        <translation>弹跳</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation>回退</translation>
+        <translation>从后向前</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -20132,7 +20132,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Save text style</source>
-        <translation>保存文本样式</translation>
+        <translation>保存文字样式</translation>
     </message>
     <message>
         <source>My style %1</source>
@@ -20143,43 +20143,43 @@ If playback stutters, try another.</source>
     <name>TextInspectorAccentSection</name>
     <message>
         <source>Word accent</source>
-        <translation>单词重点突出</translation>
+        <translation>强调词</translation>
     </message>
     <message>
         <source>Style some words differently from the rest, chosen by rule</source>
-        <translation>根据规则选择部分单词应用不同样式</translation>
+        <translation>通过规则选取部分词并应用不同样式</translation>
     </message>
     <message>
         <source>Accent colour</source>
-        <translation>突出颜色</translation>
+        <translation>强调色</translation>
     </message>
     <message>
         <source>Recolour the words the rule picks out</source>
-        <translation>为规则选出的单词重新着色</translation>
+        <translation>为规则选中的词重新着色</translation>
     </message>
     <message>
         <source>Choose accent colour</source>
-        <translation>选择突出颜色</translation>
+        <translation>选择强调色</translation>
     </message>
     <message>
         <source>Accent size</source>
-        <translation>突出大小</translation>
+        <translation>强调大小</translation>
     </message>
     <message>
         <source>Size of the accented words relative to the rest of the line</source>
-        <translation>突出单词相对于本行其余部分的大小</translation>
+        <translation>强调词相对于行中其余文字的大小</translation>
     </message>
     <message>
         <source>Accent outline</source>
-        <translation>突出描边</translation>
+        <translation>强调描边</translation>
     </message>
     <message>
         <source>Give the accented words their own outline</source>
-        <translation>为突出的单词赋予独立的描边</translation>
+        <translation>为强调词添加独立描边</translation>
     </message>
     <message>
         <source>Choose accent outline colour</source>
-        <translation>选择突出描边颜色</translation>
+        <translation>选择强调描边颜色</translation>
     </message>
     <message>
         <source>Width</source>
@@ -20187,15 +20187,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Accent pill</source>
-        <translation>突出药丸胶囊底框</translation>
+        <translation>强调标签</translation>
     </message>
     <message>
         <source>Highlight only the accented words, instead of every word</source>
-        <translation>仅高亮突出显示的单词，而非每个单词</translation>
+        <translation>仅高亮强调词，而非每个词</translation>
     </message>
     <message>
         <source>Choose accent highlight colour</source>
-        <translation>选择突出高亮颜色</translation>
+        <translation>选择强调高亮颜色</translation>
     </message>
 </context>
 <context>
@@ -20206,22 +20206,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Custom animator (set via MCP). Preset controls are disabled.</source>
-        <translation>自定义动画器（通过 MCP 设置）。预设控件已禁用。</translation>
+        <translation>自定义动画器（通过 MCP 设置）。预设控制已禁用。</translation>
     </message>
     <message>
         <source>Revert to preset</source>
-        <translation>还原为预设</translation>
+        <translation>恢复为预设</translation>
     </message>
     <message>
         <source>Drop the custom animators and go back to picking presets</source>
-        <translation>放弃自定义动画器并返回选择预设</translation>
+        <translation>移除自定义动画器，返回预设选择</translation>
     </message>
 </context>
 <context>
     <name>TextInspectorAnimCategoryStrip</name>
     <message>
         <source>All</source>
-        <translation>所有</translation>
+        <translation>全部</translation>
     </message>
 </context>
 <context>
@@ -20236,15 +20236,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Duration</source>
-        <translation>持续时间</translation>
+        <translation>时长</translation>
     </message>
     <message>
         <source>Edit text animation</source>
-        <translation>编辑文本动画</translation>
+        <translation>编辑文字动画</translation>
     </message>
     <message>
         <source>By</source>
-        <translation>按</translation>
+        <translation>方式</translation>
     </message>
     <message>
         <source>Phase</source>
@@ -20252,15 +20252,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stagger</source>
-        <translation>交错延时</translation>
+        <translation>交错</translation>
     </message>
     <message>
         <source>Delay between one unit and the next along the cycle</source>
-        <translation>沿周期各单元之间的延迟</translation>
+        <translation>沿循环方向，单位与单位之间的延迟</translation>
     </message>
     <message>
         <source>Delay between one unit starting and the next</source>
-        <translation>一个单元开始与下一个单元之间的延迟</translation>
+        <translation>上一个单位启动与下一个单位启动之间的延迟</translation>
     </message>
     <message>
         <source>Order</source>
@@ -20290,7 +20290,7 @@ If playback stutters, try another.</source>
     <name>TextInspectorAnimateHint</name>
     <message>
         <source>Plays for every caption</source>
-        <translation>为每条字幕播放</translation>
+        <translation>每条字幕均播放</translation>
     </message>
 </context>
 <context>
@@ -20309,7 +20309,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Apply the text to this clip</source>
-        <translation>将文本应用到此剪辑</translation>
+        <translation>将文本应用至此片段</translation>
     </message>
 </context>
 <context>
@@ -20320,7 +20320,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Boxes and rules drawn around the text rather than on it</source>
-        <translation>绘制在文本周围而非文本本身的背景框和分隔线</translation>
+        <translation>在文字周围绘制边框和线条，而非直接绘制在文字上</translation>
     </message>
     <message>
         <source>Background</source>
@@ -20328,7 +20328,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Draw a filled box behind the text</source>
-        <translation>在文本后方绘制填充框</translation>
+        <translation>在文字后方绘制填充框</translation>
     </message>
     <message>
         <source>Choose background colour</source>
@@ -20340,7 +20340,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Space between the text and the edge of its background box</source>
-        <translation>文本与其背景框边缘之间的间距</translation>
+        <translation>文字与其背景框边缘之间的间距</translation>
     </message>
     <message>
         <source>Corner radius</source>
@@ -20348,23 +20348,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Roundness of the background box corners</source>
-        <translation>背景框角的圆度</translation>
+        <translation>背景框角落的圆角程度</translation>
     </message>
     <message>
         <source>Word highlight</source>
-        <translation>单词高亮</translation>
+        <translation>文字高亮</translation>
     </message>
     <message>
         <source>Filled pill behind every word, sized to the word itself</source>
-        <translation>每个单词后方的填充药丸胶囊底框，大小与单词本身自适应</translation>
+        <translation>在每个词后方绘制填充标签，大小适配词本身</translation>
     </message>
     <message>
         <source>Thickness</source>
-        <translation>粗细</translation>
+        <translation>厚度</translation>
     </message>
     <message>
         <source>How far the pill extends past the word</source>
-        <translation>药丸底框超出单词的扩展距离</translation>
+        <translation>标签超出词边缘的距离</translation>
     </message>
     <message>
         <source>Highlight colour</source>
@@ -20380,15 +20380,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Draw a rule under each line of text</source>
-        <translation>在每行文本下方绘制下划线</translation>
+        <translation>在每行文字下方绘制线条</translation>
     </message>
     <message>
         <source>Offset</source>
-        <translation>偏移</translation>
+        <translation>偏移量</translation>
     </message>
     <message>
         <source>Gap between the baseline and the rule</source>
-        <translation>基线与下划线之间的间隙</translation>
+        <translation>基线与下划线之间的间距</translation>
     </message>
     <message>
         <source>Underline colour</source>
@@ -20411,7 +20411,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Size</source>
-        <translation>大小</translation>
+        <translation>字号</translation>
     </message>
     <message>
         <source>Colour</source>
@@ -20423,11 +20423,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Choose text colour</source>
-        <translation>选择文本颜色</translation>
+        <translation>选择文字颜色</translation>
     </message>
     <message>
         <source>Edits the first gradient stop</source>
-        <translation>编辑第一个渐变色标</translation>
+        <translation>编辑第一个渐变节点</translation>
     </message>
     <message>
         <source>Edit in Style</source>
@@ -20435,11 +20435,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The text is painted with an image; change it on the Style page</source>
-        <translation>文本填充为图像；请在“样式”页面更改</translation>
+        <translation>文字使用图片填充；请在样式页中修改</translation>
     </message>
     <message>
         <source>The text is painted with an effect; change it on the Style page</source>
-        <translation>文本应用了特效；请在“样式”页面更改</translation>
+        <translation>文字使用效果填充；请在样式页中修改</translation>
     </message>
     <message>
         <source>Style</source>
@@ -20451,11 +20451,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Italicise the text</source>
-        <translation>使文本倾斜</translation>
+        <translation>将文字设为斜体</translation>
     </message>
     <message>
         <source>%1 has no italic face</source>
-        <translation>%1 没有斜体字形</translation>
+        <translation>%1 没有斜体字面</translation>
     </message>
     <message>
         <source>Align left</source>
@@ -20475,7 +20475,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Align middle</source>
-        <translation>垂直居中</translation>
+        <translation>居中对齐</translation>
     </message>
     <message>
         <source>Align bottom</source>
@@ -20490,15 +20490,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shadow, outline, neon and friends — a recipe that builds the layers below</source>
-        <translation>阴影、描边、霓虹及相关效果 — 用于构建下方图层的配方</translation>
+        <translation>阴影、描边、霓虹等效果——一种配方，可在下方构建图层</translation>
     </message>
     <message>
         <source>Shadow, outline, neon… built as layers you can fine-tune below.</source>
-        <translation>阴影、描边、霓虹… 构建为可在下方微调的图层。</translation>
+        <translation>阴影、描边、霓虹……以下方可微调的图层组合。</translation>
     </message>
     <message>
         <source>Adjust text look</source>
-        <translation>调整文本外观</translation>
+        <translation>调整文字外观</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -20510,7 +20510,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add a fill, stroke, shadow, glow or extrude layer</source>
-        <translation>添加填充、描边、阴影、发光或凸出图层</translation>
+        <translation>添加填充、描边、阴影、辉光或拉伸图层</translation>
     </message>
     <message>
         <source>Fill</source>
@@ -20526,15 +20526,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Glow</source>
-        <translation>发光</translation>
+        <translation>辉光</translation>
     </message>
     <message>
         <source>Extrude</source>
-        <translation>凸出</translation>
+        <translation>拉伸</translation>
     </message>
     <message>
         <source>No layers. Pick an effect above or add a fill to start.</source>
-        <translation>无图层。在上方选择一种效果或添加填充以开始。</translation>
+        <translation>尚无图层。在上方选择效果或添加填充开始。</translation>
     </message>
 </context>
 <context>
@@ -20545,11 +20545,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>A whole text style — font, colour and effect — applied in one tap</source>
-        <translation>一键应用整套文本样式 — 字体、颜色和效果</translation>
+        <translation>完整的文字样式——字体、颜色和效果——一键应用</translation>
     </message>
     <message>
         <source>Font, colour and effect in one tap. Save your own to reuse it.</source>
-        <translation>一键应用字体、颜色和效果。保存您自己的样式以便重复使用。</translation>
+        <translation>字体、颜色和效果一键应用。保存自己的样式以便重复使用。</translation>
     </message>
     <message>
         <source>Save style…</source>
@@ -20569,7 +20569,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>…every track</source>
-        <translation>…每个轨道</translation>
+        <translation>…所有轨道</translation>
     </message>
     <message>
         <source>Copy this style to every caption in the project</source>
@@ -20577,19 +20577,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Generate voiceover</source>
-        <translation>生成画外音</translation>
+        <translation>生成配音</translation>
     </message>
     <message>
         <source>Speak every caption with a generated voice</source>
-        <translation>使用生成的声音朗读每条字幕</translation>
+        <translation>用生成的语音朗读每条字幕</translation>
     </message>
     <message>
         <source>Install the voice model from the add-on manager first</source>
-        <translation>请先从加载项管理器安装语音模型</translation>
+        <translation>请先从附加包管理器安装语音模型</translation>
     </message>
     <message>
         <source>Install the AI engine and the voice model from the add-on manager to generate voiceovers.</source>
-        <translation>从加载项管理器安装 AI 引擎和语音模型以生成画外音。</translation>
+        <translation>请从附加包管理器安装 AI 引擎和语音模型以生成配音。</translation>
     </message>
 </context>
 <context>
@@ -20600,7 +20600,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Line height, letter spacing, wrapping and bend</source>
-        <translation>行高、字间距、换行和弯曲</translation>
+        <translation>行高、字间距、换行与弯曲</translation>
     </message>
     <message>
         <source>Line height</source>
@@ -20620,7 +20620,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Wrap long lines inside the text box instead of overflowing</source>
-        <translation>长文本行在文本框内换行而不是溢出</translation>
+        <translation>在文本框内换行长行，而非溢出显示</translation>
     </message>
     <message>
         <source>Bend</source>
@@ -20654,7 +20654,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Text effect</source>
-        <translation>文本效果</translation>
+        <translation>文字效果</translation>
     </message>
     <message>
         <source>Close</source>
@@ -20669,23 +20669,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Text for this slot</source>
-        <translation>此插槽的文本</translation>
+        <translation>此槽位的文本</translation>
     </message>
     <message>
         <source>Change image…</source>
-        <translation>更改图像…</translation>
+        <translation>更改图片…</translation>
     </message>
     <message>
         <source>Choose image…</source>
-        <translation>选择图像…</translation>
+        <translation>选择图片…</translation>
     </message>
     <message>
         <source>Slot Image</source>
-        <translation>插槽图像</translation>
+        <translation>槽位图片</translation>
     </message>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp)</source>
-        <translation>图像 (*.png *.jpg *.jpeg *.webp)</translation>
+        <translation>图片 (*.png *.jpg *.jpeg *.webp)</translation>
     </message>
 </context>
 <context>
@@ -20696,11 +20696,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Offset X</source>
-        <translation>偏移 X</translation>
+        <translation>X 偏移</translation>
     </message>
     <message>
         <source>Offset Y</source>
-        <translation>偏移 Y</translation>
+        <translation>Y 偏移</translation>
     </message>
     <message>
         <source>Blur</source>
@@ -20716,11 +20716,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Trim start</source>
-        <translation>修剪起点</translation>
+        <translation>修剪起始</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation>修剪终点</translation>
+        <translation>修剪结束</translation>
     </message>
     <message>
         <source>Dash offset</source>
@@ -20728,11 +20728,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Sketch length</source>
-        <translation>素描长度</translation>
+        <translation>手绘长度</translation>
     </message>
     <message>
         <source>Sketch deviation</source>
-        <translation>素描偏差</translation>
+        <translation>手绘偏差</translation>
     </message>
     <message>
         <source>Red</source>
@@ -20748,7 +20748,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Alpha</source>
-        <translation>Alpha</translation>
+        <translation>透明度</translation>
     </message>
     <message>
         <source>Gradient angle</source>
@@ -20772,7 +20772,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Stop %1</source>
-        <translation>色标 %1</translation>
+        <translation>节点 %1</translation>
     </message>
     <message>
         <source>Fill</source>
@@ -20788,15 +20788,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Glow</source>
-        <translation>发光</translation>
+        <translation>辉光</translation>
     </message>
     <message>
         <source>Extrude</source>
-        <translation>凸出</translation>
+        <translation>拉伸</translation>
     </message>
     <message>
         <source>Text size</source>
-        <translation>文本大小</translation>
+        <translation>文字大小</translation>
     </message>
     <message>
         <source>Letter spacing</source>
@@ -20819,7 +20819,7 @@ If playback stutters, try another.</source>
     <name>TextStylePackCard</name>
     <message>
         <source>%1 — click to add at the playhead, or drag to the timeline. Double-click it on the preview to edit.</source>
-        <translation>%1 — 单击在播放头处添加，或拖动到时间线。在预览中双击以编辑。</translation>
+        <translation>%1 — 点击可在播放头处添加，或拖拽到时间线。在预览中双击可编辑。</translation>
     </message>
     <message>
         <source>Add at playhead</source>
@@ -20834,7 +20834,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Text preset</source>
-        <translation>文本预设</translation>
+        <translation>文字预设</translation>
     </message>
     <message>
         <source>Close</source>
@@ -20860,7 +20860,7 @@ If playback stutters, try another.</source>
     <name>TextStyleUserCard</name>
     <message>
         <source>%1 — click to add at the playhead, or drag to the timeline. Double-click it on the preview to edit.</source>
-        <translation>%1 — 单击在播放头处添加，或拖动到时间线。在预览中双击以编辑。</translation>
+        <translation>%1 — 点击可在播放头处添加，或拖拽到时间线。在预览中双击可编辑。</translation>
     </message>
     <message>
         <source>Style options</source>
@@ -20887,23 +20887,23 @@ If playback stutters, try another.</source>
     <name>ThemeTrustDialog</name>
     <message>
         <source>Trust theme overrides?</source>
-        <translation>信任主题替代文件？</translation>
+        <translation>信任主题覆盖？</translation>
     </message>
     <message>
         <source>“%1” includes QML files that replace controls. Those files run with Drift’s permissions. Trust a theme only after you have read it.</source>
-        <translation>“%1”包含替换控件的 QML 文件。这些文件将以 Drift 的权限运行。请仅在检查其内容后再信任该主题。</translation>
+        <translation>"%1" 包含替换控件的 QML 文件。这些文件将以 Drift 的权限运行。请在阅读后再信任该主题。</translation>
     </message>
     <message>
         <source>No override files were found.</source>
-        <translation>未找到替代文件。</translation>
+        <translation>未发现覆盖文件。</translation>
     </message>
     <message>
         <source>Trust and use overrides</source>
-        <translation>信任并使用替代文件</translation>
+        <translation>信任并使用覆盖</translation>
     </message>
     <message>
         <source>Use without overrides</source>
-        <translation>不使用替代文件</translation>
+        <translation>不使用覆盖</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -20918,7 +20918,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enter a color like #FF0000</source>
-        <translation>输入类似 #FF0000 的颜色</translation>
+        <translation>输入颜色，如 #FF0000</translation>
     </message>
     <message>
         <source>Hex colour</source>
@@ -20952,7 +20952,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Enter a number</source>
-        <translation>输入数字</translation>
+        <translation>输入一个数字</translation>
     </message>
     <message>
         <source>Edit value</source>
@@ -20963,7 +20963,7 @@ If playback stutters, try another.</source>
     <name>TimelineBookmarkContextMenu</name>
     <message>
         <source>Go to bookmark</source>
-        <translation>转到书签</translation>
+        <translation>转到标记</translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -20986,19 +20986,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Open composite</source>
-        <translation>打开复合剪辑</translation>
+        <translation>打开组合</translation>
     </message>
     <message>
         <source>Flatten composite</source>
-        <translation>拼合复合剪辑</translation>
+        <translation>扁平化组合</translation>
     </message>
     <message>
         <source>Make composite</source>
-        <translation>创建复合剪辑</translation>
+        <translation>创建组合</translation>
     </message>
     <message>
         <source>Transform together</source>
-        <translation>一起变换</translation>
+        <translation>组合变换</translation>
     </message>
     <message>
         <source>Add transform layer</source>
@@ -21010,19 +21010,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Covers…</source>
-        <translation>覆盖…</translation>
+        <translation>覆盖范围…</translation>
     </message>
     <message>
         <source>Select covered clips</source>
-        <translation>选择被覆盖的剪辑</translation>
+        <translation>选择覆盖的片段</translation>
     </message>
     <message>
         <source>Split at current time</source>
-        <translation>在当前时间分割</translation>
+        <translation>在播放头处分割</translation>
     </message>
     <message>
         <source>Split item at current time</source>
-        <translation>在当前时间分割项目</translation>
+        <translation>在播放头处分割项目</translation>
     </message>
     <message>
         <source>Separate audio</source>
@@ -21030,7 +21030,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Separate all audio tracks</source>
-        <translation>分离所有音频轨道</translation>
+        <translation>分离所有音轨</translation>
     </message>
     <message>
         <source>Convert to mask</source>
@@ -21038,7 +21038,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Convert to edit-friendly format</source>
-        <translation>转换为适合编辑的格式</translation>
+        <translation>转换为易编辑格式</translation>
     </message>
     <message>
         <source>Crop…</source>
@@ -21058,15 +21058,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Merge subtitle clips</source>
-        <translation>合并字幕剪辑</translation>
+        <translation>合并字幕片段</translation>
     </message>
     <message>
         <source>Merge all subtitles on this track</source>
-        <translation>合并此轨道上的所有字幕</translation>
+        <translation>合并此轨道上所有字幕</translation>
     </message>
     <message>
         <source>Convert to text clips</source>
-        <translation>转换为文本剪辑</translation>
+        <translation>转换为文字片段</translation>
     </message>
     <message>
         <source>Convert to subtitle</source>
@@ -21086,7 +21086,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Duplicate</source>
-        <translation>创建副本</translation>
+        <translation>复制副本</translation>
     </message>
     <message>
         <source>Rename…</source>
@@ -21114,11 +21114,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlink from clip</source>
-        <translation>从剪辑取消链接</translation>
+        <translation>与片段取消链接</translation>
     </message>
     <message>
         <source>Move to its own track</source>
-        <translation>移动到独立轨道</translation>
+        <translation>移至独立轨道</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -21140,7 +21140,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drag media here from the library, or add an empty track to start.</source>
-        <translation>从媒体库拖动媒体到此处，或添加空轨道以开始。</translation>
+        <translation>从素材库拖入媒体，或添加空轨道开始。</translation>
     </message>
     <message>
         <source>New track</source>
@@ -21173,11 +21173,11 @@ If playback stutters, try another.</source>
     <name>TimelineLiveRecordingBlock</name>
     <message>
         <source>PAUSED </source>
-        <translation>已暂停 </translation>
+        <translation>已暂停</translation>
     </message>
     <message>
         <source>REC </source>
-        <translation>录制中 </translation>
+        <translation>录制中</translation>
     </message>
 </context>
 <context>
@@ -21195,11 +21195,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Previewing from a low-resolution proxy. Export uses the original.</source>
-        <translation>正在从低分辨率代理预览。导出时将使用原始媒体。</translation>
+        <translation>正在预览低分辨率代理，导出使用原始文件。</translation>
     </message>
     <message>
         <source>Edit-friendly</source>
-        <translation>适合编辑</translation>
+        <translation>易编辑</translation>
     </message>
     <message>
         <source>Converted to a constant frame rate for smooth editing</source>
@@ -21207,15 +21207,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
-        <translation>可变帧率。此剪辑可能与其音频不同步。右键单击并选择“转换为适合编辑的格式”。</translation>
+        <translation>可变帧率。此片段可能与音频不同步。右键单击并选择"转换为易编辑格式"。</translation>
     </message>
     <message>
         <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
-        <translation>未找到媒体文件。请在此项上使用“替换媒体…”重新指向该文件。</translation>
+        <translation>未找到媒体文件。对此项目使用"替换媒体…"重新指向该文件。</translation>
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
-        <translation>变换图层：移动、缩放和旋转其括号覆盖的每个轨道</translation>
+        <translation>变换图层：移动、缩放并旋转其括号覆盖的每个轨道</translation>
     </message>
     <message>
         <source>Save effect preset</source>
@@ -21227,7 +21227,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename bookmark</source>
-        <translation>重命名书签</translation>
+        <translation>重命名标记</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -21239,11 +21239,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Bookmark name</source>
-        <translation>书签名称</translation>
+        <translation>标记名称</translation>
     </message>
     <message>
         <source>Bookmark</source>
-        <translation>书签</translation>
+        <translation>标记</translation>
     </message>
     <message>
         <source>Convert to subtitle?</source>
@@ -21255,11 +21255,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.</source>
-        <translation>选定的文本剪辑将被一个字幕剪辑替换。每条字幕都将使用第一个文本剪辑的位置和样式。</translation>
+        <translation>选定的文字片段将被替换为一个字幕片段。每个字幕将使用第一个文字片段的位置和样式。</translation>
     </message>
     <message>
         <source>Rename clip</source>
-        <translation>重命名剪辑</translation>
+        <translation>重命名片段</translation>
     </message>
     <message>
         <source>Name</source>
@@ -21267,22 +21267,22 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Clip name</source>
-        <translation>剪辑名称</translation>
+        <translation>片段名称</translation>
     </message>
     <message>
         <source>My look</source>
-        <translation>我的外观</translation>
+        <translation>我的风格</translation>
     </message>
     <message>
         <source>Close Gap</source>
-        <translation>消除间隙</translation>
+        <translation>闭合间隙</translation>
     </message>
 </context>
 <context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
-        <translation>单击或拖动以定位播放</translation>
+        <translation>单击或拖动以跳转</translation>
     </message>
 </context>
 <context>
@@ -21306,7 +21306,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add video or audio files directly to the timeline at the playhead</source>
-        <translation>在播放头处直接向时间线添加视频或音频文件</translation>
+        <translation>在播放头处直接将视频或音频文件添加到时间线</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -21318,27 +21318,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Auto-select: select the clip under the playhead</source>
-        <translation>自动选择：选择播放头下方的剪辑</translation>
+        <translation>自动选择：选择播放头下方的片段</translation>
     </message>
     <message>
         <source>Magnetic snapping: align video and audio edges across tracks</source>
-        <translation>磁性吸附：跨轨道对齐视频和音频边缘</translation>
+        <translation>磁性吸附：对齐跨轨道的视频和音频边缘</translation>
     </message>
     <message>
         <source>Ripple editing: keep following clips together when trimming</source>
-        <translation>波纹编辑：修剪时保持后续剪辑联动紧凑</translation>
+        <translation>波纹编辑：修剪时保持后续片段连贯</translation>
     </message>
     <message>
         <source>Toggle audio mixer strip</source>
-        <translation>切换混音器面板</translation>
+        <translation>切换音频混音器条</translation>
     </message>
     <message>
         <source>Timeline overview — a minimap of the whole project; click or drag it to jump the view</source>
-        <translation>时间线全景概览 — 整个项目的小地图；单击或拖动可跳转视图</translation>
+        <translation>时间线总览——整个项目的迷你地图，单击或拖动可跳转视图</translation>
     </message>
     <message>
         <source>Allow clip overlap</source>
-        <translation>允许剪辑重叠</translation>
+        <translation>允许片段重叠</translation>
     </message>
 </context>
 <context>
@@ -21349,7 +21349,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select — normal editing</source>
-        <translation>选择 — 普通编辑</translation>
+        <translation>选择——常规编辑</translation>
     </message>
     <message>
         <source>Cut mode</source>
@@ -21357,47 +21357,47 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cut mode — click a clip to split it</source>
-        <translation>剪切模式 — 单击剪辑以分割</translation>
+        <translation>剪切模式——单击片段即可分割</translation>
     </message>
     <message>
         <source>Show audio on separate track</source>
-        <translation>在独立轨道上显示音频</translation>
+        <translation>在独立轨道显示音频</translation>
     </message>
     <message>
         <source>Unlink video and audio</source>
-        <translation>取消视频与音频的链接</translation>
+        <translation>取消链接视频与音频</translation>
     </message>
     <message>
         <source>Link selected clips</source>
-        <translation>链接选定的剪辑</translation>
+        <translation>链接所选片段</translation>
     </message>
     <message>
         <source>Trim start</source>
-        <translation>修剪起始</translation>
+        <translation>修剪起点</translation>
     </message>
     <message>
         <source>Trim start — click a clip to drop everything left of the cut</source>
-        <translation>修剪起始 — 单击剪辑删除分割点左侧的所有内容</translation>
+        <translation>修剪起点——单击片段以删除剪切左侧所有内容</translation>
     </message>
     <message>
         <source>Trim end</source>
-        <translation>修剪末尾</translation>
+        <translation>修剪终点</translation>
     </message>
     <message>
         <source>Trim end — click a clip to drop everything right of the cut</source>
-        <translation>修剪末尾 — 单击剪辑删除分割点右侧的所有内容</translation>
+        <translation>修剪终点——单击片段以删除剪切右侧所有内容</translation>
     </message>
     <message>
         <source>Trim start to playhead</source>
-        <translation>修剪起始至播放头</translation>
+        <translation>修剪起点至播放头</translation>
     </message>
     <message>
         <source>Trim end to playhead</source>
-        <translation>修剪末尾至播放头</translation>
+        <translation>修剪终点至播放头</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation>撤消</translation>
+        <translation>撤销</translation>
     </message>
     <message>
         <source>Redo</source>
@@ -21405,23 +21405,23 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Delete clip</source>
-        <translation>删除剪辑</translation>
+        <translation>删除片段</translation>
     </message>
     <message>
         <source>Copy selection</source>
-        <translation>复制所选项</translation>
+        <translation>复制所选内容</translation>
     </message>
     <message>
         <source>Paste at current time</source>
-        <translation>在当前时间粘贴</translation>
+        <translation>在当前位置粘贴</translation>
     </message>
     <message>
         <source>Duplicate clip</source>
-        <translation>创建剪辑副本</translation>
+        <translation>复制片段</translation>
     </message>
     <message>
         <source>Add/remove bookmark at current time</source>
-        <translation>在当前时间添加/移除书签</translation>
+        <translation>在当前位置添加/移除标记</translation>
     </message>
     <message>
         <source>Mark work area in</source>
@@ -21441,11 +21441,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Merge adjacent clips</source>
-        <translation>合并相邻剪辑</translation>
+        <translation>合并相邻片段</translation>
     </message>
     <message>
         <source>Freeze frame at current time</source>
-        <translation>在当前时间静止帧</translation>
+        <translation>在当前位置冻结帧</translation>
     </message>
     <message>
         <source>Add adjustment layer</source>
@@ -21461,11 +21461,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add camera</source>
-        <translation>添加摄像机</translation>
+        <translation>添加相机</translation>
     </message>
     <message>
         <source>Add camera — one viewpoint the whole timeline is seen through. With a camera already there, adds a new camera clip (a cut to a new framing) at the playhead</source>
-        <translation>添加摄像机 — 查看整个时间线的一个视点。若已存在摄像机，则在播放头处添加新摄像机剪辑（切换到新取景）</translation>
+        <translation>添加相机——整个时间线通过单一视点查看。已有相机时，在播放头处添加新的相机片段（切换到新构图）</translation>
     </message>
 </context>
 <context>
@@ -21483,14 +21483,14 @@ If playback stutters, try another.</source>
     <name>TimelineToolbarCustomizeDivider</name>
     <message>
         <source>More menu</source>
-        <translation>“更多”菜单</translation>
+        <translation>更多菜单</translation>
     </message>
 </context>
 <context>
     <name>TimelineToolbarCustomizeRow</name>
     <message>
         <source>— Separator —</source>
-        <translation>— 分隔线 —</translation>
+        <translation>— 分隔符 —</translation>
     </message>
     <message>
         <source>Move up</source>
@@ -21502,18 +21502,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove separator</source>
-        <translation>移除分隔线</translation>
+        <translation>移除分隔符</translation>
     </message>
 </context>
 <context>
     <name>TimelineToolbarCustomizer</name>
     <message>
         <source>Drag items to reorder them. Items above the divider are toolbar buttons; the rest are in the More menu.</source>
-        <translation>拖动项以重新排序。分隔线以上的项为工具栏按钮；其余项位于“更多”菜单中。</translation>
+        <translation>拖动项目重新排序。分隔符上方为工具栏按钮，其余在更多菜单中。</translation>
     </message>
     <message>
         <source>Add separator</source>
-        <translation>添加分隔线</translation>
+        <translation>添加分隔符</translation>
     </message>
     <message>
         <source>Reset to defaults</source>
@@ -21535,22 +21535,22 @@ If playback stutters, try another.</source>
     <name>TimelineToolbarSceneBadge</name>
     <message>
         <source>Main</source>
-        <translation>主要</translation>
+        <translation>主</translation>
     </message>
     <message>
         <source>Composite</source>
-        <translation>复合</translation>
+        <translation>合成</translation>
     </message>
     <message>
         <source>Switch between the main timeline and composite clips</source>
-        <translation>在主时间线与复合剪辑之间切换</translation>
+        <translation>在主时间线和合成片段之间切换</translation>
     </message>
 </context>
 <context>
     <name>TimelineToolbarSceneEmptyItem</name>
     <message>
         <source>No composite clips yet</source>
-        <translation>尚无复合剪辑</translation>
+        <translation>暂无合成片段</translation>
     </message>
 </context>
 <context>
@@ -21565,14 +21565,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Fit timeline in view</source>
-        <translation>适应视图中的时间线</translation>
+        <translation>适应视图</translation>
     </message>
 </context>
 <context>
     <name>TimelineToolbarZoomReadout</name>
     <message>
         <source>Zoom level — click to reset to 1×. Ctrl+wheel over the timeline also zooms.</source>
-        <translation>缩放级别 — 单击重置为 1×。在时间线上使用 Ctrl+滚轮也可缩放。</translation>
+        <translation>缩放级别——单击可重置为 1×。在时间线上按住 Ctrl+滚轮也可缩放。</translation>
     </message>
 </context>
 <context>
@@ -21617,15 +21617,15 @@ If playback stutters, try another.</source>
     <name>TimelineTrimHandle</name>
     <message>
         <source>Drag to trim the start</source>
-        <translation>拖动以修剪起始点</translation>
+        <translation>拖动以修剪起点</translation>
     </message>
     <message>
         <source>Drag to trim the end</source>
-        <translation>拖动以修剪结束点</translation>
+        <translation>拖动以修剪终点</translation>
     </message>
     <message>
         <source>Trim clip</source>
-        <translation>修剪剪辑</translation>
+        <translation>修剪片段</translation>
     </message>
 </context>
 <context>
@@ -21653,18 +21653,18 @@ If playback stutters, try another.</source>
     <name>TrackHeaderChannelLanesButton</name>
     <message>
         <source>Show one combined waveform</source>
-        <translation>显示单一合并波形</translation>
+        <translation>显示单个合并波形</translation>
     </message>
     <message>
         <source>Show each channel separately (%1)</source>
-        <translation>分别显示每个声道 (%1)</translation>
+        <translation>单独显示每个声道 (%1)</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderClipDisplayButton</name>
     <message>
         <source>Clips show: %1 (click to change)</source>
-        <translation>剪辑显示：%1（单击以更改）</translation>
+        <translation>片段显示：%1（单击可更改）</translation>
     </message>
 </context>
 <context>
@@ -21675,7 +21675,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Video + waveform</source>
-        <translation>视频 + 波形</translation>
+        <translation>视频+波形</translation>
     </message>
     <message>
         <source>CAM</source>
@@ -21711,7 +21711,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Camera</source>
-        <translation>摄像机</translation>
+        <translation>相机</translation>
     </message>
     <message>
         <source>Transform</source>
@@ -21739,11 +21739,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Everything below</source>
-        <translation>下方所有轨道</translation>
+        <translation>下方全部</translation>
     </message>
     <message>
         <source>%1 only</source>
-        <translation>仅 %1</translation>
+        <translation>%1 仅显示</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -21762,11 +21762,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unmute track</source>
-        <translation>取消轨道静音</translation>
+        <translation>取消静音轨道</translation>
     </message>
     <message>
         <source>Mute track</source>
-        <translation>轨道静音</translation>
+        <translation>静音轨道</translation>
     </message>
     <message>
         <source>Show track</source>
@@ -21778,15 +21778,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Add camera clip at playhead</source>
-        <translation>在播放头处添加摄像机剪辑</translation>
+        <translation>在播放头处添加相机片段</translation>
     </message>
     <message>
         <source>Covers…</source>
-        <translation>覆盖…</translation>
+        <translation>覆盖范围…</translation>
     </message>
     <message>
         <source>Select covered clips</source>
-        <translation>选择被覆盖的剪辑</translation>
+        <translation>选择覆盖的片段</translation>
     </message>
     <message>
         <source>Add transform layer above</source>
@@ -21798,27 +21798,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Short</source>
-        <translation>紧凑</translation>
+        <translation>短</translation>
     </message>
     <message>
         <source>Tall</source>
-        <translation>标准</translation>
+        <translation>高</translation>
     </message>
     <message>
         <source>Taller</source>
-        <translation>较高</translation>
+        <translation>更高</translation>
     </message>
     <message>
         <source>Scroll over the header to fine-tune</source>
-        <translation>在轨道头上滚动以微调</translation>
+        <translation>在轨道头上滚动可微调</translation>
     </message>
     <message>
         <source>Taller row</source>
-        <translation>增高行</translation>
+        <translation>增加行高</translation>
     </message>
     <message>
         <source>Shorter row</source>
-        <translation>减矮行</translation>
+        <translation>减小行高</translation>
     </message>
     <message>
         <source>Delete track</source>
@@ -21829,7 +21829,7 @@ If playback stutters, try another.</source>
     <name>TrackHeaderCoversMenu</name>
     <message>
         <source>Covers</source>
-        <translation>覆盖</translation>
+        <translation>覆盖范围</translation>
     </message>
 </context>
 <context>
@@ -21845,19 +21845,19 @@ If playback stutters, try another.</source>
     <message numerus="yes">
         <source>This removes the track and its %n clips. You can undo afterwards.</source>
         <translation>
-            <numerusform>这将删除该轨道及其 %n 个剪辑。您可以在之后撤消。</numerusform>
+            <numerusform>将移除此轨道及其 %n 个片段，之后可以撤销。</numerusform>
         </translation>
     </message>
     <message>
         <source>This removes the empty track. You can undo afterwards.</source>
-        <translation>这将删除空轨道。您可以在之后撤消。</translation>
+        <translation>将移除此空轨道，之后可以撤销。</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderGrip</name>
     <message>
         <source>Drag the header to reorder this track</source>
-        <translation>拖动轨道头以重新排序此轨道</translation>
+        <translation>拖动轨道头可重新排序</translation>
     </message>
 </context>
 <context>
@@ -21879,30 +21879,30 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Record voiceover</source>
-        <translation>录制旁白</translation>
+        <translation>录制配音</translation>
     </message>
     <message>
         <source>Paused — click to finish recording</source>
-        <translation>已暂停 — 单击完成录制</translation>
+        <translation>已暂停——单击完成录制</translation>
     </message>
     <message>
         <source>Recording — click to finish recording</source>
-        <translation>正在录制 — 单击完成录制</translation>
+        <translation>录制中——单击完成录制</translation>
     </message>
     <message>
         <source>Record voiceover (mic)</source>
-        <translation>录制旁白（麦克风）</translation>
+        <translation>录制配音（麦克风）</translation>
     </message>
 </context>
 <context>
     <name>TrackHeaderMuteButton</name>
     <message>
         <source>Unmute track</source>
-        <translation>取消轨道静音</translation>
+        <translation>取消静音轨道</translation>
     </message>
     <message>
         <source>Mute track</source>
-        <translation>轨道静音</translation>
+        <translation>静音轨道</translation>
     </message>
 </context>
 <context>
@@ -22334,11 +22334,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Tilt X</source>
-        <translation>倾斜 X</translation>
+        <translation>X 轴倾斜</translation>
     </message>
     <message>
         <source>Tilt Y</source>
-        <translation>倾斜 Y</translation>
+        <translation>Y 轴倾斜</translation>
     </message>
     <message>
         <source>Depth</source>
@@ -22350,7 +22350,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Also moved by %1</source>
-        <translation>同时由 %1 移动</translation>
+        <translation>同时受 %1 影响</translation>
     </message>
     <message>
         <source>Select</source>
@@ -22358,7 +22358,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Move to a time, set a value, then click the diamond to add a keyframe. With Auto keyframes on, dragging a slider or the preview also creates them.</source>
-        <translation>移动到某一时间点，设置一个值，然后单击菱形图标以添加关键帧。开启“自动关键帧”后，拖动滑块或预览画面也会自动创建关键帧。</translation>
+        <translation>移动到某一时间点，设置数值，然后点击菱形添加关键帧。开启自动关键帧后，拖动滑块或预览画面也会自动创建关键帧。</translation>
     </message>
     <message>
         <source>Auto keyframes</source>
@@ -22366,19 +22366,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Position (px)</source>
-        <translation>位置 (像素)</translation>
+        <translation>位置 (px)</translation>
     </message>
     <message>
         <source>Position (px, linked)</source>
-        <translation>位置 (像素，已链接)</translation>
+        <translation>位置 (px，已链接)</translation>
     </message>
     <message>
         <source>Separate X and Y keyframes</source>
-        <translation>分离 X 和 Y 关键帧</translation>
+        <translation>分别设置 X 和 Y 关键帧</translation>
     </message>
     <message>
         <source>Link X and Y keyframes and motion curves</source>
-        <translation>链接 X 和 Y 关键帧及运动曲线</translation>
+        <translation>关联 X 和 Y 关键帧与运动曲线</translation>
     </message>
     <message>
         <source>Measured inside %1&apos;s frame</source>
@@ -22386,7 +22386,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Size (px)</source>
-        <translation>大小 (像素)</translation>
+        <translation>大小 (px)</translation>
     </message>
     <message>
         <source>Scale</source>
@@ -22398,7 +22398,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Scale width and height together</source>
-        <translation>等比例缩放宽度和高度</translation>
+        <translation>同时缩放宽度和高度</translation>
     </message>
     <message>
         <source>Previous scale keyframe</source>
@@ -22414,7 +22414,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Scale clip</source>
-        <translation>缩放剪辑</translation>
+        <translation>缩放片段</translation>
     </message>
     <message>
         <source>Remove scale keyframe</source>
@@ -22438,11 +22438,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Tilt the whole group as one flat card</source>
-        <translation>将整个组作为一张平面卡片倾斜</translation>
+        <translation>将整个组作为一张扁平卡片倾斜</translation>
     </message>
     <message>
         <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
-        <translation>倾斜剪辑并推动其深度，在预览画面上带有 3D 控制手柄。关闭此功能会使剪辑重新扁平化。</translation>
+        <translation>倾斜片段并推入深度，预览中显示 3D 控制柄。关闭后将片段恢复扁平。</translation>
     </message>
     <message>
         <source>Occlude by depth</source>
@@ -22450,11 +22450,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation>由深度决定遮挡该剪辑的内容，而非其轨道顺序。仅开启此选项的剪辑相互进行深度排序；其他所有剪辑仍按轨道顺序绘制。</translation>
+        <translation>由深度决定此片段被什么覆盖，而非其轨道位置。仅开启此项的片段之间相互排序；其余仍按轨道顺序绘制。</translation>
     </message>
     <message>
         <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation>需要“正常”混合模式 — 其他模式会读取剪辑后方的画布，深度无法对其进行排序。</translation>
+        <translation>需要正常混合模式——其他模式读取片段后方的画布内容，深度无法对其进行排序。</translation>
     </message>
     <message>
         <source>Move</source>
@@ -22462,7 +22462,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Arrows on the preview move the clip along each axis</source>
-        <translation>预览画面上的箭头沿各轴移动剪辑</translation>
+        <translation>预览上的箭头沿各轴移动片段</translation>
     </message>
     <message>
         <source>Rotate</source>
@@ -22470,11 +22470,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rings on the preview turn the clip about each axis</source>
-        <translation>预览画面上的圆环使剪辑绕各轴旋转</translation>
+        <translation>预览上的环绕各轴旋转片段</translation>
     </message>
     <message>
         <source>Handles on the preview stretch the clip along its own edges</source>
-        <translation>预览画面上的手柄沿剪辑自身边缘拉伸</translation>
+        <translation>预览上的控制柄沿片段自身边缘拉伸</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
@@ -22486,7 +22486,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Gizmo follows the camera: X across, Y down, Z toward you</source>
-        <translation>坐标系手柄跟随摄像机：X 向右、Y 向下、Z 朝向您</translation>
+        <translation>控制柄跟随摄像机：X 横向，Y 纵向，Z 朝向你</translation>
     </message>
     <message>
         <source>Local</source>
@@ -22510,11 +22510,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Reset position &amp; size</source>
-        <translation>重置位置和大小</translation>
+        <translation>重置位置与大小</translation>
     </message>
     <message>
         <source>Fix orientation</source>
-        <translation>校正朝向</translation>
+        <translation>修复方向</translation>
     </message>
     <message>
         <source>Transform</source>
@@ -22553,7 +22553,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Adjustment</source>
-        <translation>调整</translation>
+        <translation>调节</translation>
     </message>
     <message>
         <source>Video</source>
@@ -22561,7 +22561,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Everything below</source>
-        <translation>下方所有轨道</translation>
+        <translation>下方全部</translation>
     </message>
     <message>
         <source>%1 only</source>
@@ -22573,7 +22573,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Moves, scales, turns and fades every track under it as one. Each clip keeps its own transform inside the group.</source>
-        <translation>将其下方的每个轨道作为一个整体移动、缩放、旋转和淡入淡出。每个剪辑在组内保留其独立的变换。</translation>
+        <translation>将其下方所有轨道作为整体移动、缩放、旋转和淡入淡出。各片段保留组内的自身变换。</translation>
     </message>
     <message>
         <source>Covers</source>
@@ -22589,16 +22589,16 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No covered clip plays here.</source>
-        <translation>此处未播放被覆盖的剪辑。</translation>
+        <translation>此处无被覆盖的片段播放。</translation>
     </message>
     <message>
         <source>Clip</source>
-        <translation>剪辑</translation>
+        <translation>片段</translation>
     </message>
     <message numerus="yes">
         <source>+%n more</source>
         <translation>
-            <numerusform>+还有 %n 个</numerusform>
+            <numerusform>+%n 个更多</numerusform>
         </translation>
     </message>
 </context>
@@ -22607,7 +22607,7 @@ If playback stutters, try another.</source>
     <message numerus="yes">
         <source>%1 · %n clip(s)</source>
         <translation>
-            <numerusform>%1 · %n 个剪辑</numerusform>
+            <numerusform>%1 · %n 个片段</numerusform>
         </translation>
     </message>
     <message>
@@ -22627,14 +22627,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Select the transform layer moving this clip (%1)</source>
-        <translation>选择移动此剪辑的变换图层 (%1)</translation>
+        <translation>选择移动此片段的变换图层 (%1)</translation>
     </message>
 </context>
 <context>
     <name>TransformSpanBracket</name>
     <message>
         <source>Transform layer span end</source>
-        <translation>变换图层跨度结束</translation>
+        <translation>变换图层范围结束</translation>
     </message>
     <message numerus="yes">
         <source>Covers %n track(s)</source>
@@ -22647,7 +22647,7 @@ If playback stutters, try another.</source>
     <name>TransitionCatalog</name>
     <message>
         <source>Basic</source>
-        <translation>基本</translation>
+        <translation>基础</translation>
     </message>
     <message>
         <source>Grid &amp; Geometric</source>
@@ -22655,7 +22655,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Particle &amp; Liquid</source>
-        <translation>粒子与流体</translation>
+        <translation>粒子与液体</translation>
     </message>
     <message>
         <source>Glitch &amp; Digital</source>
@@ -22674,31 +22674,31 @@ If playback stutters, try another.</source>
     <name>TransitionInspector</name>
     <message>
         <source>Select where two clips overlap (shown in purple), or drag a clip so it overlaps the next one.</source>
-        <translation>选择两个剪辑重叠的位置（显示为紫色），或拖动一个剪辑使其与下一个重叠。</translation>
+        <translation>选择两个片段重叠的位置（以紫色显示），或拖动片段使其与下一个片段重叠。</translation>
     </message>
     <message>
         <source>Transitions work between two clips on a video, shape, or text track.</source>
-        <translation>转场适用于视频、形状或文本轨道上的两个剪辑之间。</translation>
+        <translation>转场可在视频、图形或文字轨道的两个片段之间使用。</translation>
     </message>
     <message>
         <source>No transition after this clip. Add one at the cut to the next clip.</source>
-        <translation>此剪辑后没有转场。在到下一个剪辑的切口处添加一个。</translation>
+        <translation>此片段后无转场。在与下一片段的切割处添加一个。</translation>
     </message>
     <message>
         <source>Add crossfade (%1 s)</source>
-        <translation>添加交叉渐变 (%1 秒)</translation>
+        <translation>添加交叉淡入淡出 (%1 秒)</translation>
     </message>
     <message>
         <source>Overlap transition. Drag another kind from Transitions to replace it.</source>
-        <translation>重叠转场。从“转场”拖动另一种转场以替换它。</translation>
+        <translation>重叠转场。从转场中拖放其他类型以替换它。</translation>
     </message>
     <message>
         <source>Transition to the next clip. Move across the cut to preview it.</source>
-        <translation>转场到下一个剪辑。移过切口处以预览。</translation>
+        <translation>转场到下一片段。划过切割处可预览。</translation>
     </message>
     <message>
         <source>One side has no media past the cut, so its sound fades through silence instead of crossfading.</source>
-        <translation>其中一侧在切口之后没有媒体，因此其声音将淡出至静音而非交叉渐变。</translation>
+        <translation>一侧在切割后没有媒体内容，因此其声音通过静音淡出而非交叉淡入淡出。</translation>
     </message>
     <message>
         <source>Type</source>
@@ -22706,7 +22706,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Duration</source>
-        <translation>持续时间</translation>
+        <translation>时长</translation>
     </message>
     <message>
         <source>Curve</source>
@@ -22734,11 +22734,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>On</source>
-        <translation>开启</translation>
+        <translation>开</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation>关闭</translation>
+        <translation>关</translation>
     </message>
     <message>
         <source>Edit transition</source>
@@ -22753,15 +22753,15 @@ If playback stutters, try another.</source>
     <name>TransitionPresetCard</name>
     <message>
         <source>%1 — drag onto where two clips meet, or on touch hold then drag</source>
-        <translation>%1 — 拖动到两个剪辑相接处，或在触控设备上长按后拖动</translation>
+        <translation>%1 — 拖放到两个片段交界处，或在触屏上按住后拖动</translation>
     </message>
     <message>
         <source>Remove from favorites</source>
-        <translation>从收藏夹中移除</translation>
+        <translation>从收藏中移除</translation>
     </message>
     <message>
         <source>Add to favorites</source>
-        <translation>添加到收藏夹</translation>
+        <translation>添加到收藏</translation>
     </message>
 </context>
 <context>
@@ -22780,7 +22780,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No transitions available</source>
-        <translation>无可用转场</translation>
+        <translation>无可用的转场</translation>
     </message>
     <message>
         <source>Install a transitions pack to add more.</source>
@@ -22788,19 +22788,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Get extras</source>
-        <translation>获取附加组件</translation>
+        <translation>获取更多</translation>
     </message>
     <message>
         <source>No transitions match “%1”</source>
-        <translation>没有与“%1”匹配的转场</translation>
+        <translation>没有与 "%1" 匹配的转场</translation>
     </message>
     <message>
         <source>No custom transitions yet</source>
-        <translation>尚无自定义转场</translation>
+        <translation>暂无自定义转场</translation>
     </message>
     <message>
         <source>No favorites yet</source>
-        <translation>尚无收藏</translation>
+        <translation>暂无收藏</translation>
     </message>
     <message>
         <source>Nothing in this category</source>
@@ -22812,15 +22812,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>导入在 Drift Forge 中制作的 .driftfx 文件以添加您自己的转场。</translation>
+        <translation>导入 Drift Forge 制作的 .driftfx 文件以添加自定义转场。</translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>
-        <translation>为转场加星标以在此保存。</translation>
+        <translation>星标转场以保存至此。</translation>
     </message>
     <message>
         <source>Pick another category.</source>
-        <translation>选择另一个分类。</translation>
+        <translation>选择其他类别。</translation>
     </message>
     <message>
         <source>Import</source>
@@ -22835,7 +22835,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Queued</source>
-        <translation>已加入队列</translation>
+        <translation>排队中</translation>
     </message>
     <message>
         <source>Cancelled</source>
@@ -22843,27 +22843,27 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speech added to the timeline</source>
-        <translation>已将语音添加到时间线</translation>
+        <translation>语音已添加到时间线</translation>
     </message>
     <message>
         <source>Speech added to the media bin</source>
-        <translation>已将语音添加到媒体箱</translation>
+        <translation>语音已添加到素材箱</translation>
     </message>
     <message>
         <source>Select a subtitle clip first</source>
-        <translation>请先选择一个字幕剪辑</translation>
+        <translation>请先选择字幕片段</translation>
     </message>
     <message>
         <source>This subtitle clip has no text to speak</source>
-        <translation>此字幕剪辑没有可朗读的文本</translation>
+        <translation>此字幕片段无文字内容可朗读</translation>
     </message>
     <message>
         <source>Generate voiceover</source>
-        <translation>生成画外音</translation>
+        <translation>生成配音</translation>
     </message>
     <message>
         <source>Could not add the voiceover</source>
-        <translation>无法添加画外音</translation>
+        <translation>无法添加配音</translation>
     </message>
     <message numerus="yes">
         <source>Generated %n line(s)</source>
@@ -22874,7 +22874,7 @@ If playback stutters, try another.</source>
     <message numerus="yes">
         <source>; %n ran longer than their captions</source>
         <translation>
-            <numerusform>；%n 个时长超过对应字幕</numerusform>
+            <numerusform>；%n 个语音时长超过对应字幕</numerusform>
         </translation>
     </message>
 </context>
@@ -22886,7 +22886,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>“%1” has unsaved changes. Save before continuing?</source>
-        <translation>“%1”有未保存的更改。是否在继续之前保存？</translation>
+        <translation>%1" 包含未保存的更改。继续之前要保存吗？</translation>
     </message>
     <message>
         <source>Untitled project</source>
@@ -22917,15 +22917,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Installs when you close Drift</source>
-        <translation>在您关闭 Drift 时安装</translation>
+        <translation>关闭 Drift 时安装</translation>
     </message>
     <message>
         <source>Ready to install</source>
-        <translation>准备就绪，可以安装</translation>
+        <translation>准备安装</translation>
     </message>
     <message>
         <source>Drift %1 will install when you close Drift.</source>
-        <translation>Drift %1 将在您关闭 Drift 时安装。</translation>
+        <translation>关闭 Drift 时将安装 Drift %1。</translation>
     </message>
     <message>
         <source>Couldn’t check for updates: %1</source>
@@ -22933,7 +22933,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Couldn’t check for updates: unexpected response.</source>
-        <translation>无法检查更新：意外响应。</translation>
+        <translation>无法检查更新：收到意外响应。</translation>
     </message>
     <message>
         <source>Drift %1 is the latest version.</source>
@@ -22941,11 +22941,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drift %1 is available.</source>
-        <translation>Drift %1 现已推出。</translation>
+        <translation>Drift %1 已可用。</translation>
     </message>
     <message>
         <source>Couldn’t download the update: the cache isn’t writable.</source>
-        <translation>无法下载更新：缓存目录不可写。</translation>
+        <translation>无法下载更新：缓存不可写。</translation>
     </message>
     <message>
         <source>Couldn’t download the update: %1</source>
@@ -22953,7 +22953,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>the download was interrupted.</source>
-        <translation>下载已被中断。</translation>
+        <translation>下载已中断。</translation>
     </message>
     <message>
         <source>Couldn’t download the update: the file didn’t match the release.</source>
@@ -22965,7 +22965,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drift %1 is ready to install.</source>
-        <translation>Drift %1 已准备就绪，可以安装。</translation>
+        <translation>Drift %1 已准备安装。</translation>
     </message>
 </context>
 <context>
@@ -22980,15 +22980,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drift %1 will install when you close Drift.</source>
-        <translation>Drift %1 将在您关闭 Drift 时安装。</translation>
+        <translation>关闭 Drift 时将安装 Drift %1。</translation>
     </message>
     <message>
         <source>Drift %1 is downloaded and ready to install</source>
-        <translation>Drift %1 已下载并准备就绪，可以安装</translation>
+        <translation>Drift %1 已下载完毕，准备安装</translation>
     </message>
     <message>
         <source>Drift %1 is available</source>
-        <translation>Drift %1 现已推出</translation>
+        <translation>Drift %1 已可用</translation>
     </message>
     <message>
         <source>A new Drift update is available</source>
@@ -22996,15 +22996,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>You have %1.</source>
-        <translation>您当前使用的是 %1。</translation>
+        <translation>当前版本：%1。</translation>
     </message>
     <message>
         <source>Install automatically when I close Drift</source>
-        <translation>在关闭 Drift 时自动安装</translation>
+        <translation>关闭 Drift 时自动安装</translation>
     </message>
     <message>
         <source>Downloads in the background and installs the next time you close Drift. Unchecked, you choose when to install once the download finishes.</source>
-        <translation>在后台下载，并在您下次关闭 Drift 时安装。取消勾选后，下载完成后由您选择何时安装。</translation>
+        <translation>在后台下载，下次关闭 Drift 时安装。取消勾选时，下载完成后由您选择安装时机。</translation>
     </message>
     <message>
         <source>Skip</source>
@@ -23028,7 +23028,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Closes Drift, installs the update and opens Drift again</source>
-        <translation>关闭 Drift，安装更新并重新打开 Drift</translation>
+        <translation>关闭 Drift，安装更新后重新打开 Drift</translation>
     </message>
     <message>
         <source>Downloads the update in the background</source>
@@ -23059,11 +23059,11 @@ If playback stutters, try another.</source>
     <name>UpscaleModelCard</name>
     <message>
         <source>Anime and drawings</source>
-        <translation>动漫与插画</translation>
+        <translation>动漫与绘画</translation>
     </message>
     <message>
         <source>Live action</source>
-        <translation>真人实拍</translation>
+        <translation>真人视频</translation>
     </message>
     <message>
         <source>3D animation and games</source>
@@ -23109,7 +23109,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>SVG drawing</source>
-        <translation>SVG 矢量绘图</translation>
+        <translation>SVG 绘图</translation>
     </message>
     <message>
         <source>Lottie animation</source>
@@ -23125,7 +23125,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>still</source>
-        <translation>静止</translation>
+        <translation>静态</translation>
     </message>
     <message>
         <source>inline document</source>
@@ -23137,7 +23137,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Load another .json or .svg; position, length, fit and loop stay</source>
-        <translation>加载另一个 .json 或 .svg；保留位置、长度、适应方式和循环设置</translation>
+        <translation>加载另一个 .json 或 .svg；位置、时长、适配与循环保持不变</translation>
     </message>
     <message>
         <source>Playback</source>
@@ -23145,7 +23145,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Fit</source>
-        <translation>适应方式</translation>
+        <translation>适配</translation>
     </message>
     <message>
         <source>Contain</source>
@@ -23161,15 +23161,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>How the drawing fills the clip box</source>
-        <translation>绘图填充剪辑外框的方式</translation>
+        <translation>绘图填充片段框的方式</translation>
     </message>
     <message>
         <source>After the end</source>
-        <translation>播放结束后</translation>
+        <translation>结束后</translation>
     </message>
     <message>
         <source>Hold last frame</source>
-        <translation>停留在最后一帧</translation>
+        <translation>保持最后一帧</translation>
     </message>
     <message>
         <source>Loop</source>
@@ -23177,7 +23177,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Ping-pong</source>
-        <translation>往返播放</translation>
+        <translation>乒乓</translation>
     </message>
     <message>
         <source>Hide</source>
@@ -23197,7 +23197,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Recolour the whole drawing, or one element the file names by id. Drawing-wide colours replace paints the file already has; outlines drawn with no fill stay hollow.</source>
-        <translation>对整个绘图或文件中按 id 指定的单个元素重新着色。整个绘图的颜色会替换文件中现有的涂色；绘制为无填充的轮廓保持中空。</translation>
+        <translation>重新着色整个绘图，或通过 id 指定单个元素。全局颜色替换文件已有颜色；无填充的轮廓线保持空心。</translation>
     </message>
     <message>
         <source>Target</source>
@@ -23209,11 +23209,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source> (defs)</source>
-        <translation> (defs)</translation>
+        <translation>(defs)</translation>
     </message>
     <message>
         <source>Which part of the drawing the rows below restyle</source>
-        <translation>下方各行重新设置样式的绘图部分</translation>
+        <translation>下方各行重新样式化的绘图部分</translation>
     </message>
     <message>
         <source>Fill</source>
@@ -23245,11 +23245,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Drop every override on this target</source>
-        <translation>丢弃此目标上的所有替代设置</translation>
+        <translation>移除此目标上的所有覆写</translation>
     </message>
     <message>
         <source>Reset all</source>
-        <translation>全部重置</translation>
+        <translation>重置全部</translation>
     </message>
     <message>
         <source>Slots</source>
@@ -23257,7 +23257,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Template inputs the animation declares. Overrides are per clip.</source>
-        <translation>动画声明的模板输入。替代按剪辑分别设置。</translation>
+        <translation>动画声明的模板输入。覆写按片段单独设置。</translation>
     </message>
     <message>
         <source>Not rendered</source>
@@ -23265,7 +23265,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Expression on %1 (drawn static)</source>
-        <translation>%1 上的表达式（绘制为静态）</translation>
+        <translation>%1 上的表达式（静态绘制）</translation>
     </message>
 </context>
 <context>
@@ -23299,11 +23299,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Key %1 at the playhead</source>
-        <translation>在播放头处为 %1 打关键帧</translation>
+        <translation>在播放头处设置 %1 关键帧</translation>
     </message>
     <message>
         <source>Override the %1 colour</source>
-        <translation>覆盖 %1 颜色</translation>
+        <translation>覆写 %1 颜色</translation>
     </message>
     <message>
         <source>Back to the drawing&apos;s own %1</source>
@@ -23314,7 +23314,7 @@ If playback stutters, try another.</source>
     <name>VfrWarning</name>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
-        <translation>可变帧率。此剪辑可能与其音频不同步。右键单击并选择“转换为适合编辑的格式”。</translation>
+        <translation>可变帧率。此片段可能与音频失步。右键单击并选择转换为编辑友好格式。</translation>
     </message>
 </context>
 <context>
@@ -23329,11 +23329,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Pick a platform template (YouTube, Instagram, TikTok, …) and quality</source>
-        <translation>选择平台模板（YouTube、Instagram、TikTok 等）和画质</translation>
+        <translation>选择平台模板（YouTube、Instagram、TikTok 等）和质量</translation>
     </message>
     <message>
         <source>Change the video size. Clips keep their current size and position.</source>
-        <translation>更改视频尺寸。剪辑将保留其当前大小和位置。</translation>
+        <translation>更改视频尺寸。片段保持当前大小和位置。</translation>
     </message>
     <message>
         <source>Width</source>
@@ -23345,7 +23345,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Frames per second</source>
-        <translation>每秒帧数 (FPS)</translation>
+        <translation>帧率</translation>
     </message>
     <message>
         <source>Cancel crop</source>
@@ -23353,19 +23353,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Crop video size</source>
-        <translation>裁剪视频尺寸</translation>
+        <translation>裁剪视频大小</translation>
     </message>
     <message>
         <source>Drag the preview edges to change what’s included</source>
-        <translation>拖动预览边缘以更改包含的内容</translation>
+        <translation>拖动预览边缘以更改包含内容</translation>
     </message>
     <message>
         <source>Changing size doesn’t shrink your clips — anything outside the new edges is cut off.</source>
-        <translation>更改尺寸不会缩小剪辑 — 新边缘之外的所有内容都将被裁剪掉。</translation>
+        <translation>更改大小不会压缩片段——新边界外的内容将被裁切。</translation>
     </message>
     <message>
         <source>Clips keep their length. A higher rate samples more pictures per second from the same footage.</source>
-        <translation>剪辑保留其长度。较高的帧率会从相同的素材中每秒采样更多画面。</translation>
+        <translation>片段保持原有长度。更高的帧率会从相同素材中每秒采样更多画面。</translation>
     </message>
 </context>
 <context>
@@ -23387,7 +23387,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Orbit left</source>
-        <translation>向左环绕</translation>
+        <translation>向左旋转</translation>
     </message>
     <message>
         <source>Numpad 4</source>
@@ -23395,7 +23395,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Orbit up</source>
-        <translation>向上环绕</translation>
+        <translation>向上旋转</translation>
     </message>
     <message>
         <source>Numpad 8</source>
@@ -23403,7 +23403,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Orbit right</source>
-        <translation>向右环绕</translation>
+        <translation>向右旋转</translation>
     </message>
     <message>
         <source>Numpad 6</source>
@@ -23419,7 +23419,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Orbit down</source>
-        <translation>向下环绕</translation>
+        <translation>向下旋转</translation>
     </message>
     <message>
         <source>Numpad 2</source>
@@ -23462,14 +23462,14 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>The recording is too short: record at least %1 seconds</source>
-        <translation>录音太短：请至少录制 %1 秒</translation>
+        <translation>录音时间太短：至少录制 %1 秒</translation>
     </message>
 </context>
 <context>
     <name>VoiceoverDialog</name>
     <message>
         <source>Generate voiceover</source>
-        <translation>生成画外音</translation>
+        <translation>生成配音</translation>
     </message>
     <message>
         <source>Voice</source>
@@ -23485,11 +23485,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Higher values sound more dramatic and speak faster</source>
-        <translation>较高的值语调更戏剧化且语速更快</translation>
+        <translation>较高的值会听起来更富有戏剧性且语速更快</translation>
     </message>
     <message>
         <source>Loading voice model (first use takes a while)…</source>
-        <translation>正在加载语音模型（首次使用需要一些时间）…</translation>
+        <translation>正在加载声音模型（首次使用需要一段时间）…</translation>
     </message>
     <message>
         <source>Generate</source>
@@ -23512,7 +23512,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Voice input gain: %1% (adjust voice level)</source>
-        <translation>语音输入增益：%1%（调整语音音量）</translation>
+        <translation>语音输入增益：%1%（调整音量）</translation>
     </message>
 </context>
 <context>
@@ -23530,7 +23530,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Input microphone: %1 (click to switch)</source>
-        <translation>输入麦克风：%1（单击以切换）</translation>
+        <translation>输入麦克风：%1（点击切换）</translation>
     </message>
 </context>
 <context>
@@ -23548,7 +23548,7 @@ If playback stutters, try another.</source>
     <name>VoiceoverTransport</name>
     <message>
         <source>Resume recording</source>
-        <translation>继续录制</translation>
+        <translation>恢复录制</translation>
     </message>
     <message>
         <source>Pause recording</source>
@@ -23556,18 +23556,18 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Done — finish recording and save to track</source>
-        <translation>完成 — 结束录制并保存到轨道</translation>
+        <translation>完成——结束录制并保存到音轨</translation>
     </message>
     <message>
         <source>Cancel — discard recording</source>
-        <translation>取消 — 放弃录音</translation>
+        <translation>取消——放弃录制</translation>
     </message>
 </context>
 <context>
     <name>VttIO</name>
     <message>
         <source>Invalid subtitle timing line</source>
-        <translation>无效的字幕时间行</translation>
+        <translation>无效的字幕时间轴</translation>
     </message>
     <message>
         <source>Invalid subtitle timestamp</source>
@@ -23579,7 +23579,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Subtitle cue has no text</source>
-        <translation>字幕提示没有文本</translation>
+        <translation>字幕提示无文本</translation>
     </message>
     <message>
         <source>Missing output</source>
@@ -23603,7 +23603,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Missing WEBVTT header</source>
-        <translation>缺少 WEBVTT 文件头</translation>
+        <translation>缺少 WEBVTT 头</translation>
     </message>
 </context>
 <context>
@@ -23614,11 +23614,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Library tabs</source>
-        <translation>资源库选项卡</translation>
+        <translation>库标签</translation>
     </message>
     <message>
         <source>Inspector tabs</source>
-        <translation>检查器选项卡</translation>
+        <translation>检查器标签</translation>
     </message>
     <message>
         <source>New workspace</source>
@@ -23638,11 +23638,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Default tab</source>
-        <translation>默认选项卡</translation>
+        <translation>默认标签</translation>
     </message>
     <message>
         <source>Make active tab</source>
-        <translation>设为活动选项卡</translation>
+        <translation>设为活动标签</translation>
     </message>
     <message>
         <source>Remove %1</source>
@@ -23682,19 +23682,19 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Use a Preview-only fullscreen window as a second-monitor output.</source>
-        <translation>使用仅预览的全屏窗口作为副显示器输出。</translation>
+        <translation>使用仅预览的全屏窗口作为第二显示器输出。</translation>
     </message>
     <message>
         <source>Every panel is placed. Drag one here to remove it.</source>
-        <translation>所有面板均已放置。将面板拖动到此处以将其移除。</translation>
+        <translation>所有面板已放置。将面板拖至此处以移除。</translation>
     </message>
     <message>
         <source>Drag a panel here</source>
-        <translation>拖动面板至此处</translation>
+        <translation>将面板拖至此处</translation>
     </message>
     <message>
         <source>Changes apply when you save.</source>
-        <translation>更改将在保存后生效。</translation>
+        <translation>保存后更改生效。</translation>
     </message>
     <message>
         <source>No changes.</source>
@@ -23716,7 +23716,7 @@ If playback stutters, try another.</source>
     <name>WorkspaceStore</name>
     <message>
         <source>Assets</source>
-        <translation>资源</translation>
+        <translation>素材</translation>
     </message>
     <message>
         <source>Properties</source>
@@ -23732,7 +23732,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Audio Mixer</source>
-        <translation>混音器</translation>
+        <translation>音频混音器</translation>
     </message>
     <message>
         <source>Source Viewer</source>
@@ -23740,7 +23740,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation>子标题</translation>
+        <translation>字幕</translation>
     </message>
     <message>
         <source>History</source>
@@ -23748,7 +23748,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Sources</source>
-        <translation>素材源</translation>
+        <translation>来源</translation>
     </message>
     <message>
         <source>Source Lab Viewer</source>
@@ -23760,7 +23760,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Ranges &amp; Markers</source>
-        <translation>范围和标记</translation>
+        <translation>范围与标记</translation>
     </message>
     <message>
         <source>Process</source>
@@ -23788,11 +23788,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Agent Log</source>
-        <translation>Agent 日志</translation>
+        <translation>智能助手日志</translation>
     </message>
     <message>
         <source>Recorder</source>
-        <translation>录制器</translation>
+        <translation>录音机</translation>
     </message>
     <message>
         <source>Noise Removal</source>
@@ -23800,7 +23800,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Color</source>
-        <translation>色彩</translation>
+        <translation>颜色</translation>
     </message>
     <message>
         <source>Looks</source>
@@ -23828,7 +23828,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Market</source>
-        <translation>市场</translation>
+        <translation>素材市场</translation>
     </message>
     <message>
         <source>Text</source>
@@ -23844,7 +23844,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Shapes</source>
-        <translation>图形</translation>
+        <translation>形状</translation>
     </message>
     <message>
         <source>Masks</source>
@@ -23924,11 +23924,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>A window has no panels.</source>
-        <translation>窗口没有任何面板。</translation>
+        <translation>窗口没有面板。</translation>
     </message>
     <message>
         <source>A split needs at least two sections.</source>
-        <translation>分屏至少需要两个区域。</translation>
+        <translation>分割至少需要两个区域。</translation>
     </message>
     <message>
         <source>A section needs at least one panel.</source>
@@ -23948,7 +23948,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 · Library</source>
-        <translation>%1 · 资源库</translation>
+        <translation>%1 · 库</translation>
     </message>
     <message>
         <source>%1 · Inspector</source>
@@ -24022,7 +24022,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Curve</source>
-        <translation>弯曲</translation>
+        <translation>曲线</translation>
     </message>
     <message>
         <source>Gradient</source>
@@ -24034,7 +24034,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Chrome</source>
-        <translation>金属铬</translation>
+        <translation>铬色</translation>
     </message>
     <message>
         <source>Holographic</source>
@@ -24049,15 +24049,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No OpenGL driver</source>
-        <translation>无 OpenGL 驱动程序</translation>
+        <translation>无 OpenGL 驱动</translation>
     </message>
     <message>
         <source>Drift could not create an OpenGL context, so it cannot draw its interface or render the preview.
 
 Install or update your graphics driver.</source>
-        <translation>Drift 无法创建 OpenGL 上下文，因此无法绘制界面或渲染预览画面。
+        <translation>Drift 无法创建 OpenGL 上下文，因此无法绘制界面或渲染预览。
 
-请安装或更新您的显卡驱动程序。</translation>
+请安装或更新显卡驱动。</translation>
     </message>
     <message>
         <source>OpenGL context unavailable</source>
@@ -24067,25 +24067,25 @@ Install or update your graphics driver.</source>
         <source>Drift could not create an OpenGL 3.3 core profile context, though this driver reports OpenGL %1.%2 (%3).
 
 The video preview cannot render. Updating your graphics driver may help.</source>
-        <translation>Drift 无法创建 OpenGL 3.3 核心配置文件上下文，尽管该驱动程序报告 OpenGL %1.%2 (%3)。
+        <translation>Drift 无法创建 OpenGL 3.3 core profile 上下文，但该驱动报告的 OpenGL 版本为 %1.%2（%3）。
 
-视频预览无法渲染。更新您的显卡驱动程序可能会有所帮助。</translation>
+视频预览无法渲染。更新显卡驱动可能有所帮助。</translation>
     </message>
     <message>
         <source>Graphics driver is too old</source>
-        <translation>显卡驱动程序版本过旧</translation>
+        <translation>显卡驱动过旧</translation>
     </message>
     <message>
         <source>Drift needs OpenGL 3.3, but this graphics driver only provides OpenGL %1.%2 (%3).
 
 The video preview cannot render, and Drift may not start at all. Update your graphics driver, or run Drift on a machine with a newer GPU.</source>
-        <translation>Drift 需要 OpenGL 3.3，但此显卡驱动程序仅提供 OpenGL %1.%2 (%3)。
+        <translation>Drift 需要 OpenGL 3.3，但该显卡驱动仅支持 OpenGL %1.%2（%3）。
 
-视频预览无法渲染，Drift 可能根本无法启动。请更新您的显卡驱动程序，或在配备较新 GPU 的计算机上运行 Drift。</translation>
+视频预览无法渲染，且 Drift 可能无法正常启动。请更新显卡驱动，或在配备更新 GPU 的机器上运行 Drift。</translation>
     </message>
     <message>
         <source>Drift is not drawing its window</source>
-        <translation>Drift 未绘制其窗口</translation>
+        <translation>Drift 未绘制窗口</translation>
     </message>
     <message>
         <source>Drift has been running for %1 seconds but its window has not drawn anything yet.
