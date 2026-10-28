@@ -4,6 +4,7 @@
 #include "app/editor/sessions/KeyframeTimeView.h"
 
 #include <QAbstractListModel>
+#include <QColor>
 #include <QPointer>
 #include <QVariantList>
 #include <QVariantMap>
@@ -26,6 +27,8 @@ class KeyframeRowsModel : public QAbstractListModel
     Q_PROPERTY(bool animatedOnly MEMBER m_animatedOnly NOTIFY inputsChanged)
     Q_PROPERTY(QString scaleLabel MEMBER m_scaleLabel NOTIFY inputsChanged)
     Q_PROPERTY(QVariantMap collapsed MEMBER m_collapsed NOTIFY inputsChanged)
+    Q_PROPERTY(QVariantMap curveColors MEMBER m_curveColors NOTIFY styleChanged)
+    Q_PROPERTY(QVariantList curveRamp MEMBER m_curveRamp NOTIFY styleChanged)
     Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
@@ -44,6 +47,12 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     QVariantList rows() const;
+    int track() const { return m_track; }
+    int clip() const { return m_clip; }
+    KeyframeController *keyframes() const { return m_controller; }
+    // The colour a property's lane and curve are drawn in: its own entry in `curveColors`, else a
+    // ramp entry picked by a hash of the id, the same pick Theme.keyframeCurveColor makes.
+    Q_INVOKABLE QColor colorFor(const QString &prop) const;
 
     const QList<KeyframeRows::Row> &list() const { return m_rows; }
     // Replaces the rows with `next`, inserting and removing only what changed.
@@ -79,6 +88,7 @@ signals:
     void controllerChanged();
     void timeViewChanged();
     void inputsChanged();
+    void styleChanged();
     void rowsChanged();
     void countChanged();
 
@@ -96,6 +106,8 @@ private:
     bool m_animatedOnly = false;
     QString m_scaleLabel;
     QVariantMap m_collapsed;
+    QVariantMap m_curveColors;
+    QVariantList m_curveRamp;
 
     QVariantList m_entries;
     QString m_entriesKey;

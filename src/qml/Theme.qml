@@ -323,6 +323,14 @@ QtObject {
     readonly property color gizmoUniform: ThemeManager.semantic.gizmo.uniform
     readonly property color gizmoHot: ThemeManager.semantic.gizmo.hot
 
+    // A token group as a plain object, for C++ items whose style property is a QVariantMap.
+    function plainMap(group) {
+        const out = {}
+        for (const key of group.keys())
+            out[key] = group[key]
+        return out
+    }
+
     // --- Colors: keyframe curves ------------------------------------------------
     readonly property var keyframeCurveColors: ThemeManager.semantic.keyframe.curves
     readonly property var keyframeCurveRamp: ThemeManager.semantic.keyframe.ramp

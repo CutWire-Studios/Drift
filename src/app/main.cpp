@@ -33,6 +33,8 @@
 #include "playback/stats/PerfLog.h"
 #include "ui/color/ColorWheelPad.h"
 #include "ui/color/CurvePlot.h"
+#include "ui/keyframes/KeyframeCurvesItem.h"
+#include "ui/keyframes/KeyframeLanesItem.h"
 #include "ui/preview/BrushStrokeItem.h"
 #include "ui/preview/ConfidenceStripItem.h"
 #include "ui/preview/TrackerOverlayItem.h"
@@ -41,6 +43,7 @@
 #include "ui/theme/backdrop/WindowBackdrop.h"
 #include "ui/timeline/TimelineTrackItem.h"
 #include "ui/timeline/TimelineViewState.h"
+#include "app/editor/sessions/KeyframeCurvesModel.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeSelection.h"
 #include "app/editor/sessions/PolylineDraft.h"
@@ -707,10 +710,13 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyframeSelection>("Drift", 1, 0, "KeyframeSelection");
     qmlRegisterType<KeyframeTimeView>("Drift", 1, 0, "KeyframeTimeView");
     qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
+    qmlRegisterType<KeyframeCurvesModel>("Drift", 1, 0, "KeyframeCurvesModel");
     qmlRegisterType<BrushStrokeItem>("Drift", 1, 0, "BrushStrokeItem");
     qmlRegisterType<PolylineDraft>("Drift", 1, 0, "PolylineDraft");
     qmlRegisterType<ColorWheelPad>("Drift", 1, 0, "ColorWheelPad");
     qmlRegisterType<CurvePlot>("Drift", 1, 0, "CurvePlot");
+    qmlRegisterType<KeyframeLanesItem>("Drift", 1, 0, "KeyframeLanesItem");
+    qmlRegisterType<KeyframeCurvesItem>("Drift", 1, 0, "KeyframeCurvesItem");
     qmlRegisterType<TrackerOverlayItem>("Drift", 1, 0, "TrackerOverlayItem");
     qmlRegisterType<ConfidenceStripItem>("Drift", 1, 0, "ConfidenceStripItem");
     TimelineTrackItem::installAccessibility();

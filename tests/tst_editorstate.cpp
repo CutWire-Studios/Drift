@@ -41,7 +41,9 @@
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/sessions/KeyframeController.h"
+#include "app/editor/sessions/KeyframeCurvesModel.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
+#include "app/editor/sessions/KeyframeSelection.h"
 #include "app/editor/sessions/KeyframeTimeView.h"
 #include "app/editor/sessions/MaskStackModel.h"
 #include "app/jobs/vision/TrackerListModel.h"
@@ -307,6 +309,8 @@ private slots:
     void keyframeRowsModelDiffsRebuildsAndNavigates();
     void keyframeMoveReportsCollisions();
     void keyframeNudgesFoldIntoOneUndoStep();
+    void keyframeScaleMoveCarriesItsPins();
+    void keyframeCurvesModelHitTestsMarqueesAndFits();
     void keyframeScaleMathMatchesTheCanvasBox();
     void depthEffectEditorStateResolvesHandles();
     void behindSubjectTargetsAChosenClip();
@@ -5244,6 +5248,127 @@ void EditorStateTest::keyframeNudgesFoldIntoOneUndoStep()
     const QVariantList keys = state.clipKeyframes(track, clip, rotation);
     QCOMPARE(keys.size(), 2);
     QVERIFY(qAbs(keys.first().toMap().value(QStringLiteral("seconds")).toDouble() - 1.0) < 1e-6);
+}
+
+void EditorStateTest::keyframeScaleMoveCarriesItsPins()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Pins"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    state.setPositionLinked(false);
+    const QString x = QStringLiteral("x");
+    const QString y = QStringLiteral("y");
+    const QString width = QStringLiteral("width");
+    const QString height = QStringLiteral("height");
+
+    state.keyframes()->addKeysAt(track, clip, {width, height}, 1.0);
+    state.setClipKeyframe(track, clip, x, 1.01, 5.0);
+    state.setClipKeyframe(track, clip, x, 2.0, 7.0);
+    const auto has = [&](const QString &prop, double seconds) {
+        for (const QVariant &k : state.clipKeyframes(track, clip, prop)) {
+            if (qAbs(k.toMap().value(QStringLiteral("seconds")).toDouble() - seconds) < 1e-4)
+                return true;
+        }
+        return false;
+    };
+    const auto count = [&](const QString &prop) { return state.clipKeyframes(track, clip, prop).size(); };
+    const int xCount = count(x);
+    const int yCount = count(y);
+    QVERIFY(has(x, 1.0) && has(x, 1.01) && has(x, 2.0) && has(y, 1.0) && has(width, 1.0));
+
+    const auto ref = [](const QString &prop, double seconds) {
+        return QVariantMap{{QStringLiteral("prop"), prop}, {QStringLiteral("seconds"), seconds}};
+    };
+    const QVariantList scale{ref(width, 1.0), ref(height, 1.0)};
+    state.keyframes()->previewMoveKeys(track, clip, scale, 0.5);
+    state.keyframes()->previewMoveKeys(track, clip, scale, 0.75);
+    QVERIFY(has(width, 1.75) && has(height, 1.75));
+    QVERIFY(has(y, 1.75) && !has(y, 1.0));
+    QVERIFY(has(x, 1.75) && !has(x, 1.0));
+    QVERIFY(has(x, 1.01) && has(x, 2.0));
+    QCOMPARE(count(x), xCount);
+    QCOMPARE(count(y), yCount);
+
+    state.commitPreviewDrag();
+    state.undo();
+    QVERIFY(has(width, 1.0) && has(height, 1.0));
+    QVERIFY(has(x, 1.0) && has(y, 1.0) && has(x, 1.01) && has(x, 2.0));
+    QVERIFY(!has(x, 1.75) && !has(y, 1.75));
+}
+
+void EditorStateTest::keyframeCurvesModelHitTestsMarqueesAndFits()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Curves"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    state.setPositionLinked(false);
+    const QString rotation = QStringLiteral("rotation");
+    state.setClipKeyframe(track, clip, rotation, 1.0, 10.0);
+    state.setClipKeyframe(track, clip, rotation, 2.0, 20.0);
+
+    KeyframeTimeView view;
+    view.setPxPerSecond(100);
+    KeyframeRowsModel rows;
+    rows.setController(state.keyframes());
+    rows.setTimeView(&view);
+    rows.setProperty("track", track);
+    rows.setProperty("clip", clip);
+    rows.rebuild();
+    KeyframeSelection selection;
+    KeyframeCurvesModel curves;
+    curves.setRowsModel(&rows);
+    curves.setSelection(&selection);
+    curves.setGraphMargin(8);
+    curves.setViewHeight(116);
+    QCOMPARE(curves.graphHeight(), 100.0);
+    curves.setCurveShown({{rotation, true}});
+    QCOMPARE(curves.count(), 1);
+
+    QVERIFY(qAbs(curves.vMin() - 9.0) < 1e-9);
+    QVERIFY(qAbs(curves.vMax() - 21.0) < 1e-9);
+    QVERIFY(qAbs(curves.screenY(10.0, 0) - (8 + 100 - 100.0 / 12)) < 1e-6);
+    QVERIFY(qAbs(curves.valueForY(curves.screenY(15.0, 0) - 8, 0) - 15.0) < 1e-6);
+
+    const double y1 = curves.screenY(10.0, 0);
+    const QVariantMap hit = curves.hitTest(view.xFor(1.0) + 2, y1 + 1, 6);
+    QCOMPARE(hit.value(QStringLiteral("seconds")).toDouble(), 1.0);
+    QCOMPARE(hit.value(QStringLiteral("entryIndex")).toInt(), 0);
+    QCOMPARE(hit.value(QStringLiteral("refs")).toList().size(), 1);
+    const QVariantMap miss = curves.hitTest(view.xFor(1.0) + 40, y1, 6);
+    QVERIFY(!miss.value(QStringLiteral("dot")).isValid() || miss.value(QStringLiteral("dot")).isNull());
+    QCOMPARE(miss.value(QStringLiteral("row")).toInt(), -1);
+    QCOMPARE(miss.value(QStringLiteral("seconds")).toDouble(), 1.4);
+
+    const QVariantList base{QVariantMap{{QStringLiteral("prop"), QStringLiteral("z")}, {QStringLiteral("seconds"), 9.0}}};
+    QCOMPARE(curves.marqueeRefs(50, 150, 0, 200, base).size(), 2);
+    QCOMPARE(curves.marqueeRefs(50, 250, 0, 200, base).size(), 3);
+    QCOMPARE(curves.marqueeRefs(150, 250, 0, 40, {}).size(), 1);
+    QCOMPARE(curves.marqueeRefs(150, 250, 150, 200, {}).size(), 0);
+
+    selection.replace({QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 2.0}}});
+    curves.fitValues(true);
+    QVERIFY(qAbs(curves.vMin() - 18.0) < 1e-9 && qAbs(curves.vMax() - 22.0) < 1e-9);
+    selection.clear();
+    curves.fitValues(true);
+    QVERIFY(qAbs(curves.vMin() - 9.0) < 1e-9 && qAbs(curves.vMax() - 21.0) < 1e-9);
+
+    curves.lockRanges();
+    curves.panValuesBy(50);
+    QVERIFY(qAbs(curves.vMin() - 15.0) < 1e-9);
+    QVERIFY(qAbs(curves.series().first().toMap().value(QStringLiteral("valueMin")).toDouble() - 9.0) < 1e-9);
+    QVERIFY(qAbs(curves.valueDelta(rotation, -100) - 12.0) < 1e-9);
+    curves.unlockRanges();
+    QVERIFY(qAbs(curves.series().first().toMap().value(QStringLiteral("valueMin")).toDouble() - 15.0) < 1e-9);
+    QCOMPARE(curves.valueDelta(rotation, -100), 0.0);
+
+    curves.setNormalize(true);
+    const QVariantMap own = curves.series().first().toMap();
+    QCOMPARE(own.value(QStringLiteral("valueMin")).toDouble(), -180.0);
+    QCOMPARE(own.value(QStringLiteral("valueMax")).toDouble(), 180.0);
 }
 
 void EditorStateTest::keyframeScaleMathMatchesTheCanvasBox()

@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import Drift
-import "keyframes/EasingCache.js" as EasingCache
 
 // Keyframe strip aligned with the timeline: left gutter matches track labels,
 // graph scroll + playhead share the timeline's contentX / pxPerSecond.
@@ -136,54 +135,12 @@ Item {
         return clip.kind !== "audio"
     }
 
-    // The engine's spec for a key's outgoing segment when that segment is a Penner function.
-    function easingFnSpec(key) {
-        return { kind: "function", fn: key.fn, amplitude: key.fnAmp, period: key.fnPeriod }
-    }
-
     // Each series is normalized against its own value range, so curves in wildly
     // different units (px vs. 0–1 opacity) stay comparable when overlaid.
     function valueRangeFor(id, pts, base) {
-        if (id === "opacity")
-            return { min: 0, max: 1 }
-        if (id === "volume")
-            return { min: 0, max: 2 }
-        if (id === "rotation" || id === "mask.rotation")
-            return { min: -180, max: 180 }
-        // Mask geometry is normalized to the clip frame, so a fixed 0..1 axis is meaningful and
-        // keeps the four curves comparable. Feather is in px and auto-fits like anything else.
-        if (id === "mask.x" || id === "mask.y" || id === "mask.w" || id === "mask.h")
-            return { min: 0, max: 1 }
         const fx = effectParam(id)
-        if (fx)
-            return { min: fx.param.min, max: fx.param.max }
-        let lo = Infinity
-        let hi = -Infinity
-        for (let i = 0; i < pts.length; ++i) {
-            const v = Number(pts[i].value)
-            lo = Math.min(lo, v)
-            hi = Math.max(hi, v)
-            // A Penner function overshoots its endpoints, so the lane has to make room for its peak.
-            if (pts[i].fn && i + 1 < pts.length) {
-                const span = Number(pts[i + 1].value) - v
-                const samples = EasingCache.samples(root.easingFnSpec(pts[i]), 48, (s, n) => EditorState.easingSamples(s, n))
-                for (let k = 0; k < samples.length; ++k) {
-                    const w = v + span * samples[k].y
-                    lo = Math.min(lo, w)
-                    hi = Math.max(hi, w)
-                }
-            }
-        }
-        // With no keys there is nothing to fit, so centre the axis on the value the property
-        // actually holds — otherwise a 1920px width would be drawn far off the top of a 0..100 lane.
-        if (!isFinite(lo))
-            lo = base
-        if (!isFinite(hi))
-            hi = base
-        return {
-            min: lo - Math.max(1, Math.abs(lo) * 0.1),
-            max: hi + Math.max(1, Math.abs(hi) * 0.1)
-        }
+        return EditorState.keyframes.curveRange(id, pts, base, fx !== null, fx ? fx.param.min : 0,
+                                                fx ? fx.param.max : 1)
     }
 
     // A preview move emits tracksChanged, which would re-evaluate `series` and
@@ -569,9 +526,31 @@ Item {
                         viewportWidth: viewport.width
                     }
 
-                    KeyframeGraphCurveCanvas {
-                        host: root
-                        viewportWidth: viewport.width
+                    KeyframeCurvesItem {
+                        x: root.contentX
+                        width: viewport.width
+                        height: parent.height
+                        series: root.series
+                        focusedIndex: root.focusedIndex
+                        curveEditing: root.curveEditing
+                        pxPerSecond: root.pxPerSecond
+                        originX: root.contentX
+                        clipStart: root.clipStart
+                        clipDuration: root.clipDuration
+                        lineWidth: Theme.c.keyframeGraphCurveCanvas.lineWidth
+                        lineWidthMuted: Theme.c.keyframeGraphCurveCanvas.lineWidthMuted
+                        opacityContext: Theme.c.keyframeGraphCurveCanvas.opacityContext
+                        opacityDisabled: Theme.c.keyframeGraphCurveCanvas.opacityDisabled
+                        positionLinked: EditorState.positionLinked
+                        dragProp: root.dragProp
+                        dragIndex: root.dragIndex
+                        dragSeconds: root.dragSeconds
+                        dragValue: root.dragValue
+                        dragTangentIndex: root.dragTangentIndex
+                        dragTangentInDx: root.dragTangentInDx
+                        dragTangentInDy: root.dragTangentInDy
+                        dragTangentOutDx: root.dragTangentOutDx
+                        dragTangentOutDy: root.dragTangentOutDy
                     }
 
                     // Below the key dots (z 2) and tangent grips (z 4), so double-clicking an

@@ -47,6 +47,12 @@ public:
                                              double dtSeconds);
     Q_INVOKABLE void clearCollisions();
     Q_INVOKABLE bool collidesWith(const QVariantList &refs) const;
+    bool collides(const QString &prop, double seconds) const;
+    // What a property holds when it has no keys: the level of its flat curve.
+    double baseValue(int track, int clip, const QString &prop) const;
+    // The axis a property's curve is drawn in; `hasRange` makes `min`..`max` the range.
+    Q_INVOKABLE QVariantMap curveRange(const QString &prop, const QVariantList &points, double base, bool hasRange,
+                                       double min, double max) const;
     // Keyboard nudge: successive calls with the selection the previous call returned fold into one
     // auto-committed undo step.
     Q_INVOKABLE QVariantList nudgeKeys(int track, int clip, const QVariantList &keys, double dtSeconds);
@@ -101,7 +107,9 @@ private:
     bool resolveKey(int track, int clip, const QString &prop, double seconds, KeyTarget *out) const;
     QList<KeyTarget> resolveKeys(int track, int clip, const QVariantList &keys) const;
     QList<KeyTarget> expandLinked(const QList<KeyTarget> &keys) const;
+    QList<KeyTarget> withPins(const QList<KeyTarget> &keys) const;
     QStringList mirrorLinkedProps(const QStringList &props) const;
+    QStringList movedProps(const QStringList &props) const;
     double shownValue(int track, int clip, const QString &prop, double seconds) const;
     bool eraseKeys(const QList<KeyTarget> &keys);
     QVariantMap keyRef(const KeyTarget &key, drift::TimeUs rel) const;

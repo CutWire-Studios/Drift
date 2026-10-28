@@ -43,7 +43,7 @@ Item {
     signal contextRequested(real x, real y, var hit)
 
     function hitTest(x, y, slop) {
-        const hit = rowsModel.hitTest(x, y, lanes.list.contentY, lanes.rowHeight, slop)
+        const hit = rowsModel.hitTest(x, y, lanes.contentY, lanes.rowHeight, slop)
         if (hit.row < 0)
             return null
         hit.rowData = panel.rows[hit.row]
@@ -91,7 +91,7 @@ Item {
 
     function updateMarquee(x, y) {
         const anchorX = pressX - (timeView.contentX - pressContentX)
-        const anchorY = pressY - (lanes.list.contentY - pressContentY)
+        const anchorY = pressY - (lanes.contentY - pressContentY)
         const px = Math.max(0, Math.min(width, x))
         const py = Math.max(0, Math.min(height, y))
         const x0 = Math.min(anchorX, px)
@@ -102,7 +102,7 @@ Item {
         marquee.y = Math.max(0, y0)
         marquee.width = Math.min(width, x1) - marquee.x
         marquee.height = Math.min(height, y1) - marquee.y
-        selection.replace(rowsModel.marqueeRefs(x0, x1, y0, y1, lanes.list.contentY, lanes.rowHeight,
+        selection.replace(rowsModel.marqueeRefs(x0, x1, y0, y1, lanes.contentY, lanes.rowHeight,
                                                 marqueeBase))
     }
 
@@ -231,14 +231,14 @@ Item {
             root.lastX = mouse.x
             root.lastY = mouse.y
             root.pressContentX = root.timeView.contentX
-            root.pressContentY = root.lanes.list.contentY
+            root.pressContentY = root.lanes.contentY
             root.hoverTip = ""
             root.collapseOnRelease = false
             root.pressHit = root.hitTest(mouse.x, mouse.y, root.slop)
             root.mode = ""
             if (mouse.button === Qt.MiddleButton) {
                 root.panStartX = root.timeView.contentX
-                root.panStartY = root.lanes.list.contentY
+                root.panStartY = root.lanes.contentY
                 root.mode = "pan"
                 return
             }
@@ -249,7 +249,7 @@ Item {
             }
             if (root.touch) {
                 root.panStartX = root.timeView.contentX
-                root.panStartY = root.lanes.list.contentY
+                root.panStartY = root.lanes.contentY
                 root.mode = "touch"
                 return
             }
@@ -295,7 +295,7 @@ Item {
             }
             if (root.mode === "pan") {
                 root.timeView.contentX = root.panStartX - (mouse.x - root.pressX)
-                root.lanes.list.contentY = Math.max(0, Math.min(root.lanes.maxContentY(),
+                root.lanes.contentY = Math.max(0, Math.min(root.lanes.maxContentY(),
                                                                 root.panStartY - (mouse.y - root.pressY)))
             } else if (root.mode === "dot") {
                 if (!root.dotDrag && moved)

@@ -283,6 +283,8 @@ PanelFrame {
         animatedOnly: root.animatedOnly
         scaleLabel: qsTr("Scale")
         collapsed: root.collapsed
+        curveColors: Theme.plainMap(Theme.keyframeCurveColors)
+        curveRamp: Theme.keyframeCurveRamp
     }
 
     HoverHandler { id: hover }

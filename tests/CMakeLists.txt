@@ -14,11 +14,12 @@ add_test(NAME Core COMMAND tst_core)
 
 qt_add_executable(tst_keyframeview
     tst_keyframeview.cpp
+    ../src/app/editor/sessions/KeyframeCurves.cpp
     ../src/app/editor/sessions/KeyframeRows.cpp
     ../src/app/editor/sessions/KeyframeSelection.cpp
     ../src/app/editor/sessions/KeyframeTimeView.cpp)
 target_include_directories(tst_keyframeview PRIVATE ../src)
-target_link_libraries(tst_keyframeview PRIVATE Qt6::Test Qt6::Core)
+target_link_libraries(tst_keyframeview PRIVATE Qt6::Test Qt6::Core driftcore)
 add_test(NAME KeyframeView COMMAND tst_keyframeview)
 
 qt_add_executable(tst_polylinedraft
@@ -67,6 +68,8 @@ qt_add_executable(tst_editorstate
     ../src/app/editor/sessions/SpeedCurveController.cpp
     ../src/app/editor/sessions/CurveEditorController.cpp
     ../src/app/editor/sessions/KeyframeController.cpp
+    ../src/app/editor/sessions/KeyframeCurves.cpp
+    ../src/app/editor/sessions/KeyframeCurvesModel.cpp
     ../src/app/editor/sessions/KeyframeRows.cpp
     ../src/app/editor/sessions/KeyframeRowsModel.cpp
     ../src/app/editor/sessions/KeyframeSelection.cpp
@@ -271,6 +274,8 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/SpeedCurveController.cpp
     ../src/app/editor/sessions/CurveEditorController.cpp
     ../src/app/editor/sessions/KeyframeController.cpp
+    ../src/app/editor/sessions/KeyframeCurves.cpp
+    ../src/app/editor/sessions/KeyframeCurvesModel.cpp
     ../src/app/editor/sessions/KeyframeRows.cpp
     ../src/app/editor/sessions/KeyframeRowsModel.cpp
     ../src/app/editor/sessions/KeyframeSelection.cpp

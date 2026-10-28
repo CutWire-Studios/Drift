@@ -1070,6 +1070,10 @@ qt_add_executable(drift
     src/app/editor/sessions/KeyframeRows.cpp
     src/app/editor/sessions/KeyframeRowsModel.h
     src/app/editor/sessions/KeyframeRowsModel.cpp
+    src/app/editor/sessions/KeyframeCurves.h
+    src/app/editor/sessions/KeyframeCurves.cpp
+    src/app/editor/sessions/KeyframeCurvesModel.h
+    src/app/editor/sessions/KeyframeCurvesModel.cpp
     src/app/editor/sessions/KeyframeSelection.h
     src/app/editor/sessions/KeyframeSelection.cpp
     src/app/editor/sessions/KeyframeTimeView.h
@@ -1159,6 +1163,12 @@ qt_add_executable(drift
     src/ui/color/ColorWheelPad.cpp
     src/ui/color/CurveEdit.h
     src/ui/color/CurveEdit.cpp
+    src/ui/keyframes/KeyframeDot.h
+    src/ui/keyframes/KeyframeDot.cpp
+    src/ui/keyframes/KeyframeLanesItem.h
+    src/ui/keyframes/KeyframeLanesItem.cpp
+    src/ui/keyframes/KeyframeCurvesItem.h
+    src/ui/keyframes/KeyframeCurvesItem.cpp
     src/ui/color/CurvePlot.h
     src/ui/color/CurvePlot.cpp
     src/ui/preview/TrackerOverlayItem.h
@@ -1593,7 +1603,6 @@ qt_add_qml_module(drift
         src/qml/components/properties/KeyframeGraphHeaderBar.qml
         src/qml/components/properties/KeyframeGraphGutterRule.qml
         src/qml/components/properties/KeyframeGraphFrame.qml
-        src/qml/components/properties/KeyframeGraphCurveCanvas.qml
         src/qml/components/properties/KeyframeGraphClipSpan.qml
         src/qml/components/properties/KeyframeGraphBeatCanvas.qml
         src/qml/components/properties/GradientStopChip.qml
@@ -1736,7 +1745,6 @@ qt_add_qml_module(drift
         src/qml/components/keyframes/KeyframesCurvesView.qml
         src/qml/components/keyframes/KeyframesInteractionSurface.qml
         src/qml/components/keyframes/KeyframesDragReadout.qml
-        src/qml/components/keyframes/KeyframesKeyDot.qml
         src/qml/components/keyframes/KeyframesLanesView.qml
         src/qml/components/keyframes/KeyframesMarquee.qml
         src/qml/components/keyframes/KeyframesPlayheadLine.qml
@@ -1745,7 +1753,6 @@ qt_add_qml_module(drift
         src/qml/components/keyframes/KeyframesToolbar.qml
         src/qml/components/keyframes/KeyframesTreeRow.qml
         src/qml/components/keyframes/KeyframesValueScrubber.qml
-        src/qml/components/keyframes/EasingCache.js
         src/qml/components/color/GradeSlider.qml
         src/qml/components/color/ColorWheel.qml
         src/qml/components/color/CurveEditor.qml

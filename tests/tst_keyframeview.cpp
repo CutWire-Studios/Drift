@@ -1,5 +1,6 @@
 #include <QtTest>
 
+#include "app/editor/sessions/KeyframeCurves.h"
 #include "app/editor/sessions/KeyframeRows.h"
 #include "app/editor/sessions/KeyframeSelection.h"
 #include "app/editor/sessions/KeyframeTimeView.h"
@@ -59,6 +60,9 @@ private slots:
     void prevAndNextKeyTime();
     void hitTestPicksNearestDot();
     void marqueeCollectsDotsInBox();
+    void curveSamplingMatchesEngineEasing();
+    void curveRangeAndFitIncludeOvershootAndHandles();
+    void curveGridTicksAndTangentHandles();
 };
 
 void KeyframeViewTest::selectionDedupesByMicrosecond()
@@ -259,6 +263,125 @@ void KeyframeViewTest::marqueeCollectsDotsInBox()
     const QVariantList refs = marqueeRefs(rows, axis, 50, 150, 45, 125, 0, 40, base);
     QCOMPARE(refs.size(), 3);
     QCOMPARE(marqueeRefs(rows, axis, 150, 250, 45, 85, 0, 40, {}).size(), 1);
+}
+
+void KeyframeViewTest::curveSamplingMatchesEngineEasing()
+{
+    using namespace KeyframeCurves;
+    Point a;
+    a.seconds = 0;
+    a.value = 2;
+    a.fn = drift::EasingFn::ElasticOut;
+    a.fnAmplitude = 1.0;
+    a.fnPeriod = 0.3;
+    Point b;
+    b.seconds = 1;
+    b.value = 12;
+    const QVector<QPointF> samples = sampleCurve({a, b}, 0, 0, 1, 0, 1, 0.01);
+    QVERIFY(samples.size() > 100);
+    double peak = 0;
+    for (const QPointF &p : samples) {
+        const double expected = a.value + (b.value - a.value) * drift::evaluateEasingFn(a.fn, p.x(), 1.0, 0.3);
+        QVERIFY2(qAbs(p.y() - expected) < 1e-3, qPrintable(QString::number(p.x())));
+        peak = std::max(peak, p.y());
+    }
+    QVERIFY(peak > b.value + 0.1);
+
+    b.value = 12;
+    a.fn = drift::EasingFn::None;
+    a.outDx = 0.5;
+    a.outDy = 20;
+    for (const QPointF &p : sampleCurve({a, b}, 0, 0, 1, 0, 1, 0.01))
+        QVERIFY(qAbs(p.y() - valueAt({a, b}, p.x())) < 1e-3);
+
+    const QVector<QPointF> flat = sampleCurve({}, 7, 1, 3, 0, 5, 0.01);
+    QCOMPARE(flat.size(), 2);
+    QCOMPARE(flat.first(), QPointF(1, 7));
+    QCOMPARE(flat.last(), QPointF(3, 7));
+
+    a.fn = drift::EasingFn::None;
+    a.hold = true;
+    const QVector<QPointF> step = sampleCurve({a, b}, 0, 0, 1, 0, 1, 0.01);
+    QVERIFY(step.contains(QPointF(1, a.value)));
+    QVERIFY(step.contains(QPointF(1, b.value)));
+}
+
+void KeyframeViewTest::curveRangeAndFitIncludeOvershootAndHandles()
+{
+    using namespace KeyframeCurves;
+    Point a;
+    a.seconds = 0;
+    a.value = 0;
+    a.fn = drift::EasingFn::ElasticOut;
+    Point b;
+    b.seconds = 1;
+    b.value = 10;
+    Point straight = a;
+    straight.fn = drift::EasingFn::None;
+    const Range plain = valueRange(QStringLiteral("x"), {straight, b}, 0, false, 0, 0);
+    const Range eased = valueRange(QStringLiteral("x"), {a, b}, 0, false, 0, 0);
+    QVERIFY(eased.max > plain.max);
+    QCOMPARE(valueRange(QStringLiteral("opacity"), {a, b}, 0, false, 0, 0).max, 1.0);
+    QCOMPARE(valueRange(QStringLiteral("fx.0.amount"), {}, 0, true, -5, 5).min, -5.0);
+    const Range empty = valueRange(QStringLiteral("x"), {}, 100, false, 0, 0);
+    QCOMPARE(empty.min, 90.0);
+    QCOMPARE(empty.max, 110.0);
+
+    Series s;
+    s.prop = QStringLiteral("x");
+    Point lo;
+    lo.seconds = 0;
+    lo.value = 0;
+    lo.outDy = 30;
+    Point hi;
+    hi.seconds = 1;
+    hi.value = 10;
+    s.points = {lo, hi};
+    Series flat;
+    flat.prop = QStringLiteral("y");
+    flat.baseValue = -50;
+
+    Range r;
+    QVERIFY(fitRange({s}, {}, false, &r));
+    QVERIFY(qAbs(r.min - (0 - 3.0)) < 1e-9);
+    QVERIFY(qAbs(r.max - (30 + 3.0)) < 1e-9);
+    QVERIFY(fitRange({s, flat}, {}, false, &r));
+    QVERIFY(r.min < -50);
+    QVERIFY(fitRange({s, flat}, {}, true, &r) == false);
+    const auto onlyHigh = [](const QString &prop, double seconds) { return prop == QLatin1String("x") && seconds == 1.0; };
+    QVERIFY(fitRange({s, flat}, onlyHigh, true, &r));
+    QVERIFY(qAbs(r.min - 9.0) < 1e-9 && qAbs(r.max - 11.0) < 1e-9);
+
+    const Range padded = padRange(5, 5);
+    QCOMPARE(padded.min, 4.0);
+    QCOMPARE(padded.max, 6.0);
+}
+
+void KeyframeViewTest::curveGridTicksAndTangentHandles()
+{
+    using namespace KeyframeCurves;
+    const QList<Tick> ticks = gridTicks({0, 1}, true);
+    QVERIFY(ticks.size() >= 4);
+    QCOMPARE(ticks.first().text, QStringLiteral("0"));
+    QCOMPARE(ticks.first().frac, 0.0);
+    QCOMPARE(gridTicks({0, 1}, false).size(), 5);
+    QVERIFY(gridTicks({0, 1}, false).first().text.isEmpty());
+
+    Point a;
+    Point b;
+    b.seconds = 1;
+    Point c;
+    c.seconds = 2;
+    c.fn = drift::EasingFn::BounceOut;
+    QCOMPARE(tangentHandles({a, b, c}).size(), 4);
+    b.hold = true;
+    QCOMPARE(tangentHandles({a, b, c}).size(), 2);
+    QCOMPARE(handleSeconds(a, true), kDefaultHandleSeconds);
+    QCOMPARE(handleSeconds(a, false), -kDefaultHandleSeconds);
+    a.outDx = 0.4;
+    a.outDy = 3;
+    QCOMPARE(handleSeconds(a, true), 0.4);
+    QCOMPARE(handleValue(a, true), a.value + 3);
 }
 
 QTEST_APPLESS_MAIN(KeyframeViewTest)

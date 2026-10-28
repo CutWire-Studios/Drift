@@ -40,43 +40,10 @@ Item {
 
     signal contextRequested(real x, real y, var hit)
 
-    function emptyHit(x) {
-        return { "row": -1, "rowData": null, "dot": null, "refs": [], "seconds": timeView.secondsFor(x),
-                 "entryIndex": -1 }
-    }
-
     function hitTest(x, y, slop) {
-        const series = view.series
-        let best = null
-        let bestDist = slop + 0.5
-        let bestFocused = false
-        for (let s = 0; s < series.length; ++s) {
-            const entry = series[s]
-            const focused = view.isFocused(s)
-            for (let i = 0; i < entry.points.length; ++i) {
-                const p = entry.points[i]
-                const d = Math.hypot(timeView.xFor(p.seconds) - x, view.screenY(p.value, entry) - y)
-                if (d < bestDist || (d <= bestDist && focused && !bestFocused)) {
-                    bestDist = d
-                    bestFocused = focused
-                    best = { "entryIndex": s, "point": p }
-                }
-            }
-        }
-        if (!best)
-            return emptyHit(x)
-        const entry = series[best.entryIndex]
-        const refs = [{ "prop": entry.prop, "seconds": best.point.seconds }]
-        return {
-            "row": entry.rowIndex,
-            "rowData": panel.rows[entry.rowIndex],
-            "dot": { "seconds": best.point.seconds, "refs": refs, "hold": !!best.point.hold },
-            "refs": refs,
-            "seconds": best.point.seconds,
-            "value": best.point.value,
-            "label": entry.label,
-            "entryIndex": best.entryIndex
-        }
+        const hit = view.curves.hitTest(x, y, slop)
+        hit.rowData = hit.row >= 0 ? panel.rows[hit.row] : null
+        return hit
     }
 
     function focusHit(hit) {
@@ -91,7 +58,7 @@ Item {
         dragOrigin = pressHit.seconds
         dragTime = dragOrigin
         dragValue = Number(pressHit.value)
-        view.lockRanges()
+        view.curves.lockRanges()
         EditorState.beginPreviewDrag(qsTr("Move keyframes"))
         dotDrag = true
     }
@@ -109,15 +76,8 @@ Item {
         lastInvert = !!invertSnap
         const dt = rowsModel.moveDelta(dragOrigin, dx + timeView.contentX - pressContentX, dragRefs, lastInvert, true)
         dragTime = dragOrigin + dt
-        const pressedRange = (view.lockedRanges || ({}))[view.series[pressHit.entryIndex].prop]
-        dragValue = Number(pressHit.value)
-                    + (pressedRange ? -dy / view.graphHeight * (pressedRange.max - pressedRange.min) : 0)
-        const locked = view.lockedRanges || ({})
-        const refs = dragRefs.map(r => {
-            const range = locked[r.prop]
-            const dv = range ? -dy / view.graphHeight * (range.max - range.min) : 0
-            return { "prop": r.prop, "seconds": r.seconds, "dv": dv }
-        })
+        dragValue = Number(pressHit.value) + view.curves.valueDelta(view.series[pressHit.entryIndex].prop, dy)
+        const refs = view.curves.dragRefs(dragRefs, dy)
         const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clip, refs, dt)
         if (res && res.length > 0) {
             dragResult = res
@@ -129,7 +89,7 @@ Item {
         EditorState.commitPreviewDrag()
         EditorState.keyframes.clearCollisions()
         selection.replace(dragResult)
-        view.unlockRanges()
+        view.curves.unlockRanges()
         dotDrag = false
     }
 
@@ -138,7 +98,7 @@ Item {
             EditorState.cancelPreviewDrag()
             EditorState.keyframes.clearCollisions()
             selection.replace(dragRefs)
-            view.unlockRanges()
+            view.curves.unlockRanges()
             dotDrag = false
         }
         marqueeActive = false
@@ -156,18 +116,7 @@ Item {
         marquee.y = y0
         marquee.width = Math.min(width, x1) - marquee.x
         marquee.height = y1 - y0
-        const refs = marqueeBase.slice()
-        const series = view.series
-        for (let s = 0; s < series.length; ++s) {
-            const entry = series[s]
-            for (let i = 0; i < entry.points.length; ++i) {
-                const p = entry.points[i]
-                const px = timeView.xFor(p.seconds)
-                const py = view.screenY(p.value, entry)
-                if (px >= x0 && px <= x1 && py >= y0 && py <= y1)
-                    refs.push({ "prop": entry.prop, "seconds": p.seconds })
-            }
-        }
+        const refs = view.curves.marqueeRefs(x0, x1, y0, y1, marqueeBase)
         selection.replace(refs)
     }
 
@@ -348,7 +297,7 @@ Item {
             if (root.mode === "pan") {
                 root.timeView.contentX = root.panStartX - (mouse.x - root.pressX)
                 if (!root.panel.normalize)
-                    root.view.panValuesBy(mouse.y - root.panLastY)
+                    root.view.curves.panValuesBy(mouse.y - root.panLastY)
                 root.panLastY = mouse.y
             } else if (root.mode === "dot") {
                 if (!root.dotDrag && moved)
@@ -416,7 +365,7 @@ Item {
             if (mods & Qt.ControlModifier) {
                 if (mods & Qt.ShiftModifier) {
                     if (sharedRange)
-                        root.view.zoomValuesAt(wheel.y, Math.exp(-(dy !== 0 ? dy : dx) / 300))
+                        root.view.curves.zoomValuesAt(wheel.y, Math.exp(-(dy !== 0 ? dy : dx) / 300))
                 } else {
                     root.timeView.zoomAt(wheel.x, Math.exp(wheel.angleDelta.y / 600))
                 }
@@ -429,7 +378,7 @@ Item {
             if (dx !== 0)
                 root.timeView.contentX -= dx
             if (dy !== 0 && sharedRange)
-                root.view.panValuesBy(dy)
+                root.view.curves.panValuesBy(dy)
         }
     }
 

@@ -154,6 +154,21 @@ void KeyframeRowsModel::rebuild()
     setRows(build(m_entries, opts));
 }
 
+QColor KeyframeRowsModel::colorFor(const QString &prop) const
+{
+    if (m_curveRamp.isEmpty())
+        return {};
+    if (prop.isEmpty())
+        return m_curveRamp.first().value<QColor>();
+    const auto own = m_curveColors.constFind(prop);
+    if (own != m_curveColors.constEnd())
+        return own->value<QColor>();
+    quint32 hash = 0;
+    for (QChar ch : prop)
+        hash = (hash * 31 + ch.unicode()) & 0x7fffffff;
+    return m_curveRamp.at(int(hash % quint32(m_curveRamp.size()))).value<QColor>();
+}
+
 QVariantMap KeyframeRowsModel::rowAt(int index) const
 {
     return index >= 0 && index < m_rows.size() ? m_rows.at(index).toMap() : QVariantMap();
