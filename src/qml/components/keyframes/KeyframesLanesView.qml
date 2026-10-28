@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic
 import Drift
-import "KeyframesModel.js" as Model
 
 Item {
     id: root
@@ -37,7 +36,7 @@ Item {
         anchors.fill: parent
         clip: true
         interactive: false
-        model: root.panel.rowKeys
+        model: root.panel.rowsModel
         boundsBehavior: Flickable.StopAtBounds
 
         onContentYChanged: {
@@ -49,10 +48,14 @@ Item {
             id: lane
 
             required property int index
+            required property var rowData
 
-            readonly property var modelData: root.panel.rows[index] ?? ({})
+            readonly property var modelData: rowData ?? ({})
             readonly property bool isGroup: modelData.type === "group"
-            readonly property var dots: Model.laneDots(root.panel.rows, index)
+            readonly property var dots: {
+                void lane.modelData
+                return root.panel.rowsModel.dots(lane.index)
+            }
             readonly property color dotColor: isGroup ? Theme.c.keyframesKeyDot.summary
                                                       : Theme.keyframeCurveColor(modelData.keyProp ?? "")
 
@@ -68,6 +71,13 @@ Item {
                                                  Theme.c.keyframesLane.backgroundAlt.b,
                                                  Theme.c.keyframesLane.opacityAlt)
                                        : "transparent")
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                visible: root.panel.hoverRow === lane.index
+                color: Qt.rgba(Theme.c.keyframesLane.backgroundHover.r, Theme.c.keyframesLane.backgroundHover.g,
+                               Theme.c.keyframesLane.backgroundHover.b, Theme.c.keyframesLane.opacityHover)
             }
 
             Rectangle {
@@ -102,8 +112,15 @@ Item {
                     y: (lane.height - height) / 2
                     color: lane.dotColor
                     hold: modelData.hold
+                    collides: {
+                        void EditorState.keyframes.collisions
+                        return EditorState.keyframes.collidesWith(modelData.refs)
+                    }
                     disabled: !lane.isGroup && !lane.modelData.enabled
-                    selected: Model.refsSelected(root.panel.selection, modelData.refs)
+                    selected: {
+                        void root.panel.selection.revision
+                        return root.panel.selection.hasAll(modelData.refs)
+                    }
                     hovered: root.hoverRow === lane.index
                              && Math.abs(root.hoverSeconds - modelData.seconds) < 1e-4
                 }

@@ -2093,6 +2093,7 @@
       "scaleHover": 1.15,
       "scaleSelected": 1.3,
       "summary": "$semantic.mutedForeground",
+      "borderCollision": "$semantic.destructive",
       "opacityDisabled": 0.35
     },
     "keyframesLane": {
@@ -2101,6 +2102,8 @@
       "clipSpan": "$semantic.panel.accent",
       "opacityClipSpan": 0.35,
       "groupBackground": "$semantic.panel.secondary.background",
+      "backgroundHover": "$semantic.panel.accent",
+      "opacityHover": 0.4,
       "border": "$semantic.panel.border"
     },
     "keyframesMarquee": {
@@ -2108,6 +2111,13 @@
       "backgroundOpacity": 0.12,
       "border": "$semantic.primary",
       "borderWidth": "$metrics.borderWidth"
+    },
+    "keyframesReadout": {
+      "background": "$semantic.panel.secondary.background",
+      "foreground": "$semantic.panel.secondary.foreground",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "radius": "$metrics.radius.sm"
     },
     "keyframesRuler": {
       "background": "$semantic.surface.panel",

@@ -36,6 +36,9 @@
 #include "ui/theme/backdrop/WindowBackdrop.h"
 #include "ui/timeline/TimelineTrackItem.h"
 #include "ui/timeline/TimelineViewState.h"
+#include "app/editor/sessions/KeyframeRowsModel.h"
+#include "app/editor/sessions/KeyframeSelection.h"
+#include "app/editor/sessions/KeyframeTimeView.h"
 
 // QApplication (not QGuiApplication) is required so QFileDialog can use the
 // native platform file picker, which routes through xdg-desktop-portal.
@@ -695,6 +698,9 @@ int main(int argc, char *argv[])
     qmlRegisterType<PreviewItem>("Drift", 1, 0, "PreviewItem");
     qmlRegisterType<TimelineViewState>("Drift", 1, 0, "TimelineViewState");
     qmlRegisterType<TimelineTrackItem>("Drift", 1, 0, "TimelineTrackClips");
+    qmlRegisterType<KeyframeSelection>("Drift", 1, 0, "KeyframeSelection");
+    qmlRegisterType<KeyframeTimeView>("Drift", 1, 0, "KeyframeTimeView");
+    qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
     TimelineTrackItem::installAccessibility();
 
     static AssetLibrary assetLibrary;

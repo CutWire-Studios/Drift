@@ -1064,6 +1064,14 @@ qt_add_executable(drift
     src/app/editor/sessions/CurveEditorController.cpp
     src/app/editor/sessions/KeyframeController.h
     src/app/editor/sessions/KeyframeController.cpp
+    src/app/editor/sessions/KeyframeRows.h
+    src/app/editor/sessions/KeyframeRows.cpp
+    src/app/editor/sessions/KeyframeRowsModel.h
+    src/app/editor/sessions/KeyframeRowsModel.cpp
+    src/app/editor/sessions/KeyframeSelection.h
+    src/app/editor/sessions/KeyframeSelection.cpp
+    src/app/editor/sessions/KeyframeTimeView.h
+    src/app/editor/sessions/KeyframeTimeView.cpp
     src/app/editor/sessions/MaskingController.h
     src/app/editor/sessions/MaskingController.cpp
     src/app/editor/sessions/SubtitleController.h
@@ -1699,23 +1707,20 @@ qt_add_qml_module(drift
         src/qml/components/subtitles/SubtitleCueGridRow.qml
         src/qml/components/subtitles/SubtitleTime.js
         src/qml/components/panels/SubtitleTimingPanel.qml
-        src/qml/components/keyframes/KeyframesModel.js
         src/qml/components/keyframes/KeyframesContextMenu.qml
         src/qml/components/keyframes/KeyframesCurvesInteraction.qml
         src/qml/components/keyframes/KeyframesCurvesView.qml
         src/qml/components/keyframes/KeyframesInteractionSurface.qml
+        src/qml/components/keyframes/KeyframesDragReadout.qml
         src/qml/components/keyframes/KeyframesKeyDot.qml
         src/qml/components/keyframes/KeyframesLanesView.qml
         src/qml/components/keyframes/KeyframesMarquee.qml
         src/qml/components/keyframes/KeyframesPlayheadLine.qml
         src/qml/components/keyframes/KeyframesRuler.qml
         src/qml/components/keyframes/KeyframesStretchBox.qml
-        src/qml/components/keyframes/KeyframesTimeView.qml
-        src/qml/components/keyframes/KeyframesSelection.qml
         src/qml/components/keyframes/KeyframesToolbar.qml
         src/qml/components/keyframes/KeyframesTreeRow.qml
         src/qml/components/keyframes/KeyframesValueScrubber.qml
-        src/qml/components/keyframes/ScaleMath.js
         src/qml/components/keyframes/EasingCache.js
         src/qml/components/color/GradeSlider.qml
         src/qml/components/color/ColorWheel.qml

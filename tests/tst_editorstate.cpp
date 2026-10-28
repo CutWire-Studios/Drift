@@ -40,6 +40,9 @@
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include "app/editor/PreferencesController.h"
+#include "app/editor/sessions/KeyframeController.h"
+#include "app/editor/sessions/KeyframeRowsModel.h"
+#include "app/editor/sessions/KeyframeTimeView.h"
 #include "engine/compositor/FrameCompositor.h"
 #include "engine/compositor/GpuCompositor.h"
 #include "engine/tracking/MotionTracking.h"
@@ -296,6 +299,10 @@ private slots:
     void keyframePreviewMoveIsOneUndoStep();
     void keyframePreviewStretchScalesOffsetAndTangent();
     void keyframeCopyPasteRemapsEffectsAndSkipsOutOfRange();
+    void keyframeRowsModelDiffsRebuildsAndNavigates();
+    void keyframeMoveReportsCollisions();
+    void keyframeNudgesFoldIntoOneUndoStep();
+    void keyframeScaleMathMatchesTheCanvasBox();
     void depthEffectEditorStateResolvesHandles();
     void behindSubjectTargetsAChosenClip();
     void effectRemovalRemapsGraphSelection();
@@ -5075,6 +5082,151 @@ void EditorStateTest::keyframePreviewStretchScalesOffsetAndTangent()
     QCOMPARE(moved.value(QStringLiteral("value")).toDouble(), 20.0);
     QCOMPARE(moved.value(QStringLiteral("inDx")).toDouble(), 2.0 * second.value(QStringLiteral("inDx")).toDouble());
     QCOMPARE(moved.value(QStringLiteral("outDx")).toDouble(), 2.0 * second.value(QStringLiteral("outDx")).toDouble());
+}
+
+void EditorStateTest::keyframeRowsModelDiffsRebuildsAndNavigates()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Rows"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    state.setPositionLinked(false);
+    state.setClipKeyframe(track, clip, QStringLiteral("rotation"), 1.0, 10.0);
+    state.setClipKeyframe(track, clip, QStringLiteral("rotation"), 2.0, 20.0);
+
+    KeyframeTimeView view;
+    KeyframeRowsModel model;
+    model.setController(state.keyframes());
+    model.setTimeView(&view);
+    model.setProperty("track", track);
+    model.setProperty("clip", clip);
+    QSignalSpy inserted(&model, &QAbstractItemModel::rowsInserted);
+    QSignalSpy removed(&model, &QAbstractItemModel::rowsRemoved);
+
+    model.rebuild();
+    QVERIFY(model.rowCount() > 1);
+    QCOMPARE(model.index(0, 0).data(KeyframeRowsModel::RowKeyRole).toString(), QStringLiteral("g:transform"));
+    int rotationRow = -1;
+    for (int i = 0; i < model.rowCount(); ++i) {
+        if (model.rowAt(i).value(QStringLiteral("prop")).toString() == QLatin1String("rotation"))
+            rotationRow = i;
+    }
+    QVERIFY(rotationRow > 0);
+    QCOMPARE(model.rowAt(rotationRow).value(QStringLiteral("keys")).toList().size(), 2);
+
+    const int rowsBefore = model.rowCount();
+    const int insertedBefore = inserted.count();
+    model.rebuild();
+    QCOMPARE(model.rowCount(), rowsBefore);
+    QCOMPARE(inserted.count(), insertedBefore);
+    QCOMPARE(removed.count(), 0);
+
+    QCOMPARE(model.nextKeyTime({rotationRow}, 1.0), 2.0);
+    QCOMPARE(model.prevKeyTime({rotationRow}, 2.0), 1.0);
+    QCOMPARE(model.prevKeyTime({rotationRow}, 1.0), -1.0);
+    QCOMPARE(model.refsAt(rotationRow, 1.0, 1e-4).size(), 1);
+    QVERIFY(model.allVisibleKeyRefs().size() >= 2);
+
+    const QVariantList targets = model.targetIndices({QStringLiteral("rotation")}, QString());
+    QCOMPARE(targets, QVariantList{rotationRow});
+    QVERIFY(model.targetsHaveKeys(targets));
+    QVERIFY(model.allTargetsKeyed(targets, 1.0, 0.01));
+    QVERIFY(!model.allTargetsKeyed(targets, 1.5, 0.01));
+    QCOMPARE(model.targetTracks(targets), QStringList{QStringLiteral("rotation")});
+
+    view.setPxPerSecond(100);
+    const double lanePx = 40;
+    const QVariantMap hit = model.hitTest(view.xFor(1.0) + 2, rotationRow * lanePx + 5, 0, lanePx, 6);
+    QCOMPARE(hit.value(QStringLiteral("row")).toInt(), rotationRow);
+    QCOMPARE(hit.value(QStringLiteral("seconds")).toDouble(), 1.0);
+
+    // Snapping lands on the frame grid and the playhead; the moved key itself is no target.
+    view.setClipStart(0.0);
+    view.setClipDuration(10.0);
+    const QVariantList self{QVariantMap{{QStringLiteral("prop"), QStringLiteral("rotation")},
+                                        {QStringLiteral("seconds"), 1.0}}};
+    const double fps = state.projectFile()->projectFps();
+    QCOMPARE(model.moveDelta(1.0, 0.0, self, true, false), 0.0);
+    QVERIFY(qAbs(model.moveDelta(1.0, 50.3, self, true, false) - std::round(0.503 * fps) / fps) < 1e-9);
+
+    model.setProperty("animatedOnly", true);
+    model.rebuild();
+    QVERIFY(model.rowCount() < rowsBefore);
+    QVERIFY(removed.count() > 0);
+    model.clear();
+    QCOMPARE(model.rowCount(), 0);
+}
+
+void EditorStateTest::keyframeMoveReportsCollisions()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Collide"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const QString rotation = QStringLiteral("rotation");
+    state.setPositionLinked(false);
+    state.setClipKeyframe(track, clip, rotation, 1.0, 10.0);
+    state.setClipKeyframe(track, clip, rotation, 2.0, 20.0);
+
+    QSignalSpy spy(state.keyframes(), &KeyframeController::collisionsChanged);
+    const QVariantList press{QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 1.0}}};
+    state.keyframes()->previewMoveKeys(track, clip, press, 1.0);
+    QCOMPARE(state.keyframes()->collisions().size(), 1);
+    QVERIFY(state.keyframes()->collidesWith(QVariantList{QVariantMap{{QStringLiteral("prop"), rotation},
+                                                                       {QStringLiteral("seconds"), 2.0}}}));
+    state.keyframes()->previewMoveKeys(track, clip, press, 0.5);
+    QVERIFY(state.keyframes()->collisions().isEmpty());
+    QVERIFY(spy.count() >= 2);
+    state.keyframes()->previewMoveKeys(track, clip, press, 1.0);
+    state.keyframes()->clearCollisions();
+    QVERIFY(state.keyframes()->collisions().isEmpty());
+    state.cancelPreviewDrag();
+}
+
+void EditorStateTest::keyframeNudgesFoldIntoOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Nudge"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    const QString rotation = QStringLiteral("rotation");
+    state.setPositionLinked(false);
+    state.setClipKeyframe(track, clip, rotation, 1.0, 10.0);
+    state.setClipKeyframe(track, clip, rotation, 3.0, 20.0);
+
+    const double step = 1.0 / std::max(1, state.projectFile()->projectFps());
+    QVariantList sel{QVariantMap{{QStringLiteral("prop"), rotation}, {QStringLiteral("seconds"), 1.0}}};
+    for (int i = 0; i < 3; ++i) {
+        sel = state.keyframes()->nudgeKeys(track, clip, sel, step);
+        QCOMPARE(sel.size(), 1);
+    }
+    QVERIFY(qAbs(sel.first().toMap().value(QStringLiteral("seconds")).toDouble() - (1.0 + 3 * step)) < 1e-4);
+    QVERIFY(state.previewDragActive());
+    state.commitPreviewDrag();
+
+    state.undo();
+    const QVariantList keys = state.clipKeyframes(track, clip, rotation);
+    QCOMPARE(keys.size(), 2);
+    QVERIFY(qAbs(keys.first().toMap().value(QStringLiteral("seconds")).toDouble() - 1.0) < 1e-6);
+}
+
+void EditorStateTest::keyframeScaleMathMatchesTheCanvasBox()
+{
+    QCOMPARE(KeyframeController::scaleOf(960, 540, 1920, 1080), 0.5);
+    QCOMPARE(KeyframeController::scaleOf(1920, 400, 1920, 1080), 1.0);
+    const QVariantMap start{{QStringLiteral("x"), 100.0}, {QStringLiteral("y"), 50.0}, {QStringLiteral("w"), 200.0},
+                            {QStringLiteral("h"), 100.0}, {QStringLiteral("scale"), 0.5}, {QStringLiteral("rot"), 0.0}};
+    const QVariantMap centred = KeyframeController::scaledRect(start, 1.0, QPointF(0.5, 0.5));
+    QCOMPARE(centred.value(QStringLiteral("k")).toDouble(), 2.0);
+    QCOMPARE(centred.value(QStringLiteral("w")).toDouble(), 400.0);
+    QCOMPARE(centred.value(QStringLiteral("x")).toDouble(), 0.0);
+    QCOMPARE(centred.value(QStringLiteral("y")).toDouble(), 0.0);
+    const QVariantMap corner = KeyframeController::scaledRect(start, 1.0, QPointF(0.0, 0.0));
+    QCOMPARE(corner.value(QStringLiteral("x")).toDouble(), 100.0);
+    QCOMPARE(corner.value(QStringLiteral("y")).toDouble(), 50.0);
 }
 
 void EditorStateTest::keyframeCopyPasteRemapsEffectsAndSkipsOutOfRange()

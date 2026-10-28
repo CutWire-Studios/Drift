@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
-import "KeyframesModel.js" as Model
 
 Item {
     id: root
@@ -14,6 +13,8 @@ Item {
     required property bool curvesMode
     required property bool curveShown
     required property bool focused
+    required property var rowsModel
+    required property int rowIndex
 
     readonly property real rowHeight: Theme.controlHeightSm + Theme.spacingMd
     readonly property bool isGroup: row.type === "group"
@@ -24,17 +25,28 @@ Item {
         return 0.5 / Math.max(1, EditorState.projectFile.projectFps())
     }
     readonly property bool hasKeys: !isGroup && !!row.keys && row.keys.length > 0
-    readonly property var keysHere: isGroup ? [] : Model.refsForRowAt(row, displayPlayhead, halfFrame)
-    readonly property bool keyHere: keysHere.length > 0
-    readonly property bool hasPrev: hasKeys && Model.prevKeyTime([row], displayPlayhead) !== null
-    readonly property bool hasNext: hasKeys && Model.nextKeyTime([row], displayPlayhead) !== null
+    readonly property bool keyHere: {
+        void row
+        return !isGroup && rowsModel.refsAt(rowIndex, displayPlayhead, halfFrame).length > 0
+    }
+    readonly property bool hasPrev: {
+        void row
+        return hasKeys && rowsModel.prevKeyTime([rowIndex], playhead) >= 0
+    }
+    readonly property bool hasNext: {
+        void row
+        return hasKeys && rowsModel.nextKeyTime([rowIndex], playhead) >= 0
+    }
+
+    readonly property alias hovered: hover.hovered
 
     signal focusRequested()
+    signal keysSelectRequested(bool additive)
     signal groupToggled()
     signal curveShownToggled(bool shown)
 
     function toggleKeyHere() {
-        if (!isGroup && Model.refsForRowAt(row, playhead, halfFrame).length > 0)
+        if (!isGroup && rowsModel.refsAt(rowIndex, playhead, halfFrame).length > 0)
             EditorState.keyframes.removeKeysAt(track, clip, row.tracks, playhead)
         else
             EditorState.keyframes.addKeysAt(track, clip, row.tracks, playhead)
@@ -69,7 +81,24 @@ Item {
     HoverHandler { id: hover }
 
     TapHandler {
-        onTapped: root.isGroup ? root.groupToggled() : root.focusRequested()
+        acceptedModifiers: Qt.NoModifier
+        onTapped: {
+            if (root.isGroup) {
+                root.groupToggled()
+            } else {
+                root.focusRequested()
+                root.keysSelectRequested(false)
+            }
+        }
+    }
+
+    TapHandler {
+        acceptedModifiers: Qt.ShiftModifier
+        enabled: !root.isGroup
+        onTapped: {
+            root.focusRequested()
+            root.keysSelectRequested(true)
+        }
     }
 
     Row {
@@ -157,7 +186,7 @@ Item {
             track: root.track
             clip: root.clip
             playhead: root.displayPlayhead
-            onActiveFocusChanged: if (activeFocus) root.focusRequested()
+            onEditingChanged: if (editing) root.focusRequested()
         }
 
         Row {
@@ -173,7 +202,7 @@ Item {
                 enabled: root.hasPrev
                 onClicked: {
                     root.focusRequested()
-                    EditorState.playheadSeconds = Model.prevKeyTime([root.row], root.playhead)
+                    EditorState.playheadSeconds = root.rowsModel.prevKeyTime([root.rowIndex], root.playhead)
                 }
             }
 
@@ -198,7 +227,7 @@ Item {
                 enabled: root.hasNext
                 onClicked: {
                     root.focusRequested()
-                    EditorState.playheadSeconds = Model.nextKeyTime([root.row], root.playhead)
+                    EditorState.playheadSeconds = root.rowsModel.nextKeyTime([root.rowIndex], root.playhead)
                 }
             }
         }

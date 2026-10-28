@@ -12,6 +12,15 @@ target_link_libraries(tst_core PRIVATE Qt6::Test driftcore)
 target_compile_definitions(tst_core PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME Core COMMAND tst_core)
 
+qt_add_executable(tst_keyframeview
+    tst_keyframeview.cpp
+    ../src/app/editor/sessions/KeyframeRows.cpp
+    ../src/app/editor/sessions/KeyframeSelection.cpp
+    ../src/app/editor/sessions/KeyframeTimeView.cpp)
+target_include_directories(tst_keyframeview PRIVATE ../src)
+target_link_libraries(tst_keyframeview PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME KeyframeView COMMAND tst_keyframeview)
+
 qt_add_executable(tst_pdfsource tst_pdfsource.cpp)
 target_include_directories(tst_pdfsource PRIVATE ../src)
 target_link_libraries(tst_pdfsource PRIVATE Qt6::Test driftcore)
@@ -34,6 +43,10 @@ qt_add_executable(tst_editorstate
     ../src/app/editor/sessions/SpeedCurveController.cpp
     ../src/app/editor/sessions/CurveEditorController.cpp
     ../src/app/editor/sessions/KeyframeController.cpp
+    ../src/app/editor/sessions/KeyframeRows.cpp
+    ../src/app/editor/sessions/KeyframeRowsModel.cpp
+    ../src/app/editor/sessions/KeyframeSelection.cpp
+    ../src/app/editor/sessions/KeyframeTimeView.cpp
     ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
     ../src/app/editor/sessions/SubtitleCueModel.cpp
@@ -231,6 +244,10 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/SpeedCurveController.cpp
     ../src/app/editor/sessions/CurveEditorController.cpp
     ../src/app/editor/sessions/KeyframeController.cpp
+    ../src/app/editor/sessions/KeyframeRows.cpp
+    ../src/app/editor/sessions/KeyframeRowsModel.cpp
+    ../src/app/editor/sessions/KeyframeSelection.cpp
+    ../src/app/editor/sessions/KeyframeTimeView.cpp
     ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
     ../src/app/editor/sessions/SubtitleCueModel.cpp

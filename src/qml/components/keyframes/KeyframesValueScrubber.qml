@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
-import "ScaleMath.js" as ScaleMath
 
 // Inline value editor for a Keyframes tree row. A horizontal press-drag scrubs a number, a double
 // click types one; bool rows get a checkbox and colour, vec2, region and enum rows are read-only.
@@ -33,6 +32,7 @@ Item {
     property int valueRevision: 0
     property bool dragging: false
     property bool typing: false
+    readonly property bool editing: typing || dragging
     property real liveValue: 0
     property var scaleStart: null
     property real pressX: 0
@@ -52,8 +52,8 @@ Item {
 
     function valueAt() {
         if (isScale)
-            return ScaleMath.scaleOf(trackValue("width", canvasW), trackValue("height", canvasH),
-                                     canvasW, canvasH)
+            return EditorState.keyframes.scaleOf(trackValue("width", canvasW), trackValue("height", canvasH),
+                                                 canvasW, canvasH)
         return trackValue(row.keyProp, row.base)
     }
 
@@ -117,15 +117,7 @@ Item {
     }
 
     function previewScale(value) {
-        const s = scaleStart
-        if (!s || s.scale <= 0)
-            return
-        const r = ScaleMath.scaledRect(s, value, Qt.point(0.5, 0.5))
-        const kind = EditorState.selectedClipData.kind
-        if (kind === "text" || kind === "subtitle")
-            EditorState.previewSetTextRect(track, clip, r.x, r.y, r.w, r.h, Math.round(s.pixelSize * r.k))
-        else
-            EditorState.previewSetClipRect(track, clip, r.x, r.y, r.w, r.h)
+        EditorState.keyframes.previewScale(track, clip, scaleStart, value)
     }
 
     function preview(value) {

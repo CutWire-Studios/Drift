@@ -238,7 +238,7 @@ PanelFrame {
         }
     }
 
-    KeyframesTimeView {
+    KeyframeTimeView {
         id: timeViewObject
         viewportWidth: view.width
     }

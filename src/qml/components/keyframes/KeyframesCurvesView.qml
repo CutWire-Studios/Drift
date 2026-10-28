@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
-import "KeyframesModel.js" as Model
 import "EasingCache.js" as EasingCache
 
 Item {
@@ -142,7 +141,7 @@ Item {
                 out.push({
                     "prop": id,
                     "rowProp": r.prop,
-                    "row": r,
+                    "rowIndex": i,
                     "label": r.tracks.length > 1 ? r.label + " " + id.substring(id.lastIndexOf(".") + 1) : r.label,
                     "color": Theme.keyframeCurveColor(id),
                     "points": pts,
@@ -289,11 +288,21 @@ Item {
                 continue
             }
             for (let p = 0; p < e.points.length; ++p) {
-                if (selectedOnly && !panel.selection.has(e.prop, e.points[p].seconds))
+                const pt = e.points[p]
+                if (selectedOnly && !panel.selection.has(e.prop, pt.seconds))
                     continue
-                const v = Number(e.points[p].value)
-                lo = Math.min(lo, v)
-                hi = Math.max(hi, v)
+                const v = Number(pt.value)
+                const reach = [v, v + (pt.outDy || 0), v + (pt.inDy || 0)]
+                if (pt.fn && p + 1 < e.points.length) {
+                    const span = Number(e.points[p + 1].value) - v
+                    const samples = EasingCache.samples(easingFnSpec(pt), 48, (s, n) => EditorState.easingSamples(s, n))
+                    for (let k = 0; k < samples.length; ++k)
+                        reach.push(v + span * samples[k].y)
+                }
+                for (let k = 0; k < reach.length; ++k) {
+                    lo = Math.min(lo, reach[k])
+                    hi = Math.max(hi, reach[k])
+                }
             }
         }
         if (!isFinite(lo)) {
@@ -422,8 +431,15 @@ Item {
             color: modelData.color
             hold: modelData.hold
             disabled: !modelData.enabled
-            selected: root.panel.selection.has(modelData.prop, modelData.seconds)
-            hovered: root.hoverId === Model.keyId(modelData.prop, modelData.seconds)
+            collides: {
+                void EditorState.keyframes.collisions
+                return EditorState.keyframes.collidesWith([{ "prop": modelData.prop, "seconds": modelData.seconds }])
+            }
+            selected: {
+                void root.panel.selection.revision
+                return root.panel.selection.has(modelData.prop, modelData.seconds)
+            }
+            hovered: root.hoverId === root.panel.selection.keyId(modelData.prop, modelData.seconds)
             opacity: (modelData.enabled ? 1 : Theme.c.keyframesKeyDot.opacityDisabled)
                      * (root.isFocused(modelData.seriesIndex) ? 1 : Theme.c.keyframesCurves.opacityContext)
         }

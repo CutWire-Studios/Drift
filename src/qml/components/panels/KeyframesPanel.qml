@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls.Basic
 import Drift
-import "../keyframes/KeyframesModel.js" as Model
 
 PanelFrame {
     id: root
@@ -15,11 +14,13 @@ PanelFrame {
     property var collapsed: ({})
     property var curveShown: ({})
     property string focusedProp: ""
-    property var rows: []
-    readonly property alias rowKeys: rowKeysModel
+    property int hoverRow: -1
+    readonly property alias rowsModel: rowsModelObject
+    readonly property var rows: rowsModelObject.rows
 
     readonly property alias timeView: timeViewObject
     readonly property alias selection: selectionObject
+    readonly property real treeColumn: Math.min(treeWidth, width * 0.45)
     readonly property alias treeContentY: treeList.contentY
     readonly property alias rightArea: rightAreaItem
     readonly property alias treeList: treeList
@@ -32,117 +33,53 @@ PanelFrame {
     readonly property bool wantsActions: shown && (activeFocus || hover.hovered)
 
     readonly property var focusItem: Window.activeFocusItem
-    property string lastRowKeys: ""
-    property var entryCache: ({ "key": "", "list": [] })
     property var curveSeen: ({})
 
     readonly property var targets: {
         void selectionObject.revision
         void rows
         void focusedProp
-        const props = selectionObject.props()
-        const out = []
-        for (let i = 0; i < rows.length; ++i) {
-            const r = rows[i]
-            if (r.type === "group")
-                continue
-            if (props.length > 0 ? props.some(p => r.tracks.indexOf(p) >= 0) : r.prop === focusedProp)
-                out.push(r)
-        }
-        return out
+        return rowsModelObject.targetIndices(selectionObject.props(), focusedProp)
     }
     readonly property real halfFrame: {
         void EditorState.tracksRevision
         return 0.5 / Math.max(1, EditorState.projectFile.projectFps())
     }
+    readonly property bool noKeys: {
+        void rows
+        return rowsModelObject.count > 0 && rowsModelObject.allVisibleKeyRefs().length === 0
+    }
     readonly property bool allTargetsKeyed: {
         void playhead
-        return targets.length > 0 && targets.every(r => Model.refsForRowAt(r, playhead, halfFrame).length > 0)
+        void rows
+        return rowsModelObject.allTargetsKeyed(targets, playhead, halfFrame)
     }
-    readonly property bool targetsHaveKeys: targets.some(r => r.keys.length > 0)
-
-    function targetTracks(list) {
-        const out = []
-        for (let i = 0; i < list.length; ++i) {
-            for (let j = 0; j < list[i].tracks.length; ++j) {
-                if (out.indexOf(list[i].tracks[j]) < 0)
-                    out.push(list[i].tracks[j])
-            }
-        }
-        return out
+    readonly property bool targetsHaveKeys: {
+        void rows
+        return rowsModelObject.targetsHaveKeys(targets)
     }
 
-    function visibleDataRows() {
-        return rows.filter(r => r.type !== "group")
-    }
-
-    function entries() {
-        const key = track + ":" + clip + ":" + EditorState.tracksRevision
-        if (entryCache.key !== key)
-            entryCache = { "key": key, "list": EditorState.keyframes.animatableProperties(track, clip) }
-        return entryCache.list
+    function formatTimecode(seconds) {
+        const fps = Math.max(1, EditorState.projectFile.projectFps())
+        const total = Math.round(Math.max(0, seconds) * fps)
+        const pad = (n) => (n < 10 ? "0" : "") + n
+        const whole = Math.floor(total / fps)
+        return pad(Math.floor(whole / 3600)) + ":" + pad(Math.floor(whole / 60) % 60) + ":" + pad(whole % 60)
+               + ":" + pad(total - whole * fps)
     }
 
     function snapKeyTime(raw, excludeRefs, invert) {
-        const skip = {}
-        for (let i = 0; i < excludeRefs.length; ++i)
-            skip[Math.round(excludeRefs[i].seconds * 1e6)] = true
-        const others = Model.allKeyTimes(rows).filter(t => !skip[Math.round(t * 1e6)])
-        return EditorState.keyframes.snapKeyTime(raw, timeViewObject.pxPerSecond, others,
-                                                 EditorState.snapEnabled !== !!invert)
-    }
-
-    function rowKey(r) {
-        return r.type === "group" ? "g:" + r.group : "p:" + r.group + ":" + r.prop
-    }
-
-    function applyRows(built) {
-        const keys = built.map(rowKey)
-        const joined = keys.join("\n")
-        if (joined === lastRowKeys && rowKeysModel.count === keys.length) {
-            rows = built
-            return
-        }
-        lastRowKeys = joined
-        const wanted = {}
-        for (let i = 0; i < keys.length; ++i)
-            wanted[keys[i]] = true
-        for (let i = rowKeysModel.count - 1; i >= 0; --i) {
-            if (!wanted[rowKeysModel.get(i).key])
-                rowKeysModel.remove(i)
-        }
-        let at = 0
-        let ordered = true
-        for (let i = 0; i < rowKeysModel.count && ordered; ++i) {
-            while (at < keys.length && keys[at] !== rowKeysModel.get(i).key)
-                ++at
-            if (at++ >= keys.length)
-                ordered = false
-        }
-        if (!ordered)
-            rowKeysModel.clear()
-        rows = built
-        for (let i = 0; i < keys.length; ++i) {
-            if (i >= rowKeysModel.count || rowKeysModel.get(i).key !== keys[i])
-                rowKeysModel.insert(i, { "key": keys[i] })
-        }
+        return rowsModelObject.snapKeyTime(raw, excludeRefs, !!invert)
     }
 
     function rebuild() {
         if (!shown || !hasClip) {
-            applyRows([])
+            rowsModelObject.clear()
             return
         }
-        const built = Model.buildRows(entries(), {
-            "sizeLinked": EditorState.sizeLinked,
-            "animatedOnly": animatedOnly,
-            "collapsed": collapsed,
-            "clipStart": timeViewObject.clipStart,
-            "scaleLabel": qsTr("Scale"),
-            "keysFor": prop => EditorState.clipKeyframes(track, clip, prop)
-        })
         const keepY = treeList.contentY
-        applyRows(built)
+        rowsModelObject.rebuild()
+        const built = rows
         if (keepY > 0)
             Qt.callLater(() => { treeList.contentY = keepY })
         let shownNow = curveShown
@@ -195,16 +132,16 @@ PanelFrame {
     }
 
     function jumpToKey(forward) {
-        const list = targets.length > 0 ? targets : visibleDataRows()
-        const t = forward ? Model.nextKeyTime(list, playhead) : Model.prevKeyTime(list, playhead)
-        if (t !== null)
+        const t = forward ? rowsModelObject.nextKeyTime(targets, playhead)
+                          : rowsModelObject.prevKeyTime(targets, playhead)
+        if (t >= 0)
             EditorState.playheadSeconds = t
     }
 
     function toggleKeyAtPlayhead() {
         if (targets.length === 0)
             return
-        const tracks = targetTracks(targets)
+        const tracks = rowsModelObject.targetTracks(targets)
         if (allTargetsKeyed)
             EditorState.keyframes.removeKeysAt(track, clip, tracks, playhead)
         else
@@ -214,7 +151,7 @@ PanelFrame {
     function clearTargetKeys() {
         if (targets.length === 0)
             return
-        EditorState.keyframes.clearProperties(track, clip, targetTracks(targets))
+        EditorState.keyframes.clearProperties(track, clip, rowsModelObject.targetTracks(targets))
         selectionObject.clear()
     }
 
@@ -232,22 +169,9 @@ PanelFrame {
             curvesView.fitValues(true)
     }
 
-    function allVisibleKeyRefs() {
-        const refs = []
-        const list = visibleDataRows()
-        for (let i = 0; i < list.length; ++i) {
-            for (let j = 0; j < list[i].tracks.length; ++j) {
-                const keys = list[i].trackKeys[list[i].tracks[j]] || []
-                for (let k = 0; k < keys.length; ++k)
-                    refs.push({ "prop": list[i].tracks[j], "seconds": keys[k].seconds })
-            }
-        }
-        return refs
-    }
-
     function nudgeSelection(frames) {
         const dt = frames / Math.max(1, EditorState.projectFile.projectFps())
-        const moved = EditorState.keyframes.moveKeys(track, clip, selectionObject.refs(), dt)
+        const moved = EditorState.keyframes.nudgeKeys(track, clip, selectionObject.refs(), dt)
         if (moved && moved.length > 0)
             selectionObject.replace(moved)
     }
@@ -266,10 +190,10 @@ PanelFrame {
         return !!f && f.cursorPosition !== undefined
     }
 
-    function handleAction(id) {
+    function handleAction(id, force) {
         if (!shown || !hasClip || textFieldFocused())
             return false
-        const mine = activeFocus || hover.hovered
+        const mine = !!force || activeFocus || hover.hovered
         if (id === "paste") {
             if (selectionObject.count === 0 && !(EditorState.keyframes.clipboardCount > 0 && mine))
                 return false
@@ -281,7 +205,7 @@ PanelFrame {
         if (id === "selectAll") {
             if (selectionObject.count === 0 && !mine)
                 return false
-            selectionObject.replace(allVisibleKeyRefs())
+            selectionObject.replace(rowsModelObject.allVisibleKeyRefs())
             return true
         }
         if (selectionObject.count === 0)
@@ -330,6 +254,15 @@ PanelFrame {
                    && selectionObject.count > 0 && root.hasClip) {
             root.nudgeSelection((event.key === Qt.Key_Left ? -1 : 1) * (event.modifiers & Qt.ShiftModifier ? 10 : 1))
             event.accepted = true
+        } else if (event.key === Qt.Key_F && event.modifiers === Qt.NoModifier && root.hasClip) {
+            if (selectionObject.count > 0)
+                root.fitSelection()
+            else
+                root.fitAll()
+            event.accepted = true
+        } else if (event.key === Qt.Key_Home && event.modifiers === Qt.NoModifier && root.hasClip) {
+            root.fitAll()
+            event.accepted = true
         } else if (event.key === Qt.Key_Left && (event.modifiers & Qt.AltModifier)) {
             root.jumpToKey(false)
             event.accepted = true
@@ -339,7 +272,18 @@ PanelFrame {
         }
     }
 
-    ListModel { id: rowKeysModel }
+    KeyframeRowsModel {
+        id: rowsModelObject
+        controller: EditorState.keyframes
+        timeView: timeViewObject
+        track: root.track
+        clip: root.clip
+        revision: EditorState.tracksRevision
+        sizeLinked: EditorState.sizeLinked
+        animatedOnly: root.animatedOnly
+        scaleLabel: qsTr("Scale")
+        collapsed: root.collapsed
+    }
 
     HoverHandler { id: hover }
 
@@ -361,12 +305,12 @@ PanelFrame {
         }
     }
 
-    KeyframesTimeView {
+    KeyframeTimeView {
         id: timeViewObject
         viewportWidth: rightAreaItem.width
     }
 
-    KeyframesSelection {
+    KeyframeSelection {
         id: selectionObject
     }
 
@@ -394,13 +338,13 @@ PanelFrame {
 
     Item {
         id: body
-        visible: root.hasClip && root.rows.length > 0
+        visible: root.hasClip && rowsModelObject.count > 0
         anchors.top: toolbar.bottom
         anchors.bottom: parent.bottom
         width: parent.width
 
         Rectangle {
-            width: root.treeWidth
+            width: root.treeColumn
             height: ruler.height
             color: Theme.c.keyframesRuler.background
 
@@ -415,19 +359,22 @@ PanelFrame {
         ListView {
             id: treeList
             y: ruler.height
-            width: root.treeWidth
+            width: root.treeColumn
             height: parent.height - y
             clip: true
-            model: root.rowKeys
+            model: rowsModelObject
             boundsBehavior: Flickable.StopAtBounds
             ScrollBar.vertical: AppScrollBar { }
 
             delegate: KeyframesTreeRow {
                 id: delegate
                 required property int index
+                required property var rowData
                 width: treeList.width
                 // Empty while the row outlives a shrinking list, until the ListView removes it.
-                row: root.rows[index] ?? ({})
+                row: delegate.rowData ?? ({})
+                rowsModel: rowsModelObject
+                rowIndex: delegate.index
                 track: root.track
                 clip: root.clip
                 playhead: root.playhead
@@ -439,6 +386,19 @@ PanelFrame {
                     root.focusedProp = delegate.row.prop
                     root.forceActiveFocus()
                 }
+                onHoveredChanged: {
+                    if (hovered)
+                        root.hoverRow = delegate.index
+                    else if (root.hoverRow === delegate.index)
+                        root.hoverRow = -1
+                }
+                onKeysSelectRequested: (additive) => {
+                    const refs = rowsModelObject.rowRefs(delegate.index)
+                    if (additive)
+                        selectionObject.add(refs)
+                    else
+                        selectionObject.replace(refs)
+                }
                 onGroupToggled: root.toggleCollapsed(delegate.row.group)
                 onCurveShownToggled: (on) => root.setCurveShown(delegate.row.keyProp, on)
             }
@@ -446,7 +406,7 @@ PanelFrame {
 
         Rectangle {
             id: splitter
-            x: root.treeWidth
+            x: root.treeColumn
             width: Theme.spacingXs
             height: parent.height
             color: splitArea.containsMouse || splitArea.pressed ? Theme.c.keyframesPanel.splitterHover
@@ -464,7 +424,7 @@ PanelFrame {
                 property real pressWidth: 0
                 onPressed: (mouse) => {
                     pressX = mapToItem(body, mouse.x, 0).x
-                    pressWidth = root.treeWidth
+                    pressWidth = root.treeColumn
                 }
                 onPositionChanged: (mouse) => {
                     if (!pressed)
@@ -477,7 +437,7 @@ PanelFrame {
 
         Item {
             id: rightAreaItem
-            x: root.treeWidth + splitter.width
+            x: root.treeColumn + splitter.width
             width: parent.width - x
             height: parent.height
             clip: true
@@ -532,6 +492,33 @@ PanelFrame {
                     panel: root
                     anchorItem: surface.anchorProxy
                 }
+
+                Text {
+                    visible: root.noKeys
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: Theme.spacingXl * 2
+                    width: parent.width - Theme.spacing3xl
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Press K to add a keyframe at the playhead, or double-click a lane to add one there")
+                    color: Theme.c.keyframesTreeRow.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
+                }
+
+                MouseArea {
+                    z: 5
+                    width: parent.width
+                    height: Theme.spacingMd
+                    cursorShape: Qt.SizeHorCursor
+                    preventStealing: true
+                    onPressed: (mouse) => ruler.scrubTo(mouse.x)
+                    onPositionChanged: (mouse) => {
+                        if (pressed)
+                            ruler.scrubTo(mouse.x)
+                    }
+                }
             }
 
             KeyframesPlayheadLine {
@@ -551,7 +538,7 @@ PanelFrame {
     }
 
     EmptyState {
-        visible: root.hasClip && root.rows.length === 0
+        visible: root.hasClip && rowsModelObject.count === 0
         anchors.centerIn: parent
         width: Math.min(parent.width - Theme.spacing3xl, 260)
         compact: true

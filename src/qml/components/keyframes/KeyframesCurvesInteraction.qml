@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
-import "KeyframesModel.js" as Model
 
 Item {
     id: root
@@ -11,6 +10,7 @@ Item {
 
     readonly property var timeView: panel.timeView
     readonly property var selection: panel.selection
+    readonly property var rowsModel: panel.rowsModel
     readonly property bool busy: dotDrag || marqueeActive
 
     property string mode: ""
@@ -27,6 +27,16 @@ Item {
     property var dragResult: []
     property real dragOrigin: 0
     property var marqueeBase: []
+    property real pressContentX: 0
+    property real lastX: 0
+    property real lastY: 0
+    property bool lastShift: false
+    property bool lastInvert: false
+    property real dragTime: 0
+    property real dragValue: 0
+    property string hoverTip: ""
+    readonly property real edgeZone: 24
+    readonly property real slop: touch || Theme.touchInput ? 14 : 8
 
     signal contextRequested(real x, real y, var hit)
 
@@ -58,11 +68,13 @@ Item {
         const entry = series[best.entryIndex]
         const refs = [{ "prop": entry.prop, "seconds": best.point.seconds }]
         return {
-            "row": panel.rows.indexOf(entry.row),
-            "rowData": entry.row,
+            "row": entry.rowIndex,
+            "rowData": panel.rows[entry.rowIndex],
             "dot": { "seconds": best.point.seconds, "refs": refs, "hold": !!best.point.hold },
             "refs": refs,
             "seconds": best.point.seconds,
+            "value": best.point.value,
+            "label": entry.label,
             "entryIndex": best.entryIndex
         }
     }
@@ -73,17 +85,12 @@ Item {
         panel.focusedProp = entry.rowProp
     }
 
-    function removeRefs(refs) {
-        const drop = {}
-        for (let i = 0; i < refs.length; ++i)
-            drop[Model.keyId(refs[i].prop, refs[i].seconds)] = true
-        selection.replace(selection.refs().filter(r => !drop[Model.keyId(r.prop, r.seconds)]))
-    }
-
     function startDotDrag() {
         dragRefs = selection.refs()
         dragResult = dragRefs
         dragOrigin = pressHit.seconds
+        dragTime = dragOrigin
+        dragValue = Number(pressHit.value)
         view.lockRanges()
         EditorState.beginPreviewDrag(qsTr("Move keyframes"))
         dotDrag = true
@@ -98,10 +105,13 @@ Item {
             else
                 dx = 0
         }
-        const raw = Math.max(timeView.clipStart,
-                             Math.min(timeView.clipStart + timeView.clipDuration,
-                                      dragOrigin + dx / timeView.pxPerSecond))
-        const dt = dx === 0 ? 0 : panel.snapKeyTime(raw, dragRefs, invertSnap) - dragOrigin
+        lastShift = !!shift
+        lastInvert = !!invertSnap
+        const dt = rowsModel.moveDelta(dragOrigin, dx + timeView.contentX - pressContentX, dragRefs, lastInvert, true)
+        dragTime = dragOrigin + dt
+        const pressedRange = (view.lockedRanges || ({}))[view.series[pressHit.entryIndex].prop]
+        dragValue = Number(pressHit.value)
+                    + (pressedRange ? -dy / view.graphHeight * (pressedRange.max - pressedRange.min) : 0)
         const locked = view.lockedRanges || ({})
         const refs = dragRefs.map(r => {
             const range = locked[r.prop]
@@ -117,6 +127,7 @@ Item {
 
     function finishDotDrag() {
         EditorState.commitPreviewDrag()
+        EditorState.keyframes.clearCollisions()
         selection.replace(dragResult)
         view.unlockRanges()
         dotDrag = false
@@ -125,6 +136,7 @@ Item {
     function cancelDrag() {
         if (dotDrag) {
             EditorState.cancelPreviewDrag()
+            EditorState.keyframes.clearCollisions()
             selection.replace(dragRefs)
             view.unlockRanges()
             dotDrag = false
@@ -134,13 +146,15 @@ Item {
     }
 
     function updateMarquee(x, y) {
-        const x0 = Math.max(0, Math.min(pressX, x))
-        const x1 = Math.min(width, Math.max(pressX, x))
+        const anchorX = pressX - (timeView.contentX - pressContentX)
+        const px = Math.max(0, Math.min(width, x))
+        const x0 = Math.min(anchorX, px)
+        const x1 = Math.max(anchorX, px)
         const y0 = Math.max(0, Math.min(pressY, y))
         const y1 = Math.min(height, Math.max(pressY, y))
-        marquee.x = x0
+        marquee.x = Math.max(0, x0)
         marquee.y = y0
-        marquee.width = x1 - x0
+        marquee.width = Math.min(width, x1) - marquee.x
         marquee.height = y1 - y0
         const refs = marqueeBase.slice()
         const series = view.series
@@ -157,23 +171,42 @@ Item {
         selection.replace(refs)
     }
 
+    function autoScroll() {
+        let dx = 0
+        if (lastX < edgeZone)
+            dx = -(edgeZone - lastX) * 0.5
+        else if (lastX > width - edgeZone)
+            dx = (lastX - (width - edgeZone)) * 0.5
+        if (dx === 0)
+            return
+        const lo = timeView.clipStart * timeView.pxPerSecond - width * 0.25
+        const hi = Math.max(lo, (timeView.clipStart + timeView.clipDuration) * timeView.pxPerSecond
+                                + width * 0.25 - width)
+        timeView.contentX = Math.max(lo, Math.min(hi, timeView.contentX + dx))
+        if (marqueeActive)
+            updateMarquee(lastX, lastY)
+        else
+            updateDotDrag(lastX, lastY, lastShift, lastInvert)
+    }
+
+    function readoutText() {
+        const fps = Math.max(1, EditorState.projectFile.projectFps())
+        const frames = Math.round((dragTime - dragOrigin) * fps)
+        return panel.formatTimecode(dragTime) + "  " + (frames >= 0 ? "+" : "") + frames
+               + "\n" + Number(dragValue).toFixed(2)
+    }
+
+    function tipFor(hit) {
+        if (!hit.dot)
+            return ""
+        return hit.label + "\n" + panel.formatTimecode(hit.seconds) + "\n" + Number(hit.value).toFixed(2)
+    }
+
     function pressDot(mods, hit) {
-        const selected = Model.refsSelected(selection, hit.refs)
         focusHit(hit)
-        if (mods & (Qt.ControlModifier | Qt.MetaModifier)) {
-            if (selected) {
-                removeRefs(hit.refs)
-                return false
-            }
-            selection.add(hit.refs)
-        } else if (mods & Qt.ShiftModifier) {
-            selection.add(hit.refs)
-        } else if (!selected) {
-            selection.replace(hit.refs)
-        } else {
-            collapseOnRelease = true
-        }
-        return true
+        const outcome = selection.press(mods, hit.refs)
+        collapseOnRelease = outcome === 2
+        return outcome !== 0
     }
 
     function beginMarquee(mods) {
@@ -182,7 +215,7 @@ Item {
     }
 
     function openContext(x, y, hit) {
-        if (hit && hit.dot && !Model.refsSelected(selection, hit.refs))
+        if (hit && hit.dot && !selection.hasAll(hit.refs))
             selection.replace(hit.refs)
         contextRequested(x, y, hit)
     }
@@ -199,6 +232,29 @@ Item {
     KeyframesMarquee {
         id: marquee
         visible: root.marqueeActive && width > 2 && height > 2
+    }
+
+    KeyframesDragReadout {
+        visible: root.dotDrag
+        text: root.readoutText()
+        x: Math.max(0, Math.min(root.width - width, root.lastX + Theme.spacingXl))
+        y: Math.max(0, root.lastY - height - Theme.spacingLg)
+    }
+
+    Timer {
+        interval: 16
+        repeat: true
+        running: root.dotDrag || root.marqueeActive
+        onTriggered: root.autoScroll()
+    }
+
+    ThemedToolTip {
+        parent: root
+        delay: 600
+        x: root.lastX + Theme.spacingXl
+        y: root.lastY + Theme.spacingXl
+        text: root.hoverTip
+        visible: root.hoverTip !== "" && !area.pressed
     }
 
     Connections {
@@ -226,8 +282,12 @@ Item {
             root.touch = mouse.source !== Qt.MouseEventNotSynthesized
             root.pressX = mouse.x
             root.pressY = mouse.y
+            root.lastX = mouse.x
+            root.lastY = mouse.y
+            root.pressContentX = root.timeView.contentX
+            root.hoverTip = ""
             root.collapseOnRelease = false
-            root.pressHit = root.hitTest(mouse.x, mouse.y, root.touch ? 14 : 6)
+            root.pressHit = root.hitTest(mouse.x, mouse.y, root.slop)
             root.mode = ""
             if (mouse.button === Qt.MiddleButton) {
                 root.panStartX = root.timeView.contentX
@@ -271,9 +331,12 @@ Item {
         }
 
         onPositionChanged: (mouse) => {
+            root.lastX = mouse.x
+            root.lastY = mouse.y
             if (!pressed) {
-                const hit = root.hitTest(mouse.x, mouse.y, 6)
-                root.view.hoverId = hit.dot ? Model.keyId(hit.refs[0].prop, hit.seconds) : ""
+                const hit = root.hitTest(mouse.x, mouse.y, root.slop)
+                root.hoverTip = root.tipFor(hit)
+                root.view.hoverId = hit.dot ? root.selection.keyId(hit.refs[0].prop, hit.seconds) : ""
                 return
             }
             const moved = Math.abs(mouse.x - root.pressX) > 3 || Math.abs(mouse.y - root.pressY) > 3
@@ -318,7 +381,7 @@ Item {
                 const hit = root.pressHit
                 if (hit.dot) {
                     root.focusHit(hit)
-                    if (Model.refsSelected(root.selection, hit.refs))
+                    if (root.selection.hasAll(hit.refs))
                         root.openContext(mouse.x, mouse.y, hit)
                     else
                         root.selection.replace(hit.refs)
@@ -330,12 +393,15 @@ Item {
 
         onCanceled: root.cancelDrag()
 
-        onExited: root.view.hoverId = ""
+        onExited: {
+            root.view.hoverId = ""
+            root.hoverTip = ""
+        }
 
         onDoubleClicked: (mouse) => {
             if (mouse.button !== Qt.LeftButton)
                 return
-            const hit = root.hitTest(mouse.x, mouse.y, root.touch ? 14 : 6)
+            const hit = root.hitTest(mouse.x, mouse.y, root.slop)
             if (hit.dot)
                 EditorState.playheadSeconds = hit.seconds
             else

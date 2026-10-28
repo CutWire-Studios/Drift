@@ -6,10 +6,19 @@ Item {
 
     required property var timeView
 
+    readonly property real fps: {
+        void EditorState.tracksRevision
+        return Math.max(1, EditorState.projectFile.projectFps())
+    }
     readonly property real tickStepSeconds: {
         const needed = 66 / timeView.pxPerSecond
-        const steps = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30,
-                       60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 14400, 21600, 43200]
+        const steps = []
+        for (const n of [1, 2, 5, 10, 15]) {
+            if (n / fps < 1)
+                steps.push(n / fps)
+        }
+        Array.prototype.push.apply(steps, [1, 2, 5, 10, 15, 30,
+                                           60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 14400, 21600, 43200])
         for (let i = 0; i < steps.length; ++i) {
             if (steps[i] >= needed)
                 return steps[i]
@@ -23,13 +32,12 @@ Item {
                                                   Theme.c.keyframesRuler.outside.b, Theme.c.keyframesRuler.opacityOutside)
 
     function formatTick(seconds) {
-        const cc = Math.round(Math.max(0, seconds) * 100)
+        const frames = Math.round(Math.max(0, seconds) * fps)
+        const whole = Math.floor(frames / fps)
         const pad = (n) => (n < 10 ? "0" : "") + n
-        let out = pad(Math.floor(cc / 360000)) + ":"
-                + pad(Math.floor((cc % 360000) / 6000)) + ":"
-                + pad(Math.floor((cc % 6000) / 100))
+        let out = pad(Math.floor(whole / 3600)) + ":" + pad(Math.floor(whole / 60) % 60) + ":" + pad(whole % 60)
         if (tickStepSeconds < 1)
-            out += "." + pad(cc % 100)
+            out += ":" + pad(frames - whole * Math.round(fps))
         return out
     }
 

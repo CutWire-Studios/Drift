@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import Drift
-import "../keyframes/ScaleMath.js" as ScaleMath
 Item {
     id: root
 
@@ -66,7 +65,7 @@ Item {
             return 1
         const w = transformAt("width", canvasW)
         const h = transformAt("height", canvasH)
-        return ScaleMath.scaleOf(w, h, canvasW, canvasH)
+        return EditorState.keyframes.scaleOf(w, h, canvasW, canvasH)
     }
 
     // Scale is presented as a single control, but the project stores its animation as two
@@ -132,7 +131,7 @@ Item {
         const s = scaleDragStart
         if (!s || s.scale <= 0)
             return
-        const r = ScaleMath.scaledRect(s, scale, scaleAnchor)
+        const r = EditorState.keyframes.scaledRect(s, scale, scaleAnchor)
         const k = r.k
         const x = r.x
         const y = r.y
