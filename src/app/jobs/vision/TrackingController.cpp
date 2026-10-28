@@ -54,6 +54,7 @@ struct TrackingController::Job
     int rotationCorrection = 0;
     bool planar = false;
     double minConfidence = 0.7;
+    double fps = 30.0;
     // Processing order; [0] is the start frame. Source times are decreasing for a backward run
     // on a forward clip, or a forward run on a reversed one.
     QVector<TimeUs> sourceTimes;
@@ -554,6 +555,32 @@ QPointF rotated(QPointF p, double degrees)
     return QPointF(p.x() * std::cos(a) - p.y() * std::sin(a), p.x() * std::sin(a) + p.y() * std::cos(a));
 }
 
+// A canvas-space point carried by the tracker: into the host's frame at the reference time, through
+// the tracker's transform, and back out to the canvas through the host's placement at `now`. The
+// host's own motion and rotation between the two are part of the result.
+QPointF carryThroughHost(const HostFrame &ref, const HostFrame &now, const Homography &h, QSizeF px,
+                         QPointF canvas)
+{
+    const QPointF q = rotated(canvas - ref.centre, -ref.rotation);
+    const QPointF local((q.x() / ref.w + 0.5) * px.width(), (q.y() / ref.h + 0.5) * px.height());
+    const QPointF moved = drift::tracking::applyHomography(h, local);
+    const QPointF q2((moved.x() / px.width() - 0.5) * now.w, (moved.y() / px.height() - 0.5) * now.h);
+    return now.centre + rotated(q2, now.rotation);
+}
+
+// A mask a tracker can drive: a mask pinned to a clip, in that clip's frame, or the mask of a
+// standalone effects layer, in canvas space.
+bool isMaskTargetOwner(const drift::Project &project, int trackIndex, const Clip &owner)
+{
+    if (owner.type != drift::ClipType::Adjustment)
+        return false;
+    if (owner.adjustmentKind == drift::AdjustmentKind::Mask)
+        return true;
+    return owner.adjustmentKind == drift::AdjustmentKind::VideoEffects
+           && owner.mask.shape != drift::MaskShape::None
+           && !project.tracks().at(trackIndex).isAdjustmentLane();
+}
+
 QVector<QPointF> parseRegion(const QVariantList &list)
 {
     QVector<QPointF> out;
@@ -650,6 +677,17 @@ private:
     int m_chunkStart = 0;
     QVector<std::shared_ptr<const GrayImage>> m_chunk;
 };
+
+QString timecodeText(TimeUs us, double fps)
+{
+    const int rate = qMax(1, qRound(fps));
+    const qint64 frames = qRound64(drift::usToSeconds(us) * rate);
+    return QStringLiteral("%1:%2:%3:%4")
+        .arg(frames / (rate * 3600), 2, 10, QLatin1Char('0'))
+        .arg(frames / (rate * 60) % 60, 2, 10, QLatin1Char('0'))
+        .arg(frames / rate % 60, 2, 10, QLatin1Char('0'))
+        .arg(frames % rate, 2, 10, QLatin1Char('0'));
+}
 
 struct Outcome
 {
@@ -778,7 +816,9 @@ Outcome trackPoints(const TrackingController::Job &job, FrameFeed &feed, const Q
         previous = std::move(next);
         if (!anyGood) {
             writer.flush(double(i) / (count - 1));
-            return {TrackingController::tr("Tracking stopped: confidence dropped below the minimum"),
+            return {TrackingController::tr("Lost the feature at %1. Drag the marker back onto it and track again, "
+                                           "or lower the stop threshold.")
+                        .arg(timecodeText(job.timelineTimes.at(i), job.fps)),
                     QStringLiteral("warning")};
         }
     }
@@ -806,7 +846,8 @@ Outcome trackPlanar(const TrackingController::Job &job, FrameFeed &feed, const Q
     QVector<QPointF> features = goodFeatures(previous, mapPolygon(referenceToPrev, region));
     int initialCount = features.size();
     if (initialCount < 8)
-        return {TrackingController::tr("Not enough texture inside the outline to track"), QStringLiteral("warning")};
+        return {TrackingController::tr("Not enough detail inside the outline. Outline a larger area with visible texture."),
+                QStringLiteral("warning")};
 
     for (int i = 1; i < count; ++i) {
         if (cancel.loadRelaxed() != 0) {
@@ -824,7 +865,9 @@ Outcome trackPlanar(const TrackingController::Job &job, FrameFeed &feed, const Q
         const PlanarStep step = trackPlanarStep(previous, next, features, referenceToPrev);
         if (!step.ok) {
             writer.flush(double(i) / (count - 1));
-            return {TrackingController::tr("Tracking stopped: the surface was lost"), QStringLiteral("warning")};
+            return {TrackingController::tr("Lost the surface at %1. Drag its corners back into place and track again.")
+                        .arg(timecodeText(job.timelineTimes.at(i), job.fps)),
+                    QStringLiteral("warning")};
         }
 
         TrackingController::FrameResult result;
@@ -967,9 +1010,13 @@ QVariantMap TrackingController::trackerFrame(int trackIndex, int clipIndex, cons
     for (const TrackPoint &point : tracker->points) {
         const auto it = nearestKey(point.samples, sourceUs, tolerance);
         const bool has = it != point.samples.constEnd();
+        // Off the tracked span the marker stays where the closest sample left it, so it can be dragged
+        // back onto the feature; that drag writes a key here.
+        const auto ghostIt = has ? it : nearestKey(point.samples, sourceUs, std::numeric_limits<TimeUs>::max() / 4);
+        const bool ghost = !has && ghostIt != point.samples.constEnd();
         QVariantMap entry{
-            {QStringLiteral("x"), has ? it->pos.x() : 0.0},
-            {QStringLiteral("y"), has ? it->pos.y() : 0.0},
+            {QStringLiteral("x"), has ? it->pos.x() : (ghost ? ghostIt->pos.x() : 0.0)},
+            {QStringLiteral("y"), has ? it->pos.y() : (ghost ? ghostIt->pos.y() : 0.0)},
             {QStringLiteral("confidence"), has ? double(it->confidence) : 0.0},
             {QStringLiteral("userKey"), has && it->userKey},
             {QStringLiteral("patternW"), point.patternSize.width()},
@@ -977,6 +1024,7 @@ QVariantMap TrackingController::trackerFrame(int trackIndex, int clipIndex, cons
             {QStringLiteral("searchW"), point.searchSize.width()},
             {QStringLiteral("searchH"), point.searchSize.height()},
             {QStringLiteral("has"), has},
+            {QStringLiteral("ghost"), ghost},
         };
         points.append(entry);
 
@@ -992,7 +1040,9 @@ QVariantMap TrackingController::trackerFrame(int trackIndex, int clipIndex, cons
     QVariantList region;
     if (tracker->kind == MotionTracker::Kind::Planar) {
         QPolygonF polygon(tracker->planarRegion);
-        const auto it = nearestKey(tracker->homographies, sourceUs, tolerance);
+        auto it = nearestKey(tracker->homographies, sourceUs, tolerance);
+        if (it == tracker->homographies.constEnd())
+            it = nearestKey(tracker->homographies, sourceUs, std::numeric_limits<TimeUs>::max() / 4);
         if (it != tracker->homographies.constEnd())
             polygon = drift::tracking::mapPolygon(it.value(), polygon);
         for (const QPointF &p : polygon)
@@ -1117,6 +1167,32 @@ void TrackingController::addTrackerPoint(int trackIndex, int clipIndex, const QS
 
 namespace {
 
+// A hand-placed key restarts the track from there: the automatic samples past it, on the side away
+// from the reference, were followed from the old position. They go, up to the next hand-placed key.
+void dropAutoSamplesBeyond(const Clip &host, const MotionTracker &tracker, TrackPoint &point, TimeUs keySourceUs)
+{
+    const TimeUs keyAt = sampleTimelineUs(host, keySourceUs);
+    const TimeUs referenceAt = sampleTimelineUs(host, tracker.referenceUs);
+    if (keyAt == referenceAt)
+        return;
+    const bool forward = keyAt > referenceAt;
+    QVector<QPair<TimeUs, TimeUs>> beyond;
+    for (auto it = point.samples.constBegin(); it != point.samples.constEnd(); ++it) {
+        const TimeUs at = sampleTimelineUs(host, it.key());
+        if (forward ? at > keyAt : at < keyAt)
+            beyond.append({at, it.key()});
+    }
+    std::sort(beyond.begin(), beyond.end(), [&](const auto &a, const auto &b) {
+        return forward ? a.first < b.first : a.first > b.first;
+    });
+    for (const auto &entry : beyond) {
+        const auto it = point.samples.constFind(entry.second);
+        if (it->userKey)
+            break;
+        point.samples.erase(point.samples.constFind(entry.second));
+    }
+}
+
 bool writePointKey(const drift::Project &project, const Clip &host, MotionTracker &tracker, TimeUs playheadUs,
                    int pointIndex, double x, double y)
 {
@@ -1135,6 +1211,7 @@ bool writePointKey(const drift::Project &project, const Clip &host, MotionTracke
             key = existing.key();
     }
     point.samples.insert(key, TrackSample{QPointF(x, y), 1.0f, true});
+    dropAutoSamplesBeyond(host, tracker, point, key);
     return true;
 }
 
@@ -1143,9 +1220,16 @@ bool writePointKey(const drift::Project &project, const Clip &host, MotionTracke
 void TrackingController::setTrackerPoint(int trackIndex, int clipIndex, const QString &id, int pointIndex,
                                          double x, double y)
 {
-    editTracker(trackIndex, clipIndex, id, tr("Move tracking point"), [&](Clip &host, MotionTracker &tracker) {
-        return writePointKey(m_app->m_project, host, tracker, m_app->m_playheadUs, pointIndex, x, y);
+    QString error;
+    const bool ok = editTracker(trackIndex, clipIndex, id, tr("Move tracking point"), [&](Clip &host, MotionTracker &tracker) {
+        if (!writePointKey(m_app->m_project, host, tracker, m_app->m_playheadUs, pointIndex, x, y))
+            return false;
+        if (!tracker.targets.isEmpty())
+            error = applyTargets(host.id, tracker.id);
+        return true;
     });
+    if (ok && !error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
 }
 
 void TrackingController::previewSetTrackerPoint(int trackIndex, int clipIndex, const QString &id, int pointIndex,
@@ -1159,6 +1243,8 @@ void TrackingController::previewSetTrackerPoint(int trackIndex, int clipIndex, c
     MotionTracker *tracker = trackerById(*host, id);
     if (!writePointKey(m_app->m_project, *host, *tracker, m_app->m_playheadUs, pointIndex, x, y))
         return;
+    if (!tracker->targets.isEmpty())
+        applyTargets(host->id, id);
     m_app->emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("tracker")});
     emit samplesUpdated(id);
 }
@@ -1288,6 +1374,7 @@ void TrackingController::track(int trackIndex, int clipIndex, const QString &id,
     job.rotationCorrection = host->rotationCorrection;
     job.planar = tracker->kind == MotionTracker::Kind::Planar;
     job.minConfidence = tracker->minConfidence;
+    job.fps = project.fps();
     job.sourceTimes.append(startSource);
     job.timelineTimes.append(playhead);
     for (int k = 1;; ++k) {
@@ -1310,7 +1397,7 @@ void TrackingController::track(int trackIndex, int clipIndex, const QString &id,
     if (job.planar) {
         const auto it = nearestKey(tracker->homographies, startSource, tolerance);
         if (it == tracker->homographies.constEnd()) {
-            m_app->setLastMessage(tr("Move the playhead to a tracked frame first"), QStringLiteral("warning"));
+            m_app->setLastMessage(tr("Drag the outline's corners onto the surface at this frame, then track again"), QStringLiteral("warning"));
             return;
         }
         job.start = it.value();
@@ -1335,7 +1422,7 @@ void TrackingController::track(int trackIndex, int clipIndex, const QString &id,
             job.points.append(entry);
         }
         if (!anyPoint) {
-            m_app->setLastMessage(tr("Move the playhead to a tracked frame first"), QStringLiteral("warning"));
+            m_app->setLastMessage(tr("Drag the marker onto the feature at this frame, then track again"), QStringLiteral("warning"));
             return;
         }
     }
@@ -1481,9 +1568,16 @@ QVariantList TrackingController::targetCandidates(int trackIndex, int clipIndex)
         });
     }
     for (int t = 0; t < project.tracks().size(); ++t) {
-        if (t == trackIndex)
-            continue;
         for (const Clip &clip : project.tracks().at(t).clips) {
+            if (clip.type == drift::ClipType::Adjustment && clip.adjustmentKind == drift::AdjustmentKind::VideoEffects
+                && isMaskTargetOwner(project, t, clip) && clip.timelineStart < host->timelineEnd()
+                && clip.timelineEnd() > host->timelineStart) {
+                out.append(QVariantMap{{QStringLiteral("clipId"), clip.id},
+                                       {QStringLiteral("name"), tr("%1 (adjustment)").arg(clip.name)},
+                                       {QStringLiteral("kind"), QStringLiteral("mask")}});
+            }
+            if (t == trackIndex)
+                continue;
             if (clip.type == drift::ClipType::Audio || clip.type == drift::ClipType::Subtitle
                 || clip.type == drift::ClipType::Adjustment)
                 continue;
@@ -1581,7 +1675,7 @@ void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tr
                              || tracker.solve == MotionTracker::Solve::Perspective;
 
     if (target.mode == drift::TrackerTarget::Mode::Mask) {
-        if (owner.type != drift::ClipType::Adjustment || owner.adjustmentKind != drift::AdjustmentKind::Mask)
+        if (!isMaskTargetOwner(project, t, owner))
             return;
         drift::Mask &mask = owner.mask;
         const std::pair<QString, double drift::Mask::*> channels[] = {
@@ -1689,11 +1783,18 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
             continue;
 
         if (target.mode == drift::TrackerTarget::Mode::Mask) {
-            if (owner.type != drift::ClipType::Adjustment || owner.adjustmentKind != drift::AdjustmentKind::Mask) {
+            if (!isMaskTargetOwner(project, t, owner)) {
                 if (firstError.isEmpty())
                     firstError = tr("%1 is not a mask").arg(owner.name);
                 continue;
             }
+            // A mask on a standalone effects layer is normalized to the canvas; one pinned to the clip,
+            // to the clip's frame, which is where the tracker works.
+            const bool onCanvas = owner.adjustmentKind == drift::AdjustmentKind::VideoEffects;
+            const QSizeF space = onCanvas ? QSizeF(project.width(), project.height()) : px;
+            const HostFrame hostRef = hostFrameAt(project, host, refTimeline);
+            if (onCanvas && host.layer3d && firstError.isEmpty())
+                firstError = tr("This clip is transformed; the adjustment mask may not line up");
             drift::Mask &mask = owner.mask;
             const drift::Mask rest = mask.resolvedAt(refTimeline - owner.timelineStart);
             const bool parametric = !planar && solve != MotionTracker::Solve::Perspective
@@ -1701,18 +1802,30 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                                     && rest.shape != drift::MaskShape::Bars && rest.shape != drift::MaskShape::None;
             if (parametric) {
                 QVector<PoseRun> poseRuns;
-                const QPointF centre(rest.x * px.width(), rest.y * px.height());
+                const QPointF centre(rest.x * space.width(), rest.y * space.height());
                 for (const QVector<int> &run : runs) {
                     PoseRun poses;
                     for (const int i : run) {
                         const Homography &h = frames[i].h;
-                        const QPointF moved = drift::tracking::applyHomography(h, centre);
                         Pose pose;
                         pose.t = frames[i].timelineUs - owner.timelineStart;
-                        pose.x = moved.x() / px.width();
-                        pose.y = moved.y() / px.height();
-                        pose.rotation = rest.rotation + (writesRotation ? qRadiansToDegrees(std::atan2(h[3], h[0])) : 0.0);
-                        const double scale = writesScale ? std::hypot(h[0], h[3]) : 1.0;
+                        double turn = qRadiansToDegrees(std::atan2(h[3], h[0]));
+                        double scale = std::hypot(h[0], h[3]);
+                        QPointF moved;
+                        if (onCanvas) {
+                            const HostFrame now = hostFrameAt(project, host, frames[i].timelineUs);
+                            moved = carryThroughHost(hostRef, now, h, px, centre);
+                            const QPointF e = carryThroughHost(hostRef, now, h, px, centre + QPointF(1.0, 0.0)) - moved;
+                            turn = qRadiansToDegrees(std::atan2(e.y(), e.x()));
+                            scale = std::hypot(e.x(), e.y());
+                        } else {
+                            moved = drift::tracking::applyHomography(h, centre);
+                        }
+                        pose.x = moved.x() / space.width();
+                        pose.y = moved.y() / space.height();
+                        pose.rotation = rest.rotation + (writesRotation ? turn : 0.0);
+                        if (!writesScale)
+                            scale = 1.0;
                         pose.w = rest.w * scale;
                         pose.h = rest.h * scale;
                         poses.append(pose);
@@ -1720,20 +1833,20 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                     unwrapRotation(&poses);
                     poseRuns.append(poses);
                 }
-                writeChannel(mask.keyframes[QStringLiteral("x")], poseRuns, &Pose::x, kScalarTolerancePx / px.width());
-                writeChannel(mask.keyframes[QStringLiteral("y")], poseRuns, &Pose::y, kScalarTolerancePx / px.height());
+                writeChannel(mask.keyframes[QStringLiteral("x")], poseRuns, &Pose::x, kScalarTolerancePx / space.width());
+                writeChannel(mask.keyframes[QStringLiteral("y")], poseRuns, &Pose::y, kScalarTolerancePx / space.height());
                 if (writesRotation)
                     writeChannel(mask.keyframes[QStringLiteral("rotation")], poseRuns, &Pose::rotation,
                                  kRotationToleranceDeg);
                 if (writesScale) {
-                    writeChannel(mask.keyframes[QStringLiteral("w")], poseRuns, &Pose::w, kScalarTolerancePx / px.width());
-                    writeChannel(mask.keyframes[QStringLiteral("h")], poseRuns, &Pose::h, kScalarTolerancePx / px.height());
+                    writeChannel(mask.keyframes[QStringLiteral("w")], poseRuns, &Pose::w, kScalarTolerancePx / space.width());
+                    writeChannel(mask.keyframes[QStringLiteral("h")], poseRuns, &Pose::h, kScalarTolerancePx / space.height());
                 }
                 continue;
             }
 
             QString error;
-            const QVector<QPointF> vertices = restVertices(rest, px, &error);
+            const QVector<QPointF> vertices = restVertices(rest, space, &error);
             if (vertices.isEmpty()) {
                 if (firstError.isEmpty())
                     firstError = error;
@@ -1743,7 +1856,7 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                 mask.shape = drift::MaskShape::Freeform;
                 mask.points.clear();
                 for (const QPointF &v : vertices)
-                    mask.points.append(QPointF(v.x() / px.width(), v.y() / px.height()));
+                    mask.points.append(QPointF(v.x() / space.width(), v.y() / space.height()));
                 for (const QString &key : {QStringLiteral("x"), QStringLiteral("y"), QStringLiteral("w"),
                                            QStringLiteral("h"), QStringLiteral("rotation")}) {
                     mask.keyframes.remove(key);
@@ -1755,9 +1868,11 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                 for (const int i : run) {
                     PathPose pose;
                     pose.t = frames[i].timelineUs - owner.timelineStart;
+                    const HostFrame now = onCanvas ? hostFrameAt(project, host, frames[i].timelineUs) : HostFrame();
                     for (const QPointF &v : vertices) {
-                        const QPointF moved = drift::tracking::applyHomography(frames[i].h, v);
-                        pose.points.append(QPointF(moved.x() / px.width(), moved.y() / px.height()));
+                        const QPointF moved = onCanvas ? carryThroughHost(hostRef, now, frames[i].h, px, v)
+                                                       : drift::tracking::applyHomography(frames[i].h, v);
+                        pose.points.append(QPointF(moved.x() / space.width(), moved.y() / space.height()));
                     }
                     poses.append(pose);
                 }
@@ -1773,8 +1888,8 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                     double worst = 0;
                     for (int v = 0; v < vertices.size(); ++v) {
                         const QPointF expected = poses[a].points[v] + (poses[b].points[v] - poses[a].points[v]) * u;
-                        worst = qMax(worst, std::hypot((poses[k].points[v].x() - expected.x()) * px.width(),
-                                                       (poses[k].points[v].y() - expected.y()) * px.height()));
+                        worst = qMax(worst, std::hypot((poses[k].points[v].x() - expected.x()) * space.width(),
+                                                       (poses[k].points[v].y() - expected.y()) * space.height()));
                     }
                     return worst;
                 });

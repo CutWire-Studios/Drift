@@ -137,6 +137,8 @@ public:
 
 signals:
     void brushSettingsChanged();
+    // One per brush save, in stroke order, whether it succeeded or not.
+    void brushApplied(const QString &clipId);
 
 private:
     const drift::MediaAsset *assetAt(int assetIndex) const;

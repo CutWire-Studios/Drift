@@ -49,20 +49,97 @@ PanelFrame {
         { id: "ellipse", label: qsTr("Ellipse"), key: "E", glyph: Theme.icons.shapes, clipOnly: false },
         { id: "polygon", label: qsTr("Polygon"), key: "P", glyph: Theme.icons.gem, clipOnly: false },
         { id: "brush", label: qsTr("Brush"), key: "B", glyph: Theme.icons.pencil, clipOnly: true },
-        { id: "ai", label: qsTr("AI object"), key: "A", glyph: Theme.icons.sparkles, clipOnly: true }
+        { id: "ai", label: qsTr("AI object"), key: "A", glyph: Theme.icons.sparkles, clipOnly: true },
+        { id: "tracker", label: qsTr("Tracker"), key: "T", glyph: Theme.icons.locateFixed, clipOnly: false }
     ]
 
     readonly property var viewModes: [
         { id: "off", label: qsTr("Off") },
-        { id: "overlay", label: qsTr("Overlay") },
-        { id: "matte", label: qsTr("Matte") }
+        { id: "overlay", label: qsTr("Tint hidden") },
+        { id: "matte", label: qsTr("Black & white") }
     ]
+
+    // The auto-set preview needs no mask to exist: painting the first stroke into an empty clip
+    // would otherwise hide the whole picture with nothing to show what is being painted.
+    property bool viewAutoSet: false
+    property bool clipAtPlayhead: false
+    readonly property bool hasEnabledMask: stack.some(e => e.enabled)
+    readonly property bool paintingTool: EditorState.preview.maskingTool === "brush"
+                                         || EditorState.preview.maskingTool === "ai"
 
     function refresh() {
         target = EditorState.masking.maskTarget()
         stack = target.kind === "none" ? [] : EditorState.masking.maskStack(target.track, target.clip)
         const selected = stack.find(e => e.selected && e.shape === "freeform")
         shapeKeyTimes = selected ? EditorState.masking.maskPathKeyTimes(selected.track, selected.clip) : []
+        clipAtPlayhead = target.kind === "none"
+                         && EditorState.preview.clipsAtPlayhead().some(box => box.kind === "video" || box.kind === "image")
+        // Matte on a clip with nothing to show would display the unmasked picture and look broken.
+        if (!stack.some(e => e.enabled) && !paintingTool && EditorState.preview.maskViewMode !== "off")
+            EditorState.preview.maskViewMode = "off"
+    }
+
+    function useClipAtPlayhead() {
+        let pick = null
+        for (const box of EditorState.preview.clipsAtPlayhead()) {
+            if (box.kind === "video" || box.kind === "image")
+                pick = box
+        }
+        if (pick)
+            EditorState.selectClip(pick.track, pick.clip)
+    }
+
+    function trackerFor(entry) {
+        if (target.kind !== "clip")
+            return null
+        return EditorState.tracking.trackers(target.track, target.clip)
+                   .find(t => t.targets.some(d => d.clipId === entry.id)) || null
+    }
+
+    function maskCentre(entry) {
+        const layer = EditorState.preview.maskEditorState().layers.find(l => l.track === entry.track && l.clip === entry.clip)
+        const mask = layer ? layer.mask : null
+        if (!mask)
+            return null
+        if (mask.shape !== "freeform")
+            return { x: mask.x, y: mask.y }
+        const points = mask.points || []
+        if (points.length === 0)
+            return null
+        let sumX = 0
+        let sumY = 0
+        for (const p of points) {
+            sumX += p.x
+            sumY += p.y
+        }
+        return { x: sumX / points.length, y: sumY / points.length }
+    }
+
+    // Follows the mask's own centre with a point tracker, reusing the one already driving it.
+    function trackMask(entry, direction) {
+        const host = EditorState.masking.maskTarget()
+        if (host.kind !== "clip")
+            return
+        const existing = EditorState.tracking.trackers(host.track, host.clip)
+                             .find(t => t.targets.some(d => d.clipId === entry.id))
+        let id = existing ? existing.id : ""
+        if (id === "") {
+            const centre = maskCentre(entry)
+            if (!centre)
+                return
+            id = EditorState.tracking.addPointTracker(host.track, host.clip, centre.x, centre.y)
+            if (id === "") {
+                Toasts.info(qsTr("Trackers need a video clip"))
+                return
+            }
+            EditorState.tracking.setTarget(host.track, host.clip, id, entry.id, "mask")
+        }
+        ShellBridge.selectedTrackerId = id
+        EditorState.preview.maskingTool = "tracker"
+        if (direction === "both")
+            ShellBridge.trackBoth(host.track, host.clip, id)
+        else
+            EditorState.tracking.track(host.track, host.clip, id, direction === "forward", false)
     }
 
     function stepShapeKey(previous) {
@@ -120,6 +197,20 @@ PanelFrame {
         function onPlayingChanged() {
             if (!EditorState.playing)
                 root.refreshIfLive()
+        }
+    }
+
+    Connections {
+        target: EditorState.preview
+        function onMaskingToolChanged() {
+            const painting = root.paintingTool
+            if (painting && EditorState.preview.maskViewMode === "off") {
+                EditorState.preview.maskViewMode = "overlay"
+                root.viewAutoSet = true
+            } else if (!painting && root.viewAutoSet) {
+                EditorState.preview.maskViewMode = "off"
+                root.viewAutoSet = false
+            }
         }
     }
 
@@ -410,32 +501,44 @@ PanelFrame {
                 onToggled: root.aiRefine = checked
             }
 
-            RowLayout {
+            Column {
                 visible: EditorState.segmentation.backendUsesPoints && root.aiBackendModel.length > 0
                 width: parent.width
                 spacing: Theme.spacingXs
                 enabled: root.aiIncludeCount > 0 && !EditorState.segmentation.running
 
-                ThemedButton {
-                    Layout.fillWidth: true
-                    text: "◀"
-                    tooltip: qsTr("Track backward")
-                    onClicked: root.propagateAi("backward")
+                Text {
+                    visible: root.aiIncludeCount > 0
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: qsTr("This is a preview of this frame only. It becomes a mask when you cut out.")
+                    color: Theme.c.maskingPanel.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
                 }
 
                 ThemedButton {
-                    Layout.fillWidth: true
+                    width: parent.width
                     variant: "primary"
-                    text: "⇄"
-                    tooltip: qsTr("Track both ways")
+                    text: qsTr("Cut out through whole clip")
                     onClicked: root.propagateAi("both")
                 }
 
-                ThemedButton {
-                    Layout.fillWidth: true
-                    text: "▶"
-                    tooltip: qsTr("Track forward")
-                    onClicked: root.propagateAi("forward")
+                RowLayout {
+                    width: parent.width
+                    spacing: Theme.spacingXs
+
+                    ThemedButton {
+                        Layout.fillWidth: true
+                        text: qsTr("◀ Up to here")
+                        onClicked: root.propagateAi("backward")
+                    }
+
+                    ThemedButton {
+                        Layout.fillWidth: true
+                        text: qsTr("From here ▶")
+                        onClicked: root.propagateAi("forward")
+                    }
                 }
             }
 
@@ -492,6 +595,14 @@ PanelFrame {
             EditorState.preview.maskingTool = ""
             return true
         case "clearSelection":
+            if (EditorState.tracking.busy) {
+                ShellBridge.stopTracking()
+                return true
+            }
+            if (EditorState.segmentation.running) {
+                EditorState.segmentation.cancel()
+                return true
+            }
             if (ShellBridge.trackerPlaceMode !== "") {
                 ShellBridge.trackerPlaceMode = ""
                 return true
@@ -577,6 +688,12 @@ PanelFrame {
                 hint: qsTr("Select a clip or an adjustment layer on the timeline.")
             }
 
+            ThemedButton {
+                visible: !root.hasTarget && root.clipAtPlayhead
+                text: qsTr("Use clip at playhead")
+                onClicked: root.useClipAtPlayhead()
+            }
+
             Column {
                 visible: root.hasTarget
                 width: parent.width
@@ -593,7 +710,9 @@ PanelFrame {
                 }
                 Text {
                     width: parent.width
-                    text: root.onAdjustment ? qsTr("Adjustment layer mask") : qsTr("Masks on this clip")
+                    wrapMode: Text.WordWrap
+                    text: root.onAdjustment ? qsTr("This layer's effects apply only inside the mask.")
+                                            : qsTr("Masks keep what is inside and hide the rest. Invert to hide the inside instead.")
                     color: Theme.c.maskingPanel.foregroundMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
@@ -601,7 +720,7 @@ PanelFrame {
             }
 
             Row {
-                visible: root.hasTarget
+                enabled: root.hasTarget
                 spacing: Theme.spacingXs
 
                 Repeater {
@@ -624,7 +743,7 @@ PanelFrame {
 
                 Text {
                     Layout.alignment: Qt.AlignVCenter
-                    text: qsTr("Preview")
+                    text: qsTr("Show mask")
                     color: Theme.c.maskingPanel.foregroundMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
@@ -636,9 +755,22 @@ PanelFrame {
                     delegate: ThemedToggleButton {
                         required property var modelData
                         text: modelData.label
+                        enabled: modelData.id === "off" || root.hasEnabledMask || root.paintingTool
                         checked: EditorState.preview.maskViewMode === modelData.id
-                        onClicked: EditorState.preview.maskViewMode = modelData.id
+                        onClicked: {
+                            root.viewAutoSet = false
+                            EditorState.preview.maskViewMode = modelData.id
+                        }
                     }
+                }
+
+                Text {
+                    visible: !root.hasEnabledMask && !root.paintingTool
+                    Layout.alignment: Qt.AlignVCenter
+                    text: qsTr("Add a mask to preview it")
+                    color: Theme.c.maskingPanel.foregroundMuted
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeXs
                 }
             }
 
@@ -674,6 +806,22 @@ PanelFrame {
                 color: Theme.c.maskingPanel.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
+            }
+
+            Text {
+                visible: root.hasTarget && !root.onAdjustment && root.stack.length === 0
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("To blur or recolour just part of the picture, put the effect on an adjustment layer above the clip and draw the mask on that layer.")
+                color: Theme.c.maskingPanel.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
+            ThemedButton {
+                visible: root.hasTarget && !root.onAdjustment && root.stack.length === 0
+                text: qsTr("Add adjustment layer")
+                onClicked: EditorState.addAdjustmentClip(-1, -1)
             }
 
             Repeater {
@@ -730,6 +878,7 @@ PanelFrame {
                                 visible: maskEntry.index > 0
                                 Layout.preferredWidth: 96
                                 Layout.alignment: Qt.AlignVCenter
+                                tooltip: qsTr("How this mask combines with the ones above")
                                 model: ["add", "subtract", "intersect"]
                                 readonly property var labels: ({
                                     "add": qsTr("Add"),
@@ -746,8 +895,8 @@ PanelFrame {
                             ThemedToggleButton {
                                 visible: !root.onAdjustment
                                 Layout.alignment: Qt.AlignVCenter
-                                text: qsTr("Inv")
-                                tooltip: qsTr("Invert this mask")
+                                text: qsTr("Invert")
+                                tooltip: qsTr("Hide the inside instead of the outside")
                                 checked: !!maskEntry.modelData.invert
                                 onClicked: EditorState.masking.setMaskProperty(maskEntry.modelData.track,
                                                                                maskEntry.modelData.clip,
@@ -840,6 +989,77 @@ PanelFrame {
                                 }
                             }
 
+                            Column {
+                                id: trackRow
+                                visible: !maskEntry.modelData.isMedia && maskEntry.modelData.shape !== "bars"
+                                         && root.target.kind === "clip"
+                                width: parent.width
+                                spacing: Theme.spacingXs
+
+                                readonly property var driver: {
+                                    root.stack
+                                    return maskEntry.modelData.selected ? root.trackerFor(maskEntry.modelData) : null
+                                }
+
+                                Text {
+                                    visible: trackRow.driver !== null
+                                    width: parent.width
+                                    elide: Text.ElideRight
+                                    text: qsTr("Follows %1").arg(trackRow.driver ? trackRow.driver.name : "")
+                                    color: Theme.c.maskingPanel.foregroundMuted
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                }
+
+                                RowLayout {
+                                    visible: !EditorState.tracking.busy
+                                    width: parent.width
+                                    spacing: Theme.spacingXs
+
+                                    ThemedButton {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Track ◀")
+                                        tooltip: qsTr("Follow the object backward from here")
+                                        onClicked: root.trackMask(maskEntry.modelData, "backward")
+                                    }
+
+                                    ThemedButton {
+                                        Layout.fillWidth: true
+                                        variant: "primary"
+                                        text: qsTr("Track ⇄")
+                                        tooltip: qsTr("Follow the object through the whole clip")
+                                        onClicked: root.trackMask(maskEntry.modelData, "both")
+                                    }
+
+                                    ThemedButton {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Track ▶")
+                                        tooltip: qsTr("Follow the object forward from here")
+                                        onClicked: root.trackMask(maskEntry.modelData, "forward")
+                                    }
+                                }
+
+                                RowLayout {
+                                    visible: EditorState.tracking.busy
+                                    width: parent.width
+                                    spacing: Theme.spacingSm
+
+                                    ThemedProgressBar {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        value: EditorState.tracking.progress
+                                    }
+
+                                    ThemedButton {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        variant: "destructive"
+                                        text: qsTr("Stop")
+                                        tooltip: qsTr("Stop tracking (Esc)")
+                                        onClicked: ShellBridge.stopTracking()
+                                    }
+                                }
+                            }
+
                             RowLayout {
                                 visible: maskEntry.modelData.shape === "freeform"
                                 width: parent.width
@@ -893,14 +1113,14 @@ PanelFrame {
                             }
 
                             RowLayout {
-                                visible: !!maskEntry.modelData.isMedia
+                                visible: maskEntry.modelData.mediaSource === "file"
                                 width: parent.width
                                 spacing: Theme.spacingSm
 
                                 Text {
                                     Layout.preferredWidth: 56
                                     Layout.alignment: Qt.AlignVCenter
-                                    text: qsTr("Channel")
+                                    text: qsTr("Use")
                                     color: Theme.c.maskingPanel.foregroundMuted
                                     font.family: Theme.fontFamily
                                     font.pixelSize: Theme.fontSizeXs
@@ -910,7 +1130,7 @@ PanelFrame {
                                     id: channelBox
                                     Layout.preferredWidth: 120
                                     model: ["luma", "alpha"]
-                                    readonly property var labels: ({ "luma": qsTr("Luma"), "alpha": qsTr("Alpha") })
+                                    readonly property var labels: ({ "luma": qsTr("Brightness"), "alpha": qsTr("Transparency") })
                                     displayText: labels[model[currentIndex]] || model[currentIndex]
                                     currentIndex: Math.max(0, model.indexOf(maskEntry.modelData.mediaChannel))
                                     onActivated: EditorState.masking.setMaskProperty(maskEntry.modelData.track,

@@ -466,7 +466,7 @@ Item {
                     Repeater {
                         model: (maskBox.isSelected && maskBox.isFreeform
                                 && maskBox.maskData.enabled !== false)
-                               ? (maskBox.maskData.points || []) : []
+                               ? (maskBox.maskData.points || []).length : 0
 
                         delegate: MaskOverlayVertexHandle {
                             mask: maskBox
@@ -485,7 +485,7 @@ Item {
                     Repeater {
                         model: (maskBox.isSelected && maskBox.isFreeform
                                 && maskBox.maskData.enabled !== false)
-                               ? (maskBox.maskData.points || []) : []
+                               ? (maskBox.maskData.points || []).length : 0
 
                         delegate: MaskOverlayEdgeMidpoint {
                             mask: maskBox

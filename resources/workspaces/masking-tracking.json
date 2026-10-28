@@ -20,7 +20,7 @@
                 "split": "v",
                 "sizes": [0.55, 0.45],
                 "children": [
-                  { "panels": [ { "type": "masking" } ], "active": 0 },
+                  { "panels": [ { "type": "masking" }, { "type": "properties.effects" } ], "active": 0 },
                   { "panels": [ { "type": "tracking" } ], "active": 0 }
                 ]
               }

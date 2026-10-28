@@ -105,9 +105,9 @@ Item {
     function refresh() {
         if (!visible || interacting)
             return
+        target = ShellBridge.trackerTarget()
         if (!EditorState.playing)
-            editorState = EditorState.preview.maskingFrame()
-        target = EditorState.masking.maskTarget()
+            editorState = ShellBridge.trackerFrame(target)
         refreshTracker()
         refreshFrame()
     }
@@ -130,12 +130,15 @@ Item {
 
     function placeClick(mouse) {
         const n = normAt(mouse.x, mouse.y)
-        if (placeMode === "point") {
-            const id = EditorState.tracking.addPointTracker(target.track, target.clip, n.x, n.y)
-            if (id !== "")
-                ShellBridge.selectedTrackerId = id
-        } else if (placeMode === "addPoint") {
-            EditorState.tracking.addTrackerPoint(target.track, target.clip, ShellBridge.trackerPlaceId, n.x, n.y)
+        const t = ShellBridge.trackerTarget()
+        if (t.kind === "clip") {
+            if (placeMode === "point") {
+                const id = EditorState.tracking.addPointTracker(t.track, t.clip, n.x, n.y)
+                if (id !== "")
+                    ShellBridge.selectedTrackerId = id
+            } else if (placeMode === "addPoint") {
+                EditorState.tracking.addTrackerPoint(t.track, t.clip, ShellBridge.trackerPlaceId, n.x, n.y)
+            }
         }
         ShellBridge.trackerPlaceMode = ""
     }
@@ -155,7 +158,8 @@ Item {
     function finishPlanar() {
         if (planarPoints.length < 4 || !hasClip)
             return
-        const id = EditorState.tracking.addPlanarTracker(target.track, target.clip, planarPoints)
+        const t = ShellBridge.trackerTarget()
+        const id = t.kind === "clip" ? EditorState.tracking.addPlanarTracker(t.track, t.clip, planarPoints) : ""
         ShellBridge.trackerPlaceMode = ""
         if (id !== "")
             ShellBridge.selectedTrackerId = id
@@ -199,7 +203,8 @@ Item {
                    ? qsTr("Click the corners of a flat surface, Enter to finish.")
                    : qsTr("%1 corners · Enter to finish · Backspace to undo · Esc to cancel").arg(planarPoints.length)
         }
-        return trackerCount === 0 ? qsTr("Use Point or Planar in the Tracking panel to start a track") : ""
+        return trackerCount === 0 ? qsTr("Use Point or Planar in the Tracking panel to start a track")
+                                  : qsTr("Drag a marker to correct it · ◀ ▶ in the Tracking panel to track")
     }
 
     onVisibleChanged: if (visible) refresh()
@@ -243,7 +248,7 @@ Item {
         repeat: true
         running: root.visible && EditorState.playing
         onTriggered: {
-            root.editorState = EditorState.preview.maskingFrame()
+            root.editorState = ShellBridge.trackerFrame(root.target)
             root.refreshFrame()
         }
     }
@@ -315,6 +320,7 @@ Item {
             anchors.fill: parent
             enabled: root.hasClip && (root.placeMode === "point" || root.placeMode === "addPoint")
             cursorShape: Qt.CrossCursor
+            onWheel: (wheel) => { wheel.accepted = false }
             onClicked: (mouse) => root.placeClick(mouse)
         }
 
@@ -323,6 +329,7 @@ Item {
             enabled: root.hasClip && root.placeMode === "planar"
             hoverEnabled: true
             cursorShape: Qt.CrossCursor
+            onWheel: (wheel) => { wheel.accepted = false }
             onPositionChanged: (mouse) => root.planarHover = Qt.point(mouse.x, mouse.y)
             onPressed: (mouse) => root.planarPress(mouse.x, mouse.y)
             // The second press of a double-click is ignored by planarPress, so this only has to close.
@@ -370,13 +377,14 @@ Item {
             delegate: Item {
                 id: pointItem
                 required property int index
-                readonly property var pt: root.framePoints[index]
-                readonly property var at: root.pointAt(index)
+                readonly property var pt: root.framePoints[index] ?? ({})
+                readonly property var at: root.pointAt(index) ?? ({})
                 readonly property real cx: at.x * clipFrame.width
                 readonly property real cy: at.y * clipFrame.height
                 readonly property real pw: pt.patternW * clipFrame.width
                 readonly property real ph: pt.patternH * clipFrame.height
-                visible: pt.has === true
+                visible: pt.has === true || pt.ghost === true
+                opacity: pt.has === true ? 1.0 : 0.6
                 x: cx - pw / 2
                 y: cy - ph / 2
                 width: pw
@@ -386,7 +394,9 @@ Item {
                     anchors.fill: parent
                     color: "transparent"
                     border.width: Theme.c.maskDrawOverlay.borderWidth
-                    border.color: root.tintFor(pointItem.pt.confidence, root.minConfidence)
+                    border.color: pointItem.pt.has === true
+                                  ? root.tintFor(pointItem.pt.confidence, root.minConfidence)
+                                  : Theme.c.trackerOverlay.warn
                 }
 
                 Rectangle {
@@ -419,6 +429,7 @@ Item {
                     anchors.fill: parent
                     enabled: root.canEdit
                     cursorShape: Qt.SizeAllCursor
+                    onWheel: (wheel) => { wheel.accepted = false }
                     preventStealing: true
 
                     property point grab: Qt.point(0, 0)
@@ -499,7 +510,7 @@ Item {
             delegate: Rectangle {
                 id: corner
                 required property int index
-                readonly property var at: root.cornerAt(index)
+                readonly property var at: root.cornerAt(index) ?? ({})
 
                 width: 10
                 height: 10
@@ -512,6 +523,7 @@ Item {
                     anchors.margins: -4
                     enabled: root.canEdit
                     cursorShape: Qt.SizeAllCursor
+                    onWheel: (wheel) => { wheel.accepted = false }
                     preventStealing: true
 
                     onPressed: root.interacting = true

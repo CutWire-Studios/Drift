@@ -64,7 +64,7 @@ Item {
                 "star": qsTr("Star"),
                 "heart": qsTr("Heart"),
                 "bars": qsTr("Bars"),
-                "freeform": qsTr("Freeform")
+                "freeform": qsTr("Polygon")
             })
             displayText: labels[model[currentIndex]] || model[currentIndex]
             currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.shape) || "none"))

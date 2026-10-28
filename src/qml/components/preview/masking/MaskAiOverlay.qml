@@ -194,6 +194,7 @@ Item {
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             cursorShape: Qt.CrossCursor
+            onWheel: (wheel) => { wheel.accepted = false }
 
             onPositionChanged: (mouse) => {
                 root.hoverIndex = root.pointAt(mouse.x, mouse.y)
@@ -321,7 +322,7 @@ Item {
             anchors.centerIn: parent
             text: EditorState.segmentation.sessionPoints.length === 0
                   ? qsTr("Click the object to select it · Right-click or Ctrl-click to exclude")
-                  : qsTr("Add points to refine · then propagate in the Masking panel")
+                  : qsTr("Add points to refine · then press “Cut out through whole clip” in the Masking panel")
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

@@ -7,7 +7,6 @@ import Drift
 Rectangle {
     id: vertex
 
-    required property var modelData
     required property int index
     required property var mask
     required property var frame
@@ -29,12 +28,22 @@ Rectangle {
     // waiting for the model to come back.
     property real liveVx: -1e12
     property real liveVy: -1e12
-    readonly property real vx: liveVx > -1e11 ? liveVx : modelData.x
-    readonly property real vy: liveVy > -1e11 ? liveVy : modelData.y
+    readonly property var pt: (vertex.mask.maskData.points || [])[vertex.index]
+    readonly property real vx: liveVx > -1e11 ? liveVx : (pt ? pt.x : 0)
+    readonly property real vy: liveVy > -1e11 ? liveVy : (pt ? pt.y : 0)
 
     x: vx * vertex.frame.width - vs / 2
     y: vy * vertex.frame.height - vs / 2
     z: 200
+
+    // The removal rebuilds the vertex Repeater, which would destroy this delegate while its
+    // MouseArea is still inside the handler that asked for it.
+    function removeDeferred() {
+        const track = vertex.mask.layerTrack
+        const clip = vertex.mask.layerClip
+        const i = vertex.index
+        Qt.callLater(() => EditorState.removeMaskPoint(track, clip, i))
+    }
 
     MouseArea {
         id: vertexArea
@@ -51,8 +60,7 @@ Rectangle {
         onPressed: (mouse) => {
             pressedByTouch = mouse.source !== Qt.MouseEventNotSynthesized
             if (mouse.button === Qt.RightButton) {
-                EditorState.removeMaskPoint(vertex.mask.layerTrack,
-                                            vertex.mask.layerClip, vertex.index)
+                vertex.removeDeferred()
                 return
             }
             vertex.overlay.interacting = true
@@ -87,8 +95,7 @@ Rectangle {
                 return
             EditorState.cancelPreviewDrag()
             vertex.overlay.interacting = false
-            EditorState.removeMaskPoint(vertex.mask.layerTrack,
-                                        vertex.mask.layerClip, vertex.index)
+            vertex.removeDeferred()
         }
     }
 }

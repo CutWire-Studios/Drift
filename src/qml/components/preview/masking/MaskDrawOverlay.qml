@@ -107,7 +107,10 @@ Item {
         const fw = Math.max(1, clipFrame.width)
         const fh = Math.max(1, clipFrame.height)
         const pts = polyPoints.map(p => ({ "x": p.x / fw, "y": p.y / fh }))
-        EditorState.masking.addPolygonMask(target.track, target.clip, pts)
+        const t = EditorState.masking.maskTarget()
+        if (t.kind === "none")
+            return
+        EditorState.masking.addPolygonMask(t.track, t.clip, pts)
         polyPoints = []
         EditorState.preview.maskingTool = ""
     }
@@ -215,50 +218,6 @@ Item {
 
         MaskOverlayClipBounds { }
 
-        // Coordinates here are clip-frame pixels, the frame mask coordinates are normalized to.
-        MouseArea {
-            anchors.fill: parent
-            enabled: root.drawTool && root.target.kind !== "none"
-            cursorShape: Qt.CrossCursor
-            preventStealing: true
-
-            onPressed: (mouse) => {
-                root.interacting = true
-                root.dragOrigin = Qt.point(mouse.x, mouse.y)
-            }
-            onPositionChanged: (mouse) => {
-                if (!root.interacting)
-                    return
-                root.drawing = true
-                root.dragBox = root.boxFrom(root.dragOrigin.x, root.dragOrigin.y,
-                                            mouse.x, mouse.y, mouse.modifiers)
-            }
-            onReleased: (mouse) => {
-                if (!root.interacting)
-                    return
-                const box = root.boxFrom(root.dragOrigin.x, root.dragOrigin.y,
-                                         mouse.x, mouse.y, mouse.modifiers)
-                root.interacting = false
-                root.drawing = false
-                // Smaller than this is a stray click, not a mask.
-                if (box.width < 4 || box.height < 4)
-                    return
-                const fw = Math.max(1, clipFrame.width)
-                const fh = Math.max(1, clipFrame.height)
-                EditorState.masking.addShapeMask(root.target.track, root.target.clip,
-                                                 EditorState.preview.maskingTool === "rect"
-                                                     ? "rectangle" : "ellipse",
-                                                 (box.x + box.width / 2) / fw,
-                                                 (box.y + box.height / 2) / fh,
-                                                 box.width / fw, box.height / fh)
-                EditorState.preview.maskingTool = ""
-            }
-            onCanceled: {
-                root.interacting = false
-                root.drawing = false
-            }
-        }
-
         Shape {
             anchors.fill: parent
             visible: root.drawing && EditorState.preview.maskingTool === "rect"
@@ -302,30 +261,6 @@ Item {
                     startAngle: 0
                     sweepAngle: 360
                 }
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            enabled: root.polyActive
-            hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: Qt.CrossCursor
-
-            onPositionChanged: (mouse) => {
-                root.hoverPoint = root.constrainedPoint(Qt.point(mouse.x, mouse.y), mouse.modifiers)
-            }
-            onPressed: (mouse) => {
-                if (mouse.button === Qt.RightButton) {
-                    root.removeLastPolyPoint()
-                    return
-                }
-                root.polyPress(Qt.point(mouse.x, mouse.y), mouse.modifiers)
-            }
-            // The second press of a double-click is ignored by polyPress, so this only has to close.
-            onDoubleClicked: (mouse) => {
-                if (mouse.button === Qt.LeftButton)
-                    root.finishPolygon()
             }
         }
 
@@ -405,6 +340,87 @@ Item {
     }
 
     // Nothing to draw on: the tool is up, but no clip is selected, or the selected one is off the playhead.
+    // Both draw tools take input on the whole overlay rather than the clip frame, so a mask can be
+    // started off the clip. Positions are mapped into clip-frame pixels, the frame mask coordinates
+    // are normalized to.
+    MouseArea {
+        id: boxArea
+        anchors.fill: parent
+        enabled: root.drawTool && root.target.kind !== "none" && root.hasFrame
+        cursorShape: Qt.CrossCursor
+        preventStealing: true
+        onWheel: (wheel) => { wheel.accepted = false }
+
+        onPressed: (mouse) => {
+            root.interacting = true
+            root.dragOrigin = clipFrame.mapFromItem(boxArea, mouse.x, mouse.y)
+        }
+        onPositionChanged: (mouse) => {
+            if (!root.interacting)
+                return
+            const p = clipFrame.mapFromItem(boxArea, mouse.x, mouse.y)
+            root.drawing = true
+            root.dragBox = root.boxFrom(root.dragOrigin.x, root.dragOrigin.y,
+                                        p.x, p.y, mouse.modifiers)
+        }
+        onReleased: (mouse) => {
+            if (!root.interacting)
+                return
+            const p = clipFrame.mapFromItem(boxArea, mouse.x, mouse.y)
+            const box = root.boxFrom(root.dragOrigin.x, root.dragOrigin.y,
+                                     p.x, p.y, mouse.modifiers)
+            root.interacting = false
+            root.drawing = false
+            // Smaller than this is a stray click, not a mask.
+            if (box.width < 4 || box.height < 4)
+                return
+            const t = EditorState.masking.maskTarget()
+            if (t.kind === "none")
+                return
+            const fw = Math.max(1, clipFrame.width)
+            const fh = Math.max(1, clipFrame.height)
+            EditorState.masking.addShapeMask(t.track, t.clip,
+                                             EditorState.preview.maskingTool === "rect"
+                                                 ? "rectangle" : "ellipse",
+                                             (box.x + box.width / 2) / fw,
+                                             (box.y + box.height / 2) / fh,
+                                             box.width / fw, box.height / fh)
+            EditorState.preview.maskingTool = ""
+        }
+        onCanceled: {
+            root.interacting = false
+            root.drawing = false
+        }
+    }
+
+    MouseArea {
+        id: polyArea
+        anchors.fill: parent
+        enabled: root.polyActive && root.hasFrame
+        hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        cursorShape: Qt.CrossCursor
+        onWheel: (wheel) => { wheel.accepted = false }
+
+        onPositionChanged: (mouse) => {
+            const p = clipFrame.mapFromItem(polyArea, mouse.x, mouse.y)
+            root.hoverPoint = root.constrainedPoint(Qt.point(p.x, p.y), mouse.modifiers)
+        }
+        onPressed: (mouse) => {
+            if (mouse.button === Qt.RightButton) {
+                root.removeLastPolyPoint()
+                return
+            }
+            const p = clipFrame.mapFromItem(polyArea, mouse.x, mouse.y)
+            root.polyPress(Qt.point(p.x, p.y), mouse.modifiers)
+        }
+        // The second press of a double-click is ignored by polyPress, so this only has to close.
+        onDoubleClicked: (mouse) => {
+            if (mouse.button === Qt.LeftButton)
+                root.finishPolygon()
+        }
+    }
+
     Rectangle {
         visible: root.target.kind === "none" || !root.editorState.inside
         anchors.centerIn: parent

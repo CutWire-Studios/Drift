@@ -5,20 +5,18 @@ import Drift
 Rectangle {
     id: midpoint
 
-    required property var modelData
     required property int index
     required property var mask
     required property var frame
 
     // The edge from this vertex to the next, wrapping at the end.
-    readonly property var nextPoint: {
-        const pts = midpoint.mask.maskData.points || []
-        return pts[(midpoint.index + 1) % pts.length]
-    }
-    readonly property real mxN: nextPoint
-            ? (modelData.x + nextPoint.x) / 2 : modelData.x
-    readonly property real myN: nextPoint
-            ? (modelData.y + nextPoint.y) / 2 : modelData.y
+    readonly property var pts: midpoint.mask.maskData.points || []
+    readonly property var thisPoint: pts[midpoint.index]
+    readonly property var nextPoint: pts.length > 0 ? pts[(midpoint.index + 1) % pts.length] : undefined
+    readonly property real mxN: thisPoint
+            ? (nextPoint ? (thisPoint.x + nextPoint.x) / 2 : thisPoint.x) : 0
+    readonly property real myN: thisPoint
+            ? (nextPoint ? (thisPoint.y + nextPoint.y) / 2 : thisPoint.y) : 0
 
     width: Theme.spacingMd
     height: Theme.spacingMd
@@ -40,8 +38,13 @@ Rectangle {
         preventStealing: true
         onWheel: (wheel) => { wheel.accepted = false }
         // Inserting before the far end of the edge splits that edge.
-        onClicked: EditorState.insertMaskPoint(
-            midpoint.mask.layerTrack, midpoint.mask.layerClip,
-            midpoint.index + 1, midpoint.mxN, midpoint.myN)
+        onClicked: {
+            const track = midpoint.mask.layerTrack
+            const clip = midpoint.mask.layerClip
+            const i = midpoint.index + 1
+            const nx = midpoint.mxN
+            const ny = midpoint.myN
+            Qt.callLater(() => EditorState.insertMaskPoint(track, clip, i, nx, ny))
+        }
     }
 }

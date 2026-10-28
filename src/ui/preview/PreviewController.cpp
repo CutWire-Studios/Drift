@@ -1838,6 +1838,21 @@ QVariantMap PreviewController::maskingFrame() const
             {QStringLiteral("inside"), inside}};
 }
 
+QVariantMap PreviewController::trackerFrameOf(int trackIndex, int clipIndex) const
+{
+    if (!m_app.isValidClipIndex(trackIndex, clipIndex)) {
+        return {{QStringLiteral("hasFrame"), false},
+                {QStringLiteral("inside"), false},
+                {QStringLiteral("canvasWidth"), m_app.m_project.width()},
+                {QStringLiteral("canvasHeight"), m_app.m_project.height()}};
+    }
+    const bool inside = m_app.m_project.tracks().at(trackIndex).clips.at(clipIndex).containsTime(m_app.m_playheadUs);
+    QVariantMap out = clipFrameMap(trackIndex, clipIndex);
+    out.insert(QStringLiteral("inside"), inside);
+    out.insert(QStringLiteral("hasFrame"), inside);
+    return out;
+}
+
 bool PreviewController::resetSceneCamera(int trackIndex, int clipIndex)
 {
     if (trackIndex < 0) {

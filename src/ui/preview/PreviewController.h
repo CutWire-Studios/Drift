@@ -187,6 +187,9 @@ public:
     // The frame the masking overlays place against: the selection's mask target, with `inside`
     // telling whether that target is under the playhead (hasFrame follows it).
     Q_INVOKABLE QVariantMap maskingFrame() const;
+    // maskingFrame for a given media clip rather than the selection: the frame trackers work in when
+    // an adjustment layer is selected. Empty (hasFrame false) for an invalid clip.
+    Q_INVOKABLE QVariantMap trackerFrameOf(int trackIndex, int clipIndex) const;
     // What the depth handles need, as one snapshot: the selected media clip's frame on the canvas
     // and every enabled depth effect with a handle (relight, depth of field) on its stack, with
     // parameters resolved at the playhead. Empty when there is nothing to show.

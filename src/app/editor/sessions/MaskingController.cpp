@@ -14,9 +14,8 @@
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QList>
-#include <QPainter>
 #include <QPair>
-#include <QRadialGradient>
+#include <QScopeGuard>
 #include <QSet>
 #include <QStringList>
 #include <QUuid>
@@ -146,26 +145,50 @@ void paintBrushStroke(QImage &image, const QVector<QPointF> &pixelPoints, double
 {
     if (image.isNull() || pixelPoints.isEmpty() || radiusPx <= 0)
         return;
+    if (image.format() != QImage::Format_Grayscale8)
+        image = image.convertToFormat(QImage::Format_Grayscale8);
 
-    const QColor colour = erase ? QColor(Qt::black) : QColor(Qt::white);
-    QColor solid = colour;
-    solid.setAlphaF(std::clamp(opacity, 0.0, 1.0));
-    QColor transparent = colour;
-    transparent.setAlpha(0);
+    // Dabs accumulate by max into a per-stroke coverage map, so overlapping dabs never build past
+    // the stroke's own shape; opacity is applied once when the map is composited.
+    QImage coverage(image.size(), QImage::Format_Grayscale8);
+    coverage.fill(0);
     // Below 1 so the falloff keeps a ramp at full hardness.
     const double solidStop = std::clamp(hardness, 0.0, 0.99);
     const double spacing = std::max(1.0, radiusPx * 0.25);
+    const int width = image.width();
+    const int height = image.height();
 
-    QPainter painter(&image);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setPen(Qt::NoPen);
+    int minX = width;
+    int minY = height;
+    int maxX = -1;
+    int maxY = -1;
     const auto dab = [&](const QPointF &centre) {
-        QRadialGradient gradient(centre, radiusPx);
-        gradient.setColorAt(0.0, solid);
-        gradient.setColorAt(solidStop, solid);
-        gradient.setColorAt(1.0, transparent);
-        painter.setBrush(gradient);
-        painter.drawEllipse(centre, radiusPx, radiusPx);
+        const int x0 = std::max(0, static_cast<int>(std::floor(centre.x() - radiusPx)));
+        const int x1 = std::min(width - 1, static_cast<int>(std::ceil(centre.x() + radiusPx)));
+        const int y0 = std::max(0, static_cast<int>(std::floor(centre.y() - radiusPx)));
+        const int y1 = std::min(height - 1, static_cast<int>(std::ceil(centre.y() + radiusPx)));
+        if (x0 > x1 || y0 > y1)
+            return;
+        minX = std::min(minX, x0);
+        maxX = std::max(maxX, x1);
+        minY = std::min(minY, y0);
+        maxY = std::max(maxY, y1);
+        for (int y = y0; y <= y1; ++y) {
+            uchar *row = coverage.scanLine(y);
+            const double dy = y + 0.5 - centre.y();
+            for (int x = x0; x <= x1; ++x) {
+                const double dx = x + 0.5 - centre.x();
+                const double distance = std::hypot(dx, dy);
+                const double d = distance / radiusPx;
+                if (d >= 1.0)
+                    continue;
+                double v = d <= solidStop ? 1.0 : 1.0 - (d - solidStop) / (1.0 - solidStop);
+                v *= std::clamp(radiusPx - distance + 0.5, 0.0, 1.0);
+                const uchar value = static_cast<uchar>(std::lround(v * 255.0));
+                if (value > row[x])
+                    row[x] = value;
+            }
+        }
     };
 
     dab(pixelPoints.constFirst());
@@ -176,6 +199,20 @@ void paintBrushStroke(QImage &image, const QVector<QPointF> &pixelPoints, double
         const int steps = std::max(1, static_cast<int>(std::ceil(length / spacing)));
         for (int s = 1; s <= steps; ++s)
             dab(from + (to - from) * (static_cast<double>(s) / steps));
+    }
+    if (maxX < 0)
+        return;
+
+    const double strength = std::clamp(opacity, 0.0, 1.0) / 255.0;
+    for (int y = minY; y <= maxY; ++y) {
+        const uchar *src = coverage.constScanLine(y);
+        uchar *dst = image.scanLine(y);
+        for (int x = minX; x <= maxX; ++x) {
+            if (src[x] == 0)
+                continue;
+            const double a = src[x] * strength;
+            dst[x] = static_cast<uchar>(std::lround(erase ? dst[x] * (1.0 - a) : dst[x] + (255 - dst[x]) * a));
+        }
     }
 }
 
@@ -501,7 +538,7 @@ void MaskingController::brushFill(int trackIndex, int clipIndex, bool clear)
         return;
 
     QImage image = brushImage(trackIndex, clipIndex);
-    image.fill(clear ? Qt::black : Qt::white);
+    image.fill(clear ? 0 : 255);
     commitBrushMatte(trackIndex, clipIndex, image, clear ? tr("Clear mask") : tr("Fill mask"));
 }
 
@@ -576,11 +613,11 @@ QImage MaskingController::brushImage(int trackIndex, int clipIndex) const
         if (path == m_brushPendingPath && !m_brushImage.isNull())
             image = m_brushImage;
         else
-            image = QImage(path).convertToFormat(QImage::Format_ARGB32_Premultiplied);
+            image = QImage(path).convertToFormat(QImage::Format_Grayscale8);
     }
     if (image.isNull()) {
-        image = QImage(size, QImage::Format_ARGB32_Premultiplied);
-        image.fill(Qt::black);
+        image = QImage(size, QImage::Format_Grayscale8);
+        image.fill(0);
         return image;
     }
     if (image.size() != size)
@@ -618,6 +655,7 @@ bool MaskingController::waitForBrushSaves(int timeoutMs)
 void MaskingController::finishBrushSave(bool ok, const QString &path, const QString &clipId, const QString &undoText)
 {
     --m_brushSavesInFlight;
+    const auto applied = qScopeGuard([this, &clipId] { emit brushApplied(clipId); });
     if (path == m_brushPendingPath)
         m_brushSaveFailed = !ok;
     if (!ok) {

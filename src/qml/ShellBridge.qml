@@ -24,6 +24,60 @@ QtObject {
     property string trackerPlaceId: ""
     // Shared by the Tracking panel and the tracker overlay, which can both change the selection.
     property string selectedTrackerId: ""
+    // Where trackers live for the selection. An adjustment layer has none of its own, so it uses
+    // the topmost video clip under the playhead and carries the layer's name as viaAdjustment.
+    function trackerTarget() {
+        const selected = EditorState.masking.maskTarget()
+        if (selected.kind !== "adjustment")
+            return selected
+        let host = null
+        for (const box of EditorState.preview.clipsAtPlayhead()) {
+            if (box.kind === "video")
+                host = box
+        }
+        return host ? { kind: "clip", track: host.track, clip: host.clip, name: host.name,
+                        viaAdjustment: selected.name || qsTr("Adjustment layer") }
+                    : selected
+    }
+    // The frame trackers work in for trackerTarget().
+    function trackerFrame(target) {
+        return target.viaAdjustment !== undefined
+               ? EditorState.preview.trackerFrameOf(target.track, target.clip)
+               : EditorState.preview.maskingFrame()
+    }
+
+    // Tracking in both directions: backward from the playhead, then forward from where it started.
+    property string bothTrackerId: ""
+    property int bothTrack: -1
+    property int bothClip: -1
+    property real bothStartSeconds: 0
+    function trackBoth(track, clip, id) {
+        bothTrack = track
+        bothClip = clip
+        bothTrackerId = id
+        bothStartSeconds = EditorState.playheadSeconds
+        EditorState.tracking.track(track, clip, id, false, false)
+        if (!EditorState.tracking.busy)
+            continueBoth()
+    }
+    function continueBoth() {
+        const id = bothTrackerId
+        bothTrackerId = ""
+        EditorState.playheadSeconds = bothStartSeconds
+        EditorState.tracking.track(bothTrack, bothClip, id, true, false)
+    }
+    function stopTracking() {
+        bothTrackerId = ""
+        EditorState.tracking.cancel()
+    }
+    property Connections trackingWatcher: Connections {
+        target: EditorState.tracking
+        function onBusyChanged() {
+            if (!EditorState.tracking.busy && ShellBridge.bothTrackerId !== "")
+                Qt.callLater(ShellBridge.continueBoth)
+        }
+    }
+
     property var subtitleActionHandler: null
     property var sourceLabActionHandler: null
     property var sourceLabRangesHandler: null

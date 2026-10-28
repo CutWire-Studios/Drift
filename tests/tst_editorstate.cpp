@@ -374,6 +374,10 @@ private slots:
     void trackingSingleFrameStepKeepsLaterSamples();
     void trackingUndoRevertsOnlyTheTracker();
     void trackingCorrectPlanarCornersAwayFromReference();
+    void trackingDrivesStandaloneAdjustmentMaskInCanvasSpace();
+    void trackingCorrectionDropsStaleSamplesAndReappliesTargets();
+    void trackingFrameKeepsAGhostMarkerOffTheTrackedSpan();
+    void maskingBrushOpacityCapsASingleStroke();
     void maskingBrushPaintsAndErases();
     void maskingBrushStrokeCreatesAndUpdatesAMatte();
     void maskingBrushStrokesChainBeforeSaving();
@@ -13112,6 +13116,121 @@ void EditorStateTest::trackingCorrectPlanarCornersAwayFromReference()
         QVERIFY(qAbs(mapped.x() - point(moved.at(i)).x()) < 1e-6);
         QVERIFY(qAbs(mapped.y() - point(moved.at(i)).y()) < 1e-6);
     }
+}
+
+void EditorStateTest::trackingDrivesStandaloneAdjustmentMaskInCanvasSpace()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+
+    const double canvasW = state.project()->width();
+    state.project()->tracks()[0].clips[0].transformX.setKeyframe(0, 100.0);
+    state.project()->tracks()[0].clips[0].transformW.setKeyframe(0, canvasW / 2.0);
+
+    drift::Track layer;
+    layer.type = drift::TrackType::Adjustment;
+    drift::Clip adjustment;
+    adjustment.id = QStringLiteral("adjustment");
+    adjustment.name = QStringLiteral("Blur layer");
+    adjustment.type = drift::ClipType::Adjustment;
+    adjustment.adjustmentKind = drift::AdjustmentKind::VideoEffects;
+    adjustment.timelineStart = 0;
+    adjustment.timelineDuration = drift::secondsToUs(2.0);
+    adjustment.mask.shape = drift::MaskShape::Ellipse;
+    adjustment.mask.x = 0.3;
+    adjustment.mask.y = 0.5;
+    adjustment.mask.w = 0.2;
+    adjustment.mask.h = 0.2;
+    layer.clips.append(adjustment);
+    state.project()->tracks().append(layer);
+
+    const QVariantList candidates = state.tracking()->targetCandidates(0, 0);
+    QVERIFY(std::any_of(candidates.begin(), candidates.end(), [](const QVariant &c) {
+        return c.toMap().value(QStringLiteral("clipId")).toString() == QStringLiteral("adjustment")
+               && c.toMap().value(QStringLiteral("kind")).toString() == QStringLiteral("mask");
+    }));
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5), 0.95f, false});
+
+    state.tracking()->setTarget(0, 0, id, QStringLiteral("adjustment"), QStringLiteral("mask"));
+    const drift::Mask &mask = fx.clipById(QStringLiteral("adjustment"))->mask;
+    const auto &x = mask.keyframes.value(QStringLiteral("x")).keyframes();
+    QCOMPARE(x.size(), 2);
+    QVERIFY(qAbs(x.first().value - 0.3) < 1e-6);
+    // 0.29 of the host's width, which is half the canvas.
+    QVERIFY(qAbs(x.last().value - (0.3 + 0.29 / 2.0)) < 1e-6);
+    QVERIFY(qAbs(mask.keyframes.value(QStringLiteral("y")).keyframes().last().value - 0.5) < 1e-6);
+}
+
+void EditorStateTest::trackingCorrectionDropsStaleSamplesAndReappliesTargets()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const QString maskId = fx.addMask(QStringLiteral("clip-0"));
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5), 0.95f, false});
+    tracker.points[0].samples.insert(25 * fx.frame, drift::TrackSample{QPointF(0.2, 0.2), 1.0f, true});
+    state.tracking()->setTarget(0, 0, id, maskId, QStringLiteral("mask"));
+
+    state.setPlayheadUs(10 * fx.frame);
+    state.tracking()->setTrackerPoint(0, 0, id, 0, 0.9, 0.5);
+
+    const auto &samples = fx.tracker(QStringLiteral("clip-0"), id).points[0].samples;
+    QVERIFY(samples.value(10 * fx.frame).userKey);
+    QVERIFY(!samples.contains(11 * fx.frame));
+    QVERIFY(!samples.contains(24 * fx.frame));
+    QVERIFY(samples.contains(25 * fx.frame));
+    QVERIFY(samples.contains(26 * fx.frame));
+    QVERIFY(samples.contains(9 * fx.frame));
+
+    const drift::Mask &mask = fx.clipById(maskId)->mask;
+    const auto &x = mask.keyframes.value(QStringLiteral("x")).keyframes();
+    QVERIFY(x.contains(10 * fx.frame));
+    QVERIFY(qAbs(x.value(10 * fx.frame).value - 0.9) < 1e-6);
+}
+
+void EditorStateTest::trackingFrameKeepsAGhostMarkerOffTheTrackedSpan()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    for (int k = 1; k <= 10; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5), 0.95f, false});
+
+    const auto pointAt = [&](int frameIndex) {
+        const QVariantMap frame = state.tracking()->trackerFrame(0, 0, id, drift::usToSeconds(frameIndex * fx.frame));
+        return frame.value(QStringLiteral("points")).toList().first().toMap();
+    };
+    QVERIFY(pointAt(5).value(QStringLiteral("has")).toBool());
+    QVERIFY(!pointAt(5).value(QStringLiteral("ghost")).toBool());
+    const QVariantMap past = pointAt(20);
+    QVERIFY(!past.value(QStringLiteral("has")).toBool());
+    QVERIFY(past.value(QStringLiteral("ghost")).toBool());
+    QVERIFY(qAbs(past.value(QStringLiteral("x")).toDouble() - 0.6) < 1e-9);
+}
+
+void EditorStateTest::maskingBrushOpacityCapsASingleStroke()
+{
+    QImage image(200, 100, QImage::Format_Grayscale8);
+    image.fill(0);
+    const QVector<QPointF> line{QPointF(20, 50), QPointF(180, 50)};
+    drift::masking::paintBrushStroke(image, line, 10, 1.0, 0.3, false);
+    QVERIFY(qAbs(qGray(image.pixel(100, 50)) - 77) <= 3);
+    QCOMPARE(qGray(image.pixel(100, 5)), 0);
+
+    drift::masking::paintBrushStroke(image, line, 10, 1.0, 1.0, true);
+    QVERIFY(qGray(image.pixel(100, 50)) < 5);
 }
 
 void EditorStateTest::trackingFollowClipOffsetsTransformKeys()

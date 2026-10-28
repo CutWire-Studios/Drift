@@ -28,6 +28,9 @@ Item {
     property var stroke: []
     property bool strokeErase: false
     property bool hovering: false
+    // Strokes released but not yet visible in the composite: the matte is encoded and reloaded
+    // asynchronously. Normalized to the clip frame, so a zoom in between cannot misplace them.
+    property var pendingStrokes: []
     property point hoverPoint: Qt.point(0, 0)
     // Brush diameter in clip-frame pixels; the size is a fraction of the frame width.
     readonly property real brushDiameter: EditorState.masking.brushSize * clipFrame.width
@@ -46,16 +49,31 @@ Item {
     function commitStroke(erase) {
         const pts = root.stroke
         root.stroke = []
-        if (pts.length === 0 || !root.clipTarget)
+        // Tracks can have been inserted since the last refresh, so read the target again.
+        const t = EditorState.masking.maskTarget()
+        if (pts.length === 0 || t.kind !== "clip")
             return
         const fw = Math.max(1, clipFrame.width)
         const fh = Math.max(1, clipFrame.height)
-        EditorState.masking.brushStroke(root.target.track, root.target.clip,
-                                        pts.map(p => ({ "x": p.x / fw, "y": p.y / fh })), erase)
+        const normalized = pts.map(p => ({ "x": p.x / fw, "y": p.y / fh }))
+        root.pendingStrokes = root.pendingStrokes.concat([{ "points": normalized, "erase": erase,
+                                                            "size": EditorState.masking.brushSize }])
+        EditorState.masking.brushStroke(t.track, t.clip, normalized, erase)
     }
 
-    onVisibleChanged: if (visible) refresh()
+    onVisibleChanged: {
+        if (visible)
+            refresh()
+        else
+            pendingStrokes = []
+    }
     Component.onCompleted: refresh()
+    Component.onDestruction: pendingStrokes = []
+
+    Connections {
+        target: EditorState.masking
+        function onBrushApplied() { root.pendingStrokes = root.pendingStrokes.slice(1) }
+    }
 
     Connections {
         target: EditorState
@@ -116,39 +134,28 @@ Item {
 
         MaskOverlayClipBounds { }
 
-        // Coordinates here are clip-frame pixels, the frame mask coordinates are normalized to.
-        MouseArea {
-            anchors.fill: parent
-            enabled: root.clipTarget
-            hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: containsMouse ? Qt.BlankCursor : Qt.ArrowCursor
-            preventStealing: true
-            onContainsMouseChanged: root.hovering = containsMouse
+        Repeater {
+            model: root.pendingStrokes
 
-            onPositionChanged: (mouse) => {
-                root.hoverPoint = Qt.point(mouse.x, mouse.y)
-                if (!root.interacting)
-                    return
-                const last = root.stroke[root.stroke.length - 1]
-                if (Math.hypot(mouse.x - last.x, mouse.y - last.y) >= 2)
-                    root.stroke = root.stroke.concat([Qt.point(mouse.x, mouse.y)])
-            }
-            onPressed: (mouse) => {
-                root.interacting = true
-                root.strokeErase = mouse.button === Qt.RightButton || EditorState.masking.brushErase
-                root.stroke = [Qt.point(mouse.x, mouse.y)]
-            }
-            onReleased: {
-                if (!root.interacting)
-                    return
-                root.interacting = false
-                root.commitStroke(root.strokeErase)
-                Qt.callLater(root.refresh)
-            }
-            onCanceled: {
-                root.interacting = false
-                root.stroke = []
+            delegate: Shape {
+                id: pending
+                required property var modelData
+                anchors.fill: parent
+                visible: modelData.points.length > 1
+
+                ShapePath {
+                    strokeColor: Qt.alpha(pending.modelData.erase ? Theme.c.maskBrushOverlay.eraseStroke
+                                                                  : Theme.c.maskBrushOverlay.stroke, 0.5)
+                    strokeWidth: pending.modelData.size * clipFrame.width
+                    capStyle: ShapePath.RoundCap
+                    joinStyle: ShapePath.RoundJoin
+                    fillColor: "transparent"
+
+                    PathPolyline {
+                        path: pending.modelData.points.map(p => Qt.point(p.x * clipFrame.width,
+                                                                          p.y * clipFrame.height))
+                    }
+                }
             }
         }
 
@@ -193,6 +200,49 @@ Item {
             color: "transparent"
             border.color: Qt.alpha(Theme.c.maskBrushOverlay.cursorInner, 0.5)
             border.width: Theme.c.maskBrushOverlay.borderWidth
+        }
+    }
+
+    // Fills the whole overlay rather than the clip frame, so a stroke can start outside the frame
+    // and the cursor ring survives the pointer leaving it mid-stroke. Positions are mapped into
+    // clip-frame pixels, the frame mask coordinates are normalized to.
+    MouseArea {
+        id: paintArea
+        anchors.fill: parent
+        enabled: root.clipTarget && root.hasFrame
+        hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        cursorShape: root.hovering ? Qt.BlankCursor : Qt.ArrowCursor
+        preventStealing: true
+        onWheel: (wheel) => { wheel.accepted = false }
+        onContainsMouseChanged: root.hovering = containsMouse || pressed
+        onPressedChanged: root.hovering = containsMouse || pressed
+
+        onPositionChanged: (mouse) => {
+            const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
+            root.hoverPoint = Qt.point(p.x, p.y)
+            if (!root.interacting)
+                return
+            const last = root.stroke[root.stroke.length - 1]
+            if (Math.hypot(p.x - last.x, p.y - last.y) >= 2)
+                root.stroke = root.stroke.concat([Qt.point(p.x, p.y)])
+        }
+        onPressed: (mouse) => {
+            const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
+            root.interacting = true
+            root.strokeErase = mouse.button === Qt.RightButton || EditorState.masking.brushErase
+            root.stroke = [Qt.point(p.x, p.y)]
+        }
+        onReleased: {
+            if (!root.interacting)
+                return
+            root.interacting = false
+            root.commitStroke(root.strokeErase)
+            Qt.callLater(root.refresh)
+        }
+        onCanceled: {
+            root.interacting = false
+            root.stroke = []
         }
     }
 

@@ -20,6 +20,13 @@ PanelFrame {
     property string selectedId: ""
 
     readonly property bool hasTarget: target.kind === "clip"
+    // The target depends on what is under the playhead: an adjustment layer borrows the clip below
+    // it, and with nothing selected the panel offers the clip at the playhead.
+    readonly property bool followsPlayhead: target.kind === "adjustment" || target.kind === "none"
+                                            || target.viaAdjustment !== undefined
+    property bool clipAtPlayhead: false
+    // Set when a drag has just replaced the samples after the playhead; cleared by the next track.
+    property string correctedId: ""
     readonly property string placeMode: ShellBridge.trackerPlaceMode
 
     readonly property var placeHints: ({
@@ -36,7 +43,9 @@ PanelFrame {
     })
 
     function refresh() {
-        target = EditorState.masking.maskTarget()
+        target = ShellBridge.trackerTarget()
+        clipAtPlayhead = target.kind === "none"
+                         && EditorState.preview.clipsAtPlayhead().some(box => box.kind === "video" || box.kind === "image")
         const clip = target.kind === "clip" ? EditorState.clipAt(target.track, target.clip) : ({})
         clipStart = clip.start || 0
         clipDuration = clip.duration || 0
@@ -57,8 +66,26 @@ PanelFrame {
     }
 
     function runTrack(id, forward, singleFrame) {
+        correctedId = ""
         EditorState.tracking.track(target.track, target.clip, id, forward, singleFrame)
     }
+
+    function trackBoth(id) {
+        correctedId = ""
+        ShellBridge.trackBoth(target.track, target.clip, id)
+    }
+
+    function useClipAtPlayhead() {
+        let pick = null
+        for (const box of EditorState.preview.clipsAtPlayhead()) {
+            if (box.kind === "video" || box.kind === "image")
+                pick = box
+        }
+        if (pick)
+            EditorState.selectClip(pick.track, pick.clip)
+    }
+
+
 
     function seekStrip(fraction) {
         if (clipDuration <= 0)
@@ -76,9 +103,16 @@ PanelFrame {
         return Theme.c.trackingPanel.stripWarn
     }
 
-    // Escape cancels an armed placement even when the Masking panel is not in the layout.
+    // Escape stops a running track, or cancels an armed placement, even when the Masking panel is
+    // not in the layout.
     function handleAction(id) {
-        if (id !== "clearSelection" || ShellBridge.trackerPlaceMode === "")
+        if (id !== "clearSelection")
+            return false
+        if (EditorState.tracking.busy) {
+            ShellBridge.stopTracking()
+            return true
+        }
+        if (ShellBridge.trackerPlaceMode === "")
             return false
         ShellBridge.trackerPlaceMode = ""
         return true
@@ -130,6 +164,11 @@ PanelFrame {
             if (!EditorState.playing)
                 root.refreshIfLive()
         }
+        // An adjustment layer has no trackers of its own: the clip under it changes with the playhead.
+        function onPlayheadSecondsChanged() {
+            if (root.followsPlayhead && !EditorState.scrubbing && !EditorState.tracking.busy)
+                root.refreshIfLive()
+        }
     }
 
     Connections {
@@ -142,6 +181,10 @@ PanelFrame {
         function onBusyChanged() {
             if (!EditorState.tracking.busy)
                 root.refreshIfLive()
+        }
+        function onSamplesUpdated(trackerId) {
+            if (!EditorState.tracking.busy && trackerId === root.selectedId)
+                root.correctedId = trackerId
         }
     }
 
@@ -165,7 +208,25 @@ PanelFrame {
                 visible: !root.hasTarget
                 compact: true
                 title: qsTr("No clip selected")
-                hint: qsTr("Select a video clip to track motion in it.")
+                hint: root.target.kind === "adjustment"
+                      ? qsTr("No video clip under this adjustment layer at the playhead.")
+                      : qsTr("Select a video clip to track motion in it.")
+            }
+
+            ThemedButton {
+                visible: !root.hasTarget && root.target.kind === "none" && root.clipAtPlayhead
+                text: qsTr("Use clip at playhead")
+                onClicked: root.useClipAtPlayhead()
+            }
+
+            Text {
+                visible: root.hasTarget && root.target.viaAdjustment !== undefined
+                width: parent.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Tracking: %1 (under %2)").arg(root.target.name || "").arg(root.target.viaAdjustment || "")
+                color: Theme.c.maskingPanel.foregroundMuted
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
             }
 
             RowLayout {
@@ -290,7 +351,10 @@ PanelFrame {
                         }
 
                         TapHandler {
-                            onTapped: root.selectedId = trackerRow.modelData.id
+                            onTapped: {
+                                root.selectedId = trackerRow.modelData.id
+                                EditorState.preview.maskingTool = "tracker"
+                            }
                         }
 
                         RowLayout {
@@ -347,6 +411,48 @@ PanelFrame {
                         width: parent.width - Theme.spacingLg
                         spacing: Theme.spacingSm
 
+                        Text {
+                            visible: !((trackerRow.modelData.sampleRange ?? []).length === 2
+                                       && trackerRow.modelData.sampleRange[1] - trackerRow.modelData.sampleRange[0] > 0.001)
+                                     && !EditorState.tracking.busy
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            text: qsTr("Now track it: press Track whole clip, or ◀ ▶ to go one way.")
+                            color: Theme.c.maskingPanel.foregroundMuted
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeXs
+                        }
+
+                        ThemedButton {
+                            width: parent.width
+                            variant: "primary"
+                            text: qsTr("Track whole clip")
+                            tooltip: qsTr("Follow the feature backward and forward through the whole clip")
+                            enabled: !EditorState.tracking.busy
+                            onClicked: root.trackBoth(trackerRow.modelData.id)
+                        }
+
+                        RowLayout {
+                            visible: root.correctedId === trackerRow.modelData.id && !EditorState.tracking.busy
+                            width: parent.width
+                            spacing: Theme.spacingSm
+
+                            Text {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: qsTr("Corrected at this frame. Track ▶ to continue.")
+                                color: Theme.c.maskingPanel.foregroundMuted
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeXs
+                            }
+
+                            ThemedButton {
+                                Layout.alignment: Qt.AlignVCenter
+                                text: qsTr("Track ▶")
+                                onClicked: root.runTrack(trackerRow.modelData.id, true, false)
+                            }
+                        }
+
                         RowLayout {
                             width: parent.width
                             spacing: Theme.spacingXs
@@ -366,10 +472,10 @@ PanelFrame {
                             }
 
                             IconButton {
-                                glyph: Theme.icons.square
-                                tooltip: qsTr("Stop tracking")
+                                glyph: Theme.icons.x
+                                tooltip: qsTr("Stop tracking (Esc)")
                                 enabled: EditorState.tracking.busy
-                                onClicked: EditorState.tracking.cancel()
+                                onClicked: ShellBridge.stopTracking()
                             }
 
                             IconButton {
