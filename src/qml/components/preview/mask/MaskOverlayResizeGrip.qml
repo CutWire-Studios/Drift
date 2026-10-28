@@ -27,48 +27,6 @@ Rectangle {
     y: (modelData.dy === 0 ? grip.mask.height / 2
                            : (modelData.dy < 0 ? 0 : grip.mask.height)) - hs / 2
 
-    // Press point in clip-frame coordinates. The grip rides the box as it
-    // resizes, so deltas are measured against the frame, which stands still.
-    property real startPx: 0
-    property real startPy: 0
-
-    // Resize about the fixed opposite edge/corner. The maths runs in the box's
-    // own axes so a rotated mask grows along the direction the grip points;
-    // the resulting centre shift is rotated back into the clip frame at the end.
-    function resizeTo(px, py, modifiers) {
-        const dxSign = grip.modelData.dx
-        const dySign = grip.modelData.dy
-        const a = grip.mask.rotation * Math.PI / 180
-        const ddx = (px - grip.startPx) / Math.max(1, grip.frame.width)
-        const ddy = (py - grip.startPy) / Math.max(1, grip.frame.height)
-        // Clip axes -> box axes.
-        const lx = ddx * Math.cos(a) + ddy * Math.sin(a)
-        const ly = -ddx * Math.sin(a) + ddy * Math.cos(a)
-
-        let w = Math.max(0.01, grip.mask.dragStartW + lx * dxSign)
-        let h = Math.max(0.01, grip.mask.dragStartH + ly * dySign)
-
-        // Shift locks the ratio on a corner drag.
-        if (grip.isCorner && (modifiers & Qt.ShiftModifier) !== 0) {
-            const s = Math.max(w / Math.max(0.01, grip.mask.dragStartW),
-                               h / Math.max(0.01, grip.mask.dragStartH))
-            w = Math.max(0.01, grip.mask.dragStartW * s)
-            h = Math.max(0.01, grip.mask.dragStartH * s)
-        }
-
-        // Keeping the anchor still means the centre moves by half the size
-        // change, toward the grip, in box axes.
-        const shiftX = (w - grip.mask.dragStartW) / 2 * dxSign
-        const shiftY = (h - grip.mask.dragStartH) / 2 * dySign
-        grip.mask.liveX = grip.mask.dragStartX
-                      + shiftX * Math.cos(a) - shiftY * Math.sin(a)
-        grip.mask.liveY = grip.mask.dragStartY
-                      + shiftX * Math.sin(a) + shiftY * Math.cos(a)
-        grip.mask.liveW = w
-        grip.mask.liveH = h
-        grip.mask.writeLive()
-    }
-
     MouseArea {
         id: gripArea
         anchors.fill: parent
@@ -85,29 +43,25 @@ Rectangle {
 
         onPressed: (mouse) => {
             const p = mapToItem(grip.frame, mouse.x, mouse.y)
-            grip.startPx = p.x
-            grip.startPy = p.y
-            grip.mask.dragStartX = grip.mask.mx
-            grip.mask.dragStartY = grip.mask.my
-            grip.mask.dragStartW = grip.mask.mw
-            grip.mask.dragStartH = grip.mask.mh
-            grip.mask.liveX = grip.mask.dragStartX
-            grip.mask.liveY = grip.mask.dragStartY
-            grip.mask.liveW = grip.mask.dragStartW
-            grip.mask.liveH = grip.mask.dragStartH
+            const session = EditorState.masking.editSession
+            if (!session.begin(grip.mask.layerId, grip.frame.width, grip.frame.height))
+                return
+            session.beginResize(grip.modelData.dx, grip.modelData.dy,
+                                p.x / Math.max(1, grip.frame.width), p.y / Math.max(1, grip.frame.height))
             grip.overlay.interacting = true
             grip.mask.forceActiveFocus()
-            EditorState.beginPreviewDrag(qsTr("Mask changed"))
         }
 
         onPositionChanged: (mouse) => {
             if (!pressed)
                 return
             const p = mapToItem(grip.frame, mouse.x, mouse.y)
-            grip.resizeTo(p.x, p.y, mouse.modifiers)
+            EditorState.masking.editSession.resize(p.x / Math.max(1, grip.frame.width),
+                                                   p.y / Math.max(1, grip.frame.height),
+                                                   grip.isCorner && (mouse.modifiers & Qt.ShiftModifier) !== 0)
         }
 
-        onReleased: { grip.mask.clearLive(); grip.overlay.endInteraction() }
-        onCanceled: { grip.mask.clearLive(); grip.overlay.endInteraction() }
+        onReleased: grip.overlay.endInteraction()
+        onCanceled: grip.overlay.endInteraction()
     }
 }

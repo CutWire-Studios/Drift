@@ -1,6 +1,7 @@
 #include "app/jobs/vision/TrackingController.h"
 
 #include "app/editor/AppController.h"
+#include "app/jobs/vision/TrackerListModel.h"
 #include "app/mcp/McpDetail.h"
 #include "core/edit/TimelineOps.h"
 #include "core/tracking/MotionTracker.h"
@@ -902,6 +903,7 @@ TrackingController::TrackingController(AppController *app, QObject *parent)
 {
     // Undo, redo and every other edit funnel through tracksChanged, and trackers ride in the clips.
     connect(m_app, &AppController::tracksChanged, this, &TrackingController::trackersChanged);
+    m_trackerList = new TrackerListModel(this);
 }
 
 // Every edit copies the project for undo first and only then takes a pointer: the copy shares
@@ -992,21 +994,20 @@ QVariantList TrackingController::trackers(int trackIndex, int clipIndex) const
     return out;
 }
 
-QVariantMap TrackingController::trackerFrame(int trackIndex, int clipIndex, const QString &id,
-                                             double timelineSeconds) const
+TrackingController::FrameView TrackingController::frameView(int trackIndex, int clipIndex, const QString &id,
+                                                            double timelineSeconds) const
 {
+    FrameView out;
     const Clip *host = hostView(trackIndex, clipIndex);
     const MotionTracker *tracker = host ? trackerById(*host, id) : nullptr;
     if (!tracker)
-        return {};
+        return out;
     const drift::Project &project = m_app->m_project;
     const TimeUs tolerance = matchTolerance(project, *host);
     const TimeUs frame = drift::frameDurationUs(project.fps());
     const TimeUs at = drift::secondsToUs(timelineSeconds);
     const TimeUs sourceUs = host->timelineToSourceUs(at);
 
-    QVariantList points;
-    QVariantList trails;
     for (const TrackPoint &point : tracker->points) {
         const auto it = nearestKey(point.samples, sourceUs, tolerance);
         const bool has = it != point.samples.constEnd();
@@ -1014,30 +1015,28 @@ QVariantMap TrackingController::trackerFrame(int trackIndex, int clipIndex, cons
         // back onto the feature; that drag writes a key here.
         const auto ghostIt = has ? it : nearestKey(point.samples, sourceUs, std::numeric_limits<TimeUs>::max() / 4);
         const bool ghost = !has && ghostIt != point.samples.constEnd();
-        QVariantMap entry{
-            {QStringLiteral("x"), has ? it->pos.x() : (ghost ? ghostIt->pos.x() : 0.0)},
-            {QStringLiteral("y"), has ? it->pos.y() : (ghost ? ghostIt->pos.y() : 0.0)},
-            {QStringLiteral("confidence"), has ? double(it->confidence) : 0.0},
-            {QStringLiteral("userKey"), has && it->userKey},
-            {QStringLiteral("patternW"), point.patternSize.width()},
-            {QStringLiteral("patternH"), point.patternSize.height()},
-            {QStringLiteral("searchW"), point.searchSize.width()},
-            {QStringLiteral("searchH"), point.searchSize.height()},
-            {QStringLiteral("has"), has},
-            {QStringLiteral("ghost"), ghost},
-        };
-        points.append(entry);
+        FramePoint entry;
+        entry.x = has ? it->pos.x() : (ghost ? ghostIt->pos.x() : 0.0);
+        entry.y = has ? it->pos.y() : (ghost ? ghostIt->pos.y() : 0.0);
+        entry.confidence = has ? double(it->confidence) : 0.0;
+        entry.userKey = has && it->userKey;
+        entry.patternW = point.patternSize.width();
+        entry.patternH = point.patternSize.height();
+        entry.searchW = point.searchSize.width();
+        entry.searchH = point.searchSize.height();
+        entry.has = has;
+        entry.ghost = ghost;
+        out.points.append(entry);
 
-        QVariantList trail;
+        QVector<QPointF> trail;
         for (int k = -kTrailFrames; k <= kTrailFrames; ++k) {
             const auto near = nearestKey(point.samples, host->timelineToSourceUs(at + k * frame), tolerance);
             if (near != point.samples.constEnd())
-                trail.append(pointMap(near->pos.x(), near->pos.y()));
+                trail.append(near->pos);
         }
-        trails.append(trail);
+        out.trails.append(trail);
     }
 
-    QVariantList region;
     if (tracker->kind == MotionTracker::Kind::Planar) {
         QPolygonF polygon(tracker->planarRegion);
         auto it = nearestKey(tracker->homographies, sourceUs, tolerance);
@@ -1046,19 +1045,66 @@ QVariantMap TrackingController::trackerFrame(int trackIndex, int clipIndex, cons
         if (it != tracker->homographies.constEnd())
             polygon = drift::tracking::mapPolygon(it.value(), polygon);
         for (const QPointF &p : polygon)
-            region.append(pointMap(p.x(), p.y()));
+            out.region.append(p);
     }
+    return out;
+}
 
+TrackingController::FrameView TrackingController::frameView(const QString &clipId, const QString &id,
+                                                            double timelineSeconds) const
+{
+    int t = -1;
+    int c = -1;
+    return locateClip(clipId, &t, &c) ? frameView(t, c, id, timelineSeconds) : FrameView{};
+}
+
+bool TrackingController::locateClip(const QString &clipId, int *trackIndex, int *clipIndex) const
+{
+    return !clipId.isEmpty() && findClipById(m_app->m_project, clipId, trackIndex, clipIndex);
+}
+
+QVariantMap TrackingController::trackerFrame(int trackIndex, int clipIndex, const QString &id,
+                                             double timelineSeconds) const
+{
+    const Clip *host = hostView(trackIndex, clipIndex);
+    if (!host || !trackerById(*host, id))
+        return {};
+    const FrameView view = frameView(trackIndex, clipIndex, id, timelineSeconds);
+    QVariantList points;
+    for (const FramePoint &p : view.points) {
+        points.append(QVariantMap{
+            {QStringLiteral("x"), p.x},
+            {QStringLiteral("y"), p.y},
+            {QStringLiteral("confidence"), p.confidence},
+            {QStringLiteral("userKey"), p.userKey},
+            {QStringLiteral("patternW"), p.patternW},
+            {QStringLiteral("patternH"), p.patternH},
+            {QStringLiteral("searchW"), p.searchW},
+            {QStringLiteral("searchH"), p.searchH},
+            {QStringLiteral("has"), p.has},
+            {QStringLiteral("ghost"), p.ghost},
+        });
+    }
+    QVariantList trails;
+    for (const QVector<QPointF> &trail : view.trails) {
+        QVariantList list;
+        for (const QPointF &p : trail)
+            list.append(pointMap(p.x(), p.y()));
+        trails.append(list);
+    }
+    QVariantList region;
+    for (const QPointF &p : view.region)
+        region.append(pointMap(p.x(), p.y()));
     return {{QStringLiteral("points"), points}, {QStringLiteral("region"), region}, {QStringLiteral("trail"), trails}};
 }
 
-QVariantList TrackingController::confidenceStrip(int trackIndex, int clipIndex, const QString &id, int buckets) const
+QVector<double> TrackingController::confidenceBuckets(int trackIndex, int clipIndex, const QString &id,
+                                                      int buckets) const
 {
-    QVariantList out;
     const Clip *host = hostView(trackIndex, clipIndex);
     const MotionTracker *tracker = host ? trackerById(*host, id) : nullptr;
     if (!tracker || buckets <= 0)
-        return out;
+        return {};
     QVector<double> lowest(buckets, -1.0);
     const auto note = [&](TimeUs key, double confidence) {
         if (key < host->srcIn || key > host->srcOut || host->timelineDuration <= 0)
@@ -1073,7 +1119,20 @@ QVariantList TrackingController::confidenceStrip(int trackIndex, int clipIndex, 
     }
     for (auto it = tracker->homographies.constBegin(); it != tracker->homographies.constEnd(); ++it)
         note(it.key(), 1.0);
-    for (const double v : lowest)
+    return lowest;
+}
+
+QVector<double> TrackingController::confidenceBuckets(const QString &clipId, const QString &id, int buckets) const
+{
+    int t = -1;
+    int c = -1;
+    return locateClip(clipId, &t, &c) ? confidenceBuckets(t, c, id, buckets) : QVector<double>{};
+}
+
+QVariantList TrackingController::confidenceStrip(int trackIndex, int clipIndex, const QString &id, int buckets) const
+{
+    QVariantList out;
+    for (const double v : confidenceBuckets(trackIndex, clipIndex, id, buckets))
         out.append(v);
     return out;
 }

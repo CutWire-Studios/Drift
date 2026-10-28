@@ -3,8 +3,11 @@
 #include "core/base/Time.h"
 
 #include <QList>
+#include <QPointF>
 #include <QString>
 #include <QtGlobal>
+
+#include <cmath>
 
 // Pure planning for an object-mask propagation: which matte frame comes from where, and in what
 // order the reverse pass decodes. Kept apart from the job so it can be tested without a model.
@@ -92,6 +95,25 @@ inline QList<int> reverseDecodeOrder(int first, int last, int chunkSize)
             out.append(i);
     }
     return out;
+}
+
+// Index of the point (normalized to a frameW x frameH frame) within tolPx of (nx, ny), nearest first,
+// later points winning ties; -1 if none.
+inline int nearestPointIndex(const QList<QPointF> &points, double nx, double ny, double tolPx, double frameW,
+                             double frameH)
+{
+    const double fw = qMax(1.0, frameW);
+    const double fh = qMax(1.0, frameH);
+    int best = -1;
+    double bestDistance = tolPx;
+    for (int i = 0; i < points.size(); ++i) {
+        const double d = std::hypot((points.at(i).x() - nx) * fw, (points.at(i).y() - ny) * fh);
+        if (d <= bestDistance) {
+            best = i;
+            bestDistance = d;
+        }
+    }
+    return best;
 }
 
 } // namespace drift::segplan

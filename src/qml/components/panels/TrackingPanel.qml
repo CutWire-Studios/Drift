@@ -13,11 +13,12 @@ PanelFrame {
     // The media clip the trackers live on. Assigned on the signals below, not bound, because each
     // controller call returns a fresh snapshot.
     property var target: ({ kind: "none" })
-    property var trackerList: []
+    readonly property var trackerList: EditorState.tracking.trackerList
     // Timeline span of the target clip, for the confidence strip's playhead tick.
     property real clipStart: 0
     property real clipDuration: 0
-    property string selectedId: ""
+    property string clipId: ""
+    readonly property string selectedId: trackerList.selectedId
 
     readonly property bool hasTarget: target.kind === "clip"
     // The target depends on what is under the playhead: an adjustment layer borrows the clip below
@@ -54,9 +55,11 @@ PanelFrame {
         const clip = target.kind === "clip" ? EditorState.clipAt(target.track, target.clip) : ({})
         clipStart = clip.start || 0
         clipDuration = clip.duration || 0
-        trackerList = target.kind === "clip" ? EditorState.tracking.trackers(target.track, target.clip) : []
-        if (!trackerList.some(t => t.id === selectedId))
-            selectedId = trackerList.length > 0 ? trackerList[0].id : ""
+        clipId = target.kind === "clip" ? EditorState.masking.clipIdAt(target.track, target.clip) : ""
+        if (target.kind === "clip")
+            trackerList.refresh(target.track, target.clip)
+        else
+            trackerList.refresh(-1, -1)
     }
 
     function refreshIfLive() {
@@ -72,12 +75,16 @@ PanelFrame {
 
     function runTrack(id, forward, singleFrame) {
         correctedId = ""
-        EditorState.tracking.track(target.track, target.clip, id, forward, singleFrame)
+        const host = ShellBridge.trackerTarget()
+        if (host.kind === "clip")
+            EditorState.tracking.track(host.track, host.clip, id, forward, singleFrame)
     }
 
     function trackBoth(id) {
         correctedId = ""
-        ShellBridge.trackBoth(target.track, target.clip, id)
+        const host = ShellBridge.trackerTarget()
+        if (host.kind === "clip")
+            ShellBridge.trackBoth(host.track, host.clip, id)
     }
 
     function useClipAtPlayhead() {
@@ -96,16 +103,6 @@ PanelFrame {
         if (clipDuration <= 0)
             return
         EditorState.playheadSeconds = clipStart + Math.max(0, Math.min(1, fraction)) * clipDuration
-    }
-
-    function bucketColor(value, minConfidence) {
-        if (value < 0)
-            return Theme.c.trackingPanel.stripEmpty
-        if (value < minConfidence)
-            return Theme.c.trackingPanel.stripBad
-        if (value >= 0.8)
-            return Theme.c.trackingPanel.stripGood
-        return Theme.c.trackingPanel.stripWarn
     }
 
     // Escape stops a running track, or cancels an armed placement, even when the Masking panel is
@@ -149,7 +146,7 @@ PanelFrame {
     Component.onCompleted: {
         if (wantsActions)
             ShellBridge.trackingActionHandler = root
-        selectedId = ShellBridge.selectedTrackerId
+        trackerList.selectedId = ShellBridge.selectedTrackerId
         if (shown)
             refresh()
     }
@@ -157,7 +154,7 @@ PanelFrame {
     Connections {
         target: ShellBridge
         // The overlay selects a tracker it has just placed.
-        function onSelectedTrackerIdChanged() { root.selectedId = ShellBridge.selectedTrackerId }
+        function onSelectedTrackerIdChanged() { root.trackerList.selectedId = ShellBridge.selectedTrackerId }
     }
 
     Connections {
@@ -298,7 +295,7 @@ PanelFrame {
             }
 
             Text {
-                visible: root.hasTarget && root.trackerList.length === 0
+                visible: root.hasTarget && root.trackerList.count === 0
                 width: parent.width
                 wrapMode: Text.WordWrap
                 text: qsTr("No trackers yet. Use Point or Planar above to start one.")
@@ -308,18 +305,16 @@ PanelFrame {
             }
 
             Repeater {
-                // A count, not the array: an array model would recreate every row on each refresh.
-                model: root.trackerList.length
+                model: root.trackerList
 
                 delegate: Column {
                     id: trackerRow
                     required property int index
-                    // Empty while the row outlives a shrinking list, until the Repeater removes it.
-                    readonly property var modelData: root.trackerList[index] ?? ({})
-                    readonly property bool selected: modelData.id === root.selectedId
-                    readonly property bool isPoint: modelData.kind === "point"
-                    // Read from the controller when the row is selected; the strip and the pattern
-                    // size slider need the frame, so they are not bound.
+                    required property var model
+                    readonly property bool selected: model.id === root.selectedId
+                    readonly property bool isPoint: model.kind === "point"
+                    // Read from the controller when the row is selected; the pattern size slider
+                    // needs the frame, so it is not bound.
                     property real patternPercent: 0
                     width: column.width
                     spacing: Theme.spacingSm
@@ -327,25 +322,19 @@ PanelFrame {
                     function refreshDetail() {
                         if (!selected)
                             return
-                        strip.values = EditorState.tracking.confidenceStrip(root.target.track, root.target.clip,
-                                                                            modelData.id,
-                                                                            Math.max(20, Math.floor(strip.width / 3)))
-                        const frame = EditorState.tracking.trackerFrame(root.target.track, root.target.clip,
-                                                                        modelData.id, EditorState.playheadSeconds)
-                        patternPercent = isPoint && frame.points && frame.points.length > 0
-                                         ? frame.points[0].patternW * 100 : 0
+                        patternPercent = root.trackerList.patternPercent(model.id, EditorState.playheadSeconds)
                     }
 
                     onSelectedChanged: refreshDetail()
-                    onModelDataChanged: refreshDetail()
                     Component.onCompleted: refreshDetail()
 
                     Connections {
                         target: EditorState.tracking
                         function onSamplesUpdated(trackerId) {
-                            if (trackerId === trackerRow.modelData.id)
+                            if (trackerId === trackerRow.model.id)
                                 trackerRow.refreshDetail()
                         }
+                        function onTrackersChanged() { trackerRow.refreshDetail() }
                     }
 
                     Rectangle {
@@ -361,7 +350,7 @@ PanelFrame {
 
                         TapHandler {
                             onTapped: {
-                                root.selectedId = trackerRow.modelData.id
+                                root.trackerList.selectedId = trackerRow.model.id
                                 EditorState.preview.maskingTool = "tracker"
                             }
                         }
@@ -375,7 +364,7 @@ PanelFrame {
                             Text {
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
-                                text: trackerRow.modelData.name
+                                text: trackerRow.model.name
                                 elide: Text.ElideRight
                                 color: Theme.c.maskingPanel.foreground
                                 font.family: Theme.fontFamily
@@ -404,11 +393,11 @@ PanelFrame {
                                 glyph: Theme.icons.trash
                                 tooltip: qsTr("Delete tracker")
                                 onClicked: {
-                                    if (trackerRow.modelData.targets.length === 0)
+                                    if (trackerRow.model.targets.length === 0)
                                         EditorState.tracking.removeTracker(root.target.track, root.target.clip,
-                                                                           trackerRow.modelData.id, false)
+                                                                           trackerRow.model.id, false)
                                     else
-                                        deleteTrackerDialog.openFor(trackerRow.modelData)
+                                        deleteTrackerDialog.openFor(trackerRow.model)
                                 }
                             }
                         }
@@ -421,8 +410,8 @@ PanelFrame {
                         spacing: Theme.spacingSm
 
                         Text {
-                            visible: !((trackerRow.modelData.sampleRange ?? []).length === 2
-                                       && trackerRow.modelData.sampleRange[1] - trackerRow.modelData.sampleRange[0] > 0.001)
+                            visible: !((trackerRow.model.sampleRange ?? []).length === 2
+                                       && trackerRow.model.sampleRange[1] - trackerRow.model.sampleRange[0] > 0.001)
                                      && !EditorState.tracking.busy
                             width: parent.width
                             wrapMode: Text.WordWrap
@@ -438,11 +427,11 @@ PanelFrame {
                             text: qsTr("Track whole clip")
                             tooltip: qsTr("Follow the feature backward and forward through the whole clip")
                             enabled: !EditorState.tracking.busy
-                            onClicked: root.trackBoth(trackerRow.modelData.id)
+                            onClicked: root.trackBoth(trackerRow.model.id)
                         }
 
                         RowLayout {
-                            visible: root.correctedId === trackerRow.modelData.id && !EditorState.tracking.busy
+                            visible: root.correctedId === trackerRow.model.id && !EditorState.tracking.busy
                             width: parent.width
                             spacing: Theme.spacingSm
 
@@ -458,7 +447,7 @@ PanelFrame {
                             ThemedButton {
                                 Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Track ▶")
-                                onClicked: root.runTrack(trackerRow.modelData.id, true, false)
+                                onClicked: root.runTrack(trackerRow.model.id, true, false)
                             }
                         }
 
@@ -470,14 +459,14 @@ PanelFrame {
                                 glyph: Theme.icons.skipBack
                                 tooltip: qsTr("Track back to the start")
                                 enabled: !EditorState.tracking.busy
-                                onClicked: root.runTrack(trackerRow.modelData.id, false, false)
+                                onClicked: root.runTrack(trackerRow.model.id, false, false)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.stepBack
                                 tooltip: qsTr("Track one frame back")
                                 enabled: !EditorState.tracking.busy
-                                onClicked: root.runTrack(trackerRow.modelData.id, false, true)
+                                onClicked: root.runTrack(trackerRow.model.id, false, true)
                             }
 
                             IconButton {
@@ -491,20 +480,20 @@ PanelFrame {
                                 glyph: Theme.icons.stepForward
                                 tooltip: qsTr("Track one frame forward")
                                 enabled: !EditorState.tracking.busy
-                                onClicked: root.runTrack(trackerRow.modelData.id, true, true)
+                                onClicked: root.runTrack(trackerRow.model.id, true, true)
                             }
 
                             IconButton {
                                 glyph: Theme.icons.skipForward
                                 tooltip: qsTr("Track to the end")
                                 enabled: !EditorState.tracking.busy
-                                onClicked: root.runTrack(trackerRow.modelData.id, true, false)
+                                onClicked: root.runTrack(trackerRow.model.id, true, false)
                             }
                         }
 
                         ThemedProgressBar {
                             visible: EditorState.tracking.busy
-                                     && EditorState.tracking.busyTrackerId === trackerRow.modelData.id
+                                     && EditorState.tracking.busyTrackerId === trackerRow.model.id
                             width: parent.width
                             value: EditorState.tracking.progress
                         }
@@ -513,22 +502,17 @@ PanelFrame {
                             id: strip
                             width: parent.width
                             height: 14
-                            property var values: []
-                            readonly property real bucketWidth: values.length > 0 ? width / values.length : 0
 
-                            onWidthChanged: trackerRow.refreshDetail()
-
-                            Repeater {
-                                model: strip.values
-
-                                delegate: Rectangle {
-                                    required property var modelData
-                                    required property int index
-                                    x: index * strip.bucketWidth
-                                    width: strip.bucketWidth + 0.5
-                                    height: strip.height
-                                    color: root.bucketColor(modelData, trackerRow.modelData.minConfidence)
-                                }
+                            ConfidenceStripItem {
+                                anchors.fill: parent
+                                tracking: EditorState.tracking
+                                clipId: root.clipId
+                                trackerId: trackerRow.model.id ?? ""
+                                minConfidence: trackerRow.model.minConfidence ?? 0.5
+                                emptyColor: Theme.c.trackingPanel.stripEmpty
+                                goodColor: Theme.c.trackingPanel.stripGood
+                                warnColor: Theme.c.trackingPanel.stripWarn
+                                badColor: Theme.c.trackingPanel.stripBad
                             }
 
                             Rectangle {
@@ -575,15 +559,15 @@ PanelFrame {
                                 tooltip: qsTr("Add up to 4 points on the same surface for rotation, scale and perspective")
                                 model: root.solveModes
                                 displayText: root.solveLabels[model[currentIndex]] || model[currentIndex]
-                                currentIndex: Math.max(0, model.indexOf(trackerRow.modelData.solve))
+                                currentIndex: Math.max(0, model.indexOf(trackerRow.model.solve))
                                 onActivated: (index) => {
-                                    if (model[index] === "perspective" && trackerRow.modelData.pointCount < 4) {
+                                    if (model[index] === "perspective" && trackerRow.model.pointCount < 4) {
                                         Toasts.info(qsTr("Add up to 4 points on the same surface for rotation, scale and perspective"))
-                                        currentIndex = Math.max(0, model.indexOf(trackerRow.modelData.solve))
+                                        currentIndex = Math.max(0, model.indexOf(trackerRow.model.solve))
                                         return
                                     }
                                     EditorState.tracking.setTrackerProperty(root.target.track, root.target.clip,
-                                                                            trackerRow.modelData.id,
+                                                                            trackerRow.model.id,
                                                                             "solve", model[index])
                                 }
                             }
@@ -618,12 +602,12 @@ PanelFrame {
                                 valueFormatter: function (v) { return qsTr("match < %1 %").arg(Math.round(v)) }
                                 Binding on value {
                                     when: !minConfSlider.pressed
-                                    value: trackerRow.modelData.minConfidence * 100
+                                    value: trackerRow.model.minConfidence * 100
                                 }
                                 onPressedChanged: {
                                     if (!pressed)
                                         EditorState.tracking.setTrackerProperty(root.target.track, root.target.clip,
-                                                                                trackerRow.modelData.id,
+                                                                                trackerRow.model.id,
                                                                                 "minConfidence", value / 100)
                                 }
                             }
@@ -664,7 +648,7 @@ PanelFrame {
                                 onPressedChanged: {
                                     if (!pressed)
                                         EditorState.tracking.setTrackerProperty(root.target.track, root.target.clip,
-                                                                                trackerRow.modelData.id,
+                                                                                trackerRow.model.id,
                                                                                 "patternSize", value / 100)
                                 }
                             }
@@ -679,7 +663,7 @@ PanelFrame {
                                 tooltip: qsTr("Remove the samples before the playhead")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: EditorState.tracking.clearSamples(root.target.track, root.target.clip,
-                                                                             trackerRow.modelData.id, false)
+                                                                             trackerRow.model.id, false)
                             }
 
                             ThemedButton {
@@ -687,7 +671,7 @@ PanelFrame {
                                 tooltip: qsTr("Remove the samples after the playhead")
                                 enabled: !EditorState.tracking.busy
                                 onClicked: EditorState.tracking.clearSamples(root.target.track, root.target.clip,
-                                                                             trackerRow.modelData.id, true)
+                                                                             trackerRow.model.id, true)
                             }
 
                             ThemedButton {
@@ -695,8 +679,8 @@ PanelFrame {
                                 glyph: Theme.icons.plus
                                 text: qsTr("Add point")
                                 tooltip: qsTr("Place another point on the preview")
-                                enabled: trackerRow.modelData.pointCount < 4
-                                onClicked: root.startPlacing("addPoint", trackerRow.modelData.id)
+                                enabled: trackerRow.model.pointCount < 4
+                                onClicked: root.startPlacing("addPoint", trackerRow.model.id)
                             }
                         }
 
@@ -709,7 +693,7 @@ PanelFrame {
                         }
 
                         Repeater {
-                            model: trackerRow.modelData.targets
+                            model: trackerRow.model.targets
 
                             delegate: RowLayout {
                                 id: targetRow
@@ -749,7 +733,7 @@ PanelFrame {
                                     displayText: labels[model[currentIndex]]
                                     currentIndex: targetRow.modelData.center ? 0 : 1
                                     onActivated: (index) => EditorState.tracking.setTargetCenter(
-                                                     root.target.track, root.target.clip, trackerRow.modelData.id,
+                                                     root.target.track, root.target.clip, trackerRow.model.id,
                                                      targetRow.modelData.clipId, index === 0)
                                 }
 
@@ -758,7 +742,7 @@ PanelFrame {
                                     glyph: Theme.icons.x
                                     tooltip: qsTr("Stop driving from this")
                                     onClicked: EditorState.tracking.removeTarget(root.target.track, root.target.clip,
-                                                                                 trackerRow.modelData.id,
+                                                                                 trackerRow.model.id,
                                                                                  modelData.clipId)
                                 }
                             }
@@ -774,10 +758,7 @@ PanelFrame {
                                 text: qsTr("Attach…")
                                 tooltip: qsTr("Make a mask or clip move with this tracker")
                                 onClicked: {
-                                    const drives = trackerRow.modelData.targets
-                                    targetMenu.candidates = EditorState.tracking.targetCandidates(root.target.track,
-                                                                                                  root.target.clip)
-                                                                .filter(c => !drives.some(d => d.clipId === c.clipId))
+                                    targetMenu.candidates = root.trackerList.candidates(trackerRow.model.id)
                                     if (targetMenu.candidates.length === 0)
                                         Toasts.info(qsTr("No masks or clips to drive from"))
                                     else
@@ -789,9 +770,9 @@ PanelFrame {
                                 glyph: Theme.icons.refresh
                                 text: qsTr("Re-apply")
                                 tooltip: qsTr("Update the attached masks and clips from the current track")
-                                enabled: !EditorState.tracking.busy && trackerRow.modelData.targets.length > 0
+                                enabled: !EditorState.tracking.busy && trackerRow.model.targets.length > 0
                                 onClicked: EditorState.tracking.apply(root.target.track, root.target.clip,
-                                                                      trackerRow.modelData.id)
+                                                                      trackerRow.model.id)
                             }
                         }
 
@@ -807,7 +788,7 @@ PanelFrame {
                                     text: modelData.kind === "mask" ? qsTr("Mask: %1").arg(modelData.name)
                                                                     : qsTr("Make follow: %1").arg(modelData.name)
                                     onTriggered: EditorState.tracking.setTarget(root.target.track, root.target.clip,
-                                                                                trackerRow.modelData.id,
+                                                                                trackerRow.model.id,
                                                                                 modelData.clipId,
                                                                                 modelData.kind === "mask" ? "mask" : "followClip")
                                 }

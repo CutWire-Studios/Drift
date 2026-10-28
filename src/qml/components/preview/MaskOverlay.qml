@@ -60,26 +60,9 @@ Item {
     property string layerSignature: ""
 
     function endInteraction() {
-        EditorState.commitPreviewDrag()
+        EditorState.masking.editSession.commit()
         interacting = false
         Qt.callLater(refreshOverlay)
-    }
-
-    // Nearest target within `tol` of any candidate, returned as the delta to add to the moving
-    // value. Mirrors TransformOverlay.snapAxis.
-    function snapAxis(candidates, targets, tol) {
-        let result = { delta: 0 }
-        let best = tol
-        for (const c of candidates) {
-            for (const t of targets) {
-                const d = t - c
-                if (Math.abs(d) < best) {
-                    best = Math.abs(d)
-                    result = { delta: d }
-                }
-            }
-        }
-        return result
     }
 
     onVisibleChanged: if (visible) refreshOverlay()
@@ -159,10 +142,6 @@ Item {
                 readonly property var maskData: layerEntry.mask || ({})
                 readonly property int layerTrack: layerEntry.track
                 readonly property int layerClip: layerEntry.clip
-                // Once any scalar has keys the drag has to write through the keyframe API, or it
-                // would move the static value under an animation that immediately overrides it
-                // again on the next frame.
-                readonly property bool animated: !!layerEntry.animated
 
                 // Bars ignores x/y/w entirely — it is two full-width bands whose height comes from
                 // h — so a centred box with corner grips would be a lie. It draws its real bands
@@ -176,45 +155,25 @@ Item {
                 readonly property bool movable: editable
                                                 || (isFreeform && maskData.enabled !== false)
 
+                readonly property string layerId: layerEntry.id
+                readonly property var session: EditorState.masking.editSession
+                // True while a handle drag on this mask is running: the session then holds the
+                // geometry, since the refreshed model is skipped until the drag ends.
+                readonly property bool live: session.active && session.clipId === layerId
+
                 // Bounding rect of the polygon's vertices, in normalized clip-frame units.
-                readonly property var pointBounds: {
-                    const pts = maskBox.maskData.points || []
-                    if (!maskBox.isFreeform || pts.length === 0)
-                        return null
-                    let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9
-                    for (const p of pts) {
-                        minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x)
-                        minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y)
-                    }
-                    return { x: (minX + maxX) / 2, y: (minY + maxY) / 2,
-                             w: Math.max(0.001, maxX - minX), h: Math.max(0.001, maxY - minY) }
-                }
+                readonly property var pointBounds: maskBox.isFreeform ? (layerEntry.bounds || null) : null
 
-                // Live overrides applied during a drag so the box tracks the cursor without
-                // rebuilding the (stale) model.
-                property real liveX: -1e12
-                property real liveY: -1e12
-                property real liveW: -1
-                property real liveH: -1
-                property real liveRotation: 1e9
-
-                readonly property real mx: liveX > -1e11 ? liveX
+                readonly property real mx: live ? session.liveX
                         : (pointBounds ? pointBounds.x : (maskData.x || 0))
-                readonly property real my: liveY > -1e11 ? liveY
+                readonly property real my: live ? session.liveY
                         : (pointBounds ? pointBounds.y : (maskData.y || 0))
-                readonly property real mw: liveW >= 0 ? liveW
+                readonly property real mw: live ? session.liveW
                         : (pointBounds ? pointBounds.w : (maskData.w || 0))
-                readonly property real mh: liveH >= 0 ? liveH
+                readonly property real mh: live ? session.liveH
                         : (pointBounds ? pointBounds.h : (maskData.h || 0))
-
-                // Drag anchors, captured on press.
-                property real dragStartX: 0
-                property real dragStartY: 0
-                property real dragStartW: 0
-                property real dragStartH: 0
-                // Vertex positions captured on press, so a body drag stays absolute rather than
-                // accumulating rounding from each incremental write.
-                property var dragStartPoints: []
+                readonly property var displayPoints: live && isFreeform ? session.livePoints
+                                                                        : (maskData.points || [])
 
                 visible: !maskBox.isBars
                 x: (mx - mw / 2) * clipFrame.width
@@ -225,87 +184,10 @@ Item {
                 // A freeform's box is derived from its (already absolute) points, so rotating it
                 // here would double-apply the rotation the rasterizer does.
                 rotation: maskBox.isFreeform
-                          ? 0 : (liveRotation < 1e8 ? liveRotation : (maskData.rotation || 0))
+                          ? 0 : (maskBox.live ? maskBox.session.liveRotation : (maskData.rotation || 0))
                 // The selected entry sits on top so its grips win hit-testing over the outlines of
                 // entries behind it.
                 z: maskBox.isSelected ? 100 : 0
-
-                // Normalized snap targets: the clip's edges and centre lines.
-                readonly property var snapTargets: [0, 0.5, 1]
-                readonly property real snapTolX: root.snapTolPx / Math.max(1, clipFrame.width)
-                readonly property real snapTolY: root.snapTolPx / Math.max(1, clipFrame.height)
-                // A rotated box has no axis-aligned edges to stick with.
-                readonly property bool canSnap: Math.abs(maskBox.rotation) < 0.01
-
-                function clearLive() {
-                    liveX = -1e12
-                    liveY = -1e12
-                    liveW = -1
-                    liveH = -1
-                    liveRotation = 1e9
-                }
-
-                // Rebuild the mask map from the live values and hand it back. The copy is
-                // load-bearing: maskFromMap resets anything the map omits.
-                function writeLive() {
-                    if (maskBox.animated) {
-                        writeLiveKeyframes()
-                        return
-                    }
-                    const mask = Object.assign({}, maskBox.maskData)
-                    mask.x = maskBox.mx
-                    mask.y = maskBox.my
-                    mask.w = maskBox.mw
-                    mask.h = maskBox.mh
-                    if (maskBox.liveRotation < 1e8)
-                        mask.rotation = maskBox.liveRotation
-                    EditorState.previewSetClipMask(maskBox.layerTrack, maskBox.layerClip, mask)
-                }
-
-                // Writes go to the playhead. previewSetClipKeyframe honours autoKeyEnabled and the
-                // retarget-nearest policy, so an existing key moves rather than a new one appearing
-                // on every drag.
-                function writeLiveKeyframes() {
-                    const at = EditorState.playheadSeconds
-                    const put = (param, value) => EditorState.previewSetClipKeyframe(
-                        maskBox.layerTrack, maskBox.layerClip, "mask." + param, at, value)
-                    put("x", maskBox.mx)
-                    put("y", maskBox.my)
-                    put("w", maskBox.mw)
-                    put("h", maskBox.mh)
-                    if (maskBox.liveRotation < 1e8)
-                        put("rotation", maskBox.liveRotation)
-                }
-
-                // Freeform has no centre to write, so a body drag shifts every vertex instead.
-                function writePointsTranslated(dx, dy) {
-                    const mask = Object.assign({}, maskBox.maskData)
-                    const points = []
-                    for (const p of maskBox.dragStartPoints)
-                        points.push({ "x": p.x + dx, "y": p.y + dy })
-                    mask.points = points
-                    if ((maskBox.maskData.pathKeyCount || 0) > 0)
-                        EditorState.masking.previewSetMaskPathKey(maskBox.layerTrack, maskBox.layerClip,
-                                                                  EditorState.playheadSeconds, points)
-                    else
-                        EditorState.previewSetClipMask(maskBox.layerTrack, maskBox.layerClip, mask)
-                }
-
-                function writePointAt(index, nx, ny) {
-                    const mask = Object.assign({}, maskBox.maskData)
-                    const points = []
-                    const src = maskBox.maskData.points || []
-                    for (let i = 0; i < src.length; ++i) {
-                        points.push(i === index ? { "x": nx, "y": ny }
-                                                : { "x": src[i].x, "y": src[i].y })
-                    }
-                    mask.points = points
-                    if ((maskBox.maskData.pathKeyCount || 0) > 0)
-                        EditorState.masking.previewSetMaskPathKey(maskBox.layerTrack, maskBox.layerClip,
-                                                                  EditorState.playheadSeconds, points)
-                    else
-                        EditorState.previewSetClipMask(maskBox.layerTrack, maskBox.layerClip, mask)
-                }
 
                 // Arrow keys nudge the selected mask; Shift makes the step coarse. Focus is taken
                 // explicitly on click, never bound to selection — a rebuild would otherwise steal
@@ -313,33 +195,18 @@ Item {
                 Keys.onPressed: function(event) {
                     if (!maskBox.isSelected || !maskBox.movable)
                         return
-                    const stepX = ((event.modifiers & Qt.ShiftModifier) ? 10 : 1)
-                                / Math.max(1, clipFrame.width)
-                    const stepY = ((event.modifiers & Qt.ShiftModifier) ? 10 : 1)
-                                / Math.max(1, clipFrame.height)
                     let dx = 0
                     let dy = 0
                     switch (event.key) {
-                    case Qt.Key_Left:  dx = -stepX; break
-                    case Qt.Key_Right: dx = stepX; break
-                    case Qt.Key_Up:    dy = -stepY; break
-                    case Qt.Key_Down:  dy = stepY; break
+                    case Qt.Key_Left:  dx = -1; break
+                    case Qt.Key_Right: dx = 1; break
+                    case Qt.Key_Up:    dy = -1; break
+                    case Qt.Key_Down:  dy = 1; break
                     default: return
                     }
-                    EditorState.beginPreviewDrag(qsTr("Mask changed"))
-                    if (maskBox.isFreeform) {
-                        maskBox.dragStartPoints = (maskBox.maskData.points || []).slice()
-                        maskBox.writePointsTranslated(dx, dy)
-                        maskBox.dragStartPoints = []
-                    } else {
-                        maskBox.dragStartX = maskBox.mx
-                        maskBox.dragStartY = maskBox.my
-                        maskBox.liveX = maskBox.mx + dx
-                        maskBox.liveY = maskBox.my + dy
-                        maskBox.writeLive()
-                        maskBox.clearLive()
-                    }
-                    EditorState.commitPreviewDrag()
+                    maskBox.session.nudge(maskBox.layerId, dx, dy,
+                                          (event.modifiers & Qt.ShiftModifier) !== 0,
+                                          clipFrame.width, clipFrame.height)
                     event.accepted = true
                 }
 
@@ -384,10 +251,6 @@ Item {
                     target: null
                     enabled: maskBox.movable && maskBox.isSelected
 
-                    // Press point in clipFrame coordinates, which stands still while the box moves.
-                    property real pressPx: 0
-                    property real pressPy: 0
-
                     onActiveChanged: {
                         if (active) {
                             // Taken at activation rather than at the press, so the drag threshold
@@ -395,19 +258,14 @@ Item {
                             const p = clipFrame.mapFromItem(null,
                                                             bodyDrag.centroid.scenePosition.x,
                                                             bodyDrag.centroid.scenePosition.y)
-                            bodyDrag.pressPx = p.x
-                            bodyDrag.pressPy = p.y
-                            maskBox.dragStartX = maskBox.mx
-                            maskBox.dragStartY = maskBox.my
-                            maskBox.liveX = maskBox.dragStartX
-                            maskBox.liveY = maskBox.dragStartY
-                            maskBox.dragStartPoints = (maskBox.maskData.points || []).slice()
+                            if (!maskBox.session.begin(maskBox.layerId, clipFrame.width,
+                                                       clipFrame.height))
+                                return
+                            maskBox.session.beginBody(p.x / Math.max(1, clipFrame.width),
+                                                      p.y / Math.max(1, clipFrame.height))
                             root.interacting = true
                             maskBox.forceActiveFocus()
-                            EditorState.beginPreviewDrag(qsTr("Mask changed"))
                         } else {
-                            maskBox.clearLive()
-                            maskBox.dragStartPoints = []
                             root.endInteraction()
                         }
                     }
@@ -418,31 +276,11 @@ Item {
                         const p = clipFrame.mapFromItem(null,
                                                         bodyDrag.centroid.scenePosition.x,
                                                         bodyDrag.centroid.scenePosition.y)
-                        let nx = maskBox.dragStartX
-                               + (p.x - bodyDrag.pressPx) / Math.max(1, clipFrame.width)
-                        let ny = maskBox.dragStartY
-                               + (p.y - bodyDrag.pressPy) / Math.max(1, clipFrame.height)
-
                         // Ctrl bypasses snapping. Alt is unusable here — the window manager takes
                         // it for window drags on Linux.
-                        const bypass = (bodyDrag.centroid.modifiers & Qt.ControlModifier) !== 0
-                        if (maskBox.canSnap && !bypass) {
-                            const halfW = maskBox.mw / 2
-                            const halfH = maskBox.mh / 2
-                            nx += root.snapAxis([nx - halfW, nx, nx + halfW],
-                                                maskBox.snapTargets, maskBox.snapTolX).delta
-                            ny += root.snapAxis([ny - halfH, ny, ny + halfH],
-                                                maskBox.snapTargets, maskBox.snapTolY).delta
-                        }
-
-                        maskBox.liveX = nx
-                        maskBox.liveY = ny
-                        if (maskBox.isFreeform) {
-                            maskBox.writePointsTranslated(nx - maskBox.dragStartX,
-                                                          ny - maskBox.dragStartY)
-                        } else {
-                            maskBox.writeLive()
-                        }
+                        maskBox.session.moveBody(p.x / Math.max(1, clipFrame.width),
+                                                 p.y / Math.max(1, clipFrame.height),
+                                                 (bodyDrag.centroid.modifiers & Qt.ControlModifier) !== 0)
                     }
                 }
 
@@ -466,7 +304,7 @@ Item {
                     Repeater {
                         model: (maskBox.isSelected && maskBox.isFreeform
                                 && maskBox.maskData.enabled !== false)
-                               ? (maskBox.maskData.points || []).length : 0
+                               ? maskBox.displayPoints.length : 0
 
                         delegate: MaskOverlayVertexHandle {
                             mask: maskBox
@@ -485,7 +323,7 @@ Item {
                     Repeater {
                         model: (maskBox.isSelected && maskBox.isFreeform
                                 && maskBox.maskData.enabled !== false)
-                               ? (maskBox.maskData.points || []).length : 0
+                               ? maskBox.displayPoints.length : 0
 
                         delegate: MaskOverlayEdgeMidpoint {
                             mask: maskBox
@@ -532,30 +370,17 @@ Item {
                 readonly property var layerEntry: root.layerValues[index] || modelData
                 readonly property var maskData: layerEntry.mask || ({})
                 readonly property bool isSelected: !!layerEntry.selected
-                readonly property bool animated: !!layerEntry.animated
+                readonly property string layerId: layerEntry.id
+                readonly property var session: EditorState.masking.editSession
+                readonly property bool live: session.active && session.clipId === layerId
                 anchors.fill: parent
                 visible: maskData.shape === "bars" && maskData.enabled !== false
 
                 // Live override during a drag, so the bands track the cursor without waiting for
                 // the model to come back.
-                property real liveH: -1
-                readonly property real mh: liveH >= 0 ? liveH : (maskData.h || 0)
+                readonly property real mh: live ? session.liveH : (maskData.h || 0)
                 // barH in the rasterizer is h * canvasHeight * 0.5, applied at both edges.
                 readonly property real bandH: Math.max(1, mh * 0.5 * clipFrame.height)
-
-                function writeHeight(value) {
-                    barsEntry.liveH = Math.max(0.0, Math.min(2.0, value))
-                    if (barsEntry.animated) {
-                        EditorState.previewSetClipKeyframe(modelData.track, modelData.clip,
-                                                           "mask.h",
-                                                           EditorState.playheadSeconds,
-                                                           barsEntry.liveH)
-                        return
-                    }
-                    const mask = Object.assign({}, barsEntry.maskData)
-                    mask.h = barsEntry.liveH
-                    EditorState.previewSetClipMask(modelData.track, modelData.clip, mask)
-                }
 
                 TapHandler {
                     onTapped: EditorState.selectClip(modelData.track, modelData.clip)

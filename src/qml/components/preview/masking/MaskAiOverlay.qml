@@ -19,10 +19,9 @@ Item {
     property var target: ({ kind: "none" })
     readonly property bool aiActive: target.kind === "clip"
 
-    // The clip the segmentation session is open on, -1 when none. Kept here so that closing or
-    // retargeting always ends the session that was actually begun.
-    property int sessionTrack: -1
-    property int sessionClip: -1
+    // The clip the segmentation session is open on, empty when none. Kept here so that closing or
+    // retargeting always ends the session that was actually begun. By id: inserted tracks shift indices.
+    property string sessionClipId: ""
 
     property int hoverIndex: -1
 
@@ -44,16 +43,14 @@ Item {
     }
 
     function syncSession() {
-        const wantTrack = visible && aiActive ? target.track : -1
-        const wantClip = wantTrack >= 0 ? target.clip : -1
-        if (wantTrack === sessionTrack && wantClip === sessionClip)
+        const wantId = visible && aiActive ? EditorState.masking.clipIdAt(target.track, target.clip) : ""
+        if (wantId === sessionClipId)
             return
-        if (sessionTrack >= 0)
+        if (sessionClipId !== "")
             EditorState.segmentation.endSession()
-        sessionTrack = wantTrack
-        sessionClip = wantClip
-        if (sessionTrack >= 0)
-            EditorState.segmentation.beginSessionAtPlayhead(sessionTrack, sessionClip)
+        sessionClipId = wantId
+        if (sessionClipId !== "")
+            EditorState.segmentation.beginSessionAtPlayhead(target.track, target.clip)
     }
 
     // Scrubbing and playback each pay a multi-second encode per frame, so the session only follows
@@ -63,21 +60,9 @@ Item {
             frameTimer.restart()
     }
 
-    // Index of the prompt point within 8 px of (x, y) in clip-frame pixels, nearest first, or -1.
     function pointAt(x, y) {
-        const pts = EditorState.segmentation.sessionPoints
-        const fw = Math.max(1, clipFrame.width)
-        const fh = Math.max(1, clipFrame.height)
-        let best = -1
-        let bestDistance = 8
-        for (let i = 0; i < pts.length; ++i) {
-            const d = Math.hypot(pts[i].x * fw - x, pts[i].y * fh - y)
-            if (d <= bestDistance) {
-                best = i
-                bestDistance = d
-            }
-        }
-        return best
+        return EditorState.segmentation.pointIndexAt(x / Math.max(1, clipFrame.width), y / Math.max(1, clipFrame.height),
+                                                    8, clipFrame.width, clipFrame.height)
     }
 
     onVisibleChanged: {
@@ -87,10 +72,9 @@ Item {
     }
     Component.onCompleted: refresh()
     Component.onDestruction: {
-        if (sessionTrack >= 0)
+        if (sessionClipId !== "")
             EditorState.segmentation.endSession()
-        sessionTrack = -1
-        sessionClip = -1
+        sessionClipId = ""
     }
 
     Timer {
@@ -98,7 +82,7 @@ Item {
         interval: 250
         repeat: false
         onTriggered: {
-            if (root.sessionTrack >= 0 && !EditorState.playing && !EditorState.scrubbing)
+            if (root.sessionClipId !== "" && !EditorState.playing && !EditorState.scrubbing)
                 EditorState.segmentation.setFrameSeconds(EditorState.playheadSeconds)
         }
     }

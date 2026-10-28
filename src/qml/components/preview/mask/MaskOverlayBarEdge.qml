@@ -33,8 +33,9 @@ Rectangle {
         onWheel: (wheel) => { wheel.accepted = false }
 
         onPressed: {
-            edge.overlay.interacting = true
-            EditorState.beginPreviewDrag(qsTr("Mask changed"))
+            if (EditorState.masking.editSession.begin(edge.bars.layerId, edge.frame.width,
+                                                      edge.frame.height))
+                edge.overlay.interacting = true
         }
 
         onPositionChanged: (mouse) => {
@@ -44,15 +45,10 @@ Rectangle {
             // Both bands come from one number, so the bottom edge is
             // measured from the bottom of the frame.
             const depth = edge.atTop ? p.y : edge.frame.height - p.y
-            edge.bars.writeHeight(2.0 * depth / Math.max(1, edge.frame.height))
+            EditorState.masking.editSession.setBarsHeight(2.0 * depth / Math.max(1, edge.frame.height))
         }
 
-        function finish() {
-            edge.bars.liveH = -1
-            edge.overlay.endInteraction()
-        }
-
-        onReleased: finish()
-        onCanceled: finish()
+        onReleased: edge.overlay.endInteraction()
+        onCanceled: edge.overlay.endInteraction()
     }
 }

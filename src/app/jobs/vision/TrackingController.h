@@ -5,14 +5,17 @@
 
 #include <QAtomicInt>
 #include <QObject>
+#include <QPointF>
 #include <QString>
 #include <QVariant>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QVector>
 
 #include <functional>
 
 class AppController;
+class TrackerListModel;
 
 // Point and planar motion tracking on a media clip, and turning a track into mask or transform
 // keys. Reached from QML as EditorState.tracking. The trackers themselves live on
@@ -27,6 +30,7 @@ class TrackingController : public QObject
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
     Q_PROPERTY(double progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(QString busyTrackerId READ busyTrackerId NOTIFY busyChanged)
+    Q_PROPERTY(TrackerListModel *trackerList READ trackerList CONSTANT)
 
 public:
     explicit TrackingController(AppController *app, QObject *parent = nullptr);
@@ -34,6 +38,7 @@ public:
     bool busy() const { return m_busy; }
     double progress() const { return m_progress; }
     QString busyTrackerId() const { return m_busyTrackerId; }
+    TrackerListModel *trackerList() const { return m_trackerList; }
 
     // [{id, name, kind: "point"|"planar", solve, minConfidence, pointCount, referenceSeconds,
     //   targets: [{clipId, mode, name}], sampleRange: [startSec, endSec]}]. Seconds are timeline.
@@ -106,6 +111,32 @@ public:
     // Regenerates the keys on every target. One undo step.
     Q_INVOKABLE void apply(int trackIndex, int clipIndex, const QString &id);
 
+    struct FramePoint
+    {
+        double x = 0;
+        double y = 0;
+        double confidence = 0;
+        bool userKey = false;
+        double patternW = 0;
+        double patternH = 0;
+        double searchW = 0;
+        double searchH = 0;
+        bool has = false;
+        bool ghost = false;
+    };
+    // trackerFrame as plain data, for the items that draw it without crossing a QVariantMap.
+    struct FrameView
+    {
+        QVector<FramePoint> points;
+        QVector<QPointF> region;
+        QVector<QVector<QPointF>> trails;
+    };
+    FrameView frameView(int trackIndex, int clipIndex, const QString &id, double timelineSeconds) const;
+    FrameView frameView(const QString &clipId, const QString &id, double timelineSeconds) const;
+    QVector<double> confidenceBuckets(int trackIndex, int clipIndex, const QString &id, int buckets) const;
+    QVector<double> confidenceBuckets(const QString &clipId, const QString &id, int buckets) const;
+    bool locateClip(const QString &clipId, int *trackIndex, int *clipIndex) const;
+
     struct FrameResult;
     struct Job;
 
@@ -134,6 +165,7 @@ private:
     bool m_busy = false;
     double m_progress = 0.0;
     QString m_busyTrackerId;
+    TrackerListModel *m_trackerList = nullptr;
     QAtomicInt m_cancel = 0;
     // The run's undo target: only this tracker is restored, so unrelated edits made meanwhile survive.
     QString m_jobClipId;

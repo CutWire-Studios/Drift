@@ -96,6 +96,9 @@ public:
     Q_INVOKABLE void scrubFrame(double seconds);
     Q_INVOKABLE void addPoint(double x, double y, bool include);
     Q_INVOKABLE void removePoint(int index);
+    // Index of the prompt point within tolPx of (nx, ny) (normalized), nearest first, or -1. frameW and
+    // frameH are the clip frame's size in pixels.
+    Q_INVOKABLE int pointIndexAt(double nx, double ny, double tolPx, double frameW, double frameH) const;
     Q_INVOKABLE void clearPoints();
     Q_INVOKABLE void runSession(const QString &outputMode);
     // Propagates the session's prompt from its frame. direction: "forward" (to the clip's end),
@@ -119,6 +122,9 @@ signals:
                              double durationSeconds);
 
 private:
+    // Re-finds the session clip by id: tracks inserted since beginSession move its indices.
+    bool resolveSessionClip();
+
     // Segmentation completion is normally reached only through a finished worker, which needs a
     // real backend installed. The test drives it directly instead.
     friend class EditorStateTest;
@@ -150,6 +156,7 @@ private:
     bool m_segSessionActive = false;
     bool m_segForTemplate = false;
     bool m_segEncoding = false;
+    QString m_segClipId;
     int m_segTrack = -1;
     int m_segClip = -1;
     double m_segSeconds = 0.0;

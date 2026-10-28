@@ -1,5 +1,6 @@
 #include "ui/preview/PreviewController.h"
 
+#include "app/editor/sessions/MaskEditSession.h"
 #include "core/edit/TimelineOps.h"
 #include "engine/render3d/editor/ClipGizmo.h"
 #include "engine/render3d/scene/ClipTransform3d.h"
@@ -1682,13 +1683,24 @@ QVariantMap PreviewController::maskEditorState() const
         const drift::Mask resolved = adjustment.mask.isAnimated()
                                          ? adjustment.mask.resolvedAt(maskTimeUs)
                                          : adjustment.mask;
-        layers.append(QVariantMap{
+        QVariantMap layer{
+            {QStringLiteral("id"), adjustment.id},
             {QStringLiteral("track"), trackIndex},
             {QStringLiteral("clip"), clipIndex},
             {QStringLiteral("selected"), adjustment.id == selectedAdjustmentId},
             {QStringLiteral("animated"), adjustment.mask.isAnimated()},
             {QStringLiteral("mask"), maskToMap(resolved, adjustment.timelineStart)},
-        });
+        };
+        if (resolved.shape == drift::MaskShape::Freeform && !resolved.points.isEmpty()) {
+            QSizeF size;
+            const QPointF centre =
+                MaskEditSession::bounds(QList<QPointF>(resolved.points.begin(), resolved.points.end()), &size);
+            layer.insert(QStringLiteral("bounds"), QVariantMap{{QStringLiteral("x"), centre.x()},
+                                                              {QStringLiteral("y"), centre.y()},
+                                                              {QStringLiteral("w"), size.width()},
+                                                              {QStringLiteral("h"), size.height()}});
+        }
+        layers.append(layer);
     };
 
     if (selectedClip.type == drift::ClipType::Adjustment) {

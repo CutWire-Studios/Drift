@@ -105,6 +105,7 @@ class AppController : public QObject
     friend class ColorController;
     friend class KeyframeController;
     friend class MaskingController;
+    friend class MaskEditSession;
     friend class SubtitleController;
     friend class RestoreController;
     friend class FaceTrackingController;

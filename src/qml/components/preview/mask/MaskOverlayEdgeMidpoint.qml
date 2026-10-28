@@ -10,7 +10,7 @@ Rectangle {
     required property var frame
 
     // The edge from this vertex to the next, wrapping at the end.
-    readonly property var pts: midpoint.mask.maskData.points || []
+    readonly property var pts: midpoint.mask.displayPoints
     readonly property var thisPoint: pts[midpoint.index]
     readonly property var nextPoint: pts.length > 0 ? pts[(midpoint.index + 1) % pts.length] : undefined
     readonly property real mxN: thisPoint
@@ -39,12 +39,11 @@ Rectangle {
         onWheel: (wheel) => { wheel.accepted = false }
         // Inserting before the far end of the edge splits that edge.
         onClicked: {
-            const track = midpoint.mask.layerTrack
-            const clip = midpoint.mask.layerClip
+            const id = midpoint.mask.layerId
             const i = midpoint.index + 1
             const nx = midpoint.mxN
             const ny = midpoint.myN
-            Qt.callLater(() => EditorState.insertMaskPoint(track, clip, i, nx, ny))
+            Qt.callLater(() => EditorState.masking.editSession.insertPoint(id, i, nx, ny))
         }
     }
 }

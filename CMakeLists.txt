@@ -1072,6 +1072,12 @@ qt_add_executable(drift
     src/app/editor/sessions/KeyframeSelection.cpp
     src/app/editor/sessions/KeyframeTimeView.h
     src/app/editor/sessions/KeyframeTimeView.cpp
+    src/app/editor/sessions/MaskEditSession.h
+    src/app/editor/sessions/MaskEditSession.cpp
+    src/app/editor/sessions/MaskStackModel.h
+    src/app/editor/sessions/MaskStackModel.cpp
+    src/app/editor/sessions/PolylineDraft.h
+    src/app/editor/sessions/PolylineDraft.cpp
     src/app/editor/sessions/MaskingController.h
     src/app/editor/sessions/MaskingController.cpp
     src/app/editor/sessions/SubtitleController.h
@@ -1097,6 +1103,8 @@ qt_add_executable(drift
     src/app/jobs/vision/StabilizeController.cpp
     src/app/jobs/vision/TrackingController.h
     src/app/jobs/vision/TrackingController.cpp
+    src/app/jobs/vision/TrackerListModel.h
+    src/app/jobs/vision/TrackerListModel.cpp
     src/app/bin/MediaBinController.h
     src/app/bin/MediaBinController.cpp
     src/app/bin/SourceLabController.h
@@ -1142,6 +1150,13 @@ qt_add_executable(drift
     src/playback/stats/PerfLog.cpp
     src/ui/preview/PreviewItem.h
     src/ui/preview/PreviewItem.cpp
+    src/ui/preview/BrushStrokeItem.h
+    src/ui/preview/BrushStrokeItem.cpp
+    src/ui/preview/TrackerOverlayItem.h
+    src/ui/preview/TrackerOverlayItem.cpp
+    src/ui/preview/TrackerOverlayMath.h
+    src/ui/preview/ConfidenceStripItem.h
+    src/ui/preview/ConfidenceStripItem.cpp
     src/ui/preview/PreviewController.h
     src/ui/preview/PreviewController.cpp
     src/ui/timeline/ClipThumbnailStore.h

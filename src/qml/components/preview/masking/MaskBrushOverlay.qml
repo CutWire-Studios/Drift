@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Shapes
 import Drift
 
-// Paints a raster matte on the target clip's frame. A stroke is drawn live in clip-frame pixels and
-// committed on release as one undo step: left paints (or erases when the Paint/Erase toggle says so),
-// right erases.
+// Paints a raster matte on the target clip's frame. A stroke is collected by EditorState.masking
+// (strokeBegin/Add/End) in clip-frame pixels, drawn live by BrushStrokeItem and committed on release
+// as one undo step: left paints (or erases when the Paint/Erase toggle says so), right erases.
 Item {
     id: root
 
@@ -24,13 +24,13 @@ Item {
     readonly property real sx: root.width / canvasW
     readonly property real sy: root.height / canvasH
 
-    // Clip-frame pixels, in the order the pointer passed them.
-    property var stroke: []
     property bool strokeErase: false
     property bool hovering: false
-    // Strokes released but not yet visible in the composite: the matte is encoded and reloaded
-    // asynchronously. Normalized to the clip frame, so a zoom in between cannot misplace them.
-    property var pendingStrokes: []
+    // A touch stroke waits briefly (or for 6 px of movement) so the first finger of a pinch does not
+    // leave a dab; this is where it started.
+    property bool touchWaiting: false
+    property bool touchStroke: false
+    property point touchStart: Qt.point(0, 0)
     property point hoverPoint: Qt.point(0, 0)
     // Brush diameter in clip-frame pixels; the size is a fraction of the frame width.
     readonly property real brushDiameter: EditorState.masking.brushSize * clipFrame.width
@@ -52,36 +52,60 @@ Item {
         target = EditorState.masking.maskTarget()
     }
 
-    function commitStroke(erase) {
-        const pts = root.stroke
-        root.stroke = []
-        // Tracks can have been inserted since the last refresh, so read the target again.
+    function beginStroke(p, erase, pressure) {
         const t = EditorState.masking.maskTarget()
-        if (pts.length === 0 || t.kind !== "clip")
+        const id = t.kind === "clip" ? EditorState.masking.clipIdAt(t.track, t.clip) : ""
+        if (id === "" || !EditorState.masking.strokeBegin(id, p.x, p.y, clipFrame.width, clipFrame.height,
+                                                          erase, pressure))
+            return false
+        root.strokeErase = erase
+        root.interacting = true
+        return true
+    }
+
+    function endStroke() {
+        root.touchWaiting = false
+        touchDelay.stop()
+        if (!root.interacting)
             return
-        const fw = Math.max(1, clipFrame.width)
-        const fh = Math.max(1, clipFrame.height)
-        const normalized = pts.map(p => ({ "x": p.x / fw, "y": p.y / fh }))
-        root.pendingStrokes = root.pendingStrokes.concat([{ "points": normalized, "erase": erase,
-                                                            "size": EditorState.masking.brushSize,
-                                                            "opacity": EditorState.masking.brushOpacity }])
-        EditorState.masking.brushStroke(t.track, t.clip, normalized, erase)
+        root.interacting = false
+        EditorState.masking.strokeEnd()
+    }
+
+    function cancelStroke() {
+        root.touchWaiting = false
+        touchDelay.stop()
+        root.resizing = false
+        if (root.interacting)
+            EditorState.masking.strokeCancel()
+        root.interacting = false
     }
 
     onVisibleChanged: {
         if (visible)
             refresh()
         else
-            pendingStrokes = []
+            EditorState.masking.clearStrokePreview()
     }
     Component.onCompleted: refresh()
     Component.onDestruction: {
-        if (interacting && stroke.length > 0)
-            commitStroke(strokeErase)
+        if (interacting)
+            endStroke()
         ShellBridge.brushStrokeActive = false
-        pendingStrokes = []
+        EditorState.masking.clearStrokePreview()
     }
     onInteractingChanged: ShellBridge.brushStrokeActive = interacting
+
+    Timer {
+        id: touchDelay
+        interval: 60
+        onTriggered: {
+            if (root.touchWaiting) {
+                root.touchWaiting = false
+                root.beginStroke(root.touchStart, root.strokeErase, 1)
+            }
+        }
+    }
 
     Timer {
         id: sizeLabelTimer
@@ -91,7 +115,6 @@ Item {
 
     Connections {
         target: EditorState.masking
-        function onBrushApplied() { root.pendingStrokes = root.pendingStrokes.slice(1) }
         function onBrushSettingsChanged() {
             root.sizeLabelShown = true
             sizeLabelTimer.restart()
@@ -158,78 +181,28 @@ Item {
         MaskOverlayClipBounds { }
 
         Repeater {
-            model: root.pendingStrokes
+            model: EditorState.masking.pendingStrokeCount
 
-            delegate: Item {
-                id: pending
-                required property var modelData
+            delegate: BrushStrokeItem {
+                required property int index
                 anchors.fill: parent
-
-                Shape {
-                    anchors.fill: parent
-                    visible: pending.modelData.points.length > 1
-                    opacity: 0.35 + 0.5 * pending.modelData.opacity
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        strokeColor: pending.modelData.erase ? Theme.c.maskBrushOverlay.eraseStroke
-                                                             : Theme.c.maskBrushOverlay.stroke
-                        strokeWidth: pending.modelData.size * clipFrame.width
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-                        fillColor: "transparent"
-
-                        PathPolyline {
-                            path: pending.modelData.points.map(p => Qt.point(p.x * clipFrame.width,
-                                                                              p.y * clipFrame.height))
-                        }
-                    }
-                }
-
-                Rectangle {
-                    readonly property var first: pending.modelData.points[0]
-                    visible: pending.modelData.points.length === 1
-                    width: pending.modelData.size * clipFrame.width
-                    height: width
-                    radius: width / 2
-                    x: (first ? first.x * clipFrame.width : 0) - width / 2
-                    y: (first ? first.y * clipFrame.height : 0) - height / 2
-                    color: pending.modelData.erase ? Theme.c.maskBrushOverlay.eraseStroke
-                                                   : Theme.c.maskBrushOverlay.stroke
-                    opacity: 0.35 + 0.5 * pending.modelData.opacity
-                }
+                masking: EditorState.masking
+                strokeIndex: index
+                color: erase ? Theme.c.maskBrushOverlay.eraseStroke : Theme.c.maskBrushOverlay.stroke
+                opacity: strokeOpacity
+                layer.enabled: true
+                layer.samples: 4
             }
         }
 
-        Shape {
+        BrushStrokeItem {
             anchors.fill: parent
-            visible: root.interacting && root.stroke.length > 1
-            opacity: 0.35 + 0.5 * EditorState.masking.brushOpacity
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeColor: root.strokeErase ? Theme.c.maskBrushOverlay.eraseStroke
-                                              : Theme.c.maskBrushOverlay.stroke
-                strokeWidth: root.brushDiameter
-                capStyle: ShapePath.RoundCap
-                joinStyle: ShapePath.RoundJoin
-                fillColor: "transparent"
-
-                PathPolyline {
-                    path: root.stroke
-                }
-            }
-        }
-
-        Rectangle {
-            visible: root.interacting && !root.resizing && root.stroke.length === 1
-            width: root.brushDiameter
-            height: width
-            radius: width / 2
-            x: (root.stroke.length > 0 ? root.stroke[0].x : 0) - width / 2
-            y: (root.stroke.length > 0 ? root.stroke[0].y : 0) - height / 2
-            color: root.strokeErase ? Theme.c.maskBrushOverlay.eraseStroke : Theme.c.maskBrushOverlay.stroke
-            opacity: 0.35 + 0.5 * EditorState.masking.brushOpacity
+            masking: EditorState.masking
+            strokeIndex: -1
+            color: erase ? Theme.c.maskBrushOverlay.eraseStroke : Theme.c.maskBrushOverlay.stroke
+            opacity: strokeOpacity
+            layer.enabled: true
+            layer.samples: 4
         }
 
         // The circle is the dab's full radius; the inner one marks where the falloff starts.
@@ -289,10 +262,22 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: root.hovering ? Qt.BlankCursor : Qt.ArrowCursor
-        preventStealing: true
+        // A touch stroke can be taken over by the viewport's pinch.
+        preventStealing: !root.touchStroke
         onWheel: (wheel) => { wheel.accepted = false }
         onContainsMouseChanged: root.hovering = containsMouse || pressed
         onPressedChanged: root.hovering = containsMouse || pressed
+
+        // Only a pen reports pressure; a mouse or finger paints at full size.
+        PointHandler {
+            id: penHandler
+            acceptedDevices: PointerDevice.Stylus | PointerDevice.Airbrush
+            target: null
+        }
+
+        function pressure() {
+            return penHandler.active ? penHandler.point.pressure : 1
+        }
 
         onPositionChanged: (mouse) => {
             const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
@@ -302,13 +287,16 @@ Item {
                 EditorState.masking.brushSize = Math.max(0.002, Math.min(0.5, size))
                 return
             }
-            if (!root.interacting)
-                return
-            const last = root.stroke[root.stroke.length - 1]
-            if (Math.hypot(p.x - last.x, p.y - last.y) >= 2) {
-                root.stroke.push(Qt.point(p.x, p.y))
-                root.strokeChanged()
+            if (root.touchWaiting) {
+                if (Math.hypot(p.x - root.touchStart.x, p.y - root.touchStart.y) < 6)
+                    return
+                root.touchWaiting = false
+                touchDelay.stop()
+                if (!root.beginStroke(root.touchStart, root.strokeErase, 1))
+                    return
             }
+            if (root.interacting)
+                EditorState.masking.strokeAdd(p.x, p.y, pressure())
         }
         onPressed: (mouse) => {
             const p = clipFrame.mapFromItem(paintArea, mouse.x, mouse.y)
@@ -318,26 +306,32 @@ Item {
                 root.resizeStartSize = EditorState.masking.brushSize
                 return
             }
-            root.interacting = true
-            root.strokeErase = mouse.button === Qt.RightButton || EditorState.masking.brushErase
-            root.stroke = [Qt.point(p.x, p.y)]
+            const erase = mouse.button === Qt.RightButton || EditorState.masking.brushErase
+            root.touchStroke = !penHandler.active && mouse.source !== Qt.MouseEventNotSynthesized
+            if (root.touchStroke) {
+                root.strokeErase = erase
+                root.touchStart = Qt.point(p.x, p.y)
+                root.touchWaiting = true
+                touchDelay.restart()
+                return
+            }
+            root.beginStroke(Qt.point(p.x, p.y), erase, pressure())
         }
         onReleased: {
             if (root.resizing) {
                 root.resizing = false
                 return
             }
-            if (!root.interacting)
-                return
-            root.interacting = false
-            root.commitStroke(root.strokeErase)
+            if (root.touchWaiting) {
+                root.touchWaiting = false
+                touchDelay.stop()
+                if (!root.beginStroke(root.touchStart, root.strokeErase, 1))
+                    return
+            }
+            root.endStroke()
             Qt.callLater(root.refresh)
         }
-        onCanceled: {
-            root.resizing = false
-            root.interacting = false
-            root.stroke = []
-        }
+        onCanceled: root.cancelStroke()
     }
 
     Rectangle {

@@ -21,6 +21,18 @@ target_include_directories(tst_keyframeview PRIVATE ../src)
 target_link_libraries(tst_keyframeview PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME KeyframeView COMMAND tst_keyframeview)
 
+qt_add_executable(tst_polylinedraft
+    tst_polylinedraft.cpp
+    ../src/app/editor/sessions/PolylineDraft.cpp)
+target_include_directories(tst_polylinedraft PRIVATE ../src)
+target_link_libraries(tst_polylinedraft PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME PolylineDraft COMMAND tst_polylinedraft)
+
+qt_add_executable(tst_trackeroverlay tst_trackeroverlay.cpp)
+target_include_directories(tst_trackeroverlay PRIVATE ../src)
+target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
+add_test(NAME TrackerOverlay COMMAND tst_trackeroverlay)
+
 qt_add_executable(tst_pdfsource tst_pdfsource.cpp)
 target_include_directories(tst_pdfsource PRIVATE ../src)
 target_link_libraries(tst_pdfsource PRIVATE Qt6::Test driftcore)
@@ -47,6 +59,8 @@ qt_add_executable(tst_editorstate
     ../src/app/editor/sessions/KeyframeRowsModel.cpp
     ../src/app/editor/sessions/KeyframeSelection.cpp
     ../src/app/editor/sessions/KeyframeTimeView.cpp
+    ../src/app/editor/sessions/MaskEditSession.cpp
+    ../src/app/editor/sessions/MaskStackModel.cpp
     ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
     ../src/app/editor/sessions/SubtitleCueModel.cpp
@@ -63,6 +77,7 @@ qt_add_executable(tst_editorstate
     ../src/app/jobs/vision/FaceTrackingController.cpp
     ../src/app/jobs/vision/StabilizeController.cpp
     ../src/app/jobs/vision/TrackingController.cpp
+    ../src/app/jobs/vision/TrackerListModel.cpp
     ../src/app/bin/MediaBinController.cpp
     ../src/app/bin/SourceLabController.cpp
     ../src/app/jobs/audio/TtsController.cpp
@@ -248,6 +263,8 @@ qt_add_executable(tst_mcp
     ../src/app/editor/sessions/KeyframeRowsModel.cpp
     ../src/app/editor/sessions/KeyframeSelection.cpp
     ../src/app/editor/sessions/KeyframeTimeView.cpp
+    ../src/app/editor/sessions/MaskEditSession.cpp
+    ../src/app/editor/sessions/MaskStackModel.cpp
     ../src/app/editor/sessions/MaskingController.cpp
     ../src/app/editor/sessions/SubtitleController.cpp
     ../src/app/editor/sessions/SubtitleCueModel.cpp
@@ -264,6 +281,7 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/vision/FaceTrackingController.cpp
     ../src/app/jobs/vision/StabilizeController.cpp
     ../src/app/jobs/vision/TrackingController.cpp
+    ../src/app/jobs/vision/TrackerListModel.cpp
     ../src/app/bin/MediaBinController.cpp
     ../src/app/bin/SourceLabController.cpp
     ../src/app/jobs/audio/TtsController.cpp

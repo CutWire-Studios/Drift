@@ -22,22 +22,15 @@ Item {
     readonly property string placeMode: ShellBridge.trackerPlaceMode
     readonly property bool canEdit: hasTracker && !busy && placeMode === ""
 
-    // TrackingController::trackerFrame at the playhead, for the selected tracker.
-    property var frame: ({})
-    readonly property var framePoints: frame.points || []
-    readonly property var frameCorners: frame.region || []
-    readonly property var frameTrails: frame.trail || []
+    property string clipId: ""
     property int trackerCount: 0
     property real minConfidence: 0.5
 
-    // While a drag runs, the dragged item's position comes from here. The delegates keep their
-    // identity, so the mouse grab survives the controller's refreshes.
-    property var pointDrag: null
-    property var cornerDrag: null
-
-    // Planar placement, as normalized corners in the order clicked.
-    property var planarPoints: []
-    property point planarHover: Qt.point(0, 0)
+    // Planar placement: corners in clip-frame pixels, in the order clicked.
+    PolylineDraft {
+        id: planarDraft
+        minPoints: 4
+    }
 
     readonly property real canvasW: Math.max(1, editorState.canvasWidth || 1)
     readonly property real canvasH: Math.max(1, editorState.canvasHeight || 1)
@@ -52,60 +45,11 @@ Item {
         return { "x": clamp01(mx / Math.max(1, clipFrame.width)), "y": clamp01(my / Math.max(1, clipFrame.height)) }
     }
 
-    function toPx(p) {
-        return { "x": p.x * clipFrame.width, "y": p.y * clipFrame.height }
-    }
-
-    function distance(a, b) {
-        return Math.hypot(a.x - b.x, a.y - b.y)
-    }
-
-    function pointAt(i) {
-        const d = pointDrag
-        return d && d.index === i ? d : framePoints[i]
-    }
-
-    function cornerAt(i) {
-        const d = cornerDrag
-        return d && d.index === i ? d : frameCorners[i]
-    }
-
-    function tintFor(confidence, minC) {
-        if (confidence < minC)
-            return Theme.c.trackerOverlay.bad
-        if (confidence >= 0.8)
-            return Theme.c.trackerOverlay.good
-        return Theme.c.trackerOverlay.warn
-    }
-
-    function trailPixels(i) {
-        // A list nested in the C++ map arrives as a sequence wrapper without Array methods.
-        return Array.from(frameTrails[i] || [], p => toPx(p))
-    }
-
-    function outlinePixels() {
-        const pts = frameCorners.map((c, i) => toPx(cornerAt(i)))
-        if (pts.length > 0)
-            pts.push(pts[0])
-        return pts
-    }
-
-    function planarPixels() {
-        return planarPoints.map(p => toPx(p))
-    }
-
-    function lastPlanarPx() {
-        return planarPoints.length > 0 ? toPx(planarPoints[planarPoints.length - 1]) : ({ "x": 0, "y": 0 })
-    }
-
-    function nearFirst() {
-        return planarPoints.length >= 4 && distance(planarHover, toPx(planarPoints[0])) <= 8
-    }
-
     function refresh() {
         if (!visible || interacting)
             return
         target = ShellBridge.trackerTarget()
+        clipId = hasClip ? EditorState.masking.clipIdAt(target.track, target.clip) : ""
         if (!EditorState.playing)
             editorState = ShellBridge.trackerFrame(target)
         refreshTracker()
@@ -122,10 +66,8 @@ Item {
     function refreshFrame() {
         if (!visible || interacting)
             return
-        const id = ShellBridge.selectedTrackerId
-        frame = hasClip && id !== "" ? EditorState.tracking.trackerFrame(target.track, target.clip, id,
-                                                                         EditorState.playheadSeconds)
-                                     : ({})
+        markers.seconds = EditorState.playheadSeconds
+        markers.refresh()
     }
 
     function placeClick(mouse) {
@@ -146,22 +88,19 @@ Item {
     }
 
     function planarPress(mx, my) {
-        const press = { "x": mx, "y": my }
-        if (planarPoints.length >= 4 && distance(press, toPx(planarPoints[0])) <= 8) {
+        const press = Qt.point(mx, my)
+        if (planarDraft.nearFirst(press, 8)) {
             finishPlanar()
             return
         }
-        // A double-click's second press lands on the vertex just placed; it must not add a duplicate.
-        if (planarPoints.length > 0 && distance(press, toPx(planarPoints[planarPoints.length - 1])) < 3)
-            return
-        planarPoints = planarPoints.concat([normAt(mx, my)])
+        planarDraft.add(press, false)
     }
 
     function finishPlanar() {
-        if (planarPoints.length < 4 || !hasClip)
+        if (planarDraft.count < 4 || !hasClip)
             return
         const t = ShellBridge.trackerTarget()
-        const id = t.kind === "clip" ? EditorState.tracking.addPlanarTracker(t.track, t.clip, planarPoints) : ""
+        const id = t.kind === "clip" ? EditorState.tracking.addPlanarTracker(t.track, t.clip, planarDraft.normalized(clipFrame.width, clipFrame.height, true)) : ""
         ShellBridge.trackerPlaceMode = ""
         if (id !== "")
             ShellBridge.selectedTrackerId = id
@@ -169,27 +108,13 @@ Item {
             Toasts.info(qsTr("Trackers need a video clip"))
     }
 
-    function endPointDrag() {
+    function endDrag() {
         if (!interacting)
             return
-        const moved = pointDrag !== null
         interacting = false
-        if (moved)
+        if (markers.endDrag() === "point")
             EditorState.commitPreviewDrag()
         refreshFrame()
-        pointDrag = null
-    }
-
-    function endCornerDrag() {
-        if (!interacting)
-            return
-        if (cornerDrag !== null) {
-            const region = frameCorners.map((c, i) => ({ "x": cornerAt(i).x, "y": cornerAt(i).y }))
-            EditorState.tracking.correctPlanarCorners(target.track, target.clip, ShellBridge.selectedTrackerId, region)
-        }
-        interacting = false
-        refreshFrame()
-        cornerDrag = null
     }
 
     function hintText() {
@@ -203,9 +128,9 @@ Item {
         case "addPoint":
             return qsTr("Click the feature to add to this tracker.")
         case "planar":
-            return planarPoints.length === 0
+            return planarDraft.count === 0
                    ? qsTr("Click the corners of a flat surface, Enter to finish.")
-                   : qsTr("%1 corners · Enter to finish · Backspace to undo · Esc to cancel").arg(planarPoints.length)
+                   : qsTr("%1 corners · Enter to finish · Backspace to undo · Esc to cancel").arg(planarDraft.count)
         }
         return trackerCount === 0 ? qsTr("Use Point or Planar in the Tracking panel to start a track")
                                   : qsTr("Drag a marker to correct it · ◀ ▶ in the Tracking panel to track")
@@ -216,7 +141,7 @@ Item {
         if (placeMode === "planar")
             forceActiveFocus()
         else
-            planarPoints = []
+            planarDraft.clear()
     }
 
     Component.onCompleted: refresh()
@@ -285,7 +210,7 @@ Item {
             event.accepted = true
             break
         case Qt.Key_Backspace:
-            root.planarPoints = root.planarPoints.slice(0, -1)
+            planarDraft.undo()
             event.accepted = true
             break
         }
@@ -334,144 +259,44 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.CrossCursor
             onWheel: (wheel) => { wheel.accepted = false }
-            onPositionChanged: (mouse) => root.planarHover = Qt.point(mouse.x, mouse.y)
+            onPositionChanged: (mouse) => planarDraft.moveHover(Qt.point(mouse.x, mouse.y), false)
             onPressed: (mouse) => root.planarPress(mouse.x, mouse.y)
             // The second press of a double-click is ignored by planarPress, so this only has to close.
             onDoubleClicked: root.finishPlanar()
         }
 
-        Repeater {
-            model: root.frameTrails.length
-
-            delegate: Shape {
-                required property int index
-                anchors.fill: parent
-                visible: !EditorState.playing
-
-                ShapePath {
-                    strokeColor: Qt.alpha(Theme.c.trackerOverlay.trail, 0.6)
-                    strokeWidth: Theme.c.maskDrawOverlay.borderWidth
-                    fillColor: "transparent"
-
-                    PathPolyline {
-                        path: root.trailPixels(index)
-                    }
-                }
-            }
-        }
-
-        Shape {
+        TrackerOverlayItem {
+            id: markers
             anchors.fill: parent
-            visible: root.frameCorners.length >= 3
-
-            ShapePath {
-                strokeColor: Theme.c.trackerOverlay.region
-                strokeWidth: Theme.c.maskDrawOverlay.borderWidth
-                fillColor: Qt.alpha(Theme.c.trackerOverlay.region, 0.12)
-
-                PathPolyline {
-                    path: root.outlinePixels()
-                }
-            }
+            tracking: EditorState.tracking
+            clipId: root.clipId
+            trackerId: root.hasTracker ? root.trackerId : ""
+            minConfidence: root.minConfidence
+            showTrails: !EditorState.playing
+            lineWidth: Theme.c.maskDrawOverlay.borderWidth
+            handleSize: Theme.spacingLg
+            handleMargin: Theme.spacingMd
+            patternColor: Theme.c.trackerOverlay.pattern
+            trailColor: Theme.c.trackerOverlay.trail
+            goodColor: Theme.c.trackerOverlay.good
+            warnColor: Theme.c.trackerOverlay.warn
+            badColor: Theme.c.trackerOverlay.bad
+            userKeyColor: Theme.c.trackerOverlay.userKey
+            regionColor: Theme.c.trackerOverlay.region
+            handleColor: Theme.c.trackerOverlay.handle
         }
 
         Repeater {
-            model: root.framePoints.length
-
-            delegate: Item {
-                id: pointItem
-                required property int index
-                readonly property var pt: root.framePoints[index] ?? ({})
-                readonly property var at: root.pointAt(index) ?? ({})
-                readonly property real cx: at.x * clipFrame.width
-                readonly property real cy: at.y * clipFrame.height
-                readonly property real pw: pt.patternW * clipFrame.width
-                readonly property real ph: pt.patternH * clipFrame.height
-                visible: pt.has === true || pt.ghost === true
-                opacity: pt.has === true ? 1.0 : 0.6
-                x: cx - pw / 2
-                y: cy - ph / 2
-                width: pw
-                height: ph
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.width: Theme.c.maskDrawOverlay.borderWidth
-                    border.color: pointItem.pt.has === true
-                                  ? root.tintFor(pointItem.pt.confidence, root.minConfidence)
-                                  : Theme.c.trackerOverlay.warn
-                }
-
-                Rectangle {
-                    x: pointItem.pw / 2 - 6
-                    y: pointItem.ph / 2 - 0.5
-                    width: 12
-                    height: 1
-                    color: Theme.c.trackerOverlay.pattern
-                }
-
-                Rectangle {
-                    x: pointItem.pw / 2 - 0.5
-                    y: pointItem.ph / 2 - 6
-                    width: 1
-                    height: 12
-                    color: Theme.c.trackerOverlay.pattern
-                }
-
-                Rectangle {
-                    visible: pointItem.pt.userKey === true
-                    x: pointItem.pw / 2 - 3.5
-                    y: pointItem.ph / 2 - 3.5
-                    width: 7
-                    height: 7
-                    rotation: 45
-                    color: Theme.c.trackerOverlay.userKey
-                }
-
-                MouseArea {
-                    anchors.centerIn: parent
-                    width: Math.max(24, pointItem.pw)
-                    height: Math.max(24, pointItem.ph)
-                    enabled: root.canEdit
-                    cursorShape: Qt.SizeAllCursor
-                    onWheel: (wheel) => { wheel.accepted = false }
-                    preventStealing: true
-
-                    property point grab: Qt.point(0, 0)
-
-                    onPressed: (mouse) => {
-                        root.interacting = true
-                        const p = mapToItem(clipFrame, mouse.x, mouse.y)
-                        grab = Qt.point(p.x - pointItem.cx, p.y - pointItem.cy)
-                    }
-                    onPositionChanged: (mouse) => {
-                        if (!root.interacting)
-                            return
-                        const p = mapToItem(clipFrame, mouse.x, mouse.y)
-                        const n = root.normAt(p.x - grab.x, p.y - grab.y)
-                        root.pointDrag = { "index": pointItem.index, "x": n.x, "y": n.y }
-                        EditorState.tracking.previewSetTrackerPoint(root.target.track, root.target.clip,
-                                                                    ShellBridge.selectedTrackerId,
-                                                                    pointItem.index, n.x, n.y)
-                    }
-                    onReleased: root.endPointDrag()
-                    onCanceled: root.endPointDrag()
-                }
-            }
-        }
-
-        Repeater {
-            model: root.placeMode === "planar" ? root.planarPoints : []
+            model: root.placeMode === "planar" ? planarDraft.points : []
 
             delegate: Rectangle {
-                required property var modelData
+                required property point modelData
                 required property int index
                 readonly property real side: index === 0 ? 11 : 7
-                readonly property bool closing: index === 0 && root.nearFirst()
+                readonly property bool closing: index === 0 && planarDraft.hoverNearFirst
 
-                x: modelData.x * clipFrame.width - side / 2
-                y: modelData.y * clipFrame.height - side / 2
+                x: modelData.x - side / 2
+                y: modelData.y - side / 2
                 width: side
                 height: side
                 color: closing ? Theme.c.trackerOverlay.good : Theme.c.trackerOverlay.region
@@ -480,7 +305,7 @@ Item {
 
         Shape {
             anchors.fill: parent
-            visible: root.placeMode === "planar" && root.planarPoints.length > 0
+            visible: root.placeMode === "planar" && planarDraft.count > 0
 
             ShapePath {
                 strokeColor: Theme.c.trackerOverlay.region
@@ -488,7 +313,7 @@ Item {
                 fillColor: "transparent"
 
                 PathPolyline {
-                    path: root.planarPixels()
+                    path: planarDraft.points
                 }
             }
 
@@ -500,50 +325,42 @@ Item {
                 fillColor: "transparent"
 
                 PathMove {
-                    x: root.lastPlanarPx().x
-                    y: root.lastPlanarPx().y
+                    x: planarDraft.last.x
+                    y: planarDraft.last.y
                 }
                 PathLine {
-                    x: root.planarHover.x
-                    y: root.planarHover.y
+                    x: planarDraft.hover.x
+                    y: planarDraft.hover.y
                 }
             }
         }
 
-        Repeater {
-            model: root.frameCorners.length
+        MouseArea {
+            anchors.fill: parent
+            enabled: root.canEdit
+            hoverEnabled: true
+            preventStealing: true
+            cursorShape: over ? Qt.SizeAllCursor : Qt.ArrowCursor
+            onWheel: (wheel) => { wheel.accepted = false }
 
-            delegate: Rectangle {
-                id: corner
-                required property int index
-                readonly property var at: root.cornerAt(index) ?? ({})
+            property bool over: false
 
-                width: Theme.spacingLg
-                height: Theme.spacingLg
-                x: at.x * clipFrame.width - width / 2
-                y: at.y * clipFrame.height - height / 2
-                color: Theme.c.trackerOverlay.handle
-
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -Theme.spacingMd
-                    enabled: root.canEdit
-                    cursorShape: Qt.SizeAllCursor
-                    onWheel: (wheel) => { wheel.accepted = false }
-                    preventStealing: true
-
-                    onPressed: root.interacting = true
-                    onPositionChanged: (mouse) => {
-                        if (!root.interacting)
-                            return
-                        const p = mapToItem(clipFrame, mouse.x, mouse.y)
-                        const n = root.normAt(p.x, p.y)
-                        root.cornerDrag = { "index": corner.index, "x": n.x, "y": n.y }
-                    }
-                    onReleased: root.endCornerDrag()
-                    onCanceled: root.endCornerDrag()
+            onPositionChanged: (mouse) => {
+                if (!pressed) {
+                    over = markers.hitTest(mouse.x, mouse.y).index >= 0
+                    return
                 }
+                if (root.interacting)
+                    markers.dragTo(mouse.x, mouse.y)
             }
+            onPressed: (mouse) => {
+                if (markers.beginDrag(mouse.x, mouse.y))
+                    root.interacting = true
+                else
+                    mouse.accepted = false
+            }
+            onReleased: root.endDrag()
+            onCanceled: root.endDrag()
         }
 
         Rectangle {

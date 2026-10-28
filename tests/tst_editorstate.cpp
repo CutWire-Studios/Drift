@@ -43,6 +43,8 @@
 #include "app/editor/sessions/KeyframeController.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeTimeView.h"
+#include "app/editor/sessions/MaskStackModel.h"
+#include "app/jobs/vision/TrackerListModel.h"
 #include "engine/compositor/FrameCompositor.h"
 #include "engine/compositor/GpuCompositor.h"
 #include "engine/tracking/MotionTracking.h"
@@ -366,6 +368,11 @@ private slots:
     void maskingPolygonMaskIsCreated();
     void maskingPathKeysAnimateShape();
     void maskingInsertPointUpdatesPathKeys();
+    void maskEditSessionMovesVertexOnStaticMask();
+    void maskEditSessionMovesVertexOnPathKeyedMask();
+    void maskEditSessionMovesKeyframedRect();
+    void maskEditSessionResizeRotateAndSnap();
+    void maskEditSessionNudgeAndBars();
     void trackingTranslationDrivesMaskKeys();
     void trackingPlanarConvertsRectangleToFreeform();
     void trackingFollowClipOffsetsTransformKeys();
@@ -378,11 +385,17 @@ private slots:
     void trackingDrivesStandaloneAdjustmentMaskInCanvasSpace();
     void trackingCorrectionDropsStaleSamplesAndReappliesTargets();
     void trackingFrameKeepsAGhostMarkerOffTheTrackedSpan();
+    void maskStackModelListsRolesAndShapeKeys();
+    void trackerListModelKeepsSelectionAndFiltersCandidates();
+    void segmentationNearestPointPicksTheClosestWithinTolerance();
     void maskingBrushOpacityCapsASingleStroke();
     void maskingClearWithoutBrushMaskCreatesNothing();
     void maskingUndoWaitsForBrushSave();
     void maskingSweepDropsUnreferencedBrushMattes();
     void maskingBrushPaintsAndErases();
+    void maskingBrushPressureScalesTheRadiusPerPoint();
+    void maskingStrokeBeginAddEndCommitsByClipId();
+    void maskingStrokeIgnoresNonMediaAndCancels();
     void maskingBrushStrokeCreatesAndUpdatesAMatte();
     void maskingBrushStrokesChainBeforeSaving();
     void freeformPointsCrossToQmlAsNamedFields();
@@ -11513,6 +11526,177 @@ void EditorStateTest::maskingPathKeysAnimateShape()
     QVERIFY(maskOf().points == remaining);
 }
 
+namespace {
+
+drift::Clip &pinnedMaskClip(AppController &state)
+{
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    return state.project()->tracks()[pinned.constFirst().trackIndex].clips[pinned.constFirst().clipIndex];
+}
+
+} // namespace
+
+void EditorStateTest::maskEditSessionMovesVertexOnStaticMask()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addPolygonMask(0, 0, QVariantList{maskVertex(0.2, 0.2), maskVertex(0.8, 0.2),
+                                                       maskVertex(0.5, 0.8)});
+    MaskEditSession *session = state.masking()->editSession();
+    const QString id = pinnedMaskClip(state).id;
+
+    QVERIFY(!session->begin(QStringLiteral("missing"), 100, 100));
+    QVERIFY(session->begin(id, 1000, 500));
+    QVERIFY(session->active());
+    session->movePoint(0, 0.1, 0.3);
+    QCOMPARE(session->livePoints().at(0), QPointF(0.1, 0.3));
+    QCOMPARE(pinnedMaskClip(state).mask.points.at(0), QPointF(0.1, 0.3));
+    QCOMPARE(pinnedMaskClip(state).mask.points.at(1), QPointF(0.8, 0.2));
+    session->movePoint(7, 0.0, 0.0);
+    session->commit();
+    QVERIFY(!session->active());
+    QCOMPARE(pinnedMaskClip(state).mask.points.at(0), QPointF(0.1, 0.3));
+
+    state.undo();
+    QCOMPARE(pinnedMaskClip(state).mask.points.at(0), QPointF(0.2, 0.2));
+
+    state.redo();
+    session->insertPoint(id, 1, 0.5, 0.1);
+    QCOMPARE(pinnedMaskClip(state).mask.points.size(), 4);
+    session->removePoint(id, 1);
+    QCOMPARE(pinnedMaskClip(state).mask.points.size(), 3);
+    session->removePoint(id, 0);
+    QCOMPARE(pinnedMaskClip(state).mask.points.size(), 3);
+}
+
+void EditorStateTest::maskEditSessionMovesVertexOnPathKeyedMask()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addPolygonMask(0, 0, QVariantList{maskVertex(0.2, 0.2), maskVertex(0.8, 0.2),
+                                                       maskVertex(0.5, 0.8)});
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    state.masking()->setMaskPathAnimated(pinned.constFirst().trackIndex, pinned.constFirst().clipIndex, true);
+    state.setPlayheadSeconds(1.0);
+    MaskEditSession *session = state.masking()->editSession();
+
+    QVERIFY(session->begin(pinnedMaskClip(state).id, 1000, 500));
+    session->movePoint(2, 0.6, 0.9);
+    session->commit();
+
+    const drift::Mask &mask = pinnedMaskClip(state).mask;
+    QCOMPARE(mask.pathKeys.size(), 2);
+    QCOMPARE(mask.pathKeys.last().at(2), QPointF(0.6, 0.9));
+    QCOMPARE(mask.pathKeys.first().at(2), QPointF(0.5, 0.8));
+}
+
+void EditorStateTest::maskEditSessionMovesKeyframedRect()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.2, 0.2);
+    state.setAutoKeyEnabled(true);
+    const auto restoreAutoKey = qScopeGuard([&state] { state.setAutoKeyEnabled(false); });
+    state.setClipKeyframe(0, 0, QStringLiteral("mask.x"), 0.0, 0.2);
+    state.setClipKeyframe(0, 0, QStringLiteral("mask.x"), 2.0, 0.8);
+    state.setPlayheadSeconds(1.0);
+    MaskEditSession *session = state.masking()->editSession();
+
+    QVERIFY(session->begin(pinnedMaskClip(state).id, 1000, 1000));
+    QCOMPARE(session->liveX(), 0.5);
+    session->beginBody(0.5, 0.5);
+    session->moveBody(0.6, 0.55, true);
+    session->commit();
+
+    const drift::Mask &mask = pinnedMaskClip(state).mask;
+    QVERIFY(qAbs(mask.resolvedAt(drift::secondsToUs(1.0)).x - 0.6) < 1e-9);
+    QVERIFY(qAbs(mask.valueAt(QStringLiteral("x"), 0) - 0.2) < 1e-9);
+}
+
+void EditorStateTest::maskEditSessionResizeRotateAndSnap()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.2, 0.2);
+    MaskEditSession *session = state.masking()->editSession();
+    const QString id = pinnedMaskClip(state).id;
+
+    // The right edge grows; the left edge stays put.
+    QVERIFY(session->begin(id, 1000, 1000));
+    session->beginResize(1, 0, 0.6, 0.5);
+    session->resize(0.7, 0.5, false);
+    QVERIFY(qAbs(session->liveW() - 0.3) < 1e-9);
+    QVERIFY(qAbs(session->liveX() - 0.55) < 1e-9);
+    QVERIFY(qAbs(session->liveH() - 0.2) < 1e-9);
+    session->commit();
+    QVERIFY(qAbs(pinnedMaskClip(state).mask.w - 0.3) < 1e-9);
+
+    // A corner with the aspect locked keeps the ratio.
+    QVERIFY(session->begin(id, 1000, 1000));
+    session->beginResize(1, 1, 0.7, 0.6);
+    session->resize(0.8, 0.6, true);
+    QVERIFY(qAbs(session->liveW() / session->liveH() - 0.3 / 0.2) < 1e-9);
+    session->cancel();
+    QVERIFY(qAbs(pinnedMaskClip(state).mask.w - 0.3) < 1e-9);
+
+    // Straight above the centre is zero degrees, clockwise positive; Shift rounds to 15.
+    QVERIFY(session->begin(id, 1000, 1000));
+    session->rotate(0.65, 0.5, false);
+    QVERIFY(qAbs(session->liveRotation() - 90.0) < 1e-9);
+    session->rotate(0.55, 0.3, false);
+    QVERIFY(qAbs(session->liveRotation()) < 1e-9);
+    session->rotate(0.65, 0.4, false);
+    QVERIFY(qAbs(session->liveRotation() - 45.0) < 1e-9);
+    session->rotate(0.65, 0.35, true);
+    QVERIFY(qAbs(std::fmod(session->liveRotation(), 15.0)) < 1e-9);
+    session->commit();
+    QVERIFY(std::abs(pinnedMaskClip(state).mask.rotation) > 1.0);
+
+    // Body drag: edges and centre lines pull within 8 px; Ctrl bypasses.
+    state.masking()->removeMask(drift::linkedMaskAdjustments(*state.project(), 0, 0).constFirst().trackIndex,
+                                drift::linkedMaskAdjustments(*state.project(), 0, 0).constFirst().clipIndex);
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.2, 0.2);
+    const QString id2 = pinnedMaskClip(state).id;
+    QVERIFY(session->begin(id2, 1000, 1000));
+    session->beginBody(0.5, 0.5);
+    session->moveBody(0.504, 0.6, false);
+    QVERIFY(qAbs(session->liveX() - 0.5) < 1e-9);
+    QVERIFY(qAbs(session->liveY() - 0.6) < 1e-9);
+    session->moveBody(0.504, 0.6, true);
+    QVERIFY(qAbs(session->liveX() - 0.504) < 1e-9);
+    session->cancel();
+}
+
+void EditorStateTest::maskEditSessionNudgeAndBars()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.2, 0.2);
+    MaskEditSession *session = state.masking()->editSession();
+    const QString id = pinnedMaskClip(state).id;
+
+    session->nudge(id, 1, 0, false, 1000, 500);
+    QVERIFY(qAbs(pinnedMaskClip(state).mask.x - 0.501) < 1e-9);
+    session->nudge(id, 0, -1, true, 1000, 500);
+    QVERIFY(qAbs(pinnedMaskClip(state).mask.y - 0.48) < 1e-9);
+    QVERIFY(!session->active());
+
+    state.masking()->addShapeMask(0, 0, QStringLiteral("rectangle"), 0.5, 0.5, 0.2, 0.2);
+    drift::Clip &barsClip = pinnedMaskClip(state);
+    barsClip.mask.shape = drift::MaskShape::Bars;
+    QVERIFY(session->begin(barsClip.id, 1000, 500));
+    session->setBarsHeight(5.0);
+    QCOMPARE(session->liveH(), 2.0);
+    session->setBarsHeight(0.3);
+    session->commit();
+    QVERIFY(qAbs(pinnedMaskClip(state).mask.h - 0.3) < 1e-9);
+}
+
 // Inserting a vertex into the static shape also splits the same edge in every shape key, so a
 // key with the old count keeps matching the static shape.
 void EditorStateTest::maskingInsertPointUpdatesPathKeys()
@@ -11553,6 +11737,88 @@ void EditorStateTest::maskingBrushPaintsAndErases()
 
     drift::masking::paintBrushStroke(image, QVector<QPointF>{QPointF(100, 50)}, 10, 0.7, 1.0, true);
     QVERIFY(qGray(image.pixel(100, 50)) < 5);
+}
+
+void EditorStateTest::maskingBrushPressureScalesTheRadiusPerPoint()
+{
+    QCOMPARE(brushPressureScale(1.0, true), 1.0);
+    QCOMPARE(brushPressureScale(0.0, true), 0.3);
+    QCOMPARE(brushPressureScale(0.0, false), 1.0);
+
+    QImage image(300, 100, QImage::Format_Grayscale8);
+    image.fill(0);
+    const QVector<QPointF> line{QPointF(30, 50), QPointF(270, 50)};
+    drift::masking::paintBrushStroke(image, line, QVector<double>{4.0, 20.0}, 1.0, 1.0, false);
+    QVERIFY(qGray(image.pixel(45, 50)) > 250);
+    QCOMPARE(qGray(image.pixel(45, 40)), 0);
+    QVERIFY(qGray(image.pixel(255, 35)) > 250);
+    QVERIFY(qGray(image.pixel(150, 50)) > 250);
+    QVERIFY(qGray(image.pixel(150, 40)) > 0);
+}
+
+void EditorStateTest::maskingStrokeBeginAddEndCommitsByClipId()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+    MaskingController *masking = state.masking();
+    const QString id = masking->clipIdAt(0, 0);
+    QVERIFY(!id.isEmpty());
+
+    QVERIFY(masking->strokeBegin(id, 100, 50, 400, 200, false));
+    QVERIFY(masking->strokeActive());
+    masking->strokeAdd(101, 50, 0.5);
+    QCOMPARE(masking->previewStroke(-1)->points.size(), 1);
+    masking->strokeAdd(200, 50, 0.5);
+    masking->strokeAdd(300, 50, 1.0);
+    const BrushPreviewStroke *live = masking->previewStroke(-1);
+    QCOMPARE(live->points.size(), 3);
+    QCOMPARE(live->points.at(1), QPointF(0.5, 0.25));
+    QCOMPARE(live->pressures.at(1), 0.5);
+
+    masking->strokeEnd();
+    QVERIFY(!masking->strokeActive());
+    QCOMPARE(masking->pendingStrokeCount(), 1);
+    QVERIFY(masking->waitForBrushSaves());
+    QCOMPARE(masking->pendingStrokeCount(), 0);
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(pinned.size(), 1);
+    const drift::Mask mask = state.project()->tracks().at(pinned.constFirst().trackIndex)
+                                 .clips.at(pinned.constFirst().clipIndex).mask;
+    QVERIFY(mask.isMedia());
+    const QImage matte(mask.mediaPath);
+    QVERIFY(!matte.isNull());
+    QVERIFY(qGray(matte.pixel(matte.width() / 2, matte.height() / 4)) > 200);
+    QCOMPARE(qGray(matte.pixel(matte.width() / 2, matte.height() * 3 / 4)), 0);
+}
+
+void EditorStateTest::maskingStrokeIgnoresNonMediaAndCancels()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.selectClip(0, 0);
+    MaskingController *masking = state.masking();
+
+    QVERIFY(!masking->strokeBegin(QStringLiteral("no-such-clip"), 1, 1, 100, 100, false));
+    QVERIFY(!masking->strokeActive());
+
+    const QString id = masking->clipIdAt(0, 0);
+    QVERIFY(masking->strokeBegin(id, 10, 10, 100, 100, true));
+    masking->strokeCancel();
+    QVERIFY(!masking->strokeActive());
+    masking->strokeEnd();
+    QVERIFY(masking->waitForBrushSaves());
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 0);
+    QCOMPARE(masking->pendingStrokeCount(), 0);
 }
 
 void EditorStateTest::maskingBrushStrokeCreatesAndUpdatesAMatte()
@@ -13199,6 +13465,172 @@ void EditorStateTest::trackingCorrectionDropsStaleSamplesAndReappliesTargets()
     const auto &x = mask.keyframes.value(QStringLiteral("x")).keyframes();
     QVERIFY(x.contains(10 * fx.frame));
     QVERIFY(qAbs(x.value(10 * fx.frame).value - 0.9) < 1e-6);
+}
+
+// The Masking panel's list: rows diffed by mask id, shape-key state following the playhead.
+void EditorStateTest::maskStackModelListsRolesAndShapeKeys()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    MaskStackModel *model = state.masking()->stackModel();
+
+    model->refresh();
+    QCOMPARE(model->rowCount(), 0);
+    QVERIFY(!model->hasEnabled());
+
+    state.selectClip(0, 0);
+    state.masking()->addPolygonMask(0, 0, QVariantList{maskVertex(0.2, 0.2), maskVertex(0.8, 0.2),
+                                                       maskVertex(0.5, 0.8)});
+    model->refresh();
+    QCOMPARE(model->rowCount(), 1);
+    const auto roleOf = [model](const char *name) {
+        return model->roleNames().key(QByteArray(name));
+    };
+    QCOMPARE(model->data(model->index(0), roleOf("shape")).toString(), QStringLiteral("freeform"));
+    QVERIFY(model->data(model->index(0), roleOf("selected")).toBool());
+    QVERIFY(model->hasEnabled());
+    const QString id = model->data(model->index(0), roleOf("id")).toString();
+    QVERIFY(!id.isEmpty());
+    QCOMPARE(model->shapeKeyCount(), 0);
+    QVERIFY(model->refineMaskId().isEmpty());
+
+    const QList<drift::ClipRef> pinned = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    const int track = pinned.constFirst().trackIndex;
+    const int clip = pinned.constFirst().clipIndex;
+
+    QSignalSpy resets(model, &QAbstractItemModel::modelReset);
+    QSignalSpy changed(model, &QAbstractItemModel::dataChanged);
+    state.masking()->setMaskProperty(track, clip, QStringLiteral("enabled"), false);
+    model->refresh();
+    QCOMPARE(resets.size(), 0);
+    QVERIFY(changed.size() >= 1);
+    QVERIFY(!model->hasEnabled());
+    QVERIFY(!model->data(model->index(0), roleOf("enabled")).toBool());
+
+    state.masking()->setMaskPathAnimated(track, clip, true);
+    model->refresh();
+    QCOMPARE(model->shapeKeyCount(), 1);
+    QCOMPARE(model->data(model->index(0), roleOf("pathKeyCount")).toInt(), 1);
+    QCOMPARE(model->data(model->index(0), roleOf("shapeKeyTimes")).toList().size(), 1);
+    QVERIFY(model->playheadOnShapeKey());
+    QVERIFY(!model->earlierShapeKey());
+    QVERIFY(!model->laterShapeKey());
+
+    state.setPlayheadSeconds(1.0);
+    QVERIFY(!model->playheadOnShapeKey());
+    QVERIFY(model->earlierShapeKey());
+    model->toggleShapeKey(id);
+    model->refresh();
+    QCOMPARE(model->shapeKeyCount(), 2);
+    QVERIFY(model->playheadOnShapeKey());
+
+    state.setPlayheadSeconds(0.5);
+    QVERIFY(model->earlierShapeKey());
+    QVERIFY(model->laterShapeKey());
+    model->stepShapeKey(false);
+    QCOMPARE(state.playheadSeconds(), 1.0);
+    model->stepShapeKey(true);
+    QCOMPARE(state.playheadSeconds(), 0.0);
+    model->stepShapeKey(true);
+    QCOMPARE(state.playheadSeconds(), 0.0);
+
+    state.setPlayheadSeconds(1.0);
+    model->toggleShapeKey(id);
+    model->refresh();
+    QCOMPARE(model->shapeKeyCount(), 1);
+
+    state.masking()->removeMask(track, clip);
+    model->refresh();
+    QCOMPARE(model->rowCount(), 0);
+    QCOMPARE(model->shapeKeyCount(), 0);
+}
+
+// The Tracking panel's list: selection stays on an existing row; candidates() drops what is driven.
+void EditorStateTest::trackerListModelKeepsSelectionAndFiltersCandidates()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    TrackerListModel *model = state.tracking()->trackerList();
+
+    model->refresh(0, 0);
+    QCOMPARE(model->rowCount(), 0);
+    QVERIFY(model->selectedId().isEmpty());
+
+    const QString maskId = fx.addMask(QStringLiteral("clip-0"));
+    const QString first = state.tracking()->addPointTracker(0, 0, 0.4, 0.4);
+    const QString second = state.tracking()->addPointTracker(0, 0, 0.6, 0.6);
+    QVERIFY(!first.isEmpty() && !second.isEmpty());
+    QSignalSpy selection(model, &TrackerListModel::selectedIdChanged);
+    model->refresh(0, 0);
+    QCOMPARE(model->rowCount(), 2);
+    QCOMPARE(model->selectedId(), first);
+    QCOMPARE(selection.size(), 1);
+
+    model->setSelectedId(second);
+    model->refresh(0, 0);
+    QCOMPARE(model->selectedId(), second);
+
+    const int idRole = model->roleNames().key("id");
+    const int targetsRole = model->roleNames().key("targets");
+    QSet<QString> ids;
+    for (int i = 0; i < model->rowCount(); ++i)
+        ids.insert(model->data(model->index(i), idRole).toString());
+    QCOMPARE(ids, QSet<QString>({first, second}));
+
+    bool maskOffered = false;
+    for (const QVariant &c : model->candidates(first))
+        maskOffered = maskOffered || c.toMap().value(QStringLiteral("clipId")).toString() == maskId;
+    QVERIFY(maskOffered);
+
+    QSignalSpy resets(model, &QAbstractItemModel::modelReset);
+    QSignalSpy changed(model, &QAbstractItemModel::dataChanged);
+    state.tracking()->setTarget(0, 0, first, maskId, QStringLiteral("mask"));
+    model->refresh(0, 0);
+    QCOMPARE(resets.size(), 0);
+    QVERIFY(changed.size() >= 1);
+    int firstRow = -1;
+    for (int i = 0; i < model->rowCount(); ++i) {
+        if (model->data(model->index(i), idRole).toString() == first)
+            firstRow = i;
+    }
+    QVERIFY(firstRow >= 0);
+    QCOMPARE(model->data(model->index(firstRow), targetsRole).toList().size(), 1);
+    for (const QVariant &c : model->candidates(first))
+        QVERIFY(c.toMap().value(QStringLiteral("clipId")).toString() != maskId);
+    bool stillOffered = false;
+    for (const QVariant &c : model->candidates(second))
+        stillOffered = stillOffered || c.toMap().value(QStringLiteral("clipId")).toString() == maskId;
+    QVERIFY(stillOffered);
+
+    const QVariantList framePoints = state.tracking()->trackerFrame(0, 0, second, 0.0)
+                                         .value(QStringLiteral("points")).toList();
+    const double expected = framePoints.isEmpty()
+                                ? 0.0
+                                : framePoints.first().toMap().value(QStringLiteral("patternW")).toDouble() * 100.0;
+    QCOMPARE(model->patternPercent(second, 0.0), expected);
+    QCOMPARE(model->patternPercent(QStringLiteral("nope"), 0.0), 0.0);
+
+    state.tracking()->removeTracker(0, 0, second, false);
+    model->refresh(0, 0);
+    QCOMPARE(model->rowCount(), 1);
+    QCOMPARE(model->selectedId(), first);
+
+    model->refresh(-1, -1);
+    QCOMPARE(model->rowCount(), 0);
+    QVERIFY(model->selectedId().isEmpty());
+}
+
+void EditorStateTest::segmentationNearestPointPicksTheClosestWithinTolerance()
+{
+    const QList<QPointF> points{QPointF(0.5, 0.5), QPointF(0.52, 0.5), QPointF(0.9, 0.9)};
+    QCOMPARE(drift::segplan::nearestPointIndex(points, 0.505, 0.5, 8, 1000, 500), 0);
+    QCOMPARE(drift::segplan::nearestPointIndex(points, 0.519, 0.5, 8, 1000, 500), 1);
+    QCOMPARE(drift::segplan::nearestPointIndex(points, 0.7, 0.7, 8, 1000, 500), -1);
+    QCOMPARE(drift::segplan::nearestPointIndex(points, 0.9, 0.9 + 6.0 / 500, 8, 1000, 500), 2);
+    QCOMPARE(drift::segplan::nearestPointIndex(points, 0.9, 0.9 + 9.0 / 500, 8, 1000, 500), -1);
+    QCOMPARE(drift::segplan::nearestPointIndex({}, 0.5, 0.5, 8, 1000, 500), -1);
 }
 
 void EditorStateTest::trackingFrameKeepsAGhostMarkerOffTheTrackedSpan()

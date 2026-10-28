@@ -24,13 +24,10 @@ Item {
     // Polygon: clip-frame pixel vertices, placed one click at a time until closed or cancelled.
     readonly property bool polyTool: EditorState.preview.maskingTool === "polygon"
     readonly property bool polyActive: polyTool && target.kind !== "none"
-    property var polyPoints: []
-    property point hoverPoint: Qt.point(0, 0)
-    readonly property point firstVertex: polyPoints.length > 0 ? polyPoints[0] : Qt.point(0, 0)
-    readonly property point lastVertex: polyPoints.length > 0 ? polyPoints[polyPoints.length - 1]
-                                                              : Qt.point(0, 0)
-    readonly property bool hoverNearFirst: polyPoints.length >= 3
-                                           && distanceBetween(hoverPoint, firstVertex) <= 8
+    PolylineDraft {
+        id: polyDraft
+        minPoints: 3
+    }
 
     // Set once a press has moved, so a plain click draws nothing.
     property bool drawing: false
@@ -70,53 +67,28 @@ Item {
         return Qt.rect(Math.min(x0, x0 + dx), Math.min(y0, y0 + dy), Math.abs(dx), Math.abs(dy))
     }
 
-    function distanceBetween(a, b) {
-        return Math.hypot(a.x - b.x, a.y - b.y)
-    }
-
-    // Shift holds the new segment to 45-degree steps from the previous vertex.
-    function constrainedPoint(p, modifiers) {
-        if (!(modifiers & Qt.ShiftModifier) || polyPoints.length === 0)
-            return p
-        const step = Math.PI / 4
-        const angle = Math.round(Math.atan2(p.y - lastVertex.y, p.x - lastVertex.x) / step) * step
-        const len = distanceBetween(p, lastVertex)
-        return Qt.point(lastVertex.x + Math.cos(angle) * len, lastVertex.y + Math.sin(angle) * len)
-    }
-
     function polyPress(p, modifiers) {
-        if (polyPoints.length >= 3 && distanceBetween(p, firstVertex) <= 8) {
+        if (polyDraft.nearFirst(p, 8)) {
             finishPolygon()
             return
         }
-        const q = constrainedPoint(p, modifiers)
-        // A double-click's second press lands on the vertex just placed; it must not add a duplicate.
-        if (polyPoints.length > 0 && distanceBetween(q, lastVertex) < 3)
-            return
-        polyPoints = polyPoints.concat([q])
-    }
-
-    function removeLastPolyPoint() {
-        if (polyPoints.length > 0)
-            polyPoints = polyPoints.slice(0, -1)
+        polyDraft.add(p, !!(modifiers & Qt.ShiftModifier))
     }
 
     function finishPolygon() {
-        if (polyPoints.length < 3 || target.kind === "none")
+        if (polyDraft.count < 3 || target.kind === "none")
             return
-        const fw = Math.max(1, clipFrame.width)
-        const fh = Math.max(1, clipFrame.height)
-        const pts = polyPoints.map(p => ({ "x": p.x / fw, "y": p.y / fh }))
+        const pts = polyDraft.normalized(clipFrame.width, clipFrame.height)
         const t = EditorState.masking.maskTarget()
         if (t.kind === "none")
             return
         EditorState.masking.addPolygonMask(t.track, t.clip, pts)
-        polyPoints = []
+        polyDraft.clear()
         EditorState.preview.maskingTool = ""
     }
 
     function cancelPolygon() {
-        polyPoints = []
+        polyDraft.clear()
     }
 
     onVisibleChanged: if (visible) refresh()
@@ -137,7 +109,10 @@ Item {
         else
             cancelPolygon()
     }
-    onPolyPointsChanged: ShellBridge.pendingPolygonPoints = polyPoints.length
+    Connections {
+        target: polyDraft
+        function onPointsChanged() { ShellBridge.pendingPolygonPoints = polyDraft.count }
+    }
 
     Keys.onPressed: (event) => {
         switch (event.key) {
@@ -147,13 +122,13 @@ Item {
             event.accepted = true
             break
         case Qt.Key_Escape:
-            if (root.polyPoints.length === 0)
+            if (polyDraft.count === 0)
                 return
             root.cancelPolygon()
             event.accepted = true
             break
         case Qt.Key_Backspace:
-            root.removeLastPolyPoint()
+            polyDraft.undo()
             event.accepted = true
             break
         }
@@ -266,7 +241,7 @@ Item {
 
         Shape {
             anchors.fill: parent
-            visible: root.polyActive && root.polyPoints.length > 0
+            visible: root.polyActive && polyDraft.count > 0
 
             ShapePath {
                 strokeColor: Theme.c.maskDrawOverlay.stroke
@@ -274,14 +249,14 @@ Item {
                 fillColor: "transparent"
 
                 PathPolyline {
-                    path: root.polyPoints
+                    path: polyDraft.points
                 }
             }
         }
 
         Shape {
             anchors.fill: parent
-            visible: root.polyActive && root.polyPoints.length > 0
+            visible: root.polyActive && polyDraft.count > 0
 
             ShapePath {
                 strokeColor: Theme.c.maskDrawOverlay.stroke
@@ -291,12 +266,12 @@ Item {
                 fillColor: "transparent"
 
                 PathMove {
-                    x: root.lastVertex.x
-                    y: root.lastVertex.y
+                    x: polyDraft.last.x
+                    y: polyDraft.last.y
                 }
                 PathLine {
-                    x: root.hoverPoint.x
-                    y: root.hoverPoint.y
+                    x: polyDraft.hover.x
+                    y: polyDraft.hover.y
                 }
             }
 
@@ -308,24 +283,24 @@ Item {
                 fillColor: "transparent"
 
                 PathMove {
-                    x: root.hoverPoint.x
-                    y: root.hoverPoint.y
+                    x: polyDraft.hover.x
+                    y: polyDraft.hover.y
                 }
                 PathLine {
-                    x: root.firstVertex.x
-                    y: root.firstVertex.y
+                    x: polyDraft.first.x
+                    y: polyDraft.first.y
                 }
             }
         }
 
         Repeater {
-            model: root.polyActive ? root.polyPoints : []
+            model: root.polyActive ? polyDraft.points : []
 
             delegate: Rectangle {
                 id: vertexHandle
-                required property var modelData
+                required property point modelData
                 required property int index
-                readonly property bool closing: index === 0 && root.hoverNearFirst
+                readonly property bool closing: index === 0 && polyDraft.hoverNearFirst
                 readonly property real side: index === 0 ? 11 : 7
 
                 x: modelData.x - side / 2
@@ -404,11 +379,11 @@ Item {
 
         onPositionChanged: (mouse) => {
             const p = clipFrame.mapFromItem(polyArea, mouse.x, mouse.y)
-            root.hoverPoint = root.constrainedPoint(Qt.point(p.x, p.y), mouse.modifiers)
+            polyDraft.moveHover(Qt.point(p.x, p.y), !!(mouse.modifiers & Qt.ShiftModifier))
         }
         onPressed: (mouse) => {
             if (mouse.button === Qt.RightButton) {
-                root.removeLastPolyPoint()
+                polyDraft.undo()
                 return
             }
             const p = clipFrame.mapFromItem(polyArea, mouse.x, mouse.y)
@@ -454,9 +429,9 @@ Item {
         Text {
             id: polyHintText
             anchors.centerIn: parent
-            text: root.polyPoints.length === 0
+            text: polyDraft.count === 0
                   ? qsTr("Click to place points. Click the first point or press Enter to close.")
-                  : qsTr("%1 points · Enter to close · Backspace to undo · Esc to cancel").arg(root.polyPoints.length)
+                  : qsTr("%1 points · Enter to close · Backspace to undo · Esc to cancel").arg(polyDraft.count)
             color: Theme.c.maskDrawOverlay.hintForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

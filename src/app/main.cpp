@@ -31,6 +31,9 @@
 #include "ui/imageproviders/ShapePreviewImageProvider.h"
 #include "ui/imageproviders/TextStylePreviewImageProvider.h"
 #include "playback/stats/PerfLog.h"
+#include "ui/preview/BrushStrokeItem.h"
+#include "ui/preview/ConfidenceStripItem.h"
+#include "ui/preview/TrackerOverlayItem.h"
 #include "ui/preview/PreviewItem.h"
 #include "ui/theme/ThemeManager.h"
 #include "ui/theme/backdrop/WindowBackdrop.h"
@@ -38,6 +41,7 @@
 #include "ui/timeline/TimelineViewState.h"
 #include "app/editor/sessions/KeyframeRowsModel.h"
 #include "app/editor/sessions/KeyframeSelection.h"
+#include "app/editor/sessions/PolylineDraft.h"
 #include "app/editor/sessions/KeyframeTimeView.h"
 
 // QApplication (not QGuiApplication) is required so QFileDialog can use the
@@ -701,6 +705,10 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyframeSelection>("Drift", 1, 0, "KeyframeSelection");
     qmlRegisterType<KeyframeTimeView>("Drift", 1, 0, "KeyframeTimeView");
     qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
+    qmlRegisterType<BrushStrokeItem>("Drift", 1, 0, "BrushStrokeItem");
+    qmlRegisterType<PolylineDraft>("Drift", 1, 0, "PolylineDraft");
+    qmlRegisterType<TrackerOverlayItem>("Drift", 1, 0, "TrackerOverlayItem");
+    qmlRegisterType<ConfidenceStripItem>("Drift", 1, 0, "ConfidenceStripItem");
     TimelineTrackItem::installAccessibility();
 
     static AssetLibrary assetLibrary;

@@ -24,13 +24,9 @@ Rectangle {
     border.width: Theme.c.maskOverlayVertexHandle.borderWidth
     border.color: Theme.c.maskOverlayVertexHandle.border
 
-    // Live position during a drag, so the dot tracks the cursor without
-    // waiting for the model to come back.
-    property real liveVx: -1e12
-    property real liveVy: -1e12
-    readonly property var pt: (vertex.mask.maskData.points || [])[vertex.index]
-    readonly property real vx: liveVx > -1e11 ? liveVx : (pt ? pt.x : 0)
-    readonly property real vy: liveVy > -1e11 ? liveVy : (pt ? pt.y : 0)
+    readonly property var pt: vertex.mask.displayPoints[vertex.index]
+    readonly property real vx: pt ? pt.x : 0
+    readonly property real vy: pt ? pt.y : 0
 
     x: vx * vertex.frame.width - vs / 2
     y: vy * vertex.frame.height - vs / 2
@@ -39,10 +35,9 @@ Rectangle {
     // The removal rebuilds the vertex Repeater, which would destroy this delegate while its
     // MouseArea is still inside the handler that asked for it.
     function removeDeferred() {
-        const track = vertex.mask.layerTrack
-        const clip = vertex.mask.layerClip
+        const id = vertex.mask.layerId
         const i = vertex.index
-        Qt.callLater(() => EditorState.removeMaskPoint(track, clip, i))
+        Qt.callLater(() => EditorState.masking.editSession.removePoint(id, i))
     }
 
     MouseArea {
@@ -56,6 +51,8 @@ Rectangle {
         onWheel: (wheel) => { wheel.accepted = false }
 
         property bool pressedByTouch: false
+        property bool dragging: false
+        property bool moved: false
 
         onPressed: (mouse) => {
             pressedByTouch = mouse.source !== Qt.MouseEventNotSynthesized
@@ -63,25 +60,29 @@ Rectangle {
                 vertex.removeDeferred()
                 return
             }
+            if (!EditorState.masking.editSession.begin(vertex.mask.layerId, vertex.frame.width,
+                                                       vertex.frame.height))
+                return
+            dragging = true
+            moved = false
             vertex.overlay.interacting = true
             vertex.mask.forceActiveFocus()
-            EditorState.beginPreviewDrag(qsTr("Mask changed"))
         }
 
         onPositionChanged: (mouse) => {
-            if (!pressed || mouse.buttons !== Qt.LeftButton)
+            if (!pressed || !dragging || mouse.buttons !== Qt.LeftButton)
                 return
+            moved = true
             const p = mapToItem(vertex.frame, mouse.x, mouse.y)
-            vertex.liveVx = p.x / Math.max(1, vertex.frame.width)
-            vertex.liveVy = p.y / Math.max(1, vertex.frame.height)
-            vertex.mask.writePointAt(vertex.index, vertex.liveVx, vertex.liveVy)
+            EditorState.masking.editSession.movePoint(vertex.index,
+                                                      p.x / Math.max(1, vertex.frame.width),
+                                                      p.y / Math.max(1, vertex.frame.height))
         }
 
         function finish() {
-            if (vertex.liveVx < -1e11)
+            if (!dragging)
                 return
-            vertex.liveVx = -1e12
-            vertex.liveVy = -1e12
+            dragging = false
             vertex.overlay.endInteraction()
         }
 
@@ -90,10 +91,10 @@ Rectangle {
 
         // Touch has no right button: hold a vertex still to delete it.
         onPressAndHold: (mouse) => {
-            if (!pressedByTouch || vertex.liveVx > -1e11
-                    || !(mouse.buttons & Qt.LeftButton))
+            if (!pressedByTouch || !dragging || moved || !(mouse.buttons & Qt.LeftButton))
                 return
-            EditorState.cancelPreviewDrag()
+            dragging = false
+            EditorState.masking.editSession.cancel()
             vertex.overlay.interacting = false
             vertex.removeDeferred()
         }
