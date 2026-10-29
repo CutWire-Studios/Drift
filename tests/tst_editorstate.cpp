@@ -66,6 +66,9 @@
 #include "ui/imageproviders/multicam/MulticamImageProvider.h"
 #include "ui/imageproviders/multicam/MulticamImageStore.h"
 
+#include "core/edit/MaskSpace.h"
+#include "engine/render3d/scene/SceneCamera3d.h"
+#include "engine/tracking/MotionTracking.h"
 #include "core/project/clip/Clip.h"
 #include "core/animation/EasingPresetStore.h"
 #include "core/effects/EffectStackStore.h"
@@ -382,6 +385,13 @@ private slots:
     void trackingTranslationDrivesMaskKeys();
     void trackingPlanarConvertsRectangleToFreeform();
     void trackingFollowClipOffsetsTransformKeys();
+    void trackingStabilizeClipHoldsTheAnchor();
+    void trackingStabilizeClipFollowsRotationAndZoom();
+    void trackingStabilizeFillZoomCoversTheCanvas();
+    void trackingStabilizeIsOnePerClipAndSurvivesJson();
+    void trackingStabilizeCameraHoldsAPointTrack();
+    void trackingStabilizeCameraSolvesAPlanarTrack();
+    void trackingStabilizeCameraFillZoomCoversTheCanvas();
     void trackingClearSamplesKeepsUserKeysAndEarlierSamples();
     void trackingSurvivesProjectRoundTrip();
     void trackingFollowsMovingSquareBothWays();
@@ -13941,6 +13951,394 @@ void EditorStateTest::trackingFollowClipOffsetsTransformKeys()
     QCOMPARE(restored->transformY.keyframes().size(), 1);
     QVERIFY(qAbs(restored->transformX.keyframes().first().value - 100.0) < 1e-6);
     QVERIFY(qAbs(restored->transformY.keyframes().first().value - 50.0) < 1e-6);
+}
+
+namespace {
+
+// Where the anchor of a tracker sits on the canvas at frame k, in canvas pixels, given the tracked
+// position there (normalized to the clip frame).
+QPointF canvasPixels(AppController &state, const drift::Clip &host, drift::TimeUs t, QPointF normalized)
+{
+    const QPointF c = drift::hostFrameToCanvas(*state.project(), host, t, normalized);
+    return QPointF(c.x() * state.project()->width(), c.y() * state.project()->height());
+}
+
+double distance(QPointF a, QPointF b)
+{
+    return std::hypot(a.x() - b.x(), a.y() - b.y());
+}
+
+} // namespace
+
+void EditorStateTest::trackingStabilizeClipHoldsTheAnchor()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const double W = state.project()->width();
+    const double H = state.project()->height();
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5 + 0.005 * k), 0.95f, false});
+
+    const QPointF reference(0.5 * W, 0.5 * H);
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("clip"));
+    const drift::Clip *host = fx.clipById(QStringLiteral("clip-0"));
+    QCOMPARE(host->motionTrackers.first().targets.size(), 1);
+    QVERIFY(host->motionTrackers.first().targets.first().mode == drift::TrackerTarget::Mode::Stabilize);
+    // The tracked clip moved against the track: two end keys, scale and rotation untouched.
+    QCOMPARE(host->transformX.keyframes().size(), 2);
+    QVERIFY(host->transformW.isEmpty());
+    for (int k = 0; k < 30; ++k) {
+        const QPointF sample = k == 0 ? QPointF(0.5, 0.5) : QPointF(0.5 + 0.01 * k, 0.5 + 0.005 * k);
+        QVERIFY2(distance(canvasPixels(state, *host, k * fx.frame, sample), reference) < 0.6, qPrintable(QString::number(k)));
+    }
+
+    // Center in frame puts the anchor on the canvas centre (the host's own rest pose is full-canvas).
+    state.tracking()->setTargetCenter(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"), true);
+    host = fx.clipById(QStringLiteral("clip-0"));
+    for (int k = 0; k < 30; ++k) {
+        const QPointF sample = k == 0 ? QPointF(0.5, 0.5) : QPointF(0.5 + 0.01 * k, 0.5 + 0.005 * k);
+        QVERIFY(distance(canvasPixels(state, *host, k * fx.frame, sample), QPointF(W / 2, H / 2)) < 0.6);
+    }
+
+    // Removing the target puts the clip back on its rest pose.
+    state.tracking()->removeTarget(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"));
+    host = fx.clipById(QStringLiteral("clip-0"));
+    QCOMPARE(host->transformX.keyframes().size(), 1);
+    QCOMPARE(host->transformY.keyframes().size(), 1);
+    QVERIFY(qAbs(host->transformX.evaluateAt(10 * fx.frame)) < 1e-6);
+    QVERIFY(qAbs(host->transformY.evaluateAt(10 * fx.frame)) < 1e-6);
+    QVERIFY(host->motionTrackers.first().targets.isEmpty());
+
+    // Applying and removing are each one undo step.
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("clip"));
+    QVERIFY(fx.clipById(QStringLiteral("clip-0"))->transformX.keyframes().size() == 2);
+    state.undo();
+    QVERIFY(fx.clipById(QStringLiteral("clip-0"))->motionTrackers.first().targets.isEmpty());
+}
+
+void EditorStateTest::trackingStabilizeClipFollowsRotationAndZoom()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const double W = state.project()->width();
+    const double H = state.project()->height();
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.4, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    tracker.solve = drift::MotionTracker::Solve::TranslateRotate;
+    drift::TrackPoint second = tracker.points[0];
+    second.samples.clear();
+    second.samples.insert(tracker.referenceUs, drift::TrackSample{QPointF(0.6, 0.5), 1.0f, true});
+    tracker.points.append(second);
+
+    // The pair spins about the frame centre and drifts.
+    const auto moved = [&](QPointF ref, int k) {
+        const double a = qDegreesToRadians(0.5 * k);
+        const QPointF d(ref.x() * W - W / 2, ref.y() * H - H / 2);
+        const QPointF r(d.x() * std::cos(a) - d.y() * std::sin(a), d.x() * std::sin(a) + d.y() * std::cos(a));
+        return QPointF((W / 2 + r.x() + 2.0 * k) / W, (H / 2 + r.y() + 1.0 * k) / H);
+    };
+    for (int k = 1; k < 30; ++k) {
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{moved(QPointF(0.4, 0.5), k), 0.95f, false});
+        tracker.points[1].samples.insert(k * fx.frame, drift::TrackSample{moved(QPointF(0.6, 0.5), k), 0.95f, false});
+    }
+
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("clip"));
+    const drift::Clip *host = fx.clipById(QStringLiteral("clip-0"));
+    QVERIFY(!host->rotation.isEmpty());
+    for (int k = 0; k < 30; ++k) {
+        for (const QPointF &ref : {QPointF(0.4, 0.5), QPointF(0.6, 0.5)}) {
+            const QPointF at = k == 0 ? ref : moved(ref, k);
+            QVERIFY2(distance(canvasPixels(state, *host, k * fx.frame, at), QPointF(ref.x() * W, ref.y() * H)) < 0.6,
+                     qPrintable(QString::number(k)));
+        }
+    }
+
+    // Zoom scales about the anchor (the pair's midpoint, the frame centre here): the anchor stays put.
+    // The 0.05 degree rotation tolerance of the keys, seen from twice as far, allows a couple of pixels.
+    state.tracking()->setTargetZoom(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"), 2.0);
+    host = fx.clipById(QStringLiteral("clip-0"));
+    QVERIFY(qAbs(host->transformW.evaluateAt(10 * fx.frame) - 2.0 * W) < 1.0);
+    QVERIFY(qAbs(host->transformH.evaluateAt(10 * fx.frame) - 2.0 * H) < 1.0);
+    for (int k = 0; k < 30; ++k) {
+        const QPointF anchor = k == 0 ? QPointF(0.5, 0.5) : (moved(QPointF(0.4, 0.5), k) + moved(QPointF(0.6, 0.5), k)) / 2.0;
+        QVERIFY2(distance(canvasPixels(state, *host, k * fx.frame, anchor), QPointF(W / 2, H / 2)) < 1.0,
+                 qPrintable(QString::number(k)));
+    }
+
+    // Zoom is clamped, and removing the target drops the scale keys with the rest.
+    state.tracking()->setTargetZoom(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"), 9.0);
+    QCOMPARE(fx.clipById(QStringLiteral("clip-0"))->motionTrackers.first().targets.first().zoom, 4.0);
+    state.tracking()->removeTarget(QStringLiteral("clip-0"), id, QStringLiteral("clip-0"));
+    host = fx.clipById(QStringLiteral("clip-0"));
+    QVERIFY(qAbs(host->transformW.evaluateAt(10 * fx.frame) - W) < 1e-6);
+    QVERIFY(qAbs(host->rotation.evaluateAt(10 * fx.frame)) < 1e-6);
+}
+
+void EditorStateTest::trackingStabilizeFillZoomCoversTheCanvas()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const double W = state.project()->width();
+    const double H = state.project()->height();
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5 + 0.005 * k), 0.95f, false});
+
+    QCOMPARE(state.tracking()->fillZoom(QStringLiteral("clip-0"), id), 1.0);
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("clip"));
+    const double fill = state.tracking()->fillZoom(QStringLiteral("clip-0"), id);
+    // The clip centre sits 29 % of the width off after the lock, and zoom scales that offset too:
+    // 0.29 z <= (z - 1) / 2 gives z = 2.38.
+    QVERIFY2(fill > 2.3 && fill < 2.45, qPrintable(QString::number(fill)));
+
+    state.tracking()->autoZoom(QStringLiteral("clip-0"), id);
+    const drift::Clip *host = fx.clipById(QStringLiteral("clip-0"));
+    QCOMPARE(host->motionTrackers.first().targets.first().zoom, fill);
+    for (int k = 0; k < 30; ++k) {
+        const drift::TimeUs t = k * fx.frame;
+        const double x = host->transformX.evaluateAt(t);
+        const double y = host->transformY.evaluateAt(t);
+        QVERIFY2(x <= 0.5 && y <= 0.5, qPrintable(QString::number(k)));
+        QVERIFY2(x + host->transformW.evaluateAt(t) >= W - 0.5 && y + host->transformH.evaluateAt(t) >= H - 0.5,
+                 qPrintable(QString::number(k)));
+    }
+}
+
+void EditorStateTest::trackingStabilizeIsOnePerClipAndSurvivesJson()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+
+    const QString first = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    const QString second = state.tracking()->addPointTracker(0, 0, 0.3, 0.3);
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), first, QStringLiteral("clip"));
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), second, QStringLiteral("clip"));
+    QVERIFY(fx.tracker(QStringLiteral("clip-0"), first).targets.isEmpty());
+    QCOMPARE(fx.tracker(QStringLiteral("clip-0"), second).targets.size(), 1);
+
+    const QVariantList rows = state.tracking()->trackers(QStringLiteral("clip-0"));
+    const QVariantMap target = rows.last().toMap().value(QStringLiteral("targets")).toList().first().toMap();
+    QCOMPARE(target.value(QStringLiteral("mode")).toString(), QStringLiteral("stabilize"));
+    QCOMPARE(target.value(QStringLiteral("via")).toString(), QStringLiteral("clip"));
+    QCOMPARE(target.value(QStringLiteral("zoom")).toDouble(), 1.0);
+
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), second);
+    drift::TrackerTarget &stored = tracker.targets.first();
+    stored.via = drift::TrackerTarget::Via::Camera;
+    stored.zoom = 1.75;
+    stored.centerOnTrack = true;
+    stored.restCamera = {1, 2, 3, 4, 5, 6};
+    const drift::MotionTracker back = drift::motionTrackerFromJson(drift::toJson(tracker));
+    QCOMPARE(back.targets.size(), 1);
+    QVERIFY(back.targets.first().mode == drift::TrackerTarget::Mode::Stabilize);
+    QVERIFY(back.targets.first().via == drift::TrackerTarget::Via::Camera);
+    QCOMPARE(back.targets.first().zoom, 1.75);
+    QVERIFY(back.targets.first().centerOnTrack);
+    QCOMPARE(back.targets.first().restCamera, (QVector<double>{1, 2, 3, 4, 5, 6}));
+    QVERIFY(back.targets.first().hasRest);
+}
+
+namespace {
+
+const drift::Clip *cameraClipOf(AppController &state, drift::TimeUs at = 0)
+{
+    return drift::cameraClipAt(state.project()->tracks(), at);
+}
+
+// Where a world point on the canvas plane (given as a canvas pixel) lands through the camera the
+// clip describes at `t`.
+QPointF throughCamera(AppController &state, const drift::Clip &camera, drift::TimeUs t, QPointF canvasPoint)
+{
+    const QSizeF canvas(state.project()->width(), state.project()->height());
+    const QMatrix4x4 view = drift::cameraViewProjection(drift::sceneCameraFromClip(camera, t, 1.0), canvas);
+    const QVector4D p = view * QVector4D(float(canvasPoint.x() - canvas.width() / 2), float(canvasPoint.y() - canvas.height() / 2), 0.f, 1.f);
+    return QPointF(p.x() / p.w(), p.y() / p.w());
+}
+
+} // namespace
+
+void EditorStateTest::trackingStabilizeCameraHoldsAPointTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const double W = state.project()->width();
+    const double H = state.project()->height();
+    QVERIFY(drift::cameraTrackIndex(state.project()->tracks()) < 0);
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.3, 0.4);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    tracker.solve = drift::MotionTracker::Solve::TranslateRotateScale;
+    drift::TrackPoint second = tracker.points[0];
+    second.samples.clear();
+    second.samples.insert(tracker.referenceUs, drift::TrackSample{QPointF(0.5, 0.4), 1.0f, true});
+    tracker.points.append(second);
+
+    // The pair spins about the frame centre, grows and drifts.
+    const auto moved = [&](QPointF ref, int k) {
+        const double a = qDegreesToRadians(0.5 * k);
+        const double scale = 1.0 + 0.004 * k;
+        const QPointF d(ref.x() * W - W / 2, ref.y() * H - H / 2);
+        const QPointF r(d.x() * std::cos(a) - d.y() * std::sin(a), d.x() * std::sin(a) + d.y() * std::cos(a));
+        return QPointF((W / 2 + r.x() * scale + 2.0 * k) / W, (H / 2 + r.y() * scale + 1.0 * k) / H);
+    };
+    const QPointF left(0.3, 0.4);
+    const QPointF right(0.5, 0.4);
+    for (int k = 1; k < 30; ++k) {
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{moved(left, k), 0.95f, false});
+        tracker.points[1].samples.insert(k * fx.frame, drift::TrackSample{moved(right, k), 0.95f, false});
+    }
+
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("camera"));
+    const drift::Clip *host = fx.clipById(QStringLiteral("clip-0"));
+    // No camera existed: a track and a clip spanning the tracked clip were made, the clip itself was left alone.
+    const drift::Clip *camera = cameraClipOf(state);
+    QVERIFY(camera);
+    QCOMPARE(camera->timelineStart, host->timelineStart);
+    QCOMPARE(camera->timelineEnd(), host->timelineEnd());
+    QVERIFY(host->transformX.isEmpty() && host->transformW.isEmpty() && host->rotation.isEmpty());
+    QCOMPARE(host->motionTrackers.first().targets.size(), 1);
+    QCOMPARE(host->motionTrackers.first().targets.first().clipId, camera->id);
+    QVERIFY(camera->rotationX.isEmpty() && camera->rotationY.isEmpty());
+    QVERIFY(!camera->positionZ.isEmpty() && !camera->rotation.isEmpty());
+
+    for (int k = 0; k < 30; ++k) {
+        for (const QPointF &ref : {left, right}) {
+            const QPointF at = k == 0 ? ref : moved(ref, k);
+            const QPointF onScreen = throughCamera(state, *camera, k * fx.frame, QPointF(at.x() * W, at.y() * H));
+            QVERIFY2(distance(onScreen, QPointF(ref.x() * W, ref.y() * H)) < 1.0, qPrintable(QString::number(k)));
+        }
+    }
+
+    // Center in frame puts the pair's midpoint on the canvas centre and keeps its shape.
+    state.tracking()->setTargetCenter(QStringLiteral("clip-0"), id, camera->id, true);
+    camera = cameraClipOf(state);
+    for (int k = 0; k < 30; ++k) {
+        const QPointF a = k == 0 ? left : moved(left, k);
+        const QPointF b = k == 0 ? right : moved(right, k);
+        const QPointF pa = throughCamera(state, *camera, k * fx.frame, QPointF(a.x() * W, a.y() * H));
+        const QPointF pb = throughCamera(state, *camera, k * fx.frame, QPointF(b.x() * W, b.y() * H));
+        QVERIFY2(distance((pa + pb) / 2.0, QPointF(W / 2, H / 2)) < 1.0, qPrintable(QString::number(k)));
+        QVERIFY2(distance(pb - pa, QPointF(0.2 * W, 0.0)) < 1.0, qPrintable(QString::number(k)));
+    }
+
+    // Removing the target puts the camera back at rest, and it is one undo step to bring it back.
+    state.tracking()->removeTarget(QStringLiteral("clip-0"), id, camera->id);
+    camera = cameraClipOf(state);
+    QVERIFY(camera);
+    for (int k = 0; k < 30; k += 7) {
+        const drift::SceneCamera3d rest = drift::sceneCameraFromClip(*camera, k * fx.frame, 1.0);
+        QVERIFY(rest.isIdentity() || (std::abs(rest.positionX) + std::abs(rest.positionY) + std::abs(rest.positionZ)
+                                      + std::abs(rest.rotationX) + std::abs(rest.rotationY) + std::abs(rest.rotationZ)) < 1e-6);
+    }
+    QVERIFY(fx.clipById(QStringLiteral("clip-0"))->motionTrackers.first().targets.isEmpty());
+    state.undo();
+    QCOMPARE(fx.clipById(QStringLiteral("clip-0"))->motionTrackers.first().targets.size(), 1);
+}
+
+void EditorStateTest::trackingStabilizeCameraSolvesAPlanarTrack()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const double W = state.project()->width();
+    const double H = state.project()->height();
+    const QSizeF canvas(W, H);
+
+    const auto corner = [](double x, double y) { return QVariantMap{{QStringLiteral("x"), x}, {QStringLiteral("y"), y}}; };
+    const QVariantList outline{corner(0.3, 0.3), corner(0.7, 0.3), corner(0.7, 0.7), corner(0.3, 0.7)};
+    const QString id = state.tracking()->addPlanarTracker(0, 0, outline);
+    QVERIFY(!id.isEmpty());
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+
+    // A camera that pans, pitches, yaws and rolls; the track is what that looks like on a flat
+    // picture, so a perfect lock exists.
+    const auto known = [](int k) {
+        drift::SceneCamera3d c;
+        c.positionX = 2.0 * k;
+        c.positionY = -1.0 * k;
+        c.positionZ = 4.0 * k;
+        c.rotationX = 0.3 * k;
+        c.rotationY = -0.2 * k;
+        c.rotationZ = 0.15 * k;
+        return c;
+    };
+    using drift::tracking::Homography;
+    for (int k = 0; k < 30; ++k) {
+        const QMatrix4x4 view = drift::cameraViewProjection(known(k), canvas);
+        const Homography worldToCanvas{view(0, 0), view(0, 1), view(0, 3), view(1, 0), view(1, 1), view(1, 3), view(3, 0), view(3, 1), view(3, 3)};
+        Homography back;
+        QVERIFY(drift::tracking::invertHomography(worldToCanvas, &back));
+        const Homography toPixels{W, 0, 0, 0, H, 0, 0, 0, 1};
+        const Homography worldShift{1, 0, W / 2, 0, 1, H / 2, 0, 0, 1};
+        const Homography toNormalized{1 / W, 0, 0, 0, 1 / H, 0, 0, 0, 1};
+        using drift::tracking::composeHomography;
+        Homography h = composeHomography(toNormalized, composeHomography(worldShift, composeHomography(back, toPixels)));
+        for (double &e : h)
+            e /= h[8];
+        tracker.homographies.insert(k * fx.frame, h);
+    }
+
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("camera"));
+    QVERIFY(!state.lastMessage().contains(QStringLiteral("can't match")));
+    const drift::Clip *camera = cameraClipOf(state);
+    QVERIFY(camera);
+    QVERIFY(!camera->rotationX.isEmpty() && !camera->rotationY.isEmpty() && !camera->rotation.isEmpty()
+            && !camera->positionZ.isEmpty());
+    for (int k = 0; k < 30; ++k) {
+        const drift::tracking::Homography &h = tracker.homographies.value(k * fx.frame);
+        for (const QVariant &entry : outline) {
+            const QPointF ref(entry.toMap().value(QStringLiteral("x")).toDouble(), entry.toMap().value(QStringLiteral("y")).toDouble());
+            const QPointF at = drift::tracking::applyHomography(h, ref);
+            const QPointF onScreen = throughCamera(state, *camera, k * fx.frame, QPointF(at.x() * W, at.y() * H));
+            QVERIFY2(distance(onScreen, QPointF(ref.x() * W, ref.y() * H)) < 1.0, qPrintable(QString::number(k)));
+        }
+    }
+    // The lock is the inverse of the known motion, so the solved camera is that motion.
+    const drift::SceneCamera3d last = drift::sceneCameraFromClip(*camera, 29 * fx.frame, 1.0);
+    QVERIFY(qAbs(last.rotationX - known(29).rotationX) < 0.1);
+    QVERIFY(qAbs(last.rotationY - known(29).rotationY) < 0.1);
+    QVERIFY(qAbs(last.rotationZ - known(29).rotationZ) < 0.1);
+}
+
+void EditorStateTest::trackingStabilizeCameraFillZoomCoversTheCanvas()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    TrackingFixture fx(&state);
+    const double W = state.project()->width();
+    const double H = state.project()->height();
+
+    const QString id = state.tracking()->addPointTracker(0, 0, 0.5, 0.5);
+    drift::MotionTracker &tracker = fx.tracker(QStringLiteral("clip-0"), id);
+    for (int k = 1; k < 30; ++k)
+        tracker.points[0].samples.insert(k * fx.frame, drift::TrackSample{QPointF(0.5 + 0.01 * k, 0.5 + 0.005 * k), 0.95f, false});
+
+    state.tracking()->setStabilize(QStringLiteral("clip-0"), id, QStringLiteral("camera"));
+    const double fill = state.tracking()->fillZoom(QStringLiteral("clip-0"), id);
+    // Same geometry as the clip lock: 0.29 z <= (z - 1) / 2 gives z = 2.38.
+    QVERIFY2(fill > 2.3 && fill < 2.45, qPrintable(QString::number(fill)));
+
+    state.tracking()->autoZoom(QStringLiteral("clip-0"), id);
+    QCOMPARE(fx.clipById(QStringLiteral("clip-0"))->motionTrackers.first().targets.first().zoom, fill);
+    const drift::Clip *camera = cameraClipOf(state);
+    for (int k = 0; k < 30; ++k) {
+        const drift::TimeUs t = k * fx.frame;
+        const QPointF topLeft = throughCamera(state, *camera, t, QPointF(0, 0));
+        const QPointF bottomRight = throughCamera(state, *camera, t, QPointF(W, H));
+        QVERIFY2(topLeft.x() <= 0.5 && topLeft.y() <= 0.5 && bottomRight.x() >= W - 0.5 && bottomRight.y() >= H - 0.5,
+                 qPrintable(QString::number(k)));
+    }
 }
 
 void EditorStateTest::trackingClearSamplesKeepsUserKeysAndEarlierSamples()

@@ -435,6 +435,8 @@ PanelFrame {
                     required property var model
                     readonly property bool selected: model.id === root.selectedId
                     readonly property bool isPoint: model.kind === "point"
+                    readonly property int stabilizeIndex: (model.targets || []).findIndex(t => t.mode === "stabilize")
+                    readonly property bool hasStabilize: stabilizeIndex >= 0
                     // Read from the controller when the row is selected; the pattern size slider
                     // needs the frame, so it is not bound.
                     property real patternPercent: 0
@@ -827,55 +829,125 @@ PanelFrame {
                         Repeater {
                             model: trackerRow.model.targets
 
-                            delegate: RowLayout {
+                            delegate: ColumnLayout {
                                 id: targetRow
                                 required property var modelData
+                                required property int index
+                                readonly property bool stabilize: modelData.mode === "stabilize"
+                                visible: !stabilize || index === trackerRow.stabilizeIndex
+                                height: visible ? implicitHeight : 0
                                 width: parent.width
                                 spacing: Theme.spacingSm
 
-                                Text {
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    text: modelData.name
-                                    elide: Text.ElideRight
-                                    color: Theme.c.maskingPanel.foreground
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSizeXs
+                                    spacing: Theme.spacingSm
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: targetRow.stabilize ? qsTr("Locked to screen") : targetRow.modelData.name
+                                        elide: Text.ElideRight
+                                        color: Theme.c.maskingPanel.foreground
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeXs
+                                    }
+
+                                    Text {
+                                        visible: targetRow.modelData.mode === "mask"
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: qsTr("Mask")
+                                        color: Theme.c.maskingPanel.foregroundMuted
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeXs
+                                    }
+
+                                    ThemedComboBox {
+                                        readonly property var labels: ({
+                                            "clip": qsTr("Move clip"),
+                                            "camera": qsTr("Move camera")
+                                        })
+                                        visible: targetRow.stabilize
+                                        Layout.alignment: Qt.AlignVCenter
+                                        Layout.preferredWidth: 120
+                                        model: ["clip", "camera"]
+                                        displayText: labels[model[currentIndex]]
+                                        currentIndex: targetRow.modelData.via === "camera" ? 1 : 0
+                                        onActivated: (index) => EditorState.tracking.setStabilize(
+                                                         root.clipId, trackerRow.model.id, model[index])
+                                    }
+
+                                    ThemedComboBox {
+                                        readonly property var labels: ({
+                                            "center": targetRow.stabilize ? qsTr("Center in frame") : qsTr("Stick to the point"),
+                                            "offset": targetRow.stabilize ? qsTr("Keep where it is") : qsTr("Keep current position")
+                                        })
+                                        visible: targetRow.modelData.mode !== "mask"
+                                        Layout.alignment: Qt.AlignVCenter
+                                        Layout.preferredWidth: 140
+                                        tooltip: targetRow.stabilize
+                                                 ? qsTr("Move the tracked object to the middle of the frame, or keep it where it is at the reference frame")
+                                                 : qsTr("Put the clip's centre on the tracked point, or keep the offset it has from it at the reference frame")
+                                        model: ["center", "offset"]
+                                        displayText: labels[model[currentIndex]]
+                                        currentIndex: targetRow.modelData.center ? 0 : 1
+                                        onActivated: (index) => EditorState.tracking.setTargetCenter(
+                                                         root.clipId, trackerRow.model.id,
+                                                         targetRow.modelData.clipId, index === 0)
+                                    }
+
+                                    IconButton {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        glyph: Theme.icons.x
+                                        tooltip: qsTr("Stop driving from this")
+                                        onClicked: EditorState.tracking.removeTarget(root.clipId,
+                                                                                     trackerRow.model.id,
+                                                                                     modelData.clipId)
+                                    }
                                 }
 
-                                Text {
-                                    visible: targetRow.modelData.mode === "mask"
-                                    Layout.alignment: Qt.AlignVCenter
-                                    text: qsTr("Mask")
-                                    color: Theme.c.maskingPanel.foregroundMuted
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSizeXs
-                                }
+                                RowLayout {
+                                    visible: targetRow.stabilize
+                                    Layout.fillWidth: true
+                                    spacing: Theme.spacingSm
 
-                                ThemedComboBox {
-                                    readonly property var labels: ({
-                                        "center": qsTr("Stick to the point"),
-                                        "offset": qsTr("Keep current position")
-                                    })
-                                    visible: targetRow.modelData.mode !== "mask"
-                                    Layout.alignment: Qt.AlignVCenter
-                                    Layout.preferredWidth: 140
-                                    tooltip: qsTr("Put the clip's centre on the tracked point, or keep the offset it has from it at the reference frame")
-                                    model: ["center", "offset"]
-                                    displayText: labels[model[currentIndex]]
-                                    currentIndex: targetRow.modelData.center ? 0 : 1
-                                    onActivated: (index) => EditorState.tracking.setTargetCenter(
-                                                     root.clipId, trackerRow.model.id,
-                                                     targetRow.modelData.clipId, index === 0)
-                                }
+                                    Text {
+                                        Layout.preferredWidth: 56
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: qsTr("Zoom")
+                                        color: Theme.c.maskingPanel.foregroundMuted
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeXs
+                                    }
 
-                                IconButton {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    glyph: Theme.icons.x
-                                    tooltip: qsTr("Stop driving from this")
-                                    onClicked: EditorState.tracking.removeTarget(root.clipId,
-                                                                                 trackerRow.model.id,
-                                                                                 modelData.clipId)
+                                    ThemedSlider {
+                                        id: zoomSlider
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        label: qsTr("Zoom")
+                                        from: 100
+                                        to: 400
+                                        valueFormatter: function (v) { return Math.round(v) + " %" }
+                                        Binding on value {
+                                            when: !zoomSlider.pressed
+                                            value: targetRow.modelData.zoom * 100
+                                        }
+                                        onPressedChanged: {
+                                            if (!pressed)
+                                                EditorState.tracking.setTargetZoom(root.clipId,
+                                                                                   trackerRow.model.id,
+                                                                                   targetRow.modelData.clipId,
+                                                                                   value / 100)
+                                        }
+                                    }
+
+                                    ThemedButton {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        text: qsTr("Fill")
+                                        tooltip: qsTr("Zoom in just enough to hide the empty edges")
+                                        enabled: !EditorState.tracking.busy
+                                        onClicked: EditorState.tracking.autoZoom(root.clipId, trackerRow.model.id)
+                                    }
                                 }
                             }
                         }
@@ -883,6 +955,13 @@ PanelFrame {
                         Flow {
                             width: parent.width
                             spacing: Theme.spacingSm
+
+                            ThemedButton {
+                                text: qsTr("Lock to screen")
+                                tooltip: qsTr("Keep the tracked object still on screen by moving the clip or the camera")
+                                enabled: !EditorState.tracking.busy && !trackerRow.hasStabilize
+                                onClicked: EditorState.tracking.setStabilize(root.clipId, trackerRow.model.id, "clip")
+                            }
 
                             ThemedButton {
                                 id: addTargetButton

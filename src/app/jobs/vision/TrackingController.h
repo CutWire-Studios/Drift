@@ -41,7 +41,7 @@ public:
     TrackerListModel *trackerList() const { return m_trackerList; }
 
     // [{id, name, kind: "point"|"planar", solve, minConfidence, pointCount, referenceSeconds,
-    //   targets: [{clipId, mode, name}], sampleRange: [startSec, endSec]}]. Seconds are timeline.
+    //   targets: [{clipId, mode, name, center, via: "clip"|"camera", zoom}], sampleRange: [startSec, endSec]}]. Seconds are timeline.
     // sampleRange is empty when nothing is tracked yet.
     Q_INVOKABLE QVariantList trackers(int trackIndex, int clipIndex) const;
     // What the overlay draws at a timeline time: {points: [{x, y, confidence, userKey, patternW,
@@ -98,7 +98,7 @@ public:
     // [{clipId, name, kind: "mask"|"clip"}]: masks pinned to this clip, then the other picture
     // clips overlapping its span.
     Q_INVOKABLE QVariantList targetCandidates(int trackIndex, int clipIndex) const;
-    // mode: "mask" | "followClip". Adding is idempotent (an existing target just changes mode).
+    // mode: "mask" | "followClip" | "stabilize". Adding is idempotent (an existing target just changes mode).
     // Applies straight away.
     Q_INVOKABLE void setTarget(int trackIndex, int clipIndex, const QString &id,
                                const QString &targetClipId, const QString &mode);
@@ -128,6 +128,20 @@ public:
     Q_INVOKABLE void setTargetCenter(const QString &clipId, const QString &id, const QString &targetClipId,
                                      bool center);
     Q_INVOKABLE void apply(const QString &clipId, const QString &id);
+
+    // Locks the tracked object in place on screen by moving the tracked clip ("clip") or the scene
+    // camera ("camera") against the track. One stabilize per tracked clip across all its trackers:
+    // adding one removes the other. The target's clipId is the clip whose keys are written. One undo
+    // step.
+    Q_INVOKABLE void setStabilize(const QString &clipId, const QString &trackerId, const QString &via);
+    // Stabilize targets: scale about the locked point, 1..4. Re-applies that target.
+    Q_INVOKABLE void setTargetZoom(const QString &clipId, const QString &trackerId, const QString &targetClipId,
+                                   double zoom);
+    // The smallest zoom (>= 1, at most 4) at which the stabilized picture covers the whole canvas on
+    // every tracked frame. 1 when there is no stabilize target.
+    Q_INVOKABLE double fillZoom(const QString &clipId, const QString &trackerId) const;
+    // setTargetZoom to fillZoom. One undo step.
+    Q_INVOKABLE void autoZoom(const QString &clipId, const QString &trackerId);
 
     // Points every tracker that drives mask adjustment `fromId` at `toId` instead and regenerates
     // the keys there. Edits the project in place: the caller owns the undo step.
@@ -205,7 +219,11 @@ private:
     drift::MotionTracker buildPointTracker(drift::Clip &host, double x, double y) const;
     // Adds (or re-modes) a target and applies it; the caller owns the undo step. False when the target is unusable.
     bool addTarget(drift::Clip &host, drift::MotionTracker &tracker, const QString &targetClipId,
-                   const QString &mode, QString *error);
+                   const QString &mode, QString *error,
+                   drift::TrackerTarget::Via via = drift::TrackerTarget::Via::Clip);
+    bool zoomTarget(drift::Clip &host, drift::MotionTracker &tracker, const QString &targetClipId, double zoom,
+                    QString *error);
+    void reapplyHost(const QString &hostId, const QString &except);
     // The video clip a mask adjustment is pinned to (else the one under it on its lane's track at the playhead).
     bool maskHostIds(const QString &maskClipId, QString *hostId) const;
     drift::Clip *hostAt(int trackIndex, int clipIndex) const;
@@ -217,11 +235,12 @@ private:
                     drift::TimeUs lastTimelineUs);
     void finishJob(const QString &message, const QString &severity);
     // Returns an error to show, or empty. Does not push undo.
-    QString applyTargets(const QString &clipId, const QString &trackerId, const QString &onlyTarget = {});
+    QString applyTargets(const QString &clipId, const QString &trackerId, const QString &onlyTargetId = {});
     void unapplyTarget(const drift::Clip &host, const drift::MotionTracker &tracker, const drift::TrackerTarget &target);
 
     AppController *m_app = nullptr;
     bool m_busy = false;
+    bool m_reapplying = false;
     double m_progress = 0.0;
     QString m_busyTrackerId;
     TrackerListModel *m_trackerList = nullptr;

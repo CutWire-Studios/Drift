@@ -9,6 +9,8 @@
 #include "core/tracking/MotionTracker.h"
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/decode/readers/ClipReaderPool.h"
+#include "engine/render3d/editor/ClipGizmo.h"
+#include "engine/render3d/scene/SceneCamera3d.h"
 #include "engine/tracking/MotionTracking.h"
 
 #include <QElapsedTimer>
@@ -85,6 +87,7 @@ constexpr int kRefreshInterval = 10;
 constexpr float kRefreshConfidence = 0.9f;
 constexpr double kScalarTolerancePx = 0.5;
 constexpr double kRotationToleranceDeg = 0.05;
+constexpr double kMaxStabilizeZoom = 4.0;
 
 QVariantMap pointMap(double x, double y)
 {
@@ -373,6 +376,10 @@ struct Pose
     double w = 0;
     double h = 0;
     double rotation = 0;
+    // A camera's keys: x and y are its position, rotation its roll.
+    double z = 0;
+    double pitch = 0;
+    double yaw = 0;
 };
 using PoseRun = QVector<Pose>;
 
@@ -549,6 +556,635 @@ QPointF carryThroughHost(const HostFrame &ref, const HostFrame &now, const Homog
     const QPointF moved = drift::tracking::applyHomography(h, local);
     const QPointF q2((moved.x() / px.width() - 0.5) * now.w, (moved.y() / px.height() - 0.5) * now.h);
     return now.centre + rotated(q2, now.rotation);
+}
+
+// Clip-mode stabilize: the clip's rest pose on the canvas, the tracked point carried to the canvas
+// through it, and where that point should sit.
+struct StabilizeSetup
+{
+    QSizeF px; // the clip frame at rest, which is what the tracker's pixel space is built from
+    QPointF centre0;
+    double w0 = 1;
+    double h0 = 1;
+    double rotation0 = 0;
+    QPointF anchorOnScreen;
+    QPointF lockPoint;
+
+    QPointF toCanvas(QPointF local) const
+    {
+        return centre0 + rotated(QPointF((local.x() / px.width() - 0.5) * w0, (local.y() / px.height() - 0.5) * h0),
+                                 rotation0);
+    }
+};
+
+StabilizeSetup stabilizeSetup(const drift::Project &project, const Clip &host, const MotionTracker &tracker,
+                              const drift::TrackerTarget &target, TimeUs refTimeline)
+{
+    const TimeUs rel = qMax<TimeUs>(0, refTimeline - host.timelineStart);
+    const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
+        return track.isEmpty() ? fallback : track.evaluateAt(rel);
+    };
+    StabilizeSetup s;
+    s.w0 = qMax(1.0, target.hasRest ? target.restRect.width() : own(host.transformW, project.width()));
+    s.h0 = qMax(1.0, target.hasRest ? target.restRect.height() : own(host.transformH, project.height()));
+    s.px = QSizeF(s.w0, s.h0);
+    s.centre0 = QPointF((target.hasRest ? target.restRect.x() : own(host.transformX, 0.0)) + s.w0 / 2.0,
+                        (target.hasRest ? target.restRect.y() : own(host.transformY, 0.0)) + s.h0 / 2.0);
+    s.rotation0 = target.hasRest ? target.restRotation : own(host.rotation, 0.0);
+    const std::optional<QPointF> anchor = trackAnchor(tracker, s.px);
+    s.anchorOnScreen = s.toCanvas(anchor.value_or(QPointF(s.px.width() / 2.0, s.px.height() / 2.0)));
+    s.lockPoint = target.centerOnTrack ? QPointF(project.width() / 2.0, project.height() / 2.0) : s.anchorOnScreen;
+    return s;
+}
+
+// pose(t) = Z o rest o H_t^-1: the clip placed so what the tracker followed lands back where it was.
+// The scale is always the real one (zoom needs it even for solves that carry none).
+Pose stabilizedPose(const StabilizeSetup &s, const Homography &h, double zoom, bool writesRotation)
+{
+    Homography inverse;
+    if (!drift::tracking::invertHomography(h, &inverse))
+        inverse = drift::tracking::identityHomography();
+    const auto place = [&](QPointF local) {
+        const QPointF canvas = s.toCanvas(drift::tracking::applyHomography(inverse, local));
+        return s.lockPoint + (canvas - s.anchorOnScreen) * zoom;
+    };
+    const QPointF middle(s.px.width() / 2.0, s.px.height() / 2.0);
+    const QPointF c = place(middle);
+    const QPointF ex = place(middle + QPointF(1.0, 0.0)) - c;
+    const QPointF ey = place(middle + QPointF(0.0, 1.0)) - c;
+    Pose pose;
+    pose.rotation = writesRotation ? qRadiansToDegrees(std::atan2(ex.y(), ex.x())) : s.rotation0;
+    pose.w = std::hypot(ex.x(), ex.y()) * s.px.width();
+    pose.h = std::hypot(ey.x(), ey.y()) * s.px.height();
+    pose.x = c.x() - pose.w / 2.0;
+    pose.y = c.y() - pose.h / 2.0;
+    return pose;
+}
+
+bool coversCanvas(const Pose &pose, QSizeF canvas)
+{
+    const QPointF centre(pose.x + pose.w / 2.0, pose.y + pose.h / 2.0);
+    for (const QPointF &corner : {QPointF(0, 0), QPointF(canvas.width(), 0), QPointF(canvas.width(), canvas.height()),
+                                  QPointF(0, canvas.height())}) {
+        const QPointF q = rotated(corner - centre, -pose.rotation);
+        if (std::abs(q.x()) > pose.w / 2.0 + 1e-6 || std::abs(q.y()) > pose.h / 2.0 + 1e-6)
+            return false;
+    }
+    return true;
+}
+
+// ---- camera-mode stabilize --------------------------------------------------------------------
+//
+// The camera views the world plane z = 0 (canvas px about the canvas centre, y down) through
+//   screen = c + d * (Xc.x, Xc.y) / (d - Xc.z),  Xc = R^T X - P,  R = Rx(rotX) Ry(rotY) Rz(rotZ)
+// which is what cameraViewProjection builds. The solvers below work in doubles on that formula and
+// the tests check them against the real matrix.
+
+constexpr double kCameraRmsWarnPx = 2.0;
+
+using CameraParams = std::array<double, 6>; // posX, posY, posZ (px), rotX, rotY, rotZ (degrees)
+using Mat3 = std::array<double, 9>;         // row-major
+
+Mat3 mulMat3(const Mat3 &a, const Mat3 &b)
+{
+    Mat3 out{};
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            for (int k = 0; k < 3; ++k)
+                out[i * 3 + j] += a[i * 3 + k] * b[k * 3 + j];
+        }
+    }
+    return out;
+}
+
+Mat3 cameraRotation(const CameraParams &c)
+{
+    const double ax = qDegreesToRadians(c[3]);
+    const double ay = qDegreesToRadians(c[4]);
+    const double az = qDegreesToRadians(c[5]);
+    const Mat3 rx{1, 0, 0, 0, std::cos(ax), -std::sin(ax), 0, std::sin(ax), std::cos(ax)};
+    const Mat3 ry{std::cos(ay), 0, std::sin(ay), 0, 1, 0, -std::sin(ay), 0, std::cos(ay)};
+    const Mat3 rz{std::cos(az), -std::sin(az), 0, std::sin(az), std::cos(az), 0, 0, 0, 1};
+    return mulMat3(mulMat3(rx, ry), rz);
+}
+
+// `world` is relative to the canvas centre. False when the point is at or behind the eye.
+bool projectThroughCamera(const CameraParams &c, double d, QSizeF canvas, QPointF world, QPointF *out)
+{
+    const Mat3 r = cameraRotation(c);
+    const double x = r[0] * world.x() + r[3] * world.y() - c[0];
+    const double y = r[1] * world.x() + r[4] * world.y() - c[1];
+    const double z = r[2] * world.x() + r[5] * world.y() - c[2];
+    const double depth = d - z;
+    if (depth < 1.0)
+        return false;
+    *out = QPointF(canvas.width() / 2.0 + d * x / depth, canvas.height() / 2.0 + d * y / depth);
+    return true;
+}
+
+bool solveLinear(QVector<double> a, QVector<double> b, QVector<double> *x)
+{
+    const int n = b.size();
+    for (int col = 0; col < n; ++col) {
+        int pivot = col;
+        for (int row = col + 1; row < n; ++row) {
+            if (std::abs(a[row * n + col]) > std::abs(a[pivot * n + col]))
+                pivot = row;
+        }
+        if (std::abs(a[pivot * n + col]) < 1e-12)
+            return false;
+        if (pivot != col) {
+            for (int k = 0; k < n; ++k)
+                std::swap(a[col * n + k], a[pivot * n + k]);
+            std::swap(b[col], b[pivot]);
+        }
+        for (int row = col + 1; row < n; ++row) {
+            const double f = a[row * n + col] / a[col * n + col];
+            for (int k = col; k < n; ++k)
+                a[row * n + k] -= f * a[col * n + k];
+            b[row] -= f * b[col];
+        }
+    }
+    x->resize(n);
+    for (int row = n - 1; row >= 0; --row) {
+        double sum = b[row];
+        for (int k = row + 1; k < n; ++k)
+            sum -= a[row * n + k] * (*x)[k];
+        (*x)[row] = sum / a[row * n + row];
+    }
+    return true;
+}
+
+// Levenberg-Marquardt on the free parameters, minimising where `world` lands against `screen`.
+// Returns the RMS error in px per point.
+double refineCamera(CameraParams *params, const std::array<bool, 6> &free, double d, QSizeF canvas,
+                    const QVector<QPointF> &world, const QVector<QPointF> &screen)
+{
+    constexpr double kMiss = 1e4;
+    const int n = world.size() * 2;
+    const auto residuals = [&](const CameraParams &p) {
+        QVector<double> r(n);
+        for (int i = 0; i < world.size(); ++i) {
+            QPointF at;
+            if (projectThroughCamera(p, d, canvas, world.at(i), &at)) {
+                r[2 * i] = at.x() - screen.at(i).x();
+                r[2 * i + 1] = at.y() - screen.at(i).y();
+            } else {
+                r[2 * i] = r[2 * i + 1] = kMiss;
+            }
+        }
+        return r;
+    };
+    const auto cost = [](const QVector<double> &r) {
+        double sum = 0;
+        for (const double v : r)
+            sum += v * v;
+        return sum;
+    };
+    QVector<int> idx;
+    for (int i = 0; i < 6; ++i) {
+        if (free[i])
+            idx.append(i);
+    }
+    const int k = idx.size();
+    QVector<double> r = residuals(*params);
+    double current = cost(r);
+    double mu = 1e-3;
+    for (int iteration = 0; iteration < 40 && current > 1e-12; ++iteration) {
+        QVector<double> jacobian(n * k);
+        for (int c = 0; c < k; ++c) {
+            const double step = idx[c] < 3 ? 0.01 : 1e-4;
+            CameraParams hi = *params;
+            CameraParams lo = *params;
+            hi[idx[c]] += step;
+            lo[idx[c]] -= step;
+            const QVector<double> rh = residuals(hi);
+            const QVector<double> rl = residuals(lo);
+            for (int i = 0; i < n; ++i)
+                jacobian[i * k + c] = (rh[i] - rl[i]) / (2.0 * step);
+        }
+        QVector<double> jtj(k * k, 0.0);
+        QVector<double> jtr(k, 0.0);
+        for (int i = 0; i < n; ++i) {
+            for (int a = 0; a < k; ++a) {
+                jtr[a] += jacobian[i * k + a] * r[i];
+                for (int b = 0; b < k; ++b)
+                    jtj[a * k + b] += jacobian[i * k + a] * jacobian[i * k + b];
+            }
+        }
+        bool accepted = false;
+        double largest = 0;
+        for (int attempt = 0; attempt < 10 && !accepted; ++attempt) {
+            QVector<double> damped = jtj;
+            QVector<double> rhs(k);
+            for (int a = 0; a < k; ++a) {
+                damped[a * k + a] += mu * (jtj[a * k + a] + 1e-9);
+                rhs[a] = -jtr[a];
+            }
+            QVector<double> delta;
+            if (solveLinear(damped, rhs, &delta)) {
+                CameraParams trial = *params;
+                largest = 0;
+                for (int a = 0; a < k; ++a) {
+                    trial[idx[a]] += delta[a];
+                    largest = qMax(largest, std::abs(delta[a]) / (idx[a] < 3 ? 1.0 : 0.01));
+                }
+                const QVector<double> trialR = residuals(trial);
+                const double trialCost = cost(trialR);
+                if (trialCost < current) {
+                    *params = trial;
+                    r = trialR;
+                    current = trialCost;
+                    mu = qMax(1e-9, mu * 0.3);
+                    accepted = true;
+                    continue;
+                }
+            }
+            mu *= 10.0;
+        }
+        if (!accepted || largest < 1e-6)
+            break;
+    }
+    return std::sqrt(current / qMax(1, world.size()));
+}
+
+QPointF hostLocalToCanvas(const HostFrame &frame, QSizeF px, QPointF local)
+{
+    return frame.centre + rotated(QPointF((local.x() / px.width() - 0.5) * frame.w,
+                                          (local.y() / px.height() - 0.5) * frame.h),
+                                  frame.rotation);
+}
+
+// A planar track or a four-point perspective solve gives a whole homography to match, and so
+// needs all six camera parameters. Anything else is a similarity: position, roll and distance.
+bool usesFullCamera(const MotionTracker &tracker)
+{
+    if (tracker.kind == MotionTracker::Kind::Planar)
+        return true;
+    if (tracker.solve != MotionTracker::Solve::Perspective)
+        return false;
+    int count = 0;
+    for (const TrackPoint &point : tracker.points) {
+        if (point.samples.contains(tracker.referenceUs))
+            ++count;
+    }
+    return count >= 4;
+}
+
+struct CameraChannels
+{
+    bool distance = false;
+    bool roll = false;
+    bool tilt = false; // rotationX and rotationY
+};
+
+CameraChannels cameraChannels(const MotionTracker &tracker, const drift::TrackerTarget &target)
+{
+    const bool full = usesFullCamera(tracker);
+    const bool planar = tracker.kind == MotionTracker::Kind::Planar;
+    const bool writesRotation = planar || tracker.solve != MotionTracker::Solve::Translate;
+    const bool writesScale = planar || tracker.solve == MotionTracker::Solve::TranslateRotateScale
+                             || tracker.solve == MotionTracker::Solve::Perspective;
+    return {full || writesScale || target.zoom != 1.0, full || writesRotation, full};
+}
+
+// Everything that does not change from frame to frame: the points followed, where each must end
+// up on screen, and the camera the clip had at the reference.
+struct CameraSetup
+{
+    QSizeF px;
+    QSizeF canvas;
+    QVector<QPointF> locals;  // clip-frame px
+    QVector<QPointF> targets; // canvas px
+    CameraChannels channels;
+    bool full = false;
+    CameraParams rest{};
+    double restPerspective = drift::kDefaultClipPerspective;
+};
+
+std::optional<CameraSetup> cameraSetup(const drift::Project &project, const Clip &host, const MotionTracker &tracker,
+                                       const drift::TrackerTarget &target, const Clip &camera, TimeUs refTimeline,
+                                       double zoom)
+{
+    CameraSetup s;
+    s.px = frameSizeAt(project, host, refTimeline);
+    s.canvas = QSizeF(project.width(), project.height());
+    drift::TrackerTarget zoomed = target;
+    zoomed.zoom = zoom;
+    s.channels = cameraChannels(tracker, zoomed);
+    s.full = usesFullCamera(tracker);
+    for (int i = 0; i < qMin<int>(6, target.restCamera.size()); ++i)
+        s.rest[i] = target.restCamera.at(i);
+    const TimeUs at = camera.timelineStart + std::clamp<TimeUs>(refTimeline - camera.timelineStart, 0, camera.timelineDuration);
+    s.restPerspective = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0).perspective);
+
+    const std::optional<QPointF> anchor = trackAnchor(tracker, s.px);
+    if (!anchor)
+        return std::nullopt;
+    if (s.full) {
+        if (tracker.kind == MotionTracker::Kind::Planar) {
+            QVector<QPointF> region;
+            for (const QPointF &corner : tracker.planarRegion)
+                region.append(QPointF(corner.x() * s.px.width(), corner.y() * s.px.height()));
+            if (region.size() < 4) {
+                const QRectF box = QPolygonF(region).boundingRect();
+                region = {box.topLeft(), box.topRight(), box.bottomRight(), box.bottomLeft()};
+            }
+            s.locals = region;
+        } else {
+            for (const TrackPoint &point : tracker.points) {
+                const auto ref = point.samples.constFind(tracker.referenceUs);
+                if (ref != point.samples.constEnd())
+                    s.locals.append(QPointF(ref->pos.x() * s.px.width(), ref->pos.y() * s.px.height()));
+            }
+        }
+    } else {
+        const double length = qMax(10.0, qMin(s.px.width(), s.px.height()) / 4.0);
+        s.locals = {*anchor, *anchor + QPointF(length, 0.0), *anchor + QPointF(0.0, length)};
+    }
+
+    const QPointF centre(s.canvas.width() / 2.0, s.canvas.height() / 2.0);
+    const HostFrame ref = hostFrameAt(project, host, refTimeline);
+    const auto restScreen = [&](QPointF local) {
+        const QPointF canvas = hostLocalToCanvas(ref, s.px, local);
+        QPointF out = canvas;
+        projectThroughCamera(s.rest, s.restPerspective, s.canvas, canvas - centre, &out);
+        return out;
+    };
+    const QPointF anchorOnScreen = restScreen(*anchor);
+    const QPointF lock = target.centerOnTrack ? centre : anchorOnScreen;
+    for (const QPointF &local : s.locals)
+        s.targets.append(lock + (restScreen(local) - anchorOnScreen) * zoom);
+    return s;
+}
+
+struct CameraFrame
+{
+    CameraParams params{};
+    double rms = 0;
+};
+
+CameraFrame solveCameraFrame(const CameraSetup &s, const Homography &h, const HostFrame &now, double d,
+                             const CameraParams &previous)
+{
+    using namespace drift::tracking;
+    const QPointF centre(s.canvas.width() / 2.0, s.canvas.height() / 2.0);
+    QVector<QPointF> world;
+    for (const QPointF &local : s.locals)
+        world.append(hostLocalToCanvas(now, s.px, applyHomography(h, local)) - centre);
+
+    CameraFrame out;
+    out.params = previous;
+    std::array<bool, 6> free{true, true, true, true, true, true};
+    if (s.full) {
+        Homography m;
+        if (fitHomography(world, s.targets, &m)) {
+            // K^-1 M = lambda [F a1, F a2, t] with F = diag(1, 1, -1) and the a's the first two
+            // columns of R^T.
+            const double cx = s.canvas.width() / 2.0;
+            const double cy = s.canvas.height() / 2.0;
+            const auto column = [&](int c) {
+                return std::array<double, 3>{(m[c] - cx * m[6 + c]) / d, (m[3 + c] - cy * m[6 + c]) / d, m[6 + c]};
+            };
+            std::array<double, 3> a1 = column(0);
+            std::array<double, 3> a2 = column(1);
+            std::array<double, 3> t = column(2);
+            const auto length = [](const std::array<double, 3> &v) { return std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); };
+            const double la = length(a1);
+            const double lb = length(a2);
+            const double lambda = (la + lb) / 2.0;
+            if (la > 1e-9 && lb > 1e-9) {
+                const double sign = t[2] < 0 ? -1.0 : 1.0;
+                std::array<double, 3> m1;
+                std::array<double, 3> m2;
+                for (int i = 0; i < 3; ++i) {
+                    m1[i] = a1[i] / la;
+                    m2[i] = a2[i] / lb;
+                    t[i] *= sign / lambda;
+                }
+                // The unit sum and difference of two unit vectors are orthogonal, so this is the
+                // nearest orthonormal pair without favouring either column.
+                std::array<double, 3> sum;
+                std::array<double, 3> diff;
+                for (int i = 0; i < 3; ++i) {
+                    sum[i] = m1[i] + m2[i];
+                    diff[i] = m1[i] - m2[i];
+                }
+                const double ls = qMax(1e-12, length(sum));
+                const double ld = qMax(1e-12, length(diff));
+                for (int i = 0; i < 3; ++i) {
+                    a1[i] = (sum[i] / ls + diff[i] / ld) * M_SQRT1_2;
+                    a2[i] = (sum[i] / ls - diff[i] / ld) * M_SQRT1_2;
+                }
+                a1[2] = -a1[2];
+                a2[2] = -a2[2];
+                const std::array<double, 3> a3{a1[1] * a2[2] - a1[2] * a2[1], a1[2] * a2[0] - a1[0] * a2[2],
+                                               a1[0] * a2[1] - a1[1] * a2[0]};
+                const QMatrix4x4 rotation(float(a1[0]), float(a1[1]), float(a1[2]), 0.f, float(a2[0]), float(a2[1]),
+                                          float(a2[2]), 0.f, float(a3[0]), float(a3[1]), float(a3[2]), 0.f, 0.f, 0.f,
+                                          0.f, 1.f);
+                double nearest[3] = {previous[3], previous[4], previous[5]};
+                double angles[3];
+                drift::gizmo::eulerFromMatrix(rotation, nearest, angles);
+                out.params = {-t[0], -t[1], t[2] - d, angles[0], angles[1], angles[2]};
+            }
+        }
+    } else {
+        const QPointF wx = world[1] - world[0];
+        const QPointF sx = s.targets[1] - s.targets[0];
+        const double worldLength = std::hypot(wx.x(), wx.y());
+        const double screenLength = std::hypot(sx.x(), sx.y());
+        out.params = s.rest;
+        if (worldLength > 1e-9 && screenLength > 1e-9) {
+            const double sigma = s.channels.distance ? screenLength / worldLength : d / (d + s.rest[2]);
+            const double phi = s.channels.roll ? std::atan2(sx.y(), sx.x()) - std::atan2(wx.y(), wx.x())
+                                               : -qDegreesToRadians(s.rest[5]);
+            double roll = -qRadiansToDegrees(phi);
+            roll -= 360.0 * std::round((roll - previous[5]) / 360.0);
+            const QPointF turned = rotated(world[0], qRadiansToDegrees(phi));
+            const QPointF onScreen = s.targets[0] - centre;
+            out.params[0] = turned.x() - onScreen.x() / sigma;
+            out.params[1] = turned.y() - onScreen.y() / sigma;
+            out.params[5] = roll;
+            if (s.channels.distance)
+                out.params[2] = d / sigma - d;
+        }
+        free = {true, true, s.channels.distance, false, false, s.channels.roll};
+    }
+    out.rms = refineCamera(&out.params, free, d, s.canvas, world, s.targets);
+    return out;
+}
+
+struct CameraSolution
+{
+    QVector<PoseRun> runs;
+    double worstRms = 0;
+};
+
+// The camera clip's keys that cancel the track, for the frames the camera clip covers.
+CameraSolution solveCamera(const drift::Project &project, const Clip &host, const MotionTracker &tracker,
+                           const drift::TrackerTarget &target, const Clip &camera, double zoom)
+{
+    CameraSolution solution;
+    const TimeUs refTimeline = referenceTimelineUs(host, tracker);
+    const std::optional<CameraSetup> setup = cameraSetup(project, host, tracker, target, camera, refTimeline, zoom);
+    if (!setup)
+        return solution;
+    const QVector<FrameXform> frames = frameTransforms(project, host, tracker, setup->px);
+    CameraParams previous = setup->rest;
+    for (const QVector<int> &run : keyableRuns(frames, camera)) {
+        PoseRun poses;
+        for (const int i : run) {
+            const TimeUs at = frames[i].timelineUs;
+            const double d = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0).perspective);
+            const CameraFrame frame = solveCameraFrame(*setup, frames[i].h, hostFrameAt(project, host, at), d, previous);
+            previous = frame.params;
+            if (setup->full)
+                solution.worstRms = qMax(solution.worstRms, frame.rms);
+            Pose pose;
+            pose.t = at - camera.timelineStart;
+            pose.x = frame.params[0];
+            pose.y = frame.params[1];
+            pose.z = frame.params[2];
+            pose.pitch = frame.params[3];
+            pose.yaw = frame.params[4];
+            pose.rotation = frame.params[5];
+            poses.append(pose);
+        }
+        unwrapRotation(&poses);
+        solution.runs.append(poses);
+    }
+    return solution;
+}
+
+// Keys the stabilizing camera on `camera`. Returns a warning to show, or empty.
+QString writeCameraKeys(const drift::Project &project, const Clip &host, const MotionTracker &tracker,
+                        const drift::TrackerTarget &target, Clip &camera)
+{
+    const CameraSolution solution = solveCamera(project, host, tracker, target, camera, target.zoom);
+    if (solution.runs.isEmpty())
+        return {};
+    const CameraChannels channels = cameraChannels(tracker, target);
+    const double d = std::max(1.0, drift::sceneCameraFromClip(camera, camera.timelineStart, 1.0).perspective);
+    const double radius = std::hypot(project.width(), project.height()) / 2.0;
+    writeChannel(camera.transformX, solution.runs, &Pose::x, kScalarTolerancePx);
+    writeChannel(camera.transformY, solution.runs, &Pose::y, kScalarTolerancePx);
+    if (channels.distance)
+        writeChannel(camera.positionZ, solution.runs, &Pose::z, kScalarTolerancePx);
+    if (channels.roll)
+        writeChannel(camera.rotation, solution.runs, &Pose::rotation, qRadiansToDegrees(kScalarTolerancePx / radius));
+    if (channels.tilt) {
+        writeChannel(camera.rotationX, solution.runs, &Pose::pitch, qRadiansToDegrees(kScalarTolerancePx / d));
+        writeChannel(camera.rotationY, solution.runs, &Pose::yaw, qRadiansToDegrees(kScalarTolerancePx / d));
+    }
+    if (solution.worstRms > kCameraRmsWarnPx) {
+        return TrackingController::tr("The camera can't match this surface exactly; some frames drift by up to %1 px")
+            .arg(qRound(solution.worstRms));
+    }
+    return {};
+}
+
+// True when the four canvas corners all lie inside the convex quad.
+bool quadCoversCanvas(const QPointF (&quad)[4], QSizeF canvas)
+{
+    double area = 0;
+    for (int i = 0; i < 4; ++i) {
+        const QPointF a = quad[i];
+        const QPointF b = quad[(i + 1) % 4];
+        area += a.x() * b.y() - b.x() * a.y();
+    }
+    if (std::abs(area) < 1e-6)
+        return false;
+    const double orientation = area > 0 ? 1.0 : -1.0;
+    for (const QPointF &corner : {QPointF(0, 0), QPointF(canvas.width(), 0), QPointF(canvas.width(), canvas.height()),
+                                  QPointF(0, canvas.height())}) {
+        for (int i = 0; i < 4; ++i) {
+            const QPointF a = quad[i];
+            const QPointF b = quad[(i + 1) % 4];
+            const double cross = (b.x() - a.x()) * (corner.y() - a.y()) - (b.y() - a.y()) * (corner.x() - a.x());
+            if (cross * orientation < -1e-6)
+                return false;
+        }
+    }
+    return true;
+}
+
+double fillZoomForCamera(const drift::Project &project, const Clip &host, const MotionTracker &tracker,
+                         const drift::TrackerTarget &target)
+{
+    int t = -1;
+    int c = -1;
+    if (!findClipById(project, target.clipId, &t, &c))
+        return 1.0;
+    const Clip &camera = project.tracks().at(t).clips.at(c);
+    const QSizeF canvas(project.width(), project.height());
+    const QPointF centre(canvas.width() / 2.0, canvas.height() / 2.0);
+    const auto covers = [&](double zoom) {
+        const CameraSolution solution = solveCamera(project, host, tracker, target, camera, zoom);
+        for (const PoseRun &run : solution.runs) {
+            for (const Pose &pose : run) {
+                const TimeUs at = camera.timelineStart + pose.t;
+                const double d = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0).perspective);
+                const CameraParams params{pose.x, pose.y, pose.z, pose.pitch, pose.yaw, pose.rotation};
+                const HostFrame frame = hostFrameAt(project, host, at);
+                QPointF quad[4];
+                int k = 0;
+                for (const QPointF &corner : {QPointF(-0.5, -0.5), QPointF(0.5, -0.5), QPointF(0.5, 0.5), QPointF(-0.5, 0.5)}) {
+                    const QPointF onCanvas = frame.centre + rotated(QPointF(corner.x() * frame.w, corner.y() * frame.h), frame.rotation);
+                    if (!projectThroughCamera(params, d, canvas, onCanvas - centre, &quad[k++]))
+                        return false;
+                }
+                if (!quadCoversCanvas(quad, canvas))
+                    return false;
+            }
+        }
+        return true;
+    };
+    if (covers(1.0))
+        return 1.0;
+    if (!covers(kMaxStabilizeZoom))
+        return kMaxStabilizeZoom;
+    double lo = 1.0;
+    double hi = kMaxStabilizeZoom;
+    for (int i = 0; i < 16; ++i) {
+        const double mid = (lo + hi) / 2.0;
+        (covers(mid) ? hi : lo) = mid;
+    }
+    return hi;
+}
+
+// The smallest zoom in [1, kMaxStabilizeZoom] at which the stabilized clip covers the canvas on every
+// keyed frame.
+double fillZoomFor(const drift::Project &project, const Clip &host, const MotionTracker &tracker,
+                   const drift::TrackerTarget &target)
+{
+    if (target.via == drift::TrackerTarget::Via::Camera)
+        return fillZoomForCamera(project, host, tracker, target);
+    const StabilizeSetup setup = stabilizeSetup(project, host, tracker, target, referenceTimelineUs(host, tracker));
+    const QVector<FrameXform> frames = frameTransforms(project, host, tracker, setup.px);
+    const bool writesRotation = tracker.kind == MotionTracker::Kind::Planar
+                                || tracker.solve != MotionTracker::Solve::Translate;
+    const QSizeF canvas(project.width(), project.height());
+    const auto covers = [&](double zoom) {
+        for (const QVector<int> &run : keyableRuns(frames, host)) {
+            for (const int i : run) {
+                if (!coversCanvas(stabilizedPose(setup, frames[i].h, zoom, writesRotation), canvas))
+                    return false;
+            }
+        }
+        return true;
+    };
+    if (covers(1.0))
+        return 1.0;
+    if (!covers(kMaxStabilizeZoom))
+        return kMaxStabilizeZoom;
+    double lo = 1.0;
+    double hi = kMaxStabilizeZoom;
+    for (int i = 0; i < 24; ++i) {
+        const double mid = (lo + hi) / 2.0;
+        (covers(mid) ? hi : lo) = mid;
+    }
+    return hi;
 }
 
 // A mask a tracker can drive: a mask pinned to a clip, in that clip's frame, or the mask of a
@@ -961,6 +1597,10 @@ QVariantList TrackingController::trackers(int trackIndex, int clipIndex) const
             targets.append(QVariantMap{{QStringLiteral("clipId"), target.clipId},
                                        {QStringLiteral("mode"), drift::trackerTargetModeToString(target.mode)},
                                        {QStringLiteral("center"), target.centerOnTrack},
+                                       {QStringLiteral("via"), target.via == drift::TrackerTarget::Via::Camera
+                                                                   ? QStringLiteral("camera")
+                                                                   : QStringLiteral("clip")},
+                                       {QStringLiteral("zoom"), target.zoom},
                                        {QStringLiteral("name"), name}});
         }
 
@@ -1134,6 +1774,77 @@ void TrackingController::setTargetCenter(const QString &clipId, const QString &i
     int c = -1;
     if (locateClip(clipId, &t, &c))
         setTargetCenter(t, c, id, targetClipId, center);
+}
+
+void TrackingController::setStabilize(const QString &clipId, const QString &trackerId, const QString &via)
+{
+    int t = -1;
+    int c = -1;
+    if (!locateClip(clipId, &t, &c))
+        return;
+    QString error;
+    const drift::TrackerTarget::Via mode =
+        via == QLatin1String("camera") ? drift::TrackerTarget::Via::Camera : drift::TrackerTarget::Via::Clip;
+    editTracker(t, c, trackerId, tr("Lock to screen"), [&](Clip &host, MotionTracker &tracker) {
+        return addTarget(host, tracker, host.id, QStringLiteral("stabilize"), &error, mode);
+    });
+    if (!error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
+}
+
+void TrackingController::setTargetZoom(const QString &clipId, const QString &trackerId, const QString &targetClipId,
+                                       double zoom)
+{
+    int t = -1;
+    int c = -1;
+    if (!locateClip(clipId, &t, &c))
+        return;
+    QString error;
+    const bool ok = editTracker(t, c, trackerId, tr("Change zoom"), [&](Clip &host, MotionTracker &tracker) {
+        return zoomTarget(host, tracker, targetClipId, zoom, &error);
+    });
+    if (ok && !error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
+}
+
+double TrackingController::fillZoom(const QString &clipId, const QString &trackerId) const
+{
+    int t = -1;
+    int c = -1;
+    if (!locateClip(clipId, &t, &c))
+        return 1.0;
+    const Clip *host = hostView(t, c);
+    const MotionTracker *tracker = trackerById(*host, trackerId);
+    if (!tracker)
+        return 1.0;
+    double zoom = 1.0;
+    for (const drift::TrackerTarget &target : tracker->targets) {
+        if (target.mode == drift::TrackerTarget::Mode::Stabilize)
+            zoom = qMax(zoom, fillZoomFor(m_app->m_project, *host, *tracker, target));
+    }
+    return zoom;
+}
+
+void TrackingController::autoZoom(const QString &clipId, const QString &trackerId)
+{
+    int t = -1;
+    int c = -1;
+    if (!locateClip(clipId, &t, &c))
+        return;
+    QString error;
+    const bool ok = editTracker(t, c, trackerId, tr("Zoom to fill"), [&](Clip &host, MotionTracker &tracker) {
+        double zoom = 1.0;
+        QString stabilizeId;
+        for (const drift::TrackerTarget &target : tracker.targets) {
+            if (target.mode != drift::TrackerTarget::Mode::Stabilize)
+                continue;
+            zoom = qMax(zoom, fillZoomFor(m_app->m_project, host, tracker, target));
+            stabilizeId = target.clipId;
+        }
+        return !stabilizeId.isEmpty() && zoomTarget(host, tracker, stabilizeId, zoom, &error);
+    });
+    if (ok && !error.isEmpty())
+        m_app->setLastMessage(error, QStringLiteral("warning"));
 }
 
 void TrackingController::apply(const QString &clipId, const QString &id)
@@ -1832,13 +2543,19 @@ void TrackingController::setTrackerProperty(int trackIndex, int clipIndex, const
 void TrackingController::removeTracker(int trackIndex, int clipIndex, const QString &id, bool removeKeys)
 {
     editTracker(trackIndex, clipIndex, id, tr("Remove tracker"), [&](Clip &host, MotionTracker &tracker) {
+        bool clipLock = false;
         if (removeKeys) {
-            for (const drift::TrackerTarget &target : tracker.targets)
+            for (const drift::TrackerTarget &target : tracker.targets) {
                 unapplyTarget(host, tracker, target);
+                clipLock = clipLock || (target.mode == drift::TrackerTarget::Mode::Stabilize
+                                        && target.via == drift::TrackerTarget::Via::Clip);
+            }
         }
         for (int i = 0; i < host.motionTrackers.size(); ++i) {
             if (host.motionTrackers.at(i).id == id) {
                 host.motionTrackers.removeAt(i);
+                if (clipLock)
+                    reapplyHost(host.id, {});
                 return true;
             }
         }
@@ -2101,11 +2818,122 @@ QVariantList TrackingController::targetCandidates(int trackIndex, int clipIndex)
 }
 
 bool TrackingController::addTarget(Clip &host, MotionTracker &tracker, const QString &targetClipId,
-                                   const QString &mode, QString *error)
+                                   const QString &mode, QString *error, drift::TrackerTarget::Via via)
 {
-    if (targetClipId.isEmpty() || targetClipId == host.id)
-        return false;
     const drift::TrackerTarget::Mode targetMode = drift::trackerTargetModeFromString(mode);
+    const bool stabilize = targetMode == drift::TrackerTarget::Mode::Stabilize;
+    if (targetClipId.isEmpty() || (targetClipId == host.id && !stabilize))
+        return false;
+    if (stabilize) {
+        if (host.layer3d) {
+            *error = tr("Lock to screen is not available for 3D clips");
+            return false;
+        }
+        if (via == drift::TrackerTarget::Via::Clip && targetClipId != host.id)
+            return false;
+        // One stabilize per tracked clip: whatever locked it before lets go, keeping the zoom and
+        // anchor the user chose on this tracker.
+        double zoom = 1.0;
+        bool center = false;
+        bool hadClipLock = false;
+        for (MotionTracker &other : host.motionTrackers) {
+            for (int i = 0; i < other.targets.size(); ++i) {
+                const drift::TrackerTarget old = other.targets.at(i);
+                if (old.mode != drift::TrackerTarget::Mode::Stabilize)
+                    continue;
+                if (other.id == tracker.id && old.via == via)
+                    return false;
+                if (other.id == tracker.id) {
+                    zoom = old.zoom;
+                    center = old.centerOnTrack;
+                }
+                unapplyTarget(host, other, old);
+                other.targets.removeAt(i--);
+                hadClipLock = hadClipLock || old.via == drift::TrackerTarget::Via::Clip;
+            }
+        }
+        if (hadClipLock)
+            reapplyHost(host.id, tracker.id);
+        drift::TrackerTarget target{targetClipId, targetMode};
+        target.via = via;
+        target.zoom = zoom;
+        target.centerOnTrack = center;
+        if (via == drift::TrackerTarget::Via::Clip) {
+            const TimeUs rel = qMax<TimeUs>(0, referenceTimelineUs(host, tracker) - host.timelineStart);
+            const auto own = [&](const drift::KeyframeTrack<double> &track, double fallback) {
+                return track.isEmpty() ? fallback : track.evaluateAt(rel);
+            };
+            target.hasRest = true;
+            target.restRect = QRectF(own(host.transformX, 0.0), own(host.transformY, 0.0),
+                                     own(host.transformW, m_app->m_project.width()),
+                                     own(host.transformH, m_app->m_project.height()));
+            target.restRotation = own(host.rotation, 0.0);
+            tracker.targets.append(target);
+            *error = applyTargets(host.id, tracker.id, targetClipId);
+            return true;
+        }
+
+        // Camera clips already over the tracked clip stay as they are; each uncovered stretch of
+        // its span gets a camera clip of its own, on a new camera track when there is none.
+        drift::Project &project = m_app->m_project;
+        const TimeUs spanStart = host.timelineStart;
+        const TimeUs spanEnd = host.timelineEnd();
+        QList<QPair<TimeUs, TimeUs>> gaps;
+        TimeUs cursor = spanStart;
+        int cameraTrack = drift::cameraTrackIndex(project.tracks());
+        if (cameraTrack >= 0) {
+            QList<const Clip *> covering;
+            for (const Clip &clip : std::as_const(project.tracks()).at(cameraTrack).clips) {
+                if (drift::isCameraClip(clip) && clip.timelineStart < spanEnd && clip.timelineEnd() > spanStart)
+                    covering.append(&clip);
+            }
+            std::sort(covering.begin(), covering.end(),
+                      [](const Clip *a, const Clip *b) { return a->timelineStart < b->timelineStart; });
+            for (const Clip *clip : covering) {
+                if (clip->timelineStart > cursor)
+                    gaps.append({cursor, clip->timelineStart});
+                cursor = qMax(cursor, clip->timelineEnd());
+            }
+        }
+        if (cursor < spanEnd)
+            gaps.append({cursor, spanEnd});
+        if (!gaps.isEmpty()) {
+            if (cameraTrack < 0) {
+                project.ensureTrackIds();
+                cameraTrack = drift::insertCameraTrack(project.tracks());
+                // The camera goes in above everything, so every stored track index shifts by one.
+                if (m_app->m_selectedTrack >= 0)
+                    ++m_app->m_selectedTrack;
+                for (QPair<int, int> &pair : m_app->m_selection)
+                    ++pair.first;
+                if (m_app->m_selectedTransitionTrack >= 0)
+                    ++m_app->m_selectedTransitionTrack;
+            }
+            for (const auto &[from, to] : gaps)
+                project.tracks()[cameraTrack].clips.append(drift::makeCameraClip(from, to - from));
+        }
+
+        const TimeUs refTimeline = referenceTimelineUs(host, tracker);
+        QStringList cameraIds;
+        for (const Clip &clip : std::as_const(project.tracks()).at(cameraTrack).clips) {
+            if (!drift::isCameraClip(clip) || clip.timelineStart >= spanEnd || clip.timelineEnd() <= spanStart)
+                continue;
+            const TimeUs at = clip.timelineStart + std::clamp<TimeUs>(refTimeline - clip.timelineStart, 0, clip.timelineDuration);
+            const drift::SceneCamera3d camera = drift::sceneCameraFromClip(clip, at, 1.0);
+            drift::TrackerTarget cameraTarget = target;
+            cameraTarget.clipId = clip.id;
+            cameraTarget.restCamera = {camera.positionX, camera.positionY, camera.positionZ,
+                                       camera.rotationX, camera.rotationY, camera.rotationZ};
+            tracker.targets.append(cameraTarget);
+            cameraIds.append(clip.id);
+        }
+        for (const QString &cameraId : cameraIds) {
+            const QString warning = applyTargets(host.id, tracker.id, cameraId);
+            if (error->isEmpty())
+                *error = warning;
+        }
+        return true;
+    }
     bool found = false;
     for (drift::TrackerTarget &target : tracker.targets) {
         if (target.clipId == targetClipId) {
@@ -2138,6 +2966,56 @@ bool TrackingController::addTarget(Clip &host, MotionTracker &tracker, const QSt
     return true;
 }
 
+// Sets a stabilize target's zoom and regenerates its keys; the old keys go first because which
+// channels it writes depends on the zoom.
+bool TrackingController::zoomTarget(Clip &host, MotionTracker &tracker, const QString &targetClipId, double zoom,
+                                    QString *error)
+{
+    zoom = std::clamp(zoom, 1.0, kMaxStabilizeZoom);
+    const auto named = std::any_of(tracker.targets.begin(), tracker.targets.end(), [&](const drift::TrackerTarget &target) {
+        return target.clipId == targetClipId && target.mode == drift::TrackerTarget::Mode::Stabilize
+               && target.zoom != zoom;
+    });
+    if (!named)
+        return false;
+    // A camera lock is one target per camera clip over the tracked clip; they zoom together.
+    QStringList changed;
+    for (drift::TrackerTarget &target : tracker.targets) {
+        if (target.mode != drift::TrackerTarget::Mode::Stabilize || target.zoom == zoom)
+            continue;
+        unapplyTarget(host, tracker, target);
+        target.zoom = zoom;
+        changed.append(target.clipId);
+    }
+    for (const QString &id : changed) {
+        const QString warning = applyTargets(host.id, tracker.id, id);
+        if (error->isEmpty())
+            *error = warning;
+    }
+    return true;
+}
+
+// Re-applies every tracker of the host but `except`: a clip-mode stabilize moves the host, and
+// follow and on-canvas mask targets read where it is.
+void TrackingController::reapplyHost(const QString &hostId, const QString &except)
+{
+    if (m_reapplying)
+        return;
+    int t = -1;
+    int c = -1;
+    if (!findClipById(m_app->m_project, hostId, &t, &c))
+        return;
+    QStringList ids;
+    for (const MotionTracker &tracker : m_app->m_project.tracks().at(t).clips.at(c).motionTrackers) {
+        if (tracker.id != except)
+            ids.append(tracker.id);
+    }
+    m_reapplying = true;
+    for (const QString &id : ids)
+        applyTargets(hostId, id);
+    m_reapplying = false;
+}
+
 void TrackingController::setTarget(int trackIndex, int clipIndex, const QString &id, const QString &targetClipId,
                                    const QString &mode)
 {
@@ -2154,8 +3032,20 @@ void TrackingController::removeTarget(int trackIndex, int clipIndex, const QStri
     editTracker(trackIndex, clipIndex, id, tr("Remove tracking target"), [&](Clip &host, MotionTracker &tracker) {
         for (int i = 0; i < tracker.targets.size(); ++i) {
             if (tracker.targets.at(i).clipId == targetClipId) {
-                unapplyTarget(host, tracker, tracker.targets.at(i));
+                const drift::TrackerTarget removed = tracker.targets.at(i);
+                unapplyTarget(host, tracker, removed);
                 tracker.targets.removeAt(i);
+                if (removed.mode == drift::TrackerTarget::Mode::Stabilize && removed.via == drift::TrackerTarget::Via::Camera) {
+                    // The rest of the lock's camera clips go with it.
+                    for (int j = tracker.targets.size() - 1; j >= 0; --j) {
+                        if (tracker.targets.at(j).mode == drift::TrackerTarget::Mode::Stabilize) {
+                            unapplyTarget(host, tracker, tracker.targets.at(j));
+                            tracker.targets.removeAt(j);
+                        }
+                    }
+                }
+                if (removed.mode == drift::TrackerTarget::Mode::Stabilize && removed.via == drift::TrackerTarget::Via::Clip)
+                    reapplyHost(host.id, {});
                 return true;
             }
         }
@@ -2173,6 +3063,7 @@ void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tr
     if (!findClipById(project, target.clipId, &t, &c))
         return;
     Clip &owner = project.tracks()[t].clips[c];
+    const bool stabilize = target.mode == drift::TrackerTarget::Mode::Stabilize;
 
     const TimeUs refTimeline = referenceTimelineUs(host, tracker);
     const QSizeF px = frameSizeAt(project, host, refTimeline);
@@ -2183,6 +3074,28 @@ void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tr
     const TimeUs lo = frames[runs.first().first()].timelineUs - owner.timelineStart;
     const TimeUs hi = frames[runs.last().last()].timelineUs - owner.timelineStart;
     const TimeUs restT = qMax<TimeUs>(0, refTimeline - owner.timelineStart);
+
+    if (stabilize && target.via == drift::TrackerTarget::Via::Camera) {
+        if (target.restCamera.size() < 6)
+            return;
+        const CameraChannels channels = cameraChannels(tracker, target);
+        const auto stripCamera = [&](drift::KeyframeTrack<double> &track, int index) {
+            double rest = 0;
+            if (!stripChannel(track, lo, hi, restT, &rest))
+                track.setKeyframe(0, target.restCamera.at(index));
+        };
+        stripCamera(owner.transformX, 0);
+        stripCamera(owner.transformY, 1);
+        if (channels.distance)
+            stripCamera(owner.positionZ, 2);
+        if (channels.tilt) {
+            stripCamera(owner.rotationX, 3);
+            stripCamera(owner.rotationY, 4);
+        }
+        if (channels.roll)
+            stripCamera(owner.rotation, 5);
+        return;
+    }
 
     const bool planar = tracker.kind == MotionTracker::Kind::Planar;
     const bool writesRotation = planar || tracker.solve != MotionTracker::Solve::Translate;
@@ -2223,7 +3136,7 @@ void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tr
     strip(owner.transformY, target.restRect.y());
     if (writesRotation)
         strip(owner.rotation, target.restRotation);
-    if (writesScale) {
+    if (writesScale || (stabilize && target.zoom != 1.0)) {
         strip(owner.transformW, target.restRect.width());
         strip(owner.transformH, target.restRect.height());
     }
@@ -2235,10 +3148,26 @@ void TrackingController::setTargetCenter(int trackIndex, int clipIndex, const QS
     QString error;
     const bool ok = editTracker(trackIndex, clipIndex, id, tr("Change follow anchor"), [&](Clip &host, MotionTracker &tracker) {
         for (drift::TrackerTarget &target : tracker.targets) {
-            if (target.clipId != targetClipId || target.mode != drift::TrackerTarget::Mode::FollowClip
+            if (target.clipId != targetClipId || target.mode == drift::TrackerTarget::Mode::Mask
                 || target.centerOnTrack == center)
                 continue;
             target.centerOnTrack = center;
+            if (target.mode == drift::TrackerTarget::Mode::Stabilize) {
+                // The camera clips of one lock move together.
+                QStringList ids;
+                for (drift::TrackerTarget &other : tracker.targets) {
+                    if (other.mode == drift::TrackerTarget::Mode::Stabilize) {
+                        other.centerOnTrack = center;
+                        ids.append(other.clipId);
+                    }
+                }
+                for (const QString &id : ids) {
+                    const QString warning = applyTargets(host.id, tracker.id, id);
+                    if (error.isEmpty())
+                        error = warning;
+                }
+                return true;
+            }
             error = applyTargets(host.id, tracker.id, targetClipId);
             return true;
         }
@@ -2259,7 +3188,7 @@ void TrackingController::apply(int trackIndex, int clipIndex, const QString &id)
         m_app->setLastMessage(error, QStringLiteral("warning"));
 }
 
-QString TrackingController::applyTargets(const QString &clipId, const QString &trackerId, const QString &onlyTarget)
+QString TrackingController::applyTargets(const QString &clipId, const QString &trackerId, const QString &onlyTargetId)
 {
     drift::Project &project = m_app->m_project;
     int hostTrack = -1;
@@ -2291,8 +3220,71 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
                              || solve == MotionTracker::Solve::Perspective;
     QString firstError;
 
+    // Moving the host changes what the other targets read, so a clip-mode stabilize always
+    // brings the rest of the tracker's targets along.
+    QString onlyTarget = onlyTargetId;
     for (const drift::TrackerTarget &target : tracker->targets) {
-        if (!onlyTarget.isEmpty() && target.clipId != onlyTarget)
+        if (target.mode == drift::TrackerTarget::Mode::Stabilize && target.via == drift::TrackerTarget::Via::Clip
+            && target.clipId == onlyTarget)
+            onlyTarget.clear();
+    }
+
+    bool movedHost = false;
+    for (const drift::TrackerTarget &target : tracker->targets) {
+        if (target.mode != drift::TrackerTarget::Mode::Stabilize || (!onlyTarget.isEmpty() && target.clipId != onlyTarget))
+            continue;
+        if (host.layer3d) {
+            if (firstError.isEmpty())
+                firstError = tr("Lock to screen is not available for 3D clips");
+            continue;
+        }
+        if (target.via == drift::TrackerTarget::Via::Camera) {
+            int ct = -1;
+            int cc = -1;
+            if (!findClipById(project, target.clipId, &ct, &cc))
+                continue;
+            const QString warning = writeCameraKeys(project, host, *tracker, target, project.tracks()[ct].clips[cc]);
+            if (firstError.isEmpty())
+                firstError = warning;
+            continue;
+        }
+        const StabilizeSetup setup = stabilizeSetup(project, host, *tracker, target, refTimeline);
+        const QVector<FrameXform> stabilizeFrames = frameTransforms(project, host, *tracker, setup.px);
+        Clip &owner = project.tracks()[hostTrack].clips[hostIndex];
+        const QVector<QVector<int>> runs = keyableRuns(stabilizeFrames, owner);
+        if (runs.isEmpty())
+            continue;
+        QVector<PoseRun> poseRuns;
+        for (const QVector<int> &run : runs) {
+            PoseRun poses;
+            for (const int i : run) {
+                Pose pose = stabilizedPose(setup, stabilizeFrames[i].h, target.zoom, writesRotation);
+                pose.t = stabilizeFrames[i].timelineUs - owner.timelineStart;
+                poses.append(pose);
+            }
+            unwrapRotation(&poses);
+            poseRuns.append(poses);
+        }
+        writeChannel(owner.transformX, poseRuns, &Pose::x, kScalarTolerancePx);
+        writeChannel(owner.transformY, poseRuns, &Pose::y, kScalarTolerancePx);
+        if (writesRotation) {
+            // A locked shot shows rotation error as drift at the frame's edge, so bound it in pixels there.
+            double radius = 1.0;
+            for (const PoseRun &poses : poseRuns) {
+                for (const Pose &pose : poses)
+                    radius = qMax(radius, std::hypot(pose.w, pose.h) / 2.0);
+            }
+            writeChannel(owner.rotation, poseRuns, &Pose::rotation, qRadiansToDegrees(kScalarTolerancePx / radius));
+        }
+        if (writesScale || target.zoom != 1.0) {
+            writeChannel(owner.transformW, poseRuns, &Pose::w, kScalarTolerancePx);
+            writeChannel(owner.transformH, poseRuns, &Pose::h, kScalarTolerancePx);
+        }
+        movedHost = true;
+    }
+
+    for (const drift::TrackerTarget &target : tracker->targets) {
+        if (target.mode == drift::TrackerTarget::Mode::Stabilize || (!onlyTarget.isEmpty() && target.clipId != onlyTarget))
             continue;
         int t = -1;
         int c = -1;
@@ -2478,5 +3470,7 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
             writeChannel(owner.transformH, poseRuns, &Pose::h, kScalarTolerancePx);
         }
     }
+    if (movedHost)
+        reapplyHost(host.id, trackerId);
     return firstError;
 }

@@ -37,8 +37,9 @@ struct TrackPoint
 
 struct TrackerTarget
 {
-    enum class Mode { Mask, FollowClip };
-    QString clipId; // the Mask adjustment clip, or the clip made to follow
+    enum class Mode { Mask, FollowClip, Stabilize };
+    enum class Via { Clip, Camera };
+    QString clipId; // the Mask adjustment clip, the clip made to follow, or for Stabilize the clip whose keys are written
     Mode mode = Mode::Mask;
     // FollowClip only: put the clip's centre on the tracked point instead of keeping the offset it
     // had from it at the reference frame.
@@ -48,6 +49,11 @@ struct TrackerTarget
     bool hasRest = false;
     QRectF restRect;
     double restRotation = 0;
+    // Stabilize only: which clip's keys cancel the track, and the zoom about the locked point.
+    Via via = Via::Clip;
+    double zoom = 1.0;
+    // Stabilize via Camera: the camera clip's posX, posY, posZ, rotX, rotY, rotZ at the reference frame.
+    QVector<double> restCamera;
 };
 
 struct MotionTracker
@@ -107,12 +113,24 @@ inline MotionTracker::Solve motionTrackerSolveFromString(const QString &solve)
 
 inline QString trackerTargetModeToString(TrackerTarget::Mode mode)
 {
-    return mode == TrackerTarget::Mode::FollowClip ? QStringLiteral("followClip") : QStringLiteral("mask");
+    switch (mode) {
+    case TrackerTarget::Mode::FollowClip:
+        return QStringLiteral("followClip");
+    case TrackerTarget::Mode::Stabilize:
+        return QStringLiteral("stabilize");
+    case TrackerTarget::Mode::Mask:
+        break;
+    }
+    return QStringLiteral("mask");
 }
 
 inline TrackerTarget::Mode trackerTargetModeFromString(const QString &mode)
 {
-    return mode == QStringLiteral("followClip") ? TrackerTarget::Mode::FollowClip : TrackerTarget::Mode::Mask;
+    if (mode == QStringLiteral("followClip"))
+        return TrackerTarget::Mode::FollowClip;
+    if (mode == QStringLiteral("stabilize"))
+        return TrackerTarget::Mode::Stabilize;
+    return TrackerTarget::Mode::Mask;
 }
 
 inline QJsonObject toJson(const MotionTracker &tracker)
@@ -155,6 +173,18 @@ inline QJsonObject toJson(const MotionTracker &tracker)
             entry.insert(QStringLiteral("rest"), QJsonArray{target.restRect.x(), target.restRect.y(),
                                                             target.restRect.width(), target.restRect.height(),
                                                             target.restRotation});
+        }
+        if (target.mode == TrackerTarget::Mode::Stabilize) {
+            if (target.via == TrackerTarget::Via::Camera)
+                entry.insert(QStringLiteral("via"), QStringLiteral("camera"));
+            if (target.zoom != 1.0)
+                entry.insert(QStringLiteral("zoom"), target.zoom);
+            if (!target.restCamera.isEmpty()) {
+                QJsonArray camera;
+                for (double value : target.restCamera)
+                    camera.append(value);
+                entry.insert(QStringLiteral("restCamera"), camera);
+            }
         }
         targets.append(entry);
     }
@@ -234,6 +264,12 @@ inline MotionTracker motionTrackerFromJson(const QJsonObject &object)
                                      rest.at(3).toDouble());
             target.restRotation = rest.at(4).toDouble();
         }
+        target.via = targetObject.value(QStringLiteral("via")).toString() == QStringLiteral("camera")
+                         ? TrackerTarget::Via::Camera
+                         : TrackerTarget::Via::Clip;
+        target.zoom = targetObject.value(QStringLiteral("zoom")).toDouble(1.0);
+        for (const QJsonValue &value : targetObject.value(QStringLiteral("restCamera")).toArray())
+            target.restCamera.append(value.toDouble());
         tracker.targets.append(target);
     }
 

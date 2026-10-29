@@ -1244,6 +1244,8 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 18 added motion trackers, the mask media time base and asset mask roles. Nothing to
     // migrate; the bump is a gate, as for versions 6 and 9. An older build would drop the
     // trackers and play a track-spanning matte by the masked clip's source time.
+    // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
+    // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();
