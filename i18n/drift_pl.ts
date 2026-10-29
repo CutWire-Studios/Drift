@@ -2778,7 +2778,7 @@
     </message>
     <message>
         <source>-inf dB</source>
-        <translation>-inf dB</translation>
+        <translation>-nieskończoność dB</translation>
     </message>
     <message>
         <source>%1 dB</source>
@@ -8678,7 +8678,7 @@
     </message>
     <message>
         <source>Source Lab</source>
-        <translation>Source Lab</translation>
+        <translation>Źródło Lab</translation>
     </message>
     <message>
         <source>Select a clip</source>
@@ -11569,7 +11569,7 @@
     </message>
     <message>
         <source>Luma</source>
-        <translation>Luma</translation>
+        <translation>Światłość (luma)</translation>
     </message>
     <message>
         <source>Alpha</source>
@@ -13568,7 +13568,8 @@ Full, Half, Quarter and 1/8 are fixed fractions of the project resolution: Full 
 1/8 (Eco) is for older laptops with integrated graphics.
 Auto renders only as many pixels as the preview actually shows, and lowers that further while playback cannot keep up.</source>
         <translation>Jakość podglądu — niższa jest płynniejsza podczas edycji.
-Pełna, Połowa i Ćwierć to stałe ułamki rozdzielczości projektu: Pełna komponuje dokładnie to, co eksport.
+Pełna, Połowa, Ćwierć i 1/8 to stałe ułamki rozdzielczości projektu: Pełna komponuje dokładnie to, co eksport./
+1/8 (eko) jest dla starszych urządzeń ze zintegrowaną grafiką.
 Auto renderuje tylko tyle pikseli, ile podgląd faktycznie pokazuje, i obniża to dalej, gdy odtwarzanie nie nadąża.</translation>
     </message>
     <message>
