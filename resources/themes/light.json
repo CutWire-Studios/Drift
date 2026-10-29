@@ -685,6 +685,14 @@
     "startScreen": {
       "background": "$semantic.surface.app"
     },
+    "startupSplash": {
+      "background": "$semantic.surface.app",
+      "border": "$semantic.border",
+      "foreground": "$semantic.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "progressTrack": "$semantic.panel.sliderTrack",
+      "progressFill": "$semantic.primary"
+    },
     "startScreenRecents": {
       "foreground": "$semantic.mutedForeground"
     },

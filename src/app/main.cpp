@@ -5,6 +5,8 @@
 #include "engine/gpu/device/GpuPreference.h"
 #include "engine/decode/hw/HwAccel.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
+#include "engine/gpu/GlRuntime.h"
+#include "engine/render2d/skia/SkiaRuntime.h"
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
 #include "app/HeadlessApp.h"
 #include "app/mcp/transport/McpStdio.h"
@@ -16,6 +18,8 @@
 #include "app/platform/FileDialogs.h"
 #include "app/platform/Haptics.h"
 #include "app/platform/PointerDevices.h"
+#include "app/platform/PrimaryDisplay.h"
+#include "app/StartupSplash.h"
 #include "app/editor/LayoutStore.h"
 #include "app/editor/WorkspaceStore.h"
 #include "app/editor/SearchIndex.h"
@@ -77,6 +81,7 @@
 #include <QFile>
 #include <QUrl>
 
+#include <algorithm>
 #include <condition_variable>
 #include <QElapsedTimer>
 #include <QTimer>
@@ -599,7 +604,18 @@ int main(int argc, char *argv[])
     // must be in the environment before QApplication is constructed.
     QCoreApplication::setApplicationName("CutWire Drift");
     QCoreApplication::setOrganizationName("CutWire Drift");
+#ifdef Q_OS_WIN
+    // Windows defaults 1080p screens to 125%, which leaves the editor too little room. Interface
+    // size is measured from 96 DPI here instead, picked from the screen on first run.
+    double osDisplayScale = 0.0;
+    if (const auto display = drift::display::primaryDisplay()) {
+        osDisplayScale = display->scale;
+        PreferencesController::autoUiScaleOnce(std::min(display->width, display->height), display->scale);
+    }
+    PreferencesController::applyStoredUiScale(osDisplayScale);
+#else
     PreferencesController::applyStoredUiScale();
+#endif
     // Qt's xcb plugin defaults to GLX, so eglGetCurrentDisplay() is null and
     // zero-copy sticky-disables. Only force EGL when the user opted in — default
     // X11 behaviour stays byte-identical. An explicit QT_XCB_GL_INTEGRATION still wins.
@@ -662,6 +678,20 @@ int main(int argc, char *argv[])
     // Protocol strings under src/app/mcp/ are excluded from the catalog; they stay English.
     PreferencesController::installUiTranslators();
 
+    StartupSplash *splash = nullptr;
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    splash = new StartupSplash;
+    splash->show();
+    splash->step(StartupSplash::tr("Starting…"), 0.02);
+    // Once, to map the window. Nothing has queued work for the event loop yet; later steps only
+    // repaint.
+    QCoreApplication::processEvents();
+#endif
+    const auto step = [splash](const QString &status, double progress) {
+        if (splash)
+            splash->step(status, progress);
+    };
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     // The whole UI is a Qt Quick scene graph on OpenGL, so with no OpenGL at all
     // there is no window to put an error in — the app would just appear not to
@@ -670,11 +700,13 @@ int main(int argc, char *argv[])
     // particular version, so it fires only when a context cannot be created at
     // all. A driver that is merely too old still starts, and the preview explains
     // itself in the panel instead.
+    step(StartupSplash::tr("Checking the graphics driver…"), 0.04);
     warnIfNoOpenGl();
 #endif
 
     // Registering the bundled fonts needs a QGuiApplication, and must happen before the compositor
     // thread starts touching QFontDatabase.
+    step(StartupSplash::tr("Loading fonts…"), 0.08);
     reloadFontCatalog();
     reloadUserFonts();
     reloadEmojiCatalog();
@@ -724,8 +756,10 @@ int main(int argc, char *argv[])
     qmlRegisterType<ConfidenceStripItem>("Drift", 1, 0, "ConfidenceStripItem");
     TimelineTrackItem::installAccessibility();
 
+    step(StartupSplash::tr("Starting the playback and audio engines…"), 0.12);
     static AssetLibrary assetLibrary;
     static EditorState editorState(&assetLibrary);
+    step(StartupSplash::tr("Loading add-ons and themes…"), 0.36);
     static FileDialogs fileDialogs;
     static AddonManager addonManager;
     static MarketClient marketClient;
@@ -839,7 +873,9 @@ int main(int argc, char *argv[])
     }
 #endif
     engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
+    step(StartupSplash::tr("Building the interface…"), 0.5);
     engine.loadFromModule("Drift", "Shell");
+    step(StartupSplash::tr("Opening the editor…"), 1.0);
     drift::perf::install();
     if (drift::perf::enabled()) {
         // Frame pacing: the interval between swaps is the frame time the user sees. Windows are
@@ -882,10 +918,28 @@ int main(int argc, char *argv[])
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     // Shell.qml is not a window itself; the shell window it builds is its host.
+    QQuickWindow *shellWindow = nullptr;
     if (!engine.rootObjects().isEmpty()) {
         auto *host = engine.rootObjects().constFirst()->property("host").value<QObject *>();
-        if (auto *window = qobject_cast<QQuickWindow *>(host))
-            new FirstFrameWatchdog(window);
+        shellWindow = qobject_cast<QQuickWindow *>(host);
+        if (shellWindow)
+            new FirstFrameWatchdog(shellWindow);
+    }
+    splash->finishOn(shellWindow);
+    if (shellWindow) {
+        // The compositor's GL context and Skia otherwise come up on the first preview frame,
+        // blocking the GUI thread as a project opens. Bring them up off the GUI thread once the
+        // window is on screen, so the start screen is not held back and the first open is quick.
+        QObject::connect(shellWindow, &QQuickWindow::frameSwapped, &app, [] {
+            std::thread([] {
+                drift::gl::GlRuntime &rt = drift::gl::runtime();
+#ifdef DRIFT_WITH_SKIA
+                rt.exec([&rt] { drift::skia::SkiaRuntime::acquire(rt); });
+#else
+                rt.available();
+#endif
+            }).detach();
+        }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
     }
 #endif
 

@@ -102,8 +102,10 @@ class PreferencesController : public QObject
     Q_PROPERTY(QString uiLanguage READ uiLanguage WRITE setUiLanguage NOTIFY uiLanguageChanged)
     Q_PROPERTY(QVariantList uiLanguages READ uiLanguages NOTIFY uiLanguageChanged)
     Q_PROPERTY(bool needsUiLanguagePrompt READ needsUiLanguagePrompt NOTIFY uiLanguageChanged)
-    // Extra UI scale on top of the OS display scale. QSettings("ui/scale"), 1.0..2.0 in
-    // 0.25 steps. Applied as QT_SCALE_FACTOR before QApplication; a change needs a restart.
+    // QSettings("ui/scale"), 1.0..2.0 in 0.25 steps. Extra scale on top of the OS display scale,
+    // except where applyStoredUiScale is given the OS scale (Windows): there it is the absolute
+    // size, 1.0 being 96 DPI. Applied as QT_SCALE_FACTOR before QApplication; a change needs a
+    // restart.
     Q_PROPERTY(double uiScale READ uiScale WRITE setUiScale NOTIFY uiScaleChanged)
     Q_PROPERTY(double appliedUiScale READ appliedUiScale CONSTANT)
     Q_PROPERTY(bool uiScaleNeedsRestart READ uiScaleNeedsRestart NOTIFY uiScaleChanged)
@@ -236,9 +238,13 @@ public:
     void setUiScale(double scale);
     // Snaps to 1.0, 1.25, 1.5, 1.75, or 2.0. Safe before any PreferencesController exists.
     static double storedUiScale();
-    // Writes QT_SCALE_FACTOR from ui/scale unless the environment already set one.
+    // Once per install: sets ui/scale from the primary screen's short side, 1080 rows being 1.0,
+    // and records ui/autoScaleDone. Same preconditions as applyStoredUiScale.
+    static void autoUiScaleOnce(int shortSide, double osDisplayScale);
+    // Writes QT_SCALE_FACTOR from ui/scale unless the environment already set one. With
+    // osDisplayScale, ui/scale is the absolute size and the factor is divided by it.
     // Call once before QApplication; organization/application names must already be set.
-    static void applyStoredUiScale();
+    static void applyStoredUiScale(double osDisplayScale = 0.0);
     QString interfaceShell() const { return m_interfaceShell; }
     void setInterfaceShell(const QString &shell);
     QString appliedShell() const;

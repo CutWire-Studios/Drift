@@ -1056,6 +1056,8 @@ qt_add_executable(drift
     src/app/mcp/McpController.cpp
     src/app/editor/PreferencesController.h
     src/app/editor/PreferencesController.cpp
+    src/app/StartupSplash.h
+    src/app/StartupSplash.cpp
     src/app/editor/ProjectFileController.h
     src/app/editor/ProjectFileController.cpp
     src/app/bin/AssetPreviewController.h
@@ -1248,7 +1250,8 @@ if(WIN32)
     # console subsystem and Windows opens a console window before the GUI comes up. Qt6::EntryPoint
     # (linked in by Qt6::Core) supplies the WinMain that forwards to main().
     set_target_properties(drift PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_sources(drift PRIVATE resources/windows/drift.rc)
+    target_sources(drift PRIVATE resources/windows/drift.rc src/app/platform/PrimaryDisplay_win.cpp)
+    target_link_libraries(drift PRIVATE shcore)
     set_source_files_properties(resources/windows/drift.rc PROPERTIES
         OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/resources/windows/drift.ico")
 endif()

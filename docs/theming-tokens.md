@@ -572,6 +572,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | editorHeaderExportButton | foreground | $semantic.primaryForeground | $semantic.primaryForeground |
 | editorHeaderExportButton | icon | $semantic.primaryForeground | $semantic.primaryForeground |
 | startScreen | background | $semantic.surface.app | $semantic.surface.app |
+| startupSplash | background | $semantic.surface.app | $semantic.surface.app |
+| startupSplash | border | $semantic.border | $semantic.border |
+| startupSplash | foreground | $semantic.foreground | $semantic.foreground |
+| startupSplash | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| startupSplash | progressTrack | $semantic.panel.sliderTrack | $semantic.panel.sliderTrack |
+| startupSplash | progressFill | $semantic.primary | $semantic.primary |
 | startScreenRecents | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
 | startScreenTitle | foreground | $semantic.foreground | $semantic.foreground |
 | startScreenTitle | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |

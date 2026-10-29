@@ -516,12 +516,15 @@ void syncMap(QQmlPropertyMap *map, const QVariantMap &data)
         if (!data.contains(key))
             removeKey(map, key);
     }
+    // One insert for the lot: each single-key insert of a new key extends the map's metaobject,
+    // which made filling a theme's few thousand tokens quadratic.
+    QVariantHash changed;
     for (auto it = data.cbegin(); it != data.cend(); ++it) {
         if (it.value().typeId() == QMetaType::QVariantMap) {
             QQmlPropertyMap *child = asMap(map->value(it.key()));
             if (!child) {
                 child = makeMap(map);
-                map->insert(it.key(), QVariant::fromValue(static_cast<QObject *>(child)));
+                changed.insert(it.key(), QVariant::fromValue(static_cast<QObject *>(child)));
             }
             syncMap(child, it.value().toMap());
             continue;
@@ -531,8 +534,10 @@ void syncMap(QQmlPropertyMap *map, const QVariantMap &data)
             old->deleteLater();
         }
         if (map->value(it.key()) != it.value())
-            map->insert(it.key(), it.value());
+            changed.insert(it.key(), it.value());
     }
+    if (!changed.isEmpty())
+        map->insert(changed);
 }
 
 void stripOverlayMeta(QVariantMap *overlay)
@@ -727,6 +732,19 @@ ThemeManager *ThemeManager::shared()
 {
     static ThemeManager instance;
     return &instance;
+}
+
+QVariantMap ThemeManager::builtinComponent(const QString &variant, const QString &component)
+{
+    const QString path = QString::fromLatin1(variant == QLatin1String("light") ? kLightResource : kDarkResource);
+    QString error;
+    const QVariantMap root = readObject(path, &error);
+    if (!error.isEmpty())
+        return {};
+    const QString at = QStringLiteral("components.") + component;
+    QStringList stack;
+    const QVariant resolved = resolveTree(lookupPath(root, at), root, &stack, at, path);
+    return coerceTree(resolved, at, path).toMap();
 }
 
 void ThemeManager::registerSingleton()
