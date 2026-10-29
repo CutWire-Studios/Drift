@@ -15,6 +15,7 @@
 #include <QVariantMap>
 
 #ifdef Q_OS_ANDROID
+#include <QCoreApplication>
 #include <QJniEnvironment>
 #include <QJniObject>
 #include <QtCore/qcoreapplication_platform.h>
@@ -269,7 +270,11 @@ PlaybackEngine::~PlaybackEngine()
 #ifdef Q_OS_ANDROID
     // A focus change already in flight on the Android UI thread must not find this engine.
     g_audioFocusEngine.store(nullptr, std::memory_order_release);
-    abandonAudioFocus();
+    // The editor is a static in main(), so this usually runs from exit() after the application and
+    // Qt's own globals are gone; runOnAndroidMainThread() then crashes. Android releases a dead
+    // process's focus itself.
+    if (QCoreApplication::instance())
+        abandonAudioFocus();
 #endif
     m_playing = false;
     m_compositeTimer.stop();
