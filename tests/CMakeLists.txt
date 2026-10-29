@@ -431,6 +431,12 @@ qt_add_resources(tst_workspacestore "workspace_presets"
 )
 add_test(NAME WorkspaceStore COMMAND tst_workspacestore)
 
+qt_add_executable(tst_searchindex tst_searchindex.cpp ../src/app/editor/SearchIndex.cpp)
+target_include_directories(tst_searchindex PRIVATE ../src)
+target_link_libraries(tst_searchindex PRIVATE Qt6::Test Qt6::Core)
+target_compile_definitions(tst_searchindex PRIVATE DRIFT_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME SearchIndex COMMAND tst_searchindex)
+
 qt_add_executable(tst_tracking tst_tracking.cpp ../src/engine/tracking/MotionTracking.cpp)
 target_include_directories(tst_tracking PRIVATE ../src)
 target_link_libraries(tst_tracking PRIVATE Qt6::Test Qt6::Core Qt6::Gui)

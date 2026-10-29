@@ -114,8 +114,23 @@ PanelFrame {
         }
     }
 
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "properties" || root.locked)
+            return
+        ShellBridge.panelRequest = null
+        const index = root.tabIndexOf(request.tab)
+        if (index >= 0)
+            root.activeTab = index
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+
     Component.onCompleted: {
         root.syncActiveTab()
+        root.applyPanelRequest()
     }
 
     // Rail order: clip identity → geometry/timing → compositing / FX.

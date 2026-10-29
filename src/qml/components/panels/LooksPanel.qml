@@ -6,6 +6,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "color-looks"
+        title: qsTr("Looks")
+        keywords: "lut filter preset cube"
+    }
 
     property bool shown: false
 
@@ -137,7 +142,14 @@ PanelFrame {
             placeholderText: qsTr("Search looks")
             onTextChanged: root.query = text
 
+            SearchAnchor {
+                searchId: "color-import-looks"
+                title: qsTr("Import looks")
+                keywords: "import cube lut look"
+                target: importLooksButton
+            }
             IconButton {
+                id: importLooksButton
                 glyph: Theme.icons.download
                 variant: "ghost"
                 buttonSize: Theme.controlHeight

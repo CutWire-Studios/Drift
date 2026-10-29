@@ -42,7 +42,22 @@ PanelFrame {
         }
     }
 
-    Component.onCompleted: AssetLibrary.ensureAllMedia()
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "assets" || root.locked)
+            return
+        ShellBridge.panelRequest = null
+        root.showTab(request.tab)
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+
+    Component.onCompleted: {
+        AssetLibrary.ensureAllMedia()
+        root.applyPanelRequest()
+    }
 
     // Imports and reports the outcome. `importUrls` skips anything it cannot
     // probe, so a bad file used to just never appear with no explanation at all.

@@ -34,6 +34,11 @@ Item {
 
         Text {
             text: qsTr("Playback speed")
+            SearchAnchor {
+                searchId: "speed-playback"
+                title: qsTr("Playback speed")
+                keywords: "fast slow motion"
+            }
             color: Theme.c.speedFadeInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -50,7 +55,14 @@ Item {
             width: parent.width
             spacing: 6
 
+            SearchAnchor {
+                searchId: "speed-custom"
+                title: qsTr("Custom speed…")
+                keywords: "ramp curve"
+                target: speedCustomButton
+            }
             ThemedButton {
+                id: speedCustomButton
                 visible: !root.nestedSource
                 text: qsTr("Custom speed…")
                 variant: "secondary"
@@ -124,7 +136,14 @@ Item {
             font.pixelSize: Theme.fontSizeSm
         }
 
+        SearchAnchor {
+            searchId: "speed-reverse"
+            title: qsTr("Reverse")
+            keywords: "backwards rewind"
+            target: speedReverseChip
+        }
         ThemedChip {
+            id: speedReverseChip
             visible: !root.nestedSource
             text: qsTr("Reverse")
             selected: {

@@ -189,6 +189,18 @@ Item {
         }
     }
 
+    function inLayout(type) {
+        return !!root._created[type] && root._created[type].parent !== root
+    }
+
+    // Brings a panel's tab to the front when it sits behind another one.
+    function reveal(type) {
+        if (!root.inLayout(type))
+            return false
+        root._created[type].parent?.parent?.activate?.(type)
+        return true
+    }
+
     function label(type) {
         const types = Workspaces.panelTypes
         for (let i = 0; i < types.length; ++i) {

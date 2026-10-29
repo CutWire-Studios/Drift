@@ -6,6 +6,12 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "color-grade"
+        title: qsTr("Color grade")
+        keywords: "grade color workspace open"
+        searchTarget: "panel:color#color-grade"
+    }
 
     property bool shown: false
 
@@ -187,20 +193,20 @@ PanelFrame {
         if (!root.shown)
             root.setBypass(false)
     }
-    function applyTabRequest() {
-        const request = ShellBridge.colorTabRequest
-        if (!request)
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "color")
             return
-        ShellBridge.colorTabRequest = null
+        ShellBridge.panelRequest = null
         if (request.tab >= 0)
             root.tab = request.tab
     }
     Connections {
         target: ShellBridge
-        function onColorTabRequestChanged() { root.applyTabRequest() }
+        function onPanelRequestChanged() { root.applyPanelRequest() }
     }
     Component.onCompleted: {
-        applyTabRequest()
+        applyPanelRequest()
         const specs = {}
         const catalog = colorState.finishingCatalog()
         for (let i = 0; i < catalog.length; ++i)
@@ -269,6 +275,13 @@ PanelFrame {
         spacing: Theme.spacingMd
         visible: root.hasTarget
 
+        SearchAnchor {
+            searchId: "color-compare"
+            title: qsTr("Compare")
+            keywords: "before after bypass original"
+            searchTarget: "panel:color#color-compare"
+            target: compareButton
+        }
         ThemedButton {
             id: compareButton
             text: qsTr("Compare")
@@ -288,7 +301,15 @@ PanelFrame {
             onCanceled: root.setBypass(root.compareWasOn)
         }
 
+        SearchAnchor {
+            searchId: "color-apply-all"
+            title: qsTr("Apply to all clips")
+            keywords: "grade timeline all clips copy"
+            searchTarget: "panel:color#color-apply-all"
+            target: applyAllButton
+        }
         ThemedButton {
+            id: applyAllButton
             text: qsTr("Apply to all…")
             enabled: !!root.target.canApplyToAll
             tooltip: root.target.canApplyToAll
@@ -471,6 +492,42 @@ PanelFrame {
                         title: qsTr("Light")
                         modified: root.lightModified
                         onResetRequested: root.colorState.resetGroup("Light")
+                        SearchAnchor {
+                            searchId: "color-exposure"
+                            title: qsTr("Exposure")
+                            keywords: "light brightness"
+                            searchTarget: "panel:color#tab=0/color-exposure"
+                        }
+                        SearchAnchor {
+                            searchId: "color-contrast"
+                            title: qsTr("Contrast")
+                            keywords: "light"
+                            searchTarget: "panel:color#tab=0/color-contrast"
+                        }
+                        SearchAnchor {
+                            searchId: "color-highlights"
+                            title: qsTr("Highlights")
+                            keywords: "light bright"
+                            searchTarget: "panel:color#tab=0/color-highlights"
+                        }
+                        SearchAnchor {
+                            searchId: "color-shadows"
+                            title: qsTr("Shadows")
+                            keywords: "light dark"
+                            searchTarget: "panel:color#tab=0/color-shadows"
+                        }
+                        SearchAnchor {
+                            searchId: "color-whites"
+                            title: qsTr("Whites")
+                            keywords: "light"
+                            searchTarget: "panel:color#tab=0/color-whites"
+                        }
+                        SearchAnchor {
+                            searchId: "color-blacks"
+                            title: qsTr("Blacks")
+                            keywords: "light"
+                            searchTarget: "panel:color#tab=0/color-blacks"
+                        }
                     }
                     Repeater {
                         model: root.lightSliders
@@ -508,6 +565,30 @@ PanelFrame {
                         title: qsTr("Color")
                         modified: root.colorModified
                         onResetRequested: root.colorState.resetGroup("Color")
+                        SearchAnchor {
+                            searchId: "color-temperature"
+                            title: qsTr("Temperature")
+                            keywords: "white balance warm cool kelvin"
+                            searchTarget: "panel:color#tab=0/color-temperature"
+                        }
+                        SearchAnchor {
+                            searchId: "color-tint"
+                            title: qsTr("Tint")
+                            keywords: "white balance green magenta"
+                            searchTarget: "panel:color#tab=0/color-tint"
+                        }
+                        SearchAnchor {
+                            searchId: "color-saturation"
+                            title: qsTr("Saturation")
+                            keywords: "color intensity"
+                            searchTarget: "panel:color#tab=0/color-saturation"
+                        }
+                        SearchAnchor {
+                            searchId: "color-vibrance"
+                            title: qsTr("Vibrance")
+                            keywords: "color saturation"
+                            searchTarget: "panel:color#tab=0/color-vibrance"
+                        }
                     }
                     Repeater {
                         model: root.colorSliders
@@ -582,6 +663,12 @@ PanelFrame {
                     title: qsTr("Wheels")
                     modified: root.wheelsModified
                     onResetRequested: root.colorState.resetGroup("Wheels")
+                    SearchAnchor {
+                        searchId: "color-wheels"
+                        title: qsTr("Color wheels")
+                        keywords: "lift gamma gain shadows midtones highlights"
+                        searchTarget: "panel:color#tab=1/color-wheels"
+                    }
                 }
                 Item {
                     width: parent.width
@@ -668,6 +755,12 @@ PanelFrame {
                             title: qsTr("Curves")
                             modified: root.curvesAreModified
                             onResetRequested: root.colorState.resetGroup("Curves")
+                            SearchAnchor {
+                                searchId: "color-curves"
+                                title: qsTr("Curves")
+                                keywords: "rgb curve"
+                                searchTarget: "panel:color#tab=2/color-curves"
+                            }
                         }
                         CurveEditor {
                             x: (parent.width - width) / 2
@@ -692,6 +785,12 @@ PanelFrame {
                             title: qsTr("Hue Curves")
                             modified: root.hueCurvesAreModified
                             onResetRequested: root.colorState.resetGroup("Hue Curves")
+                            SearchAnchor {
+                                searchId: "color-hue-curves"
+                                title: qsTr("Hue curves")
+                                keywords: "hue vs hue saturation luminance curve"
+                                searchTarget: "panel:color#tab=2/color-hue-curves"
+                            }
                         }
                         CurveEditor {
                             x: (parent.width - width) / 2
@@ -719,6 +818,12 @@ PanelFrame {
                     title: qsTr("HSL")
                     modified: root.hslModified
                     onResetRequested: root.colorState.resetGroup("HSL")
+                    SearchAnchor {
+                        searchId: "color-hsl"
+                        title: qsTr("HSL")
+                        keywords: "hsl hue saturation luminance color band red orange yellow green aqua blue purple magenta"
+                        searchTarget: "panel:color#tab=3/color-hsl"
+                    }
                 }
                 Column {
                     id: hslCol
@@ -869,6 +974,30 @@ PanelFrame {
                 visible: root.tab === 4
                 height: visible ? implicitHeight : 0
 
+                SearchAnchor {
+                    searchId: "color-film-grain"
+                    title: qsTr("Film Grain")
+                    keywords: "grain noise film"
+                    searchTarget: "panel:color#tab=4/color-film-grain"
+                }
+                SearchAnchor {
+                    searchId: "color-glow"
+                    title: qsTr("Glow")
+                    keywords: "bloom glow halation"
+                    searchTarget: "panel:color#tab=4/color-glow"
+                }
+                SearchAnchor {
+                    searchId: "color-vignette"
+                    title: qsTr("Vignette")
+                    keywords: "dark corners edges"
+                    searchTarget: "panel:color#tab=4/color-vignette"
+                }
+                SearchAnchor {
+                    searchId: "color-chromatic-aberration"
+                    title: qsTr("Chromatic Aberration")
+                    keywords: "color fringe lens"
+                    searchTarget: "panel:color#tab=4/color-chromatic-aberration"
+                }
                 Repeater {
                     model: Object.keys(root.finishingNames)
                     delegate: Rectangle {

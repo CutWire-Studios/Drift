@@ -21,19 +21,19 @@ Item {
     readonly property real pageMargin: narrow ? Theme.pagePadding : Theme.spacing3xl
 
     readonly property var pages: [
-        { id: "general", title: qsTr("General") },
-        { id: "appearance", title: qsTr("Appearance") },
-        { id: "workspaces", title: qsTr("Workspaces") },
-        { id: "timeline", title: qsTr("Timeline") },
-        { id: "toolbar", title: qsTr("Timeline toolbar") },
-        { id: "keymap", title: qsTr("Keyboard shortcuts") },
-        { id: "preview", title: qsTr("Preview") },
-        { id: "performance", title: qsTr("Performance") },
-        { id: "audio", title: qsTr("Audio") },
-        { id: "ai", title: qsTr("AI & Cloud") },
-        { id: "network", title: qsTr("Network") },
-        { id: "marketplace", title: qsTr("Marketplace") },
-        { id: "about", title: qsTr("About") }
+        { id: "general", title: qsTr("General"), keywords: "language locale startup autosave recovery cache backup" },
+        { id: "appearance", title: qsTr("Appearance"), keywords: "theme dark light color workspace layout translucency" },
+        { id: "workspaces", title: qsTr("Workspaces"), keywords: "workspace layout panel window monitor screen dock preset" },
+        { id: "timeline", title: qsTr("Timeline"), keywords: "scroll wheel horizontal vertical crossfade transition overview minimap" },
+        { id: "toolbar", title: qsTr("Timeline toolbar"), keywords: "toolbar buttons customize" },
+        { id: "keymap", title: qsTr("Keyboard shortcuts"), keywords: "keymap keys hotkeys bindings" },
+        { id: "preview", title: qsTr("Preview"), keywords: "quality resolution decode proxies guides background graphics gpu" },
+        { id: "performance", title: qsTr("Performance"), keywords: "advanced tuning cache memory ram vram read-ahead buffer drop frames hardware encoder export pool" },
+        { id: "audio", title: qsTr("Audio"), keywords: "sound speakers microphone output input" },
+        { id: "ai", title: qsTr("AI & Cloud"), keywords: "agent mcp claude cursor api key elevenlabs voice scene detection" },
+        { id: "network", title: qsTr("Network"), keywords: "proxy http socks internet firewall" },
+        { id: "marketplace", title: qsTr("Marketplace"), keywords: "market store account sign in" },
+        { id: "about", title: qsTr("About"), keywords: "version updates debug info diagnostics" }
     ]
     readonly property var visiblePages: pages.filter(
         (page) => page.id !== "marketplace" || (Market.configured && Market.authenticated))

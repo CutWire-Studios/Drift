@@ -6,6 +6,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "masking-tracking"
+        title: qsTr("Masking & Tracking")
+        keywords: "mask matte rotoscope roto brush polygon tracking tracker motion track planar object follow"
+    }
 
     property bool shown: false
 

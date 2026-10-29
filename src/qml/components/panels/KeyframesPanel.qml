@@ -5,6 +5,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "keyframes-editor"
+        title: qsTr("Keyframe editor")
+        keywords: "keyframes animation curves graph editor dope sheet"
+    }
 
     property bool shown: false
     property real treeWidth: 300

@@ -187,13 +187,19 @@ Rectangle {
         y: searchBox.height + Theme.spacingMd
         x: (searchBox.width - width) / 2
         width: Math.max(searchBox.width, 480)
-        headerCommands: [
-            { label: qsTr("Export video"), keywords: "render save mp4", run: () => searchBox.exportRequested() },
-            { label: qsTr("Downloads"), keywords: "download link", run: () => searchBox.downloadsRequested() },
-            { label: qsTr("Language…"), keywords: "translate locale", run: () => searchBox.languageRequested() },
-            { label: qsTr("Video size and layout"), keywords: "canvas resolution aspect ratio", run: () => searchBox.videoSizeRequested() },
-            { label: qsTr("Switch to mobile layout…"), keywords: "phone shell", run: () => ShellBridge.main.switchShell("mobile") },
-        ]
         onFinished: searchBox.searchFinished()
+    }
+
+    Connections {
+        target: ShellBridge
+        function onDialogRequested(name, params) {
+            switch (name) {
+            case "export": searchBox.exportRequested(); break
+            case "downloads": searchBox.downloadsRequested(); break
+            case "language": searchBox.languageRequested(); break
+            case "videoSize": searchBox.videoSizeRequested(); break
+            case "mobileShell": ShellBridge.main.switchShell("mobile"); break
+            }
+        }
     }
 }

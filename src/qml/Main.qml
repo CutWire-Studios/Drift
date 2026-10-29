@@ -11,6 +11,7 @@ ApplicationWindow {
     readonly property var previewPanel: workspace.pool.previewPanel
     readonly property var propertiesPanel: workspace.pool.propertiesPanel
     readonly property var timelinePanel: workspace.pool.timelinePanel
+    readonly property var panelPool: workspace.pool
     property alias androidMediaPreviewLoader: mediaPreviewHost.loader
 
     // Qt creates some chrome itself — most visibly the Undo/Cut/Copy/Paste menu on every
@@ -778,6 +779,22 @@ ApplicationWindow {
     // not bound to one clip, so it survives any edit and only closes when the document does.
     function openMulticam() {
         multicamWindowLoader.ensure().openSession()
+    }
+
+    // Panels that no workspace has room for. One window per type, kept for the session.
+    property var floatingPanels: ({})
+    function openFloatingPanel(type) {
+        if (type === "preview")
+            return
+        if (!window.floatingPanels[type])
+            window.floatingPanels[type] = floatingPanelC.createObject(window.contentItem,
+                                                                      { type: type, pool: workspace.pool })
+        window.floatingPanels[type].openPanel()
+    }
+
+    Component {
+        id: floatingPanelC
+        FloatingPanelWindow {}
     }
 
     // Opened from the header's Settings menu. Every preference lives here now; the

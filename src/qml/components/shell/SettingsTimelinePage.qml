@@ -15,6 +15,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Mouse wheel scrolls")
+        searchId: "timeline-mouse-wheel-scrolls"
         description: qsTr("What the mouse wheel moves on the timeline. Hold Shift for the other direction; middle-click drag also pans.")
         keywords: "scroll wheel pan horizontal vertical invert direction mouse"
         available: !Theme.touchUi
@@ -39,6 +40,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Auto-crossfade overlapping clips")
+        searchId: "timeline-auto-crossfade"
         description: qsTr("When a move creates an overlap with a neighbouring clip on the same track, add a crossfade across it.")
         keywords: "transition dissolve overlap"
         query: page.query
@@ -51,6 +53,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Auto-select clip under playhead")
+        searchId: "timeline-auto-select-clip"
         description: qsTr("Select the clip under the playhead as the playhead moves.")
         keywords: "locate follow select"
         query: page.query
@@ -63,6 +66,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Auto keyframes")
+        searchId: "timeline-auto-keyframes"
         description: qsTr("Dragging a slider also creates keyframes.")
         keywords: "keyframe animate record"
         query: page.query
@@ -75,6 +79,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Loop work area")
+        searchId: "timeline-loop-work-area"
         description: qsTr("Playback repeats between the work area in and out points.")
         keywords: "repeat in out"
         query: page.query
@@ -92,6 +97,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Still image duration")
+        searchId: "timeline-still-image-duration"
         description: qsTr("Length of images and stills when added to the timeline.")
         keywords: "image photo picture length"
         query: page.query
@@ -117,6 +123,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Transition length")
+        searchId: "timeline-transition-length"
         description: qsTr("Length of new transitions dropped between clips.")
         keywords: "crossfade duration seconds"
         query: page.query
@@ -146,6 +153,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Show timeline overview")
+        searchId: "timeline-show-overview"
         description: qsTr("A minimap of the whole project. Click or drag it to jump the view.")
         keywords: "minimap navigator"
         query: page.query
@@ -158,6 +166,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Show audio mixer")
+        searchId: "timeline-show-audio-mixer"
         description: qsTr("Show the audio mixer strip beside the timeline.")
         keywords: "volume levels strip"
         query: page.query

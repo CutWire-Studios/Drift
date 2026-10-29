@@ -34,6 +34,7 @@
     "beatOnset": "#2121218c",
     "textStylePreviewBorder": "#2a2a2a",
     "primary": "#F8B81C",
+    "searchHighlight": "#4DF8B81C",
     "primaryForeground": "#221900",
     "destructive": "#e91616",
     "constructive": "#23d160",
@@ -832,6 +833,10 @@
       "border": "$semantic.panel.border",
       "radius": "$metrics.radius.md",
       "foregroundMuted": "$semantic.mutedForeground"
+    },
+    "searchHighlight": {
+      "background": "$palette.searchHighlight",
+      "radius": "$metrics.radius.sm"
     },
     "editorHeaderProjectsButton": {
       "radius": "$metrics.radius.sm",

@@ -97,6 +97,11 @@ Item {
 
         // Integer models keep delegates alive across preview ticks that rebuild
         // selectedClipEffects as a fresh QVariantList (same as AudioEffectsInspector).
+        SearchAnchor {
+            searchId: "effects-settings"
+            title: qsTr("Effect settings")
+            keywords: "parameters"
+        }
         Repeater {
             model: root.selectedEffects.length
             delegate: Column {

@@ -14,7 +14,14 @@ Row {
         onClicked: EditorState.pasteEffectsFromClipboard(
                        EditorState.selectedTrack, EditorState.selectedClip)
     }
+    SearchAnchor {
+        searchId: "effects-save-preset"
+        title: qsTr("Save as preset…")
+        keywords: "stack"
+        target: effectsSavePresetButton
+    }
     ThemedButton {
+        id: effectsSavePresetButton
         text: qsTr("Save as preset…")
         glyph: Theme.icons.save
         variant: "secondary"

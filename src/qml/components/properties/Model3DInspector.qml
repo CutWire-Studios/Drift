@@ -74,7 +74,14 @@ Item {
             width: parent.width
             spacing: Theme.spacingXs
 
-            ThemedLabel { text: qsTr("3D model") }
+            ThemedLabel {
+                text: qsTr("3D model")
+                SearchAnchor {
+                    searchId: "model3d-model"
+                    title: qsTr("3D model")
+                    keywords: "mesh"
+                }
+            }
 
             ThemedLabel {
                 width: parent.width

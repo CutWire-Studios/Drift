@@ -29,6 +29,7 @@ private slots:
     void subtitlesPresetHasSubtitlePanels();
     void migratesCutTrimToSourceLab();
     void migratesSourceLabBinOverride();
+    void findsWorkspaceWithPanel();
 
 private:
     QString m_org;
@@ -283,6 +284,19 @@ void WorkspaceStoreTest::migratesSourceLabBinOverride()
     const QVariantMap ws = store.workspace("source-lab");
     QVERIFY(!ws.value("modified").toBool());
     QVERIFY(ws.value("builtin").toBool());
+}
+
+void WorkspaceStoreTest::findsWorkspaceWithPanel()
+{
+    WorkspaceStore store;
+    QCOMPARE(store.workspaceWithPanel("preview"), store.activeId());
+    QCOMPARE(store.workspaceWithPanel("color"), QStringLiteral("color"));
+    QVERIFY(store.workspaceWithPanel("no-such-panel").isEmpty());
+
+    QVERIFY(store.saveWorkspace(workspaceWith(slot("sourceViewer"), "custom-1")).isEmpty());
+    QCOMPARE(store.workspaceWithPanel("sourceViewer"), QStringLiteral("custom-1"));
+    store.setActiveId(QStringLiteral("custom-1"));
+    QCOMPARE(store.workspaceWithPanel("sourceViewer"), QStringLiteral("custom-1"));
 }
 
 QTEST_MAIN(WorkspaceStoreTest)

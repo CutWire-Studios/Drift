@@ -60,6 +60,11 @@ Item {
             color: Theme.c.stabilizeInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
+            SearchAnchor {
+                searchId: "stabilize-stabilize"
+                title: qsTr("Stabilize")
+                keywords: "shake shaky steady"
+            }
         }
 
         Column {
@@ -94,6 +99,11 @@ Item {
 
             Text {
                 text: qsTr("Smoothing")
+                SearchAnchor {
+                    searchId: "stabilize-smoothing"
+                    title: qsTr("Smoothing")
+                    keywords: "shake steady"
+                }
                 color: Theme.c.stabilizeInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -136,7 +146,14 @@ Item {
             width: parent.width
             spacing: Theme.spacingSm
 
+            SearchAnchor {
+                searchId: "stabilize-tripod"
+                title: qsTr("Tripod mode")
+                keywords: "lock still"
+                target: stabilizeTripodSwitch
+            }
             ThemedSwitch {
+                id: stabilizeTripodSwitch
                 text: qsTr("Tripod mode")
                 checked: root.clipData ? !!root.clipData.stabilizeTripod : false
                 enabled: !root.stabilizing

@@ -19,6 +19,11 @@ SourceLabSection {
 
     SourceLabSliderRow {
         label: qsTr("Speed")
+        SearchAnchor {
+            searchId: "sourcelab-speed"
+            title: qsTr("Speed and loudness")
+            keywords: "speed slow fast motion gain volume loudness normalize"
+        }
         value: root.speed
         from: 0.25
         to: 4

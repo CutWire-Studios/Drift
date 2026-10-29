@@ -39,6 +39,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | beatOnset | #ffffff8c | #2121218c |
 | textStylePreviewBorder | #3a3a3a | #2a2a2a |
 | primary | #F8B81C | #F8B81C |
+| searchHighlight | #4DF8B81C | #4DF8B81C |
 | primaryForeground | #221900 | #221900 |
 | destructive | #e91616 | #e91616 |
 | constructive | #23d160 | #23d160 |
@@ -678,6 +679,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | globalSearchPopup | border | $semantic.panel.border | $semantic.panel.border |
 | globalSearchPopup | radius | $metrics.radius.md | $metrics.radius.md |
 | globalSearchPopup | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| searchHighlight | background | $palette.searchHighlight | $palette.searchHighlight |
+| searchHighlight | radius | $metrics.radius.sm | $metrics.radius.sm |
 | editorHeaderProjectsButton | radius | $metrics.radius.sm | $metrics.radius.sm |
 | editorHeaderProjectsButton | backgroundHover | $semantic.popoverHover | $semantic.popoverHover |
 | editorHeaderProjectsButton | background | $semantic.accent | $semantic.accent |

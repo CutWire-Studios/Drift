@@ -19,6 +19,11 @@ SourceLabSection {
     dirty: (root.recipe.aspect ?? "free") !== "free" || root.crop.x !== 0 || root.crop.y !== 0
            || root.crop.width !== 1 || root.crop.height !== 1
     onResetRequested: root.lab.resetRecipe("crop")
+    SearchAnchor {
+        searchId: "sourcelab-crop"
+        title: qsTr("Crop / reframe source")
+        keywords: "crop reframe reframing aspect ratio 9:16 portrait presets"
+    }
 
     function setPixels(x, y, w, h) {
         const sw = Math.max(1, root.sourceW)

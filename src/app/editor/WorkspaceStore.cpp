@@ -254,6 +254,28 @@ QString validateNode(const QVariantMap &node, QSet<QString> &seen)
     return {};
 }
 
+bool containsPanel(const QVariantMap &node, const QString &type)
+{
+    for (const QVariant &child : node.value(QStringLiteral("children")).toList()) {
+        if (containsPanel(child.toMap(), type))
+            return true;
+    }
+    for (const QVariant &panel : node.value(QStringLiteral("panels")).toList()) {
+        if (panel.toMap().value(QStringLiteral("type")).toString() == type)
+            return true;
+    }
+    return false;
+}
+
+bool workspaceHasPanel(const QVariantMap &ws, const QString &type)
+{
+    for (const QVariant &window : ws.value(QStringLiteral("windows")).toList()) {
+        if (containsPanel(window.toMap().value(QStringLiteral("root")).toMap(), type))
+            return true;
+    }
+    return false;
+}
+
 QVariantMap parseJson(const QByteArray &data)
 {
     return QJsonDocument::fromJson(data).object().toVariantMap();
@@ -531,6 +553,21 @@ QVariantList WorkspaceStore::panelTypes() const
 QVariantMap WorkspaceStore::workspace(const QString &id) const
 {
     return effective(id);
+}
+
+QString WorkspaceStore::workspaceWithPanel(const QString &type) const
+{
+    if (workspaceHasPanel(effective(m_activeId), type))
+        return m_activeId;
+    for (const QString &id : m_presetOrder) {
+        if (workspaceHasPanel(effective(id), type))
+            return id;
+    }
+    for (const QVariant &v : m_user) {
+        if (workspaceHasPanel(v.toMap(), type))
+            return v.toMap().value(QStringLiteral("id")).toString();
+    }
+    return {};
 }
 
 QString WorkspaceStore::validate(const QVariantMap &ws) const

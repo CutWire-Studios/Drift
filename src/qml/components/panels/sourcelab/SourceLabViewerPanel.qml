@@ -3,6 +3,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "sourcelab-viewer"
+        title: qsTr("Source Lab")
+        keywords: "source lab workspace cut trim crop reframe ranges subclip favorite reject marker speed denoise stabilize upscale enhance export clip normalize loudness"
+    }
 
     // Set by PanelPool. The panel owns EditorState.assetPreview only while it is on screen.
     property bool shown: false

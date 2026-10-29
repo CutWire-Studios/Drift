@@ -11,6 +11,11 @@ CollapsibleSection {
 
     Text {
         text: qsTr("Font")
+        SearchAnchor {
+            searchId: "text-font"
+            title: qsTr("Font")
+            keywords: "typeface"
+        }
         color: Theme.c.textInspectorFontSection.foregroundMuted
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
@@ -65,6 +70,11 @@ CollapsibleSection {
             spacing: 4
             Text {
                 text: qsTr("Colour")
+                SearchAnchor {
+                    searchId: "text-style"
+                    title: qsTr("Text style")
+                    keywords: "color outline shadow"
+                }
                 color: Theme.c.textInspectorFontSection.foregroundMuted
                 font.pixelSize: Theme.fontSizeXs
                 font.family: Theme.fontFamily

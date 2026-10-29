@@ -59,6 +59,11 @@ Item {
                 text: qsTr("Everything on the timeline is seen through this camera while the clip "
                            + "lasts. A camera at rest looks exactly like no camera at all, so the "
                            + "numbers below are all offsets from the normal view.")
+                SearchAnchor {
+                    searchId: "camera-position"
+                    title: qsTr("Camera position")
+                    keywords: "3d"
+                }
                 color: Theme.c.cameraInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs

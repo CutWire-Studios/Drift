@@ -5,6 +5,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "color-scopes"
+        title: qsTr("Scopes")
+        keywords: "histogram waveform vectorscope parade"
+    }
 
     property bool shown: false
     property bool held: false

@@ -21,6 +21,7 @@ SettingsPage {
     SettingsRow {
         stacked: true
         title: qsTr("Layout designer")
+        searchId: "workspaces-layout-designer"
         description: qsTr("Built-in presets keep a copy of the original, so Reset brings them back.")
         keywords: "workspace layout panel window monitor screen dock preset split tab"
         query: page.query

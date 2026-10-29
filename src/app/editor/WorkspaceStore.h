@@ -34,6 +34,7 @@ public:
     QVariantList panelTypes() const;
 
     Q_INVOKABLE QVariantMap workspace(const QString &id) const;
+    Q_INVOKABLE QString workspaceWithPanel(const QString &type) const;
     Q_INVOKABLE QString validate(const QVariantMap &ws) const;
     Q_INVOKABLE QString saveWorkspace(const QVariantMap &ws);
     Q_INVOKABLE QString duplicate(const QString &id);

@@ -111,7 +111,14 @@ SourceLabSection {
         spacing: Theme.spacingSm
         visible: root.usable
 
-        ThemedLabel { text: qsTr("Upscale") }
+        ThemedLabel {
+            text: qsTr("Upscale")
+            SearchAnchor {
+                searchId: "sourcelab-upscale"
+                title: qsTr("Upscale source clip")
+                keywords: "upscale enhance restore resolution sharpen a/b compare"
+            }
+        }
         ThemedComboBox {
             width: parent.width
             model: root.upscaleModels

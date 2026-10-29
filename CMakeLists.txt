@@ -1126,6 +1126,8 @@ qt_add_executable(drift
     src/app/editor/LayoutStore.cpp
     src/app/editor/WorkspaceStore.h
     src/app/editor/WorkspaceStore.cpp
+    src/app/editor/SearchIndex.h
+    src/app/editor/SearchIndex.cpp
     src/app/platform/FileDialogs.h
     src/app/platform/FileDialogs.cpp
     src/app/platform/Haptics.h
@@ -1398,6 +1400,13 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/color.json
         resources/workspaces/keyframes.json
         resources/workspaces/masking-tracking.json
+)
+
+# Global search index written by scripts/gen-search-index.py; loaded at :/search-index.json.
+qt_add_resources(drift "drift_search_index"
+    PREFIX "/"
+    BASE resources
+    FILES resources/search-index.json
 )
 
 set_source_files_properties(src/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
@@ -2183,7 +2192,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/StartScreen.qml
         src/qml/components/NewTrackMenu.qml
         src/qml/components/shell/GlobalSearchPopup.qml
-        src/qml/components/shell/GlobalSearchControls.qml
         src/qml/components/shell/ToastHost.qml
         src/qml/components/shell/NotificationList.qml
         src/qml/components/shell/NotificationsPopup.qml
@@ -2222,6 +2230,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsPerformancePage.qml
         src/qml/components/shell/SettingsPreviewPage.qml
         src/qml/components/shell/SettingsRow.qml
+        src/qml/components/shell/SearchAnchor.qml
         src/qml/components/shell/SettingsThemeEntry.qml
         src/qml/components/shell/SettingsThemeList.qml
         src/qml/components/shell/SettingsTimelinePage.qml
@@ -2241,6 +2250,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/GlobalSearchResultRow.qml
         src/qml/components/shell/EditorWorkspace.qml
         src/qml/components/shell/workspaces/PanelPool.qml
+        src/qml/components/shell/workspaces/FloatingPanelWindow.qml
         src/qml/components/shell/workspaces/WorkspaceCell.qml
         src/qml/components/shell/workspaces/WorkspaceHost.qml
         src/qml/components/shell/workspaces/WorkspacePlaceholderPanel.qml

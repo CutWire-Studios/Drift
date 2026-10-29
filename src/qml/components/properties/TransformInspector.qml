@@ -216,6 +216,11 @@ Item {
             Item {
                 width: parent.width
                 height: posLinkButton.height
+                SearchAnchor {
+                    searchId: "transform-position"
+                    title: qsTr("Position")
+                    keywords: "move x y"
+                }
 
                 Text {
                     anchors.left: parent.left
@@ -275,6 +280,11 @@ Item {
             Item {
                 width: parent.width
                 height: sizeLinkButton.height
+                SearchAnchor {
+                    searchId: "transform-scale"
+                    title: qsTr("Scale")
+                    keywords: "size zoom resize"
+                }
 
                 Text {
                     anchors.left: parent.left
@@ -455,7 +465,14 @@ Item {
                 font.weight: Font.Medium
             }
 
+            SearchAnchor {
+                searchId: "transform-opacity"
+                title: qsTr("Opacity")
+                keywords: "transparency alpha fade"
+                target: transformOpacityRow
+            }
             PropertyKeyframeRow {
+                id: transformOpacityRow
                 width: parent.width
                 propDef: root.propOpacity
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.opacity && root.clipData.keyframes.opacity.points) || []
@@ -465,7 +482,14 @@ Item {
                 percent: true
             }
 
+            SearchAnchor {
+                searchId: "transform-rotation"
+                title: qsTr("Rotation")
+                keywords: "angle rotate 90"
+                target: transformRotationRow
+            }
             PropertyKeyframeRow {
+                id: transformRotationRow
                 width: parent.width
                 propDef: root.propRotation
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotation && root.clipData.keyframes.rotation.points) || []
@@ -635,6 +659,11 @@ Item {
             Text {
                 visible: root.clipKind === "video"
                 text: qsTr("Fix orientation")
+                SearchAnchor {
+                    searchId: "transform-fix-orientation"
+                    title: qsTr("Fix orientation")
+                    keywords: "rotate sideways"
+                }
                 color: Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -673,6 +702,11 @@ Item {
 
             Text {
                 text: qsTr("Flip")
+                SearchAnchor {
+                    searchId: "transform-flip"
+                    title: qsTr("Flip")
+                    keywords: "mirror horizontal vertical"
+                }
                 color: Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -704,7 +738,14 @@ Item {
                 }
             }
 
+            SearchAnchor {
+                searchId: "transform-reset-size"
+                title: qsTr("Reset position & size")
+                keywords: "fit"
+                target: transformResetButton
+            }
             ThemedButton {
+                id: transformResetButton
                 text: qsTr("Reset position & size")
                 onClicked: EditorState.resetClipTransform(
                                EditorState.selectedTrack, EditorState.selectedClip)

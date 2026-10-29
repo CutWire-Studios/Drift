@@ -9,6 +9,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Account")
+        searchId: "marketplace-account"
         description: Market.accountName.length > 0
                      ? qsTr("Account connected (%1)").arg(Market.accountName)
                      : qsTr("Marketplace account connected")
