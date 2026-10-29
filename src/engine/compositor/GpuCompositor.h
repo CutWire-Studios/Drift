@@ -199,9 +199,9 @@ struct GpuFrameTexture
 {
     unsigned int textureId = 0;
     QSize size;
-    // Readback fallback, only ever filled on Android and only when the driver
-    // refused to put the compositor's context in the scene graph's share group,
-    // which makes textureId unusable there. Premultiplied ARGB32, ready to upload.
+    // Readback fallback, filled only when the compositor's context is not in the scene
+    // graph's share group: Qt Quick runs on a non-OpenGL API, or an Android driver refused
+    // sharing. textureId is unusable there. Premultiplied ARGB32, ready to upload.
     QImage image;
     // Small upright copy of the canvas for the scopes, only when GpuScene asked for one.
     QImage scopeImage;

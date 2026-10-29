@@ -71,6 +71,46 @@ SettingsPage {
     }
 
     SettingsGroupHeader {
+        text: qsTr("Interface")
+        query: page.query
+        available: EditorState.preferences.uiGraphicsApis.length > 1
+    }
+
+    SettingsRow {
+        title: qsTr("Interface graphics API")
+        searchId: "performance-graphics-api"
+        description: {
+            const text = qsTr("What draws panels, the timeline and menus. OpenGL hands the preview over without a copy. The others can make the interface smoother but copy every preview frame through the CPU, so playback may get slower. If Drift does not start with your choice, it goes back to OpenGL. Takes effect after restart.")
+            return EditorState.preferences.uiGraphicsApiRevertedFrom.length > 0
+                ? text + " " + qsTr("The last choice did not start, so OpenGL is in use.")
+                : text
+        }
+        keywords: "renderer rhi opengl direct3d d3d11 d3d12 vulkan metal gpu backend slow ui"
+        available: EditorState.preferences.uiGraphicsApis.length > 1
+        query: page.query
+
+        ThemedComboBox {
+            width: Theme.c.settingsRow.controlWidth
+            textRole: "label"
+            valueRole: "id"
+            model: {
+                const labels = {
+                    opengl: qsTr("OpenGL (recommended)"),
+                    d3d11: qsTr("Direct3D 11 (Windows default)"),
+                    d3d12: "Direct3D 12",
+                    vulkan: "Vulkan",
+                    metal: qsTr("Metal (macOS default)")
+                }
+                return EditorState.preferences.uiGraphicsApis.map(function (id) {
+                    return { id: id, label: labels[id] || id }
+                })
+            }
+            currentIndex: Math.max(0, EditorState.preferences.uiGraphicsApis.indexOf(EditorState.preferences.uiGraphicsApi))
+            onActivated: EditorState.preferences.uiGraphicsApi = model[currentIndex].id
+        }
+    }
+
+    SettingsGroupHeader {
         text: qsTr("Playback")
         query: page.query
     }

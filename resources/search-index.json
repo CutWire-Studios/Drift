@@ -995,6 +995,14 @@
       "descriptionSource": "These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately."
     },
     {
+      "id": "performance-graphics-api",
+      "target": "settings:performance#performance-graphics-api",
+      "context": "SettingsPerformancePage",
+      "source": "Interface graphics API",
+      "keywords": "renderer rhi opengl direct3d d3d11 d3d12 vulkan metal gpu backend slow ui",
+      "needs": []
+    },
+    {
       "id": "performance-drop-late-frames",
       "target": "settings:performance#performance-drop-late-frames",
       "context": "SettingsPerformancePage",

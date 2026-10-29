@@ -798,6 +798,10 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
             [this](const QString &text) {
                 setLastMessage(text, QStringLiteral("info"));
             });
+    if (!m_preferences->uiGraphicsApiRevertedFrom().isEmpty()) {
+        setLastMessage(tr("The interface graphics API you chose did not start, so Drift went back to OpenGL."),
+                       QStringLiteral("warning"));
+    }
     m_projectFile->setAutosaveIntervalSeconds(m_preferences->autosaveIntervalSeconds());
     connect(m_preferences, &PreferencesController::autosaveIntervalSecondsChanged, this, [this] {
         m_projectFile->setAutosaveIntervalSeconds(m_preferences->autosaveIntervalSeconds());

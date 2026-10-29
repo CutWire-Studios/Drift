@@ -2736,6 +2736,10 @@
         <translation>Walang sapat na bakanteng espasyo sa %1.</translation>
     </message>
     <message>
+        <source>The interface graphics API you chose did not start, so Drift went back to OpenGL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Your graphics driver is too old for the preview, which needs OpenGL 3.3. See Help → Debug info.</source>
         <translation>Masyadong luma ang iyong graphics driver para sa preview, na nangangailangan ng OpenGL 3.3. Tingnan ang Tulong → Impormasyon sa pag-debug.</translation>
     </message>
@@ -13087,6 +13091,10 @@
         <translation>Magkakabisa ang pagpili ng graphics card pagkatapos mong i-restart ang Drift.</translation>
     </message>
     <message>
+        <source>The interface graphics API takes effect after you restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>System default</source>
         <translation>Default ng sistema</translation>
     </message>
@@ -16128,6 +16136,34 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Reset to defaults</source>
         <translation>I-reset sa mga default</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation type="unfinished">Interface</translation>
+    </message>
+    <message>
+        <source>Interface graphics API</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What draws panels, the timeline and menus. OpenGL hands the preview over without a copy. The others can make the interface smoother but copy every preview frame through the CPU, so playback may get slower. If Drift does not start with your choice, it goes back to OpenGL. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last choice did not start, so OpenGL is in use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenGL (recommended)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Direct3D 11 (Windows default)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Metal (macOS default)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback</source>

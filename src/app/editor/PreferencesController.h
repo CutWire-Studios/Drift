@@ -66,6 +66,12 @@ class PreferencesController : public QObject
     Q_PROPERTY(QString preferredGpu READ preferredGpu WRITE setPreferredGpu NOTIFY preferredGpuChanged)
     Q_PROPERTY(bool gpuPreferenceSupported READ gpuPreferenceSupported CONSTANT)
     Q_PROPERTY(bool gpuPreferenceInSystemSettings READ gpuPreferenceInSystemSettings CONSTANT)
+    // Graphics API the interface is drawn with (GraphicsApiChoice.h), next launch. uiGraphicsApis
+    // lists what this platform offers; uiGraphicsApiRevertedFrom names a choice this launch fell
+    // back from after it failed to start.
+    Q_PROPERTY(QString uiGraphicsApi READ uiGraphicsApi WRITE setUiGraphicsApi NOTIFY uiGraphicsApiChanged)
+    Q_PROPERTY(QStringList uiGraphicsApis READ uiGraphicsApis CONSTANT)
+    Q_PROPERTY(QString uiGraphicsApiRevertedFrom READ uiGraphicsApiRevertedFrom CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
     Q_PROPERTY(bool autoCrossfadeOverlaps READ autoCrossfadeOverlaps WRITE setAutoCrossfadeOverlaps
@@ -177,6 +183,10 @@ public:
     void setPreferredGpu(const QString &id);
     bool gpuPreferenceSupported() const;
     bool gpuPreferenceInSystemSettings() const;
+    QString uiGraphicsApi() const { return m_uiGraphicsApi; }
+    void setUiGraphicsApi(const QString &id);
+    QStringList uiGraphicsApis() const;
+    QString uiGraphicsApiRevertedFrom() const;
     bool invertTimelineScroll() const { return m_invertTimelineScroll; }
     void setInvertTimelineScroll(bool enabled);
     bool autoCrossfadeOverlaps() const { return m_autoCrossfadeOverlaps; }
@@ -281,6 +291,7 @@ signals:
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
     void preferredGpuChanged();
+    void uiGraphicsApiChanged();
     void invertTimelineScrollChanged();
     void autoCrossfadeOverlapsChanged();
     void autoSelectUnderPlayheadChanged();
@@ -293,7 +304,7 @@ signals:
     void uiScaleChanged();
     void interfaceShellChanged();
     void performanceChanged();
-    // setVaapiZeroCopy, setMediaCodecZeroCopy and setPreferredGpu take effect on the next
+    // setVaapiZeroCopy, setMediaCodecZeroCopy, setPreferredGpu and setUiGraphicsApi take effect on the next
     // launch. AppController turns this into a status toast.
     void restartNoticeRequested(const QString &text);
 
@@ -313,6 +324,7 @@ private:
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
     QString m_preferredGpu = QStringLiteral("auto");
+    QString m_uiGraphicsApi;
     bool m_invertTimelineScroll = false;
     bool m_autoCrossfadeOverlaps = true;
     bool m_autoSelectUnderPlayhead = false;

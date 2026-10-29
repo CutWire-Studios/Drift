@@ -2795,6 +2795,10 @@
         <translation>%1-এ পর্যাপ্ত খালি জায়গা নেই।</translation>
     </message>
     <message>
+        <source>The interface graphics API you chose did not start, so Drift went back to OpenGL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not create a proxy for %1: %2</source>
         <translation>%1 : %2 এর জন্য একটি প্রক্সি তৈরি করা যায়নি</translation>
     </message>
@@ -13087,6 +13091,10 @@
         <translation>Drift পুনরায় চালু করলে নির্বাচিত গ্রাফিক্স কার্ড ব্যবহার করা হবে.</translation>
     </message>
     <message>
+        <source>The interface graphics API takes effect after you restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>System default</source>
         <translation>সিস্টেমের ডিফল্ট</translation>
     </message>
@@ -16127,6 +16135,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Reset to defaults</source>
         <translation>ডিফল্ট সেটিংস ফিরিয়ে আনুন</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation type="unfinished">ইন্টারফেস</translation>
+    </message>
+    <message>
+        <source>Interface graphics API</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What draws panels, the timeline and menus. OpenGL hands the preview over without a copy. The others can make the interface smoother but copy every preview frame through the CPU, so playback may get slower. If Drift does not start with your choice, it goes back to OpenGL. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last choice did not start, so OpenGL is in use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenGL (recommended)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Direct3D 11 (Windows default)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Metal (macOS default)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback</source>

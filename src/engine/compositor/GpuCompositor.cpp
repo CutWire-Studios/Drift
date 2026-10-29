@@ -1977,10 +1977,9 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
 
     GlRuntime &rt = runtime();
 
-#ifdef Q_OS_ANDROID
     // Handing over a texture *name* only works while both contexts are in one share
-    // group; a driver that refuses sharing would leave the preview black rather than
-    // merely slow, so fall back to a readback in that case.
+    // group. Without one — Qt Quick on another graphics API, or an Android driver that
+    // refused sharing — the preview would be black rather than merely slow, so read back.
     if (!rt.sharesWithGuiContext()) {
         rt.exec([&] {
             GlTarget canvas = rt.acquireTarget(scene.canvasSize.width(), scene.canvasSize.height());
@@ -2000,7 +1999,6 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
         });
         return out;
     }
-#endif
 
     rt.exec([&] {
         GlTarget &canvas = rt.acquirePresentTarget(scene.canvasSize.width(), scene.canvasSize.height());

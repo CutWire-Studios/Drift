@@ -10,8 +10,9 @@ class PlaybackEngine;
 
 // Displays the compositor's output. The frame is normally already a GL texture in
 // the shared context, so it is wrapped with fromNative — no copy, no upload. Only
-// when the driver refused to share contexts (Android only; see GpuFrameTexture)
-// does the compositor publish a QImage instead, which is uploaded here per frame.
+// when there is no shared context (Qt Quick on a non-OpenGL API, or an Android driver
+// that refused sharing; see GpuFrameTexture) does the compositor publish a QImage
+// instead, which is uploaded here per frame.
 //
 // Frames are pulled from PlaybackEngine in C++ — QML cannot reliably assign QImage
 // between properties, which left the Android preview permanently blank.

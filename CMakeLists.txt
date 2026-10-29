@@ -1058,6 +1058,8 @@ qt_add_executable(drift
     src/app/editor/PreferencesController.cpp
     src/app/StartupSplash.h
     src/app/StartupSplash.cpp
+    src/app/GraphicsApiChoice.h
+    src/app/GraphicsApiChoice.cpp
     src/app/editor/ProjectFileController.h
     src/app/editor/ProjectFileController.cpp
     src/app/bin/AssetPreviewController.h

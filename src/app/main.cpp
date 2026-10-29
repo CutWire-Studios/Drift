@@ -19,6 +19,7 @@
 #include "app/platform/Haptics.h"
 #include "app/platform/PointerDevices.h"
 #include "app/platform/PrimaryDisplay.h"
+#include "app/GraphicsApiChoice.h"
 #include "app/StartupSplash.h"
 #include "app/editor/LayoutStore.h"
 #include "app/editor/WorkspaceStore.h"
@@ -68,6 +69,7 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QProcess>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
 #include <QQmlApplicationEngine>
@@ -567,8 +569,8 @@ int main(int argc, char *argv[])
     // OpenGL reads the alpha plane from the surface format. RHI backends
     // (Vulkan, D3D, Metal) ignore QSurfaceFormat and look at
     // QQuickWindow::setDefaultAlphaBuffer instead; set both so a transparent
-    // window color survives whichever graphics API is selected. The app asks
-    // for OpenGL below, so the format is the path that actually runs.
+    // window color survives whichever graphics API is selected. Qt Quick runs
+    // on OpenGL unless Settings picked another API (GraphicsApiChoice.h).
     if (translucentWindows)
         format.setAlphaBufferSize(8);
     QSurfaceFormat::setDefaultFormat(format);
@@ -576,11 +578,6 @@ int main(int argc, char *argv[])
     if (translucentWindows)
         QQuickWindow::setDefaultAlphaBuffer(true);
     WindowBackdrop::noteProcessTranslucency(translucentWindows);
-
-    // Keep Qt Quick on OpenGL and create its global share context before the
-    // application, enabling zero-copy texture handoff from the compositor.
-    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
 #ifdef Q_OS_WIN
     // Before allowing desktop OpenGL, Qt looks the GPU up in a blacklist keyed on
@@ -604,6 +601,9 @@ int main(int argc, char *argv[])
     // must be in the environment before QApplication is constructed.
     QCoreApplication::setApplicationName("CutWire Drift");
     QCoreApplication::setOrganizationName("CutWire Drift");
+    // Reads QSettings, so after the names. Qt Quick stays on OpenGL with a global share context
+    // unless the user picked another API in Settings; see GraphicsApiChoice.h.
+    [[maybe_unused]] const bool graphicsApiGuarded = drift::graphics::applyAtStartup(argc, argv);
 #ifdef Q_OS_WIN
     // Windows defaults 1080p screens to 125%, which leaves the editor too little room. Interface
     // size is measured from 96 DPI here instead, picked from the screen on first run.
@@ -926,6 +926,21 @@ int main(int argc, char *argv[])
             new FirstFrameWatchdog(shellWindow);
     }
     splash->finishOn(shellWindow);
+    if (shellWindow && graphicsApiGuarded) {
+        QObject::connect(shellWindow, &QQuickWindow::frameSwapped, &app, [] {
+            drift::graphics::markStarted();
+        }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
+        // Connected, Qt Quick reports a backend that will not come up here instead of aborting.
+        // Go back to OpenGL and start again rather than leave a blank window.
+        QObject::connect(shellWindow, &QQuickWindow::sceneGraphError, &app,
+                         [](QQuickWindow::SceneGraphError, const QString &message) {
+            qCritical("Qt Quick could not start on the chosen graphics API: %s", qUtf8Printable(message));
+            drift::graphics::revertAfterFailure();
+            QProcess::startDetached(QCoreApplication::applicationFilePath(),
+                                    QCoreApplication::arguments().mid(1));
+            QCoreApplication::exit(1);
+        }, Qt::QueuedConnection);
+    }
     if (shellWindow) {
         // The compositor's GL context and Skia otherwise come up on the first preview frame,
         // blocking the GUI thread as a project opens. Bring them up off the GUI thread once the

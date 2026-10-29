@@ -1,4 +1,5 @@
 #include "app/editor/PreferencesController.h"
+#include "app/GraphicsApiChoice.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/EngineTuning.h"
 
@@ -115,6 +116,8 @@ bool isMachineOrSecretSetting(const QString &key)
         QStringLiteral("variant"), QStringLiteral("outputDeviceId"), QStringLiteral("decodeMode"),
         QStringLiteral("hardwareDecode"), QStringLiteral("vaapiZeroCopy"), QStringLiteral("d3d11ZeroCopy"),
         QStringLiteral("mediaCodecZeroCopy"), QStringLiteral("preferredGpu"),
+        QStringLiteral("graphicsApi"), QStringLiteral("graphicsApiPending"),
+        QStringLiteral("graphicsApiRevertedFrom"),
         QStringLiteral("speedFactor"), QStringLiteral("speedCalibrated"),
         QStringLiteral("proxyPassword"),
     };
@@ -262,6 +265,7 @@ PreferencesController::PreferencesController(QObject *parent)
     m_vaapiZeroCopy = drift::vaapiZeroCopyMode() != drift::VaapiZeroCopyMode::Off;
 #endif
     m_preferredGpu = drift::gpu::preferenceId(drift::gpu::storedPreference());
+    m_uiGraphicsApi = drift::graphics::storedApi();
     m_mediaCodecZeroCopy =
         settings.value(QStringLiteral("preview/mediaCodecZeroCopy"), false).toBool();
     m_invertTimelineScroll = settings.value(QStringLiteral("timeline/invertScroll"), false).toBool();
@@ -505,6 +509,26 @@ void PreferencesController::setPreferredGpu(const QString &id)
     emit preferredGpuChanged();
     // Not conservative advice: the driver chose this process's GPU when it loaded.
     emit restartNoticeRequested(tr("The graphics card choice takes effect after you restart Drift."));
+}
+
+void PreferencesController::setUiGraphicsApi(const QString &id)
+{
+    if (m_uiGraphicsApi == id || !drift::graphics::availableApis().contains(id))
+        return;
+    m_uiGraphicsApi = id;
+    drift::graphics::storeApi(id);
+    emit uiGraphicsApiChanged();
+    emit restartNoticeRequested(tr("The interface graphics API takes effect after you restart Drift."));
+}
+
+QStringList PreferencesController::uiGraphicsApis() const
+{
+    return drift::graphics::availableApis();
+}
+
+QString PreferencesController::uiGraphicsApiRevertedFrom() const
+{
+    return drift::graphics::revertedFrom();
 }
 
 bool PreferencesController::gpuPreferenceSupported() const

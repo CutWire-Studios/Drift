@@ -2790,6 +2790,10 @@
         <translation>%1에 사용 가능한 공간이 부족합니다.</translation>
     </message>
     <message>
+        <source>The interface graphics API you chose did not start, so Drift went back to OpenGL.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not create a proxy for %1: %2</source>
         <translation>%1의 프록시를 만들 수 없습니다: %2</translation>
     </message>
@@ -13029,6 +13033,10 @@
         <translation>그래픽 카드 선택은 Drift를 다시 시작한 후 적용됩니다.</translation>
     </message>
     <message>
+        <source>The interface graphics API takes effect after you restart Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>System default</source>
         <translation>시스템 기본값</translation>
     </message>
@@ -16058,6 +16066,34 @@ If playback stutters, try another.</source>
     <message>
         <source>Reset to defaults</source>
         <translation>기본값으로 초기화</translation>
+    </message>
+    <message>
+        <source>Interface</source>
+        <translation type="unfinished">인터페이스</translation>
+    </message>
+    <message>
+        <source>Interface graphics API</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What draws panels, the timeline and menus. OpenGL hands the preview over without a copy. The others can make the interface smoother but copy every preview frame through the CPU, so playback may get slower. If Drift does not start with your choice, it goes back to OpenGL. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last choice did not start, so OpenGL is in use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenGL (recommended)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Direct3D 11 (Windows default)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Metal (macOS default)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Playback</source>
