@@ -63,8 +63,10 @@ inline int64_t elementCount(const std::vector<int64_t> &shape)
 //
 // On "auto", a registered plugin EP wins over a provider baked into the core: the plugin is only
 // present because someone installed the addon on purpose, whereas CUDA comes along inside every
-// GPU build whether or not the machine has a usable card.
-inline QString providerToTry()
+// GPU build whether or not the machine has a usable card. Providers that already failed for this
+// model (or for everything) are passed over, so a broken one is tried once rather than on every
+// load.
+inline QString providerToTry(const char *tag)
 {
     const QString requested = preferredVariant();
     if (requested == QLatin1String("cpu"))
@@ -72,13 +74,16 @@ inline QString providerToTry()
     if (variantExplicit())
         return requested;
 
-    const QList<PluginEp> eps = registeredPluginEps();
-    if (!eps.isEmpty())
-        return eps.first().variant;
+    for (const PluginEp &ep : registeredPluginEps()) {
+        if (!autoProviderFailed(tag, ep.variant))
+            return ep.variant;
+    }
 
     const std::vector<std::string> providers = Ort::GetAvailableProviders();
     if (std::find(providers.begin(), providers.end(), "CUDAExecutionProvider") == providers.end())
         return {}; // CPU-only core: nothing to try, and nothing worth saying about it
+    if (autoProviderFailed(tag, QStringLiteral("cuda")))
+        return {};
     return QStringLiteral("cuda");
 }
 
@@ -93,12 +98,15 @@ inline QString providerToTry()
 // `sharedArena` registers one env-wide CUDA allocator grown by exactly what is asked for. Only
 // pipelines that spread huge allocations across several sessions need it (see Sam2Segmenter);
 // for a single small session it is pure overhead.
-inline void appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env, const char *tag,
-                                    bool sharedArena = false)
+//
+// Returns why an explicitly chosen provider could not be set up, empty otherwise. opts is left on
+// CPU in that case, so callers that only warn can carry on.
+inline QString appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env, const char *tag,
+                                       bool sharedArena = false)
 {
-    const QString ep = providerToTry();
+    const QString ep = providerToTry(tag);
     if (ep.isEmpty())
-        return;
+        return {};
     const bool explicitEp = variantExplicit();
 
     try {
@@ -111,7 +119,10 @@ inline void appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env, co
             if (devices.empty()) {
                 qWarning("[%s] %s is registered but reports no usable device; using CPU.", tag,
                          qUtf8Printable(epName));
-                return;
+                if (!explicitEp)
+                    markAutoProviderFailed(nullptr, ep);
+                return explicitEp ? QStringLiteral("%1 reports no usable device.").arg(epName)
+                                  : QString();
             }
             opts.AppendExecutionProvider_V2(env, devices,
                                             std::unordered_map<std::string, std::string>{});
@@ -133,29 +144,23 @@ inline void appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env, co
             qWarning("[%s] %s is not a provider this runtime offers; using CPU. Install the "
                      "matching Acceleration addon, or set the preference back to Auto.",
                      tag, qUtf8Printable(ep));
-            return;
+            return QStringLiteral("%1 is not available in the installed AI engine.").arg(ep);
         }
         qInfo("[%s] execution provider %s enabled.", tag, qUtf8Printable(ep));
     } catch (const Ort::Exception &e) {
         if (!explicitEp) {
             qInfo("[%s] %s is present but could not be initialised (%s); using CPU.", tag,
                   qUtf8Printable(ep), e.what());
+            markAutoProviderFailed(nullptr, ep);
         } else {
             qWarning("[%s] %s could not be set up (%s). Falling back to CPU; if the message "
                      "mentions loading a shared library, the installed ONNX Runtime has no %s "
                      "provider.",
                      tag, qUtf8Printable(ep), e.what(), qUtf8Printable(ep));
+            return QString::fromUtf8(e.what());
         }
     }
-}
-
-inline Ort::SessionOptions defaultSessionOptions(Ort::Env &env, const char *tag,
-                                                 bool sharedArena = false)
-{
-    Ort::SessionOptions opts;
-    opts.SetIntraOpNumThreads(std::max(1, QThread::idealThreadCount()));
-    appendRequestedProvider(opts, env, tag, sharedArena);
-    return opts;
+    return {};
 }
 
 // Builds a model's sessions, falling back to CPU when an automatically chosen provider turns out
@@ -168,28 +173,45 @@ inline Ort::SessionOptions defaultSessionOptions(Ort::Env &env, const char *tag,
 // what makes that machine merely slower instead of missing the feature entirely.
 //
 // An explicit acceleration choice is never silently overridden: asking for a provider and quietly
-// getting CPU would hide exactly what the setting was changed to investigate.
+// getting CPU would hide exactly what the setting was changed to investigate. Instead the user is
+// asked for a replacement (askForOtherProvider), and the build is retried with their answer.
 //
-// `build` takes a configured Ort::SessionOptions and creates the sessions; it may be called twice,
-// so it must overwrite rather than append to whatever it fills.
+// `build` takes a configured Ort::SessionOptions and creates the sessions; it may be called
+// several times, so it must overwrite rather than append to whatever it fills.
 template <typename BuildFn>
 bool buildSessions(Ort::Env &env, const char *tag, bool sharedArena, QString *errorOut,
                    BuildFn &&build)
 {
-    const bool explicitEp = variantExplicit();
-    try {
-        Ort::SessionOptions opts = defaultSessionOptions(env, tag, sharedArena);
-        build(opts);
-        return true;
-    } catch (const Ort::Exception &e) {
-        if (explicitEp) {
+    for (;;) {
+        const bool explicitEp = variantExplicit();
+        const QString ep = providerToTry(tag);
+        QString failure;
+        try {
+            Ort::SessionOptions opts;
+            opts.SetIntraOpNumThreads(std::max(1, QThread::idealThreadCount()));
+            failure = appendRequestedProvider(opts, env, tag, sharedArena);
+            if (failure.isEmpty()) {
+                build(opts);
+                return true;
+            }
+        } catch (const Ort::Exception &e) {
+            failure = QString::fromUtf8(e.what());
+        }
+        if (!explicitEp) {
+            qInfo("[%s] the auto-selected execution provider could not create a session (%s); "
+                  "retrying on CPU.",
+                  tag, qUtf8Printable(failure));
+            markAutoProviderFailed(tag, ep);
+            break;
+        }
+        // The user picked this provider, so the user picks what replaces it.
+        const QString next = askForOtherProvider(ep, failure);
+        if (next.isEmpty() || next == ep) {
             if (errorOut)
-                *errorOut = QString::fromUtf8(e.what());
+                *errorOut = failure;
             return false;
         }
-        qInfo("[%s] the auto-selected execution provider could not create a session (%s); "
-              "retrying on CPU.",
-              tag, e.what());
+        qInfo("[%s] %s failed; retrying with %s.", tag, qUtf8Printable(ep), qUtf8Printable(next));
     }
 
     try {

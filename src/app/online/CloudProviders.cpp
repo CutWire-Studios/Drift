@@ -97,6 +97,20 @@ void CloudProviders::setApiKey(const QString &provider, const QString &key)
     bump();
 }
 
+bool CloudProviders::shown() const
+{
+    const QVariant stored = QSettings().value(QStringLiteral("cloud/shown"));
+    if (stored.isValid())
+        return stored.toBool();
+    return configured(QString::fromLatin1(kElevenLabs)) || configured(QString::fromLatin1(kFish));
+}
+
+void CloudProviders::setShown(bool shown)
+{
+    QSettings().setValue(QStringLiteral("cloud/shown"), shown);
+    bump();
+}
+
 bool CloudProviders::consent(const QString &provider) const
 {
     return knownProvider(provider) && QSettings().value(settingsKey(provider, "consent")).toBool();

@@ -239,30 +239,42 @@ RvmMatter::Impl::Loaded *RvmMatter::Impl::ensureLoaded(const QString &requested)
                  qUtf8Printable(drift::ort::preferredVariant()));
     }
 
-    // fp16 is only worth loading for a GPU provider. On CPU ONNX Runtime services a half graph
-    // through inserted Cast nodes and it comes out slower than fp32.
-    const bool wantHalf = useEp && !root.fp16.isEmpty();
-    const QString file = wantHalf ? root.fp16 : (root.fp32.isEmpty() ? root.fp16 : root.fp32);
-    const bool half = (file == root.fp16);
-
     Loaded entry;
-    entry.fp16 = half;
     entry.variant = root.variant;
+    QString file;
 
     Ort::Env &ortEnv = drift::ort::env();
-    try {
-        Ort::SessionOptions opts;
-        opts.SetIntraOpNumThreads(std::max(1, QThread::idealThreadCount()));
-        // sharedArena stays false: RVM is one small session, and the env-wide CUDA allocator exists
-        // for SAM2's 449 MiB attention matrix spread across five sessions.
-        if (useEp)
-            drift::ort::appendRequestedProvider(opts, ortEnv, "rvm");
+    const auto build = [&](Ort::SessionOptions &opts) {
+        // fp16 is only worth loading for a GPU provider. On CPU ONNX Runtime services a half graph
+        // through inserted Cast nodes and it comes out slower than fp32. Decided per attempt,
+        // since a failed provider may have been swapped for CPU in between.
+        const bool wantHalf = !drift::ort::providerToTry("rvm").isEmpty() && !root.fp16.isEmpty();
+        file = wantHalf ? root.fp16 : (root.fp32.isEmpty() ? root.fp16 : root.fp32);
+        entry.fp16 = (file == root.fp16);
         entry.session = std::make_unique<Ort::Session>(
             ortEnv, ortPath(QDir(root.dir).filePath(file)).c_str(), opts);
-    } catch (const Ort::Exception &e) {
-        error = QStringLiteral("Failed to load the video matting model: ")
-                + QString::fromUtf8(e.what());
-        failed.insert({root.variant, error});
+    };
+    QString loadError;
+    bool built = true;
+    if (useEp) {
+        // sharedArena stays false: RVM is one small session, and the env-wide CUDA allocator
+        // exists for SAM2's 449 MiB attention matrix spread across five sessions.
+        built = drift::ort::buildSessions(ortEnv, "rvm", false, &loadError, build);
+    } else {
+        try {
+            Ort::SessionOptions opts;
+            opts.SetIntraOpNumThreads(std::max(1, QThread::idealThreadCount()));
+            build(opts);
+        } catch (const Ort::Exception &e) {
+            loadError = QString::fromUtf8(e.what());
+            built = false;
+        }
+    }
+    if (!built) {
+        error = QStringLiteral("Failed to load the video matting model: ") + loadError;
+        // On a chosen engine the failure is the engine's, and switching it should get a fresh try.
+        if (!useEp)
+            failed.insert({root.variant, error});
         return nullptr;
     }
 
@@ -293,7 +305,7 @@ RvmMatter::Impl::Loaded *RvmMatter::Impl::ensureLoaded(const QString &requested)
     }
 
     error.clear();
-    qInfo("[rvm] loaded %s (%s)", qUtf8Printable(file), half ? "fp16" : "fp32");
+    qInfo("[rvm] loaded %s (%s)", qUtf8Printable(file), entry.fp16 ? "fp16" : "fp32");
     return &(loaded[root.variant] = std::move(entry));
 }
 

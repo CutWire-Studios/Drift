@@ -506,6 +506,20 @@ ApplicationWindow {
         }
     }
 
+    LazyLoader {
+        id: accelerationFailedDialogLoader
+        sourceComponent: Component {
+            AccelerationFailedDialog { }
+        }
+    }
+
+    Connections {
+        target: Addons
+        function onAccelerationFailed(variant, error, waiting) {
+            accelerationFailedDialogLoader.ensure().openFor(variant, error, waiting)
+        }
+    }
+
     Connections {
         target: Updates
         function onInstallReady() {

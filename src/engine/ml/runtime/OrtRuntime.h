@@ -6,6 +6,8 @@
 
 #include <onnxruntime_cxx_api.h>
 
+#include <functional>
+
 // Loading ONNX Runtime, which Drift does not link.
 //
 // The runtime is an addon like any other bulky optional thing: the app ships headers only and
@@ -88,5 +90,21 @@ bool variantExplicit();
 // The EP name to hand ONNX Runtime for a plugin-EP variant token, or empty when the variant is
 // not a plugin EP registered on this env. Requires the runtime to be loaded.
 QString pluginEpNameForVariant(const QString &variant);
+
+// Automatic mode stops trying a provider once it has failed, for the rest of the process. A null
+// tag means the provider itself could not be set up (missing CUDA libraries, no device), so every
+// model skips it; with a tag only that model does, since one graph lacking a kernel says nothing
+// about the others.
+void markAutoProviderFailed(const char *tag, const QString &variant);
+bool autoProviderFailed(const char *tag, const QString &variant);
+
+// Asks whoever installed a handler (the GUI) which provider to use instead of an explicitly
+// chosen one that cannot build a model. Runs on the loading thread and may block until the user
+// answers. Returns the variant to retry with, already saved as the preference, or empty to give
+// up. Without a handler, or under DRIFT_ORT_EP, it always gives up.
+using ProviderFailureHandler =
+    std::function<QString(const QString &failedVariant, const QString &error)>;
+void setProviderFailureHandler(ProviderFailureHandler handler);
+QString askForOtherProvider(const QString &failedVariant, const QString &error);
 
 } // namespace drift::ort

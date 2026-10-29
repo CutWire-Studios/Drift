@@ -44,6 +44,11 @@ QString g_variant;
 QString g_version;
 int g_apiVersion = 0;
 QList<PluginEp> g_registeredEps;
+QSet<QString> g_autoFailed;
+ProviderFailureHandler g_failureHandler;
+// Held across the whole question, so loads failing together share one answer instead of
+// stacking dialogs.
+QMutex g_askMutex;
 
 QStringList libraryNames()
 {
@@ -418,6 +423,40 @@ QString pluginEpNameForVariant(const QString &variant)
             return ep.epName;
     }
     return {};
+}
+
+void markAutoProviderFailed(const char *tag, const QString &variant)
+{
+    if (variant.isEmpty())
+        return;
+    QMutexLocker lock(&g_mutex);
+    g_autoFailed.insert(tag ? QString::fromLatin1(tag) + u'/' + variant : variant);
+}
+
+bool autoProviderFailed(const char *tag, const QString &variant)
+{
+    QMutexLocker lock(&g_mutex);
+    return g_autoFailed.contains(variant)
+        || (tag && g_autoFailed.contains(QString::fromLatin1(tag) + u'/' + variant));
+}
+
+void setProviderFailureHandler(ProviderFailureHandler handler)
+{
+    QMutexLocker lock(&g_askMutex);
+    g_failureHandler = std::move(handler);
+}
+
+QString askForOtherProvider(const QString &failedVariant, const QString &error)
+{
+    if (!qEnvironmentVariableIsEmpty("DRIFT_ORT_EP"))
+        return {};
+    QMutexLocker lock(&g_askMutex);
+    const QString current = preferredVariant();
+    if (current != failedVariant)
+        return current; // answered for another load while this one waited
+    if (!g_failureHandler)
+        return {};
+    return g_failureHandler(failedVariant, error);
 }
 
 } // namespace drift::ort

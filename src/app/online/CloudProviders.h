@@ -19,6 +19,9 @@ class CloudProviders : public QObject
     Q_OBJECT
     // Bumped on every change, so QML bindings over the getters below re-evaluate.
     Q_PROPERTY(int revision READ revision NOTIFY changed)
+    // Settings-page switch that reveals the provider fields. Display only: it gates nothing.
+    // Defaults to on once any key is configured, so existing setups stay visible.
+    Q_PROPERTY(bool shown READ shown WRITE setShown NOTIFY changed)
 public:
     static constexpr const char *kElevenLabs = "elevenlabs";
     static constexpr const char *kFish = "fish";
@@ -26,6 +29,8 @@ public:
     explicit CloudProviders(QObject *parent = nullptr);
 
     int revision() const { return m_revision; }
+    bool shown() const;
+    void setShown(bool shown);
 
     Q_INVOKABLE bool configured(const QString &provider) const;
     Q_INVOKABLE bool keyFromEnvironment(const QString &provider) const;

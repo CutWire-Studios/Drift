@@ -2,12 +2,15 @@
 
 #include <QHash>
 #include <QJsonObject>
+#include <QMutex>
 #include <QObject>
 #include <QUrl>
 #include <QPointer>
 #include <QVariantList>
+#include <QWaitCondition>
 
 #include <memory>
+#include <optional>
 
 class QNetworkAccessManager;
 
@@ -110,6 +113,11 @@ public:
     // loaded one. The library is loaded once per process, so the change only takes effect on the
     // next launch and the dialog has to say so.
     Q_INVOKABLE bool runtimeRestartRequired() const;
+    // accelerationOptions() narrowed to what works without a restart, minus `failed`: the
+    // choices offered when an engine the user picked could not run a model.
+    Q_INVOKABLE QVariantList fallbackAccelerationOptions(const QString &failed) const;
+    // The answer to accelerationFailed: the variant to switch to, or empty to give up.
+    Q_INVOKABLE void answerAccelerationFailure(const QString &variant);
 
 signals:
     void catalogChanged();
@@ -132,6 +140,9 @@ signals:
     // The file from inspectAddonFile() is not signed by the Drift team; the UI asks before
     // calling installAddonFile(true) or discardAddonFile().
     void addonFileNeedsConfirmation();
+    // An explicitly chosen AI engine could not load a model. When `waiting`, the load is paused
+    // on its own thread until answerAccelerationFailure() and is retried with the answer.
+    void accelerationFailed(const QString &variant, const QString &error, bool waiting);
 
 private:
     struct Transfer;
@@ -144,6 +155,7 @@ private:
     void beginExtract(const QString &id, const QString &packagePath);
     void failTransfer(const QString &id, const QString &message);
     void sweepDownloadCache();
+    QString askForOtherAcceleration(const QString &failed, const QString &error);
 
     QString m_status;
     bool m_refreshing = false;
@@ -156,6 +168,10 @@ private:
     QStringList m_awaitingFreshIndex;
     QSet<QString> m_retried;
     bool m_runtimeRestartRequired = false;
+    QMutex m_askMutex;
+    QWaitCondition m_askAnswered;
+    std::optional<QString> m_askAnswer;
+    bool m_quitting = false;
     QString m_userPackagePath;
     QString m_addonFilePath;
     QString m_addonFileType; // "driftpkg" | "zip"

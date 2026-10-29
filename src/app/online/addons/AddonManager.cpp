@@ -24,6 +24,9 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFutureWatcher>
+#include <QCoreApplication>
+#include <QMetaMethod>
+#include <QThread>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QNetworkAccessManager>
@@ -106,9 +109,22 @@ AddonManager::AddonManager(QObject *parent)
     }
 
     refresh();
+
+    drift::ort::setProviderFailureHandler([this](const QString &failed, const QString &error) {
+        return askForOtherAcceleration(failed, error);
+    });
+    // A load paused on the question must not outlive the window that would answer it.
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
+        QMutexLocker lock(&m_askMutex);
+        m_quitting = true;
+        m_askAnswered.wakeAll();
+    });
 }
 
-AddonManager::~AddonManager() = default;
+AddonManager::~AddonManager()
+{
+    drift::ort::setProviderFailureHandler({});
+}
 
 QString AddonManager::status() const
 {
@@ -366,6 +382,58 @@ void AddonManager::setAcceleration(const QString &variant)
 bool AddonManager::runtimeRestartRequired() const
 {
     return m_runtimeRestartRequired;
+}
+
+QVariantList AddonManager::fallbackAccelerationOptions(const QString &failed) const
+{
+    const QString active = drift::ort::activeVariant();
+    QVariantList rows;
+    for (const QVariant &option : accelerationOptions()) {
+        const QVariantMap row = option.toMap();
+        const QString value = row.value(QStringLiteral("value")).toString();
+        if (value == failed || !row.value(QStringLiteral("available")).toBool())
+            continue;
+        // A different core only loads on the next launch, which is no use to the job waiting.
+        const bool usableNow = value == QLatin1String("auto") || value == QLatin1String("cpu")
+            || value == active || !drift::ort::pluginEpNameForVariant(value).isEmpty();
+        if (usableNow)
+            rows.append(row);
+    }
+    return rows;
+}
+
+QString AddonManager::askForOtherAcceleration(const QString &failed, const QString &error)
+{
+    // Blocking here would freeze the dialog that answers, so loads on the GUI thread just report.
+    if (QThread::currentThread() == thread()) {
+        QMetaObject::invokeMethod(this, [this, failed, error] {
+            emit accelerationFailed(failed, error, false);
+        }, Qt::QueuedConnection);
+        return {};
+    }
+    // Headless runs have nobody to ask.
+    if (!isSignalConnected(QMetaMethod::fromSignal(&AddonManager::accelerationFailed)))
+        return {};
+
+    QMutexLocker lock(&m_askMutex);
+    if (m_quitting)
+        return {};
+    m_askAnswer.reset();
+    QMetaObject::invokeMethod(this, [this, failed, error] {
+        emit accelerationFailed(failed, error, true);
+    }, Qt::QueuedConnection);
+    while (!m_askAnswer && !m_quitting)
+        m_askAnswered.wait(&m_askMutex);
+    return m_quitting ? QString() : *m_askAnswer;
+}
+
+void AddonManager::answerAccelerationFailure(const QString &variant)
+{
+    if (!variant.isEmpty())
+        setAcceleration(variant);
+    QMutexLocker lock(&m_askMutex);
+    m_askAnswer = variant;
+    m_askAnswered.wakeAll();
 }
 
 void AddonManager::refresh(bool force)

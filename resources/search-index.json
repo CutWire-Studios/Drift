@@ -766,6 +766,23 @@
       "descriptionSource": "System, playback and codec details for bug reports."
     },
     {
+      "id": "ai-acceleration",
+      "target": "settings:ai#ai-acceleration",
+      "context": "SettingsAiPage",
+      "source": "How AI runs",
+      "keywords": "acceleration gpu cuda webgpu cpu onnx engine graphics",
+      "needs": []
+    },
+    {
+      "id": "ai-scene-detection-sensitivity",
+      "target": "settings:ai#ai-scene-detection-sensitivity",
+      "context": "SettingsAiPage",
+      "source": "Scene detection sensitivity",
+      "keywords": "shot cut detect",
+      "needs": [],
+      "descriptionSource": "Higher finds more cuts. When a clip is flat or heavily graded, Drift still falls back to an adaptive threshold."
+    },
+    {
       "id": "ai-agent-access",
       "target": "settings:ai#ai-agent-access",
       "context": "SettingsAiPage",
@@ -784,21 +801,21 @@
       "descriptionSource": "Turn agent access on automatically the next time you open Drift. Turning access off resets this."
     },
     {
+      "id": "ai-cloud-services",
+      "target": "settings:ai#ai-cloud-services",
+      "context": "SettingsAiPage",
+      "source": "Use cloud services",
+      "keywords": "api key elevenlabs fish online",
+      "needs": [],
+      "descriptionSource": "Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects."
+    },
+    {
       "id": "ai-cloud-providers",
       "target": "settings:ai#ai-cloud-providers",
       "context": "SettingsAiPage",
       "source": "Cloud providers",
       "keywords": "api key elevenlabs openai deepgram transcription voice",
       "needs": []
-    },
-    {
-      "id": "ai-scene-detection-sensitivity",
-      "target": "settings:ai#ai-scene-detection-sensitivity",
-      "context": "SettingsAiPage",
-      "source": "Scene detection sensitivity",
-      "keywords": "shot cut detect",
-      "needs": [],
-      "descriptionSource": "Higher finds more cuts. When a clip is flat or heavily graded, Drift still falls back to an adaptive threshold."
     },
     {
       "id": "appearance-color-theme",

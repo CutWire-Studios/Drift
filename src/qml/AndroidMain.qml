@@ -653,6 +653,7 @@ ApplicationWindow {
     }
     AddonStartupDialog { id: addonStartupDialog }
     LazyLoader { id: missingAddonsDialogLoader; sourceComponent: Component { MissingAddonsDialog { } } }
+    LazyLoader { id: accelerationFailedDialogLoader; sourceComponent: Component { AccelerationFailedDialog { } } }
     LazyLoader { id: updateDialogLoader; sourceComponent: Component { UpdateDialog { } } }
     // Kept after its first close: it holds the last benchmark result.
     LazyLoader { id: debugInfoDialogLoader; keepLoaded: true; sourceComponent: Component { DebugInfoDialog { } } }
@@ -1026,6 +1027,9 @@ ApplicationWindow {
         function onCatalogChanged() { Qt.callLater(window.refreshAddonAttention) }
         function onRemindEssentialChanged() { Qt.callLater(window.refreshAddonAttention) }
         function onRemindUpdatesChanged() { Qt.callLater(window.refreshAddonAttention) }
+        function onAccelerationFailed(variant, error, waiting) {
+            accelerationFailedDialogLoader.ensure().openFor(variant, error, waiting)
+        }
 
         // A download or signature failure only reaches the addon manager's status line,
         // so a pack that failed while that dialog was closed failed silently.
