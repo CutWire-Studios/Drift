@@ -148,6 +148,11 @@ class EngineTest : public QObject
 {
     Q_OBJECT
 
+public:
+    // renderToTexture only hands out texture names when the compositor shares with Qt Quick's
+    // context, as it does in the app; without this the present-ring tests get readbacks.
+    static void initMain() { QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts); }
+
 private slots:
     void initTestCase();
     void splatPlyLoads();
