@@ -980,9 +980,9 @@ CameraFrame solveCameraFrame(const CameraSetup &s, const Homography &h, const Ho
                 a2[2] = -a2[2];
                 const std::array<double, 3> a3{a1[1] * a2[2] - a1[2] * a2[1], a1[2] * a2[0] - a1[0] * a2[2],
                                                a1[0] * a2[1] - a1[1] * a2[0]};
-                const QMatrix4x4 rotation(float(a1[0]), float(a1[1]), float(a1[2]), 0.f, float(a2[0]), float(a2[1]),
+                const QMatrix4x4 rotation{float(a1[0]), float(a1[1]), float(a1[2]), 0.f, float(a2[0]), float(a2[1]),
                                           float(a2[2]), 0.f, float(a3[0]), float(a3[1]), float(a3[2]), 0.f, 0.f, 0.f,
-                                          0.f, 1.f);
+                                          0.f, 1.f};
                 double nearest[3] = {previous[3], previous[4], previous[5]};
                 double angles[3];
                 drift::gizmo::eulerFromMatrix(rotation, nearest, angles);
