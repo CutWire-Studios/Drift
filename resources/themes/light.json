@@ -3118,6 +3118,9 @@
       "borderWidth": "$metrics.borderWidth",
       "radius": "$metrics.radius.md"
     },
+    "scrollStrip": {
+      "fade": "$semantic.surface.panel"
+    },
     "assetCategoryChips": {
       "divider": "$semantic.panel.border",
       "dividerWidth": "$metrics.borderWidth"

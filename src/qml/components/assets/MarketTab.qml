@@ -123,17 +123,13 @@ Item {
 
         // Text tabs: the medium is the first choice, so it stays visible rather than collapsed
         // into a dropdown.
-        Flickable {
+        ScrollStrip {
             width: parent.width
             height: tabRow.height
-            contentWidth: tabRow.width + root.sidePadding * 2
-            flickableDirection: Flickable.HorizontalFlick
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
+            padding: root.sidePadding
 
             Row {
                 id: tabRow
-                x: root.sidePadding
                 spacing: Theme.spacing2xl
 
                 Repeater {

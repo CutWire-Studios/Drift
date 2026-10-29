@@ -2185,6 +2185,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | viewNavPad | border | $semantic.panel.border | $semantic.panel.border |
 | viewNavPad | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | viewNavPad | radius | $metrics.radius.md | $metrics.radius.md |
+| scrollStrip | fade | $semantic.surface.panel | $semantic.surface.panel |
 | assetCategoryChips | divider | $semantic.panel.border | $semantic.panel.border |
 | assetCategoryChips | dividerWidth | $metrics.borderWidth | $metrics.borderWidth |
 | assetsPanel | background | $semantic.surface.panel | $semantic.surface.panel |

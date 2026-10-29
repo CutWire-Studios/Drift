@@ -175,16 +175,12 @@ Item {
             width: parent.width - root.sidePadding * 2
             height: Math.max(sourceFlick.height, filterButton.height)
 
-            Flickable {
+            ScrollStrip {
                 id: sourceFlick
                 anchors.left: parent.left
                 anchors.right: filterButton.visible ? filterButton.left : parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 height: sourceRow.height
-                contentWidth: sourceRow.width
-                flickableDirection: Flickable.HorizontalFlick
-                boundsBehavior: Flickable.StopAtBounds
-                clip: true
 
                 Row {
                     id: sourceRow

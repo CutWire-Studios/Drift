@@ -1,16 +1,11 @@
 import QtQuick
 import Drift
 
-Flickable {
+ScrollStrip {
     id: root
     property var inspector
     width: parent.width
     height: Theme.controlHeightSm
-    contentWidth: categoryRow.width
-    flickableDirection: Flickable.HorizontalFlick
-    boundsBehavior: Flickable.StopAtBounds
-    clip: true
-    interactive: contentWidth > width
     visible: inspector.animCategories.length > 1
 
     Row {

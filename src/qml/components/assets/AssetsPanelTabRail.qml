@@ -1,10 +1,9 @@
 import QtQuick
-import QtQuick.Controls.Basic
 import Drift
 // Vertical tab rail. Up/Down move between tabs once it has focus.
-// Flickable so short panel heights can still reach lower icons.
+// Scrolls so short panel heights can still reach lower icons.
 // Hidden in sheetMode — AndroidBottomRail drives showTab() instead.
-Flickable {
+ScrollStrip {
     id: root
 
     property bool sheetMode: false
@@ -19,15 +18,7 @@ Flickable {
     width: sheetMode ? 0 : Theme.tabRailWidth
     height: parent ? parent.height : 0
     visible: !sheetMode
-    contentWidth: width
-    contentHeight: tabRailColumn.height
-    clip: true
-    boundsBehavior: Flickable.StopAtBounds
-    interactive: contentHeight > height
-    ScrollBar.vertical: AppScrollBar {
-        policy: root.contentHeight > root.height
-                ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
-    }
+    vertical: true
 
     Accessible.role: Accessible.PageTabList
 

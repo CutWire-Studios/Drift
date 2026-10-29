@@ -59,44 +59,10 @@ Item {
             color: Theme.c.assetCategoryChips.divider
         }
 
-        Flickable {
-            id: categoryFlick
+        ScrollStrip {
             width: Math.max(0, row.width - favButton.width - divider.width - row.spacing * 2
                                - (mineButton.visible ? mineButton.width + row.spacing : 0))
             height: parent.height
-            contentWidth: categoryRow.width
-            flickableDirection: Flickable.HorizontalFlick
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            interactive: contentWidth > width
-
-            onMovementStarted: scrollAnimation.stop()
-
-            NumberAnimation {
-                id: scrollAnimation
-                target: categoryFlick
-                property: "contentX"
-                duration: 250
-                easing.type: Easing.OutCubic
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                propagateComposedEvents: true
-                acceptedButtons: Qt.NoButton
-                property real targetContentX: categoryFlick.contentX
-                onWheel: (wheel) => {
-                    const dy = wheel.angleDelta.y
-                    const dx = wheel.angleDelta.x
-                    const delta = Math.abs(dy) > Math.abs(dx) ? dy : dx
-                    if (!scrollAnimation.running)
-                        targetContentX = categoryFlick.contentX
-                    targetContentX = Math.max(0, Math.min(categoryFlick.contentWidth - categoryFlick.width, targetContentX - delta))
-                    scrollAnimation.to = targetContentX
-                    scrollAnimation.restart()
-                    wheel.accepted = true
-                }
-            }
 
             Row {
                 id: categoryRow

@@ -1964,6 +1964,7 @@ qt_add_qml_module(drift
         src/qml/components/EmojiPicker.qml
         src/qml/components/controls/ThemedButton.qml
         src/qml/components/controls/ThemedChip.qml
+        src/qml/components/controls/ScrollStrip.qml
         src/qml/components/controls/ThemedProgressBar.qml
         src/qml/components/MediaPill.qml
         src/qml/components/shell/VfrWarning.qml

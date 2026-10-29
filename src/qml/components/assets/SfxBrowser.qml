@@ -118,17 +118,13 @@ Item {
         bottomPadding: Theme.spacingSm
         visible: Sfx.sounds.length > 0
 
-        Flickable {
+        ScrollStrip {
             width: parent.width
             height: Theme.controlHeightSm
-            contentWidth: categoryRow.width + root.sidePadding * 2
-            flickableDirection: Flickable.HorizontalFlick
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
+            padding: root.sidePadding
 
             Row {
                 id: categoryRow
-                x: root.sidePadding
                 height: parent.height
                 spacing: Theme.spacingSm
 
@@ -155,18 +151,14 @@ Item {
             }
         }
 
-        Flickable {
+        ScrollStrip {
             width: parent.width
             height: Theme.controlHeightSm
             visible: root.subcategories.length > 1
-            contentWidth: subRow.width + root.sidePadding * 2
-            flickableDirection: Flickable.HorizontalFlick
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
+            padding: root.sidePadding
 
             Row {
                 id: subRow
-                x: root.sidePadding
                 height: parent.height
                 spacing: Theme.spacingSm
 
