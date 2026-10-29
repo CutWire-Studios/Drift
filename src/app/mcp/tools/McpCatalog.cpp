@@ -260,6 +260,8 @@ QJsonObject textLayerSchema(const QString &description)
                                                  {QStringLiteral("center"), QStringLiteral("outside"), QStringLiteral("inside")})},
         {QStringLiteral("dash"), enumProp(QStringLiteral("Stroke dash pattern"),
                                           {QStringLiteral("solid"), QStringLiteral("dash"), QStringLiteral("dot"), QStringLiteral("dashdot")})},
+        {QStringLiteral("join"), enumProp(QStringLiteral("Stroke corner join (default round)"),
+                                          {QStringLiteral("miter"), QStringLiteral("round"), QStringLiteral("bevel")})},
         {QStringLiteral("dashOffset"), numberProp(QStringLiteral("Dash phase in stroke widths (keyframe for marching ants)"))},
         {QStringLiteral("sketchLength"), numberProp(QStringLiteral("Hand-drawn jitter segment length in px; 0 = off"))},
         {QStringLiteral("sketchDeviation"), numberProp(QStringLiteral("Hand-drawn jitter amount in px"))},

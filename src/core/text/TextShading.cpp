@@ -185,6 +185,28 @@ StrokeDash strokeDashFromString(const QString &dash)
     return StrokeDash::Solid;
 }
 
+QString strokeJoinToString(StrokeJoin join)
+{
+    switch (join) {
+    case StrokeJoin::Miter:
+        return QStringLiteral("miter");
+    case StrokeJoin::Round:
+        return QStringLiteral("round");
+    case StrokeJoin::Bevel:
+        return QStringLiteral("bevel");
+    }
+    return QStringLiteral("round");
+}
+
+StrokeJoin strokeJoinFromString(const QString &join)
+{
+    if (join == QStringLiteral("miter") || join == QStringLiteral("mitre"))
+        return StrokeJoin::Miter;
+    if (join == QStringLiteral("bevel"))
+        return StrokeJoin::Bevel;
+    return StrokeJoin::Round;
+}
+
 QList<double> strokeDashIntervals(StrokeDash dash)
 {
     // Qt's pen patterns, so a migrated shape stroke keeps its look.
@@ -372,7 +394,7 @@ quint64 textLayersHash(const QList<TextShadingLayer> &layers)
             continue;
         h = qHashMulti(h, l.id, static_cast<int>(l.kind), paintHash(l.paint), l.opacity, static_cast<int>(l.blend),
                        l.offsetX, l.offsetY, l.blur, l.width, l.spread, static_cast<int>(l.strokeAlign),
-                       static_cast<int>(l.dash), l.dashOffset, l.knockout, l.trimStart, l.trimEnd, l.sketchLength,
+                       static_cast<int>(l.dash), static_cast<int>(l.join), l.dashOffset, l.knockout, l.trimStart, l.trimEnd, l.sketchLength,
                        l.sketchDeviation, l.sketchSeed, l.extrudeSteps, l.extrudeAngle, l.extrudeDarken,
                        static_cast<int>(l.scope));
     }
@@ -520,6 +542,7 @@ QJsonObject textShadingLayerToJson(const TextShadingLayer &l)
     if (l.kind == TextLayerKind::Stroke) {
         o.insert(QStringLiteral("strokeAlign"), strokeAlignToString(l.strokeAlign));
         o.insert(QStringLiteral("dash"), strokeDashToString(l.dash));
+        o.insert(QStringLiteral("join"), strokeJoinToString(l.join));
         o.insert(QStringLiteral("dashOffset"), l.dashOffset);
     }
     if (l.sketchLength > 0.0 || l.sketchDeviation > 0.0) {
@@ -560,6 +583,7 @@ TextShadingLayer textShadingLayerFromJson(const QJsonObject &o)
     else
         l.strokeAlign = o.value(QStringLiteral("strokeOutside")).toBool(true) ? StrokeAlign::Outside : StrokeAlign::Center;
     l.dash = strokeDashFromString(o.value(QStringLiteral("dash")).toString());
+    l.join = strokeJoinFromString(o.value(QStringLiteral("join")).toString());
     l.dashOffset = o.value(QStringLiteral("dashOffset")).toDouble(0.0);
     l.sketchLength = o.value(QStringLiteral("sketchLength")).toDouble(0.0);
     l.sketchDeviation = o.value(QStringLiteral("sketchDeviation")).toDouble(0.0);

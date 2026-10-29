@@ -92,6 +92,22 @@ sk_sp<SkPathEffect> sketchEffect(const TextShadingLayer &layer, double scale)
 
 } // namespace
 
+void applyStrokeJoin(SkPaint &paint, StrokeJoin join)
+{
+    switch (join) {
+    case StrokeJoin::Miter:
+        paint.setStrokeJoin(SkPaint::kMiter_Join);
+        paint.setStrokeMiter(float(kStrokeMiterLimit));
+        break;
+    case StrokeJoin::Round:
+        paint.setStrokeJoin(SkPaint::kRound_Join);
+        break;
+    case StrokeJoin::Bevel:
+        paint.setStrokeJoin(SkPaint::kBevel_Join);
+        break;
+    }
+}
+
 sk_sp<SkPathEffect> strokePathEffectFor(const TextShadingLayer &layer, double strokeWidthPx, double scale)
 {
     sk_sp<SkPathEffect> effect;

@@ -1966,6 +1966,7 @@ void CoreTest::shapeStyleSerialization()
     stroke.dash = drift::StrokeDash::DashDot;
     stroke.dashOffset = 1.5;
     stroke.strokeAlign = drift::StrokeAlign::Center;
+    stroke.join = drift::StrokeJoin::Bevel;
     stroke.trimEnd = 0.6;
     stroke.sketchLength = 8.0;
     stroke.sketchDeviation = 2.0;
@@ -2011,6 +2012,7 @@ void CoreTest::shapeStyleSerialization()
     QCOMPARE(style.layers[1].dash, drift::StrokeDash::DashDot);
     QCOMPARE(style.layers[1].dashOffset, 1.5);
     QCOMPARE(style.layers[1].strokeAlign, drift::StrokeAlign::Center);
+    QCOMPARE(style.layers[1].join, drift::StrokeJoin::Bevel);
     QCOMPARE(style.layers[1].trimEnd, 0.6);
     QCOMPARE(style.layers[1].sketchLength, 8.0);
     QCOMPARE(style.layers[1].sketchDeviation, 2.0);

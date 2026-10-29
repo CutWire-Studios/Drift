@@ -999,6 +999,11 @@ double bleedFor(const drift::TextStyle &style)
     // may be drawn over.
     const double stroke = qMax(drift::textStrokeWidth(style, false),
                                accented ? drift::textStrokeWidth(style, true) : 0.0);
+    // Shadow and glow silhouettes take the first stroke's corners.
+    const drift::TextShadingLayer *firstStroke =
+        drift::firstTextLayerOfKind(style.layers, drift::TextLayerKind::Stroke, true);
+    const double silhouette =
+        stroke * (firstStroke && firstStroke->join == drift::StrokeJoin::Miter ? drift::kStrokeMiterLimit : 1.0);
     double widest = 0.0;
     for (const drift::TextShadingLayer &layer : style.layers) {
         if (!layer.enabled)
@@ -1006,13 +1011,14 @@ double bleedFor(const drift::TextStyle &style)
         double reach = qMax(std::abs(layer.offsetX), std::abs(layer.offsetY)) + layer.blur * 2.0 + qMax(0.0, layer.spread)
                        + layer.sketchDeviation;
         if (layer.kind == drift::TextLayerKind::Stroke)
-            reach += layer.strokeAlign == drift::StrokeAlign::Inside    ? 0.0
-                     : layer.strokeAlign == drift::StrokeAlign::Center ? layer.width * 0.5
-                                                                        : layer.width;
+            reach += (layer.strokeAlign == drift::StrokeAlign::Inside    ? 0.0
+                      : layer.strokeAlign == drift::StrokeAlign::Center ? layer.width * 0.5
+                                                                         : layer.width)
+                     * (layer.join == drift::StrokeJoin::Miter ? drift::kStrokeMiterLimit : 1.0);
         else if (layer.kind == drift::TextLayerKind::Extrude)
             reach += layer.width;
         else
-            reach += stroke;
+            reach += silhouette;
         widest = qMax(widest, reach);
     }
     double bleed = qMax(widest, stroke);

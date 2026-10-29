@@ -34,6 +34,7 @@ enum class TextLayerScope { All, Base, Accent };
 // Where a stroke sits relative to the outline: centred on it, grown outward only, or kept inside.
 enum class StrokeAlign { Center, Outside, Inside };
 enum class StrokeDash { Solid, Dash, Dot, DashDot };
+enum class StrokeJoin { Miter, Round, Bevel };
 
 QString textLayerKindToString(TextLayerKind kind);
 TextLayerKind textLayerKindFromString(const QString &kind);
@@ -49,6 +50,10 @@ QString strokeAlignToString(StrokeAlign align);
 StrokeAlign strokeAlignFromString(const QString &align);
 QString strokeDashToString(StrokeDash dash);
 StrokeDash strokeDashFromString(const QString &dash);
+QString strokeJoinToString(StrokeJoin join);
+StrokeJoin strokeJoinFromString(const QString &join);
+// Skia's default miter limit; a sharper corner falls back to a bevel.
+inline constexpr double kStrokeMiterLimit = 4.0;
 // On/off run lengths in stroke widths; empty for Solid.
 QList<double> strokeDashIntervals(StrokeDash dash);
 
@@ -114,6 +119,7 @@ struct TextShadingLayer
     double spread = 0.0;  // shadow / glow dilation, px
     StrokeAlign strokeAlign = StrokeAlign::Outside; // the legacy outline grew outward only
     StrokeDash dash = StrokeDash::Solid;
+    StrokeJoin join = StrokeJoin::Round;
     double dashOffset = 0.0;   // dash phase in stroke widths (keyframable → marching ants)
     bool knockout = false;     // a fill that punches through the layers beneath (hollow text)
     double trimStart = 0.0;    // stroke write-on
