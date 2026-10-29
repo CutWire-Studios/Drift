@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import Drift
 
 // The phone's home for a keyframe segment's easing. The desktop opens EasingPickerPopup beside
@@ -36,18 +37,26 @@ AndroidBottomSheet {
         }
     }
 
-    EasingPicker {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.leftMargin: Theme.pagePadding + root.safeLeft
-        anchors.rightMargin: Theme.pagePadding + root.safeRight
-        anchors.topMargin: Theme.spacingLg
-        trackIndex: root.trackIndex
-        clipIndex: root.clipIndex
-        propKey: root.propKey
-        propLabel: root.propLabel
-        keySeconds: root.keySeconds
-        onCloseRequested: root.dismiss()
+    Flickable {
+        id: scroll
+        anchors.fill: parent
+        clip: true
+        contentWidth: width
+        contentHeight: picker.y + picker.implicitHeight + Theme.spacingLg
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
+
+        EasingPicker {
+            id: picker
+            x: Theme.pagePadding + root.safeLeft
+            y: Theme.spacingLg
+            width: scroll.width - x - Theme.pagePadding - root.safeRight
+            trackIndex: root.trackIndex
+            clipIndex: root.clipIndex
+            propKey: root.propKey
+            propLabel: root.propLabel
+            keySeconds: root.keySeconds
+            onCloseRequested: root.dismiss()
+        }
     }
 }
