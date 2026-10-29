@@ -344,6 +344,23 @@ LkResult trackPointLk(const Pyramid &prev, const Pyramid &next, QPointF point, i
         sampleWindow(prev.levels[level], px, py, r, tpl);
         sampleWindow(prev.gradX[level], px, py, r, tx);
         sampleWindow(prev.gradY[level], px, py, r, ty);
+        // Window taps off the image read clamped border pixels that do not move with the scene; on
+        // coarse levels they bias the step enough to send every finer level the wrong way.
+        // Zero gradients drop them from the solve.
+        const GrayImage &lv = prev.levels[level];
+        int inside = 0;
+        for (int y = 0; y < n; ++y) {
+            const float sy = py - float(r) + float(y);
+            for (int x = 0; x < n; ++x) {
+                const float sx = px - float(r) + float(x);
+                if (sx >= 1 && sy >= 1 && sx <= float(lv.width - 2) && sy <= float(lv.height - 2)) {
+                    ++inside;
+                } else {
+                    tx[y * n + x] = 0;
+                    ty[y * n + x] = 0;
+                }
+            }
+        }
         double sxx = 0, sxy = 0, syy = 0;
         for (int i = 0; i < n * n; ++i) {
             sxx += tx[i] * tx[i];
@@ -351,7 +368,7 @@ LkResult trackPointLk(const Pyramid &prev, const Pyramid &next, QPointF point, i
             syy += ty[i] * ty[i];
         }
         const double det = sxx * syy - sxy * sxy;
-        const double minEig = 0.5 * (sxx + syy - std::sqrt((sxx - syy) * (sxx - syy) + 4 * sxy * sxy)) / (n * n);
+        const double minEig = 0.5 * (sxx + syy - std::sqrt((sxx - syy) * (sxx - syy) + 4 * sxy * sxy)) / std::max(1, inside);
         if (minEig < kMinEigenPerPixel || det <= 0) {
             if (level == 0)
                 return res;
