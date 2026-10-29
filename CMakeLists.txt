@@ -2328,6 +2328,8 @@ if(ANDROID)
     # CorePrivate is not pulled in by the plain Qt6 Core package, hence the extra find_package.
     find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
     target_link_libraries(drift PRIVATE Qt6::CorePrivate)
+    # AudioOutputChannel opens the system-default output through AAudio directly (#391).
+    target_link_libraries(drift PRIVATE aaudio)
 
     # Qt Network's OpenSSL TLS plugin dlopens libcrypto_3.so / libssl_3.so at runtime.
     # androiddeployqt files each extra .so under lib/<abi>/ from its ELF architecture, so a

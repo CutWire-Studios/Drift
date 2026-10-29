@@ -2,8 +2,13 @@
 
 #include <QAudioSink>
 #include <QDebug>
+#include <QTimer>
 
 #include <cstring>
+
+#ifdef Q_OS_ANDROID
+#include <aaudio/AAudio.h>
+#endif
 
 namespace {
 
@@ -221,6 +226,10 @@ void AudioOutputChannel::start()
     QMetaObject::invokeMethod(
         m_pull,
         [this] {
+            if (m_stream) {
+                startNativeStream();
+                return;
+            }
             if (!m_sink)
                 return;
             if (m_sink->state() == QAudio::SuspendedState)
@@ -243,12 +252,31 @@ void AudioOutputChannel::stop()
         [this] {
             if (m_sink)
                 m_sink->stop();
+#ifdef Q_OS_ANDROID
+            if (m_stream) {
+                m_pump->stop();
+                // Pause and flush rather than stop: a stopped output stream plays out what it has
+                // queued first, and QAudioSink::stop() drops it, which is what callers expect.
+                AAudioStream_requestPause(m_stream);
+                aaudio_stream_state_t state = AAUDIO_STREAM_STATE_UNKNOWN;
+                AAudioStream_waitForStateChange(m_stream, AAUDIO_STREAM_STATE_PAUSING, &state,
+                                                100'000'000);
+                AAudioStream_requestFlush(m_stream);
+            }
+#endif
         },
         Qt::BlockingQueuedConnection);
 }
 
 qint64 AudioOutputChannel::processedUSecs() const
 {
+#ifdef Q_OS_ANDROID
+    if (m_stream) {
+        const int rate = m_format.sampleRate();
+        const qint64 frames = qMax<qint64>(0, AAudioStream_getFramesRead(m_stream) - m_readBase);
+        return rate > 0 ? frames * 1'000'000 / rate : 0;
+    }
+#endif
     return m_sink ? m_sink->processedUSecs() : 0;
 }
 
@@ -278,6 +306,32 @@ void AudioOutputChannel::rebuild()
     // Blocking, and first: with the old sink closed no refill can be in flight, so the rate below
     // — which the fill callback reads — can be swapped without racing a running mix.
     QMetaObject::invokeMethod(m_pull, [this] { destroySink(); }, Qt::BlockingQueuedConnection);
+
+    if (useNativeStream()) {
+        // Opened here rather than in a queued build because only the opened stream knows its
+        // rate, and sinkRebuilt has to carry it.
+        QAudioFormat format;
+        QMetaObject::invokeMethod(
+            m_pull, [this, &format] { format = openNativeStream(m_preferredRate); },
+            Qt::BlockingQueuedConnection);
+        m_activeId.clear();
+        if (!format.isValid()) {
+            m_haveSink = false;
+            emit errorOccurred(describeSinkError(QAudio::OpenError));
+            return;
+        }
+        m_haveSink = true;
+        m_sampleRate.store(format.sampleRate(), std::memory_order_release);
+        emit sinkRebuilt();
+        QMetaObject::invokeMethod(
+            m_pull,
+            [this] {
+                if (m_stream && m_running.load(std::memory_order_acquire))
+                    startNativeStream();
+            },
+            Qt::QueuedConnection);
+        return;
+    }
 
     const QAudioDevice device = resolveDevice();
     const QAudioFormat format = drift::negotiateAudioFormat(device, m_preferredRate);
@@ -330,6 +384,14 @@ void AudioOutputChannel::buildSink(const QAudioDevice &device, const QAudioForma
 
 void AudioOutputChannel::destroySink()
 {
+#ifdef Q_OS_ANDROID
+    if (m_stream) {
+        m_pump->stop();
+        AAudioStream_requestStop(m_stream);
+        AAudioStream_close(m_stream);
+        m_stream = nullptr;
+    }
+#endif
     if (!m_sink)
         return;
     m_sink->stop();
@@ -341,6 +403,8 @@ void AudioOutputChannel::onAudioOutputsChanged()
 {
     if (!m_haveSink)
         return; // nothing open; the next start() negotiates against whatever is there then
+    if (useNativeStream())
+        return; // Android moves the stream itself, and disconnects it when it cannot
 
     const QAudioDevice target = resolveDevice();
     if (!target.isNull() && target.id() == m_activeId)
@@ -363,4 +427,159 @@ void AudioOutputChannel::handleSinkError(const QString &message)
     }
 
     emit errorOccurred(message);
+}
+
+bool AudioOutputChannel::useNativeStream() const
+{
+#ifdef Q_OS_ANDROID
+    return m_requestedId.isEmpty();
+#else
+    return false;
+#endif
+}
+
+QAudioFormat AudioOutputChannel::openNativeStream(int preferredRate)
+{
+#ifdef Q_OS_ANDROID
+    AAudioStreamBuilder *builder = nullptr;
+    if (AAudio_createStreamBuilder(&builder) != AAUDIO_OK)
+        return QAudioFormat();
+
+    AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_OUTPUT);
+    AAudioStreamBuilder_setSharingMode(builder, AAUDIO_SHARING_MODE_SHARED);
+    AAudioStreamBuilder_setUsage(builder, AAUDIO_USAGE_MEDIA);
+    AAudioStreamBuilder_setContentType(builder, AAUDIO_CONTENT_TYPE_MUSIC);
+    AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_FLOAT);
+    AAudioStreamBuilder_setChannelCount(builder, 2);
+    AAudioStreamBuilder_setSampleRate(builder, preferredRate);
+    // Called on a thread of AAudio's own, where the stream must not be closed. The hop through the
+    // audio thread drops errors from a stream that has since been replaced.
+    AAudioStreamBuilder_setErrorCallback(
+        builder,
+        [](AAudioStream *stream, void *userData, aaudio_result_t error) {
+            auto *self = static_cast<AudioOutputChannel *>(userData);
+            QMetaObject::invokeMethod(
+                self->m_pull,
+                [self, stream, error] {
+                    if (stream != self->m_stream)
+                        return;
+                    QMetaObject::invokeMethod(
+                        self, [self, error] { self->onNativeStreamError(error); },
+                        Qt::QueuedConnection);
+                },
+                Qt::QueuedConnection);
+        },
+        this);
+
+    AAudioStream *stream = nullptr;
+    aaudio_result_t result = AAudioStreamBuilder_openStream(builder, &stream);
+    if (result != AAUDIO_OK) {
+        AAudioStreamBuilder_setSampleRate(builder, AAUDIO_UNSPECIFIED);
+        result = AAudioStreamBuilder_openStream(builder, &stream);
+    }
+    AAudioStreamBuilder_delete(builder);
+    if (result != AAUDIO_OK) {
+        qWarning("AudioOutputChannel: AAudio open failed: %s", AAudio_convertResultToText(result));
+        return QAudioFormat();
+    }
+
+    QAudioFormat format;
+    format.setSampleRate(AAudioStream_getSampleRate(stream));
+    format.setChannelCount(AAudioStream_getChannelCount(stream));
+    switch (AAudioStream_getFormat(stream)) {
+    case AAUDIO_FORMAT_PCM_FLOAT:
+        format.setSampleFormat(QAudioFormat::Float);
+        break;
+    case AAUDIO_FORMAT_PCM_I16:
+        format.setSampleFormat(QAudioFormat::Int16);
+        break;
+    default:
+        break;
+    }
+    if (!format.isValid()) {
+        AAudioStream_close(stream);
+        return QAudioFormat();
+    }
+
+    // Deep enough to ride out a slow mix between pump ticks. The playhead follows frames read, so
+    // the depth costs start latency only, not sync.
+    AAudioStream_setBufferSizeInFrames(stream, format.sampleRate() * 80 / 1000);
+
+    m_stream = stream;
+    m_format = format;
+    m_direct = format.sampleFormat() == QAudioFormat::Float && format.channelCount() == 2;
+    m_deliveredFrames = 0;
+    m_readBase = AAudioStream_getFramesWritten(stream);
+    if (!m_pump) {
+        m_pump = new QTimer(m_pull);
+        m_pump->setTimerType(Qt::PreciseTimer);
+        m_pump->setInterval(5);
+        connect(m_pump, &QTimer::timeout, m_pull, [this] { pumpNativeStream(); });
+    }
+    return format;
+#else
+    Q_UNUSED(preferredRate);
+    return QAudioFormat();
+#endif
+}
+
+void AudioOutputChannel::startNativeStream()
+{
+#ifdef Q_OS_ANDROID
+    const aaudio_stream_state_t state = AAudioStream_getState(m_stream);
+    if (state == AAUDIO_STREAM_STATE_STARTED || state == AAUDIO_STREAM_STATE_STARTING)
+        return;
+    // Flushed or never written to, so nothing written so far is still to be played.
+    m_deliveredFrames = 0;
+    m_readBase = AAudioStream_getFramesWritten(m_stream);
+    AAudioStream_requestStart(m_stream);
+    m_pump->start();
+    pumpNativeStream();
+#endif
+}
+
+void AudioOutputChannel::pumpNativeStream()
+{
+#ifdef Q_OS_ANDROID
+    if (!m_stream || !m_fill)
+        return;
+
+    const qint64 queued = AAudioStream_getFramesWritten(m_stream) - AAudioStream_getFramesRead(m_stream);
+    const int room = static_cast<int>(AAudioStream_getBufferSizeInFrames(m_stream) - queued);
+    if (room <= 0)
+        return;
+
+    m_bytes.resize(static_cast<qsizetype>(room) * m_format.bytesPerFrame());
+    int filled = 0;
+    if (m_direct) {
+        filled = m_fill(reinterpret_cast<float *>(m_bytes.data()), room);
+    } else {
+        m_scratch.resize(room * 2);
+        filled = m_fill(m_scratch.data(), room);
+        drift::writeInterleaved(m_scratch.constData(), filled, m_format, m_bytes.data());
+    }
+    if (filled <= 0)
+        return;
+
+    m_deliveredFrames += filled;
+    AAudioStream_write(m_stream, m_bytes.constData(), filled, 0);
+#endif
+}
+
+void AudioOutputChannel::onNativeStreamError(int error)
+{
+#ifdef Q_OS_ANDROID
+    if (!m_haveSink || !useNativeStream())
+        return;
+    // Disconnected is how AAudio says the route moved under a stream it could not take along —
+    // headphones in or out, a Bluetooth headset connecting. Not a failure, so reopening does not
+    // spend the one recovery a start() gets.
+    if (error == AAUDIO_ERROR_DISCONNECTED) {
+        rebuild();
+        return;
+    }
+    handleSinkError(describeSinkError(QAudio::IOError));
+#else
+    Q_UNUSED(error);
+#endif
 }

@@ -12,7 +12,9 @@
 #include <functional>
 
 class QAudioSink;
+class QTimer;
 class AudioOutputChannel;
+struct AAudioStreamStruct;
 
 namespace drift {
 
@@ -101,10 +103,25 @@ private:
     void buildSink(const QAudioDevice &device, const QAudioFormat &format);
     void destroySink();
 
+    // Android, following the system default: Qt's sink pins AAudio to the device id of whatever it
+    // thinks the default is, and its device list drops USB and LE Audio headsets, so those never
+    // got sound (#391). An AAudio stream with no device set lets Android route it instead.
+    bool useNativeStream() const;
+    // Audio thread only. Returns the format the stream opened with, invalid on failure.
+    QAudioFormat openNativeStream(int preferredRate);
+    void startNativeStream();
+    void pumpNativeStream();
+    void onNativeStreamError(int error);
+
     QMediaDevices m_mediaDevices;
     QThread m_thread;
     AudioPullDevice *m_pull = nullptr;
     QAudioSink *m_sink = nullptr;
+    // Audio thread only, Android.
+    AAudioStreamStruct *m_stream = nullptr;
+    QTimer *m_pump = nullptr;
+    qint64 m_readBase = 0;
+    QByteArray m_bytes;
     FillCallback m_fill;
 
     QByteArray m_requestedId;  // owner thread
