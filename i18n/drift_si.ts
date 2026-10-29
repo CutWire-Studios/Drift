@@ -29,6 +29,29 @@
     </message>
 </context>
 <context>
+    <name>AccelerationFailedDialog</name>
+    <message>
+        <source>AI engine isn&apos;t working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">අවලංගු කරන්න</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine, then try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -41,6 +64,10 @@
     <message>
         <source>NVIDIA graphics (faster)</source>
         <translation>NVIDIA ග්‍රැෆික්ස් (වේගවත්)</translation>
+    </message>
+    <message>
+        <source>AMD graphics (faster)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Graphics card (faster)</source>
@@ -2232,8 +2259,20 @@
         <translation>පිවිසුම (In)</translation>
     </message>
     <message>
+        <source>In animation</source>
+        <translation type="unfinished">පිවිසුම් සජීවිකරණය</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>පිටවීම (Out)</translation>
+    </message>
+    <message>
+        <source>Out animation</source>
+        <translation type="unfinished">පිටවීමේ සජීවිකරණය</translation>
+    </message>
+    <message>
+        <source>Custom curve</source>
+        <translation type="unfinished">අභිරුචි වක්‍රය</translation>
     </message>
     <message>
         <source>Edit custom curve…</source>
@@ -2393,10 +2432,6 @@
     <message>
         <source>Select tool</source>
         <translation>තේරීමේ මෙවලම</translation>
-    </message>
-    <message>
-        <source>Cut tool</source>
-        <translation>කැපුම් මෙවලම</translation>
     </message>
     <message>
         <source>Search…</source>
@@ -2844,6 +2879,22 @@
         <translation>ධාවන වේගය අඩු කරන්න</translation>
     </message>
     <message>
+        <source>3D gizmo: move / Tracker tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: rotate / Rectangle mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: scale / Ellipse mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut tool / Brush mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Polygon mask tool</source>
         <translation>බහුඅස්‍ර ආවරණ මෙවලම</translation>
     </message>
@@ -2858,6 +2909,30 @@
     <message>
         <source>Increase brush size</source>
         <translation>බුරුසුවේ ප්‍රමාණය වැඩි කරන්න</translation>
+    </message>
+    <message>
+        <source>Brush: switch paint / erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track forward</source>
+        <translation type="unfinished">ඉදිරියට ලුහුබඳින්න</translation>
+    </message>
+    <message>
+        <source>Track backward</source>
+        <translation type="unfinished">පසුපසට ලුහුබඳින්න</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">එක් රාමුවක් ඉදිරියට ලුහුබඳින්න</translation>
+    </message>
+    <message>
+        <source>Track one frame backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -3554,18 +3629,6 @@
     <message>
         <source>Select transform layer</source>
         <translation>පරිවර්තන ස්තරය තෝරන්න</translation>
-    </message>
-    <message>
-        <source>3D gizmo: move</source>
-        <translation>3D gizmo: ගෙනයන්න</translation>
-    </message>
-    <message>
-        <source>3D gizmo: rotate</source>
-        <translation>3D gizmo: කරකවන්න</translation>
-    </message>
-    <message>
-        <source>3D gizmo: scale</source>
-        <translation>3D gizmo: පරිමාණය කරන්න</translation>
     </message>
     <message>
         <source>3D gizmo: switch global/local axes</source>
@@ -5035,6 +5098,10 @@
         <source>Auto keyframes</source>
         <translation>ස්වයංක්‍රීය කීෆ්‍රේම</translation>
     </message>
+    <message>
+        <source>Audio effect settings</source>
+        <translation type="unfinished">ශ්‍රව්‍ය ප්‍රයෝග සැකසීම්</translation>
+    </message>
 </context>
 <context>
     <name>AudioInspector</name>
@@ -5377,6 +5444,10 @@
         <translation>ක්ලිප් එක පවතින තාක් කාලරේඛාවේ ඇති සියල්ල මෙම කැමරාව හරහා පෙනේ. නිශ්චලව ඇති කැමරාවක් කැමරාවක් නොමැති ආකාරයටම පෙනේ, එබැවින් පහත අංක සියල්ල සාමාන්‍ය දසුනෙන් වන අපගමනයන් වේ.</translation>
     </message>
     <message>
+        <source>Camera position</source>
+        <translation type="unfinished">කැමරා පිහිටීම</translation>
+    </message>
+    <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation>කෙටි කාචයක් ගැඹුර වැඩි කර පෙන්වයි; දිගු එකක් එය සමතලා කරයි. මෙම කැමරාව ධාවනය වන විට එය එක් එක් ක්ලිප් එකෙහිම పර්යාලෝක (Perspective) අගය ප්‍රතිස්ථාපනය කරයි, මන්ද දර්ශනයකට ඇත්තේ එක් නරඹන්නෙකු පමණි.</translation>
     </message>
@@ -5451,6 +5522,10 @@
     <message>
         <source>None</source>
         <translation>කිසිවක් නැත</translation>
+    </message>
+    <message>
+        <source>Missing look</source>
+        <translation type="unfinished">නැතිවූ පෙනුම</translation>
     </message>
     <message>
         <source>Adjust color</source>
@@ -5660,20 +5735,8 @@
         <translation>Halation</translation>
     </message>
     <message>
-        <source>None</source>
-        <translation>කිසිවක් නැත</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>නැතිවූ පෙනුම</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>%1 යළි සකසන්න</translation>
-    </message>
-    <message>
-        <source>No clip selected</source>
-        <translation>කිසිදු ක්ලිප් එකක් තෝරාගෙන නැත</translation>
     </message>
     <message>
         <source>Compare</source>
@@ -5696,6 +5759,34 @@
         <translation>සියල්ලට යොදන්න…</translation>
     </message>
     <message>
+        <source>Color grade</source>
+        <translation type="unfinished">වර්ණ සංශෝධනය</translation>
+    </message>
+    <message>
+        <source>Adds film-like noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft glow around bright areas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color fringing at the edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darkens the corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Red glow around highlights, like film</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>යළි සකසන්න</translation>
     </message>
@@ -5709,7 +5800,15 @@
     </message>
     <message>
         <source>Editing &quot;%1&quot; only. Use Apply to all to copy its grade to other clips.</source>
-        <translation>"%1" පමණක් සංස්කරණය කරමින් පවතී. එහි වර්ණ සංශෝධනය වෙනත් ක්ලිප් වලට පිටපත් කිරීමට &apos;සියල්ලට යොදන්න&apos; භාවිතා කරන්න.</translation>
+        <translation>&quot;%1&quot; පමණක් සංස්කරණය කරමින් පවතී. එහි වර්ණ සංශෝධනය වෙනත් ක්ලිප් වලට පිටපත් කිරීමට &apos;සියල්ලට යොදන්න&apos; භාවිතා කරන්න.</translation>
+    </message>
+    <message>
+        <source>Showing the original. Your grade is hidden until you turn Compare off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grade</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The grade is turned off.</source>
@@ -5744,8 +5843,16 @@
         <translation>පෙනුම (Look)</translation>
     </message>
     <message>
+        <source>None. Choose a look in the Looks panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look Intensity</source>
         <translation>පෙනුමේ තීව්‍රතාව</translation>
+    </message>
+    <message>
+        <source>Color wheels</source>
+        <translation type="unfinished">වර්ණ රෝද</translation>
     </message>
     <message>
         <source>Adjust curves</source>
@@ -5754,6 +5861,10 @@
     <message>
         <source>Hue Curves</source>
         <translation>Hue වක්‍ර</translation>
+    </message>
+    <message>
+        <source>Hue curves</source>
+        <translation type="unfinished">Hue වක්‍ර</translation>
     </message>
     <message>
         <source>Adjust hue curves</source>
@@ -5828,6 +5939,10 @@
         <translation>%1 යළි සකසන්න</translation>
     </message>
     <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Brightness</source>
         <translation>දීප්තිය</translation>
     </message>
@@ -5877,20 +5992,44 @@
         <translation>Hue</translation>
     </message>
     <message>
-        <source>Sat</source>
-        <translation>Sat</translation>
+        <source>Saturation</source>
+        <translation type="unfinished">සංතෘප්තිය (Saturation)</translation>
     </message>
     <message>
-        <source>Lum</source>
-        <translation>Lum</translation>
+        <source>Luminance</source>
+        <translation type="unfinished">Luminance</translation>
     </message>
     <message>
         <source>Master</source>
         <translation>Master</translation>
     </message>
     <message>
+        <source>Hue vs Hue: shift one color toward another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Saturation: make one color more or less vivid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Luminance: brighten or darken one color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset channel</source>
         <translation>නාලිකාව යළි සකසන්න</translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7101,6 +7240,22 @@
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">වැඩබිම: %1</translation>
+    </message>
+    <message>
+        <source>Workspace:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch workspace</source>
+        <translation type="unfinished">වැඩබිම මාරු කරන්න</translation>
+    </message>
+    <message>
+        <source>Customize layouts in Settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search  %1</source>
         <translation>සොයන්න  %1</translation>
     </message>
@@ -7108,47 +7263,12 @@
         <source>Search</source>
         <translation>සොයන්න</translation>
     </message>
-    <message>
-        <source>Export video</source>
-        <translation>වීඩියෝව නිර්යාත කරන්න</translation>
-    </message>
-    <message>
-        <source>Downloads</source>
-        <translation>බාගැනීම්</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>භාෂාව…</translation>
-    </message>
-    <message>
-        <source>Video size and layout</source>
-        <translation>වීඩියෝ ප්‍රමාණය සහ පිරිසැලසුම</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation>ජංගම පිරිසැලසුමට මාරු වන්න…</translation>
-    </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
     <message>
         <source>Settings</source>
         <translation>සැකසීම්</translation>
-    </message>
-</context>
-<context>
-    <name>EditorHeaderWorkspaceButton</name>
-    <message>
-        <source>Workspaces</source>
-        <translation>වැඩබිම්</translation>
-    </message>
-    <message>
-        <source>Switch workspace</source>
-        <translation>වැඩබිම මාරු කරන්න</translation>
-    </message>
-    <message>
-        <source>Edit workspaces…</source>
-        <translation>වැඩබිම් සංස්කරණය කරන්න…</translation>
     </message>
 </context>
 <context>
@@ -7739,6 +7859,10 @@
     <message>
         <source>Browse effects</source>
         <translation>ප්‍රයෝග ගවේෂණය කරන්න</translation>
+    </message>
+    <message>
+        <source>Effect settings</source>
+        <translation type="unfinished">ප්‍රයෝග සැකසීම්</translation>
     </message>
 </context>
 <context>
@@ -8627,565 +8751,6 @@
     </message>
 </context>
 <context>
-    <name>GlobalSearchControls</name>
-    <message>
-        <source>Properties</source>
-        <translation>ගුණාංග</translation>
-    </message>
-    <message>
-        <source>Assets</source>
-        <translation>වත්කම්</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>සැකසීම්</translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation>වර්ණ</translation>
-    </message>
-    <message>
-        <source>Source Lab</source>
-        <translation>Source Lab</translation>
-    </message>
-    <message>
-        <source>Select a clip</source>
-        <translation>ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select a video, image, text or shape clip</source>
-        <translation>වීඩියෝ, පින්තූර, පෙළ හෝ හැඩතල ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select a video clip</source>
-        <translation>වීඩියෝ ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select a video or audio clip</source>
-        <translation>වීඩියෝ හෝ ශ්‍රව්‍ය ක්ලිපයක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select a text or subtitle clip</source>
-        <translation>පෙළ හෝ උපසිරැසි ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s effects layer</source>
-        <translation>ක්ලිප් එකක ප්‍රයෝග ස්තරය තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s mask layer</source>
-        <translation>ක්ලිප් එකක ආවරණ ස්තරය තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s audio effects layer</source>
-        <translation>ක්ලිප් එකක ශ්‍රව්‍ය ප්‍රයෝග ස්තරය තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Select the clip before a cut</source>
-        <translation>කැපුමකට පෙර ක්ලිප් එක තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Open the Subtitles workspace</source>
-        <translation>උපසිරැසි වැඩබිම විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Open the Source Lab workspace</source>
-        <translation>Source Lab වැඩබිම විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation>සාමාන්‍ය</translation>
-    </message>
-    <message>
-        <source>Clip name</source>
-        <translation>ක්ලිප් නම</translation>
-    </message>
-    <message>
-        <source>Crop</source>
-        <translation>කප්පාදු (Crop)</translation>
-    </message>
-    <message>
-        <source>Trim</source>
-        <translation>කප්පාදු කිරීම</translation>
-    </message>
-    <message>
-        <source>Duration</source>
-        <translation>කාලසීමාව</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>පරිවර්තනය</translation>
-    </message>
-    <message>
-        <source>Position</source>
-        <translation>පිහිටීම</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>පරිමාණය (Scale)</translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation>පාරාන්ධතාව</translation>
-    </message>
-    <message>
-        <source>Rotation</source>
-        <translation>භ්‍රමණය</translation>
-    </message>
-    <message>
-        <source>Flip</source>
-        <translation>පෙරළන්න (Flip)</translation>
-    </message>
-    <message>
-        <source>Fix orientation</source>
-        <translation>දිශානතිය නිවැරදි කරන්න</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>පිහිටීම සහ ප්‍රමාණය යළි සකසන්න</translation>
-    </message>
-    <message>
-        <source>Stabilization</source>
-        <translation>ස්ථාවර කිරීම</translation>
-    </message>
-    <message>
-        <source>Stabilize</source>
-        <translation>ස්ථාපිත කරන්න (Stabilize)</translation>
-    </message>
-    <message>
-        <source>Smoothing</source>
-        <translation>සුමටතාව</translation>
-    </message>
-    <message>
-        <source>Tripod mode</source>
-        <translation>ට්‍රයිපොඩ් ප්‍රකාරය</translation>
-    </message>
-    <message>
-        <source>Animation</source>
-        <translation>සජීවිකරණය</translation>
-    </message>
-    <message>
-        <source>In animation</source>
-        <translation>පිවිසුම් සජීවිකරණය</translation>
-    </message>
-    <message>
-        <source>Out animation</source>
-        <translation>පිටවීමේ සජීවිකරණය</translation>
-    </message>
-    <message>
-        <source>Custom curve</source>
-        <translation>අභිරුචි වක්‍රය</translation>
-    </message>
-    <message>
-        <source>Audio</source>
-        <translation>ශ්‍රව්‍ය</translation>
-    </message>
-    <message>
-        <source>Volume</source>
-        <translation>ශබ්ද මට්ටම</translation>
-    </message>
-    <message>
-        <source>Pan</source>
-        <translation>Pan</translation>
-    </message>
-    <message>
-        <source>Remove noise…</source>
-        <translation>ඝෝෂාව ඉවත් කරන්න…</translation>
-    </message>
-    <message>
-        <source>Auto subtitles</source>
-        <translation>ස්වයංක්‍රීය උපසිරැසි</translation>
-    </message>
-    <message>
-        <source>Audio track</source>
-        <translation>ශ්‍රව්‍ය ට්‍රැකය</translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <translation>වේගය</translation>
-    </message>
-    <message>
-        <source>Playback speed</source>
-        <translation>ධාවන වේගය</translation>
-    </message>
-    <message>
-        <source>Custom speed…</source>
-        <translation>අභිරුචි වේගය…</translation>
-    </message>
-    <message>
-        <source>Reverse</source>
-        <translation>ප්‍රතිලෝම කරන්න</translation>
-    </message>
-    <message>
-        <source>Blending</source>
-        <translation>සම්මිශ්‍රණය</translation>
-    </message>
-    <message>
-        <source>Blend mode</source>
-        <translation>මුසු කිරීමේ ප්‍රකාරය</translation>
-    </message>
-    <message>
-        <source>Masks</source>
-        <translation>ආවරණ</translation>
-    </message>
-    <message>
-        <source>Feather</source>
-        <translation>Feather (මෘදු දාර)</translation>
-    </message>
-    <message>
-        <source>Invert</source>
-        <translation>ප්‍රතිලෝම කරන්න (Invert)</translation>
-    </message>
-    <message>
-        <source>Combine</source>
-        <translation>ඒකාබද්ධ කරන්න</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>ප්‍රයෝග</translation>
-    </message>
-    <message>
-        <source>Effect settings</source>
-        <translation>ප්‍රයෝග සැකසීම්</translation>
-    </message>
-    <message>
-        <source>Face tracking</source>
-        <translation>මුහුණු ලුහුබැඳීම</translation>
-    </message>
-    <message>
-        <source>Save as preset…</source>
-        <translation>පෙරසැකසුමක් ලෙස සුරකින්න…</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>ශ්‍රව්‍ය ප්‍රයෝග</translation>
-    </message>
-    <message>
-        <source>Audio effect settings</source>
-        <translation>ශ්‍රව්‍ය ප්‍රයෝග සැකසීම්</translation>
-    </message>
-    <message>
-        <source>Transition</source>
-        <translation>සංක්‍රාන්තිය</translation>
-    </message>
-    <message>
-        <source>Transition duration</source>
-        <translation>සංක්‍රාන්ති කාලසීමාව</translation>
-    </message>
-    <message>
-        <source>Transition curve</source>
-        <translation>සංක්‍රාන්ති වක්‍රය</translation>
-    </message>
-    <message>
-        <source>Text</source>
-        <translation>පෙළ</translation>
-    </message>
-    <message>
-        <source>Font</source>
-        <translation>ෆොන්ට් (අකුරු)</translation>
-    </message>
-    <message>
-        <source>Text style</source>
-        <translation>පෙළ විලාසය</translation>
-    </message>
-    <message>
-        <source>Shape</source>
-        <translation>හැඩතලය</translation>
-    </message>
-    <message>
-        <source>Shape style</source>
-        <translation>හැඩතල විලාසය</translation>
-    </message>
-    <message>
-        <source>Select a shape clip</source>
-        <translation>හැඩතල ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Camera</source>
-        <translation>කැමරාව</translation>
-    </message>
-    <message>
-        <source>Camera position</source>
-        <translation>කැමරා පිහිටීම</translation>
-    </message>
-    <message>
-        <source>Select the camera layer</source>
-        <translation>කැමරා ස්තරය තෝරන්න</translation>
-    </message>
-    <message>
-        <source>PDF</source>
-        <translation>PDF</translation>
-    </message>
-    <message>
-        <source>PDF page</source>
-        <translation>PDF පිටුව</translation>
-    </message>
-    <message>
-        <source>Select a PDF clip</source>
-        <translation>PDF ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>3D Model</source>
-        <translation>3D ආකෘතිය</translation>
-    </message>
-    <message>
-        <source>3D model</source>
-        <translation>3D ආකෘතිය</translation>
-    </message>
-    <message>
-        <source>Select a 3D model clip</source>
-        <translation>3D ආකෘති ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Exposure</source>
-        <translation>නිරාවරණය</translation>
-    </message>
-    <message>
-        <source>Contrast</source>
-        <translation>පරස්පරතාව</translation>
-    </message>
-    <message>
-        <source>Highlights</source>
-        <translation>උද්දීපන</translation>
-    </message>
-    <message>
-        <source>Shadows</source>
-        <translation>සෙවනැලි</translation>
-    </message>
-    <message>
-        <source>Whites</source>
-        <translation>සුදු</translation>
-    </message>
-    <message>
-        <source>Blacks</source>
-        <translation>කළු</translation>
-    </message>
-    <message>
-        <source>Temperature</source>
-        <translation>උෂ්ණත්වය</translation>
-    </message>
-    <message>
-        <source>Tint</source>
-        <translation>පැහැය (Tint)</translation>
-    </message>
-    <message>
-        <source>Saturation</source>
-        <translation>සංතෘප්තිය</translation>
-    </message>
-    <message>
-        <source>Vibrance</source>
-        <translation>විචිත්‍රත්වය</translation>
-    </message>
-    <message>
-        <source>Color wheels</source>
-        <translation>වර්ණ රෝද</translation>
-    </message>
-    <message>
-        <source>Curves</source>
-        <translation>වක්‍ර</translation>
-    </message>
-    <message>
-        <source>Hue curves</source>
-        <translation>Hue වක්‍ර</translation>
-    </message>
-    <message>
-        <source>HSL</source>
-        <translation>HSL</translation>
-    </message>
-    <message>
-        <source>Color grade</source>
-        <translation>වර්ණ සංශෝධනය</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>පෙනුම (Looks)</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>පෙනුම ආයාත කරන්න</translation>
-    </message>
-    <message>
-        <source>Scopes</source>
-        <translation>දර්ශක (Scopes)</translation>
-    </message>
-    <message>
-        <source>Open the Color workspace</source>
-        <translation>වර්ණ වැඩබිම විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Film Grain</source>
-        <translation>Film Grain</translation>
-    </message>
-    <message>
-        <source>Glow</source>
-        <translation>දීප්තිය (Glow)</translation>
-    </message>
-    <message>
-        <source>Vignette</source>
-        <translation>Vignette</translation>
-    </message>
-    <message>
-        <source>Chromatic Aberration</source>
-        <translation>Chromatic Aberration</translation>
-    </message>
-    <message>
-        <source>Compare</source>
-        <translation>සසඳන්න</translation>
-    </message>
-    <message>
-        <source>Apply to all clips</source>
-        <translation>සියලුම ක්ලිප් වලට යොදන්න</translation>
-    </message>
-    <message>
-        <source>Keyframe editor</source>
-        <translation>කීෆ්‍රේම සංස්කාරකය</translation>
-    </message>
-    <message>
-        <source>Open the Keyframes workspace</source>
-        <translation>කීෆ්‍රේම වැඩබිම විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Masking &amp; Tracking</source>
-        <translation>Masking &amp; Tracking</translation>
-    </message>
-    <message>
-        <source>Open the Masking &amp; Tracking workspace</source>
-        <translation>Masking &amp; Tracking වැඩබිම විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Subtitle lane</source>
-        <translation>උපසිරැසි පථය</translation>
-    </message>
-    <message>
-        <source>Subtitle timing</source>
-        <translation>උපසිරැසි කාල නිර්ණය</translation>
-    </message>
-    <message>
-        <source>Shift times</source>
-        <translation>වේලාවන් මාරු කරන්න</translation>
-    </message>
-    <message>
-        <source>Two-point sync</source>
-        <translation>ලක්ෂ්‍ය දෙකක සමමුහුර්තකරණය</translation>
-    </message>
-    <message>
-        <source>Frame rate conversion</source>
-        <translation>රාමු අනුපාත පරිවර්තනය</translation>
-    </message>
-    <message>
-        <source>Bridge gaps</source>
-        <translation>හිඩැස් පියවන්න</translation>
-    </message>
-    <message>
-        <source>Subtitle text editor</source>
-        <translation>උපසිරැසි පෙළ සංස්කාරකය</translation>
-    </message>
-    <message>
-        <source>Trim source clip</source>
-        <translation>මූලාශ්‍ර ක්ලිප් එක කප්පාදු කරන්න</translation>
-    </message>
-    <message>
-        <source>Crop / reframe source</source>
-        <translation>මූලාශ්‍රය කප්පාදු කරන්න / නැවත රාමු කරන්න</translation>
-    </message>
-    <message>
-        <source>Speed and loudness</source>
-        <translation>වේගය සහ ශබ්ද ඝෝෂාකාරීත්වය</translation>
-    </message>
-    <message>
-        <source>Denoise and stabilize source</source>
-        <translation>මූලාශ්‍රයේ ශබ්ද බාධා ඉවත් කර ස්ථාවර කරන්න</translation>
-    </message>
-    <message>
-        <source>Upscale source clip</source>
-        <translation>මූලාශ්‍ර ක්ලිප් එකේ විභේදනය වැඩි කරන්න (Upscale)</translation>
-    </message>
-    <message>
-        <source>Export trimmed clip</source>
-        <translation>කප්පාදු කළ ක්ලිප් එක නිර්යාත කරන්න</translation>
-    </message>
-    <message>
-        <source>Workspaces</source>
-        <translation>වැඩබිම්</translation>
-    </message>
-    <message>
-        <source>Performance</source>
-        <translation>ක්‍රියාකාරිත්වය (Performance)</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>සංක්‍රාන්ති</translation>
-    </message>
-    <message>
-        <source>Templates</source>
-        <translation>ආකෘති</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>ස්ටිකර්</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>උපසිරැසි</translation>
-    </message>
-    <message>
-        <source>Speech</source>
-        <translation>කථනය</translation>
-    </message>
-    <message>
-        <source>Subject</source>
-        <translation>විෂයය</translation>
-    </message>
-    <message>
-        <source>Scenes</source>
-        <translation>දර්ශන</translation>
-    </message>
-    <message>
-        <source>Media</source>
-        <translation>මාධ්‍ය</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>පෙරදසුන</translation>
-    </message>
-    <message>
-        <source>Appearance</source>
-        <translation>පෙනුම</translation>
-    </message>
-    <message>
-        <source>Timeline</source>
-        <translation>කාලරේඛාව</translation>
-    </message>
-    <message>
-        <source>Timeline toolbar</source>
-        <translation>කාලරේඛා මෙවලම් තීරුව</translation>
-    </message>
-    <message>
-        <source>Keyboard shortcuts</source>
-        <translation>යතුරුපුවරු කෙටිමං</translation>
-    </message>
-    <message>
-        <source>AI &amp; Cloud</source>
-        <translation>AI සහ Cloud</translation>
-    </message>
-    <message>
-        <source>Network</source>
-        <translation>ජාලය</translation>
-    </message>
-    <message>
-        <source>About</source>
-        <translation>පිළිබඳව</translation>
-    </message>
-    <message>
-        <source>Upscale…</source>
-        <translation>Upscale කරන්න…</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>අමතර අංග</translation>
-    </message>
-</context>
-<context>
     <name>GlobalSearchPopup</name>
     <message>
         <source>Action</source>
@@ -9244,76 +8809,16 @@
         <translation>පාලකය</translation>
     </message>
     <message>
-        <source>Select a clip first</source>
-        <translation>පළමුව ක්ලිප් එකක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>තෝරාගත් ක්ලිපයට යොදන්න</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>ප්ලේහෙඩ් එක ඇති තැනට එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Not available now</source>
-        <translation>දැන් ලබාගත නොහැක</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>සැකසීම්</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>අමතර අංග</translation>
-    </message>
-    <message>
-        <source>Add-on manager</source>
-        <translation>ඇඩෝන කළමනාකරු</translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>දෝෂ නිවාරණ තොරතුරු…</translation>
-    </message>
-    <message>
-        <source>Light theme</source>
-        <translation>ලා පැහැ තේමාව</translation>
-    </message>
-    <message>
-        <source>Dark theme</source>
-        <translation>අඳුරු තේමාව</translation>
-    </message>
-    <message>
-        <source>System theme</source>
-        <translation>පද්ධති තේමාව</translation>
-    </message>
-    <message>
-        <source>Theme: %1</source>
-        <translation>තේමාව: %1</translation>
-    </message>
-    <message>
-        <source>Workspace: %1</source>
-        <translation>වැඩබිම: %1</translation>
-    </message>
-    <message>
-        <source>Add as adjustment clip</source>
-        <translation>ගැලපුම් ක්ලිප් එකක් ලෙස එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Add after selected clip</source>
-        <translation>තෝරාගත් ක්ලිප් එකට පසුව එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Not available on this track</source>
-        <translation>මෙම ට්‍රැක් එකෙහි ලබාගත නොහැක</translation>
-    </message>
-    <message>
         <source>No matches</source>
         <translation>ගැලපීම් නැත</translation>
     </message>
 </context>
 <context>
     <name>GradeSlider</name>
+    <message>
+        <source>Double-click to reset. Hold Shift while dragging for fine control.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
         <translation>සජීවිකරණය කර ඇත. සංස්කරණය කිරීමෙන් කීෆ්‍රේම සකසයි (ස්වයංක්‍රීය කීෆ්‍රේම සක්‍රියව තිබිය යුතුය).</translation>
@@ -9812,6 +9317,10 @@
         <translation>කීෆ්‍රේම හිස් කරන ලදී</translation>
     </message>
     <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move keyframes</source>
         <translation>කීෆ්‍රේම ගෙන යන්න</translation>
     </message>
@@ -9918,6 +9427,10 @@
         <translation>ආවරණ මෘදු බව (Feather)</translation>
     </message>
     <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">කීෆ්‍රේම වක්‍රය සංස්කරණය කරන්න</translation>
+    </message>
+    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (කීෆ්‍රේම අක්‍රියයි)</translation>
     </message>
@@ -9963,6 +9476,14 @@
     <message>
         <source>Expand curve editor to view and edit Bezier handles (180px)</source>
         <translation>Bezier හැන්ඩල බැලීමට සහ සංස්කරණය කිරීමට වක්‍ර සංස්කාරකය දිගහරින්න (180px)</translation>
+    </message>
+    <message>
+        <source>Hide Bezier handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show Bezier handles. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -10066,6 +9587,10 @@
         <source>Move keyframes</source>
         <translation>කීෆ්‍රේම ගෙන යන්න</translation>
     </message>
+    <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">කීෆ්‍රේම වක්‍රය සංස්කරණය කරන්න</translation>
+    </message>
 </context>
 <context>
     <name>KeyframesInteractionSurface</name>
@@ -10073,12 +9598,27 @@
         <source>Move keyframes</source>
         <translation>කීෆ්‍රේම ගෙන යන්න</translation>
     </message>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>KeyframesPanel</name>
     <message>
+        <source>Keyframe editor</source>
+        <translation type="unfinished">කීෆ්‍රේම සංස්කාරකය</translation>
+    </message>
+    <message>
         <source>Scale</source>
         <translation>පරිමාණය (Scale)</translation>
+    </message>
+    <message>
+        <source>Press K to add a keyframe at the playhead, or double-click a lane to add one there</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
@@ -10147,6 +9687,14 @@
         <translation>උස පිරවීමට සෑම වක්‍රයක්ම පරිමාණය කරන්න</translation>
     </message>
     <message>
+        <source>Handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bezier handles on the focused curve. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fit the clip in view</source>
         <translation>ක්ලිප් එක දසුනට සරිලන සේ සකසන්න</translation>
     </message>
@@ -10170,12 +9718,12 @@
         <translation>%1 හි තවමත් කීෆ්‍රේම නැත</translation>
     </message>
     <message>
-        <source>Turn off %1&apos;s keyframes — they are kept, but stop animating</source>
-        <translation>%1 හි කීෆ්‍රේම අක්‍රිය කරන්න — ඒවා තබා ගන්නා නමුත් සජීවීකරණය වීම නතර වේ</translation>
+        <source>Stop animating %1 (keys are kept)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Turn %1&apos;s keyframes back on</source>
-        <translation>%1 හි කීෆ්‍රේම නැවත ක්‍රියාත්මක කරන්න</translation>
+        <source>Animate %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -10734,8 +10282,8 @@
         <translation>කවුළුව (&amp;W)</translation>
     </message>
     <message>
-        <source>Edit Workspaces…</source>
-        <translation>වැඩබිම් සංස්කරණය කරන්න…</translation>
+        <source>Customize Layouts in Settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
@@ -10997,15 +10545,27 @@
         <translation>වස්තුව තේරීමට එය මත ක්ලික් කරන්න · බැහැර කිරීමට දකුණු-ක්ලික් හෝ Ctrl-ක්ලික් කරන්න</translation>
     </message>
     <message>
-        <source>Add points to refine · then propagate in the Masking panel</source>
-        <translation>වැඩිදියුණු කිරීමට ලක්ෂ්‍ය එක් කරන්න · ඉන්පසු Masking පැනලය තුළ ප්‍රචාරණය කරන්න</translation>
+        <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a cutout model in the Masking panel first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People are found automatically · press “Cut out people” in the Masking panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
-        <source>Paint to add · Right-drag to erase · [ ] size</source>
-        <translation>එක් කිරීමට අඳින්න · මකා දැමීමට දකුණු-ක්ලික් කර අදින්න · [ ] ප්‍රමාණය</translation>
+        <source>%1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move the playhead over the selected clip</source>
@@ -11034,23 +10594,39 @@
         <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
         <translation>ලක්ෂ්‍ය %1ක් · වැසීමට Enter · අහෝසි කිරීමට Backspace · අවලංගු කිරීමට Esc</translation>
     </message>
+    <message>
+        <source>Drawing replaces this layer&apos;s mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to draw · Shift for square/circle · Alt from centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MaskEditSession</name>
+    <message>
+        <source>Mask changed</source>
+        <translation type="unfinished">ආවරණය (Mask) වෙනස් විය</translation>
+    </message>
 </context>
 <context>
     <name>MaskOverlay</name>
     <message>
-        <source>Mask changed</source>
-        <translation>ආවරණය (Mask) වෙනස් විය</translation>
+        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>MaskOverlayBarEdge</name>
     <message>
-        <source>Mask changed</source>
-        <translation>ආවරණය (Mask) වෙනස් විය</translation>
+        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayEmptyHint</name>
+    <message>
+        <source>Pick a mask tool in the Masking panel and draw on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
         <translation>මෙහි සංස්කරණය කිරීමට ආවරණ ටැබයෙන් ආවරණයක් ක්ලිපයක් මතට අදින්න</translation>
@@ -11058,27 +10634,6 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>ආවරණ සංස්කරණය කිරීමට ධාවන ශීර්ෂයේ ඇති ක්ලිපයක් තෝරන්න</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayResizeGrip</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>ආවරණය (Mask) වෙනස් විය</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayRotateHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>ආවරණය (Mask) වෙනස් විය</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayVertexHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>ආවරණය (Mask) වෙනස් විය</translation>
     </message>
 </context>
 <context>
@@ -11119,12 +10674,32 @@
         <translation>ආවරණය එක් කරන ලදී</translation>
     </message>
     <message>
+        <source>Remove speed changes first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs a video track below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to mask</source>
         <translation>ආවරණයක් බවට පරිවර්තනය කරන්න</translation>
     </message>
     <message>
         <source>Clip converted to mask</source>
         <translation>ක්ලිප් එක ආවරණයක් බවට පරිවර්තනය කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Cutouts can&apos;t be moved yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask moved to an effect layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Draw mask</source>
@@ -11141,6 +10716,26 @@
     <message>
         <source>Fill mask</source>
         <translation>ආවරණය පුරවන්න</translation>
+    </message>
+    <message>
+        <source>Clear cutout fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout fix cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the cutout fix. The next stroke will try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix cutout frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout frame fixed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
@@ -11270,16 +10865,16 @@
         <translation>AI වස්තුව</translation>
     </message>
     <message>
+        <source>Tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
         <source>Off</source>
         <translation>අක්‍රියයි</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Overlay</translation>
-    </message>
-    <message>
-        <source>Matte</source>
-        <translation>Matte</translation>
     </message>
     <message>
         <source>Size</source>
@@ -11322,6 +10917,18 @@
         <translation>වම්-ක්ලික් කර ඇදීමෙන් මකා දමයි</translation>
     </message>
     <message>
+        <source>Pressure changes size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear fix on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the brush fix from the frame at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fill</source>
         <translation>පිරවුම (Fill)</translation>
     </message>
@@ -11330,12 +10937,28 @@
         <translation>සම්පූර්ණ ක්ලිප් එකම ආවරණයෙන් වසන්න</translation>
     </message>
     <message>
+        <source>Start a new brush mask covering the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear</source>
         <translation>හිස් කරන්න</translation>
     </message>
     <message>
         <source>Empty the mask</source>
         <translation>ආවරණය හිස් කරන්න</translation>
+    </message>
+    <message>
+        <source>No trackers on this clip yet. Start one with Point or Planar in the Tracking panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">ආවරණයක් (Mask) එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -11396,16 +11019,24 @@
         <translation>තෝරාගත් ආවරණය පිරිපහදු කරන්න</translation>
     </message>
     <message>
-        <source>Track backward</source>
-        <translation>පසුපසට ලුහුබඳින්න</translation>
+        <source>Invert</source>
+        <translation type="unfinished">ප්‍රතිලෝම කරන්න (Invert)</translation>
     </message>
     <message>
-        <source>Track both ways</source>
-        <translation>දෙපැත්තටම ලුහුබඳින්න</translation>
+        <source>Hide the inside instead of the outside</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Track forward</source>
-        <translation>ඉදිරියට ලුහුබඳින්න</translation>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">දීප්තිය</translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -11424,18 +11055,6 @@
         <translation>කාලරේඛාවේ ක්ලිප් එකක් හෝ ගැලපුම් ස්තරයක් තෝරන්න.</translation>
     </message>
     <message>
-        <source>Adjustment layer mask</source>
-        <translation>ගැලපුම් ස්තර ආවරණය</translation>
-    </message>
-    <message>
-        <source>Masks on this clip</source>
-        <translation>මෙම ක්ලිප් එකෙහි ආවරණ</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>පෙරදසුන</translation>
-    </message>
-    <message>
         <source>Masks</source>
         <translation>ආවරණ</translation>
     </message>
@@ -11452,6 +11071,70 @@
         <translation>ආවරණය පෙන්වන්න</translation>
     </message>
     <message>
+        <source>Masking &amp; Tracking</source>
+        <translation type="unfinished">Masking &amp; Tracking</translation>
+    </message>
+    <message>
+        <source>Tint hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black &amp; white</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur added on an adjustment layer. Adjust the amount in the Effects tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fixing this frame of “%1”. Brush fixes don&apos;t follow motion.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a preview of this frame only. It becomes a mask when you cut out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out through whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>◀ Up to here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From here ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This layer&apos;s effects apply only inside the mask.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Masks keep what is inside and hide the rest. Invert to hide the inside instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a mask to preview it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How this mask combines with the ones above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add</source>
         <translation>Add</translation>
     </message>
@@ -11462,14 +11145,6 @@
     <message>
         <source>Intersect</source>
         <translation>ඡේදනය කරන්න</translation>
-    </message>
-    <message>
-        <source>Inv</source>
-        <translation>ප්‍රතිලෝම</translation>
-    </message>
-    <message>
-        <source>Invert this mask</source>
-        <translation>මෙම ආවරණය ප්‍රතිලෝම කරන්න</translation>
     </message>
     <message>
         <source>Apply effects: Inside / Outside</source>
@@ -11490,6 +11165,86 @@
     <message>
         <source>Feather</source>
         <translation>Feather (මෘදු දාර)</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation type="unfinished">පිහිටීම</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">පර්යාලෝකය</translation>
+    </message>
+    <message>
+        <source>Track ◀</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ⇄</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">නවත්වන්න</translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the mask copies from the tracked object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add more points to this tracker in the Tracking panel for rotation, scale and perspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the mask on the preview to correct it, then track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur this area ▾</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply a blur or pixelate effect inside this shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">බොඳ කිරීම</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Animate shape</source>
@@ -11522,18 +11277,6 @@
             <numerusform>හැඩතල කී %nක්</numerusform>
         </translation>
     </message>
-    <message>
-        <source>Channel</source>
-        <translation>නාලිකාව</translation>
-    </message>
-    <message>
-        <source>Luma</source>
-        <translation>Luma</translation>
-    </message>
-    <message>
-        <source>Alpha</source>
-        <translation>ඇල්ෆා (Alpha)</translation>
-    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -11564,10 +11307,6 @@
     <message>
         <source>Bars</source>
         <translation>තීරු (Bars)</translation>
-    </message>
-    <message>
-        <source>Freeform</source>
-        <translation>නිදහස් හැඩය (Freeform)</translation>
     </message>
     <message>
         <source>Combine</source>
@@ -11616,6 +11355,10 @@
     <message>
         <source>Feather</source>
         <translation>Feather (මෘදු දාර)</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">බහුඅස්‍රය</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -13164,6 +12907,10 @@
         <source>Pages</source>
         <translation>පිටු</translation>
     </message>
+    <message>
+        <source>PDF page</source>
+        <translation type="unfinished">PDF පිටුව</translation>
+    </message>
     <message numerus="yes">
         <source>%n page(s)</source>
         <translation>
@@ -13571,8 +13318,16 @@ If playback stutters, try another.</source>
 <context>
     <name>PreviewOsdZoomChip</name>
     <message>
+        <source>Zoom out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
         <translation>පෙරදසුන් විශාලනය — විශාලනය කිරීමට පෙරදසුන මත Ctrl+scroll කරන්න, දසුන චලනය කිරීමට මැද බොත්තමෙන් අදින්න. 100% වෙත යළි සැකසීමට ක්ලික් කරන්න.</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14946,7 +14701,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Speeds are per frame of this clip. Custom models are experimental and may not work. Drop an ONNX export (fp32 or fp16, RGB, 1x/2x/4x) into the folder; put the scale in the file name, e.g. &quot;2x_Name.onnx&quot;.</source>
-        <translation>වේගයන් මෙම ක්ලිප් එකේ රාමුවකට අනුව වේ. අභිරුචි ආකෘති පර්යේෂණාත්මක වන අතර ක්‍රියා නොකරනු ඇත. ONNX නිර්යාතයක් (fp32 හෝ fp16, RGB, 1x/2x/4x) ෆෝල්ඩරය තුළට දමන්න; ගොනු නමේ පරිමාණය ඇතුළත් කරන්න, උදා: "2x_Name.onnx".</translation>
+        <translation>වේගයන් මෙම ක්ලිප් එකේ රාමුවකට අනුව වේ. අභිරුචි ආකෘති පර්යේෂණාත්මක වන අතර ක්‍රියා නොකරනු ඇත. ONNX නිර්යාතයක් (fp32 හෝ fp16, RGB, 1x/2x/4x) ෆෝල්ඩරය තුළට දමන්න; ගොනු නමේ පරිමාණය ඇතුළත් කරන්න, උදා: &quot;2x_Name.onnx&quot;.</translation>
     </message>
     <message>
         <source>Get models (openmodeldb.info)</source>
@@ -15213,8 +14968,16 @@ If playback stutters, try another.</source>
         <translation>Histogram</translation>
     </message>
     <message>
+        <source>Histo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation>තරංග ආකාරය (Waveform)</translation>
+    </message>
+    <message>
+        <source>Wave</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Parade</source>
@@ -15225,8 +14988,115 @@ If playback stutters, try another.</source>
         <translation>Vectorscope</translation>
     </message>
     <message>
+        <source>Vector</source>
+        <translation type="unfinished">දෛශික (Vector)</translation>
+    </message>
+    <message>
+        <source>Scopes update from the preview. Play or move the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scopes</source>
         <translation>දර්ශක (Scopes)</translation>
+    </message>
+</context>
+<context>
+    <name>SearchIndex</name>
+    <message>
+        <source>Not available now</source>
+        <translation type="unfinished">දැන් ලබාගත නොහැක</translation>
+    </message>
+    <message>
+        <source>Export video</source>
+        <translation type="unfinished">වීඩියෝව නිර්යාත කරන්න</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">බාගැනීම්</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation type="unfinished">භාෂාව…</translation>
+    </message>
+    <message>
+        <source>Video size and layout</source>
+        <translation type="unfinished">වීඩියෝ ප්‍රමාණය සහ පිරිසැලසුම</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished">ජංගම පිරිසැලසුමට මාරු වන්න…</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">සැකසීම්</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">අමතර අංග</translation>
+    </message>
+    <message>
+        <source>Add-on manager</source>
+        <translation type="unfinished">ඇඩෝන කළමනාකරු</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation type="unfinished">දෝෂ නිවාරණ තොරතුරු…</translation>
+    </message>
+    <message>
+        <source>Light theme</source>
+        <translation type="unfinished">ලා පැහැ තේමාව</translation>
+    </message>
+    <message>
+        <source>Dark theme</source>
+        <translation type="unfinished">අඳුරු තේමාව</translation>
+    </message>
+    <message>
+        <source>System theme</source>
+        <translation type="unfinished">පද්ධති තේමාව</translation>
+    </message>
+    <message>
+        <source>Theme: %1</source>
+        <translation type="unfinished">තේමාව: %1</translation>
+    </message>
+    <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">වැඩබිම: %1</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to selected clip</source>
+        <translation type="unfinished">තෝරාගත් ක්ලිපයට යොදන්න</translation>
+    </message>
+    <message>
+        <source>Select a clip first</source>
+        <translation type="unfinished">පළමුව ක්ලිප් එකක් තෝරන්න</translation>
+    </message>
+    <message>
+        <source>Add at playhead</source>
+        <translation type="unfinished">ප්ලේහෙඩ් එක ඇති තැනට එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Add as adjustment clip</source>
+        <translation type="unfinished">ගැලපුම් ක්ලිප් එකක් ලෙස එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Add after selected clip</source>
+        <translation type="unfinished">තෝරාගත් ක්ලිප් එකට පසුව එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Not available on this track</source>
+        <translation type="unfinished">මෙම ට්‍රැක් එකෙහි ලබාගත නොහැක</translation>
+    </message>
+    <message>
+        <source>Select the clip before a cut</source>
+        <translation type="unfinished">කැපුමකට පෙර ක්ලිප් එක තෝරන්න</translation>
+    </message>
+    <message>
+        <source>Select a video, image, text or shape clip</source>
+        <translation type="unfinished">වීඩියෝ, පින්තූර, පෙළ හෝ හැඩතල ක්ලිප් එකක් තෝරන්න</translation>
     </message>
 </context>
 <context>
@@ -15375,6 +15245,10 @@ If playback stutters, try another.</source>
         <translation>වස්තු ආවරණය පිරිපහදු කරන්න</translation>
     </message>
     <message>
+        <source>Object mask refined. Frame fixes were kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That clip no longer exists</source>
         <translation>එම ක්ලිපය තවදුරටත් නොපවතී</translation>
     </message>
@@ -15503,6 +15377,30 @@ If playback stutters, try another.</source>
         <translation>AI සහ Cloud</translation>
     </message>
     <message>
+        <source>On this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI ක්‍රියා කරන ආකාරය</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine from Extras to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">මෙය බලපැවැත්වීමට Drift නැවත අරඹන්න.</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">ස්වයංක්‍රීය මඟින් ස්ථාපිත වේගවත්ම විකල්පය තෝරාගන්නා අතර, ග්‍රැෆික් කාඩ්පත භාවිත කළ නොහැකි නම් මෙම පරිගණකය භාවිත කරයි.</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent access</source>
         <translation>නියෝජිත (Agent) ප්‍රවේශය</translation>
     </message>
@@ -15517,6 +15415,18 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
         <translation>ඔබ ඊළඟ වතාවේ Drift විවෘත කරන විට සහායක ප්‍රවේශය ස්වයංක්‍රීයව සක්‍රිය කරන්න. ප්‍රවේශය අක්‍රිය කිරීමෙන් මෙය යළි සකසයි.</translation>
+    </message>
+    <message>
+        <source>Cloud</source>
+        <translation type="unfinished">වලාකුළ</translation>
+    </message>
+    <message>
+        <source>Use cloud services</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -15679,6 +15589,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Restart Drift to apply this size.</source>
         <translation>මෙම ප්‍රමාණය යෙදීමට Drift නැවත ආරම්භ කරන්න.</translation>
+    </message>
+    <message>
+        <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
@@ -16912,6 +16826,18 @@ If playback stutters, try another.</source>
         <translation>කඩඉරි-තිත් (Dash-dot)</translation>
     </message>
     <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opacity</source>
         <translation>පාරාන්ධතාව</translation>
     </message>
@@ -16938,6 +16864,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Dash offset</source>
         <translation>Dash විස්ථාපනය</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the stroke turns a corner: sharp, rounded or cut off</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>
@@ -17029,6 +16963,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Swapping the shape keeps its position, size, style and effects.</source>
         <translation>හැඩතලය මාරු කිරීමේදී එහි පිහිටීම, ප්‍රමාණය, විලාසය සහ ප්‍රයෝග එලෙසම තබා ගනී.</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">හැඩතල විලාසය</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -17290,6 +17228,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Nothing in this category.</source>
         <translation>මෙම ප්‍රවර්ගයේ කිසිවක් නැත.</translation>
+    </message>
+</context>
+<context>
+    <name>ShellBridge</name>
+    <message>
+        <source>Adjustment layer</source>
+        <translation type="unfinished">ගැළපුම් ස්තරය</translation>
     </message>
 </context>
 <context>
@@ -17751,6 +17696,10 @@ If playback stutters, try another.</source>
         <translation>කප්පාදු කිරීම / නැවත රාමු කිරීම</translation>
     </message>
     <message>
+        <source>Crop / reframe source</source>
+        <translation type="unfinished">මූලාශ්‍රය කප්පාදු කරන්න / නැවත රාමු කරන්න</translation>
+    </message>
+    <message>
         <source>Free</source>
         <translation>Free</translation>
     </message>
@@ -17824,6 +17773,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Upscale</source>
         <translation>Upscale</translation>
+    </message>
+    <message>
+        <source>Upscale source clip</source>
+        <translation type="unfinished">මූලාශ්‍ර ක්ලිප් එකේ විභේදනය වැඩි කරන්න (Upscale)</translation>
     </message>
     <message>
         <source>Output size: %1 x %2</source>
@@ -17924,6 +17877,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SourceLabOutputPanel</name>
     <message>
+        <source>Export trimmed clip</source>
+        <translation type="unfinished">කප්පාදු කළ ක්ලිප් එක නිර්යාත කරන්න</translation>
+    </message>
+    <message>
         <source>Output</source>
         <translation>ප්‍රතිදානය</translation>
     </message>
@@ -18020,6 +17977,10 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SourceLabProcessPanel</name>
+    <message>
+        <source>Denoise and stabilize source</source>
+        <translation type="unfinished">මූලාශ්‍රයේ ශබ්ද බාධා ඉවත් කර ස්ථාවර කරන්න</translation>
+    </message>
     <message>
         <source>Process</source>
         <translation>ක්‍රියාවලිය</translation>
@@ -18183,6 +18144,10 @@ If playback stutters, try another.</source>
         <translation>වේගය</translation>
     </message>
     <message>
+        <source>Speed and loudness</source>
+        <translation type="unfinished">වේගය සහ ශබ්ද ඝෝෂාකාරීත්වය</translation>
+    </message>
+    <message>
         <source>Keep pitch</source>
         <translation>ස්වරය එලෙසම තබා ගන්න</translation>
     </message>
@@ -18240,6 +18205,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SourceLabTrimPanel</name>
     <message>
+        <source>Trim source clip</source>
+        <translation type="unfinished">මූලාශ්‍ර ක්ලිප් එක කප්පාදු කරන්න</translation>
+    </message>
+    <message>
         <source>Source Lab Trim</source>
         <translation>Source Lab කප්පාදුව</translation>
     </message>
@@ -18290,6 +18259,10 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SourceLabViewerPanel</name>
+    <message>
+        <source>Source Lab</source>
+        <translation type="unfinished">Source Lab</translation>
+    </message>
     <message>
         <source>Source Lab Viewer</source>
         <translation>Source Lab නරඹනය</translation>
@@ -18886,6 +18859,10 @@ If playback stutters, try another.</source>
         <translation>කැමරා සෙලවීම සුමට කරයි. Drift එක් වරක් ක්ලිප් එක පරිලෝකනය කර, පසුව මාධ්‍ය බඳුනට ස්ථාවර කළ පිටපතක් රෙන්ඩර් කර ක්ලිප් එක ඒ වෙත මාරු කරයි. ඔබ යොදන තෙක් සුමට බව හෝ tripod වෙනස් කිරීම පෙරදසුන යාවත්කාලීන නොකරයි.</translation>
     </message>
     <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">ස්ථාවර කරන්න</translation>
+    </message>
+    <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation>ස්ථාවර කළ පිටපතක් රෙන්ඩර් කරන්න, නැතහොත් විරල පරිවර්තන කී සමඟ ක්ලිප් එක සජීවිකරණය කරන්න</translation>
     </message>
@@ -18997,6 +18974,41 @@ If playback stutters, try another.</source>
     <message>
         <source>Create polished videos fast</source>
         <translation>උසස් නිමාවකින් යුත් වීඩියෝ ඉක්මනින් සාදන්න</translation>
+    </message>
+</context>
+<context>
+    <name>StartupSplash</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">ආරම්භ කරමින්…</translation>
+    </message>
+    <message>
+        <source>Checking the graphics driver…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading fonts…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting the playback and audio engines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading add-ons and themes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Building the interface…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opening the editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation type="unfinished">අනුවාදය %1</translation>
     </message>
 </context>
 <context>
@@ -19481,6 +19493,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SubtitleLanePanel</name>
     <message>
+        <source>Subtitle lane</source>
+        <translation type="unfinished">උපසිරැසි පථය</translation>
+    </message>
+    <message>
         <source>Select a subtitle clip</source>
         <translation>උපසිරැසි ක්ලිප් එකක් තෝරන්න</translation>
     </message>
@@ -19555,6 +19571,10 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SubtitleTextPanel</name>
+    <message>
+        <source>Subtitle text editor</source>
+        <translation type="unfinished">උපසිරැසි පෙළ සංස්කාරකය</translation>
+    </message>
     <message>
         <source>Import Subtitles</source>
         <translation>උපසිරැසි ආයාත කරන්න</translation>
@@ -19689,6 +19709,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SubtitleTimingPanel</name>
     <message>
+        <source>Subtitle timing</source>
+        <translation type="unfinished">උපසිරැසි කාල නිර්ණය</translation>
+    </message>
+    <message>
         <source>Pick two existing cues</source>
         <translation>පවතින සිරස්තල දෙකක් තෝරන්න</translation>
     </message>
@@ -19730,6 +19754,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Shift</source>
         <translation>මාරු කිරීම</translation>
+    </message>
+    <message>
+        <source>Shift times</source>
+        <translation type="unfinished">වේලාවන් මාරු කරන්න</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -19832,6 +19860,10 @@ If playback stutters, try another.</source>
         <translation>රාමු අනුපාතය / වේගය</translation>
     </message>
     <message>
+        <source>Frame rate conversion</source>
+        <translation type="unfinished">රාමු අනුපාත පරිවර්තනය</translation>
+    </message>
+    <message>
         <source>From fps</source>
         <translation>ආරම්භක fps</translation>
     </message>
@@ -19858,6 +19890,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Bridge small gaps</source>
         <translation>කුඩා හිඩැස් පියවන්න</translation>
+    </message>
+    <message>
+        <source>Bridge gaps</source>
+        <translation type="unfinished">හිඩැස් පියවන්න</translation>
     </message>
     <message>
         <source>Shorter than (ms)</source>
@@ -20486,6 +20522,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Colour</source>
         <translation>වර්ණය</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">පෙළ විලාසය</translation>
     </message>
     <message>
         <source>Choose the gradient&apos;s first colour</source>
@@ -21181,6 +21221,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Edit keyframes…</source>
         <translation>කීෆ්‍රේම සංස්කරණය කරන්න…</translation>
+    </message>
+    <message>
+        <source>Mask &amp; track…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unlink from clip</source>
@@ -22023,6 +22067,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a clip on the timeline to track motion in it</source>
         <translation>චලනය ලුහුබැඳීමට කාලරේඛාවේ ක්ලිප් එකක් තෝරන්න</translation>
     </message>
@@ -22039,6 +22087,10 @@ If playback stutters, try another.</source>
         <translation>මෙම ට්‍රැකර් එකට එක් කිරීමට අංගය ක්ලික් කරන්න.</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
         <translation>පැතලි මතුපිටක කොන් ක්ලික් කරන්න, නිම කිරීමට Enter ඔබන්න.</translation>
     </message>
@@ -22051,8 +22103,16 @@ If playback stutters, try another.</source>
         <translation>ලුහුබැඳීම ආරම්භ කිරීමට Tracking පැනලයෙහි Point හෝ Planar භාවිතා කරන්න</translation>
     </message>
     <message>
+        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking… %1%</source>
         <translation>ලුහුබඳිමින්… %1%</translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22074,18 +22134,6 @@ If playback stutters, try another.</source>
         <translation>රාමුව %1 විකේතනය කිරීමට නොහැකි විය</translation>
     </message>
     <message>
-        <source>Tracking stopped: confidence dropped below the minimum</source>
-        <translation>ලුහුබැඳීම නැවතුණි: විශ්වාසනීයත්වය අවම අගයට වඩා පහත වැටුණි</translation>
-    </message>
-    <message>
-        <source>Not enough texture inside the outline to track</source>
-        <translation>ලුහුබැඳීමට දළ සටහන තුළ ප්‍රමාණවත් වයනයක් නොමැත</translation>
-    </message>
-    <message>
-        <source>Tracking stopped: the surface was lost</source>
-        <translation>ලුහුබැඳීම නැවතුණි: මතුපිට ගිලිහී ගියේය</translation>
-    </message>
-    <message>
         <source>Tracking stopped: not enough texture left to follow</source>
         <translation>ලුහුබැඳීම නැවතුණි: අනුගමනය කිරීමට ප්‍රමාණවත් වයනයක් ඉතිරිව නැත</translation>
     </message>
@@ -22100,6 +22148,54 @@ If playback stutters, try another.</source>
     <message>
         <source>Tracker added</source>
         <translation>ට්‍රැකර් එකක් එක් කරන ලදී</translation>
+    </message>
+    <message>
+        <source>The camera can&apos;t match this surface exactly; some frames drift by up to %1 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the feature at %1. Drag the marker back onto it and track again, or lower the stop threshold.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not enough detail inside the outline. Outline a larger area with visible texture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the surface at %1. Drag its corners back into place and track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom to fill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Correct track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">ආවරණයක් (Mask) එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Mask added</source>
+        <translation type="unfinished">ආවරණය එක් කරන ලදී</translation>
     </message>
     <message>
         <source>Planar %1</source>
@@ -22154,8 +22250,16 @@ If playback stutters, try another.</source>
         <translation>එම දිශාවට ලුහුබැඳීමට කිසිවක් ඉතිරිව නැත</translation>
     </message>
     <message>
-        <source>Move the playhead to a tracked frame first</source>
-        <translation>පළමුව ප්ලේහෙඩ් එක ලුහුබැඳි රාමුවක් වෙත ගෙන යන්න</translation>
+        <source>Drag the outline&apos;s corners onto the surface at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the marker onto the feature at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is transformed; the adjustment mask may not line up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track</source>
@@ -22164,6 +22268,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Tracked</source>
         <translation>ලුහුබඳින ලදී</translation>
+    </message>
+    <message>
+        <source>%1 (adjustment)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen is not available for 3D clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply track</source>
@@ -22201,28 +22313,64 @@ If playback stutters, try another.</source>
         <translation>මෙම ට්‍රැකර් එකට එක් කිරීමට අංගය ක්ලික් කරන්න.</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation>පිහිටීම</translation>
-    </message>
-    <message>
-        <source>Position + Rotation</source>
-        <translation>පිහිටීම + භ්‍රමණය</translation>
-    </message>
-    <message>
-        <source>Position + Rotation + Scale</source>
-        <translation>පිහිටීම + භ්‍රමණය + පරිමාණය</translation>
     </message>
     <message>
         <source>Perspective</source>
         <translation>පර්යාලෝකය</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
         <source>No clip selected</source>
         <translation>කිසිදු ක්ලිප් එකක් තෝරාගෙන නැත</translation>
     </message>
     <message>
+        <source>No video clip under this adjustment layer at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video under this clip at the playhead. Move the playhead over the video it should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to track motion in it.</source>
         <translation>චලනය ලුහුබැඳීමට වීඩියෝ ක්ලිප් එකක් තෝරන්න.</translation>
+    </message>
+    <message>
+        <source>Follow an object in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click an object on the video; this clip will follow it through the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows %1 on %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop following</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking: %1 (under %2)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Point</source>
@@ -22241,6 +22389,14 @@ If playback stutters, try another.</source>
         <translation>එහි කොන් වලින් සලකුණු කළ පැතලි මතුපිටක් ලුහුබඳින්න</translation>
     </message>
     <message>
+        <source>Cancel</source>
+        <translation type="unfinished">අවලංගු කරන්න</translation>
+    </message>
+    <message>
+        <source>Stop placing (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers</source>
         <translation>ට්‍රැකර්ස්</translation>
     </message>
@@ -22253,6 +22409,30 @@ If playback stutters, try another.</source>
         <translation>ට්‍රැකර් එක මකන්න</translation>
     </message>
     <message>
+        <source>Now track it: press Track whole clip, or ◀ ▶ to go one way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the feature backward and forward through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrected at this frame. Track ▶ to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track back to the start</source>
         <translation>නැවත ආරම්භය දක්වා ලුහුබඳින්න</translation>
     </message>
@@ -22261,8 +22441,88 @@ If playback stutters, try another.</source>
         <translation>එක් රාමුවක් පසුපසට ලුහුබඳින්න</translation>
     </message>
     <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking stops when the match gets worse than this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if match is worse than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>match &lt; %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Box size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size of the area being followed. Bigger is steadier, smaller is more precise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Locked to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">ක්ලිපය ගෙනයන්න</translation>
+    </message>
+    <message>
+        <source>Move camera</source>
+        <translation type="unfinished">කැමරාව ගෙන යන්න</translation>
+    </message>
+    <message>
+        <source>Center in frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stick to the point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep where it is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep current position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the tracked object to the middle of the frame, or keep it where it is at the reference frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop tracking</source>
         <translation>ලුහුබැඳීම නවත්වන්න</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -22273,40 +22533,12 @@ If playback stutters, try another.</source>
         <translation>අවසානය දක්වා ලුහුබඳින්න</translation>
     </message>
     <message>
-        <source>Solve</source>
-        <translation>විසඳන්න</translation>
-    </message>
-    <message>
         <source>Add up to 4 points on the same surface for rotation, scale and perspective</source>
         <translation>භ්‍රමණය, පරිමාණය සහ පර්යාලෝකය සඳහා එකම මතුපිට ලක්ෂ්‍ය 4ක් දක්වා එක් කරන්න</translation>
     </message>
     <message>
-        <source>Confidence</source>
-        <translation>විශ්වාසනීයත්වය</translation>
-    </message>
-    <message>
-        <source>Minimum confidence</source>
-        <translation>අවම විශ්වාසනීයත්වය</translation>
-    </message>
-    <message>
-        <source>Pattern</source>
-        <translation>රටාව</translation>
-    </message>
-    <message>
-        <source>Pattern size</source>
-        <translation>රටා ප්‍රමාණය</translation>
-    </message>
-    <message>
-        <source>Clear ◀</source>
-        <translation>හිස් කරන්න ◀</translation>
-    </message>
-    <message>
         <source>Remove the samples before the playhead</source>
         <translation>ප්ලේහෙඩ් එකට පෙර සාම්පල ඉවත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Clear ▶</source>
-        <translation>හිස් කරන්න ▶</translation>
     </message>
     <message>
         <source>Remove the samples after the playhead</source>
@@ -22321,24 +22553,52 @@ If playback stutters, try another.</source>
         <translation>පෙරදසුන මත තවත් ලක්ෂ්‍යයක් තබන්න</translation>
     </message>
     <message>
-        <source>Drives</source>
-        <translation>මෙහෙයවීම්</translation>
-    </message>
-    <message>
         <source>Mask</source>
         <translation>ආවරණය (Mask)</translation>
     </message>
     <message>
-        <source>Center on track</source>
-        <translation>ලුහුබැඳීම මත මැදට ගන්න</translation>
-    </message>
-    <message>
-        <source>Keep offset</source>
-        <translation>ඕෆ්සෙට් එක තබා ගන්න</translation>
-    </message>
-    <message>
         <source>Put the clip&apos;s centre on the tracked point, or keep the offset it has from it at the reference frame</source>
         <translation>ක්ලිප් එකේ මධ්‍යය ලුහුබැඳි ලක්ෂ්‍යය මත තබන්න, නැතහොත් යොමු රාමුවේදී එයින් ඇති ඕෆ්සෙට් එක තබා ගන්න</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">විශාලනය</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">පිරවුම (Fill)</translation>
+    </message>
+    <message>
+        <source>Zoom in just enough to hide the empty edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the tracked object still on screen by moving the clip or the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make a mask or clip move with this tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">ආවරණයක් (Mask) එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update the attached masks and clips from the current track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
@@ -22360,24 +22620,12 @@ If playback stutters, try another.</source>
         <translation>මෙයින් මෙහෙයවීම නවත්වන්න</translation>
     </message>
     <message>
-        <source>Add target…</source>
-        <translation>ඉලක්කයක් එක් කරන්න…</translation>
-    </message>
-    <message>
-        <source>Let a mask or clip follow this tracker</source>
-        <translation>මෙම ට්‍රැකර් එක අනුගමනය කිරීමට ආවරණයකට හෝ ක්ලිප් එකකට ඉඩ දෙන්න</translation>
-    </message>
-    <message>
         <source>No masks or clips to drive from</source>
         <translation>මෙහෙයවීමට ආවරණ හෝ ක්ලිප් නැත</translation>
     </message>
     <message>
         <source>Re-apply</source>
         <translation>නැවත යොදන්න</translation>
-    </message>
-    <message>
-        <source>Regenerate the keys on the drives</source>
-        <translation>මෙහෙයවීම් මත කී නැවත ජනනය කරන්න</translation>
     </message>
     <message>
         <source>Mask: %1</source>
@@ -22467,6 +22715,10 @@ If playback stutters, try another.</source>
         <translation>පරිමාණය (Scale)</translation>
     </message>
     <message>
+        <source>Position</source>
+        <translation type="unfinished">පිහිටීම</translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>පළල සහ උස වෙන වෙනම සංස්කරණය කරන්න</translation>
     </message>
@@ -22505,6 +22757,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Opacity &amp; rotation</source>
         <translation>පාරාන්ධතාව සහ භ්‍රමණය</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation type="unfinished">භ්‍රමණය</translation>
     </message>
     <message>
         <source>Rotate 90°</source>
@@ -22786,8 +23042,16 @@ If playback stutters, try another.</source>
         <translation>කාලසීමාව</translation>
     </message>
     <message>
+        <source>Transition duration</source>
+        <translation type="unfinished">සංක්‍රාන්ති කාලසීමාව</translation>
+    </message>
+    <message>
         <source>Curve</source>
         <translation>වක්‍රය</translation>
+    </message>
+    <message>
+        <source>Transition curve</source>
+        <translation type="unfinished">සංක්‍රාන්ති වක්‍රය</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -24019,11 +24283,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unknown panel type &quot;%1&quot;.</source>
-        <translation>නොදන්නා පැනල වර්ගය "%1".</translation>
+        <translation>නොදන්නා පැනල වර්ගය &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>The &quot;%1&quot; panel is used more than once.</source>
-        <translation>"%1" පැනලය එක් වරකට වඩා භාවිතා කර ඇත.</translation>
+        <translation>&quot;%1&quot; පැනලය එක් වරකට වඩා භාවිතා කර ඇත.</translation>
     </message>
     <message>
         <source>%1 · Library</source>

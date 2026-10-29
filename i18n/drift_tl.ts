@@ -29,6 +29,29 @@
     </message>
 </context>
 <context>
+    <name>AccelerationFailedDialog</name>
+    <message>
+        <source>AI engine isn&apos;t working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Kanselahin</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine, then try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -41,6 +64,10 @@
     <message>
         <source>NVIDIA graphics (faster)</source>
         <translation>Grapikong NVIDIA (mas mabilis)</translation>
+    </message>
+    <message>
+        <source>AMD graphics (faster)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Graphics card (faster)</source>
@@ -2232,8 +2259,20 @@
         <translation>In</translation>
     </message>
     <message>
+        <source>In animation</source>
+        <translation type="unfinished">In animasyon</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>Out</translation>
+    </message>
+    <message>
+        <source>Out animation</source>
+        <translation type="unfinished">Out animasyon</translation>
+    </message>
+    <message>
+        <source>Custom curve</source>
+        <translation type="unfinished">Custom na curve</translation>
     </message>
     <message>
         <source>Edit custom curve…</source>
@@ -2389,10 +2428,6 @@
     <message>
         <source>Select tool</source>
         <translation>Tool sa pagpili</translation>
-    </message>
-    <message>
-        <source>Cut tool</source>
-        <translation>Tool sa pag-cut</translation>
     </message>
     <message>
         <source>Polygon mask tool</source>
@@ -2802,6 +2837,46 @@
     <message>
         <source>Decrease playback speed</source>
         <translation>Pabagalin ang playback</translation>
+    </message>
+    <message>
+        <source>3D gizmo: move / Tracker tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: rotate / Rectangle mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: scale / Ellipse mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut tool / Brush mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush: switch paint / erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track forward</source>
+        <translation type="unfinished">Subaybayan pasulong</translation>
+    </message>
+    <message>
+        <source>Track backward</source>
+        <translation type="unfinished">Subaybayan pabalik</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">Subaybayan nang isang frame pasulong</translation>
+    </message>
+    <message>
+        <source>Track one frame backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -3554,18 +3629,6 @@
     <message>
         <source>Select transform layer</source>
         <translation>Piliin ang transform layer</translation>
-    </message>
-    <message>
-        <source>3D gizmo: move</source>
-        <translation>3D gizmo: ilipat</translation>
-    </message>
-    <message>
-        <source>3D gizmo: rotate</source>
-        <translation>3D gizmo: paikutin</translation>
-    </message>
-    <message>
-        <source>3D gizmo: scale</source>
-        <translation>3D gizmo: baguhin ang laki</translation>
     </message>
     <message>
         <source>3D gizmo: switch global/local axes</source>
@@ -5035,6 +5098,10 @@
         <source>Auto keyframes</source>
         <translation>Awtomatikong mga keyframe</translation>
     </message>
+    <message>
+        <source>Audio effect settings</source>
+        <translation type="unfinished">Mga setting ng epektong audio</translation>
+    </message>
 </context>
 <context>
     <name>AudioInspector</name>
@@ -5377,6 +5444,10 @@
         <translation>Lahat ng nasa timeline ay makikita sa pamamagitan ng camera na ito habang tumatagal ang clip. Ang isang nakatigil na camera ay mukhang walang camera, kaya ang mga numero sa ibaba ay pawang mga offset mula sa normal na view.</translation>
     </message>
     <message>
+        <source>Camera position</source>
+        <translation type="unfinished">Posisyon ng camera</translation>
+    </message>
+    <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation>Pinalalabis ng maikling lens ang depth; pinapa-flat naman ito ng mahabang lens. Habang tumatakbo ang camera na ito, pinapalitan nito ang sariling Perspective value ng bawat clip, dahil iisa ang tumitingin sa eksena.</translation>
     </message>
@@ -5451,6 +5522,10 @@
     <message>
         <source>None</source>
         <translation>Wala</translation>
+    </message>
+    <message>
+        <source>Missing look</source>
+        <translation type="unfinished">Nawawalang look</translation>
     </message>
     <message>
         <source>Adjust color</source>
@@ -5660,20 +5735,8 @@
         <translation>Halation</translation>
     </message>
     <message>
-        <source>None</source>
-        <translation>Wala</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Nawawalang look</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>I-reset ang %1</translation>
-    </message>
-    <message>
-        <source>No clip selected</source>
-        <translation>Walang napiling clip</translation>
     </message>
     <message>
         <source>Compare</source>
@@ -5696,6 +5759,34 @@
         <translation>Ilapat sa lahat…</translation>
     </message>
     <message>
+        <source>Color grade</source>
+        <translation type="unfinished">Color grade</translation>
+    </message>
+    <message>
+        <source>Adds film-like noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft glow around bright areas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color fringing at the edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darkens the corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Red glow around highlights, like film</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>I-reset</translation>
     </message>
@@ -5709,7 +5800,15 @@
     </message>
     <message>
         <source>Editing &quot;%1&quot; only. Use Apply to all to copy its grade to other clips.</source>
-        <translation>Inie-edit ang "%1" lamang. Gamitin ang Ilapat sa lahat upang kopyahin ang grade nito sa iba pang mga clip.</translation>
+        <translation>Inie-edit ang &quot;%1&quot; lamang. Gamitin ang Ilapat sa lahat upang kopyahin ang grade nito sa iba pang mga clip.</translation>
+    </message>
+    <message>
+        <source>Showing the original. Your grade is hidden until you turn Compare off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grade</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The grade is turned off.</source>
@@ -5744,8 +5843,16 @@
         <translation>Look</translation>
     </message>
     <message>
+        <source>None. Choose a look in the Looks panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look Intensity</source>
         <translation>Intensity ng Look</translation>
+    </message>
+    <message>
+        <source>Color wheels</source>
+        <translation type="unfinished">Mga color wheel</translation>
     </message>
     <message>
         <source>Adjust curves</source>
@@ -5754,6 +5861,10 @@
     <message>
         <source>Hue Curves</source>
         <translation>Mga Curve ng Hue</translation>
+    </message>
+    <message>
+        <source>Hue curves</source>
+        <translation type="unfinished">Mga curve ng hue</translation>
     </message>
     <message>
         <source>Adjust hue curves</source>
@@ -5828,6 +5939,10 @@
         <translation>I-reset ang %1</translation>
     </message>
     <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Brightness</source>
         <translation>Liwanag</translation>
     </message>
@@ -5877,20 +5992,44 @@
         <translation>Hue</translation>
     </message>
     <message>
-        <source>Sat</source>
-        <translation>Sat</translation>
+        <source>Saturation</source>
+        <translation type="unfinished">Saturation</translation>
     </message>
     <message>
-        <source>Lum</source>
-        <translation>Lum</translation>
+        <source>Luminance</source>
+        <translation type="unfinished">Luminance</translation>
     </message>
     <message>
         <source>Master</source>
         <translation>Master</translation>
     </message>
     <message>
+        <source>Hue vs Hue: shift one color toward another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Saturation: make one color more or less vivid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Luminance: brighten or darken one color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset channel</source>
         <translation>I-reset ang channel</translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6587,7 +6726,7 @@
     </message>
     <message>
         <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>Licence &lt;a href="%1"&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
+        <translation>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
     </message>
     <message>
         <source>Licence %1</source>
@@ -7101,6 +7240,22 @@
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">Workspace: %1</translation>
+    </message>
+    <message>
+        <source>Workspace:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch workspace</source>
+        <translation type="unfinished">Lumipat ng workspace</translation>
+    </message>
+    <message>
+        <source>Customize layouts in Settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search  %1</source>
         <translation>Maghanap sa  %1</translation>
     </message>
@@ -7108,47 +7263,12 @@
         <source>Search</source>
         <translation>Maghanap</translation>
     </message>
-    <message>
-        <source>Export video</source>
-        <translation>I-export ang video</translation>
-    </message>
-    <message>
-        <source>Downloads</source>
-        <translation>Mga Pag-download</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>Wika…</translation>
-    </message>
-    <message>
-        <source>Video size and layout</source>
-        <translation>Laki at layout ng video</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation>Lumipat sa layout ng mobile…</translation>
-    </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
     <message>
         <source>Settings</source>
         <translation>Mga Setting</translation>
-    </message>
-</context>
-<context>
-    <name>EditorHeaderWorkspaceButton</name>
-    <message>
-        <source>Workspaces</source>
-        <translation>Mga Workspace</translation>
-    </message>
-    <message>
-        <source>Switch workspace</source>
-        <translation>Lumipat ng workspace</translation>
-    </message>
-    <message>
-        <source>Edit workspaces…</source>
-        <translation>I-edit ang mga workspace…</translation>
     </message>
 </context>
 <context>
@@ -7739,6 +7859,10 @@
     <message>
         <source>Browse effects</source>
         <translation>Mag-browse ng mga epekto</translation>
+    </message>
+    <message>
+        <source>Effect settings</source>
+        <translation type="unfinished">Mga setting ng epekto</translation>
     </message>
 </context>
 <context>
@@ -8627,565 +8751,6 @@
     </message>
 </context>
 <context>
-    <name>GlobalSearchControls</name>
-    <message>
-        <source>Properties</source>
-        <translation>Mga Katangian</translation>
-    </message>
-    <message>
-        <source>Assets</source>
-        <translation>Mga Asset</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Mga Setting</translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation>Kulay</translation>
-    </message>
-    <message>
-        <source>Source Lab</source>
-        <translation>Source Lab</translation>
-    </message>
-    <message>
-        <source>Select a clip</source>
-        <translation>Pumili ng clip</translation>
-    </message>
-    <message>
-        <source>Select a video, image, text or shape clip</source>
-        <translation>Pumili ng video, imahe, teksto o shape clip</translation>
-    </message>
-    <message>
-        <source>Select a video clip</source>
-        <translation>Pumili ng video clip</translation>
-    </message>
-    <message>
-        <source>Select a video or audio clip</source>
-        <translation>Pumili ng video o audio clip</translation>
-    </message>
-    <message>
-        <source>Select a text or subtitle clip</source>
-        <translation>Pumili ng text o subtitle clip</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s effects layer</source>
-        <translation>Pumili ng layer ng mga epekto ng clip</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s mask layer</source>
-        <translation>Pumili ng layer ng mask ng clip</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s audio effects layer</source>
-        <translation>Pumili ng layer ng mga epektong audio ng clip</translation>
-    </message>
-    <message>
-        <source>Select the clip before a cut</source>
-        <translation>Pumili ng clip bago ang isang cut</translation>
-    </message>
-    <message>
-        <source>Open the Subtitles workspace</source>
-        <translation>Buksan ang Subtitles workspace</translation>
-    </message>
-    <message>
-        <source>Open the Source Lab workspace</source>
-        <translation>Buksan ang Source Lab workspace</translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation>Pangkalahatan</translation>
-    </message>
-    <message>
-        <source>Clip name</source>
-        <translation>Pangalan ng clip</translation>
-    </message>
-    <message>
-        <source>Crop</source>
-        <translation>I-crop</translation>
-    </message>
-    <message>
-        <source>Trim</source>
-        <translation>I-trim</translation>
-    </message>
-    <message>
-        <source>Duration</source>
-        <translation>Tagal</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>Pagbabagong-anyo</translation>
-    </message>
-    <message>
-        <source>Position</source>
-        <translation>Posisyon</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>Scale</translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation>Opacity</translation>
-    </message>
-    <message>
-        <source>Rotation</source>
-        <translation>Pag-ikot</translation>
-    </message>
-    <message>
-        <source>Flip</source>
-        <translation>I-flip</translation>
-    </message>
-    <message>
-        <source>Fix orientation</source>
-        <translation>Ayusin ang oryentasyon</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>I-reset ang posisyon at laki</translation>
-    </message>
-    <message>
-        <source>Stabilization</source>
-        <translation>Pagpapatatag</translation>
-    </message>
-    <message>
-        <source>Stabilize</source>
-        <translation>Patatagin</translation>
-    </message>
-    <message>
-        <source>Smoothing</source>
-        <translation>Pagpapakinis</translation>
-    </message>
-    <message>
-        <source>Tripod mode</source>
-        <translation>Tripod mode</translation>
-    </message>
-    <message>
-        <source>Animation</source>
-        <translation>Animasyon</translation>
-    </message>
-    <message>
-        <source>In animation</source>
-        <translation>In animasyon</translation>
-    </message>
-    <message>
-        <source>Out animation</source>
-        <translation>Out animasyon</translation>
-    </message>
-    <message>
-        <source>Custom curve</source>
-        <translation>Custom na curve</translation>
-    </message>
-    <message>
-        <source>Audio</source>
-        <translation>Audyo</translation>
-    </message>
-    <message>
-        <source>Volume</source>
-        <translation>Volume</translation>
-    </message>
-    <message>
-        <source>Pan</source>
-        <translation>Pan</translation>
-    </message>
-    <message>
-        <source>Remove noise…</source>
-        <translation>Alisin ang ingay…</translation>
-    </message>
-    <message>
-        <source>Auto subtitles</source>
-        <translation>Awtomatikong mga subtitle</translation>
-    </message>
-    <message>
-        <source>Audio track</source>
-        <translation>Audio track</translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <translation>Bilis</translation>
-    </message>
-    <message>
-        <source>Playback speed</source>
-        <translation>Bilis ng playback</translation>
-    </message>
-    <message>
-        <source>Custom speed…</source>
-        <translation>Custom na bilis…</translation>
-    </message>
-    <message>
-        <source>Reverse</source>
-        <translation>I-reverse</translation>
-    </message>
-    <message>
-        <source>Blending</source>
-        <translation>Paghahalo</translation>
-    </message>
-    <message>
-        <source>Blend mode</source>
-        <translation>Blend mode</translation>
-    </message>
-    <message>
-        <source>Masks</source>
-        <translation>Mga Maskara</translation>
-    </message>
-    <message>
-        <source>Feather</source>
-        <translation>Feather</translation>
-    </message>
-    <message>
-        <source>Invert</source>
-        <translation>Baligtarin</translation>
-    </message>
-    <message>
-        <source>Combine</source>
-        <translation>Pagsamahin</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>Epekto</translation>
-    </message>
-    <message>
-        <source>Effect settings</source>
-        <translation>Mga setting ng epekto</translation>
-    </message>
-    <message>
-        <source>Face tracking</source>
-        <translation>Pagsubaybay sa mukha</translation>
-    </message>
-    <message>
-        <source>Save as preset…</source>
-        <translation>I-save bilang preset…</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>Epektong audyo</translation>
-    </message>
-    <message>
-        <source>Audio effect settings</source>
-        <translation>Mga setting ng epektong audio</translation>
-    </message>
-    <message>
-        <source>Transition</source>
-        <translation>Transisyon</translation>
-    </message>
-    <message>
-        <source>Transition duration</source>
-        <translation>Tagal ng transisyon</translation>
-    </message>
-    <message>
-        <source>Transition curve</source>
-        <translation>Curve ng transisyon</translation>
-    </message>
-    <message>
-        <source>Text</source>
-        <translation>Teksto</translation>
-    </message>
-    <message>
-        <source>Font</source>
-        <translation>Font</translation>
-    </message>
-    <message>
-        <source>Text style</source>
-        <translation>Estilo ng teksto</translation>
-    </message>
-    <message>
-        <source>Shape</source>
-        <translation>Hugis</translation>
-    </message>
-    <message>
-        <source>Shape style</source>
-        <translation>Estilo ng hugis</translation>
-    </message>
-    <message>
-        <source>Select a shape clip</source>
-        <translation>Pumili ng shape clip</translation>
-    </message>
-    <message>
-        <source>Camera</source>
-        <translation>Camera</translation>
-    </message>
-    <message>
-        <source>Camera position</source>
-        <translation>Posisyon ng camera</translation>
-    </message>
-    <message>
-        <source>Select the camera layer</source>
-        <translation>Piliin ang camera layer</translation>
-    </message>
-    <message>
-        <source>PDF</source>
-        <translation>PDF</translation>
-    </message>
-    <message>
-        <source>PDF page</source>
-        <translation>Pahina ng PDF</translation>
-    </message>
-    <message>
-        <source>Select a PDF clip</source>
-        <translation>Pumili ng PDF clip</translation>
-    </message>
-    <message>
-        <source>3D Model</source>
-        <translation>3D Model</translation>
-    </message>
-    <message>
-        <source>3D model</source>
-        <translation>3D model</translation>
-    </message>
-    <message>
-        <source>Select a 3D model clip</source>
-        <translation>Pumili ng 3D model clip</translation>
-    </message>
-    <message>
-        <source>Exposure</source>
-        <translation>Exposure</translation>
-    </message>
-    <message>
-        <source>Contrast</source>
-        <translation>Contrast</translation>
-    </message>
-    <message>
-        <source>Highlights</source>
-        <translation>Mga Highlight</translation>
-    </message>
-    <message>
-        <source>Shadows</source>
-        <translation>Mga Anino</translation>
-    </message>
-    <message>
-        <source>Whites</source>
-        <translation>Mga Puti</translation>
-    </message>
-    <message>
-        <source>Blacks</source>
-        <translation>Mga Itim</translation>
-    </message>
-    <message>
-        <source>Temperature</source>
-        <translation>Temperatura</translation>
-    </message>
-    <message>
-        <source>Tint</source>
-        <translation>Tint</translation>
-    </message>
-    <message>
-        <source>Saturation</source>
-        <translation>Saturation</translation>
-    </message>
-    <message>
-        <source>Vibrance</source>
-        <translation>Vibrance</translation>
-    </message>
-    <message>
-        <source>Color wheels</source>
-        <translation>Mga color wheel</translation>
-    </message>
-    <message>
-        <source>Curves</source>
-        <translation>Mga Curve</translation>
-    </message>
-    <message>
-        <source>Hue curves</source>
-        <translation>Mga curve ng hue</translation>
-    </message>
-    <message>
-        <source>HSL</source>
-        <translation>HSL</translation>
-    </message>
-    <message>
-        <source>Color grade</source>
-        <translation>Color grade</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>Mga Look</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>Mag-import ng mga look</translation>
-    </message>
-    <message>
-        <source>Scopes</source>
-        <translation>Mga Scope</translation>
-    </message>
-    <message>
-        <source>Open the Color workspace</source>
-        <translation>Buksan ang Color workspace</translation>
-    </message>
-    <message>
-        <source>Film Grain</source>
-        <translation>Film Grain</translation>
-    </message>
-    <message>
-        <source>Glow</source>
-        <translation>Glow</translation>
-    </message>
-    <message>
-        <source>Vignette</source>
-        <translation>Vignette</translation>
-    </message>
-    <message>
-        <source>Chromatic Aberration</source>
-        <translation>Chromatic Aberration</translation>
-    </message>
-    <message>
-        <source>Compare</source>
-        <translation>Ikumpara</translation>
-    </message>
-    <message>
-        <source>Apply to all clips</source>
-        <translation>Ilapat sa lahat ng clip</translation>
-    </message>
-    <message>
-        <source>Keyframe editor</source>
-        <translation>Editor ng keyframe</translation>
-    </message>
-    <message>
-        <source>Open the Keyframes workspace</source>
-        <translation>Buksan ang Keyframes workspace</translation>
-    </message>
-    <message>
-        <source>Masking &amp; Tracking</source>
-        <translation>Pag-mask at Pagsubaybay</translation>
-    </message>
-    <message>
-        <source>Open the Masking &amp; Tracking workspace</source>
-        <translation>Buksan ang Masking &amp; Tracking workspace</translation>
-    </message>
-    <message>
-        <source>Subtitle lane</source>
-        <translation>Lane ng subtitle</translation>
-    </message>
-    <message>
-        <source>Subtitle timing</source>
-        <translation>Timing ng subtitle</translation>
-    </message>
-    <message>
-        <source>Shift times</source>
-        <translation>Ilipat ang mga oras</translation>
-    </message>
-    <message>
-        <source>Two-point sync</source>
-        <translation>Two-point sync</translation>
-    </message>
-    <message>
-        <source>Frame rate conversion</source>
-        <translation>Conversion ng frame rate</translation>
-    </message>
-    <message>
-        <source>Bridge gaps</source>
-        <translation>Pagtulay sa mga puwang</translation>
-    </message>
-    <message>
-        <source>Subtitle text editor</source>
-        <translation>Editor ng teksto ng subtitle</translation>
-    </message>
-    <message>
-        <source>Trim source clip</source>
-        <translation>I-trim ang source clip</translation>
-    </message>
-    <message>
-        <source>Crop / reframe source</source>
-        <translation>I-crop / i-reframe ang source</translation>
-    </message>
-    <message>
-        <source>Speed and loudness</source>
-        <translation>Bilis at lakas ng tunog</translation>
-    </message>
-    <message>
-        <source>Denoise and stabilize source</source>
-        <translation>I-denoise at patatagin ang source</translation>
-    </message>
-    <message>
-        <source>Upscale source clip</source>
-        <translation>I-upscale ang source clip</translation>
-    </message>
-    <message>
-        <source>Export trimmed clip</source>
-        <translation>I-export ang na-trim na clip</translation>
-    </message>
-    <message>
-        <source>Workspaces</source>
-        <translation>Mga Workspace</translation>
-    </message>
-    <message>
-        <source>Performance</source>
-        <translation>Pagganap</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>Pagbabagong-kalagayan</translation>
-    </message>
-    <message>
-        <source>Templates</source>
-        <translation>Mga Template</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>Mga Sticker</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>Mga Subtitle</translation>
-    </message>
-    <message>
-        <source>Speech</source>
-        <translation>Speech</translation>
-    </message>
-    <message>
-        <source>Subject</source>
-        <translation>Paksa</translation>
-    </message>
-    <message>
-        <source>Scenes</source>
-        <translation>Mga Eksena</translation>
-    </message>
-    <message>
-        <source>Media</source>
-        <translation>Media</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>Preview</translation>
-    </message>
-    <message>
-        <source>Appearance</source>
-        <translation>Hitsura</translation>
-    </message>
-    <message>
-        <source>Timeline</source>
-        <translation>Timeline</translation>
-    </message>
-    <message>
-        <source>Timeline toolbar</source>
-        <translation>Toolbar ng timeline</translation>
-    </message>
-    <message>
-        <source>Keyboard shortcuts</source>
-        <translation>Mga keyboard shortcut</translation>
-    </message>
-    <message>
-        <source>AI &amp; Cloud</source>
-        <translation>AI at Cloud</translation>
-    </message>
-    <message>
-        <source>Network</source>
-        <translation>Network</translation>
-    </message>
-    <message>
-        <source>About</source>
-        <translation>Tungkol sa</translation>
-    </message>
-    <message>
-        <source>Upscale…</source>
-        <translation>I-upscale…</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>Dagdag</translation>
-    </message>
-</context>
-<context>
     <name>GlobalSearchPopup</name>
     <message>
         <source>Action</source>
@@ -9244,76 +8809,16 @@
         <translation>Kontrol</translation>
     </message>
     <message>
-        <source>Select a clip first</source>
-        <translation>Pumili muna ng clip</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>Ilapat sa napiling clip</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>Idagdag sa playhead</translation>
-    </message>
-    <message>
-        <source>Not available now</source>
-        <translation>Hindi available ngayon</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Mga Setting</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>Dagdag</translation>
-    </message>
-    <message>
-        <source>Add-on manager</source>
-        <translation>Manager ng add-on</translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>Impormasyon sa pag-debug…</translation>
-    </message>
-    <message>
-        <source>Light theme</source>
-        <translation>Maliwanag na tema</translation>
-    </message>
-    <message>
-        <source>Dark theme</source>
-        <translation>Madilim na tema</translation>
-    </message>
-    <message>
-        <source>System theme</source>
-        <translation>Tema ng sistema</translation>
-    </message>
-    <message>
-        <source>Theme: %1</source>
-        <translation>Tema: %1</translation>
-    </message>
-    <message>
-        <source>Workspace: %1</source>
-        <translation>Workspace: %1</translation>
-    </message>
-    <message>
-        <source>Add as adjustment clip</source>
-        <translation>Idagdag bilang adjustment clip</translation>
-    </message>
-    <message>
-        <source>Add after selected clip</source>
-        <translation>Idagdag pagkatapos ng napiling clip</translation>
-    </message>
-    <message>
-        <source>Not available on this track</source>
-        <translation>Hindi available sa track na ito</translation>
-    </message>
-    <message>
         <source>No matches</source>
         <translation>Walang mga tugma</translation>
     </message>
 </context>
 <context>
     <name>GradeSlider</name>
+    <message>
+        <source>Double-click to reset. Hold Shift while dragging for fine control.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
         <translation>Animated. Ang pag-edit ay nagtatakda ng mga keyframe (kailangan ang Awtomatikong keyframe na naka-on).</translation>
@@ -9812,6 +9317,10 @@
         <translation>Na-clear ang mga keyframe</translation>
     </message>
     <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move keyframes</source>
         <translation>Ilipat ang mga keyframe</translation>
     </message>
@@ -9918,6 +9427,10 @@
         <translation>Feather ng mask</translation>
     </message>
     <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">I-edit ang curve ng keyframe</translation>
+    </message>
+    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (naka-off ang mga keyframe)</translation>
     </message>
@@ -9963,6 +9476,14 @@
     <message>
         <source>Expand curve editor to view and edit Bezier handles (180px)</source>
         <translation>I-expand ang editor ng curve upang tingnan at i-edit ang mga Bezier handle (180px)</translation>
+    </message>
+    <message>
+        <source>Hide Bezier handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show Bezier handles. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -10066,6 +9587,10 @@
         <source>Move keyframes</source>
         <translation>Ilipat ang mga keyframe</translation>
     </message>
+    <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">I-edit ang curve ng keyframe</translation>
+    </message>
 </context>
 <context>
     <name>KeyframesInteractionSurface</name>
@@ -10073,12 +9598,27 @@
         <source>Move keyframes</source>
         <translation>Ilipat ang mga keyframe</translation>
     </message>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>KeyframesPanel</name>
     <message>
+        <source>Keyframe editor</source>
+        <translation type="unfinished">Editor ng keyframe</translation>
+    </message>
+    <message>
         <source>Scale</source>
         <translation>Scale</translation>
+    </message>
+    <message>
+        <source>Press K to add a keyframe at the playhead, or double-click a lane to add one there</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
@@ -10147,6 +9687,14 @@
         <translation>I-scale ang bawat curve upang punan ang taas</translation>
     </message>
     <message>
+        <source>Handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bezier handles on the focused curve. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fit the clip in view</source>
         <translation>Ikasya ang clip sa view</translation>
     </message>
@@ -10170,12 +9718,12 @@
         <translation>Wala pang mga keyframe ang %1</translation>
     </message>
     <message>
-        <source>Turn off %1&apos;s keyframes — they are kept, but stop animating</source>
-        <translation>I-off ang mga keyframe ng %1 — pinapanatili ang mga ito, ngunit hihinto sa pag-animate</translation>
+        <source>Stop animating %1 (keys are kept)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Turn %1&apos;s keyframes back on</source>
-        <translation>I-on muli ang mga keyframe ng %1</translation>
+        <source>Animate %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -10734,8 +10282,8 @@
         <translation>&amp;Window</translation>
     </message>
     <message>
-        <source>Edit Workspaces…</source>
-        <translation>I-edit ang mga Workspace…</translation>
+        <source>Customize Layouts in Settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
@@ -10997,15 +10545,27 @@
         <translation>I-click ang bagay upang piliin ito · I-right-click o Ctrl-click upang ibukod</translation>
     </message>
     <message>
-        <source>Add points to refine · then propagate in the Masking panel</source>
-        <translation>Magdagdag ng mga punto upang linawin · pagkatapos ay i-propagate sa panel ng Masking</translation>
+        <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a cutout model in the Masking panel first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People are found automatically · press “Cut out people” in the Masking panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
-        <source>Paint to add · Right-drag to erase · [ ] size</source>
-        <translation>Mag-paint upang magdagdag · I-right-drag upang magbura · [ ] laki</translation>
+        <source>%1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move the playhead over the selected clip</source>
@@ -11034,23 +10594,39 @@
         <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
         <translation>%1 punto · Enter upang isara · Backspace upang i-undo · Esc upang kanselahin</translation>
     </message>
+    <message>
+        <source>Drawing replaces this layer&apos;s mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to draw · Shift for square/circle · Alt from centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MaskEditSession</name>
+    <message>
+        <source>Mask changed</source>
+        <translation type="unfinished">Nabago ang mask</translation>
+    </message>
 </context>
 <context>
     <name>MaskOverlay</name>
     <message>
-        <source>Mask changed</source>
-        <translation>Nabago ang mask</translation>
+        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>MaskOverlayBarEdge</name>
     <message>
-        <source>Mask changed</source>
-        <translation>Nabago ang mask</translation>
+        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayEmptyHint</name>
+    <message>
+        <source>Pick a mask tool in the Masking panel and draw on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
         <translation>Mag-drag ng mask mula sa tab ng Masks sa isang clip upang i-edit ito rito</translation>
@@ -11058,27 +10634,6 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>Pumili ng clip sa playhead upang i-edit ang mga mask nito</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayResizeGrip</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>Nabago ang mask</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayRotateHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>Nabago ang mask</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayVertexHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>Nabago ang mask</translation>
     </message>
 </context>
 <context>
@@ -11119,12 +10674,32 @@
         <translation>Naidagdag ang mask</translation>
     </message>
     <message>
+        <source>Remove speed changes first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs a video track below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to mask</source>
         <translation>I-convert sa mask</translation>
     </message>
     <message>
         <source>Clip converted to mask</source>
         <translation>Na-convert ang clip sa mask</translation>
+    </message>
+    <message>
+        <source>Cutouts can&apos;t be moved yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask moved to an effect layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Draw mask</source>
@@ -11141,6 +10716,26 @@
     <message>
         <source>Fill mask</source>
         <translation>Punuin ang mask</translation>
+    </message>
+    <message>
+        <source>Clear cutout fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout fix cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the cutout fix. The next stroke will try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix cutout frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout frame fixed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
@@ -11270,16 +10865,16 @@
         <translation>AI na bagay</translation>
     </message>
     <message>
+        <source>Tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
         <source>Off</source>
         <translation>Naka-off</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Overlay</translation>
-    </message>
-    <message>
-        <source>Matte</source>
-        <translation>Matte</translation>
     </message>
     <message>
         <source>Size</source>
@@ -11322,6 +10917,18 @@
         <translation>Nagbubura ang pag-drag sa kaliwa</translation>
     </message>
     <message>
+        <source>Pressure changes size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear fix on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the brush fix from the frame at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fill</source>
         <translation>Punuin</translation>
     </message>
@@ -11330,12 +10937,28 @@
         <translation>Takpan ang buong clip ng mask</translation>
     </message>
     <message>
+        <source>Start a new brush mask covering the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear</source>
         <translation>I-clear</translation>
     </message>
     <message>
         <source>Empty the mask</source>
         <translation>Alisin ang laman ng mask</translation>
+    </message>
+    <message>
+        <source>No trackers on this clip yet. Start one with Point or Planar in the Tracking panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Magdagdag ng mask</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -11396,16 +11019,24 @@
         <translation>Linawin ang napiling mask</translation>
     </message>
     <message>
-        <source>Track backward</source>
-        <translation>Subaybayan pabalik</translation>
+        <source>Invert</source>
+        <translation type="unfinished">Baligtarin</translation>
     </message>
     <message>
-        <source>Track both ways</source>
-        <translation>Subaybayan sa parehong direksyon</translation>
+        <source>Hide the inside instead of the outside</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Track forward</source>
-        <translation>Subaybayan pasulong</translation>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">Liwanag</translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -11424,18 +11055,6 @@
         <translation>Pumili ng clip o adjustment layer sa timeline.</translation>
     </message>
     <message>
-        <source>Adjustment layer mask</source>
-        <translation>Mask ng adjustment layer</translation>
-    </message>
-    <message>
-        <source>Masks on this clip</source>
-        <translation>Mga mask sa clip na ito</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>Preview</translation>
-    </message>
-    <message>
         <source>Masks</source>
         <translation>Mga Maskara</translation>
     </message>
@@ -11452,6 +11071,70 @@
         <translation>Ipakita ang mask</translation>
     </message>
     <message>
+        <source>Masking &amp; Tracking</source>
+        <translation type="unfinished">Pag-mask at Pagsubaybay</translation>
+    </message>
+    <message>
+        <source>Tint hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black &amp; white</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur added on an adjustment layer. Adjust the amount in the Effects tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fixing this frame of “%1”. Brush fixes don&apos;t follow motion.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a preview of this frame only. It becomes a mask when you cut out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out through whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>◀ Up to here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From here ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This layer&apos;s effects apply only inside the mask.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Masks keep what is inside and hide the rest. Invert to hide the inside instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a mask to preview it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How this mask combines with the ones above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add</source>
         <translation>Magdagdag</translation>
     </message>
@@ -11462,14 +11145,6 @@
     <message>
         <source>Intersect</source>
         <translation>Intersect</translation>
-    </message>
-    <message>
-        <source>Inv</source>
-        <translation>Inv</translation>
-    </message>
-    <message>
-        <source>Invert this mask</source>
-        <translation>Baligtarin ang mask na ito</translation>
     </message>
     <message>
         <source>Apply effects: Inside / Outside</source>
@@ -11490,6 +11165,86 @@
     <message>
         <source>Feather</source>
         <translation>Feather</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation type="unfinished">Posisyon</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Perspective</translation>
+    </message>
+    <message>
+        <source>Track ◀</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ⇄</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Ihinto</translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the mask copies from the tracked object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add more points to this tracker in the Tracking panel for rotation, scale and perspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the mask on the preview to correct it, then track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur this area ▾</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply a blur or pixelate effect inside this shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Blur</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Animate shape</source>
@@ -11522,18 +11277,6 @@
             <numerusform>%n mga shape key</numerusform>
         </translation>
     </message>
-    <message>
-        <source>Channel</source>
-        <translation>Channel</translation>
-    </message>
-    <message>
-        <source>Luma</source>
-        <translation>Luma</translation>
-    </message>
-    <message>
-        <source>Alpha</source>
-        <translation>Alpha</translation>
-    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -11564,10 +11307,6 @@
     <message>
         <source>Bars</source>
         <translation>Mga Bar</translation>
-    </message>
-    <message>
-        <source>Freeform</source>
-        <translation>Freeform</translation>
     </message>
     <message>
         <source>Combine</source>
@@ -11616,6 +11355,10 @@
     <message>
         <source>Feather</source>
         <translation>Feather</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">Polygon</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -13164,6 +12907,10 @@
         <source>Pages</source>
         <translation>Mga Pahina</translation>
     </message>
+    <message>
+        <source>PDF page</source>
+        <translation type="unfinished">Pahina ng PDF</translation>
+    </message>
     <message numerus="yes">
         <source>%n page(s)</source>
         <translation>
@@ -13572,8 +13319,16 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>PreviewOsdZoomChip</name>
     <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Mag-zoom out</translation>
+    </message>
+    <message>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
         <translation>Zoom ng preview — Ctrl+mag-scroll sa ibabaw ng preview upang mag-zoom, gitnang-drag upang mag-pan. I-click upang i-reset sa 100%.</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Mag-zoom in</translation>
     </message>
 </context>
 <context>
@@ -13860,7 +13615,7 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>This project uses &quot;%1&quot;, which isn’t installed — it won’t show. Open Extras to install it.</source>
-        <translation>Ginagamit ng proyektong ito ang "%1", na hindi naka-install — hindi ito lalabas. Buksan ang Dagdag upang i-install ito.</translation>
+        <translation>Ginagamit ng proyektong ito ang &quot;%1&quot;, na hindi naka-install — hindi ito lalabas. Buksan ang Dagdag upang i-install ito.</translation>
     </message>
     <message>
         <source>This project uses %1 effects or transitions that aren’t installed (%2%3) — they won’t show. Open Extras to install them.</source>
@@ -14947,7 +14702,7 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>Speeds are per frame of this clip. Custom models are experimental and may not work. Drop an ONNX export (fp32 or fp16, RGB, 1x/2x/4x) into the folder; put the scale in the file name, e.g. &quot;2x_Name.onnx&quot;.</source>
-        <translation>Ang mga bilis ay bawat frame ng clip na ito. Eksperimental ang mga custom na model at maaaring hindi gumana. Mag-drop ng isang ONNX export (fp32 o fp16, RGB, 1x/2x/4x) sa folder; ilagay ang scale sa pangalan ng file, hal. "2x_Pangalan.onnx".</translation>
+        <translation>Ang mga bilis ay bawat frame ng clip na ito. Eksperimental ang mga custom na model at maaaring hindi gumana. Mag-drop ng isang ONNX export (fp32 o fp16, RGB, 1x/2x/4x) sa folder; ilagay ang scale sa pangalan ng file, hal. &quot;2x_Pangalan.onnx&quot;.</translation>
     </message>
     <message>
         <source>Get models (openmodeldb.info)</source>
@@ -15214,8 +14969,16 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Histogram</translation>
     </message>
     <message>
+        <source>Histo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation>Waveform</translation>
+    </message>
+    <message>
+        <source>Wave</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Parade</source>
@@ -15226,8 +14989,115 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Vectorscope</translation>
     </message>
     <message>
+        <source>Vector</source>
+        <translation type="unfinished">Vector</translation>
+    </message>
+    <message>
+        <source>Scopes update from the preview. Play or move the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scopes</source>
         <translation>Mga Scope</translation>
+    </message>
+</context>
+<context>
+    <name>SearchIndex</name>
+    <message>
+        <source>Not available now</source>
+        <translation type="unfinished">Hindi available ngayon</translation>
+    </message>
+    <message>
+        <source>Export video</source>
+        <translation type="unfinished">I-export ang video</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">Mga Pag-download</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation type="unfinished">Wika…</translation>
+    </message>
+    <message>
+        <source>Video size and layout</source>
+        <translation type="unfinished">Laki at layout ng video</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished">Lumipat sa layout ng mobile…</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Mga Setting</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Dagdag</translation>
+    </message>
+    <message>
+        <source>Add-on manager</source>
+        <translation type="unfinished">Manager ng add-on</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation type="unfinished">Impormasyon sa pag-debug…</translation>
+    </message>
+    <message>
+        <source>Light theme</source>
+        <translation type="unfinished">Maliwanag na tema</translation>
+    </message>
+    <message>
+        <source>Dark theme</source>
+        <translation type="unfinished">Madilim na tema</translation>
+    </message>
+    <message>
+        <source>System theme</source>
+        <translation type="unfinished">Tema ng sistema</translation>
+    </message>
+    <message>
+        <source>Theme: %1</source>
+        <translation type="unfinished">Tema: %1</translation>
+    </message>
+    <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">Workspace: %1</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to selected clip</source>
+        <translation type="unfinished">Ilapat sa napiling clip</translation>
+    </message>
+    <message>
+        <source>Select a clip first</source>
+        <translation type="unfinished">Pumili muna ng clip</translation>
+    </message>
+    <message>
+        <source>Add at playhead</source>
+        <translation type="unfinished">Idagdag sa playhead</translation>
+    </message>
+    <message>
+        <source>Add as adjustment clip</source>
+        <translation type="unfinished">Idagdag bilang adjustment clip</translation>
+    </message>
+    <message>
+        <source>Add after selected clip</source>
+        <translation type="unfinished">Idagdag pagkatapos ng napiling clip</translation>
+    </message>
+    <message>
+        <source>Not available on this track</source>
+        <translation type="unfinished">Hindi available sa track na ito</translation>
+    </message>
+    <message>
+        <source>Select the clip before a cut</source>
+        <translation type="unfinished">Pumili ng clip bago ang isang cut</translation>
+    </message>
+    <message>
+        <source>Select a video, image, text or shape clip</source>
+        <translation type="unfinished">Pumili ng video, imahe, teksto o shape clip</translation>
     </message>
 </context>
 <context>
@@ -15376,6 +15246,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Linawin ang object mask</translation>
     </message>
     <message>
+        <source>Object mask refined. Frame fixes were kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That clip no longer exists</source>
         <translation>Hindi na umiiral ang clip na iyon</translation>
     </message>
@@ -15504,6 +15378,30 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>AI at Cloud</translation>
     </message>
     <message>
+        <source>On this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">Paano gumagana ang AI</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine from Extras to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">I-restart ang Drift para magkabisa ito.</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">Pinipili ng Awtomatiko ang pinakamabilis na opsyon na naka-install sa iyo, at ginagamit ang kompyuter na ito kung hindi makakatulong ang sistemang grapiko.</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent access</source>
         <translation>Access ng agent</translation>
     </message>
@@ -15518,6 +15416,18 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
         <translation>Awtomatikong i-on ang access ng agent sa susunod na buksan mo ang Drift. Ang pag-off sa access ay nagre-reset nito.</translation>
+    </message>
+    <message>
+        <source>Cloud</source>
+        <translation type="unfinished">Ulap</translation>
+    </message>
+    <message>
+        <source>Use cloud services</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -15680,6 +15590,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Restart Drift to apply this size.</source>
         <translation>I-restart ang Drift upang ilapat ang laking ito.</translation>
+    </message>
+    <message>
+        <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
@@ -16913,6 +16827,18 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Dash-dot</translation>
     </message>
     <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opacity</source>
         <translation>Opacity</translation>
     </message>
@@ -16939,6 +16865,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Dash offset</source>
         <translation>Offset ng dash</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the stroke turns a corner: sharp, rounded or cut off</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>
@@ -17030,6 +16964,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Swapping the shape keeps its position, size, style and effects.</source>
         <translation>Pinapanatili ng pagpapalit ng hugis ang posisyon, laki, estilo at mga epekto nito.</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">Estilo ng hugis</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -17291,6 +17229,13 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Nothing in this category.</source>
         <translation>Walang laman sa kategoryang ito.</translation>
+    </message>
+</context>
+<context>
+    <name>ShellBridge</name>
+    <message>
+        <source>Adjustment layer</source>
+        <translation type="unfinished">Adjustment layer</translation>
     </message>
 </context>
 <context>
@@ -17752,6 +17697,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-crop / I-reframe</translation>
     </message>
     <message>
+        <source>Crop / reframe source</source>
+        <translation type="unfinished">I-crop / i-reframe ang source</translation>
+    </message>
+    <message>
         <source>Free</source>
         <translation>Libre</translation>
     </message>
@@ -17825,6 +17774,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Upscale</source>
         <translation>I-upscale</translation>
+    </message>
+    <message>
+        <source>Upscale source clip</source>
+        <translation type="unfinished">I-upscale ang source clip</translation>
     </message>
     <message>
         <source>Output size: %1 x %2</source>
@@ -17925,6 +17878,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SourceLabOutputPanel</name>
     <message>
+        <source>Export trimmed clip</source>
+        <translation type="unfinished">I-export ang na-trim na clip</translation>
+    </message>
+    <message>
         <source>Output</source>
         <translation>Output</translation>
     </message>
@@ -18021,6 +17978,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 </context>
 <context>
     <name>SourceLabProcessPanel</name>
+    <message>
+        <source>Denoise and stabilize source</source>
+        <translation type="unfinished">I-denoise at patatagin ang source</translation>
+    </message>
     <message>
         <source>Process</source>
         <translation>Iproseso</translation>
@@ -18184,6 +18145,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Bilis</translation>
     </message>
     <message>
+        <source>Speed and loudness</source>
+        <translation type="unfinished">Bilis at lakas ng tunog</translation>
+    </message>
+    <message>
         <source>Keep pitch</source>
         <translation>Panatilihin ang pitch</translation>
     </message>
@@ -18241,6 +18206,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SourceLabTrimPanel</name>
     <message>
+        <source>Trim source clip</source>
+        <translation type="unfinished">I-trim ang source clip</translation>
+    </message>
+    <message>
         <source>Source Lab Trim</source>
         <translation>Source Lab Trim</translation>
     </message>
@@ -18291,6 +18260,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 </context>
 <context>
     <name>SourceLabViewerPanel</name>
+    <message>
+        <source>Source Lab</source>
+        <translation type="unfinished">Source Lab</translation>
+    </message>
     <message>
         <source>Source Lab Viewer</source>
         <translation>Source Lab Viewer</translation>
@@ -18887,6 +18860,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Pinapakinis ang pag-uga ng camera. Ini-scan ng Drift ang clip nang isang beses, pagkatapos ay nagre-render ng napatatag na kopya sa media bin at inililipat ang clip doon. Ang pagpapalit ng kinis o tripod ay hindi nag-a-update ng preview hanggang sa ilapat mo.</translation>
     </message>
     <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">Patatagin</translation>
+    </message>
+    <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation>Mag-render ng napatatag na kopya, o i-animate ang clip gamit ang mga sparse transform key</translation>
     </message>
@@ -18998,6 +18975,41 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Create polished videos fast</source>
         <translation>Mabilis na gumawa ng mga pulidong video</translation>
+    </message>
+</context>
+<context>
+    <name>StartupSplash</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Nagsisimula…</translation>
+    </message>
+    <message>
+        <source>Checking the graphics driver…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading fonts…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting the playback and audio engines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading add-ons and themes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Building the interface…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opening the editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation type="unfinished">Bersyon %1</translation>
     </message>
 </context>
 <context>
@@ -19482,6 +19494,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SubtitleLanePanel</name>
     <message>
+        <source>Subtitle lane</source>
+        <translation type="unfinished">Lane ng subtitle</translation>
+    </message>
+    <message>
         <source>Select a subtitle clip</source>
         <translation>Pumili ng subtitle clip</translation>
     </message>
@@ -19556,6 +19572,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 </context>
 <context>
     <name>SubtitleTextPanel</name>
+    <message>
+        <source>Subtitle text editor</source>
+        <translation type="unfinished">Editor ng teksto ng subtitle</translation>
+    </message>
     <message>
         <source>Import Subtitles</source>
         <translation>Mag-import ng mga Subtitle</translation>
@@ -19690,6 +19710,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>SubtitleTimingPanel</name>
     <message>
+        <source>Subtitle timing</source>
+        <translation type="unfinished">Timing ng subtitle</translation>
+    </message>
+    <message>
         <source>Pick two existing cues</source>
         <translation>Pumili ng dalawang umiiral na cue</translation>
     </message>
@@ -19731,6 +19755,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Shift</source>
         <translation>Ilipat</translation>
+    </message>
+    <message>
+        <source>Shift times</source>
+        <translation type="unfinished">Ilipat ang mga oras</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -19833,6 +19861,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Frame rate / bilis</translation>
     </message>
     <message>
+        <source>Frame rate conversion</source>
+        <translation type="unfinished">Conversion ng frame rate</translation>
+    </message>
+    <message>
         <source>From fps</source>
         <translation>Mula sa fps</translation>
     </message>
@@ -19859,6 +19891,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Bridge small gaps</source>
         <translation>Tulay sa maliliit na puwang</translation>
+    </message>
+    <message>
+        <source>Bridge gaps</source>
+        <translation type="unfinished">Pagtulay sa mga puwang</translation>
     </message>
     <message>
         <source>Shorter than (ms)</source>
@@ -20487,6 +20523,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Colour</source>
         <translation>Kulay</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">Estilo ng teksto</translation>
     </message>
     <message>
         <source>Choose the gradient&apos;s first colour</source>
@@ -21182,6 +21222,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Edit keyframes…</source>
         <translation>I-edit ang mga keyframe…</translation>
+    </message>
+    <message>
+        <source>Mask &amp; track…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unlink from clip</source>
@@ -22024,6 +22068,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a clip on the timeline to track motion in it</source>
         <translation>Pumili ng clip sa timeline upang subaybayan ang galaw rito</translation>
     </message>
@@ -22040,6 +22088,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-click ang feature na idaragdag sa tracker na ito.</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
         <translation>I-click ang mga sulok ng isang patag na ibabaw, Enter upang tapusin.</translation>
     </message>
@@ -22052,8 +22104,16 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Gamitin ang Punto o Planar sa panel ng Pagsubaybay upang magsimula ng track</translation>
     </message>
     <message>
+        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking… %1%</source>
         <translation>Sinusubaybayan… %1%</translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22075,18 +22135,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Hindi ma-decode ang frame %1</translation>
     </message>
     <message>
-        <source>Tracking stopped: confidence dropped below the minimum</source>
-        <translation>Huminto ang pagsubaybay: bumaba ang kumpiyansa sa ilalim ng pinakamababa</translation>
-    </message>
-    <message>
-        <source>Not enough texture inside the outline to track</source>
-        <translation>Kulang ang texture sa loob ng outline upang subaybayan</translation>
-    </message>
-    <message>
-        <source>Tracking stopped: the surface was lost</source>
-        <translation>Huminto ang pagsubaybay: nawala ang ibabaw</translation>
-    </message>
-    <message>
         <source>Tracking stopped: not enough texture left to follow</source>
         <translation>Huminto ang pagsubaybay: kulang ang natitirang texture upang sundan</translation>
     </message>
@@ -22101,6 +22149,54 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Tracker added</source>
         <translation>Naidagdag ang tracker</translation>
+    </message>
+    <message>
+        <source>The camera can&apos;t match this surface exactly; some frames drift by up to %1 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the feature at %1. Drag the marker back onto it and track again, or lower the stop threshold.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not enough detail inside the outline. Outline a larger area with visible texture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the surface at %1. Drag its corners back into place and track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom to fill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Correct track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Magdagdag ng mask</translation>
+    </message>
+    <message>
+        <source>Mask added</source>
+        <translation type="unfinished">Naidagdag ang mask</translation>
     </message>
     <message>
         <source>Planar %1</source>
@@ -22155,8 +22251,16 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Walang natira upang subaybayan sa direksyong iyon</translation>
     </message>
     <message>
-        <source>Move the playhead to a tracked frame first</source>
-        <translation>Ilipat muna ang playhead sa isang na-track na frame</translation>
+        <source>Drag the outline&apos;s corners onto the surface at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the marker onto the feature at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is transformed; the adjustment mask may not line up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track</source>
@@ -22165,6 +22269,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Tracked</source>
         <translation>Nasubaybayan</translation>
+    </message>
+    <message>
+        <source>%1 (adjustment)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen is not available for 3D clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply track</source>
@@ -22202,28 +22314,64 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-click ang feature na idaragdag sa tracker na ito.</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation>Posisyon</translation>
-    </message>
-    <message>
-        <source>Position + Rotation</source>
-        <translation>Posisyon + Pag-ikot</translation>
-    </message>
-    <message>
-        <source>Position + Rotation + Scale</source>
-        <translation>Posisyon + Pag-ikot + Scale</translation>
     </message>
     <message>
         <source>Perspective</source>
         <translation>Perspective</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
         <source>No clip selected</source>
         <translation>Walang napiling clip</translation>
     </message>
     <message>
+        <source>No video clip under this adjustment layer at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video under this clip at the playhead. Move the playhead over the video it should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to track motion in it.</source>
         <translation>Pumili ng video clip upang subaybayan ang galaw rito.</translation>
+    </message>
+    <message>
+        <source>Follow an object in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click an object on the video; this clip will follow it through the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows %1 on %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop following</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking: %1 (under %2)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Point</source>
@@ -22242,6 +22390,14 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Subaybayan ang isang patag na ibabaw na may outline ng mga sulok nito</translation>
     </message>
     <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Kanselahin</translation>
+    </message>
+    <message>
+        <source>Stop placing (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers</source>
         <translation>Mga Tracker</translation>
     </message>
@@ -22254,6 +22410,30 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Tanggalin ang tracker</translation>
     </message>
     <message>
+        <source>Now track it: press Track whole clip, or ◀ ▶ to go one way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the feature backward and forward through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrected at this frame. Track ▶ to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track back to the start</source>
         <translation>Subaybayan pabalik sa simula</translation>
     </message>
@@ -22262,8 +22442,88 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Subaybayan nang isang frame pabalik</translation>
     </message>
     <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking stops when the match gets worse than this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if match is worse than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>match &lt; %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Box size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size of the area being followed. Bigger is steadier, smaller is more precise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Locked to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">Ilipat ang clip</translation>
+    </message>
+    <message>
+        <source>Move camera</source>
+        <translation type="unfinished">Igalaw ang camera</translation>
+    </message>
+    <message>
+        <source>Center in frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stick to the point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep where it is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep current position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the tracked object to the middle of the frame, or keep it where it is at the reference frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop tracking</source>
         <translation>Ihinto ang pagsubaybay</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -22274,40 +22534,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Subaybayan hanggang sa dulo</translation>
     </message>
     <message>
-        <source>Solve</source>
-        <translation>Lutasin</translation>
-    </message>
-    <message>
         <source>Add up to 4 points on the same surface for rotation, scale and perspective</source>
         <translation>Magdagdag ng hanggang 4 na punto sa parehong ibabaw para sa pag-ikot, scale at perspective</translation>
     </message>
     <message>
-        <source>Confidence</source>
-        <translation>Kumpiyansa</translation>
-    </message>
-    <message>
-        <source>Minimum confidence</source>
-        <translation>Pinakamababang kumpiyansa</translation>
-    </message>
-    <message>
-        <source>Pattern</source>
-        <translation>Pattern</translation>
-    </message>
-    <message>
-        <source>Pattern size</source>
-        <translation>Laki ng pattern</translation>
-    </message>
-    <message>
-        <source>Clear ◀</source>
-        <translation>I-clear ◀</translation>
-    </message>
-    <message>
         <source>Remove the samples before the playhead</source>
         <translation>Alisin ang mga sample bago ang playhead</translation>
-    </message>
-    <message>
-        <source>Clear ▶</source>
-        <translation>I-clear ▶</translation>
     </message>
     <message>
         <source>Remove the samples after the playhead</source>
@@ -22322,24 +22554,52 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Maglagay ng isa pang punto sa preview</translation>
     </message>
     <message>
-        <source>Drives</source>
-        <translation>Mga Drive</translation>
-    </message>
-    <message>
         <source>Mask</source>
         <translation>Mask</translation>
     </message>
     <message>
-        <source>Center on track</source>
-        <translation>Igitna sa track</translation>
-    </message>
-    <message>
-        <source>Keep offset</source>
-        <translation>Panatilihin ang offset</translation>
-    </message>
-    <message>
         <source>Put the clip&apos;s centre on the tracked point, or keep the offset it has from it at the reference frame</source>
         <translation>Ilagay ang gitna ng clip sa nasubaybayang punto, o panatilihin ang offset nito mula rito sa reference frame</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Mag-zoom</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Punuin</translation>
+    </message>
+    <message>
+        <source>Zoom in just enough to hide the empty edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the tracked object still on screen by moving the clip or the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make a mask or clip move with this tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Magdagdag ng mask</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update the attached masks and clips from the current track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
@@ -22361,24 +22621,12 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Ihinto ang pagpapatakbo mula rito</translation>
     </message>
     <message>
-        <source>Add target…</source>
-        <translation>Magdagdag ng target…</translation>
-    </message>
-    <message>
-        <source>Let a mask or clip follow this tracker</source>
-        <translation>Hayaang sumunod ang isang mask o clip sa tracker na ito</translation>
-    </message>
-    <message>
         <source>No masks or clips to drive from</source>
         <translation>Walang mga mask o clip na pagpapatakbuhin</translation>
     </message>
     <message>
         <source>Re-apply</source>
         <translation>Ilapat muli</translation>
-    </message>
-    <message>
-        <source>Regenerate the keys on the drives</source>
-        <translation>Buuing muli ang mga key sa mga drive</translation>
     </message>
     <message>
         <source>Mask: %1</source>
@@ -22468,6 +22716,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Scale</translation>
     </message>
     <message>
+        <source>Position</source>
+        <translation type="unfinished">Posisyon</translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>I-edit nang magkahiwalay ang lapad at taas</translation>
     </message>
@@ -22506,6 +22758,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Opacity &amp; rotation</source>
         <translation>Opacity at pag-ikot</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation type="unfinished">Pag-ikot</translation>
     </message>
     <message>
         <source>Rotate 90°</source>
@@ -22787,8 +23043,16 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Tagal</translation>
     </message>
     <message>
+        <source>Transition duration</source>
+        <translation type="unfinished">Tagal ng transisyon</translation>
+    </message>
+    <message>
         <source>Curve</source>
         <translation>Kurba</translation>
+    </message>
+    <message>
+        <source>Transition curve</source>
+        <translation type="unfinished">Curve ng transisyon</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -24020,11 +24284,11 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>Unknown panel type &quot;%1&quot;.</source>
-        <translation>Hindi kilalang uri ng panel "%1".</translation>
+        <translation>Hindi kilalang uri ng panel &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>The &quot;%1&quot; panel is used more than once.</source>
-        <translation>Ginagamit ang "%1" panel nang higit sa isang beses.</translation>
+        <translation>Ginagamit ang &quot;%1&quot; panel nang higit sa isang beses.</translation>
     </message>
     <message>
         <source>%1 · Library</source>

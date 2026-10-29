@@ -29,6 +29,29 @@
     </message>
 </context>
 <context>
+    <name>AccelerationFailedDialog</name>
+    <message>
+        <source>AI engine isn&apos;t working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine, then try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -41,6 +64,10 @@
     <message>
         <source>NVIDIA graphics (faster)</source>
         <translation>英伟达显卡（快速）</translation>
+    </message>
+    <message>
+        <source>AMD graphics (faster)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Graphics card (faster)</source>
@@ -2230,8 +2257,20 @@
         <translation>入场</translation>
     </message>
     <message>
+        <source>In animation</source>
+        <translation type="unfinished">入场动画</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>出场</translation>
+    </message>
+    <message>
+        <source>Out animation</source>
+        <translation type="unfinished">出场动画</translation>
+    </message>
+    <message>
+        <source>Custom curve</source>
+        <translation type="unfinished">自定义曲线</translation>
     </message>
     <message>
         <source>Edit custom curve…</source>
@@ -2391,10 +2430,6 @@
     <message>
         <source>Select tool</source>
         <translation>选择工具</translation>
-    </message>
-    <message>
-        <source>Cut tool</source>
-        <translation>剪切工具</translation>
     </message>
     <message>
         <source>Search…</source>
@@ -2839,6 +2874,22 @@
         <translation>减慢播放速度</translation>
     </message>
     <message>
+        <source>3D gizmo: move / Tracker tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: rotate / Rectangle mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: scale / Ellipse mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut tool / Brush mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Polygon mask tool</source>
         <translation>多边形蒙版工具</translation>
     </message>
@@ -2853,6 +2904,30 @@
     <message>
         <source>Increase brush size</source>
         <translation>增大画笔大小</translation>
+    </message>
+    <message>
+        <source>Brush: switch paint / erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track forward</source>
+        <translation type="unfinished">向前跟踪</translation>
+    </message>
+    <message>
+        <source>Track backward</source>
+        <translation type="unfinished">向后跟踪</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">向前跟踪一帧</translation>
+    </message>
+    <message>
+        <source>Track one frame backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -3549,18 +3624,6 @@
     <message>
         <source>Select transform layer</source>
         <translation>选择变换图层</translation>
-    </message>
-    <message>
-        <source>3D gizmo: move</source>
-        <translation>3D 操纵器：移动</translation>
-    </message>
-    <message>
-        <source>3D gizmo: rotate</source>
-        <translation>3D 操纵器：旋转</translation>
-    </message>
-    <message>
-        <source>3D gizmo: scale</source>
-        <translation>3D 操纵器：缩放</translation>
     </message>
     <message>
         <source>3D gizmo: switch global/local axes</source>
@@ -5014,6 +5077,10 @@
         <source>Auto keyframes</source>
         <translation>自动关键帧</translation>
     </message>
+    <message>
+        <source>Audio effect settings</source>
+        <translation type="unfinished">音效设置</translation>
+    </message>
 </context>
 <context>
     <name>AudioInspector</name>
@@ -5356,6 +5423,10 @@
         <translation>在该片段持续期间，时间线上的所有内容都通过这台摄影机观看。摄影机处于静止状态时与没有摄影机完全相同，因此以下数值都是相对正常视图的偏移量。</translation>
     </message>
     <message>
+        <source>Camera position</source>
+        <translation type="unfinished">相机位置</translation>
+    </message>
+    <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation>短焦镜头会放大景深感；长焦镜头会压平空间。当此摄像机运行时，它将替换每个剪辑自身的透视值，因为一个场景只有一个观察视角。</translation>
     </message>
@@ -5430,6 +5501,10 @@
     <message>
         <source>None</source>
         <translation>无</translation>
+    </message>
+    <message>
+        <source>Missing look</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Adjust color</source>
@@ -5636,20 +5711,8 @@
         <translation>光晕</translation>
     </message>
     <message>
-        <source>None</source>
-        <translation>无</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>缺少外观</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>重置 %1</translation>
-    </message>
-    <message>
-        <source>No clip selected</source>
-        <translation>未选择片段</translation>
     </message>
     <message>
         <source>Compare</source>
@@ -5672,6 +5735,34 @@
         <translation>应用到全部…</translation>
     </message>
     <message>
+        <source>Color grade</source>
+        <translation type="unfinished">调色</translation>
+    </message>
+    <message>
+        <source>Adds film-like noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft glow around bright areas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color fringing at the edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darkens the corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Red glow around highlights, like film</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>重置</translation>
     </message>
@@ -5686,6 +5777,14 @@
     <message>
         <source>Editing &quot;%1&quot; only. Use Apply to all to copy its grade to other clips.</source>
         <translation>仅在编辑“%1”。使用“应用到所有”可将其调色复制到其他剪辑。</translation>
+    </message>
+    <message>
+        <source>Showing the original. Your grade is hidden until you turn Compare off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grade</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The grade is turned off.</source>
@@ -5720,8 +5819,16 @@
         <translation>外观</translation>
     </message>
     <message>
+        <source>None. Choose a look in the Looks panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look Intensity</source>
         <translation>外观强度</translation>
+    </message>
+    <message>
+        <source>Color wheels</source>
+        <translation type="unfinished">色彩轮</translation>
     </message>
     <message>
         <source>Adjust curves</source>
@@ -5730,6 +5837,10 @@
     <message>
         <source>Hue Curves</source>
         <translation>色相曲线</translation>
+    </message>
+    <message>
+        <source>Hue curves</source>
+        <translation type="unfinished">色相曲线</translation>
     </message>
     <message>
         <source>Adjust hue curves</source>
@@ -5803,6 +5914,10 @@
         <translation>重置 %1</translation>
     </message>
     <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Brightness</source>
         <translation>亮度</translation>
     </message>
@@ -5852,20 +5967,44 @@
         <translation>色相</translation>
     </message>
     <message>
-        <source>Sat</source>
-        <translation>饱和</translation>
+        <source>Saturation</source>
+        <translation type="unfinished">饱和度</translation>
     </message>
     <message>
-        <source>Lum</source>
-        <translation>明度</translation>
+        <source>Luminance</source>
+        <translation type="unfinished">明度</translation>
     </message>
     <message>
         <source>Master</source>
         <translation>主</translation>
     </message>
     <message>
+        <source>Hue vs Hue: shift one color toward another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Saturation: make one color more or less vivid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Luminance: brighten or darken one color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset channel</source>
         <translation>重置通道</translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6557,7 +6696,7 @@
     </message>
     <message>
         <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>许可 &lt;a href="%1"&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
+        <translation>许可 &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
     </message>
     <message>
         <source>Licence %1</source>
@@ -7070,6 +7209,22 @@
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">工作区：%1</translation>
+    </message>
+    <message>
+        <source>Workspace:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch workspace</source>
+        <translation type="unfinished">切换工作区</translation>
+    </message>
+    <message>
+        <source>Customize layouts in Settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search  %1</source>
         <translation>搜索 %1</translation>
     </message>
@@ -7077,47 +7232,12 @@
         <source>Search</source>
         <translation>搜索</translation>
     </message>
-    <message>
-        <source>Export video</source>
-        <translation>导出视频</translation>
-    </message>
-    <message>
-        <source>Downloads</source>
-        <translation>下载</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>语言…</translation>
-    </message>
-    <message>
-        <source>Video size and layout</source>
-        <translation>视频尺寸与布局</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation>切换到移动端布局…</translation>
-    </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
     <message>
         <source>Settings</source>
         <translation>设置</translation>
-    </message>
-</context>
-<context>
-    <name>EditorHeaderWorkspaceButton</name>
-    <message>
-        <source>Workspaces</source>
-        <translation>工作区</translation>
-    </message>
-    <message>
-        <source>Switch workspace</source>
-        <translation>切换工作区</translation>
-    </message>
-    <message>
-        <source>Edit workspaces…</source>
-        <translation>编辑工作区…</translation>
     </message>
 </context>
 <context>
@@ -7707,6 +7827,10 @@
     <message>
         <source>Browse effects</source>
         <translation>浏览效果</translation>
+    </message>
+    <message>
+        <source>Effect settings</source>
+        <translation type="unfinished">效果设置</translation>
     </message>
 </context>
 <context>
@@ -8595,565 +8719,6 @@
     </message>
 </context>
 <context>
-    <name>GlobalSearchControls</name>
-    <message>
-        <source>Properties</source>
-        <translation>属性</translation>
-    </message>
-    <message>
-        <source>Assets</source>
-        <translation>素材</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>设置</translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation>颜色</translation>
-    </message>
-    <message>
-        <source>Source Lab</source>
-        <translation>素材实验室</translation>
-    </message>
-    <message>
-        <source>Select a clip</source>
-        <translation>选择一个片段</translation>
-    </message>
-    <message>
-        <source>Select a video, image, text or shape clip</source>
-        <translation>请选择视频、图像、文本或形状片段</translation>
-    </message>
-    <message>
-        <source>Select a video clip</source>
-        <translation>请选择视频片段</translation>
-    </message>
-    <message>
-        <source>Select a video or audio clip</source>
-        <translation>请选择视频或音频片段</translation>
-    </message>
-    <message>
-        <source>Select a text or subtitle clip</source>
-        <translation>请选择文本或字幕片段</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s effects layer</source>
-        <translation>选择剪辑的效果层</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s mask layer</source>
-        <translation>选择剪辑的蒙版层</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s audio effects layer</source>
-        <translation>选择剪辑的音频效果层</translation>
-    </message>
-    <message>
-        <source>Select the clip before a cut</source>
-        <translation>选择剪切点前的片段</translation>
-    </message>
-    <message>
-        <source>Open the Subtitles workspace</source>
-        <translation>打开字幕工作区</translation>
-    </message>
-    <message>
-        <source>Open the Source Lab workspace</source>
-        <translation>打开素材实验室工作区</translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation>常规</translation>
-    </message>
-    <message>
-        <source>Clip name</source>
-        <translation>片段名称</translation>
-    </message>
-    <message>
-        <source>Crop</source>
-        <translation>裁剪</translation>
-    </message>
-    <message>
-        <source>Trim</source>
-        <translation>修剪</translation>
-    </message>
-    <message>
-        <source>Duration</source>
-        <translation>时长</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>变换</translation>
-    </message>
-    <message>
-        <source>Position</source>
-        <translation>位置</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>缩放</translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation>不透明度</translation>
-    </message>
-    <message>
-        <source>Rotation</source>
-        <translation>旋转</translation>
-    </message>
-    <message>
-        <source>Flip</source>
-        <translation>翻转</translation>
-    </message>
-    <message>
-        <source>Fix orientation</source>
-        <translation>修正方向</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>重置位置和大小</translation>
-    </message>
-    <message>
-        <source>Stabilization</source>
-        <translation>防抖</translation>
-    </message>
-    <message>
-        <source>Stabilize</source>
-        <translation>防抖</translation>
-    </message>
-    <message>
-        <source>Smoothing</source>
-        <translation>平滑</translation>
-    </message>
-    <message>
-        <source>Tripod mode</source>
-        <translation>三脚架模式</translation>
-    </message>
-    <message>
-        <source>Animation</source>
-        <translation>动画</translation>
-    </message>
-    <message>
-        <source>In animation</source>
-        <translation>入场动画</translation>
-    </message>
-    <message>
-        <source>Out animation</source>
-        <translation>出场动画</translation>
-    </message>
-    <message>
-        <source>Custom curve</source>
-        <translation>自定义曲线</translation>
-    </message>
-    <message>
-        <source>Audio</source>
-        <translation>音频</translation>
-    </message>
-    <message>
-        <source>Volume</source>
-        <translation>音量</translation>
-    </message>
-    <message>
-        <source>Pan</source>
-        <translation>声像</translation>
-    </message>
-    <message>
-        <source>Remove noise…</source>
-        <translation>降噪…</translation>
-    </message>
-    <message>
-        <source>Auto subtitles</source>
-        <translation>自动字幕</translation>
-    </message>
-    <message>
-        <source>Audio track</source>
-        <translation>音轨</translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <translation>速度</translation>
-    </message>
-    <message>
-        <source>Playback speed</source>
-        <translation>播放速度</translation>
-    </message>
-    <message>
-        <source>Custom speed…</source>
-        <translation>自定义速度…</translation>
-    </message>
-    <message>
-        <source>Reverse</source>
-        <translation>倒放</translation>
-    </message>
-    <message>
-        <source>Blending</source>
-        <translation>混合</translation>
-    </message>
-    <message>
-        <source>Blend mode</source>
-        <translation>混合模式</translation>
-    </message>
-    <message>
-        <source>Masks</source>
-        <translation>蒙版</translation>
-    </message>
-    <message>
-        <source>Feather</source>
-        <translation>羽化</translation>
-    </message>
-    <message>
-        <source>Invert</source>
-        <translation>反转</translation>
-    </message>
-    <message>
-        <source>Combine</source>
-        <translation>合并</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>效果</translation>
-    </message>
-    <message>
-        <source>Effect settings</source>
-        <translation>效果设置</translation>
-    </message>
-    <message>
-        <source>Face tracking</source>
-        <translation>人脸跟踪</translation>
-    </message>
-    <message>
-        <source>Save as preset…</source>
-        <translation>另存为预设…</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>音效</translation>
-    </message>
-    <message>
-        <source>Audio effect settings</source>
-        <translation>音效设置</translation>
-    </message>
-    <message>
-        <source>Transition</source>
-        <translation>转场</translation>
-    </message>
-    <message>
-        <source>Transition duration</source>
-        <translation>转场时长</translation>
-    </message>
-    <message>
-        <source>Transition curve</source>
-        <translation>转场曲线</translation>
-    </message>
-    <message>
-        <source>Text</source>
-        <translation>文本</translation>
-    </message>
-    <message>
-        <source>Font</source>
-        <translation>字体</translation>
-    </message>
-    <message>
-        <source>Text style</source>
-        <translation>文本样式</translation>
-    </message>
-    <message>
-        <source>Shape</source>
-        <translation>形状</translation>
-    </message>
-    <message>
-        <source>Shape style</source>
-        <translation>形状样式</translation>
-    </message>
-    <message>
-        <source>Select a shape clip</source>
-        <translation>选择一个形状片段</translation>
-    </message>
-    <message>
-        <source>Camera</source>
-        <translation>相机</translation>
-    </message>
-    <message>
-        <source>Camera position</source>
-        <translation>相机位置</translation>
-    </message>
-    <message>
-        <source>Select the camera layer</source>
-        <translation>选择相机图层</translation>
-    </message>
-    <message>
-        <source>PDF</source>
-        <translation>PDF</translation>
-    </message>
-    <message>
-        <source>PDF page</source>
-        <translation>PDF 页</translation>
-    </message>
-    <message>
-        <source>Select a PDF clip</source>
-        <translation>选择一个 PDF 片段</translation>
-    </message>
-    <message>
-        <source>3D Model</source>
-        <translation>3D 模型</translation>
-    </message>
-    <message>
-        <source>3D model</source>
-        <translation>3D 模型</translation>
-    </message>
-    <message>
-        <source>Select a 3D model clip</source>
-        <translation>选择一个 3D 模型片段</translation>
-    </message>
-    <message>
-        <source>Exposure</source>
-        <translation>曝光</translation>
-    </message>
-    <message>
-        <source>Contrast</source>
-        <translation>对比度</translation>
-    </message>
-    <message>
-        <source>Highlights</source>
-        <translation>高光</translation>
-    </message>
-    <message>
-        <source>Shadows</source>
-        <translation>阴影</translation>
-    </message>
-    <message>
-        <source>Whites</source>
-        <translation>白色</translation>
-    </message>
-    <message>
-        <source>Blacks</source>
-        <translation>黑色</translation>
-    </message>
-    <message>
-        <source>Temperature</source>
-        <translation>色温</translation>
-    </message>
-    <message>
-        <source>Tint</source>
-        <translation>色调</translation>
-    </message>
-    <message>
-        <source>Saturation</source>
-        <translation>饱和度</translation>
-    </message>
-    <message>
-        <source>Vibrance</source>
-        <translation>自然饱和度</translation>
-    </message>
-    <message>
-        <source>Color wheels</source>
-        <translation>色彩轮</translation>
-    </message>
-    <message>
-        <source>Curves</source>
-        <translation>曲线</translation>
-    </message>
-    <message>
-        <source>Hue curves</source>
-        <translation>色相曲线</translation>
-    </message>
-    <message>
-        <source>HSL</source>
-        <translation>HSL</translation>
-    </message>
-    <message>
-        <source>Color grade</source>
-        <translation>调色</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>风格</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>导入风格</translation>
-    </message>
-    <message>
-        <source>Scopes</source>
-        <translation>示波器</translation>
-    </message>
-    <message>
-        <source>Open the Color workspace</source>
-        <translation>打开调色工作区</translation>
-    </message>
-    <message>
-        <source>Film Grain</source>
-        <translation>胶片颗粒</translation>
-    </message>
-    <message>
-        <source>Glow</source>
-        <translation>辉光</translation>
-    </message>
-    <message>
-        <source>Vignette</source>
-        <translation>暗角</translation>
-    </message>
-    <message>
-        <source>Chromatic Aberration</source>
-        <translation>色差</translation>
-    </message>
-    <message>
-        <source>Compare</source>
-        <translation>对比</translation>
-    </message>
-    <message>
-        <source>Apply to all clips</source>
-        <translation>应用到所有片段</translation>
-    </message>
-    <message>
-        <source>Keyframe editor</source>
-        <translation>关键帧编辑器</translation>
-    </message>
-    <message>
-        <source>Open the Keyframes workspace</source>
-        <translation>打开关键帧工作区</translation>
-    </message>
-    <message>
-        <source>Masking &amp; Tracking</source>
-        <translation>蒙版与跟踪</translation>
-    </message>
-    <message>
-        <source>Open the Masking &amp; Tracking workspace</source>
-        <translation>打开蒙版与跟踪工作区</translation>
-    </message>
-    <message>
-        <source>Subtitle lane</source>
-        <translation>字幕轨</translation>
-    </message>
-    <message>
-        <source>Subtitle timing</source>
-        <translation>字幕时序</translation>
-    </message>
-    <message>
-        <source>Shift times</source>
-        <translation>平移时间</translation>
-    </message>
-    <message>
-        <source>Two-point sync</source>
-        <translation>两点同步</translation>
-    </message>
-    <message>
-        <source>Frame rate conversion</source>
-        <translation>帧率转换</translation>
-    </message>
-    <message>
-        <source>Bridge gaps</source>
-        <translation>填补间隙</translation>
-    </message>
-    <message>
-        <source>Subtitle text editor</source>
-        <translation>字幕文本编辑器</translation>
-    </message>
-    <message>
-        <source>Trim source clip</source>
-        <translation>修剪源片段</translation>
-    </message>
-    <message>
-        <source>Crop / reframe source</source>
-        <translation>裁剪 / 重新构图源片段</translation>
-    </message>
-    <message>
-        <source>Speed and loudness</source>
-        <translation>速度和响度</translation>
-    </message>
-    <message>
-        <source>Denoise and stabilize source</source>
-        <translation>源片段降噪与防抖</translation>
-    </message>
-    <message>
-        <source>Upscale source clip</source>
-        <translation>放大源片段</translation>
-    </message>
-    <message>
-        <source>Export trimmed clip</source>
-        <translation>导出已修剪片段</translation>
-    </message>
-    <message>
-        <source>Workspaces</source>
-        <translation>工作区</translation>
-    </message>
-    <message>
-        <source>Performance</source>
-        <translation>性能</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>转场</translation>
-    </message>
-    <message>
-        <source>Templates</source>
-        <translation>模板</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>贴纸</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>字幕</translation>
-    </message>
-    <message>
-        <source>Speech</source>
-        <translation>语音</translation>
-    </message>
-    <message>
-        <source>Subject</source>
-        <translation>主体</translation>
-    </message>
-    <message>
-        <source>Scenes</source>
-        <translation>场景</translation>
-    </message>
-    <message>
-        <source>Media</source>
-        <translation>媒体</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>预览</translation>
-    </message>
-    <message>
-        <source>Appearance</source>
-        <translation>外观</translation>
-    </message>
-    <message>
-        <source>Timeline</source>
-        <translation>时间线</translation>
-    </message>
-    <message>
-        <source>Timeline toolbar</source>
-        <translation>时间线工具栏</translation>
-    </message>
-    <message>
-        <source>Keyboard shortcuts</source>
-        <translation>键盘快捷键</translation>
-    </message>
-    <message>
-        <source>AI &amp; Cloud</source>
-        <translation>AI 与云</translation>
-    </message>
-    <message>
-        <source>Network</source>
-        <translation>网络</translation>
-    </message>
-    <message>
-        <source>About</source>
-        <translation>关于</translation>
-    </message>
-    <message>
-        <source>Upscale…</source>
-        <translation>放大…</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>附加项</translation>
-    </message>
-</context>
-<context>
     <name>GlobalSearchPopup</name>
     <message>
         <source>Action</source>
@@ -9212,76 +8777,16 @@
         <translation>控件</translation>
     </message>
     <message>
-        <source>Select a clip first</source>
-        <translation>请先选择一个片段</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>应用到所选片段</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>在播放头处添加</translation>
-    </message>
-    <message>
-        <source>Not available now</source>
-        <translation>暂不可用</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>设置</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>附加项</translation>
-    </message>
-    <message>
-        <source>Add-on manager</source>
-        <translation>附加包管理器</translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>调试信息…</translation>
-    </message>
-    <message>
-        <source>Light theme</source>
-        <translation>浅色主题</translation>
-    </message>
-    <message>
-        <source>Dark theme</source>
-        <translation>深色主题</translation>
-    </message>
-    <message>
-        <source>System theme</source>
-        <translation>系统主题</translation>
-    </message>
-    <message>
-        <source>Theme: %1</source>
-        <translation>主题：%1</translation>
-    </message>
-    <message>
-        <source>Workspace: %1</source>
-        <translation>工作区：%1</translation>
-    </message>
-    <message>
-        <source>Add as adjustment clip</source>
-        <translation>添加为调整片段</translation>
-    </message>
-    <message>
-        <source>Add after selected clip</source>
-        <translation>添加到所选片段之后</translation>
-    </message>
-    <message>
-        <source>Not available on this track</source>
-        <translation>此轨道不可用</translation>
-    </message>
-    <message>
         <source>No matches</source>
         <translation>无匹配项</translation>
     </message>
 </context>
 <context>
     <name>GradeSlider</name>
+    <message>
+        <source>Double-click to reset. Hold Shift while dragging for fine control.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
         <translation>已启用动画。编辑时会设置关键帧（需开启自动关键帧）。</translation>
@@ -9777,6 +9282,10 @@
         <translation>已清除关键帧</translation>
     </message>
     <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move keyframes</source>
         <translation>移动关键帧</translation>
     </message>
@@ -9882,6 +9391,10 @@
         <translation>蒙版羽化</translation>
     </message>
     <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">编辑关键帧曲线</translation>
+    </message>
+    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1（关键帧已关闭）</translation>
     </message>
@@ -9927,6 +9440,14 @@
     <message>
         <source>Expand curve editor to view and edit Bezier handles (180px)</source>
         <translation>展开曲线编辑器以查看和编辑贝塞尔手柄（180px）</translation>
+    </message>
+    <message>
+        <source>Hide Bezier handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show Bezier handles. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -10029,6 +9550,10 @@
         <source>Move keyframes</source>
         <translation>移动关键帧</translation>
     </message>
+    <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">编辑关键帧曲线</translation>
+    </message>
 </context>
 <context>
     <name>KeyframesInteractionSurface</name>
@@ -10036,12 +9561,26 @@
         <source>Move keyframes</source>
         <translation>移动关键帧</translation>
     </message>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>KeyframesPanel</name>
     <message>
+        <source>Keyframe editor</source>
+        <translation type="unfinished">关键帧编辑器</translation>
+    </message>
+    <message>
         <source>Scale</source>
         <translation>缩放</translation>
+    </message>
+    <message>
+        <source>Press K to add a keyframe at the playhead, or double-click a lane to add one there</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
@@ -10110,6 +9649,14 @@
         <translation>缩放每条曲线以填满高度</translation>
     </message>
     <message>
+        <source>Handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bezier handles on the focused curve. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fit the clip in view</source>
         <translation>缩放至完整显示片段</translation>
     </message>
@@ -10133,12 +9680,12 @@
         <translation>%1 尚无关键帧</translation>
     </message>
     <message>
-        <source>Turn off %1&apos;s keyframes — they are kept, but stop animating</source>
-        <translation>关闭 %1 的关键帧 — 关键帧将保留，但停止动画效果</translation>
+        <source>Stop animating %1 (keys are kept)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Turn %1&apos;s keyframes back on</source>
-        <translation>重新开启 %1 的关键帧</translation>
+        <source>Animate %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -10696,8 +10243,8 @@
         <translation>窗口(&amp;W)</translation>
     </message>
     <message>
-        <source>Edit Workspaces…</source>
-        <translation>编辑工作区…</translation>
+        <source>Customize Layouts in Settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
@@ -10959,15 +10506,27 @@
         <translation>单击目标以选取 · 右键单击或按住 Ctrl 单击以排除</translation>
     </message>
     <message>
-        <source>Add points to refine · then propagate in the Masking panel</source>
-        <translation>添加点以细化选区 · 然后在蒙版面板中进行追踪传递</translation>
+        <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a cutout model in the Masking panel first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People are found automatically · press “Cut out people” in the Masking panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
-        <source>Paint to add · Right-drag to erase · [ ] size</source>
-        <translation>涂抹以添加 · 右键拖动以擦除 · [ ] 调节大小</translation>
+        <source>%1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move the playhead over the selected clip</source>
@@ -10996,23 +10555,39 @@
         <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
         <translation>%1 个锚点 · Enter 闭合 · Backspace 撤消 · Esc 取消</translation>
     </message>
+    <message>
+        <source>Drawing replaces this layer&apos;s mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to draw · Shift for square/circle · Alt from centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MaskEditSession</name>
+    <message>
+        <source>Mask changed</source>
+        <translation type="unfinished">蒙版已更改</translation>
+    </message>
 </context>
 <context>
     <name>MaskOverlay</name>
     <message>
-        <source>Mask changed</source>
-        <translation>蒙版已更改</translation>
+        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>MaskOverlayBarEdge</name>
     <message>
-        <source>Mask changed</source>
-        <translation>蒙版已更改</translation>
+        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayEmptyHint</name>
+    <message>
+        <source>Pick a mask tool in the Masking panel and draw on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
         <translation>将蒙版从“蒙版”标签页拖到片段上即可在此处编辑</translation>
@@ -11020,27 +10595,6 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>选中播放头处的片段以编辑其蒙版</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayResizeGrip</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>蒙版已更改</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayRotateHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>蒙版已更改</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayVertexHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>蒙版已更改</translation>
     </message>
 </context>
 <context>
@@ -11081,12 +10635,32 @@
         <translation>蒙版已添加</translation>
     </message>
     <message>
+        <source>Remove speed changes first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs a video track below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to mask</source>
         <translation>转换为蒙版</translation>
     </message>
     <message>
         <source>Clip converted to mask</source>
         <translation>剪辑已转换为蒙版</translation>
+    </message>
+    <message>
+        <source>Cutouts can&apos;t be moved yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask moved to an effect layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Draw mask</source>
@@ -11103,6 +10677,26 @@
     <message>
         <source>Fill mask</source>
         <translation>填充蒙版</translation>
+    </message>
+    <message>
+        <source>Clear cutout fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout fix cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the cutout fix. The next stroke will try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix cutout frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout frame fixed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
@@ -11232,16 +10826,16 @@
         <translation>AI 目标</translation>
     </message>
     <message>
+        <source>Tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Off</source>
         <translation>关</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>叠加</translation>
-    </message>
-    <message>
-        <source>Matte</source>
-        <translation>遮罩</translation>
     </message>
     <message>
         <source>Size</source>
@@ -11284,6 +10878,18 @@
         <translation>左键拖动进行擦除</translation>
     </message>
     <message>
+        <source>Pressure changes size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear fix on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the brush fix from the frame at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fill</source>
         <translation>填充</translation>
     </message>
@@ -11292,12 +10898,28 @@
         <translation>用蒙版覆盖整个剪辑</translation>
     </message>
     <message>
+        <source>Start a new brush mask covering the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear</source>
         <translation>清除</translation>
     </message>
     <message>
         <source>Empty the mask</source>
         <translation>清空蒙版</translation>
+    </message>
+    <message>
+        <source>No trackers on this clip yet. Start one with Point or Planar in the Tracking panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">添加蒙版</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -11356,16 +10978,24 @@
         <translation>细化所选蒙版</translation>
     </message>
     <message>
-        <source>Track backward</source>
-        <translation>向后跟踪</translation>
+        <source>Invert</source>
+        <translation type="unfinished">反转</translation>
     </message>
     <message>
-        <source>Track both ways</source>
-        <translation>双向跟踪</translation>
+        <source>Hide the inside instead of the outside</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Track forward</source>
-        <translation>向前跟踪</translation>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">亮度</translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -11384,18 +11014,6 @@
         <translation>在时间线上选择剪辑或调整图层。</translation>
     </message>
     <message>
-        <source>Adjustment layer mask</source>
-        <translation>调整图层蒙版</translation>
-    </message>
-    <message>
-        <source>Masks on this clip</source>
-        <translation>此剪辑上的蒙版</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>预览</translation>
-    </message>
-    <message>
         <source>Masks</source>
         <translation>蒙版</translation>
     </message>
@@ -11412,6 +11030,70 @@
         <translation>显示蒙版</translation>
     </message>
     <message>
+        <source>Masking &amp; Tracking</source>
+        <translation type="unfinished">蒙版与跟踪</translation>
+    </message>
+    <message>
+        <source>Tint hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black &amp; white</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur added on an adjustment layer. Adjust the amount in the Effects tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fixing this frame of “%1”. Brush fixes don&apos;t follow motion.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a preview of this frame only. It becomes a mask when you cut out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out through whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>◀ Up to here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From here ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This layer&apos;s effects apply only inside the mask.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Masks keep what is inside and hide the rest. Invert to hide the inside instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a mask to preview it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How this mask combines with the ones above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add</source>
         <translation>相加</translation>
     </message>
@@ -11422,14 +11104,6 @@
     <message>
         <source>Intersect</source>
         <translation>相交</translation>
-    </message>
-    <message>
-        <source>Inv</source>
-        <translation>反转</translation>
-    </message>
-    <message>
-        <source>Invert this mask</source>
-        <translation>反转此蒙版</translation>
     </message>
     <message>
         <source>Apply effects: Inside / Outside</source>
@@ -11450,6 +11124,86 @@
     <message>
         <source>Feather</source>
         <translation>羽化</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation type="unfinished">位置</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">透视</translation>
+    </message>
+    <message>
+        <source>Track ◀</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ⇄</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">停止</translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the mask copies from the tracked object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add more points to this tracker in the Tracking panel for rotation, scale and perspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the mask on the preview to correct it, then track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur this area ▾</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply a blur or pixelate effect inside this shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">模糊</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Animate shape</source>
@@ -11481,18 +11235,6 @@
             <numerusform>%n 个形状关键帧</numerusform>
         </translation>
     </message>
-    <message>
-        <source>Channel</source>
-        <translation>通道</translation>
-    </message>
-    <message>
-        <source>Luma</source>
-        <translation>亮度</translation>
-    </message>
-    <message>
-        <source>Alpha</source>
-        <translation>Alpha</translation>
-    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -11523,10 +11265,6 @@
     <message>
         <source>Bars</source>
         <translation>条形</translation>
-    </message>
-    <message>
-        <source>Freeform</source>
-        <translation>自由形状</translation>
     </message>
     <message>
         <source>Combine</source>
@@ -11575,6 +11313,10 @@
     <message>
         <source>Feather</source>
         <translation>羽化</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">多边形</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -13108,6 +12850,10 @@
         <source>Pages</source>
         <translation>页面</translation>
     </message>
+    <message>
+        <source>PDF page</source>
+        <translation type="unfinished">PDF 页</translation>
+    </message>
     <message numerus="yes">
         <source>%n page(s)</source>
         <translation>
@@ -13515,8 +13261,16 @@ If playback stutters, try another.</source>
 <context>
     <name>PreviewOsdZoomChip</name>
     <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">缩小</translation>
+    </message>
+    <message>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
         <translation>预览缩放——在预览上按住 Ctrl 并滚动缩放，中键拖动平移。点击恢复 100%。</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">放大</translation>
     </message>
 </context>
 <context>
@@ -15153,8 +14907,16 @@ If playback stutters, try another.</source>
         <translation>直方图</translation>
     </message>
     <message>
+        <source>Histo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation>波形图</translation>
+    </message>
+    <message>
+        <source>Wave</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Parade</source>
@@ -15165,8 +14927,115 @@ If playback stutters, try another.</source>
         <translation>矢量示波器</translation>
     </message>
     <message>
+        <source>Vector</source>
+        <translation type="unfinished">矢量</translation>
+    </message>
+    <message>
+        <source>Scopes update from the preview. Play or move the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scopes</source>
         <translation>示波器</translation>
+    </message>
+</context>
+<context>
+    <name>SearchIndex</name>
+    <message>
+        <source>Not available now</source>
+        <translation type="unfinished">暂不可用</translation>
+    </message>
+    <message>
+        <source>Export video</source>
+        <translation type="unfinished">导出视频</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">下载</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation type="unfinished">语言…</translation>
+    </message>
+    <message>
+        <source>Video size and layout</source>
+        <translation type="unfinished">视频尺寸与布局</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished">切换到移动端布局…</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">设置</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">附加项</translation>
+    </message>
+    <message>
+        <source>Add-on manager</source>
+        <translation type="unfinished">附加包管理器</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation type="unfinished">调试信息…</translation>
+    </message>
+    <message>
+        <source>Light theme</source>
+        <translation type="unfinished">浅色主题</translation>
+    </message>
+    <message>
+        <source>Dark theme</source>
+        <translation type="unfinished">深色主题</translation>
+    </message>
+    <message>
+        <source>System theme</source>
+        <translation type="unfinished">系统主题</translation>
+    </message>
+    <message>
+        <source>Theme: %1</source>
+        <translation type="unfinished">主题：%1</translation>
+    </message>
+    <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">工作区：%1</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to selected clip</source>
+        <translation type="unfinished">应用到所选片段</translation>
+    </message>
+    <message>
+        <source>Select a clip first</source>
+        <translation type="unfinished">请先选择一个片段</translation>
+    </message>
+    <message>
+        <source>Add at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add as adjustment clip</source>
+        <translation type="unfinished">添加为调整片段</translation>
+    </message>
+    <message>
+        <source>Add after selected clip</source>
+        <translation type="unfinished">添加到所选片段之后</translation>
+    </message>
+    <message>
+        <source>Not available on this track</source>
+        <translation type="unfinished">此轨道不可用</translation>
+    </message>
+    <message>
+        <source>Select the clip before a cut</source>
+        <translation type="unfinished">选择剪切点前的片段</translation>
+    </message>
+    <message>
+        <source>Select a video, image, text or shape clip</source>
+        <translation type="unfinished">请选择视频、图像、文本或形状片段</translation>
     </message>
 </context>
 <context>
@@ -15315,6 +15184,10 @@ If playback stutters, try another.</source>
         <translation>细化目标蒙版</translation>
     </message>
     <message>
+        <source>Object mask refined. Frame fixes were kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That clip no longer exists</source>
         <translation>该片段已不存在</translation>
     </message>
@@ -15443,6 +15316,30 @@ If playback stutters, try another.</source>
         <translation>AI 与云</translation>
     </message>
     <message>
+        <source>On this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI 如何运行</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine from Extras to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">重启 Drift 以生效。</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">如果你的显卡不起作用，就会在这台电脑自动以最快选项安装。</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent access</source>
         <translation>智能体访问</translation>
     </message>
@@ -15457,6 +15354,18 @@ If playback stutters, try another.</source>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
         <translation>下次打开 Drift 时自动开启智能体访问。关闭访问会重置此设置</translation>
+    </message>
+    <message>
+        <source>Cloud</source>
+        <translation type="unfinished">云朵</translation>
+    </message>
+    <message>
+        <source>Use cloud services</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -15619,6 +15528,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Restart Drift to apply this size.</source>
         <translation>重启 Drift 以应用此大小</translation>
+    </message>
+    <message>
+        <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
@@ -16852,6 +16765,18 @@ If playback stutters, try another.</source>
         <translation>点划线</translation>
     </message>
     <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opacity</source>
         <translation>不透明度</translation>
     </message>
@@ -16878,6 +16803,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Dash offset</source>
         <translation>虚线偏移</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the stroke turns a corner: sharp, rounded or cut off</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>
@@ -16969,6 +16902,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Swapping the shape keeps its position, size, style and effects.</source>
         <translation>更换形状会保留其位置、大小、样式和效果。</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">形状样式</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -17230,6 +17167,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Nothing in this category.</source>
         <translation>此分类暂无内容。</translation>
+    </message>
+</context>
+<context>
+    <name>ShellBridge</name>
+    <message>
+        <source>Adjustment layer</source>
+        <translation type="unfinished">调整图层</translation>
     </message>
 </context>
 <context>
@@ -17691,6 +17635,10 @@ If playback stutters, try another.</source>
         <translation>裁剪 / 调整构图</translation>
     </message>
     <message>
+        <source>Crop / reframe source</source>
+        <translation type="unfinished">裁剪 / 重新构图源片段</translation>
+    </message>
+    <message>
         <source>Free</source>
         <translation>自由</translation>
     </message>
@@ -17764,6 +17712,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Upscale</source>
         <translation>放大</translation>
+    </message>
+    <message>
+        <source>Upscale source clip</source>
+        <translation type="unfinished">放大源片段</translation>
     </message>
     <message>
         <source>Output size: %1 x %2</source>
@@ -17864,6 +17816,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SourceLabOutputPanel</name>
     <message>
+        <source>Export trimmed clip</source>
+        <translation type="unfinished">导出已修剪片段</translation>
+    </message>
+    <message>
         <source>Output</source>
         <translation>输出</translation>
     </message>
@@ -17959,6 +17915,10 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SourceLabProcessPanel</name>
+    <message>
+        <source>Denoise and stabilize source</source>
+        <translation type="unfinished">源片段降噪与防抖</translation>
+    </message>
     <message>
         <source>Process</source>
         <translation>处理</translation>
@@ -18121,6 +18081,10 @@ If playback stutters, try another.</source>
         <translation>速度</translation>
     </message>
     <message>
+        <source>Speed and loudness</source>
+        <translation type="unfinished">速度和响度</translation>
+    </message>
+    <message>
         <source>Keep pitch</source>
         <translation>保持音调</translation>
     </message>
@@ -18178,6 +18142,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SourceLabTrimPanel</name>
     <message>
+        <source>Trim source clip</source>
+        <translation type="unfinished">修剪源片段</translation>
+    </message>
+    <message>
         <source>Source Lab Trim</source>
         <translation>素材实验室修剪</translation>
     </message>
@@ -18228,6 +18196,10 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SourceLabViewerPanel</name>
+    <message>
+        <source>Source Lab</source>
+        <translation type="unfinished">素材实验室</translation>
+    </message>
     <message>
         <source>Source Lab Viewer</source>
         <translation>素材实验室监视器</translation>
@@ -18824,6 +18796,10 @@ If playback stutters, try another.</source>
         <translation>平滑相机抖动。Drift 扫描一次片段，然后渲染防抖副本到素材箱并将片段切换到它。更改平滑度或三脚架设置不会在应用前更新预览。</translation>
     </message>
     <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">防抖</translation>
+    </message>
+    <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation>渲染防抖副本，或使用稀疏变换关键帧为片段添加动画</translation>
     </message>
@@ -18938,6 +18914,41 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>StartupSplash</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">启动中…</translation>
+    </message>
+    <message>
+        <source>Checking the graphics driver…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading fonts…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting the playback and audio engines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading add-ons and themes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Building the interface…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opening the editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation type="unfinished">版本 %1</translation>
+    </message>
+</context>
+<context>
     <name>StickerPresetCard</name>
     <message>
         <source>%1 — click to add, or drag to the timeline or preview</source>
@@ -18980,7 +18991,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No stickers match “%1”</source>
-        <translation>没有与 "%1" 匹配的贴纸</translation>
+        <translation>没有与 &quot;%1&quot; 匹配的贴纸</translation>
     </message>
     <message>
         <source>No favorites yet</source>
@@ -19415,6 +19426,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SubtitleLanePanel</name>
     <message>
+        <source>Subtitle lane</source>
+        <translation type="unfinished">字幕轨道</translation>
+    </message>
+    <message>
         <source>Select a subtitle clip</source>
         <translation>选一个字幕片段</translation>
     </message>
@@ -19488,6 +19503,10 @@ If playback stutters, try another.</source>
 </context>
 <context>
     <name>SubtitleTextPanel</name>
+    <message>
+        <source>Subtitle text editor</source>
+        <translation type="unfinished">字幕文本编辑器</translation>
+    </message>
     <message>
         <source>Import Subtitles</source>
         <translation>导入字幕</translation>
@@ -19620,6 +19639,10 @@ If playback stutters, try another.</source>
 <context>
     <name>SubtitleTimingPanel</name>
     <message>
+        <source>Subtitle timing</source>
+        <translation type="unfinished">字幕时间</translation>
+    </message>
+    <message>
         <source>Pick two existing cues</source>
         <translation>选择两条已有提示</translation>
     </message>
@@ -19660,6 +19683,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Shift</source>
         <translation>偏移</translation>
+    </message>
+    <message>
+        <source>Shift times</source>
+        <translation type="unfinished">平移时间</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -19762,6 +19789,10 @@ If playback stutters, try another.</source>
         <translation>帧率 / 速度</translation>
     </message>
     <message>
+        <source>Frame rate conversion</source>
+        <translation type="unfinished">帧率转换</translation>
+    </message>
+    <message>
         <source>From fps</source>
         <translation>原帧率</translation>
     </message>
@@ -19788,6 +19819,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Bridge small gaps</source>
         <translation>桥接小间隔</translation>
+    </message>
+    <message>
+        <source>Bridge gaps</source>
+        <translation type="unfinished">填补间隙</translation>
     </message>
     <message>
         <source>Shorter than (ms)</source>
@@ -20038,7 +20073,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Remove “%1” from your saved styles? Clips already using it keep their look.</source>
-        <translation>要从已保存的样式中移除 "%1" 吗？已使用该样式的片段将保持外观不变。</translation>
+        <translation>要从已保存的样式中移除 &quot;%1&quot; 吗？已使用该样式的片段将保持外观不变。</translation>
     </message>
 </context>
 <context>
@@ -20416,6 +20451,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Colour</source>
         <translation>颜色</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">文本样式</translation>
     </message>
     <message>
         <source>Choose the gradient&apos;s first colour</source>
@@ -20891,7 +20930,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>“%1” includes QML files that replace controls. Those files run with Drift’s permissions. Trust a theme only after you have read it.</source>
-        <translation>"%1" 包含替换控件的 QML 文件。这些文件将以 Drift 的权限运行。请在阅读后再信任该主题。</translation>
+        <translation>&quot;%1&quot; 包含替换控件的 QML 文件。这些文件将以 Drift 的权限运行。请在阅读后再信任该主题。</translation>
     </message>
     <message>
         <source>No override files were found.</source>
@@ -21113,6 +21152,10 @@ If playback stutters, try another.</source>
         <translation>编辑关键帧…</translation>
     </message>
     <message>
+        <source>Mask &amp; track…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unlink from clip</source>
         <translation>与片段取消链接</translation>
     </message>
@@ -21207,11 +21250,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Variable frame rate. This clip can drift out of sync with its audio. Right-click it and choose Convert to edit-friendly format.</source>
-        <translation>可变帧率。此片段可能与音频不同步。右键单击并选择"转换为易编辑格式"。</translation>
+        <translation>可变帧率。此片段可能与音频不同步。右键单击并选择&quot;转换为易编辑格式&quot;。</translation>
     </message>
     <message>
         <source>Media file not found. Use Replace media… on this item to point it at the file again.</source>
-        <translation>未找到媒体文件。对此项目使用"替换媒体…"重新指向该文件。</translation>
+        <translation>未找到媒体文件。对此项目使用&quot;替换媒体…&quot;重新指向该文件。</translation>
     </message>
     <message>
         <source>Transform layer: moves, scales and turns every track its bracket covers</source>
@@ -21950,6 +21993,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a clip on the timeline to track motion in it</source>
         <translation>在时间线上选择一个剪辑以跟踪其中的运动</translation>
     </message>
@@ -21966,6 +22013,10 @@ If playback stutters, try another.</source>
         <translation>在画面中单击要添加到此跟踪器的特征。</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
         <translation>单击平面的各个角点，按 Enter 完成。</translation>
     </message>
@@ -21978,8 +22029,16 @@ If playback stutters, try another.</source>
         <translation>在“跟踪”面板中使用“点”或“平面”开始跟踪</translation>
     </message>
     <message>
+        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking… %1%</source>
         <translation>正在跟踪… %1%</translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22001,18 +22060,6 @@ If playback stutters, try another.</source>
         <translation>无法解码第 %1 帧</translation>
     </message>
     <message>
-        <source>Tracking stopped: confidence dropped below the minimum</source>
-        <translation>跟踪已停止：置信度低于最小值</translation>
-    </message>
-    <message>
-        <source>Not enough texture inside the outline to track</source>
-        <translation>轮廓内没有足够的纹理用于跟踪</translation>
-    </message>
-    <message>
-        <source>Tracking stopped: the surface was lost</source>
-        <translation>跟踪已停止：平面丢失</translation>
-    </message>
-    <message>
         <source>Tracking stopped: not enough texture left to follow</source>
         <translation>跟踪已停止：没有足够的纹理可继续跟随</translation>
     </message>
@@ -22027,6 +22074,54 @@ If playback stutters, try another.</source>
     <message>
         <source>Tracker added</source>
         <translation>已添加跟踪器</translation>
+    </message>
+    <message>
+        <source>The camera can&apos;t match this surface exactly; some frames drift by up to %1 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the feature at %1. Drag the marker back onto it and track again, or lower the stop threshold.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not enough detail inside the outline. Outline a larger area with visible texture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the surface at %1. Drag its corners back into place and track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom to fill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Correct track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">添加蒙版</translation>
+    </message>
+    <message>
+        <source>Mask added</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Planar %1</source>
@@ -22081,8 +22176,16 @@ If playback stutters, try another.</source>
         <translation>该方向上已无可跟踪的内容</translation>
     </message>
     <message>
-        <source>Move the playhead to a tracked frame first</source>
-        <translation>请先将播放头移动到已跟踪的帧</translation>
+        <source>Drag the outline&apos;s corners onto the surface at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the marker onto the feature at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is transformed; the adjustment mask may not line up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track</source>
@@ -22091,6 +22194,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Tracked</source>
         <translation>已跟踪</translation>
+    </message>
+    <message>
+        <source>%1 (adjustment)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen is not available for 3D clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply track</source>
@@ -22128,28 +22239,64 @@ If playback stutters, try another.</source>
         <translation>在画面中单击要添加到此跟踪器的特征。</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation>位置</translation>
-    </message>
-    <message>
-        <source>Position + Rotation</source>
-        <translation>位置 + 旋转</translation>
-    </message>
-    <message>
-        <source>Position + Rotation + Scale</source>
-        <translation>位置 + 旋转 + 缩放</translation>
     </message>
     <message>
         <source>Perspective</source>
         <translation>透视</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No clip selected</source>
         <translation>未选择剪辑</translation>
     </message>
     <message>
+        <source>No video clip under this adjustment layer at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video under this clip at the playhead. Move the playhead over the video it should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to track motion in it.</source>
         <translation>选择视频剪辑以跟踪其中的运动。</translation>
+    </message>
+    <message>
+        <source>Follow an object in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click an object on the video; this clip will follow it through the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows %1 on %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop following</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking: %1 (under %2)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Point</source>
@@ -22168,6 +22315,14 @@ If playback stutters, try another.</source>
         <translation>跟踪由角点勾勒的平面</translation>
     </message>
     <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Stop placing (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers</source>
         <translation>跟踪器</translation>
     </message>
@@ -22180,6 +22335,30 @@ If playback stutters, try another.</source>
         <translation>删除跟踪器</translation>
     </message>
     <message>
+        <source>Now track it: press Track whole clip, or ◀ ▶ to go one way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the feature backward and forward through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrected at this frame. Track ▶ to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track back to the start</source>
         <translation>向后跟踪至起始点</translation>
     </message>
@@ -22188,8 +22367,88 @@ If playback stutters, try another.</source>
         <translation>向后跟踪一帧</translation>
     </message>
     <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking stops when the match gets worse than this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if match is worse than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>match &lt; %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Box size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size of the area being followed. Bigger is steadier, smaller is more precise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Locked to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">移动片段</translation>
+    </message>
+    <message>
+        <source>Move camera</source>
+        <translation type="unfinished">移动摄像机</translation>
+    </message>
+    <message>
+        <source>Center in frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stick to the point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep where it is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep current position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the tracked object to the middle of the frame, or keep it where it is at the reference frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop tracking</source>
         <translation>停止跟踪</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -22200,40 +22459,12 @@ If playback stutters, try another.</source>
         <translation>向前跟踪至结束点</translation>
     </message>
     <message>
-        <source>Solve</source>
-        <translation>求解</translation>
-    </message>
-    <message>
         <source>Add up to 4 points on the same surface for rotation, scale and perspective</source>
         <translation>在同一平面上添加最多 4 个点以求解旋转、缩放和透视</translation>
     </message>
     <message>
-        <source>Confidence</source>
-        <translation>置信度</translation>
-    </message>
-    <message>
-        <source>Minimum confidence</source>
-        <translation>最小置信度</translation>
-    </message>
-    <message>
-        <source>Pattern</source>
-        <translation>图案</translation>
-    </message>
-    <message>
-        <source>Pattern size</source>
-        <translation>图案尺寸</translation>
-    </message>
-    <message>
-        <source>Clear ◀</source>
-        <translation>清除 ◀</translation>
-    </message>
-    <message>
         <source>Remove the samples before the playhead</source>
         <translation>移除播放头之前的采样</translation>
-    </message>
-    <message>
-        <source>Clear ▶</source>
-        <translation>清除 ▶</translation>
     </message>
     <message>
         <source>Remove the samples after the playhead</source>
@@ -22248,24 +22479,52 @@ If playback stutters, try another.</source>
         <translation>在预览画面上放置另一个点</translation>
     </message>
     <message>
-        <source>Drives</source>
-        <translation>驱动</translation>
-    </message>
-    <message>
         <source>Mask</source>
         <translation>蒙版</translation>
     </message>
     <message>
-        <source>Center on track</source>
-        <translation>居中对齐到跟踪点</translation>
-    </message>
-    <message>
-        <source>Keep offset</source>
-        <translation>保持偏移</translation>
-    </message>
-    <message>
         <source>Put the clip&apos;s centre on the tracked point, or keep the offset it has from it at the reference frame</source>
         <translation>将剪辑中心置于跟踪点上，或保持其在参考帧处与跟踪点的偏移量</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">缩放</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">填充</translation>
+    </message>
+    <message>
+        <source>Zoom in just enough to hide the empty edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the tracked object still on screen by moving the clip or the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make a mask or clip move with this tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">添加蒙版</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update the attached masks and clips from the current track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
@@ -22286,24 +22545,12 @@ If playback stutters, try another.</source>
         <translation>停止由此驱动</translation>
     </message>
     <message>
-        <source>Add target…</source>
-        <translation>添加目标…</translation>
-    </message>
-    <message>
-        <source>Let a mask or clip follow this tracker</source>
-        <translation>使蒙版或剪辑跟随此跟踪器</translation>
-    </message>
-    <message>
         <source>No masks or clips to drive from</source>
         <translation>无可驱动的蒙版或剪辑</translation>
     </message>
     <message>
         <source>Re-apply</source>
         <translation>重新应用</translation>
-    </message>
-    <message>
-        <source>Regenerate the keys on the drives</source>
-        <translation>重新生成驱动目标上的关键帧</translation>
     </message>
     <message>
         <source>Mask: %1</source>
@@ -22393,6 +22640,10 @@ If playback stutters, try another.</source>
         <translation>缩放</translation>
     </message>
     <message>
+        <source>Position</source>
+        <translation type="unfinished">位置</translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>分别编辑宽度和高度</translation>
     </message>
@@ -22431,6 +22682,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Opacity &amp; rotation</source>
         <translation>不透明度与旋转</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation type="unfinished">旋转</translation>
     </message>
     <message>
         <source>Rotate 90°</source>
@@ -22709,8 +22964,16 @@ If playback stutters, try another.</source>
         <translation>时长</translation>
     </message>
     <message>
+        <source>Transition duration</source>
+        <translation type="unfinished">转场时长</translation>
+    </message>
+    <message>
         <source>Curve</source>
         <translation>曲线</translation>
+    </message>
+    <message>
+        <source>Transition curve</source>
+        <translation type="unfinished">转场曲线</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -22792,7 +23055,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>No transitions match “%1”</source>
-        <translation>没有与 "%1" 匹配的转场</translation>
+        <translation>没有与 &quot;%1&quot; 匹配的转场</translation>
     </message>
     <message>
         <source>No custom transitions yet</source>
@@ -22886,7 +23149,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>“%1” has unsaved changes. Save before continuing?</source>
-        <translation>%1" 包含未保存的更改。继续之前要保存吗？</translation>
+        <translation>%1&quot; 包含未保存的更改。继续之前要保存吗？</translation>
     </message>
     <message>
         <source>Untitled project</source>

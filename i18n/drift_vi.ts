@@ -29,6 +29,29 @@
     </message>
 </context>
 <context>
+    <name>AccelerationFailedDialog</name>
+    <message>
+        <source>AI engine isn&apos;t working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this engine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine, then try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AddonManager</name>
     <message>
         <source>Automatic (recommended)</source>
@@ -41,6 +64,10 @@
     <message>
         <source>NVIDIA graphics (faster)</source>
         <translation>Đồ họa NVIDIA (nhanh hơn)</translation>
+    </message>
+    <message>
+        <source>AMD graphics (faster)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Graphics card (faster)</source>
@@ -2230,8 +2257,20 @@
         <translation>Vào</translation>
     </message>
     <message>
+        <source>In animation</source>
+        <translation type="unfinished">Trong hoạt ảnh</translation>
+    </message>
+    <message>
         <source>Out</source>
         <translation>Ra</translation>
+    </message>
+    <message>
+        <source>Out animation</source>
+        <translation type="unfinished">Ngoài hoạt ảnh</translation>
+    </message>
+    <message>
+        <source>Custom curve</source>
+        <translation type="unfinished">Tùy chỉnh đường cong</translation>
     </message>
     <message>
         <source>Edit custom curve…</source>
@@ -2391,10 +2430,6 @@
     <message>
         <source>Select tool</source>
         <translation>Chọn công cụ</translation>
-    </message>
-    <message>
-        <source>Cut tool</source>
-        <translation>Công cụ cắt</translation>
     </message>
     <message>
         <source>Search…</source>
@@ -2839,6 +2874,22 @@
         <translation>Giảm tốc độ phát lại</translation>
     </message>
     <message>
+        <source>3D gizmo: move / Tracker tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: rotate / Rectangle mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D gizmo: scale / Ellipse mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut tool / Brush mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Polygon mask tool</source>
         <translation>Công cụ mặt nạ đa giác</translation>
     </message>
@@ -2853,6 +2904,30 @@
     <message>
         <source>Increase brush size</source>
         <translation>Tăng kích thước cọ</translation>
+    </message>
+    <message>
+        <source>Brush: switch paint / erase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track forward</source>
+        <translation type="unfinished">Theo dõi xuôi</translation>
+    </message>
+    <message>
+        <source>Track backward</source>
+        <translation type="unfinished">Theo dõi ngược</translation>
+    </message>
+    <message>
+        <source>Track one frame forward</source>
+        <translation type="unfinished">Theo dõi tiến một khung hình</translation>
+    </message>
+    <message>
+        <source>Track one frame backward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Zoom in</source>
@@ -3557,18 +3632,6 @@
     <message>
         <source>Select transform layer</source>
         <translation>Chọn lớp chuyển đổi</translation>
-    </message>
-    <message>
-        <source>3D gizmo: move</source>
-        <translation>3D gizmo: di chuyển</translation>
-    </message>
-    <message>
-        <source>3D gizmo: rotate</source>
-        <translation>3D gizmo: xoay</translation>
-    </message>
-    <message>
-        <source>3D gizmo: scale</source>
-        <translation>3D gizmo: tỷ lệ</translation>
     </message>
     <message>
         <source>3D gizmo: switch global/local axes</source>
@@ -5014,6 +5077,10 @@
         <source>Auto keyframes</source>
         <translation>Keyframe tự động</translation>
     </message>
+    <message>
+        <source>Audio effect settings</source>
+        <translation type="unfinished">Cài đặt hiệu ứng âm thanh</translation>
+    </message>
 </context>
 <context>
     <name>AudioInspector</name>
@@ -5356,6 +5423,10 @@
         <translation>Mọi thứ trên dòng thời gian đều được nhìn qua camera này trong suốt thời gian clip tồn tại. Một camera đứng yên trông giống hệt như không có camera nào cả, nên các con số bên dưới đều là độ lệch so với khung nhìn bình thường.</translation>
     </message>
     <message>
+        <source>Camera position</source>
+        <translation type="unfinished">Vị trí camera</translation>
+    </message>
+    <message>
         <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
         <translation>Ống kính ngắn phóng đại chiều sâu; ống kính dài làm nó phẳng lại. Khi camera này đang chạy, nó thay thế giá trị Phối cảnh riêng của từng clip, vì một cảnh chỉ có một người xem.</translation>
     </message>
@@ -5430,6 +5501,10 @@
     <message>
         <source>None</source>
         <translation>Không</translation>
+    </message>
+    <message>
+        <source>Missing look</source>
+        <translation type="unfinished">Thiếu giao diện màu</translation>
     </message>
     <message>
         <source>Adjust color</source>
@@ -5636,20 +5711,8 @@
         <translation>Quầng sáng</translation>
     </message>
     <message>
-        <source>None</source>
-        <translation>Không</translation>
-    </message>
-    <message>
-        <source>Missing look</source>
-        <translation>Thiếu giao diện màu</translation>
-    </message>
-    <message>
         <source>Reset %1</source>
         <translation>Đặt lại %1</translation>
-    </message>
-    <message>
-        <source>No clip selected</source>
-        <translation>Chưa chọn clip nào</translation>
     </message>
     <message>
         <source>Compare</source>
@@ -5672,6 +5735,34 @@
         <translation>Áp dụng cho tất cả…</translation>
     </message>
     <message>
+        <source>Color grade</source>
+        <translation type="unfinished">Chỉnh màu</translation>
+    </message>
+    <message>
+        <source>Adds film-like noise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Soft glow around bright areas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color fringing at the edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Darkens the corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Red glow around highlights, like film</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset</source>
         <translation>Đặt lại</translation>
     </message>
@@ -5685,7 +5776,15 @@
     </message>
     <message>
         <source>Editing &quot;%1&quot; only. Use Apply to all to copy its grade to other clips.</source>
-        <translation>Chỉ chỉnh sửa "%1". Dùng Áp dụng cho tất cả để sao chép chỉnh màu của clip này sang các clip khác.</translation>
+        <translation>Chỉ chỉnh sửa &quot;%1&quot;. Dùng Áp dụng cho tất cả để sao chép chỉnh màu của clip này sang các clip khác.</translation>
+    </message>
+    <message>
+        <source>Showing the original. Your grade is hidden until you turn Compare off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grade</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The grade is turned off.</source>
@@ -5720,8 +5819,16 @@
         <translation>Giao diện màu</translation>
     </message>
     <message>
+        <source>None. Choose a look in the Looks panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Look Intensity</source>
         <translation>Cường độ giao diện màu</translation>
+    </message>
+    <message>
+        <source>Color wheels</source>
+        <translation type="unfinished">Bánh xe màu</translation>
     </message>
     <message>
         <source>Adjust curves</source>
@@ -5730,6 +5837,10 @@
     <message>
         <source>Hue Curves</source>
         <translation>Đường cong sắc độ</translation>
+    </message>
+    <message>
+        <source>Hue curves</source>
+        <translation type="unfinished">Đường cong sắc độ</translation>
     </message>
     <message>
         <source>Adjust hue curves</source>
@@ -5803,6 +5914,10 @@
         <translation>Đặt lại %1</translation>
     </message>
     <message>
+        <source>Drag to tint. Shift for fine control. Double-click to reset the color.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Brightness</source>
         <translation>Độ sáng</translation>
     </message>
@@ -5852,20 +5967,44 @@
         <translation>Sắc độ</translation>
     </message>
     <message>
-        <source>Sat</source>
-        <translation>Độ bão hòa</translation>
+        <source>Saturation</source>
+        <translation type="unfinished">Độ bão hòa</translation>
     </message>
     <message>
-        <source>Lum</source>
-        <translation>Độ chói</translation>
+        <source>Luminance</source>
+        <translation type="unfinished">Độ chói</translation>
     </message>
     <message>
         <source>Master</source>
         <translation>Chính</translation>
     </message>
     <message>
+        <source>Hue vs Hue: shift one color toward another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Saturation: make one color more or less vivid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue vs Luminance: brighten or darken one color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reset channel</source>
         <translation>Đặt lại kênh</translation>
+    </message>
+    <message>
+        <source>Hue %1° → %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In %1 → Out %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7070,6 +7209,22 @@
 <context>
     <name>EditorHeaderSearchField</name>
     <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">Không gian làm việc: %1</translation>
+    </message>
+    <message>
+        <source>Workspace:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch workspace</source>
+        <translation type="unfinished">Chuyển đổi không gian làm việc</translation>
+    </message>
+    <message>
+        <source>Customize layouts in Settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search  %1</source>
         <translation>Tìm kiếm%1</translation>
     </message>
@@ -7077,47 +7232,12 @@
         <source>Search</source>
         <translation>Tìm kiếm</translation>
     </message>
-    <message>
-        <source>Export video</source>
-        <translation>Xuất video</translation>
-    </message>
-    <message>
-        <source>Downloads</source>
-        <translation>Tải xuống</translation>
-    </message>
-    <message>
-        <source>Language…</source>
-        <translation>Ngôn ngữ…</translation>
-    </message>
-    <message>
-        <source>Video size and layout</source>
-        <translation>Kích thước và bố cục video</translation>
-    </message>
-    <message>
-        <source>Switch to mobile layout…</source>
-        <translation>Chuyển sang bố cục mobile…</translation>
-    </message>
 </context>
 <context>
     <name>EditorHeaderSettingsButton</name>
     <message>
         <source>Settings</source>
         <translation>Cài đặt</translation>
-    </message>
-</context>
-<context>
-    <name>EditorHeaderWorkspaceButton</name>
-    <message>
-        <source>Workspaces</source>
-        <translation>Không gian làm việc</translation>
-    </message>
-    <message>
-        <source>Switch workspace</source>
-        <translation>Chuyển đổi không gian làm việc</translation>
-    </message>
-    <message>
-        <source>Edit workspaces…</source>
-        <translation>Chỉnh sửa các không gian làm việc…</translation>
     </message>
 </context>
 <context>
@@ -7707,6 +7827,10 @@
     <message>
         <source>Browse effects</source>
         <translation>Duyệt hiệu ứng</translation>
+    </message>
+    <message>
+        <source>Effect settings</source>
+        <translation type="unfinished">Cài đặt hiệu ứng</translation>
     </message>
 </context>
 <context>
@@ -8595,565 +8719,6 @@
     </message>
 </context>
 <context>
-    <name>GlobalSearchControls</name>
-    <message>
-        <source>Properties</source>
-        <translation>Thuộc tính</translation>
-    </message>
-    <message>
-        <source>Assets</source>
-        <translation>Tài nguyên</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Cài đặt</translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation>Màu</translation>
-    </message>
-    <message>
-        <source>Source Lab</source>
-        <translation>Source Lab</translation>
-    </message>
-    <message>
-        <source>Select a clip</source>
-        <translation>Chọn một clip</translation>
-    </message>
-    <message>
-        <source>Select a video, image, text or shape clip</source>
-        <translation>Chọn một clip video, hình ảnh, chữ hoặc hình dạng</translation>
-    </message>
-    <message>
-        <source>Select a video clip</source>
-        <translation>Chọn một video clip</translation>
-    </message>
-    <message>
-        <source>Select a video or audio clip</source>
-        <translation>Chọn một video hoặc clip âm thanh</translation>
-    </message>
-    <message>
-        <source>Select a text or subtitle clip</source>
-        <translation>Chọn clip chữ hoặc clip phụ đề</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s effects layer</source>
-        <translation>Chọn lớp hiệu ứng của clip</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s mask layer</source>
-        <translation>Chọn lớp mặt nạ của clip</translation>
-    </message>
-    <message>
-        <source>Select a clip&apos;s audio effects layer</source>
-        <translation>Chọn lớp hiệu ứng âm thanh của clip</translation>
-    </message>
-    <message>
-        <source>Select the clip before a cut</source>
-        <translation>Chọn clip trước điểm cắt</translation>
-    </message>
-    <message>
-        <source>Open the Subtitles workspace</source>
-        <translation>Mở không gian làm việc Phụ đề</translation>
-    </message>
-    <message>
-        <source>Open the Source Lab workspace</source>
-        <translation>Mở không gian làm việc Source Lab</translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation>Chung</translation>
-    </message>
-    <message>
-        <source>Clip name</source>
-        <translation>Tên clip</translation>
-    </message>
-    <message>
-        <source>Crop</source>
-        <translation>Cắt cúp</translation>
-    </message>
-    <message>
-        <source>Trim</source>
-        <translation>Cắt</translation>
-    </message>
-    <message>
-        <source>Duration</source>
-        <translation>Thời lượng</translation>
-    </message>
-    <message>
-        <source>Transform</source>
-        <translation>Chuyển đổi</translation>
-    </message>
-    <message>
-        <source>Position</source>
-        <translation>Vị trí</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>Tỷ lệ</translation>
-    </message>
-    <message>
-        <source>Opacity</source>
-        <translation>Độ mờ</translation>
-    </message>
-    <message>
-        <source>Rotation</source>
-        <translation>Xoay</translation>
-    </message>
-    <message>
-        <source>Flip</source>
-        <translation>Lật</translation>
-    </message>
-    <message>
-        <source>Fix orientation</source>
-        <translation>Sửa hướng</translation>
-    </message>
-    <message>
-        <source>Reset position &amp; size</source>
-        <translation>Đặt lại vị trí &amp; kích thước</translation>
-    </message>
-    <message>
-        <source>Stabilization</source>
-        <translation>Ổn định</translation>
-    </message>
-    <message>
-        <source>Stabilize</source>
-        <translation>Ổn định</translation>
-    </message>
-    <message>
-        <source>Smoothing</source>
-        <translation>Độ mượt</translation>
-    </message>
-    <message>
-        <source>Tripod mode</source>
-        <translation>Chế độ chân máy</translation>
-    </message>
-    <message>
-        <source>Animation</source>
-        <translation>Hoạt ảnh</translation>
-    </message>
-    <message>
-        <source>In animation</source>
-        <translation>Trong hoạt ảnh</translation>
-    </message>
-    <message>
-        <source>Out animation</source>
-        <translation>Ngoài hoạt ảnh</translation>
-    </message>
-    <message>
-        <source>Custom curve</source>
-        <translation>Tùy chỉnh đường cong</translation>
-    </message>
-    <message>
-        <source>Audio</source>
-        <translation>Âm thanh</translation>
-    </message>
-    <message>
-        <source>Volume</source>
-        <translation>Âm lượng</translation>
-    </message>
-    <message>
-        <source>Pan</source>
-        <translation>Xoay</translation>
-    </message>
-    <message>
-        <source>Remove noise…</source>
-        <translation>Khử tiếng ồn…</translation>
-    </message>
-    <message>
-        <source>Auto subtitles</source>
-        <translation>Phụ đề tự động</translation>
-    </message>
-    <message>
-        <source>Audio track</source>
-        <translation>Track âm thanh</translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <translation>Tốc độ</translation>
-    </message>
-    <message>
-        <source>Playback speed</source>
-        <translation>Tốc độ phát lại</translation>
-    </message>
-    <message>
-        <source>Custom speed…</source>
-        <translation>Tùy chỉnh tốc độ…</translation>
-    </message>
-    <message>
-        <source>Reverse</source>
-        <translation>Đảo ngược</translation>
-    </message>
-    <message>
-        <source>Blending</source>
-        <translation>Trộn</translation>
-    </message>
-    <message>
-        <source>Blend mode</source>
-        <translation>Chế độ hòa trộn</translation>
-    </message>
-    <message>
-        <source>Masks</source>
-        <translation>Mặt nạ</translation>
-    </message>
-    <message>
-        <source>Feather</source>
-        <translation>Làm mềm viền</translation>
-    </message>
-    <message>
-        <source>Invert</source>
-        <translation>Đảo ngược</translation>
-    </message>
-    <message>
-        <source>Combine</source>
-        <translation>Hợp nhất</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>Hiệu ứng</translation>
-    </message>
-    <message>
-        <source>Effect settings</source>
-        <translation>Cài đặt hiệu ứng</translation>
-    </message>
-    <message>
-        <source>Face tracking</source>
-        <translation>Theo dõi khuôn mặt</translation>
-    </message>
-    <message>
-        <source>Save as preset…</source>
-        <translation>Lưu làm preset…</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>FX Âm thanh</translation>
-    </message>
-    <message>
-        <source>Audio effect settings</source>
-        <translation>Cài đặt hiệu ứng âm thanh</translation>
-    </message>
-    <message>
-        <source>Transition</source>
-        <translation>Chuyển cảnh</translation>
-    </message>
-    <message>
-        <source>Transition duration</source>
-        <translation>Thời lượng chuyển cảnh</translation>
-    </message>
-    <message>
-        <source>Transition curve</source>
-        <translation>Đường cong chuyển cảnh</translation>
-    </message>
-    <message>
-        <source>Text</source>
-        <translation>Văn bản</translation>
-    </message>
-    <message>
-        <source>Font</source>
-        <translation>Phông chữ</translation>
-    </message>
-    <message>
-        <source>Text style</source>
-        <translation>Kiểu văn bản</translation>
-    </message>
-    <message>
-        <source>Shape</source>
-        <translation>Hình dạng</translation>
-    </message>
-    <message>
-        <source>Shape style</source>
-        <translation>Kiểu hình dạng</translation>
-    </message>
-    <message>
-        <source>Select a shape clip</source>
-        <translation>Chọn một clip hình dạng</translation>
-    </message>
-    <message>
-        <source>Camera</source>
-        <translation>Camera</translation>
-    </message>
-    <message>
-        <source>Camera position</source>
-        <translation>Vị trí camera</translation>
-    </message>
-    <message>
-        <source>Select the camera layer</source>
-        <translation>Chọn lớp camera</translation>
-    </message>
-    <message>
-        <source>PDF</source>
-        <translation>PDF</translation>
-    </message>
-    <message>
-        <source>PDF page</source>
-        <translation>Trang PDF</translation>
-    </message>
-    <message>
-        <source>Select a PDF clip</source>
-        <translation>Chọn một clip PDF</translation>
-    </message>
-    <message>
-        <source>3D Model</source>
-        <translation>Mô hình 3D</translation>
-    </message>
-    <message>
-        <source>3D model</source>
-        <translation>Mô hình 3D</translation>
-    </message>
-    <message>
-        <source>Select a 3D model clip</source>
-        <translation>Chọn một clip mô hình 3D</translation>
-    </message>
-    <message>
-        <source>Exposure</source>
-        <translation>Độ phơi sáng</translation>
-    </message>
-    <message>
-        <source>Contrast</source>
-        <translation>Độ tương phản</translation>
-    </message>
-    <message>
-        <source>Highlights</source>
-        <translation>Vùng sáng</translation>
-    </message>
-    <message>
-        <source>Shadows</source>
-        <translation>Vùng tối</translation>
-    </message>
-    <message>
-        <source>Whites</source>
-        <translation>Mức trắng</translation>
-    </message>
-    <message>
-        <source>Blacks</source>
-        <translation>Mức đen</translation>
-    </message>
-    <message>
-        <source>Temperature</source>
-        <translation>Nhiệt độ màu</translation>
-    </message>
-    <message>
-        <source>Tint</source>
-        <translation>Sắc thái</translation>
-    </message>
-    <message>
-        <source>Saturation</source>
-        <translation>Độ bão hòa</translation>
-    </message>
-    <message>
-        <source>Vibrance</source>
-        <translation>Độ rực rỡ</translation>
-    </message>
-    <message>
-        <source>Color wheels</source>
-        <translation>Bánh xe màu</translation>
-    </message>
-    <message>
-        <source>Curves</source>
-        <translation>Đường cong</translation>
-    </message>
-    <message>
-        <source>Hue curves</source>
-        <translation>Đường cong sắc độ</translation>
-    </message>
-    <message>
-        <source>HSL</source>
-        <translation>HSL</translation>
-    </message>
-    <message>
-        <source>Color grade</source>
-        <translation>Chỉnh màu</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>Giao diện màu</translation>
-    </message>
-    <message>
-        <source>Import looks</source>
-        <translation>Nhập giao diện màu</translation>
-    </message>
-    <message>
-        <source>Scopes</source>
-        <translation>Scopes</translation>
-    </message>
-    <message>
-        <source>Open the Color workspace</source>
-        <translation>Mở không gian làm việc Màu sắc</translation>
-    </message>
-    <message>
-        <source>Film Grain</source>
-        <translation>Nhiễu hạt phim</translation>
-    </message>
-    <message>
-        <source>Glow</source>
-        <translation>Tỏa sáng</translation>
-    </message>
-    <message>
-        <source>Vignette</source>
-        <translation>Làm tối góc</translation>
-    </message>
-    <message>
-        <source>Chromatic Aberration</source>
-        <translation>Sắc sai</translation>
-    </message>
-    <message>
-        <source>Compare</source>
-        <translation>So sánh</translation>
-    </message>
-    <message>
-        <source>Apply to all clips</source>
-        <translation>Áp dụng cho tất cả clip</translation>
-    </message>
-    <message>
-        <source>Keyframe editor</source>
-        <translation>Trình chỉnh sửa keyframe</translation>
-    </message>
-    <message>
-        <source>Open the Keyframes workspace</source>
-        <translation>Mở không gian làm việc Keyframe</translation>
-    </message>
-    <message>
-        <source>Masking &amp; Tracking</source>
-        <translation>Mặt nạ &amp; Theo dõi</translation>
-    </message>
-    <message>
-        <source>Open the Masking &amp; Tracking workspace</source>
-        <translation>Mở không gian làm việc Mặt nạ &amp; Theo dõi</translation>
-    </message>
-    <message>
-        <source>Subtitle lane</source>
-        <translation>Làn phụ đề</translation>
-    </message>
-    <message>
-        <source>Subtitle timing</source>
-        <translation>Thời gian phụ đề</translation>
-    </message>
-    <message>
-        <source>Shift times</source>
-        <translation>Dịch chuyển thời gian</translation>
-    </message>
-    <message>
-        <source>Two-point sync</source>
-        <translation>Đồng bộ hai điểm</translation>
-    </message>
-    <message>
-        <source>Frame rate conversion</source>
-        <translation>Chuyển đổi tốc độ khung hình</translation>
-    </message>
-    <message>
-        <source>Bridge gaps</source>
-        <translation>Nối khoảng trống</translation>
-    </message>
-    <message>
-        <source>Subtitle text editor</source>
-        <translation>Trình chỉnh sửa văn bản phụ đề</translation>
-    </message>
-    <message>
-        <source>Trim source clip</source>
-        <translation>Cắt ngắn clip nguồn</translation>
-    </message>
-    <message>
-        <source>Crop / reframe source</source>
-        <translation>Cắt xén / đổi khung hình nguồn</translation>
-    </message>
-    <message>
-        <source>Speed and loudness</source>
-        <translation>Tốc độ và độ lớn âm thanh</translation>
-    </message>
-    <message>
-        <source>Denoise and stabilize source</source>
-        <translation>Khử nhiễu và chống rung nguồn</translation>
-    </message>
-    <message>
-        <source>Upscale source clip</source>
-        <translation>Nâng cấp độ phân giải clip nguồn</translation>
-    </message>
-    <message>
-        <source>Export trimmed clip</source>
-        <translation>Xuất clip đã cắt ngắn</translation>
-    </message>
-    <message>
-        <source>Workspaces</source>
-        <translation>Không gian làm việc</translation>
-    </message>
-    <message>
-        <source>Performance</source>
-        <translation>Hiệu năng</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>Chuyển cảnh</translation>
-    </message>
-    <message>
-        <source>Templates</source>
-        <translation>Thư viện mẫu</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>Nhãn dán</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>Phụ đề</translation>
-    </message>
-    <message>
-        <source>Speech</source>
-        <translation>Giọng nói</translation>
-    </message>
-    <message>
-        <source>Subject</source>
-        <translation>Chủ đề</translation>
-    </message>
-    <message>
-        <source>Scenes</source>
-        <translation>Phân cảnh</translation>
-    </message>
-    <message>
-        <source>Media</source>
-        <translation>Phương tiện</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>Xem trước</translation>
-    </message>
-    <message>
-        <source>Appearance</source>
-        <translation>Ngoại hình</translation>
-    </message>
-    <message>
-        <source>Timeline</source>
-        <translation>Dòng thời gian</translation>
-    </message>
-    <message>
-        <source>Timeline toolbar</source>
-        <translation>Thanh công cụ dòng thời gian</translation>
-    </message>
-    <message>
-        <source>Keyboard shortcuts</source>
-        <translation>Phím tắt</translation>
-    </message>
-    <message>
-        <source>AI &amp; Cloud</source>
-        <translation>AI &amp; Đám mây</translation>
-    </message>
-    <message>
-        <source>Network</source>
-        <translation>Mạng</translation>
-    </message>
-    <message>
-        <source>About</source>
-        <translation>Giới thiệu</translation>
-    </message>
-    <message>
-        <source>Upscale…</source>
-        <translation>Nâng độ phân giải…</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>Bổ trợ</translation>
-    </message>
-</context>
-<context>
     <name>GlobalSearchPopup</name>
     <message>
         <source>Action</source>
@@ -9212,76 +8777,16 @@
         <translation>Điều khiển</translation>
     </message>
     <message>
-        <source>Select a clip first</source>
-        <translation>Chọn một clip trước</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>Áp dụng cho clip đã chọn</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>Thêm vào đầu phát</translation>
-    </message>
-    <message>
-        <source>Not available now</source>
-        <translation>Hiện không có sẵn</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Cài đặt</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>Bổ trợ</translation>
-    </message>
-    <message>
-        <source>Add-on manager</source>
-        <translation>Trình quản lý Add-on</translation>
-    </message>
-    <message>
-        <source>Debug info…</source>
-        <translation>Thông tin gỡ lỗi…</translation>
-    </message>
-    <message>
-        <source>Light theme</source>
-        <translation>Chủ đề sáng</translation>
-    </message>
-    <message>
-        <source>Dark theme</source>
-        <translation>Chủ đề tối</translation>
-    </message>
-    <message>
-        <source>System theme</source>
-        <translation>Chủ đề hệ thống</translation>
-    </message>
-    <message>
-        <source>Theme: %1</source>
-        <translation>Chủ đề: %1</translation>
-    </message>
-    <message>
-        <source>Workspace: %1</source>
-        <translation>Không gian làm việc: %1</translation>
-    </message>
-    <message>
-        <source>Add as adjustment clip</source>
-        <translation>Thêm làm clip điều chỉnh</translation>
-    </message>
-    <message>
-        <source>Add after selected clip</source>
-        <translation>Thêm sau clip đã chọn</translation>
-    </message>
-    <message>
-        <source>Not available on this track</source>
-        <translation>Không có sẵn trên track này</translation>
-    </message>
-    <message>
         <source>No matches</source>
         <translation>Không khớp</translation>
     </message>
 </context>
 <context>
     <name>GradeSlider</name>
+    <message>
+        <source>Double-click to reset. Hold Shift while dragging for fine control.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
         <translation>Có hiệu ứng hoạt họa. Chỉnh sửa sẽ đặt keyframe (cần bật Tự động tạo keyframe).</translation>
@@ -9777,6 +9282,10 @@
         <translation>Đã xóa sạch keyframe</translation>
     </message>
     <message>
+        <source>Nudge keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move keyframes</source>
         <translation>Di chuyển keyframe</translation>
     </message>
@@ -9882,6 +9391,10 @@
         <translation>Độ mềm viền mặt nạ</translation>
     </message>
     <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">Chỉnh sửa đường cong keyframe</translation>
+    </message>
+    <message>
         <source>%1 (keyframes off)</source>
         <translation>%1 (keyframe tắt)</translation>
     </message>
@@ -9927,6 +9440,14 @@
     <message>
         <source>Expand curve editor to view and edit Bezier handles (180px)</source>
         <translation>Mở rộng trình chỉnh sửa đường cong để xem và chỉnh sửa tay cầm Bezier (180px)</translation>
+    </message>
+    <message>
+        <source>Hide Bezier handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show Bezier handles. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -10029,6 +9550,10 @@
         <source>Move keyframes</source>
         <translation>Di chuyển keyframe</translation>
     </message>
+    <message>
+        <source>Edit keyframe curve</source>
+        <translation type="unfinished">Chỉnh sửa đường cong keyframe</translation>
+    </message>
 </context>
 <context>
     <name>KeyframesInteractionSurface</name>
@@ -10036,12 +9561,26 @@
         <source>Move keyframes</source>
         <translation>Di chuyển keyframe</translation>
     </message>
+    <message numerus="yes">
+        <source>%n key(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>KeyframesPanel</name>
     <message>
+        <source>Keyframe editor</source>
+        <translation type="unfinished">Trình chỉnh sửa keyframe</translation>
+    </message>
+    <message>
         <source>Scale</source>
         <translation>Tỷ lệ</translation>
+    </message>
+    <message>
+        <source>Press K to add a keyframe at the playhead, or double-click a lane to add one there</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
@@ -10110,6 +9649,14 @@
         <translation>Thu phóng mọi đường cong để lấp đầy chiều cao</translation>
     </message>
     <message>
+        <source>Handles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bezier handles on the focused curve. Without them, drag a curve to bend it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fit the clip in view</source>
         <translation>Vừa clip trong khung nhìn</translation>
     </message>
@@ -10133,12 +9680,12 @@
         <translation>%1 hiện thời không có keyframe</translation>
     </message>
     <message>
-        <source>Turn off %1&apos;s keyframes — they are kept, but stop animating</source>
-        <translation>Tắt %1&apos;s keyframe — chúng được giữ lại nhưng ngừng hoạt ảnh</translation>
+        <source>Stop animating %1 (keys are kept)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Turn %1&apos;s keyframes back on</source>
-        <translation>Bật lại %1&apos;s keyframe</translation>
+        <source>Animate %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -10696,8 +10243,8 @@
         <translation>&amp;Cửa sổ</translation>
     </message>
     <message>
-        <source>Edit Workspaces…</source>
-        <translation>Chỉnh sửa không gian làm việc…</translation>
+        <source>Customize Layouts in Settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
@@ -10959,15 +10506,27 @@
         <translation>Nhấp vào đối tượng để chọn · Nhấp chuột phải hoặc Ctrl-nhấp để loại trừ</translation>
     </message>
     <message>
-        <source>Add points to refine · then propagate in the Masking panel</source>
-        <translation>Thêm các điểm để tinh chỉnh · sau đó truyền lan trong bảng Mặt nạ</translation>
+        <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a cutout model in the Masking panel first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People are found automatically · press “Cut out people” in the Masking panel</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
-        <source>Paint to add · Right-drag to erase · [ ] size</source>
-        <translation>Vẽ để thêm · Kéo chuột phải để xóa · [ ] kích thước</translation>
+        <source>%1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move the playhead over the selected clip</source>
@@ -10996,23 +10555,39 @@
         <source>%1 points · Enter to close · Backspace to undo · Esc to cancel</source>
         <translation>%1 điểm · Enter để đóng · Backspace để hoàn tác · Esc để hủy</translation>
     </message>
+    <message>
+        <source>Drawing replaces this layer&apos;s mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag to draw · Shift for square/circle · Alt from centre</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MaskEditSession</name>
+    <message>
+        <source>Mask changed</source>
+        <translation type="unfinished">Mặt nạ đã thay đổi</translation>
+    </message>
 </context>
 <context>
     <name>MaskOverlay</name>
     <message>
-        <source>Mask changed</source>
-        <translation>Mặt nạ đã thay đổi</translation>
+        <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>MaskOverlayBarEdge</name>
     <message>
-        <source>Mask changed</source>
-        <translation>Mặt nạ đã thay đổi</translation>
+        <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>MaskOverlayEmptyHint</name>
+    <message>
+        <source>Pick a mask tool in the Masking panel and draw on the preview</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Drag a mask from the Masks tab onto a clip to edit it here</source>
         <translation>Kéo mặt nạ từ thẻ Mặt nạ vào clip để chỉnh sửa tại đây</translation>
@@ -11020,27 +10595,6 @@
     <message>
         <source>Select a clip at the playhead to edit its masks</source>
         <translation>Chọn một clip ở đầu phát để chỉnh sửa mặt nạ của nó</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayResizeGrip</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>Mặt nạ đã thay đổi</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayRotateHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>Mặt nạ đã thay đổi</translation>
-    </message>
-</context>
-<context>
-    <name>MaskOverlayVertexHandle</name>
-    <message>
-        <source>Mask changed</source>
-        <translation>Mặt nạ đã thay đổi</translation>
     </message>
 </context>
 <context>
@@ -11081,12 +10635,32 @@
         <translation>Đã thêm mặt nạ</translation>
     </message>
     <message>
+        <source>Remove speed changes first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs a video track below</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to mask</source>
         <translation>Chuyển đổi thành mặt nạ</translation>
     </message>
     <message>
         <source>Clip converted to mask</source>
         <translation>Clip đã được chuyển đổi thành mặt nạ</translation>
+    </message>
+    <message>
+        <source>Cutouts can&apos;t be moved yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask moved to an effect layer</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Draw mask</source>
@@ -11103,6 +10677,26 @@
     <message>
         <source>Fill mask</source>
         <translation>Lấp đầy mặt nạ</translation>
+    </message>
+    <message>
+        <source>Clear cutout fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout fix cleared</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the cutout fix. The next stroke will try again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix cutout frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cutout frame fixed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not save the brush mask. The next stroke will try again</source>
@@ -11232,16 +10826,16 @@
         <translation>Đối tượng AI</translation>
     </message>
     <message>
+        <source>Tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
         <source>Off</source>
         <translation>Tắt</translation>
-    </message>
-    <message>
-        <source>Overlay</source>
-        <translation>Lớp phủ</translation>
-    </message>
-    <message>
-        <source>Matte</source>
-        <translation>Matte</translation>
     </message>
     <message>
         <source>Size</source>
@@ -11284,6 +10878,18 @@
         <translation>Kéo chuột trái để xóa</translation>
     </message>
     <message>
+        <source>Pressure changes size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear fix on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the brush fix from the frame at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fill</source>
         <translation>Đầy</translation>
     </message>
@@ -11292,12 +10898,28 @@
         <translation>Che phủ toàn bộ clip bằng mặt nạ</translation>
     </message>
     <message>
+        <source>Start a new brush mask covering the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear</source>
         <translation>Xóa</translation>
     </message>
     <message>
         <source>Empty the mask</source>
         <translation>Làm rỗng mặt nạ</translation>
+    </message>
+    <message>
+        <source>No trackers on this clip yet. Start one with Point or Planar in the Tracking panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Thêm mặt nạ</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Anything (click to pick)</source>
@@ -11356,16 +10978,24 @@
         <translation>Tinh chỉnh mặt nạ đã chọn</translation>
     </message>
     <message>
-        <source>Track backward</source>
-        <translation>Theo dõi ngược</translation>
+        <source>Invert</source>
+        <translation type="unfinished">Đảo ngược</translation>
     </message>
     <message>
-        <source>Track both ways</source>
-        <translation>Theo dõi hai chiều</translation>
+        <source>Hide the inside instead of the outside</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Track forward</source>
-        <translation>Theo dõi xuôi</translation>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">Độ sáng</translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -11384,18 +11014,6 @@
         <translation>Chọn một clip hoặc một lớp điều chỉnh trên dòng thời gian.</translation>
     </message>
     <message>
-        <source>Adjustment layer mask</source>
-        <translation>Mặt nạ lớp điều chỉnh</translation>
-    </message>
-    <message>
-        <source>Masks on this clip</source>
-        <translation>Mặt nạ trên clip này</translation>
-    </message>
-    <message>
-        <source>Preview</source>
-        <translation>Xem trước</translation>
-    </message>
-    <message>
         <source>Masks</source>
         <translation>Mặt nạ</translation>
     </message>
@@ -11412,6 +11030,70 @@
         <translation>Hiện mặt nạ</translation>
     </message>
     <message>
+        <source>Masking &amp; Tracking</source>
+        <translation type="unfinished">Mặt nạ &amp; Theo dõi</translation>
+    </message>
+    <message>
+        <source>Tint hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black &amp; white</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur added on an adjustment layer. Adjust the amount in the Effects tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fixing this frame of “%1”. Brush fixes don&apos;t follow motion.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brush masks are a still image. For a moving subject use AI object, or track the mask afterwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a preview of this frame only. It becomes a mask when you cut out.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cut out through whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>◀ Up to here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From here ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This layer&apos;s effects apply only inside the mask.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Masks keep what is inside and hide the rest. Invert to hide the inside instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a mask to preview it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How this mask combines with the ones above</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add</source>
         <translation>Thêm</translation>
     </message>
@@ -11422,14 +11104,6 @@
     <message>
         <source>Intersect</source>
         <translation>Giao điểm</translation>
-    </message>
-    <message>
-        <source>Inv</source>
-        <translation>Đảo</translation>
-    </message>
-    <message>
-        <source>Invert this mask</source>
-        <translation>Đảo ngược mặt nạ này</translation>
     </message>
     <message>
         <source>Apply effects: Inside / Outside</source>
@@ -11450,6 +11124,86 @@
     <message>
         <source>Feather</source>
         <translation>Độ mờ biên</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation type="unfinished">Vị trí</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Phối cảnh</translation>
+    </message>
+    <message>
+        <source>Track ◀</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object backward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ⇄</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the object forward from here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the mask copies from the tracked object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add more points to this tracker in the Tracking panel for rotation, scale and perspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the mask on the preview to correct it, then track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur this area ▾</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply a blur or pixelate effect inside this shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Làm mờ</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Animate shape</source>
@@ -11481,18 +11235,6 @@
             <numerusform>%n key hình dạng</numerusform>
         </translation>
     </message>
-    <message>
-        <source>Channel</source>
-        <translation>Kênh</translation>
-    </message>
-    <message>
-        <source>Luma</source>
-        <translation>Luma</translation>
-    </message>
-    <message>
-        <source>Alpha</source>
-        <translation>Alpha</translation>
-    </message>
 </context>
 <context>
     <name>MasksInspector</name>
@@ -11523,10 +11265,6 @@
     <message>
         <source>Bars</source>
         <translation>Thanh</translation>
-    </message>
-    <message>
-        <source>Freeform</source>
-        <translation>Dạng tự do</translation>
     </message>
     <message>
         <source>Combine</source>
@@ -11575,6 +11313,10 @@
     <message>
         <source>Feather</source>
         <translation>Độ mềm viền</translation>
+    </message>
+    <message>
+        <source>Polygon</source>
+        <translation type="unfinished">Đa giác</translation>
     </message>
     <message>
         <source>Invert</source>
@@ -13108,6 +12850,10 @@
         <source>Pages</source>
         <translation>Trang</translation>
     </message>
+    <message>
+        <source>PDF page</source>
+        <translation type="unfinished">Trang PDF</translation>
+    </message>
     <message numerus="yes">
         <source>%n page(s)</source>
         <translation>
@@ -13515,8 +13261,16 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>PreviewOsdZoomChip</name>
     <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Thu nhỏ</translation>
+    </message>
+    <message>
         <source>Preview zoom — Ctrl+scroll over the preview to zoom, middle-drag to pan. Click to reset to 100%.</source>
         <translation>Thu phóng xem trước — Ctrl+cuộn qua phần xem trước để thu phóng, kéo giữa để xoay. Nhấp vào để đặt lại về 100%.</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Phóng to</translation>
     </message>
 </context>
 <context>
@@ -15153,8 +14907,16 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Histogram</translation>
     </message>
     <message>
+        <source>Histo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation>Dạng sóng</translation>
+    </message>
+    <message>
+        <source>Wave</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Parade</source>
@@ -15165,8 +14927,115 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Vectorscope</translation>
     </message>
     <message>
+        <source>Vector</source>
+        <translation type="unfinished">Véc-tơ</translation>
+    </message>
+    <message>
+        <source>Scopes update from the preview. Play or move the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scopes</source>
         <translation>Scopes</translation>
+    </message>
+</context>
+<context>
+    <name>SearchIndex</name>
+    <message>
+        <source>Not available now</source>
+        <translation type="unfinished">Hiện không có sẵn</translation>
+    </message>
+    <message>
+        <source>Export video</source>
+        <translation type="unfinished">Xuất video</translation>
+    </message>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">Tải xuống</translation>
+    </message>
+    <message>
+        <source>Language…</source>
+        <translation type="unfinished">Ngôn ngữ…</translation>
+    </message>
+    <message>
+        <source>Video size and layout</source>
+        <translation type="unfinished">Kích thước và bố cục video</translation>
+    </message>
+    <message>
+        <source>Switch to mobile layout…</source>
+        <translation type="unfinished">Chuyển sang bố cục mobile…</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Cài đặt</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Bổ trợ</translation>
+    </message>
+    <message>
+        <source>Add-on manager</source>
+        <translation type="unfinished">Trình quản lý Add-on</translation>
+    </message>
+    <message>
+        <source>Debug info…</source>
+        <translation type="unfinished">Thông tin gỡ lỗi…</translation>
+    </message>
+    <message>
+        <source>Light theme</source>
+        <translation type="unfinished">Chủ đề sáng</translation>
+    </message>
+    <message>
+        <source>Dark theme</source>
+        <translation type="unfinished">Chủ đề tối</translation>
+    </message>
+    <message>
+        <source>System theme</source>
+        <translation type="unfinished">Chủ đề hệ thống</translation>
+    </message>
+    <message>
+        <source>Theme: %1</source>
+        <translation type="unfinished">Chủ đề: %1</translation>
+    </message>
+    <message>
+        <source>Workspace: %1</source>
+        <translation type="unfinished">Không gian làm việc: %1</translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to selected clip</source>
+        <translation type="unfinished">Áp dụng cho clip đã chọn</translation>
+    </message>
+    <message>
+        <source>Select a clip first</source>
+        <translation type="unfinished">Chọn một clip trước</translation>
+    </message>
+    <message>
+        <source>Add at playhead</source>
+        <translation type="unfinished">Thêm vào đầu phát</translation>
+    </message>
+    <message>
+        <source>Add as adjustment clip</source>
+        <translation type="unfinished">Thêm làm clip điều chỉnh</translation>
+    </message>
+    <message>
+        <source>Add after selected clip</source>
+        <translation type="unfinished">Thêm sau clip đã chọn</translation>
+    </message>
+    <message>
+        <source>Not available on this track</source>
+        <translation type="unfinished">Không có sẵn trên track này</translation>
+    </message>
+    <message>
+        <source>Select the clip before a cut</source>
+        <translation type="unfinished">Chọn clip trước điểm cắt</translation>
+    </message>
+    <message>
+        <source>Select a video, image, text or shape clip</source>
+        <translation type="unfinished">Chọn một clip video, hình ảnh, chữ hoặc hình dạng</translation>
     </message>
 </context>
 <context>
@@ -15315,6 +15184,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tinh chỉnh mặt nạ đối tượng</translation>
     </message>
     <message>
+        <source>Object mask refined. Frame fixes were kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That clip no longer exists</source>
         <translation>Clip đó không còn tồn tại</translation>
     </message>
@@ -15443,6 +15316,30 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>AI &amp; Đám mây</translation>
     </message>
     <message>
+        <source>On this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI hoạt động như thế nào</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine from Extras to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">Khởi động lại Drift để điều này có hiệu lực.</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">Tự động chọn tùy chọn nhanh nhất bạn đã cài đặt và sử dụng máy tính này nếu card đồ họa không thể trợ giúp.</translation>
+    </message>
+    <message>
+        <source>Agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent access</source>
         <translation>Quyền truy cập của trợ lý</translation>
     </message>
@@ -15457,6 +15354,18 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Turn agent access on automatically the next time you open Drift. Turning access off resets this.</source>
         <translation>Tự động bật quyền truy cập trợ lý vào lần tiếp theo bạn mở Drift. Việc tắt quyền truy cập sẽ đặt lại tùy chọn này.</translation>
+    </message>
+    <message>
+        <source>Cloud</source>
+        <translation type="unfinished">Đám mây</translation>
+    </message>
+    <message>
+        <source>Use cloud services</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cloud providers</source>
@@ -15619,6 +15528,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Restart Drift to apply this size.</source>
         <translation>Khởi động lại Drift để áp dụng kích thước này.</translation>
+    </message>
+    <message>
+        <source>100% fits a 1080p screen, whatever your Windows display scale is.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Makes buttons, text, and icons larger, on top of your display settings.</source>
@@ -16852,6 +16765,18 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Nét đứt-chấm</translation>
     </message>
     <message>
+        <source>Miter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Round</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bevel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opacity</source>
         <translation>Độ mờ</translation>
     </message>
@@ -16878,6 +16803,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Dash offset</source>
         <translation>Độ lệch nét đứt</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How the stroke turns a corner: sharp, rounded or cut off</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Trim start</source>
@@ -16969,6 +16902,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Swapping the shape keeps its position, size, style and effects.</source>
         <translation>Hoán đổi hình dạng sẽ giữ nguyên vị trí, kích thước, kiểu dáng và hiệu ứng của nó.</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">Kiểu hình dạng</translation>
     </message>
     <message>
         <source>Layers</source>
@@ -17230,6 +17167,13 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Nothing in this category.</source>
         <translation>Không có gì trong danh mục này.</translation>
+    </message>
+</context>
+<context>
+    <name>ShellBridge</name>
+    <message>
+        <source>Adjustment layer</source>
+        <translation type="unfinished">Lớp điều chỉnh</translation>
     </message>
 </context>
 <context>
@@ -17691,6 +17635,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Cắt xén / Đổi khung hình</translation>
     </message>
     <message>
+        <source>Crop / reframe source</source>
+        <translation type="unfinished">Cắt xén / đổi khung hình nguồn</translation>
+    </message>
+    <message>
         <source>Free</source>
         <translation>Tự do</translation>
     </message>
@@ -17764,6 +17712,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Upscale</source>
         <translation>Nâng độ phân giải</translation>
+    </message>
+    <message>
+        <source>Upscale source clip</source>
+        <translation type="unfinished">Nâng cấp độ phân giải clip nguồn</translation>
     </message>
     <message>
         <source>Output size: %1 x %2</source>
@@ -17864,6 +17816,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>SourceLabOutputPanel</name>
     <message>
+        <source>Export trimmed clip</source>
+        <translation type="unfinished">Xuất clip đã cắt ngắn</translation>
+    </message>
+    <message>
         <source>Output</source>
         <translation>Đầu ra</translation>
     </message>
@@ -17959,6 +17915,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 </context>
 <context>
     <name>SourceLabProcessPanel</name>
+    <message>
+        <source>Denoise and stabilize source</source>
+        <translation type="unfinished">Khử nhiễu và chống rung nguồn</translation>
+    </message>
     <message>
         <source>Process</source>
         <translation>Xử lý</translation>
@@ -18121,6 +18081,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tốc độ</translation>
     </message>
     <message>
+        <source>Speed and loudness</source>
+        <translation type="unfinished">Tốc độ và độ lớn âm thanh</translation>
+    </message>
+    <message>
         <source>Keep pitch</source>
         <translation>Giữ nguyên cao độ</translation>
     </message>
@@ -18178,6 +18142,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>SourceLabTrimPanel</name>
     <message>
+        <source>Trim source clip</source>
+        <translation type="unfinished">Cắt ngắn clip nguồn</translation>
+    </message>
+    <message>
         <source>Source Lab Trim</source>
         <translation>Cắt ngắn Source Lab</translation>
     </message>
@@ -18228,6 +18196,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 </context>
 <context>
     <name>SourceLabViewerPanel</name>
+    <message>
+        <source>Source Lab</source>
+        <translation type="unfinished">Source Lab</translation>
+    </message>
     <message>
         <source>Source Lab Viewer</source>
         <translation>Trình xem Source Lab</translation>
@@ -18824,6 +18796,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Làm mượt rung lắc camera. Drift quét clip một lần, rồi kết xuất một bản sao đã ổn định vào ngăn media và chuyển clip sang bản đó. Thay đổi độ mượt hoặc tripod sẽ không cập nhật xem trước cho đến khi bạn áp dụng.</translation>
     </message>
     <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">Ổn định</translation>
+    </message>
+    <message>
         <source>Render a stabilized copy, or animate the clip with sparse transform keys</source>
         <translation>Kết xuất một bản sao đã ổn định, hoặc tạo hoạt ảnh cho clip bằng các khóa biến đổi thưa</translation>
     </message>
@@ -18935,6 +18911,41 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Create polished videos fast</source>
         <translation>Tạo video ấn tượng nhanh</translation>
+    </message>
+</context>
+<context>
+    <name>StartupSplash</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Đang khởi động…</translation>
+    </message>
+    <message>
+        <source>Checking the graphics driver…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading fonts…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting the playback and audio engines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading add-ons and themes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Building the interface…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opening the editor…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation type="unfinished">Phiên bản %1</translation>
     </message>
 </context>
 <context>
@@ -19415,6 +19426,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>SubtitleLanePanel</name>
     <message>
+        <source>Subtitle lane</source>
+        <translation type="unfinished">Làn phụ đề</translation>
+    </message>
+    <message>
         <source>Select a subtitle clip</source>
         <translation>Chọn một clip phụ đề</translation>
     </message>
@@ -19488,6 +19503,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 </context>
 <context>
     <name>SubtitleTextPanel</name>
+    <message>
+        <source>Subtitle text editor</source>
+        <translation type="unfinished">Trình chỉnh sửa văn bản phụ đề</translation>
+    </message>
     <message>
         <source>Import Subtitles</source>
         <translation>Nhập phụ đề</translation>
@@ -19620,6 +19639,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>SubtitleTimingPanel</name>
     <message>
+        <source>Subtitle timing</source>
+        <translation type="unfinished">Thời gian phụ đề</translation>
+    </message>
+    <message>
         <source>Pick two existing cues</source>
         <translation>Chọn hai đoạn phụ đề hiện có</translation>
     </message>
@@ -19660,6 +19683,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Shift</source>
         <translation>Dịch chuyển</translation>
+    </message>
+    <message>
+        <source>Shift times</source>
+        <translation type="unfinished">Dịch chuyển thời gian</translation>
     </message>
     <message>
         <source>Amount</source>
@@ -19762,6 +19789,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tốc độ khung hình / tốc độ</translation>
     </message>
     <message>
+        <source>Frame rate conversion</source>
+        <translation type="unfinished">Chuyển đổi tốc độ khung hình</translation>
+    </message>
+    <message>
         <source>From fps</source>
         <translation>Từ fps</translation>
     </message>
@@ -19788,6 +19819,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Bridge small gaps</source>
         <translation>Nối các khoảng trống nhỏ</translation>
+    </message>
+    <message>
+        <source>Bridge gaps</source>
+        <translation type="unfinished">Nối khoảng trống</translation>
     </message>
     <message>
         <source>Shorter than (ms)</source>
@@ -20416,6 +20451,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Colour</source>
         <translation>Màu</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">Kiểu văn bản</translation>
     </message>
     <message>
         <source>Choose the gradient&apos;s first colour</source>
@@ -21111,6 +21150,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Edit keyframes…</source>
         <translation>Chỉnh sửa keyframe…</translation>
+    </message>
+    <message>
+        <source>Mask &amp; track…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unlink from clip</source>
@@ -21950,6 +21993,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TrackerOverlay</name>
     <message>
+        <source>Trackers need a video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a clip on the timeline to track motion in it</source>
         <translation>Chọn một clip trên dòng thời gian để theo dõi chuyển động trong đó</translation>
     </message>
@@ -21966,6 +22013,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Nhấp vào đặc điểm cần thêm vào bộ theo dõi này.</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Click the corners of a flat surface, Enter to finish.</source>
         <translation>Nhấp vào các góc của bề mặt phẳng, nhấn Enter để hoàn tất.</translation>
     </message>
@@ -21978,8 +22029,16 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Sử dụng Điểm hoặc Mặt phẳng trong bảng Theo dõi để bắt đầu theo dõi</translation>
     </message>
     <message>
+        <source>Drag a marker to correct it · ◀ ▶ in the Tracking panel to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tracking… %1%</source>
         <translation>Đang theo dõi… %1%</translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22001,18 +22060,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Không thể giải mã khung %1</translation>
     </message>
     <message>
-        <source>Tracking stopped: confidence dropped below the minimum</source>
-        <translation>Đã dừng theo dõi: độ tin cậy giảm xuống dưới mức tối thiểu</translation>
-    </message>
-    <message>
-        <source>Not enough texture inside the outline to track</source>
-        <translation>Không đủ chi tiết vân bề mặt bên trong đường viền để theo dõi</translation>
-    </message>
-    <message>
-        <source>Tracking stopped: the surface was lost</source>
-        <translation>Đã dừng theo dõi: đã mất dấu bề mặt</translation>
-    </message>
-    <message>
         <source>Tracking stopped: not enough texture left to follow</source>
         <translation>Đã dừng theo dõi: không còn đủ chi tiết vân bề mặt để bám theo</translation>
     </message>
@@ -22027,6 +22074,54 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Tracker added</source>
         <translation>Đã thêm bộ theo dõi</translation>
+    </message>
+    <message>
+        <source>The camera can&apos;t match this surface exactly; some frames drift by up to %1 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the feature at %1. Drag the marker back onto it and track again, or lower the stop threshold.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not enough detail inside the outline. Outline a larger area with visible texture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lost the surface at %1. Drag its corners back into place and track again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom to fill</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track mask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Correct track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Thêm mặt nạ</translation>
+    </message>
+    <message>
+        <source>Mask added</source>
+        <translation type="unfinished">Đã thêm mặt nạ</translation>
     </message>
     <message>
         <source>Planar %1</source>
@@ -22081,8 +22176,16 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Không còn gì để theo dõi theo hướng đó</translation>
     </message>
     <message>
-        <source>Move the playhead to a tracked frame first</source>
-        <translation>Di chuyển đầu phát đến khung hình đã được theo dõi trước</translation>
+        <source>Drag the outline&apos;s corners onto the surface at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag the marker onto the feature at this frame, then track again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is transformed; the adjustment mask may not line up</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track</source>
@@ -22091,6 +22194,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Tracked</source>
         <translation>Đã theo dõi</translation>
+    </message>
+    <message>
+        <source>%1 (adjustment)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen is not available for 3D clips</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply track</source>
@@ -22128,28 +22239,64 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Nhấp vào đặc điểm cần thêm vào bộ theo dõi này.</translation>
     </message>
     <message>
+        <source>Click the object the clip should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation>Vị trí</translation>
-    </message>
-    <message>
-        <source>Position + Rotation</source>
-        <translation>Vị trí + Xoay</translation>
-    </message>
-    <message>
-        <source>Position + Rotation + Scale</source>
-        <translation>Vị trí + Xoay + Thu phóng</translation>
     </message>
     <message>
         <source>Perspective</source>
         <translation>Phối cảnh</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
         <source>No clip selected</source>
         <translation>Chưa chọn clip nào</translation>
     </message>
     <message>
+        <source>No video clip under this adjustment layer at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No video under this clip at the playhead. Move the playhead over the video it should follow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select a video clip to track motion in it.</source>
         <translation>Chọn một clip video để theo dõi chuyển động trong đó.</translation>
+    </message>
+    <message>
+        <source>Follow an object in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow an object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click an object on the video; this clip will follow it through the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows %1 on %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop following</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use clip at playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking: %1 (under %2)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Point</source>
@@ -22168,6 +22315,14 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Theo dõi một bề mặt phẳng được xác định bởi các góc</translation>
     </message>
     <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>Stop placing (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trackers</source>
         <translation>Bộ theo dõi</translation>
     </message>
@@ -22180,6 +22335,30 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Xóa bộ theo dõi</translation>
     </message>
     <message>
+        <source>Now track it: press Track whole clip, or ◀ ▶ to go one way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tracking (Esc)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow the feature backward and forward through the whole clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrected at this frame. Track ▶ to continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Track ▶</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Track back to the start</source>
         <translation>Theo dõi ngược về điểm đầu</translation>
     </message>
@@ -22188,8 +22367,88 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Theo dõi lùi một khung hình</translation>
     </message>
     <message>
+        <source>Follow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tracking stops when the match gets worse than this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop if match is worse than</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>match &lt; %1 %</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Box size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size of the area being followed. Bigger is steadier, smaller is more precise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Erase after</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Locked to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move clip</source>
+        <translation type="unfinished">Di chuyển clip</translation>
+    </message>
+    <message>
+        <source>Move camera</source>
+        <translation type="unfinished">Di chuyển camera</translation>
+    </message>
+    <message>
+        <source>Center in frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stick to the point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep where it is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep current position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the tracked object to the middle of the frame, or keep it where it is at the reference frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Stop tracking</source>
         <translation>Dừng theo dõi</translation>
+    </message>
+    <message>
+        <source>Position + rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation + size</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Track one frame forward</source>
@@ -22200,40 +22459,12 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Theo dõi tới điểm cuối</translation>
     </message>
     <message>
-        <source>Solve</source>
-        <translation>Tính toán chuyển động</translation>
-    </message>
-    <message>
         <source>Add up to 4 points on the same surface for rotation, scale and perspective</source>
         <translation>Thêm tối đa 4 điểm trên cùng một bề mặt để tính xoay, thu phóng và phối cảnh</translation>
     </message>
     <message>
-        <source>Confidence</source>
-        <translation>Độ tin cậy</translation>
-    </message>
-    <message>
-        <source>Minimum confidence</source>
-        <translation>Độ tin cậy tối thiểu</translation>
-    </message>
-    <message>
-        <source>Pattern</source>
-        <translation>Mẫu họa tiết</translation>
-    </message>
-    <message>
-        <source>Pattern size</source>
-        <translation>Kích thước mẫu họa tiết</translation>
-    </message>
-    <message>
-        <source>Clear ◀</source>
-        <translation>Xóa ◀</translation>
-    </message>
-    <message>
         <source>Remove the samples before the playhead</source>
         <translation>Xóa các mẫu trước đầu phát</translation>
-    </message>
-    <message>
-        <source>Clear ▶</source>
-        <translation>Xóa ▶</translation>
     </message>
     <message>
         <source>Remove the samples after the playhead</source>
@@ -22248,24 +22479,52 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Đặt một điểm khác trên bản xem trước</translation>
     </message>
     <message>
-        <source>Drives</source>
-        <translation>Dẫn động</translation>
-    </message>
-    <message>
         <source>Mask</source>
         <translation>Mặt nạ</translation>
     </message>
     <message>
-        <source>Center on track</source>
-        <translation>Căn giữa vào vết theo dõi</translation>
-    </message>
-    <message>
-        <source>Keep offset</source>
-        <translation>Giữ khoảng lệch</translation>
-    </message>
-    <message>
         <source>Put the clip&apos;s centre on the tracked point, or keep the offset it has from it at the reference frame</source>
         <translation>Đặt tâm của clip vào điểm được theo dõi, hoặc giữ khoảng lệch của nó so với điểm đó tại khung hình tham chiếu</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Thu phóng</translation>
+    </message>
+    <message>
+        <source>Fill</source>
+        <translation type="unfinished">Đầy</translation>
+    </message>
+    <message>
+        <source>Zoom in just enough to hide the empty edges</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock to screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the tracked object still on screen by moving the clip or the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make a mask or clip move with this tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Thêm mặt nạ</translation>
+    </message>
+    <message>
+        <source>Draw a mask from this tracker and make it follow the track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update the attached masks and clips from the current track</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
@@ -22286,24 +22545,12 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Dừng dẫn động từ mục này</translation>
     </message>
     <message>
-        <source>Add target…</source>
-        <translation>Thêm mục tiêu…</translation>
-    </message>
-    <message>
-        <source>Let a mask or clip follow this tracker</source>
-        <translation>Cho phép mặt nạ hoặc clip bám theo bộ theo dõi này</translation>
-    </message>
-    <message>
         <source>No masks or clips to drive from</source>
         <translation>Không có mặt nạ hoặc clip nào để dẫn động</translation>
     </message>
     <message>
         <source>Re-apply</source>
         <translation>Áp dụng lại</translation>
-    </message>
-    <message>
-        <source>Regenerate the keys on the drives</source>
-        <translation>Tạo lại các key trên các mục dẫn động</translation>
     </message>
     <message>
         <source>Mask: %1</source>
@@ -22397,6 +22644,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tỷ lệ</translation>
     </message>
     <message>
+        <source>Position</source>
+        <translation type="unfinished">Vị trí</translation>
+    </message>
+    <message>
         <source>Edit width and height separately</source>
         <translation>Chỉnh sửa chiều rộng và chiều cao riêng biệt</translation>
     </message>
@@ -22435,6 +22686,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Opacity &amp; rotation</source>
         <translation>Độ mờ &amp; xoay</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation type="unfinished">Xoay</translation>
     </message>
     <message>
         <source>Rotate 90°</source>
@@ -22709,8 +22964,16 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Thời lượng</translation>
     </message>
     <message>
+        <source>Transition duration</source>
+        <translation type="unfinished">Thời lượng hiệu ứng chuyển cảnh</translation>
+    </message>
+    <message>
         <source>Curve</source>
         <translation>Đường cong</translation>
+    </message>
+    <message>
+        <source>Transition curve</source>
+        <translation type="unfinished">Đường cong chuyển cảnh</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -23940,11 +24203,11 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Unknown panel type &quot;%1&quot;.</source>
-        <translation>Loại bảng không xác định "%1".</translation>
+        <translation>Loại bảng không xác định &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>The &quot;%1&quot; panel is used more than once.</source>
-        <translation>Bảng "%1" được sử dụng nhiều hơn một lần.</translation>
+        <translation>Bảng &quot;%1&quot; được sử dụng nhiều hơn một lần.</translation>
     </message>
     <message>
         <source>%1 · Library</source>
