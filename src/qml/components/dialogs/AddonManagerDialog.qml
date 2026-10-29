@@ -326,6 +326,7 @@ ThemedDialog {
             property var options: Addons.accelerationOptions()
             property bool runtimeReady: Addons.runtimeAvailable()
             property bool restartRequired: Addons.runtimeRestartRequired()
+            property string problem: Addons.accelerationProblem()
 
             Connections {
                 target: Addons
@@ -335,6 +336,7 @@ ThemedDialog {
                     accelerationPanel.options = Addons.accelerationOptions()
                     accelerationPanel.runtimeReady = Addons.runtimeAvailable()
                     accelerationPanel.restartRequired = Addons.runtimeRestartRequired()
+                    accelerationPanel.problem = Addons.accelerationProblem()
                 }
             }
 
@@ -358,7 +360,10 @@ ThemedDialog {
                     }
                     return 0
                 }
-                onActivated: Addons.setAcceleration(accelerationPanel.options[index].value)
+                onActivated: {
+                    Addons.setAcceleration(accelerationPanel.options[index].value)
+                    accelerationPanel.problem = Addons.accelerationProblem()
+                }
             }
 
             ThemedLabel {
@@ -368,6 +373,16 @@ ThemedDialog {
                 text: accelerationPanel.runtimeReady
                       ? qsTr("Automatic picks the fastest option you have installed, and uses this computer if the graphics card can't help.")
                       : qsTr("Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.")
+            }
+
+            ThemedLabel {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                size: "sm"
+                visible: accelerationPanel.problem.length > 0
+                color: Theme.c.addonManagerDialog.restartForeground
+                tone: "default"
+                text: accelerationPanel.problem
             }
 
             ThemedLabel {

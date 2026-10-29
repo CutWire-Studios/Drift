@@ -26,6 +26,9 @@ finish-args:
   # Media import/export goes through xdg-desktop-portal (the app deliberately uses
   # QApplication so QFileDialog is the native portal picker), so no broad --filesystem
   # is granted. Add --filesystem=host only if media access proves painful in testing.
+  # The AMD AI engine needs host ROCm and /dev/kfd, which are deliberately not granted here: users
+  # opt in with `flatpak override --user --filesystem=/opt:ro --device=all org.cutwire.Drift`,
+  # and the app tells them so when they pick that engine.
 
 cleanup:
   - /include
@@ -60,6 +63,21 @@ modules:
         strip-components: 1
         only-arches:
           - aarch64
+
+  # libnuma, for the AMD AI engine only. ROCm comes from the host's /opt through a user override
+  # (see the AMD engine's note in OrtRuntime.cpp), and everything else ROCm needs is in the runtime
+  # or the GL extension (libdrm_amdgpu) — this is the one library missing. Only the library is
+  # kept; the numactl tools are of no use in the sandbox.
+  - name: libnuma
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+    cleanup:
+      - /bin
+    sources:
+      - type: archive
+        url: https://github.com/numactl/numactl/releases/download/v2.0.19/numactl-2.0.19.tar.gz
+        sha256: f2672a0381cb59196e9c246bf8bcc43d5568bc457700a697f1a1df762b9af884
 
   # Pitch shifting for the voice effects. Not in org.kde.Platform, so it is built here; the app
   # links it, which is fine for GPL-3.0 since LGPL-2.1 section 3 permits use under GPL v2 or later.

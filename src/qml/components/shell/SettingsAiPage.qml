@@ -12,6 +12,7 @@ SettingsPage {
     property var accelerationOptions: Addons.accelerationOptions()
     property bool runtimeReady: Addons.runtimeAvailable()
     property bool restartRequired: Addons.runtimeRestartRequired()
+    property string accelerationProblem: Addons.accelerationProblem()
 
     Connections {
         target: Addons
@@ -21,6 +22,7 @@ SettingsPage {
             page.accelerationOptions = Addons.accelerationOptions()
             page.runtimeReady = Addons.runtimeAvailable()
             page.restartRequired = Addons.runtimeRestartRequired()
+            page.accelerationProblem = Addons.accelerationProblem()
         }
     }
 
@@ -37,9 +39,11 @@ SettingsPage {
                 return qsTr("Install an AI Engine from Extras to unlock auto captions, subject cutout, funny face effects, and noise removal.")
             if (page.restartRequired)
                 return qsTr("Restart Drift for this to take effect.")
+            if (page.accelerationProblem.length > 0)
+                return page.accelerationProblem
             return qsTr("Automatic picks the fastest option you have installed, and uses this computer if the graphics card can't help.")
         }
-        keywords: "acceleration gpu cuda webgpu cpu onnx engine graphics"
+        keywords: "acceleration gpu cuda webgpu amd rocm migraphx cpu onnx engine graphics"
         query: page.query
 
         ThemedComboBox {
@@ -58,6 +62,7 @@ SettingsPage {
             onActivated: index => {
                 Addons.setAcceleration(page.accelerationOptions[index].value)
                 page.restartRequired = Addons.runtimeRestartRequired()
+                page.accelerationProblem = Addons.accelerationProblem()
             }
         }
     }

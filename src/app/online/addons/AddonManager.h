@@ -108,6 +108,9 @@ public:
     Q_INVOKABLE QVariantList accelerationOptions() const;
     Q_INVOKABLE QString acceleration() const;
     Q_INVOKABLE void setAcceleration(const QString &variant);
+    // What stops the engine that would run AI right now from using the graphics card, when that
+    // is something the user has to install or change (ROCm for AMD), or empty.
+    Q_INVOKABLE QString accelerationProblem() const;
 
     // True once a runtime addon has been installed or removed in a session that had already
     // loaded one. The library is loaded once per process, so the change only takes effect on the

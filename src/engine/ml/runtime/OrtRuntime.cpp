@@ -12,7 +12,9 @@
 #include <QMutex>
 #include <QSet>
 #include <QSettings>
+#include <QVersionNumber>
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <utility>
@@ -70,6 +72,11 @@ QString cudaProviderGlob()
 #endif
 }
 
+QString migraphxProviderGlob()
+{
+    return QStringLiteral("*onnxruntime_providers_migraphx*");
+}
+
 QJsonObject readJson(const QString &path)
 {
     QFile file(path);
@@ -120,9 +127,13 @@ std::optional<Candidate> inspect(const QString &root)
     candidate.variant = meta.value(QStringLiteral("variant")).toString().trimmed().toLower();
     candidate.version = meta.value(QStringLiteral("ortVersion")).toString();
     if (candidate.variant.isEmpty()) {
-        const bool hasCuda =
-            !QDir(libDir).entryList({cudaProviderGlob()}, QDir::Files).isEmpty();
-        candidate.variant = hasCuda ? QStringLiteral("cuda") : QStringLiteral("cpu");
+        const QDir dir(libDir);
+        if (!dir.entryList({cudaProviderGlob()}, QDir::Files).isEmpty())
+            candidate.variant = QStringLiteral("cuda");
+        else if (!dir.entryList({migraphxProviderGlob()}, QDir::Files).isEmpty())
+            candidate.variant = QStringLiteral("migraphx");
+        else
+            candidate.variant = QStringLiteral("cpu");
     }
     return candidate;
 }
@@ -414,6 +425,169 @@ bool variantExplicit()
 {
     const QString variant = preferredVariant();
     return !variant.isEmpty() && variant != QLatin1String("auto");
+}
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+namespace {
+
+// What the MIGraphX EP links. Everything else ROCm needs comes in through these two, by their own
+// $ORIGIN RUNPATHs.
+struct RocmLibraries
+{
+    QString hip;      // libamdhip64.so.7
+    QString migraphx; // libmigraphx_c.so.3
+};
+
+bool inFlatpak()
+{
+    return QFileInfo::exists(QStringLiteral("/.flatpak-info"));
+}
+
+QString flatpakId()
+{
+    return qEnvironmentVariable("FLATPAK_ID", QStringLiteral("org.cutwire.Drift"));
+}
+
+// AMD's packages install to /opt/rocm-X.Y.Z, with /opt/rocm a symlink through /etc/alternatives.
+// A Flatpak granted /opt cannot follow that link, since /etc is the runtime's, so the versioned
+// directories are searched as well, newest first. Both libraries are taken from one root so a
+// leftover older ROCm is never mixed with a newer one.
+RocmLibraries findRocm()
+{
+    QStringList roots;
+    if (const QString rocmPath = qEnvironmentVariable("ROCM_PATH"); !rocmPath.isEmpty())
+        roots.append(rocmPath);
+    roots.append(QStringLiteral("/opt/rocm"));
+    QStringList versioned = QDir(QStringLiteral("/opt"))
+                                .entryList({QStringLiteral("rocm-7*")},
+                                           QDir::Dirs | QDir::NoDotAndDotDot);
+    std::sort(versioned.begin(), versioned.end(), [](const QString &a, const QString &b) {
+        return QVersionNumber::fromString(a.mid(5)) > QVersionNumber::fromString(b.mid(5));
+    });
+    for (const QString &name : std::as_const(versioned))
+        roots.append(QStringLiteral("/opt/") + name);
+
+    const auto in = [](const QStringList &dirs, const QString &name) -> QString {
+        for (const QString &dir : dirs) {
+            const QString path = QDir(dir).filePath(name);
+            if (QFileInfo::exists(path))
+                return path;
+        }
+        return {};
+    };
+    const QString hipName = QStringLiteral("libamdhip64.so.7");
+    const QString migraphxName = QStringLiteral("libmigraphx_c.so.3");
+
+    for (const QString &root : std::as_const(roots)) {
+        const QStringList dirs{root + QStringLiteral("/lib"),
+                               root + QStringLiteral("/lib/migraphx/lib")};
+        RocmLibraries found{in(dirs, hipName), in(dirs, migraphxName)};
+        if (!found.hip.isEmpty() && !found.migraphx.isEmpty())
+            return found;
+    }
+
+    // Distribution packages that put ROCm on the ordinary library path. Not exhaustive; where it
+    // misses, the EP's own load is still the authority.
+    QStringList dirs = qEnvironmentVariable("LD_LIBRARY_PATH").split(u':', Qt::SkipEmptyParts);
+    dirs += {QStringLiteral("/usr/lib64"), QStringLiteral("/usr/lib/x86_64-linux-gnu"),
+             QStringLiteral("/usr/lib"), QStringLiteral("/usr/local/lib")};
+    return {in(dirs, hipName), in(dirs, migraphxName)};
+}
+
+} // namespace
+#endif
+
+QString providerSetupProblem(const QString &variant)
+{
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    if (variant != QLatin1String("migraphx"))
+        return {};
+
+    const RocmLibraries rocm = findRocm();
+    QStringList missing;
+    if (rocm.hip.isEmpty())
+        missing.append(QStringLiteral("ROCm 7 (libamdhip64.so.7)"));
+    if (rocm.migraphx.isEmpty())
+        missing.append(QStringLiteral("MIGraphX (libmigraphx_c.so.3)"));
+    if (!missing.isEmpty()) {
+        if (inFlatpak()) {
+            return QStringLiteral(
+                       "AMD graphics needs ROCm 7 with MIGraphX, and %1 could not be found from "
+                       "inside Drift's Flatpak sandbox. Install ROCm and MIGraphX from AMD "
+                       "(https://rocm.docs.amd.com/projects/install-on-linux/), which puts them "
+                       "under /opt, then let Drift read them and reach the GPU with "
+                       "\"flatpak override --user --filesystem=/opt:ro --device=all %2\" and "
+                       "restart Drift. ROCm installed under /usr by distribution packages cannot "
+                       "be reached from the sandbox.")
+                .arg(missing.join(QStringLiteral(" and ")), flatpakId());
+        }
+        return QStringLiteral(
+                   "AMD graphics needs ROCm 7 with MIGraphX installed on this computer, and %1 "
+                   "could not be found. Install ROCm and MIGraphX from AMD "
+                   "(https://rocm.docs.amd.com/projects/install-on-linux/) or your "
+                   "distribution's rocm and migraphx packages, then restart Drift.")
+            .arg(missing.join(QStringLiteral(" and ")));
+    }
+
+    const QFileInfo kfd(QStringLiteral("/dev/kfd"));
+    if (!kfd.exists()) {
+        if (inFlatpak()) {
+            return QStringLiteral(
+                       "Drift's Flatpak sandbox cannot see the AMD compute device (/dev/kfd). "
+                       "Allow it with \"flatpak override --user --device=all %1\" and restart "
+                       "Drift. If that is already done, the amdgpu driver is not loaded or this "
+                       "graphics card is not supported by ROCm.")
+                .arg(flatpakId());
+        }
+        return QStringLiteral(
+            "No AMD compute device was found (/dev/kfd is missing). The amdgpu driver is not "
+            "loaded, or this graphics card is not supported by ROCm.");
+    }
+    if (!kfd.isReadable() || !kfd.isWritable()) {
+        return QStringLiteral(
+            "Your user cannot open the AMD compute device (/dev/kfd). Add yourself to the render "
+            "and video groups (sudo usermod -aG render,video $USER), then sign out and back in.");
+    }
+#else
+    Q_UNUSED(variant);
+#endif
+    return {};
+}
+
+QString prepareProvider(const QString &variant)
+{
+    if (const QString problem = providerSetupProblem(variant); !problem.isEmpty())
+        return problem;
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    if (variant != QLatin1String("migraphx"))
+        return {};
+
+    // The EP's RUNPATH only names /opt/rocm, which misses versioned installs and anything reached
+    // through a Flatpak override. Loading the two libraries by the path found above first means
+    // the EP's DT_NEEDED entries match by SONAME and the loader never has to search. Never
+    // unloaded: the EP keeps using them for the life of the process.
+    static QMutex mutex;
+    static QString loadError;
+    static bool loaded = false;
+    QMutexLocker lock(&mutex);
+    if (loaded)
+        return loadError;
+    loaded = true;
+    const RocmLibraries rocm = findRocm();
+    for (const QString &path : {rocm.hip, rocm.migraphx}) {
+        if (!dlopen(path.toLocal8Bit().constData(), RTLD_NOW | RTLD_LOCAL)) {
+            loadError = QStringLiteral(
+                            "ROCm was found at %1 but could not be loaded (%2). Reinstall ROCm "
+                            "and MIGraphX, or check that the version is ROCm 7.")
+                            .arg(QFileInfo(path).absolutePath(),
+                                 QString::fromLocal8Bit(dlerror()));
+            break;
+        }
+    }
+    return loadError;
+#else
+    return {};
+#endif
 }
 
 QString pluginEpNameForVariant(const QString &variant)

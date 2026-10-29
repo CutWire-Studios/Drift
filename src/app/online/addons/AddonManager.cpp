@@ -345,6 +345,8 @@ QVariantList AddonManager::accelerationOptions() const
             continue;
         if (variant == QLatin1String("cuda"))
             rows.append(row(variant, tr("NVIDIA graphics (faster)")));
+        else if (variant == QLatin1String("migraphx"))
+            rows.append(row(variant, tr("AMD graphics (faster)")));
         else if (variant == QLatin1String("webgpu"))
             rows.append(row(variant, tr("Graphics card (faster)")));
         else
@@ -377,6 +379,22 @@ void AddonManager::setAcceleration(const QString &variant)
         }
     }
     emit kindChanged(QString::fromLatin1(drift::ort::kRuntimeKind));
+}
+
+QString AddonManager::accelerationProblem() const
+{
+    const QString wanted = drift::ort::preferredVariant();
+    if (wanted == QLatin1String("cpu"))
+        return {};
+    QString core = drift::ort::activeVariant();
+    if (core.isEmpty()) {
+        const QList<drift::ort::RuntimeInfo> runtimes = drift::ort::installedRuntimes();
+        if (runtimes.isEmpty())
+            return {};
+        core = runtimes.first().variant;
+    }
+    const QString variant = drift::ort::variantExplicit() ? wanted : core;
+    return drift::ort::providerSetupProblem(variant);
 }
 
 bool AddonManager::runtimeRestartRequired() const

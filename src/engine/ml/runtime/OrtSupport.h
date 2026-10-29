@@ -9,8 +9,10 @@
 #include <onnxruntime_cxx_api.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 // Boilerplate every ONNX Runtime user in the engine needs: path conversion, session name
@@ -79,16 +81,21 @@ inline QString providerToTry(const char *tag)
             return ep.variant;
     }
 
+    // A core carries at most one of these, so the order does not rank them.
     const std::vector<std::string> providers = Ort::GetAvailableProviders();
-    if (std::find(providers.begin(), providers.end(), "CUDAExecutionProvider") == providers.end())
-        return {}; // CPU-only core: nothing to try, and nothing worth saying about it
-    if (autoProviderFailed(tag, QStringLiteral("cuda")))
-        return {};
-    return QStringLiteral("cuda");
+    for (const auto &[provider, variant] : {std::pair{"CUDAExecutionProvider", "cuda"},
+                                            std::pair{"MIGraphXExecutionProvider", "migraphx"}}) {
+        if (std::find(providers.begin(), providers.end(), provider) == providers.end())
+            continue;
+        if (autoProviderFailed(tag, QLatin1String(variant)))
+            return {};
+        return QLatin1String(variant);
+    }
+    return {}; // CPU-only core: nothing to try, and nothing worth saying about it
 }
 
-// Applies that choice. The acceleration preference (or DRIFT_ORT_EP) selects between the CUDA
-// provider carried by a CUDA core, a plugin EP registered on the env, and plain CPU.
+// Applies that choice. The acceleration preference (or DRIFT_ORT_EP) selects between the CUDA or
+// MIGraphX provider carried by a GPU core, a plugin EP registered on the env, and plain CPU.
 //
 // Whether a failure is worth complaining about depends on who asked. An explicit choice that
 // cannot be honoured must be loud, or identical timings look like "the GPU did not help" when in
@@ -128,6 +135,24 @@ inline QString appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env,
                                             std::unordered_map<std::string, std::string>{});
         } else if (ep == QLatin1String("openvino")) {
             opts.AppendExecutionProvider("OpenVINO", {{"device_type", "GPU"}});
+        } else if (ep == QLatin1String("migraphx")) {
+            // ROCm is the user's install, not the addon's, so say what is missing instead of
+            // passing on the loader's "cannot open shared object file".
+            if (const QString problem = prepareProvider(ep); !problem.isEmpty()) {
+                if (!explicitEp) {
+                    qInfo("[%s] %s Using CPU.", tag, qUtf8Printable(problem));
+                    markAutoProviderFailed(nullptr, ep);
+                    return {};
+                }
+                qWarning("[%s] %s", tag, qUtf8Printable(problem));
+                return problem;
+            }
+            // Zero is not the default for every field: the memory limit means "no limit" only
+            // as SIZE_MAX.
+            OrtMIGraphXProviderOptions migraphx{};
+            migraphx.migraphx_mem_limit = SIZE_MAX;
+            migraphx.migraphx_arena_extend_strategy = 1; // kSameAsRequested
+            opts.AppendExecutionProvider_MIGraphX(migraphx);
         } else if (ep == QLatin1String("cuda")) {
             OrtCUDAProviderOptions cuda;
             cuda.arena_extend_strategy = 1; // kSameAsRequested

@@ -31,7 +31,7 @@ inline constexpr char kPluginEpKind[] = "onnxruntime-ep";
 
 struct RuntimeInfo
 {
-    QString variant; // "cpu", "cuda", …
+    QString variant; // "cpu", "cuda", "migraphx", …
     QString version; // ONNX Runtime version, when the directory says
     QString dir;     // root holding lib/
 };
@@ -73,12 +73,12 @@ QList<PluginEp> registeredPluginEps();
 QString activeVariant();
 QString activeVersion();
 
-// Selection tokens that could work here and now: "cpu", plus "cuda" when the loaded core carries
-// the provider, plus one per registered plugin EP. Drives the picker in the Addon Manager.
+// Selection tokens that could work here and now: "cpu", plus "cuda" / "migraphx" when an installed
+// core carries the provider, plus one per registered plugin EP. Drives the picker in the Addon Manager.
 QStringList selectableVariants();
 
 // The user's choice, from the "ort/variant" setting: "auto" (the default), "cpu", "cuda",
-// "webgpu", … DRIFT_ORT_EP overrides it, since it exists to investigate exactly this.
+// "migraphx", "webgpu", … DRIFT_ORT_EP overrides it, since it exists to investigate exactly this.
 QString preferredVariant();
 void setPreferredVariant(const QString &variant);
 
@@ -86,6 +86,15 @@ void setPreferredVariant(const QString &variant);
 // getting CPU hides exactly what was being investigated, so an explicit choice fails loudly where
 // an automatic one falls back.
 bool variantExplicit();
+
+// Why a provider whose libraries live outside the addon cannot work here, in words a user can act
+// on, or empty when nothing is known to be wrong. Only "migraphx" has such libraries: the AMD core
+// ships without ROCm, which the user installs. Checks files only, so it is safe to ask from the UI.
+QString providerSetupProblem(const QString &variant);
+
+// providerSetupProblem(), and then whatever loading the provider's outside libraries ahead of it
+// needs, so the provider finds them wherever they were found. Call before appending the provider.
+QString prepareProvider(const QString &variant);
 
 // The EP name to hand ONNX Runtime for a plugin-EP variant token, or empty when the variant is
 // not a plugin EP registered on this env. Requires the runtime to be loaded.

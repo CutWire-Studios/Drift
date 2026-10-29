@@ -770,7 +770,7 @@
       "target": "settings:ai#ai-acceleration",
       "context": "SettingsAiPage",
       "source": "How AI runs",
-      "keywords": "acceleration gpu cuda webgpu cpu onnx engine graphics",
+      "keywords": "acceleration gpu cuda webgpu amd rocm migraphx cpu onnx engine graphics",
       "needs": []
     },
     {
