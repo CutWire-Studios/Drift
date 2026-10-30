@@ -108,173 +108,180 @@
         <source>Close</source>
         <translation>닫기</translation>
     </message>
+</context>
+<context>
+    <name>AddonManagerPanel</name>
     <message>
         <source>Remove this pack?</source>
-        <translation>이 팩을 제거하시겠습니까?</translation>
+        <translation type="unfinished">이 팩을 제거하시겠습니까?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>제거</translation>
+        <translation type="unfinished">제거</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation>“%1”과(와) 다운로드된 데이터가 삭제됩니다. 나중에 다시 설치할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation>이 전환 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation>이 오디오 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation>이 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation>“%1” (%2 제작)</translation>
+        <translation type="unfinished">“%1”과(와) 다운로드된 데이터가 삭제됩니다. 나중에 다시 설치할 수 있습니다.</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation>추가 기능 설치</translation>
+        <translation type="unfinished">추가 기능 설치</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Drift 추가 기능 (*.driftpkg *.driftfx *.zip)</translation>
+        <translation type="unfinished">Drift 추가 기능 (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation>공식 인증되지 않은 추가 기능을 설치하시겠습니까?</translation>
+        <translation type="unfinished">공식 인증되지 않은 추가 기능을 설치하시겠습니까?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation>무시하고 설치</translation>
+        <translation type="unfinished">무시하고 설치</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” (%2 제작)</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation>“%1”</translation>
+        <translation type="unfinished">“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>%1은(는) Drift 팀에서 서명하지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
+        <translation type="unfinished">%1은(는) Drift 팀에서 서명하지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation>컴퓨터에서 실행되는 코드가 포함되어 있습니다.</translation>
+        <translation type="unfinished">컴퓨터에서 실행되는 코드가 포함되어 있습니다.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation>“%1”을(를) 대체합니다.</translation>
+        <translation type="unfinished">“%1”을(를) 대체합니다.</translation>
     </message>
     <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>%1은(는) Drift 팀이 아닌 사용자가 제작했으며 검증되지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
+        <source>Install this transition?</source>
+        <translation type="unfinished">이 전환 효과를 설치하시겠습니까?</translation>
     </message>
     <message>
-        <source>Could not install “%1”: %2</source>
-        <translation>“%1”을(를) 설치할 수 없습니다: %2</translation>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">이 오디오 효과를 설치하시겠습니까?</translation>
     </message>
     <message>
-        <source>Installed “%1”</source>
-        <translation>“%1” 설치됨</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>모두</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>효과</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>전환</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>오디오 효과</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>룩(Looks)</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>글꼴</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>스티커</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>AI 도구</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation>AI 엔진</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation>추가 기능 확인 중…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation>AI 작동 방식</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation>자동 모드는 설치된 항목 중 가장 빠른 옵션을 선택하며, 그래픽 카드가 사용할 수 없는 경우 이 컴퓨터에서 처리합니다.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation>아래에서 AI 엔진을 설치하면 자동 자막, 피사체 분리, 재미있는 얼굴 효과 및 노이즈 제거를 사용할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation>변경 사항을 적용하려면 Drift를 다시 시작하세요.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation>다운로드 스토어에 연결할 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>이 카테고리에는 항목이 없습니다</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation>연결 상태를 확인한 후 다시 시도하세요.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation>위에서 다른 카테고리를 선택하세요.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>다시 시도</translation>
+        <source>Install this effect?</source>
+        <translation type="unfinished">이 효과를 설치하시겠습니까?</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation>설치</translation>
+        <translation type="unfinished">설치</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1은(는) Drift 팀이 아닌 사용자가 제작했으며 검증되지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">“%1”을(를) 설치할 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” 설치됨</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">닫기</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">모두</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">오디오 효과</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">룩</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">글꼴</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">스티커</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI 도구</translation>
+    </message>
+    <message>
+        <source>AI engine</source>
+        <translation type="unfinished">AI 엔진</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation>사용자 지정</translation>
+        <translation type="unfinished">사용자 지정</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation>파일에서 설치…</translation>
+        <translation type="unfinished">파일에서 설치…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation>추가 기능 폴더 열기</translation>
+        <translation type="unfinished">추가 기능 폴더 열기</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation>여기에 추가 기능 폴더를 넣은 다음 부가 기능을 다시 여세요.</translation>
+        <translation type="unfinished">여기에 추가 기능 폴더를 넣은 다음 부가 기능을 다시 여세요.</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">추가 기능 확인 중…</translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI 작동 방식</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">자동 모드는 설치된 항목 중 가장 빠른 옵션을 선택하며, 그래픽 카드가 사용할 수 없는 경우 이 컴퓨터에서 처리합니다.</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished">아래에서 AI 엔진을 설치하면 자동 자막, 피사체 분리, 재미있는 얼굴 효과 및 노이즈 제거를 사용할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">변경 사항을 적용하려면 Drift를 다시 시작하세요.</translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">다운로드 스토어에 연결할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">이 카테고리에는 항목이 없습니다</translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">연결 상태를 확인한 후 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Pick another category above.</source>
+        <translation type="unfinished">위에서 다른 카테고리를 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">다시 시도</translation>
     </message>
 </context>
 <context>
@@ -683,10 +690,185 @@
     </message>
 </context>
 <context>
+    <name>AndroidAddPage</name>
+    <message>
+        <source>Library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Properties</source>
+        <translation type="unfinished">속성</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidAdjustPage</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">노출</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">대비</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">채도</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">색온도</translation>
+    </message>
+    <message>
+        <source>Adjust %1</source>
+        <translation type="unfinished">%1 조정</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 초기화</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidBackgroundPage</name>
+    <message>
+        <source>Choose background image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">단색</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">블러</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation type="unfinished">이미지</translation>
+    </message>
+    <message>
+        <source>Blur strength</source>
+        <translation type="unfinished">블러 강도</translation>
+    </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose another image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBottomRail</name>
     <message>
-        <source>Edit</source>
-        <translation>편집</translation>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">볼륨</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">속도</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">혼합</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">카메라</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">흔들림 보정</translation>
+    </message>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">텍스트 편집</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">텍스트 스타일</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">자막</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">도형 스타일</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">모션</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D 모델</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">변환</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">배경</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -700,9 +882,20 @@
         <source>Transitions</source>
         <translation>전환</translation>
     </message>
+</context>
+<context>
+    <name>AndroidClipRangeBar</name>
     <message>
-        <source>Tap a clip to edit it</source>
-        <translation>클립을 눌러 편집하세요</translation>
+        <source>Pause</source>
+        <translation type="unfinished">일시정지</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">재생</translation>
+    </message>
+    <message>
+        <source>Seek</source>
+        <translation type="unfinished">이동</translation>
     </message>
 </context>
 <context>
@@ -805,6 +998,33 @@
     </message>
 </context>
 <context>
+    <name>AndroidCropPage</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">자유</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">원본</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">클립</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">동영상</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">회전</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+</context>
+<context>
     <name>AndroidDownloadJobRow</name>
     <message>
         <source>Cancel download</source>
@@ -844,6 +1064,130 @@
 <context>
     <name>AndroidEditor</name>
     <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">볼륨</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">속도</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">변환</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">배경</translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">스티커</translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">도형</translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">텍스트</translation>
+    </message>
+    <message>
+        <source>Add text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">텍스트 스타일</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">혼합</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">도형 스타일</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">흔들림 보정</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">모션</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D 모델</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">카메라</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">마스크</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">오디오 효과</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">자막</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">마스크 추가</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">클립을 눌러 편집하세요</translation>
+    </message>
+    <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift 프로젝트 (*.drift)</translation>
     </message>
@@ -874,14 +1218,6 @@
     <message>
         <source>Open Media</source>
         <translation>미디어 열기</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>편집</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>완료</translation>
     </message>
 </context>
 <context>
@@ -928,6 +1264,44 @@
     </message>
 </context>
 <context>
+    <name>AndroidFiltersPage</name>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidHome</name>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">업데이트 사용 가능</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">추가 기능</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">설정</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Projects</source>
+        <translation type="unfinished">프로젝트</translation>
+    </message>
+    <message>
+        <source>My videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidHomeRecentCard</name>
     <message>
         <source>Untitled</source>
@@ -947,10 +1321,58 @@
     </message>
 </context>
 <context>
-    <name>AndroidHomeWordmark</name>
+    <name>AndroidHomeTab</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>세련된 동영상을 빠르게 만들기</translation>
+        <source>Quick edit</source>
+        <translation type="unfinished">빠른 편집</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">스티커</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">텍스트</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">크롭</translation>
+    </message>
+    <message>
+        <source>Trim</source>
+        <translation type="unfinished">자르기</translation>
+    </message>
+    <message>
+        <source>Video to audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image to video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">새 프로젝트</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">최근 프로젝트</translation>
+    </message>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">모두 보기</translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished">아직 아무것도 없습니다 — 저장한 프로젝트가 이 목록에 표시됩니다.</translation>
     </message>
 </context>
 <context>
@@ -1074,6 +1496,26 @@
         <translation>첫 번째 클립을 기준으로 캔버스를 %1×%2, %3fps로 설정했습니다.</translation>
     </message>
     <message>
+        <source>Pick a video or image to crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a video or audio file to trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">내보내기</translation>
+    </message>
+    <message>
+        <source>How long should the image play?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That share had no link in it.</source>
         <translation>공유한 항목에 링크가 없습니다.</translation>
     </message>
@@ -1108,6 +1550,14 @@
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>공유 가능한 복사본을 만들 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">설정</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">추가 기능</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1587,6 +2037,29 @@
     </message>
 </context>
 <context>
+    <name>AndroidMyVideosTab</name>
+    <message>
+        <source>Video actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished">공유</translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No exported videos yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported videos appear here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidNotificationsSheet</name>
     <message>
         <source>Notifications</source>
@@ -1812,24 +2285,12 @@
 <context>
     <name>AndroidProjectsPage</name>
     <message>
-        <source>Quick edit</source>
-        <translation>빠른 편집</translation>
-    </message>
-    <message>
-        <source>Pick a clip, start now</source>
-        <translation>클립을 선택하고 지금 시작</translation>
-    </message>
-    <message>
         <source>New project</source>
         <translation>새 프로젝트</translation>
     </message>
     <message>
-        <source>Choose a canvas, start empty</source>
-        <translation>캔버스를 선택하고 빈 프로젝트로 시작</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>최근 프로젝트</translation>
+        <source>Search projects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open</source>
@@ -1840,8 +2301,20 @@
         <translation>이 장치에서 프로젝트 열기</translation>
     </message>
     <message>
-        <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>아직 아무것도 없습니다 — 저장한 프로젝트가 이 목록에 표시됩니다.</translation>
+        <source>No projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished">일치하는 항목 없음</translation>
+    </message>
+    <message>
+        <source>Projects you save will show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">다른 이름을 입력해 보세요.</translation>
     </message>
 </context>
 <context>
@@ -1883,6 +2356,20 @@
     <message>
         <source>Close</source>
         <translation>닫기</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSpeedPage</name>
+    <message>
+        <source>Speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSubPage</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">뒤로</translation>
     </message>
 </context>
 <context>
@@ -1937,6 +2424,13 @@
     <message>
         <source>Done</source>
         <translation>완료</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidTextPage</name>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">텍스트 편집</translation>
     </message>
 </context>
 <context>
@@ -2086,6 +2580,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidToolPage</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">적용</translation>
+    </message>
+</context>
+<context>
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
@@ -2156,6 +2661,21 @@
     <message>
         <source>Transform</source>
         <translation>변환</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidVolumePage</name>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1초</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">페이드 인</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">페이드 아웃</translation>
     </message>
 </context>
 <context>
@@ -20466,6 +20986,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Font</source>
         <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Weight</source>

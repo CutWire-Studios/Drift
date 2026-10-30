@@ -108,173 +108,180 @@
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
+</context>
+<context>
+    <name>AddonManagerPanel</name>
     <message>
         <source>Remove this pack?</source>
-        <translation>このパックを削除しますか?</translation>
+        <translation type="unfinished">このパックを削除しますか?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>削除</translation>
+        <translation type="unfinished">削除</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation>「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation>このトランジションをインストールしますか?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation>このオーディオエフェクトをインストールしますか？</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation>このエフェクトをインストールしますか?</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation>「%1」(%2 作)</translation>
+        <translation type="unfinished">「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation>アドオンをインストール</translation>
+        <translation type="unfinished">アドオンをインストール</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Drift アドオン (*.driftpkg *.driftfx *.zip)</translation>
+        <translation type="unfinished">Drift アドオン (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation>非公式のアドオンをインストールしますか？</translation>
+        <translation type="unfinished">非公式のアドオンをインストールしますか？</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation>それでもインストール</translation>
+        <translation type="unfinished">それでもインストール</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">「%1」(%2 作)</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation>「%1」</translation>
+        <translation type="unfinished">「%1」</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>%1 は Drift チームによる署名がありません。信頼できるファイルのみインストールしてください。</translation>
+        <translation type="unfinished">%1 は Drift チームによる署名がありません。信頼できるファイルのみインストールしてください。</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation>お使いのコンピューター上で実行されるコードが含まれています。</translation>
+        <translation type="unfinished">お使いのコンピューター上で実行されるコードが含まれています。</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation>「%1」を置き換えます。</translation>
+        <translation type="unfinished">「%1」を置き換えます。</translation>
     </message>
     <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>%1 は Drift チームではなく、ユーザーによって作成されたものです。内容は確認されていません。信頼できるファイルのみインストールしてください。</translation>
+        <source>Install this transition?</source>
+        <translation type="unfinished">このトランジションをインストールしますか?</translation>
     </message>
     <message>
-        <source>Could not install “%1”: %2</source>
-        <translation>「%1」をインストールできませんでした : %2</translation>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">このオーディオエフェクトをインストールしますか？</translation>
     </message>
     <message>
-        <source>Installed “%1”</source>
-        <translation>「%1」をインストールしました</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>すべて</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>エフェクト</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>トランジション</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>オーディオ FX</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>ルック</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>フォント</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>スタンプ</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>AI ツール</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation>AI エンジン</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation>拡張機能を確認中…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation>AI の実行方法</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation>自動では、インストールされている中で最速のオプションを選択し、グラフィックスカードが使用できない場合はこのコンピューターを使用します。</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation>以下の AI エンジンをインストールして、自動字幕、被写体切り抜き、おもしろ顔エフェクト、ノイズ除去を有効にしましょう。</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation>この変更を有効にするには、Drift を再起動してください。</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation>ダウンロードストアに接続できません</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>このカテゴリには何もありません</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation>接続を確認して、もう一度試してください。</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation>上記の別のカテゴリを選択してください。</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>再試行</translation>
+        <source>Install this effect?</source>
+        <translation type="unfinished">このエフェクトをインストールしますか?</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation>インストール</translation>
+        <translation type="unfinished">インストール</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 は Drift チームではなく、ユーザーによって作成されたものです。内容は確認されていません。信頼できるファイルのみインストールしてください。</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">「%1」をインストールできませんでした : %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">「%1」をインストールしました</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">閉じる</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">すべて</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">オーディオ FX</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">ルック</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">フォント</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">スタンプ</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI ツール</translation>
+    </message>
+    <message>
+        <source>AI engine</source>
+        <translation type="unfinished">AI エンジン</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation>カスタム</translation>
+        <translation type="unfinished">カスタム</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation>ファイルからインストール…</translation>
+        <translation type="unfinished">ファイルからインストール…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation>アドオンフォルダーを開く</translation>
+        <translation type="unfinished">アドオンフォルダーを開く</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation>ここにアドオンフォルダーを配置し、「エクストラ」を開き直してください</translation>
+        <translation type="unfinished">ここにアドオンフォルダーを配置し、「エクストラ」を開き直してください</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">拡張機能を確認中…</translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI の実行方法</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">自動では、インストールされている中で最速のオプションを選択し、グラフィックスカードが使用できない場合はこのコンピューターを使用します。</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished">以下の AI エンジンをインストールして、自動字幕、被写体切り抜き、おもしろ顔エフェクト、ノイズ除去を有効にしましょう。</translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">この変更を有効にするには、Drift を再起動してください。</translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">ダウンロードストアに接続できません</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">このカテゴリには何もありません</translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">接続を確認して、もう一度試してください。</translation>
+    </message>
+    <message>
+        <source>Pick another category above.</source>
+        <translation type="unfinished">上記の別のカテゴリを選択してください。</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">再試行</translation>
     </message>
 </context>
 <context>
@@ -683,10 +690,185 @@
     </message>
 </context>
 <context>
+    <name>AndroidAddPage</name>
+    <message>
+        <source>Library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Properties</source>
+        <translation type="unfinished">プロパティ</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidAdjustPage</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">露光量</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">コントラスト</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">彩度</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">色温度</translation>
+    </message>
+    <message>
+        <source>Adjust %1</source>
+        <translation type="unfinished">%1 を調整</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">リセット</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 をリセット</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidBackgroundPage</name>
+    <message>
+        <source>Choose background image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">単色</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">ブラー</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation type="unfinished">画像</translation>
+    </message>
+    <message>
+        <source>Blur strength</source>
+        <translation type="unfinished">ブラーの強さ</translation>
+    </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose another image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBottomRail</name>
     <message>
-        <source>Edit</source>
-        <translation>編集</translation>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">音量</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">アニメーション</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">マスク</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">ブレンド</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">カメラ</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">手ぶれ補正</translation>
+    </message>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">テキストを編集</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">テキストスタイル</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">字幕</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">シェイプスタイル</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">モーション</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D モデル</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">変形</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">切り抜き</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">背景</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -700,9 +882,20 @@
         <source>Transitions</source>
         <translation>トランジション</translation>
     </message>
+</context>
+<context>
+    <name>AndroidClipRangeBar</name>
     <message>
-        <source>Tap a clip to edit it</source>
-        <translation>クリップをタップして編集</translation>
+        <source>Pause</source>
+        <translation type="unfinished">一時停止</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">再生</translation>
+    </message>
+    <message>
+        <source>Seek</source>
+        <translation type="unfinished">シーク</translation>
     </message>
 </context>
 <context>
@@ -805,6 +998,33 @@
     </message>
 </context>
 <context>
+    <name>AndroidCropPage</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">自由</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">オリジナル</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">クリップ</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">ビデオ</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">回転</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">リセット</translation>
+    </message>
+</context>
+<context>
     <name>AndroidDownloadJobRow</name>
     <message>
         <source>Cancel download</source>
@@ -844,6 +1064,130 @@
 <context>
     <name>AndroidEditor</name>
     <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">音量</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">変形</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">切り抜き</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">背景</translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">スタンプ</translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">シェイプ</translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">テキスト</translation>
+    </message>
+    <message>
+        <source>Add text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">テキストスタイル</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">アニメーション</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">ブレンド</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">シェイプスタイル</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">手ぶれ補正</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">モーション</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D モデル</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">カメラ</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">マスク</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">オーディオ FX</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">字幕</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">マスクを追加</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">クリップをタップして編集</translation>
+    </message>
+    <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift プロジェクト (*.drift)</translation>
     </message>
@@ -874,14 +1218,6 @@
     <message>
         <source>Open Media</source>
         <translation>メディアを開く</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>編集</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>完了</translation>
     </message>
 </context>
 <context>
@@ -928,6 +1264,44 @@
     </message>
 </context>
 <context>
+    <name>AndroidFiltersPage</name>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidHome</name>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">アップデートが利用可能</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">拡張機能</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">設定</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Projects</source>
+        <translation type="unfinished">プロジェクト</translation>
+    </message>
+    <message>
+        <source>My videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidHomeRecentCard</name>
     <message>
         <source>Untitled</source>
@@ -947,10 +1321,58 @@
     </message>
 </context>
 <context>
-    <name>AndroidHomeWordmark</name>
+    <name>AndroidHomeTab</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>洗練されたビデオを素早く作成</translation>
+        <source>Quick edit</source>
+        <translation type="unfinished">クイック編集</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">スタンプ</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">テキスト</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">切り抜き</translation>
+    </message>
+    <message>
+        <source>Trim</source>
+        <translation type="unfinished">トリム</translation>
+    </message>
+    <message>
+        <source>Video to audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image to video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">新規プロジェクト</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">最近のプロジェクト</translation>
+    </message>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">すべて表示</translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished">ここにはまだ何もありません — 保存したプロジェクトはこのリストに表示されます。</translation>
     </message>
 </context>
 <context>
@@ -1074,6 +1496,26 @@
         <translation>最初のクリップに基づき、キャンバスが %1×%2 (%3 fps) に設定されました。</translation>
     </message>
     <message>
+        <source>Pick a video or image to crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a video or audio file to trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">エクスポート</translation>
+    </message>
+    <message>
+        <source>How long should the image play?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That share had no link in it.</source>
         <translation>共有されたものには、リンクが含まれていませんでした。</translation>
     </message>
@@ -1108,6 +1550,14 @@
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>共有可能なコピーを作成できませんでした : %1</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">設定</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">拡張機能</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1587,6 +2037,29 @@
     </message>
 </context>
 <context>
+    <name>AndroidMyVideosTab</name>
+    <message>
+        <source>Video actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished">共有</translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No exported videos yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported videos appear here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidNotificationsSheet</name>
     <message>
         <source>Notifications</source>
@@ -1812,24 +2285,12 @@
 <context>
     <name>AndroidProjectsPage</name>
     <message>
-        <source>Quick edit</source>
-        <translation>クイック編集</translation>
-    </message>
-    <message>
-        <source>Pick a clip, start now</source>
-        <translation>クリップを選択して今すぐ開始</translation>
-    </message>
-    <message>
         <source>New project</source>
         <translation>新規プロジェクト</translation>
     </message>
     <message>
-        <source>Choose a canvas, start empty</source>
-        <translation>キャンバスを選択し、空から開始</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>最近のプロジェクト</translation>
+        <source>Search projects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open</source>
@@ -1840,8 +2301,20 @@
         <translation>このデバイスからプロジェクトを開く</translation>
     </message>
     <message>
-        <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>ここにはまだ何もありません — 保存したプロジェクトはこのリストに表示されます。</translation>
+        <source>No projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished">一致する項目はありません</translation>
+    </message>
+    <message>
+        <source>Projects you save will show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">別の名前を試してください。</translation>
     </message>
 </context>
 <context>
@@ -1883,6 +2356,20 @@
     <message>
         <source>Close</source>
         <translation>閉じる</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSpeedPage</name>
+    <message>
+        <source>Speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSubPage</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">戻る</translation>
     </message>
 </context>
 <context>
@@ -1937,6 +2424,13 @@
     <message>
         <source>Done</source>
         <translation>完了</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidTextPage</name>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">テキストを編集</translation>
     </message>
 </context>
 <context>
@@ -2086,6 +2580,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidToolPage</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">キャンセル</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">適用</translation>
+    </message>
+</context>
+<context>
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
@@ -2156,6 +2661,21 @@
     <message>
         <source>Transform</source>
         <translation>変形</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidVolumePage</name>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 秒</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">フェードイン</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">フェードアウト</translation>
     </message>
 </context>
 <context>
@@ -20475,6 +20995,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Font</source>
         <translation>フォント</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Weight</source>

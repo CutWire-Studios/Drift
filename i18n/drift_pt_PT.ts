@@ -108,173 +108,180 @@
         <source>Close</source>
         <translation>Fechar</translation>
     </message>
+</context>
+<context>
+    <name>AddonManagerPanel</name>
     <message>
         <source>Remove this pack?</source>
-        <translation>Remover este pacote?</translation>
+        <translation type="unfinished">Remover este pacote?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>Remover</translation>
+        <translation type="unfinished">Remover</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation>“%1” e os respetivos dados transferidos serão eliminados. Pode instalá-lo novamente mais tarde.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation>Instalar esta transição?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation>Instalar este efeito de áudio?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation>Instalar este efeito?</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation>“%1” por %2</translation>
+        <translation type="unfinished">“%1” e os respetivos dados transferidos serão eliminados. Pode instalá-lo novamente mais tarde.</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation>Instalar Complemento</translation>
+        <translation type="unfinished">Instalar Complemento</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Complementos do Drift (*.driftpkg *.driftfx *.zip)</translation>
+        <translation type="unfinished">Complementos do Drift (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation>Instalar um complemento não oficial?</translation>
+        <translation type="unfinished">Instalar um complemento não oficial?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation>Instalar mesmo assim</translation>
+        <translation type="unfinished">Instalar mesmo assim</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” por %2</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation>“%1”</translation>
+        <translation type="unfinished">“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>%1 não está assinado pela equipa do Drift. Instale apenas ficheiros em que confie.</translation>
+        <translation type="unfinished">%1 não está assinado pela equipa do Drift. Instale apenas ficheiros em que confie.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation>Contém código que é executado no seu computador.</translation>
+        <translation type="unfinished">Contém código que é executado no seu computador.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation>Vai substituir “%1”.</translation>
+        <translation type="unfinished">Vai substituir “%1”.</translation>
     </message>
     <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>%1 foi criado por um utilizador, não pela equipa do Drift, e não foi verificado. Instale apenas ficheiros em que confie.</translation>
+        <source>Install this transition?</source>
+        <translation type="unfinished">Instalar esta transição?</translation>
     </message>
     <message>
-        <source>Could not install “%1”: %2</source>
-        <translation>Não foi possível instalar “%1”: %2</translation>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">Instalar este efeito de áudio?</translation>
     </message>
     <message>
-        <source>Installed “%1”</source>
-        <translation>“%1” instalado</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Todos</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>Efeitos</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>Transições</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>Efeitos de Áudio</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>Visuais</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>Tipos de letra</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>Autocolantes</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>Ferramentas de IA</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation>Motor de IA</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation>A verificar extras…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation>Como a IA é executada</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation>Automático escolhe a opção mais rápida que tiver instalada e usa este computador se a placa de vídeo não puder ajudar.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation>Instale um motor de IA abaixo para desbloquear legendas automáticas, recorte automático, efeitos divertidos para rostos e remoção de ruído.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation>Reinicie o Drift para aplicar a alteração.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation>Não foi possível aceder à loja de transferências</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Nada nesta categoria</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation>Verifique a sua ligação e tente de novo.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation>Escolha outra categoria acima.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>Tentar novamente</translation>
+        <source>Install this effect?</source>
+        <translation type="unfinished">Instalar este efeito?</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation>Instalar</translation>
+        <translation type="unfinished">Instalar</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 foi criado por um utilizador, não pela equipa do Drift, e não foi verificado. Instale apenas ficheiros em que confie.</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">Não foi possível instalar “%1”: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” instalado</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Fechar</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Todos</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efeitos</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Transições</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Efeitos de Áudio</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Visuais</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Tipos de letra</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Autocolantes</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Ferramentas de IA</translation>
+    </message>
+    <message>
+        <source>AI engine</source>
+        <translation type="unfinished">Motor de IA</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation>Personalizado</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation>Instalar a partir de um ficheiro…</translation>
+        <translation type="unfinished">Instalar a partir de um ficheiro…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation>Abrir pasta de complementos</translation>
+        <translation type="unfinished">Abrir pasta de complementos</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation>Coloque aqui as pastas de complementos e volte a abrir Extras</translation>
+        <translation type="unfinished">Coloque aqui as pastas de complementos e volte a abrir Extras</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">A verificar extras…</translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">Como a IA é executada</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">Automático escolhe a opção mais rápida que tiver instalada e usa este computador se a placa de vídeo não puder ajudar.</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished">Instale um motor de IA abaixo para desbloquear legendas automáticas, recorte automático, efeitos divertidos para rostos e remoção de ruído.</translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">Reinicie o Drift para aplicar a alteração.</translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">Não foi possível aceder à loja de transferências</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Nada nesta categoria</translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">Verifique a sua ligação e tente de novo.</translation>
+    </message>
+    <message>
+        <source>Pick another category above.</source>
+        <translation type="unfinished">Escolha outra categoria acima.</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Tentar novamente</translation>
     </message>
 </context>
 <context>
@@ -683,10 +690,186 @@
     </message>
 </context>
 <context>
+    <name>AndroidAddPage</name>
+    <message>
+        <source>Library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Properties</source>
+        <translation type="unfinished">Propriedades</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidAdjustPage</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">Exposição</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">Contraste</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">Saturação</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">Temperatura</translation>
+    </message>
+    <message>
+        <source>Adjust %1</source>
+        <translation type="unfinished">Ajustar %1</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Redefinir</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">Redefinir %1</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidBackgroundPage</name>
+    <message>
+        <source>Choose background image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Sólido</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Desfoque</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation type="unfinished">Imagem</translation>
+    </message>
+    <message>
+        <source>Blur strength</source>
+        <translation type="unfinished">Intensidade do desfoque</translation>
+    </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose another image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBottomRail</name>
     <message>
-        <source>Edit</source>
-        <translation>Editar</translation>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">Volume</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Velocidade</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animação</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Máscara</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">Fusão</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Transição</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Câmara</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">Estabilizar</translation>
+    </message>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">Editar texto</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">Estilo de texto</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Legendas</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">Estilo de forma</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">Movimento</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">Modelo 3D</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">Transformação</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Recortar</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Fundo</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -700,9 +883,20 @@
         <source>Transitions</source>
         <translation>Transições</translation>
     </message>
+</context>
+<context>
+    <name>AndroidClipRangeBar</name>
     <message>
-        <source>Tap a clip to edit it</source>
-        <translation>Toque num clipe para o editar</translation>
+        <source>Pause</source>
+        <translation type="unfinished">Pausar</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">Reproduzir</translation>
+    </message>
+    <message>
+        <source>Seek</source>
+        <translation type="unfinished">Procurar</translation>
     </message>
 </context>
 <context>
@@ -805,6 +999,33 @@
     </message>
 </context>
 <context>
+    <name>AndroidCropPage</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">Livre</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">Original</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">Clipe</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Vídeo</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">Rodar</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Redefinir</translation>
+    </message>
+</context>
+<context>
     <name>AndroidDownloadJobRow</name>
     <message>
         <source>Cancel download</source>
@@ -844,6 +1065,130 @@
 <context>
     <name>AndroidEditor</name>
     <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efeitos</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">Volume</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Velocidade</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">Transformação</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Recortar</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Fundo</translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">Autocolante</translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">Forma</translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Texto</translation>
+    </message>
+    <message>
+        <source>Add text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">Estilo de texto</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animação</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">Fusão</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">Estilo de forma</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">Estabilizar</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">Movimento</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">Modelo 3D</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Câmara</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Máscara</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Efeitos de Áudio</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Transição</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Legendas</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Adicionar máscara</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">Toque num clipe para o editar</translation>
+    </message>
+    <message>
         <source>Drift project (*.drift)</source>
         <translation>Projeto do Drift (*.drift)</translation>
     </message>
@@ -874,14 +1219,6 @@
     <message>
         <source>Open Media</source>
         <translation>Abrir Multimédia</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>Editar</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>Concluir</translation>
     </message>
 </context>
 <context>
@@ -928,6 +1265,44 @@
     </message>
 </context>
 <context>
+    <name>AndroidFiltersPage</name>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidHome</name>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">Atualização disponível</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Extras</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Definições</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Projects</source>
+        <translation type="unfinished">Projetos</translation>
+    </message>
+    <message>
+        <source>My videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidHomeRecentCard</name>
     <message>
         <source>Untitled</source>
@@ -947,10 +1322,58 @@
     </message>
 </context>
 <context>
-    <name>AndroidHomeWordmark</name>
+    <name>AndroidHomeTab</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>Crie vídeos profissionais rapidamente</translation>
+        <source>Quick edit</source>
+        <translation type="unfinished">Edição rápida</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efeitos</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">Autocolante</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Texto</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">Recortar</translation>
+    </message>
+    <message>
+        <source>Trim</source>
+        <translation type="unfinished">Aparar</translation>
+    </message>
+    <message>
+        <source>Video to audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image to video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">Novo projeto</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">Projetos recentes</translation>
+    </message>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">Ver tudo</translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished">Ainda nada aqui — os projetos que guardar aparecerão nesta lista.</translation>
     </message>
 </context>
 <context>
@@ -1074,6 +1497,26 @@
         <translation>Ecrã definido como %1×%2 a %3 fps a partir do seu primeiro clipe.</translation>
     </message>
     <message>
+        <source>Pick a video or image to crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a video or audio file to trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">Exportar</translation>
+    </message>
+    <message>
+        <source>How long should the image play?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That share had no link in it.</source>
         <translation>Essa partilha não continha nenhuma ligação.</translation>
     </message>
@@ -1108,6 +1551,14 @@
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>Não foi possível criar a cópia partilhável: %1</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Definições</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Extras</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1587,6 +2038,29 @@
     </message>
 </context>
 <context>
+    <name>AndroidMyVideosTab</name>
+    <message>
+        <source>Video actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished">Partilhar</translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No exported videos yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported videos appear here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidNotificationsSheet</name>
     <message>
         <source>Notifications</source>
@@ -1812,24 +2286,12 @@
 <context>
     <name>AndroidProjectsPage</name>
     <message>
-        <source>Quick edit</source>
-        <translation>Edição rápida</translation>
-    </message>
-    <message>
-        <source>Pick a clip, start now</source>
-        <translation>Escolha um clipe, comece agora</translation>
-    </message>
-    <message>
         <source>New project</source>
         <translation>Novo projeto</translation>
     </message>
     <message>
-        <source>Choose a canvas, start empty</source>
-        <translation>Escolha um ecrã, comece em branco</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>Projetos recentes</translation>
+        <source>Search projects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open</source>
@@ -1840,8 +2302,20 @@
         <translation>Abra um projeto deste dispositivo</translation>
     </message>
     <message>
-        <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>Nada aqui ainda — os projetos que guardar aparecerão nesta lista.</translation>
+        <source>No projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished">Sem resultados</translation>
+    </message>
+    <message>
+        <source>Projects you save will show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Tente outro nome.</translation>
     </message>
 </context>
 <context>
@@ -1883,6 +2357,20 @@
     <message>
         <source>Close</source>
         <translation>Fechar</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSpeedPage</name>
+    <message>
+        <source>Speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSubPage</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Voltar</translation>
     </message>
 </context>
 <context>
@@ -1937,6 +2425,13 @@
     <message>
         <source>Done</source>
         <translation>Concluir</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidTextPage</name>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">Editar texto</translation>
     </message>
 </context>
 <context>
@@ -2087,6 +2582,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidToolPage</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancelar</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Aplicar</translation>
+    </message>
+</context>
+<context>
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
@@ -2158,6 +2664,21 @@
     <message>
         <source>Transform</source>
         <translation>Transformação</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidVolumePage</name>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Fade de entrada</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Fade de saída</translation>
     </message>
 </context>
 <context>
@@ -20547,6 +21068,10 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Font</source>
         <translation>Tipo de letra</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Weight</source>

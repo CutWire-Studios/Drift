@@ -108,173 +108,180 @@
         <source>Close</source>
         <translation>বন্ধ করুন</translation>
     </message>
+</context>
+<context>
+    <name>AddonManagerPanel</name>
     <message>
         <source>Remove this pack?</source>
-        <translation>এই প্যাকটি সরাবেন?</translation>
+        <translation type="unfinished">এই প্যাকটি সরাবেন?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>সরান</translation>
+        <translation type="unfinished">সরান</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation>“%1” এবং এর ডাউনলোড করা ডেটা মুছে ফেলা হবে। আপনি এটি পরে আবার ইনস্টল করতে পারেন.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation>এই ট্রানজিশনটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation>এই অডিও ইফেক্টটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation>এই ইফেক্টটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation>“%1” — নির্মাতা: %2</translation>
+        <translation type="unfinished">“%1” এবং এর ডাউনলোড করা ডেটা মুছে ফেলা হবে। আপনি এটি পরে আবার ইনস্টল করতে পারেন.</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation>অ্যাডঅন ইনস্টল করুন</translation>
+        <translation type="unfinished">অ্যাডঅন ইনস্টল করুন</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Drift অ্যাডঅন (*.driftpkg *.driftfx *.zip)</translation>
+        <translation type="unfinished">Drift অ্যাডঅন (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation>একটি অনানুষ্ঠানিক অ্যাডন ইনস্টল করবেন?</translation>
+        <translation type="unfinished">একটি অনানুষ্ঠানিক অ্যাডন ইনস্টল করবেন?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation>তবুও ইনস্টল করুন</translation>
+        <translation type="unfinished">তবুও ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” — নির্মাতা: %2</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation>“%1”</translation>
+        <translation type="unfinished">“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>%1 Drift টিম দ্বারা স্বাক্ষরিত নয়। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
+        <translation type="unfinished">%1 Drift টিম দ্বারা স্বাক্ষরিত নয়। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation>এতে কোড রয়েছে যা আপনার কম্পিউটারে চলে.</translation>
+        <translation type="unfinished">এতে কোড রয়েছে যা আপনার কম্পিউটারে চলে.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation>এটি “%1”-কে প্রতিস্থাপন করবে.</translation>
+        <translation type="unfinished">এটি “%1”-কে প্রতিস্থাপন করবে.</translation>
     </message>
     <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>%1 একজন ব্যবহারকারী দ্বারা তৈরি করা হয়েছে, Drift দল নয়, এবং কিছুই এটি পরীক্ষা করেনি। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
+        <source>Install this transition?</source>
+        <translation type="unfinished">এই ট্রানজিশনটি ইনস্টল করবেন?</translation>
     </message>
     <message>
-        <source>Could not install “%1”: %2</source>
-        <translation>“%1” ইনস্টল করা যায়নি: %2</translation>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">এই অডিও ইফেক্টটি ইনস্টল করবেন?</translation>
     </message>
     <message>
-        <source>Installed “%1”</source>
-        <translation>“%1” ইনস্টল করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>সব</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>ইফেক্ট</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>ট্রানজিশন</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>অডিও ইফেক্ট</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>লুকস</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>ফন্ট</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>স্টিকার</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>AI টুল</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation>AI ইঞ্জিন</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation>অতিরিক্ত প্যাক খোঁজা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation>AI কীভাবে চলে</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation>স্বয়ংক্রিয়ভাবে আপনার ইনস্টল করা দ্রুততম বিকল্পটি বেছে নেয় এবং গ্রাফিক্স কার্ড সাহায্য করতে না পারলে এই কম্পিউটারটি ব্যবহার করে.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation>স্বয়ংক্রিয় ক্যাপশন, বিষয় কাটআউট, মজার মুখের ইফেক্ট, এবং শব্দ অপসারণ আনলক করতে নীচে একটি AI ইঞ্জিন ইনস্টল করুন.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation>এটি কার্যকর করার জন্য Drift পুনরায় চালু করুন.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation>ডাউনলোড স্টোরে পৌঁছানো যাচ্ছে না</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>এই বিভাগে কিছু নেই</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation>আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation>উপরে অন্য একটি বিভাগ বেছে নিন.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>আবার চেষ্টা করুন</translation>
+        <source>Install this effect?</source>
+        <translation type="unfinished">এই ইফেক্টটি ইনস্টল করবেন?</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation>ইনস্টল করুন</translation>
+        <translation type="unfinished">ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 একজন ব্যবহারকারী দ্বারা তৈরি করা হয়েছে, Drift দল নয়, এবং কিছুই এটি পরীক্ষা করেনি। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">“%1” ইনস্টল করা যায়নি: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” ইনস্টল করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">বন্ধ করুন</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">সব</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">ট্রানজিশন</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">অডিও ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">লুকস</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">ফন্ট</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">স্টিকার</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI টুল</translation>
+    </message>
+    <message>
+        <source>AI engine</source>
+        <translation type="unfinished">AI ইঞ্জিন</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation>কাস্টম</translation>
+        <translation type="unfinished">কাস্টম</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation>ফাইল থেকে ইনস্টল করুন…</translation>
+        <translation type="unfinished">ফাইল থেকে ইনস্টল করুন…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation>অ্যাডঅন ফোল্ডার খুলুন</translation>
+        <translation type="unfinished">অ্যাডঅন ফোল্ডার খুলুন</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation>এখানে অ্যাডঅন ফোল্ডার রাখুন, তারপর এক্সট্রা পুনরায় খুলুন</translation>
+        <translation type="unfinished">এখানে অ্যাডঅন ফোল্ডার রাখুন, তারপর এক্সট্রা পুনরায় খুলুন</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">অতিরিক্ত প্যাক খোঁজা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI কীভাবে চলে</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">স্বয়ংক্রিয়ভাবে আপনার ইনস্টল করা দ্রুততম বিকল্পটি বেছে নেয় এবং গ্রাফিক্স কার্ড সাহায্য করতে না পারলে এই কম্পিউটারটি ব্যবহার করে.</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished">স্বয়ংক্রিয় ক্যাপশন, বিষয় কাটআউট, মজার মুখের ইফেক্ট, এবং শব্দ অপসারণ আনলক করতে নীচে একটি AI ইঞ্জিন ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">এটি কার্যকর করার জন্য Drift পুনরায় চালু করুন.</translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">ডাউনলোড স্টোরে পৌঁছানো যাচ্ছে না</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">এই বিভাগে কিছু নেই</translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
+    </message>
+    <message>
+        <source>Pick another category above.</source>
+        <translation type="unfinished">উপরে অন্য একটি বিভাগ বেছে নিন.</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
     </message>
 </context>
 <context>
@@ -683,10 +690,186 @@
     </message>
 </context>
 <context>
+    <name>AndroidAddPage</name>
+    <message>
+        <source>Library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Properties</source>
+        <translation type="unfinished">বৈশিষ্ট্য</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidAdjustPage</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">এক্সপোজার</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">কনট্রাস্ট</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">স্যাচুরেশন</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">তাপমাত্রা</translation>
+    </message>
+    <message>
+        <source>Adjust %1</source>
+        <translation type="unfinished">%1 সামঞ্জস্য করুন</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">রিসেট করুন</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">%1 রিসেট করুন</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidBackgroundPage</name>
+    <message>
+        <source>Choose background image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">কঠিন</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">ঝাপসা</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation type="unfinished">ছবি</translation>
+    </message>
+    <message>
+        <source>Blur strength</source>
+        <translation type="unfinished">ঝাপসা শক্তি</translation>
+    </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose another image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBottomRail</name>
     <message>
-        <source>Edit</source>
-        <translation>সম্পাদনা করুন</translation>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">আয়তন</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">গতি</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">অ্যানিমেশন</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">মিশ্রণ</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">ট্রানজিশন</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">ক্যামেরা</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">স্ট্যাবিলাইজ করুন</translation>
+    </message>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">টেক্সট সম্পাদনা করুন</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">টেক্সট শৈলী</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">সাবটাইটেল</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">আকৃতির শৈলী</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">মোশন</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D মডেল</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">ট্রান্সফর্ম</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">পটভূমি</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -700,9 +883,20 @@
         <source>Transitions</source>
         <translation>ট্রানজিশন</translation>
     </message>
+</context>
+<context>
+    <name>AndroidClipRangeBar</name>
     <message>
-        <source>Tap a clip to edit it</source>
-        <translation>সম্পাদনা করতে একটি ক্লিপে ট্যাপ করুন</translation>
+        <source>Pause</source>
+        <translation type="unfinished">বিরতি দিন</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">চালান</translation>
+    </message>
+    <message>
+        <source>Seek</source>
+        <translation type="unfinished">সময় বদলান</translation>
     </message>
 </context>
 <context>
@@ -805,6 +999,33 @@
     </message>
 </context>
 <context>
+    <name>AndroidCropPage</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">মুক্ত</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">আসল</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">ক্লিপ</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">ভিডিও</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">ঘোরান</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">রিসেট করুন</translation>
+    </message>
+</context>
+<context>
     <name>AndroidDownloadJobRow</name>
     <message>
         <source>Cancel download</source>
@@ -844,6 +1065,130 @@
 <context>
     <name>AndroidEditor</name>
     <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">আয়তন</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">গতি</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">ট্রান্সফর্ম</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">পটভূমি</translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">স্টিকার</translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">আকৃতি</translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">টেক্সট</translation>
+    </message>
+    <message>
+        <source>Add text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">টেক্সট শৈলী</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">অ্যানিমেশন</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">মিশ্রণ</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">আকৃতির শৈলী</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">স্ট্যাবিলাইজ করুন</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">মোশন</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D মডেল</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">ক্যামেরা</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">মাস্ক</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">অডিও ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">ট্রানজিশন</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">সাবটাইটেল</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">মাস্ক যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">সম্পাদনা করতে একটি ক্লিপে ট্যাপ করুন</translation>
+    </message>
+    <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift প্রকল্প (*.drift)</translation>
     </message>
@@ -874,14 +1219,6 @@
     <message>
         <source>Open Media</source>
         <translation>মিডিয়া খুলুন</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>সম্পাদনা করুন</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>সম্পন্ন</translation>
     </message>
 </context>
 <context>
@@ -928,6 +1265,44 @@
     </message>
 </context>
 <context>
+    <name>AndroidFiltersPage</name>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidHome</name>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">আপডেট পাওয়া গেছে</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">অতিরিক্ত প্যাক</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">সেটিংস</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Projects</source>
+        <translation type="unfinished">প্রকল্প</translation>
+    </message>
+    <message>
+        <source>My videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidHomeRecentCard</name>
     <message>
         <source>Untitled</source>
@@ -947,10 +1322,58 @@
     </message>
 </context>
 <context>
-    <name>AndroidHomeWordmark</name>
+    <name>AndroidHomeTab</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>দ্রুত সুন্দর ভিডিও তৈরি করুন</translation>
+        <source>Quick edit</source>
+        <translation type="unfinished">দ্রুত সম্পাদনা</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">স্টিকার</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">টেক্সট</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">ক্রপ</translation>
+    </message>
+    <message>
+        <source>Trim</source>
+        <translation type="unfinished">ট্রিম</translation>
+    </message>
+    <message>
+        <source>Video to audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image to video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">নতুন প্রকল্প</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">সাম্প্রতিক প্রকল্প</translation>
+    </message>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">সব দেখুন</translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished">এখনও কিছু নেই — সংরক্ষণ করা প্রকল্পগুলো এই তালিকায় দেখা যাবে.</translation>
     </message>
 </context>
 <context>
@@ -1074,6 +1497,26 @@
         <translation>আপনার প্রথম ক্লিপ থেকে ক্যানভাস %1× %2 %3 fps এ সেট করা হয়েছে.</translation>
     </message>
     <message>
+        <source>Pick a video or image to crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a video or audio file to trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">এক্সপোর্ট</translation>
+    </message>
+    <message>
+        <source>How long should the image play?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That share had no link in it.</source>
         <translation>সেই শেয়ারের কোনো লিঙ্ক ছিল না.</translation>
     </message>
@@ -1108,6 +1551,14 @@
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>ভাগ করা যায় এমন অনুলিপি তৈরি করা যায়নি: %1</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">সেটিংস</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">অতিরিক্ত প্যাক</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1587,6 +2038,29 @@
     </message>
 </context>
 <context>
+    <name>AndroidMyVideosTab</name>
+    <message>
+        <source>Video actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished">শেয়ার করুন</translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No exported videos yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported videos appear here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidNotificationsSheet</name>
     <message>
         <source>Notifications</source>
@@ -1812,24 +2286,12 @@
 <context>
     <name>AndroidProjectsPage</name>
     <message>
-        <source>Quick edit</source>
-        <translation>দ্রুত সম্পাদনা</translation>
-    </message>
-    <message>
-        <source>Pick a clip, start now</source>
-        <translation>একটি ক্লিপ বেছে নিন, এখনই শুরু করুন</translation>
-    </message>
-    <message>
         <source>New project</source>
         <translation>নতুন প্রকল্প</translation>
     </message>
     <message>
-        <source>Choose a canvas, start empty</source>
-        <translation>একটি ক্যানভাস চয়ন করুন, খালি শুরু করুন</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>সাম্প্রতিক প্রকল্প</translation>
+        <source>Search projects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open</source>
@@ -1840,8 +2302,20 @@
         <translation>এই ডিভাইস থেকে একটি প্রকল্প খুলুন</translation>
     </message>
     <message>
-        <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>এখনও কিছু নেই — সংরক্ষণ করা প্রকল্পগুলো এই তালিকায় দেখা যাবে.</translation>
+        <source>No projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished">কোনো মিল পাওয়া যায়নি</translation>
+    </message>
+    <message>
+        <source>Projects you save will show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">একটি ভিন্ন নাম চেষ্টা করুন.</translation>
     </message>
 </context>
 <context>
@@ -1883,6 +2357,20 @@
     <message>
         <source>Close</source>
         <translation>বন্ধ করুন</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSpeedPage</name>
+    <message>
+        <source>Speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSubPage</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ফিরে যান</translation>
     </message>
 </context>
 <context>
@@ -1937,6 +2425,13 @@
     <message>
         <source>Done</source>
         <translation>সম্পন্ন</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidTextPage</name>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">টেক্সট সম্পাদনা করুন</translation>
     </message>
 </context>
 <context>
@@ -2087,6 +2582,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidToolPage</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">প্রয়োগ করুন</translation>
+    </message>
+</context>
+<context>
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
@@ -2158,6 +2664,21 @@
     <message>
         <source>Transform</source>
         <translation>ট্রান্সফর্ম</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidVolumePage</name>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 সেকেন্ড</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">ফেড ইন</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">ফেড আউট</translation>
     </message>
 </context>
 <context>
@@ -20546,6 +21067,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Font</source>
         <translation>ফন্ট</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Weight</source>

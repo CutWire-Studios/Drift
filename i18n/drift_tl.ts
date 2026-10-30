@@ -108,173 +108,180 @@
         <source>Close</source>
         <translation>Isara</translation>
     </message>
+</context>
+<context>
+    <name>AddonManagerPanel</name>
     <message>
         <source>Remove this pack?</source>
-        <translation>Gusto mo tanggalin ang dagdag?</translation>
+        <translation type="unfinished">Gusto mo tanggalin ang dagdag?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>Tanggal</translation>
+        <translation type="unfinished">Tanggal</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation>Matatanggal ang “%1” at ang na-download nitong data. Maaari mo itong i-install muli mamaya.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation>I-install ang transisyong ito?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation>I-install ang epektong audio na ito?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation>I-install ang epektong ito?</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation>“%1” ni %2</translation>
+        <translation type="unfinished">Matatanggal ang “%1” at ang na-download nitong data. Maaari mo itong i-install muli mamaya.</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation>I-install ang Addon</translation>
+        <translation type="unfinished">I-install ang Addon</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Mga addon ng Drift (*.driftpkg *.driftfx *.zip)</translation>
+        <translation type="unfinished">Mga addon ng Drift (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation>Mag-install ng hindi opisyal na addon?</translation>
+        <translation type="unfinished">Mag-install ng hindi opisyal na addon?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation>I-install pa rin</translation>
+        <translation type="unfinished">I-install pa rin</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” ni %2</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation>“%1”</translation>
+        <translation type="unfinished">“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>Ang %1 ay hindi nilagdaan ng koponan ng Drift. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
+        <translation type="unfinished">Ang %1 ay hindi nilagdaan ng koponan ng Drift. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation>Naglalaman ito ng code na tatakbo sa iyong kompyuter.</translation>
+        <translation type="unfinished">Naglalaman ito ng code na tatakbo sa iyong kompyuter.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation>Papalitan nito ang “%1”.</translation>
+        <translation type="unfinished">Papalitan nito ang “%1”.</translation>
     </message>
     <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>Ang %1 ay ginawa ng isang user, hindi ng koponan ng Drift, at walang sumuri dito. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
+        <source>Install this transition?</source>
+        <translation type="unfinished">I-install ang transisyong ito?</translation>
     </message>
     <message>
-        <source>Could not install “%1”: %2</source>
-        <translation>Hindi ma-install ang “%1”: %2</translation>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">I-install ang epektong audio na ito?</translation>
     </message>
     <message>
-        <source>Installed “%1”</source>
-        <translation>Na-install ang “%1”</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Lahat</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>Epekto</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>Pagbabagong-kalagayan</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>Epektong audyo</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>Mga Look</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>Mga Font</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>Mga Sticker</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>Mga tool ng AI</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation>Engine ng AI</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation>Naghahanap ng mga dagdag…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation>Paano gumagana ang AI</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation>Pinipili ng Awtomatiko ang pinakamabilis na opsyon na naka-install sa iyo, at ginagamit ang kompyuter na ito kung hindi makakatulong ang sistemang grapiko.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation>Mag-install ng AI Engine sa ibaba para magamit ang mga awtomatikong caption, subject cutout, mga nakakatawang epekto sa mukha, at pag-alis ng ingay.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation>I-restart ang Drift para magkabisa ito.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation>Hindi maabot ang tindahan ng pag-download</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>Walang laman sa kategoryang ito</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation>Suriin ang iyong koneksyon at subukan muli.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation>Pumili ng ibang kategorya sa itaas.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>Subukan muli</translation>
+        <source>Install this effect?</source>
+        <translation type="unfinished">I-install ang epektong ito?</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation>I-install</translation>
+        <translation type="unfinished">I-install</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">Ang %1 ay ginawa ng isang user, hindi ng koponan ng Drift, at walang sumuri dito. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">Hindi ma-install ang “%1”: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">Na-install ang “%1”</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Isara</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Lahat</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Pagbabagong-kalagayan</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Epektong audyo</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Mga Look</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Mga Font</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Mga Sticker</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Mga tool ng AI</translation>
+    </message>
+    <message>
+        <source>AI engine</source>
+        <translation type="unfinished">Engine ng AI</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation>Pinasadya</translation>
+        <translation type="unfinished">Pinasadya</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation>I-install mula sa file…</translation>
+        <translation type="unfinished">I-install mula sa file…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation>Buksan ang folder ng mga addon</translation>
+        <translation type="unfinished">Buksan ang folder ng mga addon</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation>Ilagay dito ang mga folder ng addon, pagkatapos ay muling buksan ang Dagdag</translation>
+        <translation type="unfinished">Ilagay dito ang mga folder ng addon, pagkatapos ay muling buksan ang Dagdag</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">Naghahanap ng mga dagdag…</translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">Paano gumagana ang AI</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">Pinipili ng Awtomatiko ang pinakamabilis na opsyon na naka-install sa iyo, at ginagamit ang kompyuter na ito kung hindi makakatulong ang sistemang grapiko.</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished">Mag-install ng AI Engine sa ibaba para magamit ang mga awtomatikong caption, subject cutout, mga nakakatawang epekto sa mukha, at pag-alis ng ingay.</translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">I-restart ang Drift para magkabisa ito.</translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">Hindi maabot ang tindahan ng pag-download</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">Walang laman sa kategoryang ito</translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">Suriin ang iyong koneksyon at subukan muli.</translation>
+    </message>
+    <message>
+        <source>Pick another category above.</source>
+        <translation type="unfinished">Pumili ng ibang kategorya sa itaas.</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Subukan muli</translation>
     </message>
 </context>
 <context>
@@ -683,10 +690,186 @@
     </message>
 </context>
 <context>
+    <name>AndroidAddPage</name>
+    <message>
+        <source>Library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Properties</source>
+        <translation type="unfinished">Mga Katangian</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidAdjustPage</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">Exposure</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">Contrast</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">Saturation</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">Temperatura</translation>
+    </message>
+    <message>
+        <source>Adjust %1</source>
+        <translation type="unfinished">I-adjust ang %1</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">I-reset</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">I-reset ang %1</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidBackgroundPage</name>
+    <message>
+        <source>Choose background image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">Solid</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">Blur</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation type="unfinished">Imahe</translation>
+    </message>
+    <message>
+        <source>Blur strength</source>
+        <translation type="unfinished">Lakas ng blur</translation>
+    </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose another image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBottomRail</name>
     <message>
-        <source>Edit</source>
-        <translation>Pagbabago</translation>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">Volume</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Bilis</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animasyon</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mask</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">Paghahalo</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Transisyon</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Camera</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">Patatagin</translation>
+    </message>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">I-edit ang teksto</translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">Estilo ng teksto</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Mga Subtitle</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">Estilo ng hugis</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">Galaw</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D Model</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">Pagbabagong-anyo</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">I-crop</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Background</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -700,9 +883,20 @@
         <source>Transitions</source>
         <translation>Pagbabagong-kalagayan</translation>
     </message>
+</context>
+<context>
+    <name>AndroidClipRangeBar</name>
     <message>
-        <source>Tap a clip to edit it</source>
-        <translation>I-tap ang isang clip para baguhin ito</translation>
+        <source>Pause</source>
+        <translation type="unfinished">I-pause</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">I-play</translation>
+    </message>
+    <message>
+        <source>Seek</source>
+        <translation type="unfinished">Mag-seek</translation>
     </message>
 </context>
 <context>
@@ -805,6 +999,33 @@
     </message>
 </context>
 <context>
+    <name>AndroidCropPage</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">Libre</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">Orihinal</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">Clip</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Video</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">Paikutin</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">I-reset</translation>
+    </message>
+</context>
+<context>
     <name>AndroidDownloadJobRow</name>
     <message>
         <source>Cancel download</source>
@@ -844,6 +1065,130 @@
 <context>
     <name>AndroidEditor</name>
     <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">Volume</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">Bilis</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">Pagbabagong-anyo</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">I-crop</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">Background</translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">Sticker</translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">Hugis</translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Teksto</translation>
+    </message>
+    <message>
+        <source>Add text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">Estilo ng teksto</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animasyon</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">Paghahalo</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">Estilo ng hugis</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">Patatagin</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">Galaw</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D Model</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Camera</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">Mask</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">Epektong audyo</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Transisyon</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Mga Subtitle</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">Magdagdag ng mask</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">I-tap ang isang clip para baguhin ito</translation>
+    </message>
+    <message>
         <source>Drift project (*.drift)</source>
         <translation>Proyekto ng Drift (*.drift)</translation>
     </message>
@@ -874,14 +1219,6 @@
     <message>
         <source>Open Media</source>
         <translation>Buksan ang Media</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>Pagbabago</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>Tapos na</translation>
     </message>
 </context>
 <context>
@@ -928,6 +1265,44 @@
     </message>
 </context>
 <context>
+    <name>AndroidFiltersPage</name>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidHome</name>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">May available na update</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Dagdag</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Mga Setting</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Projects</source>
+        <translation type="unfinished">Mga Proyekto</translation>
+    </message>
+    <message>
+        <source>My videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidHomeRecentCard</name>
     <message>
         <source>Untitled</source>
@@ -947,10 +1322,58 @@
     </message>
 </context>
 <context>
-    <name>AndroidHomeWordmark</name>
+    <name>AndroidHomeTab</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>Mabilis na gumawa ng mga pulidong video</translation>
+        <source>Quick edit</source>
+        <translation type="unfinished">Mabilis na pag-edit</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished">Sticker</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">Teksto</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">I-crop</translation>
+    </message>
+    <message>
+        <source>Trim</source>
+        <translation type="unfinished">I-trim</translation>
+    </message>
+    <message>
+        <source>Video to audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image to video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">Bagong proyekto</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">Mga kamakailang proyekto</translation>
+    </message>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">Tingnan lahat</translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished">Wala pa rito — lalabas sa listahang ito ang mga proyektong ise-save mo.</translation>
     </message>
 </context>
 <context>
@@ -1074,6 +1497,26 @@
         <translation>Naitakda ang canvas sa %1×%2 sa %3 fps mula sa iyong unang clip.</translation>
     </message>
     <message>
+        <source>Pick a video or image to crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a video or audio file to trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">I-export</translation>
+    </message>
+    <message>
+        <source>How long should the image play?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That share had no link in it.</source>
         <translation>Walang link ang ibinahaging iyon.</translation>
     </message>
@@ -1108,6 +1551,14 @@
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>Hindi malikha ang maibabahaging kopya: %1</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">Mga Setting</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Dagdag</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1587,6 +2038,29 @@
     </message>
 </context>
 <context>
+    <name>AndroidMyVideosTab</name>
+    <message>
+        <source>Video actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished">Ibahagi</translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No exported videos yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported videos appear here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidNotificationsSheet</name>
     <message>
         <source>Notifications</source>
@@ -1812,24 +2286,12 @@
 <context>
     <name>AndroidProjectsPage</name>
     <message>
-        <source>Quick edit</source>
-        <translation>Mabilis na pag-edit</translation>
-    </message>
-    <message>
-        <source>Pick a clip, start now</source>
-        <translation>Pumili ng clip, magsimula ngayon</translation>
-    </message>
-    <message>
         <source>New project</source>
         <translation>Bagong proyekto</translation>
     </message>
     <message>
-        <source>Choose a canvas, start empty</source>
-        <translation>Pumili ng canvas, magsimula nang walang laman</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>Mga kamakailang proyekto</translation>
+        <source>Search projects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open</source>
@@ -1840,8 +2302,20 @@
         <translation>Magbukas ng proyekto mula sa device na ito</translation>
     </message>
     <message>
-        <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>Wala pa rito — lalabas sa listahang ito ang mga proyektong ise-save mo.</translation>
+        <source>No projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished">Walang mga tugma</translation>
+    </message>
+    <message>
+        <source>Projects you save will show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished">Subukan ang ibang pangalan.</translation>
     </message>
 </context>
 <context>
@@ -1883,6 +2357,20 @@
     <message>
         <source>Close</source>
         <translation>Isara</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSpeedPage</name>
+    <message>
+        <source>Speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSubPage</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Bumalik</translation>
     </message>
 </context>
 <context>
@@ -1937,6 +2425,13 @@
     <message>
         <source>Done</source>
         <translation>Tapos na</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidTextPage</name>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished">I-edit ang teksto</translation>
     </message>
 </context>
 <context>
@@ -2087,6 +2582,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidToolPage</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Kanselahin</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Gamitin</translation>
+    </message>
+</context>
+<context>
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
@@ -2158,6 +2664,21 @@
     <message>
         <source>Transform</source>
         <translation>Pagbabagong-anyo</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidVolumePage</name>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 s</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">Unti-unting paglitaw</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">Unti-unting paglaho</translation>
     </message>
 </context>
 <context>
@@ -20547,6 +21068,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Font</source>
         <translation>Font</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Weight</source>

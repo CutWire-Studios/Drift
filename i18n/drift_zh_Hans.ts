@@ -108,173 +108,180 @@
         <source>Close</source>
         <translation>关闭</translation>
     </message>
+</context>
+<context>
+    <name>AddonManagerPanel</name>
     <message>
         <source>Remove this pack?</source>
-        <translation>要移除这个包吗？</translation>
+        <translation type="unfinished">要移除这个包吗？</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation>移除</translation>
+        <translation type="unfinished">移除</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation>“%1” 和它下载的数据将被删除。你可以稍后再重新安装。</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation>安装此转场？</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation>安装此音效？</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation>安装此效果？</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation>“%1”（作者：%2）</translation>
+        <translation type="unfinished">“%1” 和它下载的数据将被删除。你可以稍后再重新安装。</translation>
     </message>
     <message>
         <source>Install Addon</source>
-        <translation>安装附加包</translation>
+        <translation type="unfinished">安装附加包</translation>
     </message>
     <message>
         <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Drift 附加包 (*.driftpkg *.driftfx *.zip)</translation>
+        <translation type="unfinished">Drift 附加包 (*.driftpkg *.driftfx *.zip)</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation>安装非官方附加包？</translation>
+        <translation type="unfinished">安装非官方附加包？</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation>仍要安装</translation>
+        <translation type="unfinished">仍要安装</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1”（作者：%2）</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation>“%1”</translation>
+        <translation type="unfinished">“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>%1 未由 Drift 团队签名。请只安装你信任的文件。</translation>
+        <translation type="unfinished">%1 未由 Drift 团队签名。请只安装你信任的文件。</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation>其中包含会在你的电脑上运行的代码。</translation>
+        <translation type="unfinished">其中包含会在你的电脑上运行的代码。</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation>它将替换“%1”。</translation>
+        <translation type="unfinished">它将替换“%1”。</translation>
     </message>
     <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>%1 由用户制作，并非来自 Drift 团队，且未经任何检查。请只安装你信任的文件。</translation>
+        <source>Install this transition?</source>
+        <translation type="unfinished">安装此转场？</translation>
     </message>
     <message>
-        <source>Could not install “%1”: %2</source>
-        <translation>无法安装“%1”：%2</translation>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">安装此音效？</translation>
     </message>
     <message>
-        <source>Installed “%1”</source>
-        <translation>已安装“%1”</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>所有</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>效果</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>转场</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>音效</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>外观</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>字体</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>贴纸</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>AI 工具</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation>AI 引擎</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation>正在检查附加项中…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation>AI 如何运行</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation>如果你的显卡不起作用，就会在这台电脑自动以最快选项安装。</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation>在下面安装 AI 引擎以解锁自动字幕、智能抠图、有趣的面部效果和降噪功能。</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation>重启 Drift 以生效。</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation>无法抓取下载商店</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>此类别中没有内容</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation>请检查您的连接并重试。</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation>在此选择另一类别。</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>重试</translation>
+        <source>Install this effect?</source>
+        <translation type="unfinished">安装此效果？</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation>安装</translation>
+        <translation type="unfinished">安装</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 由用户制作，并非来自 Drift 团队，且未经任何检查。请只安装你信任的文件。</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">无法安装“%1”：%2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">已安装“%1”</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">关闭</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">转场</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">音效</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">字体</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI 工具</translation>
+    </message>
+    <message>
+        <source>AI engine</source>
+        <translation type="unfinished">AI 引擎</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation>自定义</translation>
+        <translation type="unfinished">自定义</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation>从文件安装…</translation>
+        <translation type="unfinished">从文件安装…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation>打开附加包文件夹</translation>
+        <translation type="unfinished">打开附加包文件夹</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation>将附加包文件夹放到这里，然后重新打开“扩展”</translation>
+        <translation type="unfinished">将附加包文件夹放到这里，然后重新打开“扩展”</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">正在检查附加项中…</translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI 如何运行</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">如果你的显卡不起作用，就会在这台电脑自动以最快选项安装。</translation>
+    </message>
+    <message>
+        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished">在下面安装 AI 引擎以解锁自动字幕、智能抠图、有趣的面部效果和降噪功能。</translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">重启 Drift 以生效。</translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">无法抓取下载商店</translation>
+    </message>
+    <message>
+        <source>Nothing in this category</source>
+        <translation type="unfinished">此类别中没有内容</translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">请检查您的连接并重试。</translation>
+    </message>
+    <message>
+        <source>Pick another category above.</source>
+        <translation type="unfinished">在此选择另一类别。</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">重试</translation>
     </message>
 </context>
 <context>
@@ -683,10 +690,185 @@
     </message>
 </context>
 <context>
+    <name>AndroidAddPage</name>
+    <message>
+        <source>Library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Properties</source>
+        <translation type="unfinished">属性</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidAdjustPage</name>
+    <message>
+        <source>Exposure</source>
+        <translation type="unfinished">曝光</translation>
+    </message>
+    <message>
+        <source>Contrast</source>
+        <translation type="unfinished">对比度</translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished">饱和度</translation>
+    </message>
+    <message>
+        <source>Temperature</source>
+        <translation type="unfinished">色温</translation>
+    </message>
+    <message>
+        <source>Adjust %1</source>
+        <translation type="unfinished">调整 %1</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">重置</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished">重置 %1</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidBackgroundPage</name>
+    <message>
+        <source>Choose background image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill canvas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation type="unfinished">纯色</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation type="unfinished">模糊</translation>
+    </message>
+    <message>
+        <source>Image</source>
+        <translation type="unfinished">图像</translation>
+    </message>
+    <message>
+        <source>Blur strength</source>
+        <translation type="unfinished">模糊强度</translation>
+    </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose another image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidBottomRail</name>
     <message>
-        <source>Edit</source>
-        <translation>编辑</translation>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">音量</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">动画</translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">蒙版</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">混合</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">转场</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">防抖</translation>
+    </message>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">文本样式</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">形状样式</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">运动</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D 模型</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n clip(s) selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">变换</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">裁剪</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">背景</translation>
     </message>
     <message>
         <source>Effects</source>
@@ -700,9 +882,20 @@
         <source>Transitions</source>
         <translation>转场</translation>
     </message>
+</context>
+<context>
+    <name>AndroidClipRangeBar</name>
     <message>
-        <source>Tap a clip to edit it</source>
-        <translation>点按片段进行编辑</translation>
+        <source>Pause</source>
+        <translation type="unfinished">暂停</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">播放</translation>
+    </message>
+    <message>
+        <source>Seek</source>
+        <translation type="unfinished">跳转</translation>
     </message>
 </context>
 <context>
@@ -805,6 +998,33 @@
     </message>
 </context>
 <context>
+    <name>AndroidCropPage</name>
+    <message>
+        <source>Free</source>
+        <translation type="unfinished">自由</translation>
+    </message>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">原始</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation type="unfinished">片段</translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">视频</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">旋转</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">重置</translation>
+    </message>
+</context>
+<context>
     <name>AndroidDownloadJobRow</name>
     <message>
         <source>Cancel download</source>
@@ -844,6 +1064,130 @@
 <context>
     <name>AndroidEditor</name>
     <message>
+        <source>Effects</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">音量</translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <translation type="unfinished">速度</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation type="unfinished">变换</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">裁剪</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation type="unfinished">背景</translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">形状</translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">文本</translation>
+    </message>
+    <message>
+        <source>Add text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text style</source>
+        <translation type="unfinished">文本样式</translation>
+    </message>
+    <message>
+        <source>Text settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">动画</translation>
+    </message>
+    <message>
+        <source>Blending</source>
+        <translation type="unfinished">混合</translation>
+    </message>
+    <message>
+        <source>Shape style</source>
+        <translation type="unfinished">形状样式</translation>
+    </message>
+    <message>
+        <source>Stabilize</source>
+        <translation type="unfinished">防抖</translation>
+    </message>
+    <message>
+        <source>Motion</source>
+        <translation type="unfinished">运动</translation>
+    </message>
+    <message>
+        <source>3D Model</source>
+        <translation type="unfinished">3D 模型</translation>
+    </message>
+    <message>
+        <source>PDF</source>
+        <translation type="unfinished">PDF</translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mask</source>
+        <translation type="unfinished">蒙版</translation>
+    </message>
+    <message>
+        <source>Audio FX</source>
+        <translation type="unfinished">音效</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">转场</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add mask</source>
+        <translation type="unfinished">添加蒙版</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit it</source>
+        <translation type="unfinished">点按片段进行编辑</translation>
+    </message>
+    <message>
         <source>Drift project (*.drift)</source>
         <translation>Drift 项目 (*.drift)</translation>
     </message>
@@ -874,14 +1218,6 @@
     <message>
         <source>Open Media</source>
         <translation>打开媒体</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>编辑</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation>完成</translation>
     </message>
 </context>
 <context>
@@ -928,6 +1264,44 @@
     </message>
 </context>
 <context>
+    <name>AndroidFiltersPage</name>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidHome</name>
+    <message>
+        <source>Update available</source>
+        <translation type="unfinished">有可用更新</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">附加项</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">设置</translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Projects</source>
+        <translation type="unfinished">项目</translation>
+    </message>
+    <message>
+        <source>My videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidHomeRecentCard</name>
     <message>
         <source>Untitled</source>
@@ -947,10 +1321,58 @@
     </message>
 </context>
 <context>
-    <name>AndroidHomeWordmark</name>
+    <name>AndroidHomeTab</name>
     <message>
-        <source>Create polished videos fast</source>
-        <translation>快速制作精美视频</translation>
+        <source>Quick edit</source>
+        <translation type="unfinished">快速剪辑</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Adjust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sticker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished">文本</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation type="unfinished">裁剪</translation>
+    </message>
+    <message>
+        <source>Trim</source>
+        <translation type="unfinished">修剪</translation>
+    </message>
+    <message>
+        <source>Video to audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Image to video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New project</source>
+        <translation type="unfinished">新建项目</translation>
+    </message>
+    <message>
+        <source>Recent projects</source>
+        <translation type="unfinished">最近项目</translation>
+    </message>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">查看全部</translation>
+    </message>
+    <message>
+        <source>Nothing here yet — projects you save will show up in this list.</source>
+        <translation type="unfinished">这里还没有内容——您保存的项目将显示在此列表中。</translation>
     </message>
 </context>
 <context>
@@ -1074,6 +1496,26 @@
         <translation>已根据第一个片段将画布设为 %1×%2、%3 fps。</translation>
     </message>
     <message>
+        <source>Pick a video or image to crop.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a video or audio file to trim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">导出</translation>
+    </message>
+    <message>
+        <source>How long should the image play?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>That share had no link in it.</source>
         <translation>该分享内容中没有链接。</translation>
     </message>
@@ -1108,6 +1550,14 @@
     <message>
         <source>Couldn&apos;t create the shareable copy: %1</source>
         <translation>无法创建可分享副本：%1</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished">设置</translation>
+    </message>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">附加项</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -1587,6 +2037,29 @@
     </message>
 </context>
 <context>
+    <name>AndroidMyVideosTab</name>
+    <message>
+        <source>Video actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished">分享</translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No exported videos yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exported videos appear here</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidNotificationsSheet</name>
     <message>
         <source>Notifications</source>
@@ -1812,24 +2285,12 @@
 <context>
     <name>AndroidProjectsPage</name>
     <message>
-        <source>Quick edit</source>
-        <translation>快速剪辑</translation>
-    </message>
-    <message>
-        <source>Pick a clip, start now</source>
-        <translation>选个片段，即刻开始</translation>
-    </message>
-    <message>
         <source>New project</source>
         <translation>新建项目</translation>
     </message>
     <message>
-        <source>Choose a canvas, start empty</source>
-        <translation>选择画布，从空白开始</translation>
-    </message>
-    <message>
-        <source>Recent projects</source>
-        <translation>最近项目</translation>
+        <source>Search projects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open</source>
@@ -1840,8 +2301,20 @@
         <translation>从此设备打开项目</translation>
     </message>
     <message>
-        <source>Nothing here yet — projects you save will show up in this list.</source>
-        <translation>这里还是空的——保存的项目会显示在此列表中。</translation>
+        <source>No projects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished">无匹配项</translation>
+    </message>
+    <message>
+        <source>Projects you save will show up here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try a different name.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1883,6 +2356,20 @@
     <message>
         <source>Close</source>
         <translation>关闭</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSpeedPage</name>
+    <message>
+        <source>Speed curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AndroidSubPage</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1937,6 +2424,13 @@
     <message>
         <source>Done</source>
         <translation>完成</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidTextPage</name>
+    <message>
+        <source>Edit text</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2086,6 +2580,17 @@
     </message>
 </context>
 <context>
+    <name>AndroidToolPage</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">应用</translation>
+    </message>
+</context>
+<context>
     <name>AndroidTopBar</name>
     <message>
         <source>Back</source>
@@ -2156,6 +2661,21 @@
     <message>
         <source>Transform</source>
         <translation>变换</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidVolumePage</name>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished">%1 秒</translation>
+    </message>
+    <message>
+        <source>Fade in</source>
+        <translation type="unfinished">淡入</translation>
+    </message>
+    <message>
+        <source>Fade out</source>
+        <translation type="unfinished">淡出</translation>
     </message>
 </context>
 <context>
@@ -20475,6 +20995,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Font</source>
         <translation>字体</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Weight</source>
