@@ -139,10 +139,10 @@ Item {
         color: Theme.c.androidToolPage.background
     }
 
-    // Nothing under the page may receive touches.
+    // Nothing under the page may receive touches. Stealing stays allowed: a press on a clip body in
+    // the preview falls through to here, and its DragHandler must be able to take the grab back.
     MouseArea {
         anchors.fill: parent
-        preventStealing: true
         onPressed: mouse => mouse.accepted = true
     }
 
