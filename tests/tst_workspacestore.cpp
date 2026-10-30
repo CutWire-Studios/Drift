@@ -159,7 +159,7 @@ void WorkspaceStoreTest::acceptsTabPanelTypes()
         QVERIFY(t.value("type").toString().startsWith(t.value("group").toString() + "."));
         QVERIFY(!t.value("tab").toString().isEmpty());
     }
-    QCOMPARE(tabTypes, 31);
+    QCOMPARE(tabTypes, 30);
 }
 
 void WorkspaceStoreTest::sizesAreNormalizedAndSplitCollapses()

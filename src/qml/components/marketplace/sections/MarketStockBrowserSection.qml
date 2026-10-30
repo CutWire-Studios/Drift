@@ -65,10 +65,11 @@ Item {
     }
     readonly property string quotaText: {
         const q = browser.quota
-        if (!q || q.remaining === undefined || q.remaining === null)
+        const remaining = q["remaining"]
+        if (remaining === undefined || remaining === null)
             return ""
-        return q.window === "day" ? qsTr("%n download(s) left today", "", q.remaining)
-                                  : qsTr("%n download(s) left", "", q.remaining)
+        return q["window"] === "day" ? qsTr("%n download(s) left today", "", remaining)
+                                     : qsTr("%n download(s) left", "", remaining)
     }
 
     function submit() {

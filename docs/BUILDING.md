@@ -234,7 +234,7 @@ These are CMake *cache* variables: changing the default in `CMakeLists.txt` does
 
 ### Marketplace
 
-Stock media (photos, video, audio) is fetched from `https://market.cutwire.org/api/v1`. Drift has no per-store adapters; types and providers come from the catalog. Client notes: [docs/marketplace/README.md](marketplace/README.md).
+Stock media (photos, video, audio) is fetched from `https://cutwire.studio/api/v1`. Drift has no per-store adapters; types and providers come from the catalog. Client notes: [docs/marketplace/README.md](marketplace/README.md).
 
 ```bash
 cmake -B build -DDRIFT_MARKET_API_URL=https://market.example.com/api/v1 \

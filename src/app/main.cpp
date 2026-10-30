@@ -28,6 +28,7 @@
 #include "app/online/downloads/DownloadCenter.h"
 #include "app/online/marketplace/CommunityInstaller.h"
 #include "app/online/marketplace/MarketInstallRouter.h"
+#include "app/online/marketplace/MarketItemLoader.h"
 #include "app/online/marketplace/MarketSourceBrowser.h"
 #include "app/online/marketplace/MarketServices.h"
 #include "app/online/marketplace/MarketplaceManifest.h"
@@ -790,6 +791,7 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "Sfx", &market.sfx);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Marketplace", &market.manifest);
     qmlRegisterType<MarketSourceBrowser>("Drift", 1, 0, "MarketSourceBrowser");
+    qmlRegisterType<MarketItemLoader>("Drift", 1, 0, "MarketItemLoader");
     qmlRegisterSingletonInstance("Drift", 1, 0, "Downloads", downloads);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Updates", &updateChecker);
     qmlRegisterSingletonInstance("Drift", 1, 0, "LayoutMemory", &layoutStore);
