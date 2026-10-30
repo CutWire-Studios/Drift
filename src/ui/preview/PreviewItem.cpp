@@ -228,8 +228,14 @@ QSGNode *PreviewItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     }
     const qreal scale = qMin(bounds.width() / drawSize.width(),
                              bounds.height() / drawSize.height());
-    const qreal drawW = drawSize.width() * scale;
-    const qreal drawH = drawSize.height() * scale;
+    qreal drawW = drawSize.width() * scale;
+    qreal drawH = drawSize.height() * scale;
+    // The compositor rounds each axis of the frame on its own, so a frame for a box of the same
+    // aspect comes back up to a texel off; fitting that leaves a sliver of the backing showing.
+    if (bounds.width() - drawW <= scale && bounds.height() - drawH <= scale) {
+        drawW = bounds.width();
+        drawH = bounds.height();
+    }
     const qreal x = bounds.x() + (bounds.width() - drawW) / 2.0;
     const qreal y = bounds.y() + (bounds.height() - drawH) / 2.0;
     node->setRect(QRectF(x, y, drawW, drawH));
