@@ -1440,8 +1440,8 @@ set_source_files_properties(src/qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE t
 # Canvas preset catalog + the (template, quality) -> pixels arithmetic, shared by the desktop
 # layout dialog and the phone layout sheet so the two cannot drift apart again.
 set_source_files_properties(src/qml/LayoutPresets.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
-# How a download job renders as words, shared by the desktop DownloadsWindow and the phone
-# AndroidDownloadsSheet so the two hosts of the same jobs cannot word them differently.
+# How a download job renders as words, shared by the desktop Marketplace and the phone
+# download rows so the two hosts of the same jobs cannot word them differently.
 set_source_files_properties(src/qml/DownloadFormat.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # Import + reporting policy, needed by surfaces that have no AssetsPanel to borrow it from.
 set_source_files_properties(src/qml/MediaImport.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
@@ -1499,7 +1499,6 @@ qt_add_qml_module(drift
         src/qml/AndroidShareTargetSheet.qml
         src/qml/AndroidLinkImport.qml
         src/qml/DownloadFormat.qml
-        src/qml/AndroidDownloadsSheet.qml
         src/qml/AndroidNotificationsSheet.qml
         src/qml/components/shell/NavRailButton.qml
         # Touch entry point, loaded instead of Main.qml on Android (see src/app/main.cpp).
@@ -1567,7 +1566,6 @@ qt_add_qml_module(drift
         src/qml/MulticamWindow.qml
         src/qml/DenoiseWindow.qml
         src/qml/RestoreWindow.qml
-        src/qml/DownloadsWindow.qml
         src/qml/MarketplaceWindow.qml
         src/qml/SpeedCurveWindow.qml
         src/qml/FadeCurveWindow.qml
@@ -1712,15 +1710,9 @@ qt_add_qml_module(drift
         src/qml/components/marketplace/sections/MarketStockBrowserSection.qml
         src/qml/components/marketplace/sections/MarketSfxSection.qml
         src/qml/components/marketplace/sections/MarketDownloadsSection.qml
-        src/qml/components/assets/MarketTab.qml
         src/qml/components/assets/MarketSearchField.qml
-        src/qml/components/assets/DriftAssetsHome.qml
         src/qml/components/assets/DriftAssetCard.qml
-        src/qml/components/assets/DriftAssetDetail.qml
-        src/qml/components/assets/StockBrowser.qml
-        src/qml/components/assets/SfxBrowser.qml
         src/qml/components/assets/StockThumb.qml
-        src/qml/components/assets/StockItemDetail.qml
         src/qml/components/assets/BinBreadcrumb.qml
         src/qml/components/assets/AssetCategoryChips.qml
         src/qml/components/assets/EffectStacksSection.qml

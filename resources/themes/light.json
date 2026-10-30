@@ -3212,12 +3212,6 @@
       "iconBackground": "$semantic.panel.accent",
       "iconRadius": "$metrics.radius.sm"
     },
-    "downloadsWindow": {
-      "background": "$semantic.surface.app",
-      "border": "$semantic.border",
-      "borderWidth": "$metrics.borderWidth",
-      "foreground": "$semantic.foreground"
-    },
     "driftAssetCard": {
       "accent": "$semantic.primary",
       "background": "$semantic.panel.accent",
@@ -3228,38 +3222,6 @@
       "icon": "$semantic.mutedForeground",
       "radius": "$metrics.radius.md",
       "radiusPill": "$metrics.radius.pill"
-    },
-    "driftAssetDetail": {
-      "accent": "$semantic.accentOnPanel",
-      "background": "$semantic.surface.panel",
-      "foreground": "$semantic.panel.foreground",
-      "foregroundHover": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
-      "previewBackground": "$semantic.panel.accent",
-      "previewRadius": "$metrics.radius.md",
-      "styleBackground": "$semantic.panel.accent",
-      "styleBorder": "$semantic.panel.border",
-      "styleBorderSelected": "$semantic.primary",
-      "styleBorderWidth": "$metrics.borderWidth",
-      "styleBorderWidthFocus": "$metrics.borderWidthFocus",
-      "styleRadius": "$metrics.radius.sm",
-      "styleRadiusPill": "$metrics.radius.pill",
-      "swatchBorder": "$semantic.panel.border",
-      "swatchBorderHover": "$semantic.primary",
-      "swatchBorderWidth": "$metrics.borderWidth",
-      "swatchBorderWidthFocus": "$metrics.borderWidthFocus",
-      "swatchRadius": "$metrics.radius.sm"
-    },
-    "driftAssetsHome": {
-      "foreground": "$semantic.panel.foreground",
-      "foregroundHover": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
-      "icon": "$semantic.mutedForeground",
-      "rowBackgroundHover": "$semantic.popoverHover",
-      "rowRadius": "$metrics.radius.sm",
-      "scrim": "$semantic.scrim",
-      "sheetRadius": "$metrics.radius.lg",
-      "skeletonRadius": "$metrics.radius.md"
     },
     "effectBrowser": {
       "foreground": "$semantic.panel.foreground",
@@ -3322,10 +3284,6 @@
       "foregroundMuted": "$semantic.mutedForeground",
       "indicatorHeight": 2,
       "indicatorRadius": 1
-    },
-    "marketTab": {
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth"
     },
     "marketplace": {
       "background": "$semantic.surface.app",
@@ -3481,9 +3439,6 @@
       "foregroundMuted": "$semantic.mutedForeground",
       "warning": "$semantic.warning"
     },
-    "sfxBrowser": {
-      "foregroundMuted": "$semantic.mutedForeground"
-    },
     "sfxSoundRow": {
       "backgroundHover": "$semantic.popoverHover",
       "foreground": "$semantic.panel.foreground",
@@ -3529,27 +3484,6 @@
       "radius": "$metrics.radius.sm",
       "trackBackground": "$semantic.panel.muted",
       "trackRadius": 1
-    },
-    "stockBrowser": {
-      "accent": "$semantic.primary",
-      "accentForeground": "$semantic.primaryForeground",
-      "badgeRadius": "$metrics.radius.pill",
-      "foreground": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
-      "linkBackground": "$semantic.panel.accent",
-      "linkBackgroundHover": "$semantic.popoverHover",
-      "linkRadius": "$metrics.radius.md",
-      "scrim": "$semantic.scrim",
-      "sheetRadius": "$metrics.radius.lg"
-    },
-    "stockItemDetail": {
-      "accent": "$semantic.accentOnPanel",
-      "background": "$semantic.surface.panel",
-      "foreground": "$semantic.panel.foreground",
-      "foregroundHover": "$semantic.panel.foreground",
-      "foregroundMuted": "$semantic.mutedForeground",
-      "previewBackground": "$semantic.panel.accent",
-      "previewRadius": "$metrics.radius.md"
     },
     "stockThumb": {
       "background": "$semantic.panel.accent",
