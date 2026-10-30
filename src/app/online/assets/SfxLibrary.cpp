@@ -1,25 +1,17 @@
 #include "app/online/assets/SfxLibrary.h"
 
-#include "app/bin/AssetLibrary.h"
-#include "app/online/market/MarketClient.h"
+#include "app/online/downloads/DownloadCenter.h"
+#include "app/online/marketplace/MarketInstall.h"
 #include "app/online/marketplace/MarketTransport.h"
 
-#include <QCryptographicHash>
 #include <QDir>
-#include <QFile>
 #include <QFileInfo>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include <QRegularExpression>
 #include <QStandardPaths>
 
-#include <algorithm>
+using namespace drift::market;
 
 namespace {
-
-constexpr int kFileTimeoutMs = 60000;
 
 bool validId(const QString &id)
 {
@@ -27,20 +19,28 @@ bool validId(const QString &id)
     return re.match(id).hasMatch();
 }
 
-bool validName(const QString &name)
-{
-    return !name.isEmpty() && !name.contains(QLatin1Char('/')) && !name.contains(QLatin1Char('\\'))
-        && name != QLatin1String(".") && name != QLatin1String("..");
-}
-
 } // namespace
 
-SfxLibrary::SfxLibrary(MarketClient *market, AssetLibrary *library, QObject *parent)
-    : QObject(parent)
-    , m_market(market)
-    , m_library(library)
-    , m_network(new QNetworkAccessManager(this))
+struct SfxLibrary::Install
 {
+    QString id;
+    QString title;
+    QString dir;
+    QString path;
+    bool cancelled = false;
+    QPointer<Call> call;
+    QPointer<FileFetch> fetch;
+};
+
+SfxLibrary::SfxLibrary(QObject *parent, MarketTransport *transport, DownloadCenter *center)
+    : QObject(parent)
+    , m_transport(transport ? transport : MarketTransport::instance())
+    , m_center(center ? center : DownloadCenter::instance())
+{
+    const int prefix = int(qstrlen("sfx:"));
+    m_center->registerHandler(
+        QStringLiteral("sfx"), [this, prefix](const QString &id) { cancel(id.mid(prefix)); },
+        [this, prefix](const QString &id) { install(m_items.value(id.mid(prefix))); });
 }
 
 QString SfxLibrary::installRoot()
@@ -48,93 +48,18 @@ QString SfxLibrary::installRoot()
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/sfx");
 }
 
-void SfxLibrary::refresh()
+QString SfxLibrary::jobId(const QString &id)
 {
-    if (m_loading || !m_market || !m_market->configured())
-        return;
-    m_loading = true;
-    emit loadingChanged();
-    QNetworkReply *reply = drift::market::MarketTransport::instance()->get(QStringLiteral("/sfx"));
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        reply->deleteLater();
-        m_loading = false;
-        emit loadingChanged();
-        const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-        const QString error = reply->error() == QNetworkReply::NoError && doc.isObject()
-            ? QString()
-            : tr("Could not load sound effects. Check your connection and try again.");
-        if (error != m_error) {
-            m_error = error;
-            emit errorChanged();
-        }
-        if (error.isEmpty())
-            applyLibrary(doc.object());
-    });
+    return QStringLiteral("sfx:") + id;
 }
 
-void SfxLibrary::applyLibrary(const QJsonObject &library)
+QString SfxLibrary::localPath(const QString &id) const
 {
-    m_categories.clear();
-    m_sounds.clear();
-    m_index.clear();
-    for (const QJsonValue &c : library.value(QStringLiteral("categories")).toArray())
-        m_categories.append(c.toObject().toVariantMap());
-    for (const QJsonValue &v : library.value(QStringLiteral("sounds")).toArray()) {
-        QVariantMap sound = v.toObject().toVariantMap();
-        const QString id = sound.value(QStringLiteral("id")).toString();
-        if (!validId(id) || !validName(sound.value(QStringLiteral("file")).toString())
-            || m_index.contains(id))
-            continue;
-        // The wire carries 64 base64 bytes; QML draws 0-1 levels.
-        QVariantList peaks;
-        for (const char b : QByteArray::fromBase64(sound.value(QStringLiteral("peaks")).toString().toLatin1()))
-            peaks.append(static_cast<unsigned char>(b) / 255.0);
-        sound.insert(QStringLiteral("peaks"), peaks);
-        m_index.insert(id, m_sounds.size());
-        m_sounds.append(sound);
-    }
-    m_loaded = true;
-    emit libraryChanged();
-    ++m_revision;
-    emit revisionChanged();
-}
-
-QVariantList SfxLibrary::filter(const QString &query, const QString &category,
-                                const QString &subcategory) const
-{
-    const QStringList words = query.toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
-    QVariantList out;
-    for (const QVariant &v : m_sounds) {
-        const QVariantMap sound = v.toMap();
-        const QString cat = sound.value(QStringLiteral("category")).toString();
-        const QString sub = sound.value(QStringLiteral("subcategory")).toString();
-        if ((!category.isEmpty() && cat != category) || (!subcategory.isEmpty() && sub != subcategory))
-            continue;
-        const QString hay = (sound.value(QStringLiteral("name")).toString() + QLatin1Char(' ') + cat
-                             + QLatin1Char(' ') + sub)
-                                .toLower();
-        if (std::all_of(words.cbegin(), words.cend(), [&](const QString &w) { return hay.contains(w); }))
-            out.append(sound);
-    }
-    return out;
-}
-
-QVariantMap SfxLibrary::soundById(const QString &id) const
-{
-    const int i = m_index.value(id, -1);
-    return i < 0 ? QVariantMap() : m_sounds.at(i).toMap();
-}
-
-QString SfxLibrary::pathFor(const QVariantMap &sound) const
-{
-    return installRoot() + QLatin1Char('/') + sound.value(QStringLiteral("id")).toString()
-        + QLatin1Char('/') + sound.value(QStringLiteral("file")).toString();
-}
-
-bool SfxLibrary::isInstalled(const QVariantMap &sound) const
-{
-    const QFileInfo info(pathFor(sound));
-    return info.isFile() && info.size() == sound.value(QStringLiteral("size")).toLongLong();
+    if (!validId(id))
+        return {};
+    const QDir dir(installRoot() + QLatin1Char('/') + id);
+    const QStringList names = dir.entryList({QStringLiteral("*"), QStringLiteral("!*.partial")}, QDir::Files, QDir::Name);
+    return names.isEmpty() ? QString() : dir.filePath(names.first());
 }
 
 QString SfxLibrary::state(const QString &id) const
@@ -142,14 +67,16 @@ QString SfxLibrary::state(const QString &id) const
     const QString s = m_states.value(id);
     if (!s.isEmpty() && s != QLatin1String("installed"))
         return s;
-    const QVariantMap sound = soundById(id);
-    return !sound.isEmpty() && isInstalled(sound) ? QStringLiteral("installed") : QStringLiteral("none");
+    return localPath(id).isEmpty() ? QStringLiteral("none") : QStringLiteral("installed");
 }
 
-QString SfxLibrary::localPath(const QString &id) const
+QVariantList SfxLibrary::peaksOf(const QVariantMap &item) const
 {
-    const QVariantMap sound = soundById(id);
-    return !sound.isEmpty() && isInstalled(sound) ? pathFor(sound) : QString();
+    QVariantList peaks;
+    const QString encoded = item.value(QStringLiteral("extra")).toMap().value(QStringLiteral("peaks")).toString();
+    for (const char b : QByteArray::fromBase64(encoded.toLatin1()))
+        peaks.append(static_cast<unsigned char>(b) / 255.0);
+    return peaks;
 }
 
 void SfxLibrary::setState(const QString &id, const QString &state)
@@ -157,78 +84,133 @@ void SfxLibrary::setState(const QString &id, const QString &state)
     m_states.insert(id, state);
     ++m_revision;
     emit revisionChanged();
+    emit stateChanged(id);
 }
 
-void SfxLibrary::install(const QString &id)
+void SfxLibrary::publishStatus(const std::shared_ptr<Install> &install, const QString &status,
+                               const QString &phase, double progress, qint64 bytes, qint64 total,
+                               const QVariantMap &result, const QString &code, const QString &error,
+                               bool retryable)
 {
-    const QVariantMap sound = soundById(id);
-    if (sound.isEmpty() || m_downloads.contains(id))
+    DownloadCenter::Job job;
+    job.id = jobId(install->id);
+    job.kind = QStringLiteral("sfx");
+    job.title = install->title.isEmpty() ? install->id : install->title;
+    job.mediaKind = QStringLiteral("audio");
+    job.status = status;
+    job.phase = phase;
+    job.progress = progress;
+    job.bytesReceived = bytes;
+    job.bytesTotal = total;
+    job.result = result;
+    job.errorCode = code;
+    job.error = error;
+    job.retryable = retryable;
+    job.cancellable = true;
+    m_center->upsert(job);
+}
+
+void SfxLibrary::install(const QVariantMap &item)
+{
+    const QString id = item.value(QStringLiteral("id")).toString();
+    if (!validId(id) || m_installs.contains(id))
         return;
-    if (isInstalled(sound)) {
-        finishInstall(id);
+    m_items.insert(id, item);
+
+    auto install = std::make_shared<Install>();
+    install->id = id;
+    install->title = item.value(QStringLiteral("title")).toString();
+    install->dir = installRoot() + QLatin1Char('/') + id;
+    if (!localPath(id).isEmpty()) {
+        install->path = localPath(id);
+        finish(install);
         return;
     }
 
-    const QString target = pathFor(sound);
-    if (!QDir().mkpath(QFileInfo(target).absolutePath())) {
-        failInstall(id, tr("Could not write to the app data folder."));
-        return;
-    }
-    QNetworkRequest request(sound.value(QStringLiteral("download_url")).toUrl());
-    request.setTransferTimeout(kFileTimeoutMs);
-    QNetworkReply *reply = m_network->get(request);
-    m_downloads.insert(id, reply);
+    m_installs.insert(id, install);
     setState(id, QStringLiteral("installing"));
-    connect(reply, &QNetworkReply::finished, this, [this, id, sound, target, reply]() {
-        reply->deleteLater();
-        if (!m_downloads.contains(id))
+    publishStatus(install, QStringLiteral("queued"), tr("Starting…"), 0);
+    Call *call = requestInstall(m_transport, QStringLiteral("sfx"), id, {});
+    install->call = call;
+    connect(call, &Call::finished, this, [this, install](const Response &response) {
+        if (install->cancelled)
             return;
-        const QByteArray data = reply->readAll();
-        if (reply->error() != QNetworkReply::NoError) {
-            failInstall(id, tr("Could not download that sound. Check your connection and try again."));
-            return;
-        }
-        const QString sha = QString::fromLatin1(
-            QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex());
-        const QString want = sound.value(QStringLiteral("sha256")).toString();
-        if (data.size() != sound.value(QStringLiteral("size")).toLongLong()
-            || (!want.isEmpty() && sha != want)) {
-            failInstall(id, tr("That download was damaged. Try again."));
+        const InstallJob job = parseInstallJob(response);
+        const InstallFile *file = job.ready() ? job.mainFile() : nullptr;
+        if (!file) {
+            fail(install, job.errorCode.isEmpty() ? QStringLiteral("download_failed") : job.errorCode,
+                 job.errorMessage, job.retryable);
             return;
         }
-        const QString partial = target + QStringLiteral(".partial");
-        QFile out(partial);
-        if (!out.open(QIODevice::WriteOnly) || out.write(data) != data.size()) {
-            failInstall(id, tr("Could not write to the app data folder."));
-            return;
-        }
-        out.close();
-        QFile::remove(target);
-        if (!QFile::rename(partial, target)) {
-            QFile::remove(partial);
-            failInstall(id, tr("Could not write to the app data folder."));
-            return;
-        }
-        m_downloads.remove(id);
-        finishInstall(id);
+        install->path = install->dir + QLatin1Char('/') + safeFileName(file->name);
+        auto *fetch = new FileFetch(m_transport, *file, install->path + QStringLiteral(".partial"), this);
+        install->fetch = fetch;
+        connect(fetch, &FileFetch::progress, this, [this, install](qint64 received, qint64 total) {
+            publishStatus(install, QStringLiteral("downloading"), tr("Downloading…"),
+                          total > 0 ? double(received) / double(total) : 0, received, total);
+        });
+        connect(fetch, &FileFetch::finished, this, [this, install](const QString &code, const QString &message) {
+            if (install->cancelled)
+                return;
+            const QString partial = install->path + QStringLiteral(".partial");
+            if (!code.isEmpty()) {
+                QFile::remove(partial);
+                fail(install, code, message, true);
+                return;
+            }
+            QFile::remove(install->path);
+            if (!QFile::rename(partial, install->path)) {
+                QFile::remove(partial);
+                fail(install, QStringLiteral("download_failed"), tr("Could not write to the app data folder."),
+                     true);
+                return;
+            }
+            m_installs.remove(install->id);
+            finish(install);
+        });
+        fetch->start();
     });
 }
 
-void SfxLibrary::finishInstall(const QString &id)
+void SfxLibrary::finish(const std::shared_ptr<Install> &install)
 {
-    const QStringList ids = m_library ? m_library->importLocalPaths({localPath(id)}) : QStringList();
+    publishStatus(install, QStringLiteral("importing"), tr("Importing…"), 1);
+    const QStringList ids = m_importer ? m_importer({install->path}) : QStringList();
     if (ids.isEmpty()) {
-        failInstall(id, tr("Could not add that sound to the media bin."));
+        fail(install, QStringLiteral("download_failed"), tr("Could not add that sound to the media bin."), true);
         return;
     }
-    setState(id, QStringLiteral("installed"));
-    emit ready(id, ids.first());
+    setState(install->id, QStringLiteral("installed"));
+    publishStatus(install, QStringLiteral("done"), tr("In the media bin"), 1, 0, 0,
+                  {{QStringLiteral("path"), install->path}, {QStringLiteral("assetId"), ids.first()}});
+    emit ready(install->id, ids.first());
 }
 
-void SfxLibrary::failInstall(const QString &id, const QString &message)
+void SfxLibrary::fail(const std::shared_ptr<Install> &install, const QString &code, const QString &message,
+                      bool retryable)
 {
-    if (const QPointer<QNetworkReply> reply = m_downloads.take(id); reply)
-        reply->abort();
-    setState(id, QStringLiteral("failed"));
-    emit failed(id, message);
+    m_installs.remove(install->id);
+    if (install->fetch)
+        install->fetch->abort();
+    setState(install->id, QStringLiteral("failed"));
+    publishStatus(install, QStringLiteral("failed"), message, 0, 0, 0, {}, code, message, retryable);
+    emit failed(install->id, message);
+}
+
+void SfxLibrary::cancel(const QString &id)
+{
+    const auto install = m_installs.take(id);
+    if (!install)
+        return;
+    install->cancelled = true;
+    if (install->call)
+        install->call->abort();
+    if (install->fetch)
+        install->fetch->abort();
+    QFile::remove(install->path + QStringLiteral(".partial"));
+    m_states.remove(id);
+    ++m_revision;
+    emit revisionChanged();
+    emit stateChanged(id);
+    publishStatus(install, QStringLiteral("cancelled"), tr("Cancelled"), 0, 0, 0, {}, {}, {}, true);
 }

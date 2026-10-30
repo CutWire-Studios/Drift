@@ -6,9 +6,8 @@ Item {
     signal clicked()
     // The app update also lands in the Downloads window, so the button shows while
     // one is running even without the marketplace.
-    readonly property int activeCount: Market.activeDownloadCount
-                                      + (Updates.downloading || Updates.preparing ? 1 : 0)
-    visible: Market.configured || activeCount > 0
+    readonly property int activeCount: Downloads.activeCount
+    visible: StockInstaller.configured || activeCount > 0
     implicitWidth: downloadsBtn.implicitWidth
     implicitHeight: downloadsBtn.implicitHeight
     width: visible ? implicitWidth : 0

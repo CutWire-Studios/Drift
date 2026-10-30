@@ -615,6 +615,19 @@ void ColorController::importLooks(const QList<QUrl> &urls)
                               QStringLiteral("warning"));
 }
 
+QString ColorController::importLookFile(const QString &path, QString *error)
+{
+    const drift::LookImportResult result = drift::importCubeFiles({path});
+    drift::reloadLookCatalog();
+    rebuildLooks();
+    if (result.importedIds.isEmpty()) {
+        if (error)
+            *error = result.errors.value(0, tr("Could not import that look"));
+        return {};
+    }
+    return result.importedIds.first();
+}
+
 int ColorController::clipsUsingLook(const QString &id) const
 {
     int count = 0;

@@ -16,12 +16,12 @@ Item {
     signal notificationsRequested()
 
     readonly property int downloadCount: {
-        void Market.downloadsRevision
-        return Market.downloads.length
+        void Downloads.revision
+        return Downloads.jobs.length
     }
     readonly property int activeDownloadCount: {
-        void Market.downloadsRevision
-        return Market.activeDownloadCount
+        void Downloads.revision
+        return Downloads.activeCount
     }
 
     // Status bar / camera cutout. Without it the Back, Undo and Export buttons sat

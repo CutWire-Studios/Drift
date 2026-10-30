@@ -1,9 +1,17 @@
+#include "app/online/assets/DriftAssetStore.h"
+#include "app/online/assets/SfxLibrary.h"
+#include "app/online/downloads/DownloadCenter.h"
 #include "app/online/market/MarketIdentity.h"
+#include "app/online/marketplace/CommunityInstaller.h"
+#include "app/online/marketplace/MarketInstallRouter.h"
 #include "app/online/marketplace/MarketSourceBrowser.h"
 #include "app/online/marketplace/MarketTransport.h"
 #include "app/online/marketplace/MarketplaceManifest.h"
+#include "app/online/marketplace/StockInstaller.h"
 
+#include <QCryptographicHash>
 #include <QDateTime>
+#include <QSettings>
 #include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -141,7 +149,18 @@ private slots:
     void browserEncodesQuery();
     void browserReportsErrors();
 
+    void routerDispatchesBySource();
+    void communityRoutesByKind();
+    void communityShaMismatchFails();
+    void communityAppTooOld();
+    void stockJobPollsToDone();
+
 private:
+    QString fileUrl(const QString &name) const;
+    QByteArray readyJob(const QString &source, const QString &name, const QByteArray &bytes,
+                        const QByteArray &sha = {}) const;
+    void serve(const QMap<QString, QByteArray> &files, const std::function<QByteArray(const FakeRequest &)> &install);
+
     FakeServer m_server;
     MarketTransport *m_transport = nullptr;
 };
@@ -459,6 +478,232 @@ void TestMarketplace::browserReportsErrors()
     QCOMPARE(browser.errorCode(), QStringLiteral("unknown_source"));
     QCOMPARE(browser.error(), QStringLiteral("No such source."));
     QVERIFY(browser.items().isEmpty());
+}
+
+QString TestMarketplace::fileUrl(const QString &name) const
+{
+    return m_server.base().remove(QStringLiteral("/api/v1")) + QStringLiteral("/files/") + name;
+}
+
+QByteArray TestMarketplace::readyJob(const QString &source, const QString &name, const QByteArray &bytes,
+                                     const QByteArray &sha) const
+{
+    const QByteArray digest = sha.isEmpty() ? QCryptographicHash::hash(bytes, QCryptographicHash::Sha256).toHex() : sha;
+    const QJsonObject job{{"id", "ready_1"},
+                          {"source", source},
+                          {"status", "ready"},
+                          {"progress", 1},
+                          {"files", QJsonArray{QJsonObject{{"role", "main"}, {"name", name}, {"url", fileUrl(name)},
+                                                           {"size", bytes.size()}, {"sha256", QString::fromLatin1(digest)},
+                                                           {"mime", "application/octet-stream"}}}}};
+    return FakeServer::json(201, job);
+}
+
+void TestMarketplace::serve(const QMap<QString, QByteArray> &files,
+                            const std::function<QByteArray(const FakeRequest &)> &install)
+{
+    m_server.handler = [files, install](const FakeRequest &r) {
+        const QString target = QString::fromLatin1(r.target);
+        if (target.contains(QStringLiteral("/files/"))) {
+            const QByteArray body = files.value(target.section(QStringLiteral("/files/"), 1));
+            return FakeServer::reply(body.isEmpty() ? 404 : 200, body);
+        }
+        return install(r);
+    };
+}
+
+void TestMarketplace::routerDispatchesBySource()
+{
+    QSettings().remove(QStringLiteral("marketplace/community"));
+    QDir(DriftAssetStore::installRoot()).removeRecursively();
+    QDir(SfxLibrary::installRoot()).removeRecursively();
+    DownloadCenter center;
+    StockInstaller stock(nullptr, m_transport, &center);
+    DriftAssetStore assets(nullptr, m_transport, &center);
+    SfxLibrary sfx(nullptr, m_transport, &center);
+    CommunityInstaller community(nullptr, m_transport, &center);
+    MarketInstallRouter router(&stock, &assets, &sfx, &community, &center);
+
+    QStringList imported;
+    const auto importer = [&imported](const QStringList &paths) {
+        imported += paths;
+        return QStringList{QStringLiteral("asset-%1").arg(imported.size())};
+    };
+    stock.setImporter(importer);
+    assets.setImporter(importer);
+    sfx.setImporter(importer);
+    community.setHandler(QStringLiteral("theme"), [](const QString &, QString *) { return QStringLiteral("t1"); });
+
+    const QByteArray bytes = "payload";
+    QStringList sources;
+    serve({{"a.json", bytes}, {"s.flac", bytes}, {"v.mp4", bytes}, {"t.json", bytes}},
+          [&](const FakeRequest &r) {
+              const QJsonObject body = QJsonDocument::fromJson(r.body).object();
+              const QString source = body["source"].toString();
+              sources << source + QLatin1Char(':') + body["itemId"].toString();
+              const QString name = source == "drift-assets" ? "a.json" : source == "sfx" ? "s.flac"
+                                   : source.startsWith("stock.") ? "v.mp4" : "t.json";
+              return readyJob(source, name, bytes);
+          });
+
+    QStringList changed;
+    connect(&router, &MarketInstallRouter::stateChanged, this,
+            [&changed](const QString &source, const QString &id) { changed << source + QLatin1Char(':') + id; });
+
+    const QVariantMap asset{{"id", "heart"}, {"source", "drift-assets"}, {"title", "Heart"},
+                            {"extra", QVariantMap{{"kind", "lottie"}}}};
+    const QVariantMap sound{{"id", "boom1"}, {"source", "sfx"}, {"title", "Boom"}};
+    const QVariantMap clip{{"id", "pexels:9"}, {"source", "stock.video"}, {"title", "Clip"}, {"mediaKind", "video"}};
+    const QVariantMap theme{{"id", "th-1"}, {"source", "community.theme"}, {"title", "Theme"}};
+
+    QCOMPARE(router.installState(asset), QStringLiteral("none"));
+    for (const QVariantMap &item : {asset, sound, clip, theme})
+        router.install(item);
+    QTRY_COMPARE_WITH_TIMEOUT(center.activeCount(), 0, 5000);
+
+    QCOMPARE(sources.size(), 4);
+    for (const QString &expected : {QStringLiteral("drift-assets:heart"), QStringLiteral("sfx:boom1"),
+                                    QStringLiteral("stock.video:pexels:9"), QStringLiteral("community.theme:th-1")})
+        QVERIFY2(sources.contains(expected), qPrintable(expected));
+    for (const QVariantMap &item : {asset, sound, clip, theme})
+        QCOMPARE(router.installState(item), QStringLiteral("installed"));
+    QVERIFY(QFile::exists(router.installedPath(asset)));
+    QVERIFY(QFile::exists(router.installedPath(sound)));
+    QCOMPARE(router.installResult(clip).value("assetId").toString().startsWith("asset-"), true);
+    QVERIFY(changed.contains(QStringLiteral("sfx:boom1")));
+    QVERIFY(changed.contains(QStringLiteral("community.theme:th-1")));
+
+    QStringList kinds;
+    for (const QVariant &row : center.jobs()) {
+        kinds << row.toMap().value("kind").toString();
+        QCOMPARE(row.toMap().value("status").toString(), QStringLiteral("done"));
+    }
+    kinds.sort();
+    QCOMPARE(kinds, (QStringList{"community", "drift-asset", "sfx", "stock"}));
+}
+
+void TestMarketplace::communityRoutesByKind()
+{
+    QSettings().remove(QStringLiteral("marketplace/community"));
+    DownloadCenter center;
+    CommunityInstaller community(nullptr, m_transport, &center);
+    QMap<QString, QByteArray> received;
+    for (const QString &kind : {QStringLiteral("effect"), QStringLiteral("look"), QStringLiteral("effect-template")}) {
+        community.setHandler(kind, [&received, kind](const QString &path, QString *) {
+            QFile f(path);
+            f.open(QIODevice::ReadOnly);
+            received.insert(kind, f.readAll());
+            return QStringLiteral("installed-") + kind;
+        });
+    }
+    serve({{"e.driftfx", "EFFECT"}, {"l.cube", "LUT"}, {"template.json", "{}"}}, [&](const FakeRequest &r) {
+        const QString source = QJsonDocument::fromJson(r.body).object()["source"].toString();
+        if (source == "community.effect")
+            return readyJob(source, "e.driftfx", "EFFECT");
+        if (source == "community.look")
+            return readyJob(source, "l.cube", "LUT");
+        return readyJob(source, "template.json", "{}");
+    });
+    QSignalSpy done(&community, &CommunityInstaller::installed);
+    const QVariantMap effect{{"id", "e1"}, {"source", "community.effect"}, {"extra", QVariantMap{{"version", "1.2.0"}}}};
+    const QVariantMap look{{"id", "l1"}, {"source", "community.look"}};
+    const QVariantMap tmpl{{"id", "t1"}, {"source", "community.effect-template"}};
+    QCOMPARE(community.state(effect), QStringLiteral("none"));
+    community.install(effect);
+    community.install(look);
+    community.install(tmpl);
+    QCOMPARE(community.state(effect), QStringLiteral("installing"));
+    QTRY_COMPARE_WITH_TIMEOUT(done.size(), 3, 5000);
+    QCOMPARE(received.value("effect"), QByteArray("EFFECT"));
+    QCOMPARE(received.value("look"), QByteArray("LUT"));
+    QCOMPARE(received.value("effect-template"), QByteArray("{}"));
+    QCOMPARE(community.state(effect), QStringLiteral("installed"));
+    QCOMPARE(community.installedVersion("e1"), QStringLiteral("1.2.0"));
+    QCOMPARE(community.result(look).value("id").toString(), QStringLiteral("installed-look"));
+
+    QVariantMap newer = effect;
+    newer["extra"] = QVariantMap{{"version", "1.3.0"}};
+    QCOMPARE(community.state(newer), QStringLiteral("update"));
+    QSettings().remove(QStringLiteral("marketplace/community"));
+}
+
+void TestMarketplace::communityShaMismatchFails()
+{
+    QSettings().remove(QStringLiteral("marketplace/community"));
+    DownloadCenter center;
+    CommunityInstaller community(nullptr, m_transport, &center);
+    bool called = false;
+    community.setHandler(QStringLiteral("theme"), [&called](const QString &, QString *) {
+        called = true;
+        return QString();
+    });
+    serve({{"t.json", "actual"}}, [&](const FakeRequest &r) {
+        return readyJob(QJsonDocument::fromJson(r.body).object()["source"].toString(), "t.json", "actual",
+                        QByteArray(64, '0'));
+    });
+    const QVariantMap item{{"id", "bad"}, {"source", "community.theme"}, {"title", "Bad"}};
+    QSignalSpy failed(&community, &CommunityInstaller::failed);
+    community.install(item);
+    QTRY_COMPARE_WITH_TIMEOUT(failed.size(), 1, 5000);
+    QVERIFY(!called);
+    QCOMPARE(community.state(item), QStringLiteral("failed"));
+    QCOMPARE(center.jobMap("community.theme/bad").value("status").toString(), QStringLiteral("failed"));
+    QVERIFY(community.installedVersion("bad").isEmpty());
+}
+
+void TestMarketplace::communityAppTooOld()
+{
+    DownloadCenter center;
+    CommunityInstaller community(nullptr, m_transport, &center);
+    m_server.handler = [](const FakeRequest &) {
+        return FakeServer::json(409, {{"code", "app_too_old"}, {"detail", "needs newer"}, {"minAppVersion", "9.9.9"}});
+    };
+    const QVariantMap item{{"id", "old"}, {"source", "community.effect"}, {"title", "Old"}};
+    QSignalSpy failed(&community, &CommunityInstaller::failed);
+    community.install(item);
+    QTRY_COMPARE_WITH_TIMEOUT(failed.size(), 1, 5000);
+    QCOMPARE(failed.first().at(2).toString(), QStringLiteral("app_too_old"));
+    QVERIFY(failed.first().at(3).toString().contains(QStringLiteral("9.9.9")));
+    const QVariantMap job = center.jobMap("community.effect/old");
+    QCOMPARE(job.value("errorCode").toString(), QStringLiteral("app_too_old"));
+    QVERIFY(!job.value("retryable").toBool());
+}
+
+void TestMarketplace::stockJobPollsToDone()
+{
+    DownloadCenter center;
+    StockInstaller stock(nullptr, m_transport, &center);
+    QStringList imported;
+    stock.setImporter([&imported](const QStringList &paths) {
+        imported += paths;
+        return QStringList{QStringLiteral("bin-1")};
+    });
+    int polls = 0;
+    const QByteArray bytes = "video-bytes";
+    serve({{"v.mp4", bytes}}, [&](const FakeRequest &r) {
+        if (r.method == "POST") {
+            return FakeServer::json(201, {{"id", "stock_7"}, {"source", "stock.video"}, {"status", "processing"}, {"progress", 0.2}});
+        }
+        ++polls;
+        if (polls < 2)
+            return FakeServer::json(200, {{"id", "stock_7"}, {"status", "processing"}, {"progress", 0.6}});
+        return readyJob("stock.video", "v.mp4", bytes);
+    });
+    QTemporaryDir dir;
+    stock.download("stock.video", "pexels:7", {}, QUrl::fromLocalFile(dir.path()), "Beach", "video");
+    QTRY_COMPARE_WITH_TIMEOUT(center.job("stock.video/pexels:7").status, QStringLiteral("done"), 10000);
+    QVERIFY(polls >= 2);
+    QCOMPARE(imported, QStringList{dir.filePath("v.mp4")});
+    QCOMPARE(center.jobMap("stock.video/pexels:7").value("assetId").toString(), QStringLiteral("bin-1"));
+    QCOMPARE(QJsonDocument::fromJson(m_server.requests.first().body).object()["itemId"].toString(), QStringLiteral("pexels:7"));
+
+    // A failed job is retryable through the center, and cancel routes back to the installer.
+    serve({}, [](const FakeRequest &) {
+        return FakeServer::json(429, {{"code", "stock.quota_exceeded"}, {"detail", "Daily limit"}});
+    });
+    stock.download("stock.video", "pexels:8", {}, {}, "Other", "video");
+    QTRY_COMPARE_WITH_TIMEOUT(center.job("stock.video/pexels:8").status, QStringLiteral("failed"), 5000);
+    QVERIFY(!center.job("stock.video/pexels:8").retryable);
 }
 
 QTEST_MAIN(TestMarketplace)

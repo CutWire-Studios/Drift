@@ -6,11 +6,14 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 #include <QSet>
+#include <QStandardPaths>
 
 #include <algorithm>
 #include <optional>
@@ -322,4 +325,42 @@ QList<QPair<QString, QString>> effectTemplateCategories()
 QString effectTemplateCategoryLabel(const QString &categoryId)
 {
     return labelForCategory(categoryId);
+}
+
+QString installUserTemplate(const QString &templateJsonPath, QString *idOut)
+{
+    const QString root = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                         + QStringLiteral("/effect-templates");
+    QString readError;
+    const QString text = GpuPackageParse::readTextFile(templateJsonPath, &readError);
+    if (text.isEmpty())
+        return readError.isEmpty() ? QStringLiteral("empty template") : readError;
+    const QString id = QJsonDocument::fromJson(text.toUtf8()).object().value(QStringLiteral("id")).toString();
+    static const QRegularExpression safeId(QStringLiteral("^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"));
+    if (!safeId.match(id).hasMatch())
+        return QStringLiteral("template id is missing or not a safe folder name");
+
+    const QString staging = QDir(root).filePath(QStringLiteral(".import-") + id);
+    QDir(staging).removeRecursively();
+    if (!QDir().mkpath(staging))
+        return QStringLiteral("cannot write to the templates folder");
+    QString error;
+    if (!QFile::copy(templateJsonPath, QDir(staging).filePath(QStringLiteral("template.json"))))
+        error = QStringLiteral("cannot copy the template");
+    else if (!loadManifest(staging, &error))
+        error = error.isEmpty() ? QStringLiteral("invalid template") : error;
+    if (!error.isEmpty()) {
+        QDir(staging).removeRecursively();
+        return error;
+    }
+    const QString destination = QDir(root).filePath(id);
+    QDir(destination).removeRecursively();
+    if (!QDir().rename(staging, destination)) {
+        QDir(staging).removeRecursively();
+        return QStringLiteral("cannot move the template into place");
+    }
+    reloadEffectTemplateCatalog();
+    if (idOut)
+        *idOut = id;
+    return {};
 }

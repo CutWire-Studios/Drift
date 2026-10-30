@@ -655,8 +655,8 @@ ApplicationWindow {
     property bool downloadsWindowShownOnce: false
 
     Connections {
-        target: Market
-        function onDownloadStarted(itemId) {
+        target: Downloads
+        function onJobStarted(id) {
             if (window.downloadsWindowShownOnce)
                 return
             window.downloadsWindowShownOnce = true
@@ -1337,13 +1337,7 @@ ApplicationWindow {
     }
 
     Connections {
-        target: Market
-        function onAuthFinished(ok, message) {
-            if (ok)
-                Toasts.success(message)
-            else
-                Toasts.error(message)
-        }
+        target: StockInstaller
         function onDownloadImported(itemId, name) {
             Toasts.success(name.length > 0
                            ? qsTr("Imported “%1”.").arg(name)

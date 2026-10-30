@@ -13,8 +13,8 @@ Rectangle {
     readonly property bool isPlaying: previewPlayer.itemId === modelData.id
                                       && previewPlayer.playbackState === MediaPlayer.PlayingState
     readonly property var job: {
-        void Market.downloadsRevision
-        return Market.downloadInfo(modelData.id)
+        void Downloads.revision
+        return StockInstaller.downloadInfo(modelData.id)
     }
     width: ListView.view ? ListView.view.width : 0
     height: Theme.touchUi ? Theme.androidMinTouchTarget + Theme.spacingLg : Theme.controlHeight + Theme.spacingLg

@@ -1039,12 +1039,18 @@ qt_add_executable(drift
     src/app/online/market/MarketEndpoint.h
     src/app/online/market/MarketIdentity.h
     src/app/online/market/MarketIdentity.cpp
-    src/app/online/market/MarketClient.h
-    src/app/online/market/MarketClient.cpp
     src/app/online/marketplace/MarketTransport.h
     src/app/online/marketplace/MarketTransport.cpp
     src/app/online/marketplace/MarketplaceManifest.h
     src/app/online/marketplace/MarketplaceManifest.cpp
+    src/app/online/marketplace/MarketInstall.h
+    src/app/online/marketplace/MarketInstall.cpp
+    src/app/online/marketplace/StockInstaller.h
+    src/app/online/marketplace/StockInstaller.cpp
+    src/app/online/marketplace/CommunityInstaller.h
+    src/app/online/marketplace/CommunityInstaller.cpp
+    src/app/online/marketplace/MarketInstallRouter.h
+    src/app/online/marketplace/MarketInstallRouter.cpp
     src/app/online/downloads/DownloadCenter.h
     src/app/online/downloads/DownloadCenter.cpp
     src/app/online/downloads/DownloadBridges.h

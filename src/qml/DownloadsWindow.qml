@@ -20,15 +20,10 @@ ToolWindow {
     title: qsTr("Downloads")
     color: Theme.c.downloadsWindow.background
 
-    // The update row has the same shape as a marketplace job; its buttons route to Updates.
-    readonly property var updateJob: Updates.downloadJob
-    readonly property bool hasUpdateJob: updateJob.itemId !== undefined
-    readonly property var jobs: (hasUpdateJob ? [updateJob] : []).concat(Market.downloads)
-    readonly property int activeCount: Market.activeDownloadCount + (hasUpdateJob && updateJob.running ? 1 : 0)
+    readonly property var jobs: Downloads.jobs
+    readonly property int activeCount: Downloads.activeCount
     readonly property bool hasFinished: {
-        if (hasUpdateJob && (updateJob.status === "failed" || updateJob.status === "cancelled"))
-            return true
-        const list = Market.downloads
+        const list = Downloads.jobs
         for (var i = 0; i < list.length; ++i) {
             if (list[i].finished)
                 return true
@@ -73,8 +68,8 @@ ToolWindow {
 
             // Says why something sits at Waiting, so the cap does not read as a stall.
             ThemedLabel {
-                visible: root.activeCount > Market.maxConcurrentDownloads
-                text: qsTr("%1 at a time").arg(Market.maxConcurrentDownloads)
+                visible: root.activeCount > StockInstaller.maxConcurrentDownloads
+                text: qsTr("%1 at a time").arg(StockInstaller.maxConcurrentDownloads)
             }
 
             Item { Layout.fillWidth: true }
@@ -85,7 +80,7 @@ ToolWindow {
                 enabled: root.hasFinished
                 onClicked: {
                     Updates.clearDownloadState()
-                    Market.clearFinishedDownloads()
+                    Downloads.clearFinished()
                 }
             }
         }

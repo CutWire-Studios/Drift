@@ -13,8 +13,8 @@ AndroidBottomSheet {
     title: qsTr("Downloads")
 
     readonly property var jobs: {
-        void Market.downloadsRevision
-        return Market.downloads
+        void Downloads.revision
+        return Downloads.jobs
     }
 
     readonly property bool anyFinished: {
@@ -65,7 +65,7 @@ AndroidBottomSheet {
                 anchors.centerIn: parent
                 variant: "secondary"
                 text: qsTr("Clear finished")
-                onClicked: Market.clearFinishedDownloads()
+                onClicked: Downloads.clearFinished()
             }
         }
     }

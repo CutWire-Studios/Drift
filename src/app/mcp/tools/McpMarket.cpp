@@ -1,7 +1,10 @@
 #include "app/mcp/tools/McpMarket.h"
 #include "app/mcp/protocol/McpJson.h"
-#include "app/online/market/MarketClient.h"
+#include "app/online/downloads/DownloadCenter.h"
+#include "app/online/marketplace/MarketSourceBrowser.h"
+#include "app/online/marketplace/StockInstaller.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QEventLoop>
@@ -15,7 +18,6 @@
 namespace drift::mcp {
 namespace {
 
-constexpr int kCatalogWaitMs = 20000;
 constexpr int kSearchWaitMs = 30000;
 constexpr int kResolveWaitMs = 90000;
 constexpr int kMaxDownloadWaitSeconds = 600;
@@ -40,57 +42,52 @@ bool waitUntil(const std::function<bool()> &done, int timeoutMs)
     return done();
 }
 
-QJsonObject gate(MarketClient *client)
+// The agent's own browsing session: one listing, paged with more:true, and the items it has
+// shown so market_item and market_download can find them again.
+MarketSourceBrowser *browser()
+{
+    static MarketSourceBrowser *shared = new MarketSourceBrowser(QCoreApplication::instance());
+    return shared;
+}
+
+QHash<QString, QVariantMap> &seenItems()
+{
+    static QHash<QString, QVariantMap> items;
+    return items;
+}
+
+QJsonObject gate(StockInstaller *client)
 {
     if (!client || !client->configured())
         return err("market_unavailable", QStringLiteral("This build has no marketplace service configured"));
     return {};
 }
 
-bool ensureCatalog(MarketClient *client)
-{
-    if (!client->types().isEmpty())
-        return true;
-    if (!client->catalogLoading())
-        client->refreshCatalog();
-    waitUntil([client] { return !client->catalogLoading(); }, kCatalogWaitMs);
-    return !client->types().isEmpty();
-}
-
-QJsonObject quotaJson(const QVariantMap &quota)
-{
-    QJsonObject out;
-    for (const char *key : {"limit", "remaining", "window", "scope", "reset_at"}) {
-        const QVariant v = quota.value(QLatin1String(key));
-        if (v.isValid())
-            out.insert(QLatin1String(key), QJsonValue::fromVariant(v));
-    }
-    return out;
-}
-
 QJsonObject compactItem(const QVariantMap &item, bool full)
 {
+    const QVariantMap extra = item.value(QStringLiteral("extra")).toMap();
     QJsonObject out{{QStringLiteral("id"), item.value(QStringLiteral("id")).toString()},
                     {QStringLiteral("title"), item.value(QStringLiteral("title")).toString()},
-                    {QStringLiteral("type"), item.value(QStringLiteral("type")).toString()},
-                    {QStringLiteral("provider"), item.value(QStringLiteral("provider")).toString()}};
-    if (item.contains(QStringLiteral("duration_ms")))
-        out.insert(QStringLiteral("dur"), item.value(QStringLiteral("duration_ms")).toDouble() / 1000.0);
+                    {QStringLiteral("type"), item.value(QStringLiteral("mediaKind")).toString()},
+                    {QStringLiteral("source"), item.value(QStringLiteral("source")).toString()},
+                    {QStringLiteral("provider"), extra.value(QStringLiteral("provider")).toString()}};
+    if (item.value(QStringLiteral("durationMs")).toDouble() > 0)
+        out.insert(QStringLiteral("dur"), item.value(QStringLiteral("durationMs")).toDouble() / 1000.0);
     if (item.value(QStringLiteral("width")).toInt() > 0) {
         out.insert(QStringLiteral("w"), item.value(QStringLiteral("width")).toInt());
         out.insert(QStringLiteral("h"), item.value(QStringLiteral("height")).toInt());
     }
-    if (item.contains(QStringLiteral("downloadable")) && !item.value(QStringLiteral("downloadable")).toBool())
+    if (extra.contains(QStringLiteral("downloadable")) && !extra.value(QStringLiteral("downloadable")).toBool())
         out.insert(QStringLiteral("downloadable"), false);
-    const QString by = item.value(QStringLiteral("creator")).toMap().value(QStringLiteral("name")).toString();
+    const QString by = extra.value(QStringLiteral("creator")).toString();
     if (!by.isEmpty())
         out.insert(QStringLiteral("by"), by);
-    const QString thumb = item.value(QStringLiteral("thumb_url")).toString();
+    const QString thumb = item.value(QStringLiteral("thumbUrl")).toString();
     if (!thumb.isEmpty())
         out.insert(QStringLiteral("thumb"), thumb);
     const QVariantList variants = item.value(QStringLiteral("variants")).toList();
     if (full) {
-        const QString preview = item.value(QStringLiteral("preview_url")).toString();
+        const QString preview = item.value(QStringLiteral("previewUrl")).toString();
         if (!preview.isEmpty())
             out.insert(QStringLiteral("preview"), preview);
         const QVariantMap license = item.value(QStringLiteral("license")).toMap();
@@ -117,7 +114,7 @@ QJsonObject compactItem(const QVariantMap &item, bool full)
 
 QJsonObject compactJob(const QVariantMap &job)
 {
-    QJsonObject out{{QStringLiteral("id"), job.value(QStringLiteral("itemId")).toString()},
+    QJsonObject out{{QStringLiteral("id"), job.value(QStringLiteral("id")).toString()},
                     {QStringLiteral("title"), job.value(QStringLiteral("title")).toString()},
                     {QStringLiteral("status"), job.value(QStringLiteral("status")).toString()},
                     {QStringLiteral("progress"), job.value(QStringLiteral("progress")).toDouble()}};
@@ -142,199 +139,126 @@ QJsonObject compactJob(const QVariantMap &job)
     return out;
 }
 
-QStringList idsOf(const QVariantList &rows)
+QString jobIdFor(const QVariantMap &item)
 {
-    QStringList ids;
-    for (const QVariant &row : rows)
-        ids.append(row.toMap().value(QStringLiteral("id")).toString());
-    return ids;
-}
-
-// `offset` is where this page starts in the client's accumulated result list: loadMore appends,
-// so a more:true reply must skip everything the earlier replies already showed.
-QJsonObject searchOutcome(MarketClient *client, int offset, int limit)
-{
-    if (!client->searchError().isEmpty()) {
-        const QString code = client->searchErrorCode();
-        return err(code.isEmpty() ? "market_error" : code.toUtf8().constData(), client->searchError());
-    }
-    const QVariantList rows = client->items();
-    QJsonArray items;
-    for (int i = offset; i < rows.size(); ++i) {
-        if (limit > 0 && items.size() >= limit)
-            break;
-        items.append(compactItem(rows.at(i).toMap(), false));
-    }
-    QJsonObject out = ok({{QStringLiteral("type"), client->activeTypeId()},
-                          {QStringLiteral("provider"), client->activeProviderId()},
-                          {QStringLiteral("items"), items},
-                          {QStringLiteral("n"), items.size()},
-                          {QStringLiteral("offset"), offset},
-                          {QStringLiteral("has_more"), client->hasMore()}});
-    const QJsonObject quota = quotaJson(client->quota());
-    if (!quota.isEmpty())
-        out.insert(QStringLiteral("quota"), quota);
-    return out;
-}
-
-bool jobFinished(const QVariantMap &info)
-{
-    const QString status = info.value(QStringLiteral("status")).toString();
-    return status.isEmpty() || status == QLatin1String("done") || status == QLatin1String("failed")
-           || status == QLatin1String("cancelled");
+    return StockInstaller::jobId(item.value(QStringLiteral("source")).toString(),
+                                 item.value(QStringLiteral("id")).toString());
 }
 
 } // namespace
 
-QJsonObject marketStatus(MarketClient *client)
+QJsonObject marketStatus(StockInstaller *client)
 {
     QJsonObject out = ok({{QStringLiteral("configured"), client && client->configured()}});
     if (!client || !client->configured()) {
         out.insert(QStringLiteral("hint"), QStringLiteral("This build has no marketplace service configured"));
         return out;
     }
-    out.insert(QStringLiteral("active_downloads"), client->activeDownloadCount());
-    if (!ensureCatalog(client)) {
-        out.insert(QStringLiteral("catalog_error"), client->catalogError());
-        return out;
-    }
-    QJsonArray types;
-    for (const QVariant &typeRow : client->types()) {
-        const QVariantMap type = typeRow.toMap();
-        QJsonArray providers;
-        for (const QVariant &providerRow : type.value(QStringLiteral("providers")).toList()) {
-            const QVariantMap provider = providerRow.toMap();
-            QJsonObject p{{QStringLiteral("id"), provider.value(QStringLiteral("id")).toString()},
-                          {QStringLiteral("label"), provider.value(QStringLiteral("label")).toString()},
-                          {QStringLiteral("capabilities"),
-                           QJsonArray::fromStringList(provider.value(QStringLiteral("capabilities")).toStringList())}};
-            const QJsonObject quota = quotaJson(provider.value(QStringLiteral("quota")).toMap());
-            if (!quota.isEmpty())
-                p.insert(QStringLiteral("quota"), quota);
-            QJsonArray filters;
-            for (const QVariant &filterRow : provider.value(QStringLiteral("filters")).toList()) {
-                const QVariantMap filter = filterRow.toMap();
-                QJsonObject f{{QStringLiteral("id"), filter.value(QStringLiteral("id")).toString()},
-                              {QStringLiteral("type"), filter.value(QStringLiteral("type")).toString()},
-                              {QStringLiteral("label"), filter.value(QStringLiteral("label")).toString()}};
-                const QStringList options = idsOf(filter.value(QStringLiteral("options")).toList());
-                if (!options.isEmpty())
-                    f.insert(QStringLiteral("options"), QJsonArray::fromStringList(options));
-                filters.append(f);
-            }
-            if (!filters.isEmpty())
-                p.insert(QStringLiteral("filters"), filters);
-            providers.append(p);
-        }
-        types.append(QJsonObject{{QStringLiteral("id"), type.value(QStringLiteral("id")).toString()},
-                                 {QStringLiteral("label"), type.value(QStringLiteral("label")).toString()},
-                                 {QStringLiteral("providers"), providers}});
-    }
-    out.insert(QStringLiteral("types"), types);
+    out.insert(QStringLiteral("active_downloads"), DownloadCenter::instance()->activeCount());
     return out;
 }
 
-QJsonObject marketSearch(MarketClient *client, const QJsonObject &args)
+QJsonObject marketSearch(StockInstaller *client, const QJsonObject &args)
 {
     if (const QJsonObject blocked = gate(client); !blocked.isEmpty())
         return blocked;
-    if (!ensureCatalog(client))
-        return err("market_error", client->catalogError().isEmpty()
-                                       ? QStringLiteral("The marketplace catalog is empty")
-                                       : client->catalogError());
 
+    MarketSourceBrowser *list = browser();
     const bool more = args.value(QStringLiteral("more")).toBool();
     const int limit = args.value(QStringLiteral("limit")).toInt(30);
     int offset = 0;
     if (more) {
-        if (!client->hasMore())
+        if (!list->hasMore())
             return err("not_found", QStringLiteral("No more results for the last search"));
-        offset = client->items().size();
-        client->loadMore();
+        offset = list->items().size();
+        list->loadMore();
     } else {
-        const QString type = args.value(QStringLiteral("type")).toString();
-        if (!type.isEmpty()) {
-            const QStringList known = idsOf(client->types());
-            if (!known.contains(type))
-                return err("bad_args", QStringLiteral("type must be one of %1").arg(known.join(QStringLiteral(", "))));
-            client->setActiveTypeId(type);
-        }
-        const QString provider = args.value(QStringLiteral("provider")).toString();
-        if (!provider.isEmpty()) {
-            const QStringList known = idsOf(client->providers());
-            if (!known.contains(provider))
-                return err("bad_args", QStringLiteral("provider must be one of %1 for type %2")
-                                           .arg(known.join(QStringLiteral(", ")), client->activeTypeId()));
-            client->setActiveProviderId(provider);
-        }
-        if (!client->canSearch()) {
-            return err("bad_args", QStringLiteral("provider %1 has no browsable catalog — pass a page URL to "
-                                                  "market_resolve instead")
-                                       .arg(client->activeProviderId()));
-        }
-        const QString q = args.value(QStringLiteral("q")).toString();
-        const QVariantMap filters = args.value(QStringLiteral("filters")).toObject().toVariantMap();
-        client->search(q, filters);
+        const QString type = args.value(QStringLiteral("type")).toString(QStringLiteral("video"));
+        if (type != QLatin1String("video") && type != QLatin1String("audio") && type != QLatin1String("image"))
+            return err("bad_args", QStringLiteral("type must be one of video, audio, image"));
+        list->setSource(QStringLiteral("stock.") + type);
+        list->setProvider(args.value(QStringLiteral("provider")).toString());
+        list->setQuery(args.value(QStringLiteral("q")).toString());
+        list->setSort(args.value(QStringLiteral("sort")).toString());
+        list->setFilters(args.value(QStringLiteral("filters")).toObject().toVariantMap());
+        list->reload();
     }
-    if (!waitUntil([client] { return !client->searching(); }, kSearchWaitMs)) {
-        client->cancelSearch();
+    if (!waitUntil([list] { return !list->loading(); }, kSearchWaitMs)) {
+        list->cancel();
         return err("market_error", QStringLiteral("The marketplace did not answer in time"));
     }
-    return searchOutcome(client, offset, limit);
+    if (!list->error().isEmpty()) {
+        const QString code = list->errorCode();
+        return err(code.isEmpty() ? "market_error" : code.toUtf8().constData(), list->error());
+    }
+    const QVariantList rows = list->items();
+    QJsonArray items;
+    for (int i = offset; i < rows.size(); ++i) {
+        const QVariantMap row = rows.at(i).toMap();
+        seenItems().insert(row.value(QStringLiteral("id")).toString(), row);
+        if (limit > 0 && items.size() >= limit)
+            continue;
+        items.append(compactItem(row, false));
+    }
+    QJsonObject out = ok({{QStringLiteral("type"), list->source().mid(int(qstrlen("stock.")))},
+                          {QStringLiteral("provider"), list->provider()},
+                          {QStringLiteral("items"), items},
+                          {QStringLiteral("n"), items.size()},
+                          {QStringLiteral("offset"), offset},
+                          {QStringLiteral("has_more"), list->hasMore()}});
+    if (!list->quota().isEmpty())
+        out.insert(QStringLiteral("quota"), QJsonObject::fromVariantMap(list->quota()));
+    return out;
 }
 
-QJsonObject marketResolve(MarketClient *client, const QString &url)
+QJsonObject marketResolve(StockInstaller *client, const QString &url)
 {
     if (const QJsonObject blocked = gate(client); !blocked.isEmpty())
         return blocked;
     if (url.trimmed().isEmpty())
         return err("bad_args", QStringLiteral("url required"));
-    if (!ensureCatalog(client))
-        return err("market_error", QStringLiteral("The marketplace catalog is empty"));
-    if (!client->canResolve())
-        return err("bad_args", QStringLiteral("No provider in the catalog resolves pasted links"));
     client->resolveUrl(url.trimmed());
-    if (!waitUntil([client] { return !client->searching(); }, kResolveWaitMs)) {
-        client->cancelSearch();
+    if (!waitUntil([client] { return !client->resolving(); }, kResolveWaitMs)) {
+        client->cancelResolve();
         return err("market_error", QStringLiteral("Resolving that link did not finish in time"));
     }
-    if (!client->searchError().isEmpty()) {
-        const QString code = client->searchErrorCode();
-        return err(code.isEmpty() ? "market_error" : code.toUtf8().constData(), client->searchError());
+    if (!client->resolveError().isEmpty()) {
+        const QString code = client->resolveErrorCode();
+        return err(code.isEmpty() ? "market_error" : code.toUtf8().constData(), client->resolveError());
     }
-    if (client->items().isEmpty())
+    const QVariantMap item = client->resolvedItem();
+    if (item.isEmpty())
         return err("not_found", QStringLiteral("Nothing could be resolved from that link"));
-    QJsonObject out = ok({{QStringLiteral("item"), compactItem(client->items().first().toMap(), true)}});
-    const QJsonObject quota = quotaJson(client->quota());
-    if (!quota.isEmpty())
-        out.insert(QStringLiteral("quota"), quota);
-    return out;
+    seenItems().insert(item.value(QStringLiteral("id")).toString(), item);
+    return ok({{QStringLiteral("item"), compactItem(item, true)}});
 }
 
-QJsonObject marketItem(MarketClient *client, const QString &id)
+QJsonObject marketItem(StockInstaller *client, const QString &id)
 {
     if (const QJsonObject blocked = gate(client); !blocked.isEmpty())
         return blocked;
-    const QVariantMap item = client->itemById(id);
+    const QVariantMap item = seenItems().value(id);
     if (item.isEmpty())
         return err("not_found", QStringLiteral("Item %1 is not in the last search or resolve result").arg(id));
     return ok({{QStringLiteral("item"), compactItem(item, true)}});
 }
 
-QJsonObject marketDownload(MarketClient *client, const QJsonObject &args)
+QJsonObject marketDownload(StockInstaller *client, const QJsonObject &args)
 {
     if (const QJsonObject blocked = gate(client); !blocked.isEmpty())
         return blocked;
     const QString id = args.value(QStringLiteral("id")).toString();
     if (id.isEmpty())
         return err("bad_args", QStringLiteral("id required — an item id from market_search or market_resolve"));
-    const QVariantMap item = client->itemById(id);
+    const QVariantMap item = seenItems().value(id);
     if (item.isEmpty())
         return err("not_found", QStringLiteral("Item %1 is not in the last market_search / market_resolve result").arg(id));
-    if (item.contains(QStringLiteral("downloadable")) && !item.value(QStringLiteral("downloadable")).toBool())
+    const QVariantMap extra = item.value(QStringLiteral("extra")).toMap();
+    if (extra.contains(QStringLiteral("downloadable")) && !extra.value(QStringLiteral("downloadable")).toBool())
         return err("bad_args", QStringLiteral("Item %1 is not downloadable").arg(id));
-    const QVariantMap running = client->downloadInfo(id);
-    if (!jobFinished(running))
+    DownloadCenter *center = DownloadCenter::instance();
+    const QString jobId = jobIdFor(item);
+    if (center->contains(jobId) && !DownloadCenter::isFinished(center->job(jobId).status))
         return err("conflict", QStringLiteral("Item %1 is already downloading").arg(id));
 
     QString dir = args.value(QStringLiteral("dir")).toString();
@@ -342,21 +266,20 @@ QJsonObject marketDownload(MarketClient *client, const QJsonObject &args)
         dir = QUrl(dir).toLocalFile();
     if (!dir.isEmpty() && !QDir::isAbsolutePath(dir))
         return err("bad_args", QStringLiteral("dir must be an absolute path"));
-    client->download(id, args.value(QStringLiteral("variant")).toString(),
+    client->download(item.value(QStringLiteral("source")).toString(), id,
+                     args.value(QStringLiteral("variant")).toString(),
                      dir.isEmpty() ? QUrl() : QUrl::fromLocalFile(dir),
                      item.value(QStringLiteral("title")).toString(),
-                     item.value(QStringLiteral("type")).toString());
-    if (client->downloadInfo(id).isEmpty())
+                     item.value(QStringLiteral("mediaKind")).toString());
+    if (!center->contains(jobId))
         return err("market_error", QStringLiteral("The download could not be started"));
 
     const int waitSeconds = qBound(0, args.value(QStringLiteral("wait")).toInt(0), kMaxDownloadWaitSeconds);
-    if (waitSeconds > 0)
-        waitUntil([client, id] { return jobFinished(client->downloadInfo(id)); }, waitSeconds * 1000);
-    QVariantMap info;
-    for (const QVariant &row : client->downloads()) {
-        if (row.toMap().value(QStringLiteral("itemId")).toString() == id)
-            info = row.toMap();
+    if (waitSeconds > 0) {
+        waitUntil([center, jobId] { return DownloadCenter::isFinished(center->job(jobId).status); },
+                  waitSeconds * 1000);
     }
+    const QVariantMap info = center->jobMap(jobId);
     QJsonObject out = compactJob(info);
     const QString status = info.value(QStringLiteral("status")).toString();
     if (waitSeconds > 0 && (status == QLatin1String("failed") || status == QLatin1String("cancelled"))) {
@@ -374,31 +297,38 @@ QJsonObject marketDownload(MarketClient *client, const QJsonObject &args)
     return out;
 }
 
-QJsonObject marketDownloads(MarketClient *client, bool clear)
+QJsonObject marketDownloads(StockInstaller *client, bool clear)
 {
     if (!client || !client->configured())
         return err("market_unavailable", QStringLiteral("This build has no marketplace service configured"));
+    DownloadCenter *center = DownloadCenter::instance();
     if (clear)
-        client->clearFinishedDownloads();
+        center->clearFinished();
     QJsonArray jobs;
-    for (const QVariant &row : client->downloads())
+    for (const QVariant &row : center->jobs())
         jobs.append(compactJob(row.toMap()));
     return ok({{QStringLiteral("jobs"), jobs},
-               {QStringLiteral("active"), client->activeDownloadCount()},
+               {QStringLiteral("active"), center->activeCount()},
                {QStringLiteral("n"), jobs.size()}});
 }
 
-QJsonObject marketCancelDownload(MarketClient *client, const QString &id)
+QJsonObject marketCancelDownload(StockInstaller *client, const QString &id)
 {
     if (!client || !client->configured())
         return err("market_unavailable", QStringLiteral("This build has no marketplace service configured"));
-    const QVariantMap info = client->downloadInfo(id);
-    if (info.isEmpty())
+    DownloadCenter *center = DownloadCenter::instance();
+    QString jobId = id;
+    if (!center->contains(jobId)) {
+        const QVariantMap item = seenItems().value(id);
+        jobId = item.isEmpty() ? id : jobIdFor(item);
+    }
+    if (!center->contains(jobId))
         return err("not_found", QStringLiteral("No download for item %1").arg(id));
-    if (jobFinished(info))
+    const QVariantMap info = center->jobMap(jobId);
+    if (info.value(QStringLiteral("finished")).toBool())
         return err("conflict", QStringLiteral("Download %1 already finished (%2)")
                                    .arg(id, info.value(QStringLiteral("status")).toString()));
-    client->cancelDownload(id);
+    center->cancel(jobId);
     return ok({{QStringLiteral("id"), id}, {QStringLiteral("cancelled"), true}});
 }
 

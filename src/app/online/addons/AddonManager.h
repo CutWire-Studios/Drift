@@ -79,6 +79,10 @@ public:
     // Sniffs the magic, since a content:// URI from "Open with" rarely carries the file name.
     Q_INVOKABLE bool isUserPackage(const QUrl &url) const;
     Q_INVOKABLE void installUserPackage();
+    // Installs a .driftfx already on disk without asking, for packages the marketplace verified.
+    // Blocking, and independent of inspectUserPackage(), so concurrent installs cannot race on
+    // "the last inspected file". Returns an error message, empty on success.
+    QString installUserPackageFile(const QString &path);
     // --- Addons from a file (.driftpkg, .zip, or a .driftfx routed to the above) ------------
     // Reads what the file claims to be and refuses it if this build cannot use it. Returns type
     // ("driftpkg" | "zip" | "driftfx"), name, version, author, description, nativeCode and

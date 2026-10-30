@@ -23,14 +23,14 @@ Item {
     readonly property real sidePadding: compact ? Theme.androidPagePadding : Theme.pagePadding
     readonly property int activeFilterCount: Object.keys(filterValues).length
     readonly property string mediaKind: {
-        const types = Market.types
+        const types = StockInstaller.types
         for (let i = 0; i < types.length; ++i) {
-            if (types[i].id === Market.activeTypeId)
+            if (types[i].id === StockInstaller.activeTypeId)
                 return types[i].media_kind || types[i].id
         }
         return ""
     }
-    readonly property bool queryIsLink: Market.canResolve && /^(https?:\/\/|www\.)\S+$/i.test(query)
+    readonly property bool queryIsLink: StockInstaller.canResolve && /^(https?:\/\/|www\.)\S+$/i.test(query)
     readonly property var linkSource: {
         const q = query.toLowerCase()
         if (/youtu\.?be/.test(q)) return { label: "YouTube", glyph: Theme.icons.brandYoutube }
@@ -42,11 +42,11 @@ Item {
     }
 
     function runSearch() {
-        if (!Market.configured || !Market.activeTypeId || !Market.activeProviderId || !Market.canSearch)
+        if (!StockInstaller.configured || !StockInstaller.activeTypeId || !StockInstaller.activeProviderId || !StockInstaller.canSearch)
             return
         lastRequestWasResolve = false
         submittedQuery = query
-        Market.search(query, filterValues)
+        StockInstaller.search(query, filterValues)
     }
 
     function runResolve() {
@@ -54,13 +54,13 @@ Item {
             return
         lastRequestWasResolve = true
         submittedQuery = query
-        Market.resolveUrl(query)
+        StockInstaller.resolveUrl(query)
     }
 
     function submitQuery() {
         if (queryIsLink)
             runResolve()
-        else if (Market.canSearch)
+        else if (StockInstaller.canSearch)
             runSearch()
     }
 
@@ -95,33 +95,33 @@ Item {
         const title = item.title || ""
         const kind = item.media_kind || item.type || ""
         if (!FileDialogs.supportsDirectoryPicker()) {
-            Market.download(item.id, "", "", title, kind)
+            StockInstaller.download(item.id, "", "", title, kind)
             return
         }
-        let dir = Market.lastDownloadDir
+        let dir = StockInstaller.lastDownloadDir
         if (!dir || dir.toString() === "") {
             dir = FileDialogs.openDirectory(qsTr("Save downloads to"), "")
             if (!dir || dir.toString() === "")
                 return
-            Market.lastDownloadDir = dir
+            StockInstaller.lastDownloadDir = dir
         }
-        Market.download(item.id, "", dir, title, kind)
+        StockInstaller.download(item.id, "", dir, title, kind)
     }
 
     function changeFolder() {
-        const dir = FileDialogs.openDirectory(qsTr("Save downloads to"), Market.lastDownloadDir)
+        const dir = FileDialogs.openDirectory(qsTr("Save downloads to"), StockInstaller.lastDownloadDir)
         if (dir && dir.toString() !== "")
-            Market.lastDownloadDir = dir
+            StockInstaller.lastDownloadDir = dir
     }
 
     onVisibleChanged: ensureResults()
     Component.onCompleted: ensureResults()
     function ensureResults() {
-        if (!visible || !Market.configured)
+        if (!visible || !StockInstaller.configured)
             return
-        if (Market.types.length === 0 && !Market.catalogLoading)
-            Market.refreshCatalog()
-        else if (Market.canSearch && Market.items.length === 0 && !Market.searching)
+        if (StockInstaller.types.length === 0 && !StockInstaller.catalogLoading)
+            StockInstaller.refreshCatalog()
+        else if (StockInstaller.canSearch && StockInstaller.items.length === 0 && !StockInstaller.searching)
             searchDebounce.restart()
     }
 
@@ -131,7 +131,7 @@ Item {
             root.filterValues = ({})
             root.filtersExpanded = false
             root.detailShown = false
-            if (Market.canSearch && Market.items.length === 0)
+            if (StockInstaller.canSearch && StockInstaller.items.length === 0)
                 searchDebounce.restart()
         }
         function onActiveTypeIdChanged() {
@@ -139,13 +139,13 @@ Item {
             audioPlayer.stop()
         }
         function onCatalogChanged() {
-            if (root.visible && Market.canSearch && Market.items.length === 0 && !Market.searching)
+            if (root.visible && StockInstaller.canSearch && StockInstaller.items.length === 0 && !StockInstaller.searching)
                 searchDebounce.restart()
         }
         // A link resolves to one item; open it straight away rather than showing a grid of one.
         function onItemsChanged() {
-            if (root.lastRequestWasResolve && Market.items.length === 1)
-                root.openDetail(Market.items[0])
+            if (root.lastRequestWasResolve && StockInstaller.items.length === 1)
+                root.openDetail(StockInstaller.items[0])
         }
     }
 
@@ -187,10 +187,10 @@ Item {
                     spacing: Theme.spacingXl
 
                     Repeater {
-                        model: (Market.canSearchAll ? [{ id: "*", label: qsTr("All") }] : []).concat(Market.providers)
+                        model: (StockInstaller.canSearchAll ? [{ id: "*", label: qsTr("All") }] : []).concat(StockInstaller.providers)
                         delegate: Text {
                             required property var modelData
-                            readonly property bool active: Market.activeProviderId === modelData.id
+                            readonly property bool active: StockInstaller.activeProviderId === modelData.id
                             readonly property var q: modelData.quota
                             height: Theme.touchUi ? Theme.androidMinTouchTarget : Theme.controlHeightSm
                             verticalAlignment: Text.AlignVCenter
@@ -205,7 +205,7 @@ Item {
                             Accessible.checked: active
                             Accessible.name: text
                             HoverHandler { id: sourceHover; cursorShape: Qt.PointingHandCursor }
-                            TapHandler { onTapped: Market.activeProviderId = modelData.id }
+                            TapHandler { onTapped: StockInstaller.activeProviderId = modelData.id }
                         }
                     }
                 }
@@ -215,7 +215,7 @@ Item {
                 id: filterButton
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                visible: Market.filters.length > 0 && Market.canSearch
+                visible: StockInstaller.filters.length > 0 && StockInstaller.canSearch
                 glyph: Theme.icons.sliders
                 active: root.filtersExpanded
                 tooltip: root.activeFilterCount > 0
@@ -247,10 +247,10 @@ Item {
             x: root.sidePadding
             width: parent.width - root.sidePadding * 2
             spacing: Theme.spacingSm
-            visible: Market.filters.length > 0 && Market.canSearch && root.filtersExpanded
+            visible: StockInstaller.filters.length > 0 && StockInstaller.canSearch && root.filtersExpanded
 
             Repeater {
-                model: Market.filters
+                model: StockInstaller.filters
                 delegate: Item {
                     id: filterRoot
                     required property var modelData
@@ -306,7 +306,7 @@ Item {
             radius: Theme.c.stockBrowser.linkRadius
             color: linkHover.hovered ? Theme.c.stockBrowser.linkBackgroundHover : Theme.c.stockBrowser.linkBackground
             visible: root.queryIsLink && !(root.lastRequestWasResolve && root.submittedQuery === root.query
-                                           && (Market.searching || Market.items.length > 0))
+                                           && (StockInstaller.searching || StockInstaller.items.length > 0))
 
             IconGlyph {
                 id: linkGlyph
@@ -359,7 +359,7 @@ Item {
         EmptyState {
             anchors.centerIn: parent
             width: parent.width
-            visible: Market.searching && Market.items.length === 0 && root.lastRequestWasResolve
+            visible: StockInstaller.searching && StockInstaller.items.length === 0 && root.lastRequestWasResolve
             glyph: Theme.icons.spinner
             glyphSpinning: true
             compact: true
@@ -369,7 +369,7 @@ Item {
         Grid {
             anchors.fill: parent
             anchors.leftMargin: root.sidePadding
-            visible: Market.searching && Market.items.length === 0 && !root.lastRequestWasResolve
+            visible: StockInstaller.searching && StockInstaller.items.length === 0 && !root.lastRequestWasResolve
             columns: Math.max(1, Math.floor((width + Theme.assetCardGap) / (Theme.assetCardWidth + Theme.assetCardGap)))
             spacing: Theme.assetCardGap
             Repeater {
@@ -385,28 +385,28 @@ Item {
         EmptyState {
             anchors.centerIn: parent
             width: parent.width
-            visible: !Market.searching && Market.searchError.length > 0 && Market.items.length === 0
+            visible: !StockInstaller.searching && StockInstaller.searchError.length > 0 && StockInstaller.items.length === 0
             glyph: Theme.icons.error
             compact: true
             title: root.lastRequestWasResolve ? qsTr("Couldn’t open that link") : qsTr("Search failed")
-            hint: Market.searchError
-            actionText: Market.searchErrorRetryable ? qsTr("Try again") : ""
+            hint: StockInstaller.searchError
+            actionText: StockInstaller.searchErrorRetryable ? qsTr("Try again") : ""
             onActionTriggered: root.lastRequestWasResolve ? root.runResolve() : root.runSearch()
         }
 
         EmptyState {
             anchors.centerIn: parent
             width: parent.width
-            visible: !Market.searching && Market.searchError.length === 0 && Market.items.length === 0
+            visible: !StockInstaller.searching && StockInstaller.searchError.length === 0 && StockInstaller.items.length === 0
                      && !root.queryIsLink
-            glyph: Market.canSearch ? Theme.icons.search : Theme.icons.linkTwo
+            glyph: StockInstaller.canSearch ? Theme.icons.search : Theme.icons.linkTwo
             compact: true
             title: root.submittedQuery.length > 0
                    ? qsTr("No results for “%1”").arg(root.submittedQuery)
-                   : (Market.canSearch ? qsTr("Search this source") : qsTr("Paste a link"))
+                   : (StockInstaller.canSearch ? qsTr("Search this source") : qsTr("Paste a link"))
             hint: root.submittedQuery.length > 0
                   ? qsTr("Try different words, another source, or clear a filter.")
-                  : (Market.canSearch ? qsTr("Type above and press Enter.") : qsTr("Paste a page link above and press Enter."))
+                  : (StockInstaller.canSearch ? qsTr("Type above and press Enter.") : qsTr("Paste a page link above and press Enter."))
         }
 
         // Video and green screen: 16:9 tiles.
@@ -417,17 +417,17 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: root.sidePadding
             anchors.rightMargin: root.sidePadding - Theme.assetCardGap
-            visible: Market.items.length > 0 && root.mediaKind !== "audio" && root.mediaKind !== "image"
+            visible: StockInstaller.items.length > 0 && root.mediaKind !== "audio" && root.mediaKind !== "image"
             cellWidth: Math.floor(width / columnCount)
             cellHeight: tileWidth * 9 / 16 + Theme.fontSizeXs * 2.6 + Theme.assetCardGap
             cacheBuffer: Math.max(0, Math.round(height))
             clip: true
-            model: visible ? Market.items : []
+            model: visible ? StockInstaller.items : []
             ScrollBar.vertical: AppScrollBar { }
             activeFocusOnTab: true
             keyNavigationEnabled: true
-            Keys.onReturnPressed: if (currentIndex >= 0) root.openDetail(Market.items[currentIndex])
-            onAtYEndChanged: if (atYEnd && Market.hasMore && !Market.searching) Market.loadMore()
+            Keys.onReturnPressed: if (currentIndex >= 0) root.openDetail(StockInstaller.items[currentIndex])
+            onAtYEndChanged: if (atYEnd && StockInstaller.hasMore && !StockInstaller.searching) StockInstaller.loadMore()
 
             delegate: Column {
                 required property var modelData
@@ -466,7 +466,7 @@ Item {
             readonly property real targetHeight: root.compact ? 120 : 96
             readonly property real gap: Theme.spacingSm
             readonly property var rows: {
-                const items = Market.items
+                const items = StockInstaller.items
                 const width = justified.width
                 if (!visible || width <= 0)
                     return []
@@ -493,13 +493,13 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: root.sidePadding
             anchors.rightMargin: root.sidePadding
-            visible: Market.items.length > 0 && root.mediaKind === "image"
+            visible: StockInstaller.items.length > 0 && root.mediaKind === "image"
             model: rows
             spacing: gap
             clip: true
             cacheBuffer: Math.max(0, Math.round(height))
             ScrollBar.vertical: AppScrollBar { }
-            onAtYEndChanged: if (atYEnd && Market.hasMore && !Market.searching) Market.loadMore()
+            onAtYEndChanged: if (atYEnd && StockInstaller.hasMore && !StockInstaller.searching) StockInstaller.loadMore()
 
             delegate: Row {
                 required property var modelData
@@ -512,7 +512,7 @@ Item {
                         required property var modelData
                         width: Math.floor(modelData.w)
                         height: parent.height
-                        item: Market.items[modelData.index] || ({})
+                        item: StockInstaller.items[modelData.index] || ({})
                         compact: root.compact
                         onOpenRequested: root.openDetail(item)
                     }
@@ -527,11 +527,11 @@ Item {
             anchors.fill: parent
             anchors.leftMargin: root.sidePadding
             anchors.rightMargin: root.sidePadding
-            visible: Market.items.length > 0 && root.mediaKind === "audio"
-            model: visible ? Market.items : []
+            visible: StockInstaller.items.length > 0 && root.mediaKind === "audio"
+            model: visible ? StockInstaller.items : []
             clip: true
             ScrollBar.vertical: AppScrollBar { }
-            onAtYEndChanged: if (atYEnd && Market.hasMore && !Market.searching) Market.loadMore()
+            onAtYEndChanged: if (atYEnd && StockInstaller.hasMore && !StockInstaller.searching) StockInstaller.loadMore()
 
             delegate: StockAudioRow {
                 previewPlayer: audioPlayer

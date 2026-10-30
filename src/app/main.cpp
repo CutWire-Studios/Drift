@@ -26,12 +26,16 @@
 #include "app/editor/SearchIndex.h"
 #include "app/online/downloads/DownloadBridges.h"
 #include "app/online/downloads/DownloadCenter.h"
-#include "app/online/market/MarketClient.h"
+#include "app/online/marketplace/CommunityInstaller.h"
+#include "app/online/marketplace/MarketInstallRouter.h"
 #include "app/online/marketplace/MarketSourceBrowser.h"
+#include "app/online/marketplace/StockInstaller.h"
 #include "app/online/marketplace/MarketplaceManifest.h"
 #include "app/online/assets/DriftAssetStore.h"
 #include "app/online/assets/SfxLibrary.h"
 #include "app/online/updates/UpdateChecker.h"
+#include "engine/face/props/FacePropCatalog.h"
+#include "engine/packages/effects/EffectTemplateCatalog.h"
 #include "engine/decode/hw/VaapiZeroCopy.h"
 #include "ui/imageproviders/clippreview/ClipPreviewImageProvider.h"
 #include "ui/imageproviders/color/ColorImageProvider.h"
@@ -762,7 +766,7 @@ int main(int argc, char *argv[])
     step(StartupSplash::tr("Loading add-ons and themes…"), 0.36);
     static FileDialogs fileDialogs;
     static AddonManager addonManager;
-    static MarketClient marketClient;
+    static StockInstaller stockInstaller;
     static UpdateChecker updateChecker;
     static LayoutStore layoutStore;
     static WorkspaceStore workspaceStore;
@@ -770,12 +774,45 @@ int main(int argc, char *argv[])
     static drift::Haptics haptics;
     static drift::PointerDevices pointerDevices;
     editorState.setAddonManager(&addonManager);
-    marketClient.setAssetLibrary(&assetLibrary);
-    editorState.setMarketClient(&marketClient);
-    static DriftAssetStore driftAssets(&marketClient, &assetLibrary, &editorState);
-    static SfxLibrary sfxLibrary(&marketClient, &assetLibrary);
+    stockInstaller.setAssetLibrary(&assetLibrary);
+    editorState.setStockInstaller(&stockInstaller);
+    static DriftAssetStore driftAssets;
+    static SfxLibrary sfxLibrary;
+    const auto importIntoBin = [](const QStringList &paths) { return assetLibrary.importLocalPaths(paths); };
+    driftAssets.setImporter(importIntoBin);
+    sfxLibrary.setImporter(importIntoBin);
+    driftAssets.setPropImporter([](const QString &dir) {
+        return editorState.importFaceProps(QUrl::fromLocalFile(dir)).value(QStringLiteral("installed")).toStringList();
+    });
+    driftAssets.setPropLookup([](const QString &id) {
+        const QList<FacePropEntry> props = facePropsSnapshot();
+        return std::any_of(props.cbegin(), props.cend(), [&](const FacePropEntry &p) { return p.id == id; });
+    });
+    static CommunityInstaller communityInstaller;
+    for (const char *kind : {"effect", "transition", "audio-effect"}) {
+        communityInstaller.setHandler(QLatin1String(kind), [](const QString &path, QString *error) {
+            *error = addonManager.installUserPackageFile(path);
+            return QString();
+        });
+    }
+    communityInstaller.setHandler(QStringLiteral("theme"), [](const QString &path, QString *error) {
+        const QString id = ThemeManager::shared()->importTheme(QUrl::fromLocalFile(path), true);
+        if (id.isEmpty())
+            *error = ThemeManager::shared()->lastError();
+        return id;
+    });
+    communityInstaller.setHandler(QStringLiteral("look"), [](const QString &path, QString *error) {
+        return editorState.color()->importLookFile(path, error);
+    });
+    communityInstaller.setHandler(QStringLiteral("effect-template"), [](const QString &path, QString *error) {
+        QString id;
+        *error = installUserTemplate(path, &id);
+        return id;
+    });
     static MarketplaceManifest marketplace;
     DownloadCenter *downloads = DownloadCenter::instance();
+    static MarketInstallRouter installRouter(&stockInstaller, &driftAssets, &sfxLibrary, &communityInstaller,
+                                             downloads);
     bridgeUpdates(downloads, &updateChecker);
     bridgeAddons(downloads, &addonManager);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
@@ -784,7 +821,9 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "AppController", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);
-    qmlRegisterSingletonInstance("Drift", 1, 0, "Market", &marketClient);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "StockInstaller", &stockInstaller);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "CommunityInstaller", &communityInstaller);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "MarketInstall", &installRouter);
     qmlRegisterSingletonInstance("Drift", 1, 0, "DriftAssets", &driftAssets);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Sfx", &sfxLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Marketplace", &marketplace);

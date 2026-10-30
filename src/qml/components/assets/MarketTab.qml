@@ -18,8 +18,8 @@ Item {
     readonly property real sidePadding: compact ? Theme.androidPagePadding : Theme.pagePadding
     // Until the catalog is in (still loading, or unreachable) the stock tabs collapse into one
     // that leads to the loading and error states.
-    readonly property var stockTabs: Market.types.length > 0
-                                     ? Market.types
+    readonly property var stockTabs: StockInstaller.types.length > 0
+                                     ? StockInstaller.types
                                      : [{ id: "stock", label: qsTr("Stock") }]
 
     // Android Back, forwarded by its host.
@@ -33,38 +33,38 @@ Item {
 
     function showSection(id) {
         root.section = id
-        if (id !== "assets" && id !== "sfx" && id !== "stock" && Market.activeTypeId !== id)
-            Market.activeTypeId = id
+        if (id !== "assets" && id !== "sfx" && id !== "stock" && StockInstaller.activeTypeId !== id)
+            StockInstaller.activeTypeId = id
     }
 
     // A search that the pack could not answer, carried over to stock footage.
     function searchStock(typeId) {
         // Switching type already starts a search with the field's text; only an unchanged type
         // needs asking.
-        const sameType = Market.activeTypeId === typeId
+        const sameType = StockInstaller.activeTypeId === typeId
         root.showSection(typeId)
         if (sameType)
             stock.runSearch()
     }
 
-    // Market.types is not persisted, and StockBrowser can't ask for it: it only shows once the
+    // StockInstaller.types is not persisted, and StockBrowser can't ask for it: it only shows once the
     // types are there. Without this, a fresh run leaves no stock tabs at all.
     onVisibleChanged: ensureCatalog()
     Component.onCompleted: ensureCatalog()
     function ensureCatalog() {
-        if (!visible || !Market.configured)
+        if (!visible || !StockInstaller.configured)
             return
         if (!Sfx.loaded && !Sfx.loading)
             Sfx.refresh()
-        if (Market.types.length === 0 && !Market.catalogLoading)
-            Market.refreshCatalog()
+        if (StockInstaller.types.length === 0 && !StockInstaller.catalogLoading)
+            StockInstaller.refreshCatalog()
     }
 
     Connections {
         target: Market
         function onActiveTypeIdChanged() {
-            if (root.stockSection && Market.activeTypeId)
-                root.section = Market.activeTypeId
+            if (root.stockSection && StockInstaller.activeTypeId)
+                root.section = StockInstaller.activeTypeId
         }
     }
 
@@ -80,7 +80,7 @@ Item {
     EmptyState {
         anchors.centerIn: parent
         width: parent.width
-        visible: !Market.configured
+        visible: !StockInstaller.configured
         glyph: Theme.icons.store
         title: qsTr("Marketplace unavailable")
         hint: qsTr("This build does not include the marketplace.")
@@ -88,7 +88,7 @@ Item {
 
     Column {
         id: top
-        visible: Market.configured
+        visible: StockInstaller.configured
         width: parent.width
         spacing: Theme.spacingMd
         topPadding: Theme.spacingLg
@@ -97,17 +97,17 @@ Item {
             id: field
             x: root.sidePadding
             width: parent.width - root.sidePadding * 2
-            busy: root.stockSection && Market.searching
+            busy: root.stockSection && StockInstaller.searching
             placeholderText: root.section === "assets"
                              ? qsTr("Search assets")
                              : root.section === "sfx"
                                ? qsTr("Search sound effects")
-                               : (Market.canResolve ? qsTr("Search, or paste a link") : qsTr("Search"))
+                               : (StockInstaller.canResolve ? qsTr("Search, or paste a link") : qsTr("Search"))
             onSubmitted: {
                 if (root.stockSection)
                     stock.submitQuery()
             }
-            onCancelRequested: Market.cancelSearch()
+            onCancelRequested: StockInstaller.cancelSearch()
         }
 
         // Text tabs: the medium is the first choice, so it stays visible rather than collapsed
@@ -142,7 +142,7 @@ Item {
 
     Item {
         id: pages
-        visible: Market.configured
+        visible: StockInstaller.configured
         anchors.top: top.bottom
         anchors.left: parent.left
         anchors.right: parent.right
@@ -155,8 +155,8 @@ Item {
             visible: root.section === "assets"
             compact: root.compact
             query: root.section === "assets" ? root.query : ""
-            stockTypes: Market.types.length > 0
-                        ? Market.types : [{ id: "stock", label: qsTr("Stock footage") }]
+            stockTypes: StockInstaller.types.length > 0
+                        ? StockInstaller.types : [{ id: "stock", label: qsTr("Stock footage") }]
             onSearchStockRequested: (typeId) => root.searchStock(typeId)
         }
 
@@ -170,8 +170,8 @@ Item {
         EmptyState {
             anchors.centerIn: parent
             width: parent.width
-            visible: root.stockSection && Market.catalogLoading
-                     && Market.types.length === 0
+            visible: root.stockSection && StockInstaller.catalogLoading
+                     && StockInstaller.types.length === 0
             glyph: Theme.icons.spinner
             glyphSpinning: true
             title: qsTr("Loading sources…")
@@ -180,20 +180,20 @@ Item {
         EmptyState {
             anchors.centerIn: parent
             width: parent.width
-            visible: root.stockSection && !Market.catalogLoading
-                     && Market.catalogError.length > 0 && Market.types.length === 0
+            visible: root.stockSection && !StockInstaller.catalogLoading
+                     && StockInstaller.catalogError.length > 0 && StockInstaller.types.length === 0
             glyph: Theme.icons.error
             title: qsTr("Couldn’t reach the marketplace")
-            hint: Market.catalogError
+            hint: StockInstaller.catalogError
             // Only when trying again could differ: a signing mismatch fails identically forever.
-            actionText: Market.catalogErrorRetryable ? qsTr("Try again") : ""
-            onActionTriggered: Market.refreshCatalog()
+            actionText: StockInstaller.catalogErrorRetryable ? qsTr("Try again") : ""
+            onActionTriggered: StockInstaller.refreshCatalog()
         }
 
         StockBrowser {
             id: stock
             anchors.fill: parent
-            visible: root.stockSection && Market.types.length > 0
+            visible: root.stockSection && StockInstaller.types.length > 0
             compact: root.compact
             query: root.query
         }

@@ -51,7 +51,7 @@ struct MediaInfo;
 
 class QTimer;
 class AddonManager;
-class MarketClient;
+class StockInstaller;
 class JobRegistry;
 
 namespace drift {
@@ -574,8 +574,8 @@ public:
                                        const QString &undoText);
 
     void setAddonManager(AddonManager *manager);
-    void setMarketClient(MarketClient *client) { m_marketClient = client; }
-    MarketClient *marketClient() const { return m_marketClient; }
+    void setStockInstaller(StockInstaller *installer) { m_stockInstaller = installer; }
+    StockInstaller *stockInstaller() const { return m_stockInstaller; }
     AddonManager *addonManager() const { return m_addonManager; }
     // Strip chip click — folds `prop`'s curve away, or brings it back. Purely a view filter: the
     // chip stays put either way, and the animation keeps playing while it is hidden.
@@ -2012,7 +2012,7 @@ protected:
 
     AssetLibrary *m_assetLibrary = nullptr;
     AddonManager *m_addonManager = nullptr;
-    MarketClient *m_marketClient = nullptr;
+    StockInstaller *m_stockInstaller = nullptr;
     JobRegistry *m_jobs = nullptr;
     CloudProviders *m_cloud = nullptr;
     // These trees must outlive m_playback: the compositor thread holds a bare

@@ -52,6 +52,8 @@ public:
     Q_INVOKABLE void resetAll();
     Q_INVOKABLE void setLook(const QString &id);
     Q_INVOKABLE void importLooks(const QList<QUrl> &urls);
+    // Imports one .cube without a message and returns the new look id, empty on failure.
+    QString importLookFile(const QString &path, QString *error = nullptr);
     Q_INVOKABLE int clipsUsingLook(const QString &id) const;
     Q_INVOKABLE void removeLook(const QString &id);
     Q_INVOKABLE void renameLook(const QString &id, const QString &name);

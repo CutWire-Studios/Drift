@@ -14,8 +14,8 @@ Rectangle {
     signal openRequested()
 
     readonly property var job: {
-        void Market.downloadsRevision
-        return Market.downloadInfo(item.id)
+        void Downloads.revision
+        return StockInstaller.downloadInfo(item.id)
     }
     readonly property bool busy: job.status === "waiting" || job.status === "queued"
                                  || job.status === "processing" || job.status === "downloading"
@@ -133,7 +133,7 @@ Rectangle {
             iconSize: Theme.iconSizeMd
             glyph: Theme.icons.x
             tooltip: qsTr("Cancel download")
-            onClicked: Market.cancelDownload(root.item.id)
+            onClicked: StockInstaller.cancelDownload(root.item.id)
         }
         HoverHandler {
             id: busyHover
@@ -147,7 +147,7 @@ Rectangle {
         }
         TapHandler {
             enabled: !root.compact
-            onTapped: Market.cancelDownload(root.item.id)
+            onTapped: StockInstaller.cancelDownload(root.item.id)
         }
     }
 
@@ -169,7 +169,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: root.job.retryable === true
                 text: qsTr("Retry")
-                onClicked: Market.retryDownload(root.item.id)
+                onClicked: StockInstaller.retryDownload(root.item.id)
             }
         }
         // Retry is the one thing to press on a failed tile.

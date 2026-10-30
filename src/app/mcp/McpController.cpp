@@ -7,7 +7,7 @@
 #include "app/editor/AppController.h"
 #include "ui/preview/PreviewController.h"
 #include "app/mcp/McpDetail.h"
-#include "app/online/market/MarketClient.h"
+#include "app/online/downloads/DownloadCenter.h"
 #include "app/jobs/JobRegistry.h"
 #include "app/jobs/audio/TtsController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
@@ -714,9 +714,9 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                                     {QStringLiteral("clip"), m_app->scenes()->clipId()},
                                     {QStringLiteral("scenes"), int(m_app->scenes()->list().size())}});
         }
-        if (m_app->m_marketClient && m_app->m_marketClient->activeDownloadCount() > 0) {
+        if (DownloadCenter::instance()->activeCount() > 0) {
             jobs.insert(QStringLiteral("market"),
-                        QJsonObject{{QStringLiteral("active"), m_app->m_marketClient->activeDownloadCount()}});
+                        QJsonObject{{QStringLiteral("active"), DownloadCenter::instance()->activeCount()}});
         }
         const QJsonArray jobList = m_app->m_jobs->jobs();
         if (!jobList.isEmpty())

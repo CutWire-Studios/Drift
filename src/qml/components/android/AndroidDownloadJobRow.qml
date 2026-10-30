@@ -81,7 +81,7 @@ Item {
             glyph: Theme.icons.x
             variant: "text"
             tooltip: qsTr("Cancel download")
-            onClicked: Market.cancelDownload(row.modelData.itemId)
+            onClicked: Downloads.cancel(row.modelData.itemId)
         }
 
         IconButton {
@@ -92,7 +92,7 @@ Item {
             glyph: Theme.icons.refresh
             variant: "text"
             tooltip: qsTr("Try again")
-            onClicked: Market.retryDownload(row.modelData.itemId)
+            onClicked: Downloads.retry(row.modelData.itemId)
         }
     }
 }

@@ -3588,7 +3588,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     }
 
     if (tool.startsWith(QLatin1String("market_"))) {
-        MarketClient *market = m_controller->marketClient();
+        StockInstaller *market = m_controller->stockInstaller();
         if (tool == QLatin1String("market_status"))
             return marketStatus(market);
         if (tool == QLatin1String("market_search"))

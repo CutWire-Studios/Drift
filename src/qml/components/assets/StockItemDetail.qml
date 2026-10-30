@@ -19,8 +19,8 @@ Rectangle {
     readonly property string kind: item.media_kind || item.type || ""
     readonly property bool isImage: kind === "photo" || kind === "image"
     readonly property var job: {
-        void Market.downloadsRevision
-        return item.id ? Market.downloadInfo(item.id) : ({})
+        void Downloads.revision
+        return item.id ? StockInstaller.downloadInfo(item.id) : ({})
     }
     readonly property bool busy: job.status === "waiting" || job.status === "queued"
                                  || job.status === "processing" || job.status === "downloading"
@@ -167,8 +167,8 @@ Rectangle {
 
                 Text {
                     width: Math.min(implicitWidth, parent.width - changeFolder.width - parent.spacing)
-                    text: Market.lastDownloadDir.toString().length > 0
-                          ? qsTr("Saves to %1").arg(root.folderName(Market.lastDownloadDir))
+                    text: StockInstaller.lastDownloadDir.toString().length > 0
+                          ? qsTr("Saves to %1").arg(root.folderName(StockInstaller.lastDownloadDir))
                           : qsTr("You’ll choose a folder the first time")
                     color: Theme.c.stockItemDetail.foregroundMuted
                     font.family: Theme.fontFamily
@@ -177,7 +177,7 @@ Rectangle {
                 }
                 Text {
                     id: changeFolder
-                    visible: Market.lastDownloadDir.toString().length > 0
+                    visible: StockInstaller.lastDownloadDir.toString().length > 0
                     text: qsTr("Change")
                     color: changeHover.hovered ? Theme.c.stockItemDetail.foregroundHover : Theme.c.stockItemDetail.accent
                     font.family: Theme.fontFamily

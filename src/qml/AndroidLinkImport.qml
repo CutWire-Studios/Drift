@@ -39,9 +39,9 @@ AndroidBottomSheet {
     // because resolveUrl() sends the *active type* in the POST body — the pair is the unit that
     // matters, not the provider alone.
     readonly property var resolveProviders: {
-        void Market.types
+        void StockInstaller.types
         let out = []
-        const types = Market.types
+        const types = StockInstaller.types
         for (let t = 0; t < types.length; ++t) {
             const providers = types[t].providers || []
             for (let p = 0; p < providers.length; ++p) {
@@ -70,15 +70,15 @@ AndroidBottomSheet {
     }
 
     // The catalog is fetched when the Market destination is first shown, and a share that cold-
-    // starts the app has never shown it — so Market.types is empty here until this asks.
+    // starts the app has never shown it — so StockInstaller.types is empty here until this asks.
     function loadProviders() {
         root.message = ""
         root.failureCode = ""
         root.canRetry = false
-        if (Market.types.length === 0) {
+        if (StockInstaller.types.length === 0) {
             root.state = "catalog"
-            if (!Market.catalogLoading)
-                Market.refreshCatalog()
+            if (!StockInstaller.catalogLoading)
+                StockInstaller.refreshCatalog()
             return
         }
         if (root.resolveProviders.length === 0) {
@@ -90,13 +90,13 @@ AndroidBottomSheet {
     }
 
     function resolveWith(pair) {
-        Market.activeTypeId = pair.typeId
-        Market.activeProviderId = pair.providerId
+        StockInstaller.activeTypeId = pair.typeId
+        StockInstaller.activeProviderId = pair.providerId
         root.state = "resolving"
         root.message = ""
         root.failureCode = ""
         root.canRetry = false
-        Market.resolveUrl(root.sourceUrl)
+        StockInstaller.resolveUrl(root.sourceUrl)
     }
 
     // Both the catalog fetch and the resolve job clear their "loading" flag *before* applying
@@ -109,31 +109,31 @@ AndroidBottomSheet {
     // through Qt.callLater, which runs after the whole emitting turn has finished and every
     // property involved has settled.
     function evaluateCatalog() {
-        if (root.state !== "catalog" || Market.catalogLoading)
+        if (root.state !== "catalog" || StockInstaller.catalogLoading)
             return
-        if (Market.types.length > 0) {
+        if (StockInstaller.types.length > 0) {
             root.loadProviders()
             return
         }
         root.state = "failed"
-        root.message = Market.catalogError.length > 0
-                       ? Market.catalogError
+        root.message = StockInstaller.catalogError.length > 0
+                       ? StockInstaller.catalogError
                        : qsTr("Couldn’t reach the marketplace.")
-        root.canRetry = Market.catalogErrorRetryable
+        root.canRetry = StockInstaller.catalogErrorRetryable
     }
 
     function evaluateResolve() {
-        if (root.state !== "resolving" || Market.searching)
+        if (root.state !== "resolving" || StockInstaller.searching)
             return
-        if (Market.searchError.length > 0) {
+        if (StockInstaller.searchError.length > 0) {
             root.fail()
             return
         }
-        const items = Market.items
+        const items = StockInstaller.items
         if (items.length > 0) {
             root.itemId = items[0].id
             root.state = "downloading"
-            Market.download(root.itemId, "", "", items[0].title || "",
+            StockInstaller.download(root.itemId, "", "", items[0].title || "",
                             items[0].media_kind || items[0].type || "")
             return
         }
@@ -144,13 +144,13 @@ AndroidBottomSheet {
 
     function fail() {
         root.state = "failed"
-        root.message = Market.searchError
-        root.failureCode = Market.searchErrorCode
-        root.canRetry = Market.searchErrorRetryable
+        root.message = StockInstaller.searchError
+        root.failureCode = StockInstaller.searchErrorCode
+        root.canRetry = StockInstaller.searchErrorRetryable
     }
 
     Connections {
-        target: Market
+        target: StockInstaller
         enabled: root.opened
 
         function onCatalogChanged() { Qt.callLater(root.evaluateCatalog) }

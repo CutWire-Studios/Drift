@@ -882,6 +882,40 @@ bool AddonManager::isUserPackage(const QUrl &url) const
     return file && file->read(8) == QByteArrayLiteral("DRIFTFX\0");
 }
 
+namespace {
+
+// name, kind, error
+using UserPackageResult = std::tuple<QString, QString, QString>;
+
+UserPackageResult extractUserPackage(const QString &packagePath, const QString &appData)
+{
+    QString error;
+    const auto manifest = readManifest(packagePath, &error, Container::User);
+    if (!manifest)
+        return {QString(), QString(), error};
+    const PackageProvide provide = manifest->provides.first();
+    const QString folder = manifest->files.first().path.mid(provide.root.size() + 1).section(QLatin1Char('/'), 0, 0);
+
+    // Extracted next to its final home so the last step is a rename on the same filesystem.
+    // The user folders (<AppData>/effects, <AppData>/transitions) are the same roots the
+    // catalogs already scan for unsigned packages.
+    const QDir kindDir(QDir(appData).filePath(provide.kind));
+    const QString staging = kindDir.filePath(QStringLiteral(".import-") + folder);
+    PackageInfo info;
+    if (!drift::addon::install(packagePath, staging, {}, &info, &error, Container::User))
+        return {manifest->name, provide.kind, error};
+
+    const QString destination = kindDir.filePath(folder);
+    QDir(destination).removeRecursively();
+    const bool moved = QDir().rename(QDir(staging).filePath(provide.root + QLatin1Char('/') + folder), destination);
+    QDir(staging).removeRecursively();
+    if (!moved)
+        return {info.name, provide.kind, QStringLiteral("cannot move %1 into place").arg(folder)};
+    return {info.name, provide.kind, QString()};
+}
+
+} // namespace
+
 void AddonManager::installUserPackage()
 {
     if (m_userPackagePath.isEmpty())
@@ -889,9 +923,8 @@ void AddonManager::installUserPackage()
     const QString packagePath = std::exchange(m_userPackagePath, QString());
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
-    using Result = std::tuple<QString, QString, QString>; // name, kind, error
-    auto *watcher = new QFutureWatcher<Result>(this);
-    connect(watcher, &QFutureWatcher<Result>::finished, this, [this, watcher, packagePath] {
+    auto *watcher = new QFutureWatcher<UserPackageResult>(this);
+    connect(watcher, &QFutureWatcher<UserPackageResult>::finished, this, [this, watcher, packagePath] {
         watcher->deleteLater();
         QFile::remove(packagePath);
         const auto [name, kind, error] = watcher->result();
@@ -900,31 +933,16 @@ void AddonManager::installUserPackage()
         emit userPackageInstalled(name, error);
     });
 
-    watcher->setFuture(QtConcurrent::run([packagePath, appData]() -> Result {
-        QString error;
-        const auto manifest = readManifest(packagePath, &error, Container::User);
-        if (!manifest)
-            return {QString(), QString(), error};
-        const PackageProvide provide = manifest->provides.first();
-        const QString folder = manifest->files.first().path.mid(provide.root.size() + 1).section(QLatin1Char('/'), 0, 0);
+    watcher->setFuture(QtConcurrent::run([packagePath, appData] { return extractUserPackage(packagePath, appData); }));
+}
 
-        // Extracted next to its final home so the last step is a rename on the same filesystem.
-        // The user folders (<AppData>/effects, <AppData>/transitions) are the same roots the
-        // catalogs already scan for unsigned packages.
-        const QDir kindDir(QDir(appData).filePath(provide.kind));
-        const QString staging = kindDir.filePath(QStringLiteral(".import-") + folder);
-        PackageInfo info;
-        if (!drift::addon::install(packagePath, staging, {}, &info, &error, Container::User))
-            return {manifest->name, provide.kind, error};
-
-        const QString destination = kindDir.filePath(folder);
-        QDir(destination).removeRecursively();
-        const bool moved = QDir().rename(QDir(staging).filePath(provide.root + QLatin1Char('/') + folder), destination);
-        QDir(staging).removeRecursively();
-        if (!moved)
-            return {info.name, provide.kind, QStringLiteral("cannot move %1 into place").arg(folder)};
-        return {info.name, provide.kind, QString()};
-    }));
+QString AddonManager::installUserPackageFile(const QString &path)
+{
+    const auto [name, kind, error] =
+        extractUserPackage(path, QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    if (error.isEmpty())
+        reloadForKinds({kind});
+    return error;
 }
 
 QVariantMap AddonManager::inspectAddonFile(const QUrl &url)

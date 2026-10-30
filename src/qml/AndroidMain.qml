@@ -429,7 +429,7 @@ ApplicationWindow {
     property string pendingLinkUrl: ""
 
     function openLinkImport(url) {
-        if (!Market.configured) {
+        if (!StockInstaller.configured) {
             Toasts.info(qsTr("Links can’t be opened in this build."))
             return
         }
@@ -633,9 +633,9 @@ ApplicationWindow {
     // why it runs off the GUI thread and why nothing waits on it: the import has already happened
     // and the clip is usable meanwhile.
     Connections {
-        target: Market
+        target: StockInstaller
         function onDownloadImported(itemId, name) {
-            const job = Market.downloadInfo(itemId)
+            const job = StockInstaller.downloadInfo(itemId)
             const path = job && job.filePath ? String(job.filePath) : ""
             // A download the user steered to their own folder is already somewhere they chose.
             if (path === "" || (job.destinationDir && String(job.destinationDir).length > 0))
@@ -1191,7 +1191,7 @@ ApplicationWindow {
     }
 
     Connections {
-        target: Market
+        target: StockInstaller
         function onAuthFinished(ok, message) {
             if (ok)
                 Toasts.success(message)

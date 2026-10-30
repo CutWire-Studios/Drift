@@ -128,7 +128,10 @@ qt_add_executable(tst_editorstate
     ../src/app/mcp/tools/McpEffectAuthoring.cpp
     ../src/app/mcp/protocol/McpValidate.cpp
     ../src/app/mcp/tools/McpMarket.cpp
-    ../src/app/online/market/MarketClient.cpp
+    ../src/app/online/marketplace/MarketInstall.cpp
+    ../src/app/online/marketplace/StockInstaller.cpp
+    ../src/app/online/marketplace/MarketSourceBrowser.cpp
+    ../src/app/online/downloads/DownloadCenter.cpp
     ../src/app/online/marketplace/MarketTransport.cpp
     ../src/app/online/assets/DriftAssetStore.cpp
     ../src/app/online/market/MarketIdentity.cpp
@@ -209,6 +212,13 @@ qt_add_executable(tst_marketplace
     ../src/app/online/marketplace/MarketTransport.cpp
     ../src/app/online/marketplace/MarketplaceManifest.cpp
     ../src/app/online/marketplace/MarketSourceBrowser.cpp
+    ../src/app/online/marketplace/MarketInstall.cpp
+    ../src/app/online/marketplace/StockInstaller.cpp
+    ../src/app/online/marketplace/CommunityInstaller.cpp
+    ../src/app/online/marketplace/MarketInstallRouter.cpp
+    ../src/app/online/assets/DriftAssetStore.cpp
+    ../src/app/online/assets/SfxLibrary.cpp
+    ../src/app/online/downloads/DownloadCenter.cpp
 )
 target_include_directories(tst_marketplace PRIVATE ../src)
 target_link_libraries(tst_marketplace PRIVATE Qt6::Test Qt6::Core Qt6::Network Qt6::Qml)
@@ -356,7 +366,10 @@ qt_add_executable(tst_mcp
     ../src/app/mcp/tools/McpEffectAuthoring.cpp
     ../src/app/mcp/protocol/McpValidate.cpp
     ../src/app/mcp/tools/McpMarket.cpp
-    ../src/app/online/market/MarketClient.cpp
+    ../src/app/online/marketplace/MarketInstall.cpp
+    ../src/app/online/marketplace/StockInstaller.cpp
+    ../src/app/online/marketplace/MarketSourceBrowser.cpp
+    ../src/app/online/downloads/DownloadCenter.cpp
     ../src/app/online/marketplace/MarketTransport.cpp
     ../src/app/online/assets/DriftAssetStore.cpp
     ../src/app/online/market/MarketIdentity.cpp
