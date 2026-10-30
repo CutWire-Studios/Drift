@@ -25,6 +25,8 @@
 #include "app/editor/WorkspaceStore.h"
 #include "app/editor/SearchIndex.h"
 #include "app/online/market/MarketClient.h"
+#include "app/online/marketplace/MarketSourceBrowser.h"
+#include "app/online/marketplace/MarketplaceManifest.h"
 #include "app/online/assets/DriftAssetStore.h"
 #include "app/online/assets/SfxLibrary.h"
 #include "app/online/updates/UpdateChecker.h"
@@ -770,6 +772,7 @@ int main(int argc, char *argv[])
     editorState.setMarketClient(&marketClient);
     static DriftAssetStore driftAssets(&marketClient, &assetLibrary, &editorState);
     static SfxLibrary sfxLibrary(&marketClient, &assetLibrary);
+    static MarketplaceManifest marketplace;
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.bin()->folderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
@@ -779,6 +782,8 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "Market", &marketClient);
     qmlRegisterSingletonInstance("Drift", 1, 0, "DriftAssets", &driftAssets);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Sfx", &sfxLibrary);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Marketplace", &marketplace);
+    qmlRegisterType<MarketSourceBrowser>("Drift", 1, 0, "MarketSourceBrowser");
     qmlRegisterSingletonInstance("Drift", 1, 0, "Updates", &updateChecker);
     qmlRegisterSingletonInstance("Drift", 1, 0, "LayoutMemory", &layoutStore);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Workspaces", &workspaceStore);

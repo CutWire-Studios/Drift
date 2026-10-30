@@ -1043,6 +1043,8 @@ qt_add_executable(drift
     src/app/online/market/MarketClient.cpp
     src/app/online/marketplace/MarketTransport.h
     src/app/online/marketplace/MarketTransport.cpp
+    src/app/online/marketplace/MarketplaceManifest.h
+    src/app/online/marketplace/MarketplaceManifest.cpp
     src/app/online/assets/DriftAssetStore.h
     src/app/online/assets/DriftAssetStore.cpp
     src/app/online/assets/SfxLibrary.h
@@ -1409,6 +1411,12 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/masking-tracking.json
 )
 
+qt_add_resources(drift "drift_marketplace"
+    PREFIX "/"
+    BASE resources
+    FILES resources/marketplace/default-manifest.json
+)
+
 # Global search index written by scripts/gen-search-index.py; loaded at :/search-index.json.
 qt_add_resources(drift "drift_search_index"
     PREFIX "/"
@@ -1465,6 +1473,8 @@ qt_add_qml_module(drift
         src/ui/theme/ThemeManager.cpp
         src/ui/theme/backdrop/WindowBackdrop.h
         src/ui/theme/backdrop/WindowBackdrop.cpp
+        src/app/online/marketplace/MarketSourceBrowser.h
+        src/app/online/marketplace/MarketSourceBrowser.cpp
         ${DRIFT_BACKDROP_PLATFORM_SOURCES}
     QML_FILES
         src/qml/Shell.qml
@@ -2347,7 +2357,7 @@ target_link_libraries(drift PRIVATE
 )
 target_include_directories(drift PRIVATE src)
 # qmltyperegistrar emits bare-basename includes (<ThemeManager.h>) for the qml module's headers.
-target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop)
+target_include_directories(drift PRIVATE src/ui/theme src/ui/theme/backdrop src/app/online/marketplace)
 if(DRIFT_BACKDROP_PLATFORM_LIBS)
     target_link_libraries(drift PRIVATE ${DRIFT_BACKDROP_PLATFORM_LIBS})
 endif()

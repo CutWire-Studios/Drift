@@ -203,6 +203,26 @@ target_compile_definitions(tst_marketidentity PRIVATE
     DRIFT_VERSION="0")
 add_test(NAME MarketIdentity COMMAND tst_marketidentity)
 
+qt_add_executable(tst_marketplace
+    tst_marketplace.cpp
+    ../src/app/online/market/MarketIdentity.cpp
+    ../src/app/online/marketplace/MarketTransport.cpp
+    ../src/app/online/marketplace/MarketplaceManifest.cpp
+    ../src/app/online/marketplace/MarketSourceBrowser.cpp
+)
+target_include_directories(tst_marketplace PRIVATE ../src)
+target_link_libraries(tst_marketplace PRIVATE Qt6::Test Qt6::Core Qt6::Network Qt6::Qml)
+target_compile_definitions(tst_marketplace PRIVATE
+    DRIFT_MARKET_API_URL=""
+    DRIFT_MARKET_CLIENT_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    DRIFT_VERSION="0")
+qt_add_resources(tst_marketplace "marketplace_default"
+    PREFIX "/"
+    BASE ../resources
+    FILES ../resources/marketplace/default-manifest.json
+)
+add_test(NAME Marketplace COMMAND tst_marketplace)
+
 qt_add_executable(tst_projectbundle tst_projectbundle.cpp)
 target_include_directories(tst_projectbundle PRIVATE ../src)
 # zstd directly: the test forges a manifest to exercise the format version gate.

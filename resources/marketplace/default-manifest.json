@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "features": {},
+  "sources": {
+    "drift-assets": {
+      "kind": "drift-assets",
+      "label": "Drift Assets",
+      "searchable": true,
+      "categories": [],
+      "canResolve": false
+    },
+    "sfx": {
+      "kind": "sfx",
+      "label": "Sound effects",
+      "searchable": true,
+      "categories": [],
+      "canResolve": false
+    }
+  },
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "sections": [
+        {
+          "id": "assets",
+          "type": "shelf",
+          "title": "Drift Assets",
+          "limit": 12,
+          "source": {
+            "id": "drift-assets"
+          },
+          "seeAll": {
+            "page": "assets"
+          }
+        },
+        {
+          "id": "effects",
+          "type": "shelf",
+          "title": "Community effects",
+          "limit": 12,
+          "source": {
+            "id": "community.effect",
+            "sort": "trending"
+          },
+          "seeAll": {
+            "page": "community"
+          }
+        },
+        {
+          "id": "looks",
+          "type": "shelf",
+          "title": "Community looks",
+          "limit": 12,
+          "source": {
+            "id": "community.look",
+            "sort": "trending"
+          },
+          "seeAll": {
+            "page": "community"
+          }
+        },
+        {
+          "id": "themes",
+          "type": "shelf",
+          "title": "Community themes",
+          "limit": 12,
+          "source": {
+            "id": "community.theme",
+            "sort": "trending"
+          },
+          "seeAll": {
+            "page": "community"
+          }
+        }
+      ]
+    },
+    {
+      "id": "assets",
+      "title": "Assets",
+      "sections": [
+        {
+          "id": "categories",
+          "type": "chips",
+          "source": {
+            "id": "drift-assets"
+          },
+          "target": "grid"
+        },
+        {
+          "id": "grid",
+          "type": "grid",
+          "searchable": true,
+          "source": {
+            "id": "drift-assets"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sfx",
+      "title": "Sound effects",
+      "sections": [
+        {
+          "id": "browser",
+          "type": "sfx-browser",
+          "source": {
+            "id": "sfx"
+          }
+        }
+      ]
+    },
+    {
+      "id": "video",
+      "title": "Video",
+      "sections": [
+        {
+          "id": "browser",
+          "type": "stock-browser",
+          "source": {
+            "id": "stock.video"
+          }
+        }
+      ]
+    },
+    {
+      "id": "photo",
+      "title": "Photos",
+      "sections": [
+        {
+          "id": "browser",
+          "type": "stock-browser",
+          "source": {
+            "id": "stock.photo"
+          }
+        }
+      ]
+    },
+    {
+      "id": "audio",
+      "title": "Audio",
+      "sections": [
+        {
+          "id": "browser",
+          "type": "stock-browser",
+          "source": {
+            "id": "stock.audio"
+          }
+        }
+      ]
+    },
+    {
+      "id": "music",
+      "title": "Music",
+      "sections": [
+        {
+          "id": "browser",
+          "type": "stock-browser",
+          "source": {
+            "id": "stock.music"
+          }
+        }
+      ]
+    },
+    {
+      "id": "greenscreen",
+      "title": "Green screen",
+      "sections": [
+        {
+          "id": "browser",
+          "type": "stock-browser",
+          "source": {
+            "id": "stock.greenscreen"
+          }
+        }
+      ]
+    },
+    {
+      "id": "community",
+      "title": "Community",
+      "sections": [
+        {
+          "id": "categories",
+          "type": "chips",
+          "source": {
+            "id": "community.effect"
+          },
+          "target": "effects-grid"
+        },
+        {
+          "id": "effects-grid",
+          "type": "grid",
+          "title": "Effects",
+          "searchable": true,
+          "source": {
+            "id": "community.effect"
+          }
+        },
+        {
+          "id": "transitions",
+          "type": "shelf",
+          "title": "Transitions",
+          "limit": 12,
+          "source": {
+            "id": "community.transition"
+          }
+        },
+        {
+          "id": "audio-effects",
+          "type": "shelf",
+          "title": "Audio effects",
+          "limit": 12,
+          "source": {
+            "id": "community.audio-effect"
+          }
+        },
+        {
+          "id": "looks",
+          "type": "shelf",
+          "title": "Looks",
+          "limit": 12,
+          "source": {
+            "id": "community.look"
+          }
+        },
+        {
+          "id": "themes",
+          "type": "shelf",
+          "title": "Themes",
+          "limit": 12,
+          "source": {
+            "id": "community.theme"
+          }
+        },
+        {
+          "id": "templates",
+          "type": "shelf",
+          "title": "Effect templates",
+          "limit": 12,
+          "source": {
+            "id": "community.effect-template"
+          }
+        }
+      ]
+    }
+  ]
+}
