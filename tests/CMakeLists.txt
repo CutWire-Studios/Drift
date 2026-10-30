@@ -223,6 +223,14 @@ qt_add_resources(tst_marketplace "marketplace_default"
 )
 add_test(NAME Marketplace COMMAND tst_marketplace)
 
+qt_add_executable(tst_downloads
+    tst_downloads.cpp
+    ../src/app/online/downloads/DownloadCenter.cpp
+)
+target_include_directories(tst_downloads PRIVATE ../src)
+target_link_libraries(tst_downloads PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME Downloads COMMAND tst_downloads)
+
 qt_add_executable(tst_projectbundle tst_projectbundle.cpp)
 target_include_directories(tst_projectbundle PRIVATE ../src)
 # zstd directly: the test forges a manifest to exercise the format version gate.

@@ -1045,6 +1045,10 @@ qt_add_executable(drift
     src/app/online/marketplace/MarketTransport.cpp
     src/app/online/marketplace/MarketplaceManifest.h
     src/app/online/marketplace/MarketplaceManifest.cpp
+    src/app/online/downloads/DownloadCenter.h
+    src/app/online/downloads/DownloadCenter.cpp
+    src/app/online/downloads/DownloadBridges.h
+    src/app/online/downloads/DownloadBridges.cpp
     src/app/online/assets/DriftAssetStore.h
     src/app/online/assets/DriftAssetStore.cpp
     src/app/online/assets/SfxLibrary.h
