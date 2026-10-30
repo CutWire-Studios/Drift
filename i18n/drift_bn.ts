@@ -1037,21 +1037,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>ডাউনলোড</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>এখন কিছুই ডাউনলোড হচ্ছে না.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>সম্পন্ন কাজগুলো সরান</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1282,6 +1267,10 @@
         <translation type="unfinished">আপডেট পাওয়া গেছে</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">অতিরিক্ত প্যাক</translation>
     </message>
@@ -1422,10 +1411,6 @@
         <translation>লিঙ্ক খুলুন</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>বাজারে পৌঁছানো যায়নি.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>“%1” প্রস্তুত.</translation>
     </message>
@@ -1434,32 +1419,24 @@
         <translation>ডাউনলোড করা হচ্ছে…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>মার্কেটপ্লেসে কোন সোর্স লিংক খুলতে পারে না.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>সেই উৎসটি এই লিঙ্কটিকে চিনতে পারেনি.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>কোন উৎস থেকে এই লিঙ্কটি খুলতে হবে?</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>উৎস লোড করা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>উৎস থেকে তথ্য আনা হচ্ছে…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>আবার চেষ্টা করুন</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>অন্য একটি উৎস বেছে নিন</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">এতে ডাউনলোড সংরক্ষণ করুন</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">ডাউনলোড করুন</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1583,6 +1560,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>মার্কেটপ্লেস থেকে ইমপোর্ট করা.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5304,10 +5288,6 @@
         <translation>ফোল্ডারে মিডিয়া সংগ্রহ করুন</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>মার্কেট</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>টেক্সট</translation>
     </message>
@@ -5421,6 +5401,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>ফোল্ডার ইমপোর্ট করুন…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6083,6 +6067,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>লুকটি সরানো যায়নি</translation>
     </message>
@@ -6470,6 +6458,33 @@
     <message>
         <source>Brightness</source>
         <translation>উজ্জ্বলতা</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">শুরু হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ইনস্টল করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">বাতিল করা হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -7061,6 +7076,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ইনস্টল করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">বাতিল করা হয়েছে</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7129,40 +7163,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>ডাউনলোড</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%nটি সক্রিয়</numerusform>
-            <numerusform>%nটি সক্রিয়</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>কোনো ডাউনলোড চলছে না</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>একসঙ্গে %1টি</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>সম্পন্ন কাজগুলো সরান</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>এখনো কিছুই ডাউনলোড করা হয়নি</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>মার্কেট ট্যাব থেকে ডাউনলোডগুলি চালানোর সময় এখানে প্রদর্শিত হবে.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7187,10 +7187,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>লুপ, %1 সে</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>যোগ করা হয়েছে</translation>
     </message>
@@ -7204,97 +7200,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>নির্বিঘ্নে লুপ</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>খেলে, তারপর ধরে</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>চালানো করে, ধরে রাখে, চালানো করে</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>ফিরে যান</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>স্টাইল</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>রং</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>রিসেট করুন</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 সেকেন্ড</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>রুম</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>3D মডেল, প্রতি %1 সেকেন্ডে লুপ</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>যে ক্লিপে এটি প্রয়োগ করা হয়েছে তাতে একটি মুখ ট্র্যাক করে।</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>লাইসেন্স &lt;a href=&quot;%1&quot;&gt; CC BY-NC-SA 4.0 &lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>লাইসেন্স %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>নির্বাচিত ক্লিপে প্রয়োগ করুন</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>প্লেহেডে যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>প্রথমে টাইমলাইনে একটি মুখ সহ একটি ক্লিপ নির্বাচন করুন।</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>ফেস প্রপসে যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>মিডিয়া বিনে যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>এই প্রপটি প্রয়োগ করতে টাইমলাইনে একটি মুখ সহ একটি ক্লিপ নির্বাচন করুন.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>রঙ চয়ন করুন</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>এই বিল্ডে মার্কেটপ্লেস পাওয়া যায় না.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Drift সম্পদ লোড করা যায়নি। আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">শুরু হচ্ছে…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7305,79 +7214,32 @@
         <translation>অ্যাপ ডেটা ফোল্ডারে লেখা যায়নি.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>সেই সম্পদটি ডাউনলোড করা যায়নি। আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>ডাউনলোডটি ক্ষতিগ্রস্ত হয়েছে। আবার চেষ্টা করুন.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">মিডিয়া বিনে</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">বাতিল করা হয়েছে</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>সেই ফেস প্রপ যোগ করা যায়নি.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">ইমপোর্ট করা হচ্ছে…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>মিডিয়া বিনে সেই সম্পদ যোগ করা যায়নি.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>প্রয়োগ করুন</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>যোগ করুন</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>ফেস প্রপসে যোগ করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>ফেস প্রপ প্রয়োগ করতে একটি ভিডিও বা ইমেজ ক্লিপ নির্বাচন করুন</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>মিডিয়া বিনে যোগ করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Drift সম্পদ লোড করা যায়নি</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>আবার চেষ্টা করুন</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>এখানে এখনো কোনো সম্পদ নেই</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Drift সম্পদ এখনও প্রকাশিত হচ্ছে। শীঘ্রই আবার চেক করুন.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>রিফ্রেশ করুন</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>সব দেখুন</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>সমস্ত সম্পদ</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>কোন Drift সম্পদের মিল নেই “%1”.</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>“%2” এর জন্য %1 অনুসন্ধান করুন</translation>
     </message>
 </context>
 <context>
@@ -7684,15 +7546,15 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>ডাউনলোড — %nটি চলছে</numerusform>
-            <numerusform>ডাউনলোড — %nটি চলছে</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>ডাউনলোড</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10823,6 +10685,10 @@
         <translation>অটো ওয়ার্কস্পেস (ক্যানভাস অনুসরণ করুন)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>ডাউনলোড</translation>
     </message>
@@ -10848,137 +10714,252 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>মার্কেটপ্লেস এই বিল্ডে উপলব্ধ নেই.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>অপেক্ষা করা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>শুরু হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>প্রস্তুত হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>বাতিল করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>মার্কেটপ্লেস অ্যাকাউন্ট সংযোগ করা যায়নি.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>এই মুহূর্তে মার্কেটপ্লেস থেকে কিছুই পাওয়া যাচ্ছে না.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>ডাউনলোড করা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>ফাইলটি সংরক্ষণ করা যায়নি.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>ডাউনলোড করা ফাইলটি মার্কেটপ্লেস যা পাঠিয়েছে তার সাথে মেলেনি.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>ইমপোর্ট করা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>ফাইলটি ইমপোর্ট করা যায়নি.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>মিডিয়া বিনে</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>মার্কেটপ্লেস অ্যাকাউন্ট সংযুক্ত হয়েছে.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>এই উৎসের দৈনিক সীমা শেষ হয়েছে। পরে আবার চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>এই আইটেমটির একটি সংযুক্ত অ্যাকাউন্ট প্রয়োজন.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>পর্যাপ্ত কয়েন নেই.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>এই উৎসটি সাময়িকভাবে অনুপলব্ধ.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>সেই আইটেমটি আর উপলব্ধ নেই.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>বাজারে পৌঁছানো যায়নি.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>ফাইলটি প্রস্তুত করা যায়নি.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>সেই অনুরোধটি সম্পূর্ণ করা যায়নি.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>মার্কেটপ্লেস উত্তর দিতে অনেক বেশি সময় নিয়েছে। আবার চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>বাজারে পৌঁছানো যায়নি। আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
+        <source>All</source>
+        <translation type="unfinished">সব</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>মার্কেটপ্লেসটি পরীক্ষামূলক</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%nটি সক্রিয়</numerusform>
+            <numerusform>%nটি সক্রিয়</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>এই বৈশিষ্ট্যটি এখনও তৈরি করা হচ্ছে এবং যে কোনও সময় পরিবর্তন বা কাজ বন্ধ করতে পারে। আপনি এটি ব্যবহার করার আগে, এটি কি করতে পারে এবং কি করতে পারে না দয়া করে পড়ুন.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">কোনো ডাউনলোড চলছে না</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>আপনি প্রতিদিন সীমিত সংখ্যক ডাউনলোড পাবেন। সীমাটি ছোট, নোটিশ ছাড়াই পরিবর্তন হতে পারে এবং একবার এটি ব্যবহার হয়ে গেলে আপনাকে অপেক্ষা করতে হবে.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">একসঙ্গে %1টি</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>আমরা গ্যারান্টি দিতে পারি না যে কোনো উৎস উপলব্ধ থাকবে। উত্সগুলি সরানো যেতে পারে, রেট-সীমিত বা বিচ্ছিন্ন করা যেতে পারে সাইটগুলি থেকে, যে কোনও সময় এবং সতর্কতা ছাড়াই.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">সম্পন্ন কাজগুলো সরান</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>আমরা গ্যারান্টি দিতে পারি না যে একটি ডাউনলোড সফল হবে, শেষ হবে বা আপনার বেছে নেওয়া গুণমান আপনাকে দেবে। কিছু আইটেম সহজভাবে ব্যর্থ হবে.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">এখনো কিছুই ডাউনলোড করা হয়নি</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>এখানে সবকিছু তৃতীয় পক্ষ থেকে আসে। Drift এটি হোস্ট করে না, মালিকানা দেয় না বা পরীক্ষা করে না — আপনি যা ডাউনলোড করেন তা ব্যবহার করার অধিকার আপনার আছে তা নিশ্চিত করার জন্য আপনি দায়ী.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">শীর্ষ</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>আমি বুঝতে পেরেছি</translation>
+        <source>New</source>
+        <translation type="unfinished">নতুন</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>মার্কেটপ্লেসে চালিয়ে যান</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">অনুসন্ধান করুন</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">“%1” এর জন্য কোন ফলাফল নেই</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">যোগ করুন</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">ট্রানজিশন</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">থিম</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">লুক</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">অ্যানিমেশন</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">ভিডিও</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">অডিও</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">এতে ডাউনলোড সংরক্ষণ করুন</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ইনস্টল করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">আবার ডাউনলোড করুন</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">ডাউনলোড করুন</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">আপডেট</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">ফেস প্রপসে যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">মিডিয়া বিনে যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ফিরে যান</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">বিরতি দিন</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">প্লে প্রিভিউ</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">আকার</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">স্টাইল</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">টাইমলাইনে যোগ করুন</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">%1 এ সংরক্ষণ করে</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">আপনি প্রথমবার একটি ফোল্ডার বেছে নেবেন</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">পরিবর্তন</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10993,58 +10974,182 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>স্টক</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>মার্কেটপ্লেস অনুপলব্ধ।</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>এই বিল্ডে মার্কেটপ্লেস অন্তর্ভুক্ত নয়.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>সম্পদ অনুসন্ধান করুন</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>অনুসন্ধান শব্দ ইফেক্ট</translation>
+        <translation type="unfinished">অনুসন্ধান শব্দ ইফেক্ট</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>অনুসন্ধান করুন, বা একটি লিঙ্ক পেস্ট করুন।</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">সাউন্ড ইফেক্ট লোড হচ্ছে…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>সম্পদ</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>SFX</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>স্টক ফুটেজ</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>উৎস লোড করা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>বাজারে পৌঁছানো যায়নি</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">সাউন্ড এফেক্ট লোড করা যায়নি</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>আবার চেষ্টা করুন</translation>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">কোন সাউন্ড এফেক্ট মেলে না “%1”.</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">এখানে কোন সাউন্ড ইফেক্ট নেই.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">সব দেখুন</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">অনুসন্ধান করুন, বা একটি লিঙ্ক পেস্ট করুন।</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>অনুসন্ধান করুন</translation>
+        <translation type="unfinished">অনুসন্ধান করুন</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (%2 বাকি)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>ফিল্টার — %nটি প্রয়োগ করা হয়েছে</numerusform>
+            <numerusform>ফিল্টার — %nটি প্রয়োগ করা হয়েছে</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">ফিল্টার</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">%1 থেকে পান</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">এই লিঙ্ক থেকে পান</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">সেই লিঙ্কটি খুঁজছি…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">সেই লিঙ্কটি খুলতে পারেনি</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">অনুসন্ধান ব্যর্থ হয়েছে।</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">“%1” এর জন্য কোন ফলাফল নেই</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">এই উৎস অনুসন্ধান করুন</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">বিভিন্ন শব্দ, অন্য উৎস ব্যবহার করে দেখুন বা ফিল্টার সাফ করুন.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">উপরে টাইপ করুন এবং এন্টার টিপুন.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">মিডিয়া বিনে যোগ করা হয়েছে</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">ডাউনলোড</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">মার্কেটপ্লেস অনুপলব্ধ।</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">লিঙ্ক খুলুন</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">খুলুন</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11966,6 +12071,10 @@
     <message>
         <source>Import folder</source>
         <translation>ফোল্ডার ইমপোর্ট করুন</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15540,6 +15649,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ভিডিও এক্সপোর্ট করুন</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">ডাউনলোড</translation>
     </message>
@@ -16491,33 +16604,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>মার্কেটপ্লেস</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>অ্যাকাউন্ট</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>অ্যাকাউন্ট সংযুক্ত (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>মার্কেটপ্লেস অ্যাকাউন্ট সংযুক্ত</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>সংযোগ বিচ্ছিন্ন করুন</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>এই ডিভাইস থেকে মার্কেটপ্লেস অ্যাকাউন্টটি আনলিঙ্ক করুন</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16621,10 +16707,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Network</source>
         <translation>নেটওয়ার্ক</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>মার্কেটপ্লেস</translation>
     </message>
     <message>
         <source>About</source>
@@ -17185,53 +17267,30 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>মিডিয়া বিনে যোগ করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>সাউন্ড ইফেক্ট লোড হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>সাউন্ড এফেক্ট লোড করা যায়নি</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>আবার চেষ্টা করুন</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>সব</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>কোন সাউন্ড এফেক্ট মেলে না “%1”.</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>এখানে কোন সাউন্ড ইফেক্ট নেই.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>সাউন্ড এফেক্ট লোড করা যায়নি। আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">শুরু হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>অ্যাপ ডেটা ফোল্ডারে লেখা যায়নি.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>সেই শব্দটি ডাউনলোড করা যায়নি। আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">ইমপোর্ট করা হচ্ছে…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>ডাউনলোডটি ক্ষতিগ্রস্ত হয়েছে। আবার চেষ্টা করুন.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">মিডিয়া বিনে</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">বাতিল করা হয়েছে</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19646,123 +19705,38 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>এতে ডাউনলোড সংরক্ষণ করুন</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>সব</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">অপেক্ষা করা হচ্ছে…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (%2 বাকি)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>ফিল্টার — %nটি প্রয়োগ করা হয়েছে</numerusform>
-            <numerusform>ফিল্টার — %nটি প্রয়োগ করা হয়েছে</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">শুরু হচ্ছে…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>ফিল্টার</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>%1 থেকে পান</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>এই লিঙ্ক থেকে পান</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>সেই লিঙ্কটি খুঁজছি…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>সেই লিঙ্কটি খুলতে পারেনি</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>অনুসন্ধান ব্যর্থ হয়েছে।</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>আবার চেষ্টা করুন</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>“%1” এর জন্য কোন ফলাফল নেই</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>এই উৎস অনুসন্ধান করুন</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>একটি লিঙ্ক পেস্ট করুন</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>বিভিন্ন শব্দ, অন্য উৎস ব্যবহার করে দেখুন বা ফিল্টার সাফ করুন.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>উপরে টাইপ করুন এবং এন্টার টিপুন.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>উপরে একটি পৃষ্ঠার লিঙ্ক পেস্ট করুন এবং এন্টার টিপুন.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>ফলাফলে ফিরে যান</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>%1 দ্বারা</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%nটি কয়েন</numerusform>
-            <numerusform>%nটি কয়েন</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">প্রস্তুত হচ্ছে…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>ডাউনলোড করা হচ্ছে…</translation>
+        <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>আবার ডাউনলোড করুন</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">ইমপোর্ট করা হচ্ছে…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>ডাউনলোড করুন</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">ফাইলটি ইমপোর্ট করা যায়নি.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>আপনি এই উৎস থেকে আজকের ডাউনলোডগুলি ব্যবহার করেছেন।</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">মিডিয়া বিনে</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>%1 এ সংরক্ষণ করে</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>আপনি প্রথমবার একটি ফোল্ডার বেছে নেবেন</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>পরিবর্তন</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">বাতিল করা হয়েছে</translation>
     </message>
 </context>
 <context>
@@ -24731,10 +24705,6 @@ If playback stutters, try another.</source>
         <translation>মিডিয়া</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>মার্কেট</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>টেক্সট</translation>
     </message>
@@ -24943,6 +24913,59 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>হলোগ্রাফিক</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">ফাইলটি সংরক্ষণ করা যায়নি.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">ডাউনলোড করা ফাইলটি মার্কেটপ্লেস যা পাঠিয়েছে তার সাথে মেলেনি.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">এই উৎসের দৈনিক সীমা শেষ হয়েছে। পরে আবার চেষ্টা করুন.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">এই উৎসটি সাময়িকভাবে অনুপলব্ধ.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">সেই আইটেমটি আর উপলব্ধ নেই.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">বাজারে পৌঁছানো যায়নি.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">ফাইলটি প্রস্তুত করা যায়নি.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">সেই অনুরোধটি সম্পূর্ণ করা যায়নি.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">মার্কেটপ্লেস উত্তর দিতে অনেক বেশি সময় নিয়েছে। আবার চেষ্টা করুন.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">বাজারে পৌঁছানো যায়নি। আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
     </message>
 </context>
 <context>

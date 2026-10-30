@@ -1036,21 +1036,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>下载</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>当前没有正在下载的任务。</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>清除已完成</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1281,6 +1266,10 @@
         <translation type="unfinished">有可用更新</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">附加项</translation>
     </message>
@@ -1421,10 +1410,6 @@
         <translation>打开链接</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>无法连接素材市场。</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>“%1”已就绪。</translation>
     </message>
@@ -1433,32 +1418,24 @@
         <translation>正在下载…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>素材市场没有可打开链接的来源。</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>该来源无法识别此链接。</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>由哪个来源打开此链接？</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>正在加载来源…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>正在询问该来源…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>重试</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>选择其他来源</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">下载保存至</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">下载</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1582,6 +1559,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>已从素材市场导入。</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5284,10 +5268,6 @@
         <translation>收集媒体到文件夹</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>市场</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>文本</translation>
     </message>
@@ -5399,6 +5379,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>导入文件夹…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6059,6 +6043,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>无法移除外观</translation>
     </message>
@@ -6444,6 +6432,33 @@
     <message>
         <source>Brightness</source>
         <translation>亮度</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">启动中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">正在下载…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">正在安装中…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">已取消</translation>
     </message>
 </context>
 <context>
@@ -7035,6 +7050,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">正在安装中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">正在下载…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">已取消</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7101,39 +7135,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>下载</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%n 个进行中</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>没有正在进行的下载</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>每次最多 %1 个</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>清除已完成</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>还没有下载内容</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>“市场”标签页中的下载任务进行时会显示在这里。</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7156,10 +7157,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>循环，%1 秒</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>已添加</translation>
     </message>
@@ -7173,97 +7170,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>无缝循环</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>播放入场后保持</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>播放入场、保持、播放出场</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>返回</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>样式</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>颜色</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>重置</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 秒</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>可容纳你的文字</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>3D 模型，每 %1 秒循环</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>跟踪所应用片段中的人脸</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>许可 &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>许可协议 %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>应用到所选片段</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>在播放头处添加</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>请先在时间线上选择含人脸的片段</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>添加到人脸道具</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>添加到媒体库</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>请在时间线上选择含人脸的片段以应用此道具。</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>选择颜色</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>素材市场在此版本中不可用。</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>无法加载 Drift 素材。请检查网络连接后重试。</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">启动中…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7274,79 +7184,32 @@
         <translation>无法写入应用数据文件夹。</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>无法下载该素材。请检查网络连接后重试。</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">正在下载…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>下载内容已损坏，请重试。</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">已在媒体库中</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">已取消</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>无法添加该人脸道具。</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">正在导入…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>无法将该素材添加到媒体库。</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>应用</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>添加</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>已添加到人脸道具</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>请选择视频或图像片段以应用人脸道具</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>已添加到媒体库</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>无法加载 Drift 素材</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>重试</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>这里还没有素材</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Drift 素材仍在陆续发布中，请稍后再来看看。</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>刷新</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>查看全部</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>全部素材</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>没有与“%1”匹配的 Drift 素材。</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>在 %1 中搜索“%2”</translation>
     </message>
 </context>
 <context>
@@ -7653,14 +7516,14 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>下载 — %n 个进行中</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>下载</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10783,6 +10646,10 @@
         <translation>自动工作区（跟随画布）</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>下载</translation>
     </message>
@@ -10808,137 +10675,251 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>此版本不支持素材市场。</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>等待中…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>启动中…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>正在准备…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>已取消</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>无法连接素材市场帐户。</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>素材市场当前暂无可获取的内容。</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>正在下载…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>无法保存该文件。</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>下载的文件与素材市场发送的内容不符</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>正在导入…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>无法导入该文件</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>在媒体库中</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>素材市场帐户已连接</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>该来源已达到每日上限，请稍后重试</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>此条目需要连接帐户</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>金币不足</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>该来源暂时不可用</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>该条目已不可用</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>无法连接素材市场</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>无法准备该文件</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>无法完成该请求</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>素材市场响应超时，请重试</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>无法连接素材市场，请检查网络连接后重试</translation>
+        <source>All</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>素材市场为实验性功能</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%n 个进行中</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>此功能仍在开发中，可能随时更改或停止工作。使用前请先阅读它能做什么、不能做什么</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">没有正在进行的下载</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>每天可下载的数量有限。上限较小，可能随时更改，用完后需要等待</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">每次最多 %1 个</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>我们无法保证任何来源始终可用。来源可能随时被移除、限速，或因所抓取的网站而发生故障，且不会提前通知</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">清除已完成</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>我们无法保证下载一定成功、完成，或达到你选择的画质。有些条目就是会失败</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">还没有下载内容</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>这里的所有内容均来自第三方。Drift 不托管、不拥有也不审核它们——请自行确保你有权使用下载的内容</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">上</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>我已理解</translation>
+        <source>New</source>
+        <translation type="unfinished">新建</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>继续前往素材市场</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">搜索</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">重试</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">没有「%1」的结果</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安装</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">转场</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">主题</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">外观</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">动画</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">视频</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">音频</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">下载保存至</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">正在下载…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">正在安装中…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">重新下载</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">下载</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">更新</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安装</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">添加到人脸道具</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">添加到媒体库</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">暂停</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">播放预览</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">样式</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">保存至 %1</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">首次使用时将选择文件夹</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">更改</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10953,58 +10934,179 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>图库</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>素材市场不可用</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>此版本不包含素材市场</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>搜索素材</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>搜索音效</translation>
+        <translation type="unfinished">搜索音效</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>搜索，或粘贴链接</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">正在加载音效…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>素材</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>音效</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>库存视频</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>正在加载来源…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>无法连接素材市场</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">无法加载音效</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>重试</translation>
+        <translation type="unfinished">重试</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">没有匹配“%1”的音效。</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">这里没有音效。</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">查看全部</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">重试</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">搜索，或粘贴链接</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>搜索</translation>
+        <translation type="unfinished">搜索</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1（剩余 %2）</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>筛选 — %n 个已应用</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">筛选</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">从 %1 获取</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">从此链接获取</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">正在查找该链接…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">无法打开该链接</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">重试</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">搜索失败</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">没有「%1」的结果</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">搜索此素材源</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">尝试其他关键词、切换素材源，或清除筛选条件。</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">在上方输入并按回车。</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">已添加到媒体库</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">下载</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">重试</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">素材市场不可用</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">打开链接</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">打开</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11923,6 +12025,10 @@
     <message>
         <source>Import folder</source>
         <translation>导入文件夹</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15478,6 +15584,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">导出视频</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">下载</translation>
     </message>
@@ -16429,33 +16539,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>素材市场</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>帐户</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>已连接帐户（%1）</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>已连接素材市场帐户</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>断开连接</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>将素材市场帐户与此设备解除关联</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16559,10 +16642,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Network</source>
         <translation>网络</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>素材市场</translation>
     </message>
     <message>
         <source>About</source>
@@ -17123,53 +17202,30 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>已添加到媒体库</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>正在加载音效…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>无法加载音效</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>重试</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>所有</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>没有匹配“%1”的音效。</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>这里没有音效。</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>无法加载音效。请检查网络连接后重试。</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">启动中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">正在下载…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>无法写入应用数据文件夹。</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>无法下载该音效。请检查网络连接后重试。</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">正在导入…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>下载的文件已损坏。请重试。</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">已在媒体库中</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">已取消</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19582,121 +19638,38 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>下载保存至</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>所有</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">等待中…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1（剩余 %2）</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>筛选 — %n 个已应用</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">启动中…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>筛选</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>从 %1 获取</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>从此链接获取</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>正在查找该链接…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>无法打开该链接</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>搜索失败</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>重试</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>没有「%1」的结果</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>搜索此素材源</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>粘贴链接</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>尝试其他关键词、切换素材源，或清除筛选条件。</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>在上方输入并按回车。</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>在上方粘贴页面链接并按回车。</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>返回结果</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>%1 制作</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n 个积分</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">正在准备…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>正在下载…</translation>
+        <translation type="unfinished">正在下载…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>重新下载</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">正在导入…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>下载</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">无法导入该文件</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>今日从此素材源的下载次数已用完</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">已在媒体库中</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>保存至 %1</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>首次使用时将选择文件夹</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>更改</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">已取消</translation>
     </message>
 </context>
 <context>
@@ -24650,10 +24623,6 @@ If playback stutters, try another.</source>
         <translation>媒体</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>素材市场</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>文本</translation>
     </message>
@@ -24862,6 +24831,59 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>全息</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">无法保存该文件。</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">下载的文件与素材市场发送的内容不符</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">该来源已达到每日上限，请稍后重试</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">该来源暂时不可用</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">该条目已不可用</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">无法连接素材市场</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">无法准备该文件</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">无法完成该请求</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">素材市场响应超时，请重试</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">无法连接素材市场，请检查网络连接后重试</translation>
     </message>
 </context>
 <context>

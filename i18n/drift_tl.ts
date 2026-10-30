@@ -1037,21 +1037,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Mga Pag-download</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>Walang dina-download sa ngayon.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Alisin ang mga natapos</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1282,6 +1267,10 @@
         <translation type="unfinished">May available na update</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">Dagdag</translation>
     </message>
@@ -1422,10 +1411,6 @@
         <translation>Buksan ang link</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>Hindi maabot ang marketplace.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>Handa na ang “%1”.</translation>
     </message>
@@ -1434,32 +1419,24 @@
         <translation>Nagda-download…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>Walang pinagmulan sa marketplace ang makapagbubukas ng mga link.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>Hindi kinilala ng pinagmulang iyon ang link na ito.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>Aling pinagmulan ang dapat magbukas ng link na ito?</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Ikinakarga ang mga pinagmulan…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>Nagtatanong sa pinagmulang iyon…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>Subukang muli</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>Pumili ng ibang pinagmulan</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">I-save ang mga pag-download sa</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">I-download</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1583,6 +1560,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>Naangkat mula sa marketplace.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5304,10 +5288,6 @@
         <translation>Kolektahin ang Media sa Folder</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Pamilihan</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Teksto</translation>
     </message>
@@ -5421,6 +5401,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>Mag-import ng Folder…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6083,6 +6067,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>Hindi maalis ang look</translation>
     </message>
@@ -6470,6 +6458,33 @@
     <message>
         <source>Brightness</source>
         <translation>Liwanag</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Nagsisimula…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Nagda-download…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Nag-i-install…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Kinansela</translation>
     </message>
 </context>
 <context>
@@ -7061,6 +7076,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Nag-i-install…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Nagda-download…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Kinansela</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7129,40 +7163,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Mga Pag-download</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%n aktibo</numerusform>
-            <numerusform>%n mga aktibo</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>Walang tumatakbong pag-download</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>%1 nang sabay-sabay</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Alisin ang mga natapos</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>Wala pang nai-download</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>Lalabas dito ang mga pag-download mula sa tab ng Market habang tumatakbo ang mga ito.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7187,10 +7187,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>Naglo-loop, %1 s</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>Naidagdag</translation>
     </message>
@@ -7204,97 +7200,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>Walang putol na naglo-loop</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>Nagpe-play papasok, pagkatapos ay nagho-hold</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>Nagpe-play papasok, nagho-hold, nagpe-play palabas</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Bumalik</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Estilo</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>Mga Kulay</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>I-reset</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 s</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>espasyo para sa iyong teksto</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>3D model, naglo-loop bawat %1 s</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>Sumusubaybay sa mukha sa clip na nilapatan nito</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>Lisensya %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>Ilapat sa napiling clip</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>Idagdag sa playhead</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>Pumili muna ng clip na may mukha sa timeline</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>Idagdag sa mga Face prop</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>Idagdag sa media bin</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>Pumili ng clip na may mukha sa timeline upang ilapat ang prop na ito.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>Pumili ng kulay</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>Hindi available ang marketplace sa build na ito.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Hindi ma-load ang Drift Assets. Suriin ang iyong koneksyon at subukan muli.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Nagsisimula…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7305,79 +7214,32 @@
         <translation>Hindi makasulat sa folder ng app data.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>Hindi ma-download ang asset na iyon. Suriin ang iyong koneksyon at subukan muli.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">Nagda-download…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Nasira ang pag-download na iyon. Subukan muli.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Nasa media bin</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Kinansela</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>Hindi maidagdag ang face prop na iyon.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">Nag-i-import…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>Hindi maidagdag ang asset na iyon sa media bin.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>Gamitin</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Magdagdag</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>Naidagdag sa mga Face prop</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>Pumili ng video o imaheng clip upang maglapat ng face prop</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Naidagdag sa media bin</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Hindi ma-load ang Drift Assets</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Subukang muli</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>Wala pang mga asset dito</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Kasalukuyan pang inilalathala ang Drift Assets. Bumalik muli sa lalong madaling panahon.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>I-refresh</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>Tingnan lahat</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>Lahat ng asset</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>Walang Drift Assets na tumutugma sa “%1”.</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>Maghanap sa %1 para sa “%2”</translation>
     </message>
 </context>
 <context>
@@ -7684,15 +7546,15 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>Mga Pag-download — %n ang tumatakbo</numerusform>
-            <numerusform>Mga Pag-download — %n ang tumatakbo</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>Mga Pag-download</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10823,6 +10685,10 @@
         <translation>Auto Workspace (Sundin ang Canvas)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>Mga Pag-download</translation>
     </message>
@@ -10848,137 +10714,252 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>Hindi available ang Marketplace sa build na ito.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>Naghihintay…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>Nagsisimula…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>Naghahanda…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>Kinansela</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>Hindi maikonekta ang marketplace account.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>Walang available mula sa marketplace sa ngayon.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>Nagda-download…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>Hindi ma-save ang file na iyon.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>Ang na-download na file ay hindi tumugma sa ipinadala ng marketplace.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>Nag-i-import…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>Hindi ma-import ang file na iyon.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>Nasa media bin</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>Nai-konekta ang marketplace account.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>Naabot na ang pang-araw-araw na limitasyon para sa source na ito. Subukan muli mamaya.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>Nangangailangan ang item na ito ng nakakonektang account.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>Kulang ang coins.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>Pansamantalang hindi available ang source na ito.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>Hindi na available ang item na iyon.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>Hindi maabot ang marketplace.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>Hindi maihanda ang file na iyon.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>Hindi makumpleto ang kahilingang iyon.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>Masyadong matagal sumagot ang marketplace. Subukan muli.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>Hindi maabot ang marketplace. Suriin ang iyong koneksyon at subukan muli.</translation>
+        <source>All</source>
+        <translation type="unfinished">Lahat</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>Eksperimental ang marketplace</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%n aktibo</numerusform>
+            <numerusform>%n mga aktibo</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>Ginagawa pa rin ang feature na ito at maaaring magbago o huminto sa paggana anumang oras. Bago mo ito gamitin, pakibasa kung ano ang maaari at hindi nito magagawa.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">Walang tumatakbong pag-download</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>Makakakuha ka ng limitadong bilang ng mga pag-download bawat araw. Maliit ang limitasyon, maaaring magbago nang walang abiso, at kapag naubos na ito ay kailangan mong maghintay.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">%1 nang sabay-sabay</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>Hindi namin magagarantiya na mananatiling available ang anumang source. Maaaring alisin, i-rate-limit o sirain ang mga source ng mga site na pinagkukunang ito, anumang oras at nang walang babala.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">Alisin ang mga natapos</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>Hindi namin magagarantiya na magtatagumpay ang pag-download, matatapos, o ibibigay sa iyo ang kalidad na pinili mo. Ang ilang mga item ay sadyang mabibigo.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">Wala pang nai-download</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>Ang lahat dito ay nagmumula sa mga third party. Hindi ito hino-host, pag-aari o sinusuri ng Drift — responsable ka sa pagtiyak na may karapatan kang gamitin ang anumang i-download mo.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">Itaas</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>Naiintindihan ko</translation>
+        <source>New</source>
+        <translation type="unfinished">Bago</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>Magpatuloy sa marketplace</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">Maghanap</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Subukang muli</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Walang mga resulta para sa “%1”</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">I-install</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Transisyon</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">Tema</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">Look</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animasyon</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Video</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audyo</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">I-save ang mga pag-download sa</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Nagda-download…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Nag-i-install…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">I-download muli</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">I-download</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">I-update</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">I-install</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">Idagdag sa mga Face prop</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">Idagdag sa media bin</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Bumalik</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">I-pause</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">I-play ang preview</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Laki</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">Estilo</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">Idagdag sa timeline</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">Inise-save sa %1</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">Pumili ka ng folder sa unang pagkakataon</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">Palitan</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10993,58 +10974,182 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>Stock</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>Hindi available ang Marketplace</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>Hindi kasama sa build na ito ang marketplace.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>Maghanap ng mga asset</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>Maghanap ng mga sound effect</translation>
+        <translation type="unfinished">Maghanap ng mga sound effect</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>Maghanap, o mag-paste ng link</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">Niloload ang mga sound effect…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>Mga Asset</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>SFX</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>Stock footage</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Ikinakarga ang mga pinagmulan…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>Hindi maabot ang marketplace</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">Hindi ma-load ang mga sound effect</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>Subukang muli</translation>
+        <translation type="unfinished">Subukang muli</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">Walang mga sound effect na tumutugma sa “%1”.</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">Walang mga sound effect dito.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">Tingnan lahat</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Subukang muli</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">Maghanap, o mag-paste ng link</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Maghanap</translation>
+        <translation type="unfinished">Maghanap</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (%2 ang natitira)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>Mga Filter — %n ang inilapat</numerusform>
+            <numerusform>Mga Filter — %n ang inilapat</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">Mga Filter</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">Kumuha mula sa %1</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">Kumuha mula sa link na ito</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">Hinahanap ang link na iyon…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">Hindi mabuksan ang link na iyon</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Subukang muli</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">Nabigo ang paghahanap</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Walang mga resulta para sa “%1”</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">Hanapin ang source na ito</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">Subukan ang ibang mga salita, ibang source, o i-clear ang filter.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">Mag-type sa itaas at pindutin ang Enter.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">Naidagdag sa media bin</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">Mga Pag-download</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Subukan muli</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">Hindi available ang Marketplace</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">Buksan ang link</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Buksan</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11966,6 +12071,10 @@
     <message>
         <source>Import folder</source>
         <translation>Mag-import ng folder</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15541,6 +15650,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished">I-export ang video</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">Mga Pag-download</translation>
     </message>
@@ -16492,33 +16605,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>Marketplace</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>Account</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>Nakakonekta ang account (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>Nakakonekta ang marketplace account</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>Idiskonekta</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>I-unlink ang marketplace account mula sa device na ito</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16622,10 +16708,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Network</source>
         <translation>Network</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>Marketplace</translation>
     </message>
     <message>
         <source>About</source>
@@ -17186,53 +17268,30 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Naidagdag sa media bin</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>Niloload ang mga sound effect…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>Hindi ma-load ang mga sound effect</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Subukang muli</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Lahat</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>Walang mga sound effect na tumutugma sa “%1”.</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>Walang mga sound effect dito.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>Hindi ma-load ang mga sound effect. Suriin ang iyong koneksyon at subukan muli.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Nagsisimula…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Nagda-download…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>Hindi makasulat sa folder ng app data.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>Hindi ma-download ang tunog na iyon. Suriin ang iyong koneksyon at subukan muli.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Nag-i-import…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Nasira ang pag-download na iyon. Subukan muli.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Nasa media bin</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Kinansela</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19647,123 +19706,38 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>I-save ang mga pag-download sa</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Lahat</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">Naghihintay…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (%2 ang natitira)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>Mga Filter — %n ang inilapat</numerusform>
-            <numerusform>Mga Filter — %n ang inilapat</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Nagsisimula…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>Mga Filter</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>Kumuha mula sa %1</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>Kumuha mula sa link na ito</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>Hinahanap ang link na iyon…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>Hindi mabuksan ang link na iyon</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>Nabigo ang paghahanap</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Subukang muli</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>Walang mga resulta para sa “%1”</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>Hanapin ang source na ito</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>Mag-paste ng link</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>Subukan ang ibang mga salita, ibang source, o i-clear ang filter.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>Mag-type sa itaas at pindutin ang Enter.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>Mag-paste ng link ng pahina sa itaas at pindutin ang Enter.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>Bumalik sa mga resulta</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>Ni %1</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n barya</numerusform>
-            <numerusform>%n mga barya</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">Naghahanda…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>Nagda-download…</translation>
+        <translation type="unfinished">Nagda-download…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>I-download muli</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Nag-i-import…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>I-download</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">Hindi ma-import ang file na iyon.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>Nagamit mo na ang mga pag-download ngayong araw mula sa source na ito</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Nasa media bin</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>Inise-save sa %1</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>Pumili ka ng folder sa unang pagkakataon</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>Palitan</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">Kinansela</translation>
     </message>
 </context>
 <context>
@@ -24732,10 +24706,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Media</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Pamilihan</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Teksto</translation>
     </message>
@@ -24944,6 +24914,59 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Holographic</source>
         <translation>Holographic</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">Hindi ma-save ang file na iyon.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">Ang na-download na file ay hindi tumugma sa ipinadala ng marketplace.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">Naabot na ang pang-araw-araw na limitasyon para sa source na ito. Subukan muli mamaya.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">Pansamantalang hindi available ang source na ito.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">Hindi na available ang item na iyon.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">Hindi maabot ang marketplace.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">Hindi maihanda ang file na iyon.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">Hindi makumpleto ang kahilingang iyon.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">Masyadong matagal sumagot ang marketplace. Subukan muli.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">Hindi maabot ang marketplace. Suriin ang iyong koneksyon at subukan muli.</translation>
     </message>
 </context>
 <context>

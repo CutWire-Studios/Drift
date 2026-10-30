@@ -1036,21 +1036,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>다운로드</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>현재 다운로드 중인 항목이 없습니다.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>완료된 항목 지우기</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1281,6 +1266,10 @@
         <translation type="unfinished">업데이트 사용 가능</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">추가 기능</translation>
     </message>
@@ -1421,10 +1410,6 @@
         <translation>링크 열기</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>마켓플레이스에 연결할 수 없습니다.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>“%1”을(를) 사용할 준비가 되었습니다.</translation>
     </message>
@@ -1433,32 +1418,24 @@
         <translation>다운로드 중…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>마켓플레이스의 어떤 소스도 링크를 열 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>해당 소스에서 이 링크를 인식하지 못했습니다.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>이 링크를 열 소스를 선택하세요.</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>소스 불러오는 중…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>해당 소스에 요청 중…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>다시 시도</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>다른 소스 선택</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">다운로드 저장 위치</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">다운로드</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1582,6 +1559,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>마켓플레이스에서 가져왔습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5284,10 +5268,6 @@
         <translation>미디어를 폴더로 모으기</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>마켓</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>텍스트</translation>
     </message>
@@ -5399,6 +5379,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>폴더 가져오기…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6059,6 +6043,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>룩을 제거할 수 없습니다</translation>
     </message>
@@ -6444,6 +6432,33 @@
     <message>
         <source>Brightness</source>
         <translation>밝기</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">시작 중…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">설치 중…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">취소됨</translation>
     </message>
 </context>
 <context>
@@ -7035,6 +7050,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">설치 중…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">취소됨</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7101,39 +7135,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>다운로드</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>활성 %n개</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>실행 중인 다운로드 없음</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>한 번에 %1개</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>완료된 항목 지우기</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>아직 다운로드한 항목이 없습니다</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>마켓 탭에서 다운로드한 항목은 실행 중일 때 여기에 표시됩니다.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7156,10 +7157,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>반복, %1초</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>추가됨</translation>
     </message>
@@ -7173,97 +7170,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>매끄럽게 반복</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>재생 후 정지</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>재생 후 정지, 다시 재생</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>뒤로</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>스타일</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>색상</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>초기화</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1초</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>텍스트를 위한 공간</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>3D 모델, %1초마다 반복</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>적용된 클립에서 얼굴을 추적합니다</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>라이선스 &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>라이선스 %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>선택한 클립에 적용</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>재생 헤드 위치에 추가</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>먼저 타임라인에서 얼굴이 있는 클립을 선택하세요</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>얼굴 소품에 추가</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>미디어 라이브러리에 추가</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>이 소품을 적용하려면 타임라인에서 얼굴이 있는 클립을 선택하세요.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>색상 선택</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>이 빌드에서는 마켓플레이스를 사용할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Drift Assets를 불러올 수 없습니다. 연결을 확인한 후 다시 시도하세요.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">시작 중…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7274,79 +7184,32 @@
         <translation>앱 데이터 폴더에 쓸 수 없습니다.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>해당 에셋을 다운로드할 수 없습니다. 연결을 확인한 후 다시 시도하세요.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">다운로드 중…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>다운로드한 파일이 손상되었습니다. 다시 시도하세요.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">미디어 라이브러리에 있음</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">취소됨</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>해당 얼굴 소품을 추가할 수 없습니다.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">가져오는 중…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>해당 에셋을 미디어 라이브러리에 추가할 수 없습니다.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>적용</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>더하기</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>얼굴 소품에 추가됨</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>얼굴 소품을 적용할 동영상 또는 이미지 클립을 선택하세요</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>미디어 라이브러리에 추가됨</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Drift Assets를 불러올 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>다시 시도</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>아직 에셋이 없습니다</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Drift Assets가 아직 게시되는 중입니다. 잠시 후 다시 확인하세요.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>새로 고침</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>모두 보기</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>모든 에셋</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>“%1”과(와) 일치하는 Drift Assets가 없습니다.</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>“%2”을(를) 검색하려면 %1 검색</translation>
     </message>
 </context>
 <context>
@@ -7653,14 +7516,14 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>다운로드 — %n개 실행 중</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>다운로드</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10783,6 +10646,10 @@
         <translation>자동 작업 영역 (캔버스 맞춤)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>다운로드</translation>
     </message>
@@ -10808,137 +10675,251 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>이 빌드에서는 마켓플레이스를 사용할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>대기 중…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>시작 중…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>준비 중…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>취소됨</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>마켓플레이스 계정에 연결할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>현재 마켓플레이스에서 사용할 수 있는 항목이 없습니다.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>다운로드 중…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>파일을 저장할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>다운로드한 파일이 마켓플레이스에서 전송한 내용과 일치하지 않습니다.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>가져오는 중…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>해당 파일을 가져올 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>미디어 라이브러리에 있음</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>마켓플레이스 계정이 연결되었습니다.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>이 소스의 일일 한도에 도달했습니다. 나중에 다시 시도하세요.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>이 항목에는 연결된 계정이 필요합니다.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>코인이 부족합니다.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>이 소스는 일시적으로 사용할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>해당 항목은 더 이상 사용할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>마켓플레이스에 연결할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>해당 파일을 준비할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>해당 요청을 완료할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>마켓플레이스의 응답에 너무 오래 걸렸습니다. 다시 시도하세요.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>마켓플레이스에 연결할 수 없습니다. 연결 상태를 확인한 후 다시 시도하세요.</translation>
+        <source>All</source>
+        <translation type="unfinished">모두</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>마켓플레이스는 실험적 기능입니다</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>활성 %n개</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>이 기능은 아직 개발 중이며 언제든지 변경되거나 작동하지 않을 수 있습니다. 사용하기 전에 할 수 있는 작업과 할 수 없는 작업을 확인하세요.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">실행 중인 다운로드 없음</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>하루에 다운로드할 수 있는 횟수가 제한됩니다. 한도는 적고 예고 없이 변경될 수 있으며, 모두 사용하면 기다려야 합니다.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">한 번에 %1개</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>어떤 소스도 계속 이용할 수 있다고 보장할 수 없습니다. 소스는 언제든지 예고 없이 제거되거나 요청 제한이 적용되거나 해당 사이트의 문제로 작동하지 않을 수 있습니다.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">완료된 항목 지우기</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>다운로드가 성공하거나 완료되거나 선택한 화질을 제공한다고 보장할 수 없습니다. 일부 항목은 그냥 실패할 수 있습니다.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">아직 다운로드한 항목이 없습니다</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>여기의 모든 항목은 제3자가 제공합니다. Drift가 호스팅하거나 소유하거나 검증하지 않습니다 — 다운로드한 항목을 사용할 권리가 있는지 확인할 책임은 사용자에게 있습니다.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">위</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>이해했습니다</translation>
+        <source>New</source>
+        <translation type="unfinished">새로 만들기</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>마켓플레이스로 계속</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">검색</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">“%1”에 대한 결과가 없습니다</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">설치</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">더하기</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">테마</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">룩</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">애니메이션</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">동영상</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">오디오</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">다운로드 저장 위치</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">설치 중…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">다시 다운로드</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">다운로드</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">업데이트</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">설치</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">얼굴 소품에 추가</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">미디어 라이브러리에 추가</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">뒤로</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">일시정지</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">미리보기 재생</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">크기</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">스타일</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">타임라인에 추가</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">%1에 저장</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">처음 한 번은 폴더를 선택합니다</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">변경</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10953,58 +10934,179 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>스톡</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>마켓플레이스를 사용할 수 없음</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>이 빌드에는 마켓플레이스가 포함되어 있지 않습니다.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>에셋 검색</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>사운드 효과 검색</translation>
+        <translation type="unfinished">사운드 효과 검색</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>검색 또는 링크 붙여넣기</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">사운드 효과 로드 중…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>에셋</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>SFX</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>스톡 영상</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>소스 불러오는 중…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>마켓플레이스에 연결할 수 없음</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">사운드 효과를 로드할 수 없습니다</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>다시 시도</translation>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">“%1”과(와) 일치하는 사운드 효과가 없습니다.</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">여기에 사운드 효과가 없습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">모두 보기</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">검색 또는 링크 붙여넣기</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>검색</translation>
+        <translation type="unfinished">검색</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1(%2 남음)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>필터 — %n개 적용됨</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">필터</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">%1에서 가져오기</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">이 링크에서 가져오기</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">해당 링크를 확인하는 중…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">링크를 열 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">검색 실패</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">“%1”에 대한 결과가 없습니다</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">이 소스 검색</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">다른 단어를 사용하거나 다른 소스를 선택하거나 필터를 지워 보세요.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">위에 입력하고 Enter를 누르세요.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">미디어 라이브러리에 추가됨</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">다운로드</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">마켓플레이스를 사용할 수 없음</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">링크 열기</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11923,6 +12025,10 @@
     <message>
         <source>Import folder</source>
         <translation>폴더 가져오기</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15470,6 +15576,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">동영상 내보내기</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">다운로드</translation>
     </message>
@@ -16421,33 +16531,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>마켓플레이스</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>계정</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>계정 연결됨(%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>마켓플레이스 계정 연결됨</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>연결 해제</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>이 장치에서 마켓플레이스 계정 연결 해제</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16551,10 +16634,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Network</source>
         <translation>네트워크</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>마켓플레이스</translation>
     </message>
     <message>
         <source>About</source>
@@ -17115,53 +17194,30 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>미디어 라이브러리에 추가됨</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>사운드 효과 로드 중…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>사운드 효과를 로드할 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>다시 시도</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>모두</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>“%1”과(와) 일치하는 사운드 효과가 없습니다.</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>여기에 사운드 효과가 없습니다.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>사운드 효과를 로드할 수 없습니다. 연결 상태를 확인하고 다시 시도하세요.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">시작 중…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">다운로드 중…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>앱 데이터 폴더에 쓸 수 없습니다.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>해당 사운드를 다운로드할 수 없습니다. 연결 상태를 확인하고 다시 시도하세요.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">가져오는 중…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>다운로드한 파일이 손상되었습니다. 다시 시도하세요.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">미디어 라이브러리에 있음</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">취소됨</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19573,121 +19629,38 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>다운로드 저장 위치</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>모두</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">대기 중…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1(%2 남음)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>필터 — %n개 적용됨</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">시작 중…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>필터</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>%1에서 가져오기</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>이 링크에서 가져오기</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>해당 링크를 확인하는 중…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>링크를 열 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>검색 실패</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>다시 시도</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>“%1”에 대한 결과가 없습니다</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>이 소스 검색</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>링크 붙여넣기</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>다른 단어를 사용하거나 다른 소스를 선택하거나 필터를 지워 보세요.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>위에 입력하고 Enter를 누르세요.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>위에 페이지 링크를 붙여넣고 Enter를 누르세요.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>결과로 돌아가기</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>%1 제공</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>코인 %n개</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">준비 중…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>다운로드 중…</translation>
+        <translation type="unfinished">다운로드 중…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>다시 다운로드</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">가져오는 중…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>다운로드</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">해당 파일을 가져올 수 없습니다.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>오늘 이 소스의 다운로드 한도를 사용했습니다</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">미디어 라이브러리에 있음</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>%1에 저장</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>처음 한 번은 폴더를 선택합니다</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>변경</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">취소됨</translation>
     </message>
 </context>
 <context>
@@ -24641,10 +24614,6 @@ If playback stutters, try another.</source>
         <translation>미디어</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>마켓</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>텍스트</translation>
     </message>
@@ -24853,6 +24822,59 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>홀로그램</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">파일을 저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">다운로드한 파일이 마켓플레이스에서 전송한 내용과 일치하지 않습니다.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">이 소스의 일일 한도에 도달했습니다. 나중에 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">이 소스는 일시적으로 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">해당 항목은 더 이상 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">마켓플레이스에 연결할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">해당 파일을 준비할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">해당 요청을 완료할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">마켓플레이스의 응답에 너무 오래 걸렸습니다. 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">마켓플레이스에 연결할 수 없습니다. 연결 상태를 확인한 후 다시 시도하세요.</translation>
     </message>
 </context>
 <context>

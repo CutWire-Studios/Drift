@@ -1036,21 +1036,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>ダウンロード</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>現在、ダウンロード中のものはありません。</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>完了したものをクリア</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1281,6 +1266,10 @@
         <translation type="unfinished">アップデートが利用可能</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">拡張機能</translation>
     </message>
@@ -1421,10 +1410,6 @@
         <translation>リンクを開く</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>マーケットプレイスに接続できませんでした。</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>“%1” の準備が完了しました。</translation>
     </message>
@@ -1433,32 +1418,24 @@
         <translation>ダウンロード中…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>マーケットプレイス内にリンクを開けるソースがありません。</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>そのソースはこのリンクを認識しませんでした。</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>どのソースでこのリンクを開きますか?</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>ソースを読み込み中…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>ソースに問い合わせ中…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>再試行</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>別のソースを選択</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">ダウンロードの保存先</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">ダウンロード</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1582,6 +1559,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>マーケットプレイスからインポートされました。</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5284,10 +5268,6 @@
         <translation>フォルダーにメディアを収集</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>マーケット</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>テキスト</translation>
     </message>
@@ -5399,6 +5379,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>インポート フォルダー…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6059,6 +6043,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>ルックを削除できませんでした</translation>
     </message>
@@ -6444,6 +6432,33 @@
     <message>
         <source>Brightness</source>
         <translation>明るさ</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">開始中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ダウンロード中…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">インストール中…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">キャンセルされました</translation>
     </message>
 </context>
 <context>
@@ -7035,6 +7050,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">インストール中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ダウンロード中…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">キャンセルされました</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7101,39 +7135,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>ダウンロード</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%n アクティブ</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>実行中のダウンロードはありません</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>1回につき %1</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>完了したものをクリア</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>まだ何もダウンロードされていません</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>「マーケット」タブからダウンロードしたものは、実行中にここに表示されます。</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7156,10 +7157,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>ループ、%1 s</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>追加済み</translation>
     </message>
@@ -7173,97 +7170,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>シームレスにループ</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>イン再生後に静止</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>イン再生、静止、アウト再生</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>戻る</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>スタイル</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>カラー</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>リセット</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 秒</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>テキスト用のスペースあり</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>3Dモデル、%1 s ごとにループ</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>適用されたクリップ内の顔をトラッキングします</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>ライセンス &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>ライセンス %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>選択クリップに適用</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>再生ヘッド位置に追加</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>まずタイムラインで顔が映っているクリップを選択してください</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>フェイスプロップに追加</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>メディアビンに追加</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>このプロップを適用するには、タイムラインで顔が映っているクリップを選択してください。</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>色を選択</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>このビルドではマーケットプレイスを利用できません。</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Drift Assets を読み込めませんでした。接続を確認して再試行してください。</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">開始中…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7274,79 +7184,32 @@
         <translation>アプリデータフォルダーに書き込めませんでした。</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>そのアセットをダウンロードできませんでした。接続を確認して再試行してください。</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">ダウンロード中…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>ダウンロードが破損していました。再試行してください。</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">メディアビン内</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">キャンセルされました</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>そのフェイスプロップを追加できませんでした。</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">インポート中…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>そのアセットをメディアビンに追加できませんでした。</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>適用</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>加算</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>フェイスプロップに追加しました</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>フェイスプロップを適用するには、ビデオまたは画像クリップを選択してください</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>メディアビンに追加しました</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Drift Assets を読み込めませんでした</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>再試行</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>ここにはまだアセットがありません</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Drift Assets は順次公開されています。しばらくしてからもう一度ご確認ください。</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>更新</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>すべて表示</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>すべてのアセット</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>“%1” に一致する Drift Assets はありません。</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>%1 で“%2”を検索</translation>
     </message>
 </context>
 <context>
@@ -7653,14 +7516,14 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>ダウンロード — %n 個実行中</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>ダウンロード</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10783,6 +10646,10 @@
         <translation>自動ワークスペース (キャンバスに追従)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>ダウンロード</translation>
     </message>
@@ -10808,137 +10675,251 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>このビルドではマーケットプレイスは利用できません。</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>待機中…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>開始中…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>準備中…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>キャンセルされました</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>マーケットプレイスのアカウントに接続できませんでした。</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>現在マーケットプレイスから利用できるものはありません。</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>ダウンロード中…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>ファイルを保存できませんでした。</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>ダウンロードされたファイルがマーケットプレイスから送信されたデータと一致しません。</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>インポート中…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>ファイルをインポートできませんでした。</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>メディアビン内</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>マーケットプレイスのアカウントに接続しました。</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>このソースの 1日あたりの上限に達しました。後でもう一度試してください。</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>このアイテムを使用するにはアカウントの接続が必要です。</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>コインが不足しています。</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>このソースは一時的に利用できません。</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>そのアイテムは利用できなくなりました。</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>マーケットプレイスに接続できませんでした。</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>ファイルを準備できませんでした。</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>リクエストを完了できませんでした。</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>マーケットプレイスからの応答に時間がかかりすぎています。再試行してください。</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>マーケットプレイスに接続できませんでした。ネットワーク接続を確認して再試行してください。</translation>
+        <source>All</source>
+        <translation type="unfinished">すべて</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>マーケットプレイスは実験的機能です</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%n アクティブ</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>この機能は現在開発中であり、予告なく変更または利用できなくなる可能性があります。ご利用の前に、機能の仕様や制限事項をご確認ください。</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">実行中のダウンロードはありません</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>1日あたりのダウンロード回数には制限があります。制限数は少なく、予告なく変更される場合があり、上限に達した場合は一定時間待つ必要があります。</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">1回につき %1</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>ソースの継続的な利用可能性は保証されません。取得元のサイトの都合により、予告なくソースが削除・通信制限・利用不可となる場合があります。</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">完了したものをクリア</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>ダウンロードの成功、完了、または指定した画質・音質での取得を保証するものではありません。一部のアイテムは正常に取得できない場合があります。</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">まだ何もダウンロードされていません</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>提供されるコンテンツはすべてサードパーティによるものです。Drift がこれをホスト、所有、審査することはありません。ダウンロードした素材の使用権限の確認は利用者の責任で行ってください。</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">上</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>理解しました</translation>
+        <source>New</source>
+        <translation type="unfinished">新規</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>マーケットプレイスへ進む</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">検索</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">再試行</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">「%1」の検索結果はありません</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">インストール</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">加算</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">テーマ</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">ルック</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">アニメーション</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">ビデオ</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">オーディオ</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">ダウンロードの保存先</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ダウンロード中…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">インストール中…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">もう一度ダウンロード</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">ダウンロード</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">アップデート</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">インストール</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">フェイスプロップに追加</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">メディアビンに追加</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">戻る</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">一時停止</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">プレビューを再生</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">サイズ</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">スタイル</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">タイムラインに追加</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">%1 に保存されます</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">初回にフォルダーを選択します</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">変更</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10953,58 +10934,179 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>ストック</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>マーケットプレイスを利用できません</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>このビルドにはマーケットプレイスが含まれていません。</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>アセットを検索</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>効果音を検索</translation>
+        <translation type="unfinished">効果音を検索</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>検索、またはリンクを貼り付け</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">効果音を読み込んでいます…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>アセット</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>効果音</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>ストック映像</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>ソースを読み込み中…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>マーケットプレイスに接続できませんでした</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">効果音を読み込めませんでした</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>再試行</translation>
+        <translation type="unfinished">再試行</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">「%1」に一致する効果音はありません。</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">ここには効果音がありません。</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">すべて表示</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">再試行</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">検索、またはリンクを貼り付け</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>検索</translation>
+        <translation type="unfinished">検索</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (残り %2)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>フィルター — %n 個適用しました</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">フィルター</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">%1 から取得</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">このリンクから取得</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">リンクを参照中…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">リンクを開けませんでした</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">再試行</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">検索に失敗しました</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">「%1」の検索結果はありません</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">このソースを検索</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">別のキーワードや別のソースを試すか、フィルターをクリアしてください。</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">上に入力して Enter を押してください。</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">メディアビンに追加しました</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">ダウンロード</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">再試行</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">マーケットプレイスを利用できません</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">リンクを開く</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">開く</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11923,6 +12025,10 @@
     <message>
         <source>Import folder</source>
         <translation>インポート フォルダー</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15478,6 +15584,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">ビデオをエクスポート</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">ダウンロード</translation>
     </message>
@@ -16429,33 +16539,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>マーケットプレイス</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>アカウント</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>アカウントが接続されました (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>マーケットプレイスのアカウントに接続しました</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>切断</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>このデバイスからマーケットプレイスアカウントのリンクを解除する</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16559,10 +16642,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Network</source>
         <translation>ネットワーク</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>マーケットプレイス</translation>
     </message>
     <message>
         <source>About</source>
@@ -17123,53 +17202,30 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>メディアビンに追加しました</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>効果音を読み込んでいます…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>効果音を読み込めませんでした</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>再試行</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>すべて</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>「%1」に一致する効果音はありません。</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>ここには効果音がありません。</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>効果音を読み込めませんでした。接続を確認して、もう一度お試しください。</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">開始中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ダウンロード中…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>アプリデータフォルダーに書き込めませんでした。</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>そのサウンドをダウンロードできませんでした。接続を確認して、もう一度試してください。</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">インポート中…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>ダウンロードが破損していました。再試行してください。</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">メディアビン内</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">キャンセルされました</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19582,121 +19638,38 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>ダウンロードの保存先</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>すべて</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">待機中…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (残り %2)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>フィルター — %n 個適用しました</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">開始中…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>フィルター</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>%1 から取得</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>このリンクから取得</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>リンクを参照中…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>リンクを開けませんでした</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>検索に失敗しました</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>再試行</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>「%1」の検索結果はありません</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>このソースを検索</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>リンクを貼り付け</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>別のキーワードや別のソースを試すか、フィルターをクリアしてください。</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>上に入力して Enter を押してください。</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>上にページのリンクを貼り付けて Enter を押してください。</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>結果に戻る</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>作成者: %1</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n 個のコイン</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">準備中…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>ダウンロード中…</translation>
+        <translation type="unfinished">ダウンロード中…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>もう一度ダウンロード</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">インポート中…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>ダウンロード</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">ファイルをインポートできませんでした。</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>このソースからの本日のダウンロード上限に達しました</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">メディアビン内</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>%1 に保存されます</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>初回にフォルダーを選択します</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>変更</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">キャンセルされました</translation>
     </message>
 </context>
 <context>
@@ -24650,10 +24623,6 @@ If playback stutters, try another.</source>
         <translation>メディア</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>マーケット</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>テキスト</translation>
     </message>
@@ -24862,6 +24831,59 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>ホログラフィック</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">ファイルを保存できませんでした。</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">ダウンロードされたファイルがマーケットプレイスから送信されたデータと一致しません。</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">このソースの 1日あたりの上限に達しました。後でもう一度試してください。</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">このソースは一時的に利用できません。</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">そのアイテムは利用できなくなりました。</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">マーケットプレイスに接続できませんでした。</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">ファイルを準備できませんでした。</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">リクエストを完了できませんでした。</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">マーケットプレイスからの応答に時間がかかりすぎています。再試行してください。</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">マーケットプレイスに接続できませんでした。ネットワーク接続を確認して再試行してください。</translation>
     </message>
 </context>
 <context>

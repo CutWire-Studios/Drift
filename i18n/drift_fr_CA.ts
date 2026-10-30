@@ -1038,21 +1038,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Téléchargements</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>Aucun téléchargement en cours.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Effacement terminé</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1283,6 +1268,10 @@
         <translation type="unfinished">Mise à jour disponible</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">Extras</translation>
     </message>
@@ -1423,10 +1412,6 @@
         <translation>Ouvrir lien</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>Impossible d&apos;accéder au marché.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>« %1 » est prêt.</translation>
     </message>
@@ -1435,32 +1420,24 @@
         <translation>Téléchargement en cours…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>Aucune source du marché ne peut ouvrir de liens.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>Cette source ne reconnaît pas ce lien.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>Quelle source à utiliser pour ouvrir ce lien?</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Chargement des sources…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>Vérification de la source…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>Réessayez</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>Choisissez une autre source</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">Enregistrer les téléchargements dans</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">Télécharger</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1584,6 +1561,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>Importé du marché.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5306,10 +5290,6 @@
         <translation>Rassembler les médias dans un dossier</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Marché</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Texte</translation>
     </message>
@@ -5423,6 +5403,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>Importer un dossier…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6085,6 +6069,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>Impossible de supprimer le style visuel</translation>
     </message>
@@ -6472,6 +6460,33 @@
     <message>
         <source>Brightness</source>
         <translation>Luminosité</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Démarrage…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Téléchargement en cours…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Installation…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Annulé</translation>
     </message>
 </context>
 <context>
@@ -7063,6 +7078,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Installation…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Téléchargement en cours…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Annulé</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7131,40 +7165,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Téléchargements</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%n actif</numerusform>
-            <numerusform>%n actives</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>Aucun téléchargement en cours</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>%1 à la fois</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Effacement terminé</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>Rien de téléchargé encore</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>Les téléchargements en provenance du Marché s&apos;affichent ici en cours de progression.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7189,10 +7189,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>Boucle, %1 s</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>Ajouté</translation>
     </message>
@@ -7206,97 +7202,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>Boucle en continu</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>Lecture de l&apos;entrée, puis maintien</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>Lecture de l&apos;entrée, maintien, lecture de la sortie</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Retour</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Style</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>Couleurs</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Réinitialiser</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 s</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>espace pour votre texte</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>Modèle 3D, boucle toutes les %1 s</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>Suit un visage dans le clip auquel il est appliqué</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>Licence %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>Appliquer au clip sélectionné</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>Ajouter à la tête de lecture</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>Sélectionnez d&apos;abord un clip avec un visage sur la ligne du temps</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>Ajouter aux accessoires de visage</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>Ajouter au chutier</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>Sélectionnez un clip avec un visage sur la ligne du temps pour appliquer cet accessoire.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>Choisir la couleur</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>Le marché n&apos;est pas disponible dans cette version.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Impossible de charger Drift Assets. Vérifiez votre connexion et réessayez.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Démarrage…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7307,79 +7216,32 @@
         <translation>Impossible d&apos;écrire dans le dossier de données de l&apos;application.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>Impossible de télécharger cette ressource. Vérifiez votre connexion et réessayez.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">Téléchargement en cours…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Ce téléchargement était endommagé. Réessayez.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Dans la chute média</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Annulé</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>Impossible d&apos;ajouter cet accessoire de visage.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">Importation en cours…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>Impossible d&apos;ajouter cette ressource au chutier.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>Appliquer</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Ajouter</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>Ajouté aux accessoires de visage</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>Sélectionnez un clip vidéo ou une image pour appliquer un accessoire de visage</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Ajouté au chutier</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Impossible de charger Drift Assets</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Réessayez</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>Aucune ressource ici pour l&apos;instant</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Les ressources Drift Assets sont encore en cours de publication. Revenez bientôt.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>Rafraîchir</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>Tout afficher</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>Toutes les ressources</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>Aucune ressource Drift Assets ne correspond à « %1 ».</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>Rechercher « %2 » dans %1</translation>
     </message>
 </context>
 <context>
@@ -7686,15 +7548,15 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>Téléchargements — %n en cours</numerusform>
-            <numerusform>Téléchargements — %n en cours</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>Téléchargements</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10826,6 +10688,10 @@
         <translation>Espace de travail automatique (suivre le canevas)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>Téléchargements</translation>
     </message>
@@ -10851,137 +10717,252 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>Le Marché n&apos;est pas disponible dans cette version.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>En attente…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>Démarrage…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>Préparation…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>Annulé</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>Impossible de connecter le compte Marché.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>Rien n&apos;est disponible sur le Marché pour l&apos;instant.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>Téléchargement en cours…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>Impossible d&apos;enregistrer ce fichier.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>Le fichier téléchargé ne correspond pas à celui envoyé par le Marché.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>Importation en cours…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>Impossible d&apos;importer ce fichier.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>Dans la chute média</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>Compte Marché connecté.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>Limite quotidienne atteinte pour cette source. Réessayez plus tard.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>Cet élément nécessite un compte connecté.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>Crédits insuffisantes.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>Cette source est temporairement indisponible.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>Cet élément n&apos;est plus disponible.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>Impossible d&apos;atteindre le Marché.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>Impossible de préparer ce fichier.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>Impossible de traiter cette demande.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>Le Marché a mis trop de temps à répondre. Réessayez.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>Impossible d&apos;atteindre le marché. Vérifiez votre connexion et réessayez.</translation>
+        <source>All</source>
+        <translation type="unfinished">Tous</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>Le marché est expérimental.</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%n actif</numerusform>
+            <numerusform>%n actives</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>Cette fonctionnalité est en cours de développement et peut changer ou cesser de fonctionner à tout moment. Avant de l&apos;utiliser, veuillez prendre connaissance de ses capacités et de ses limites.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">Aucun téléchargement en cours</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>Vous disposez d&apos;un nombre limité de téléchargements par jour. Cette limite est restreinte, peut changer sans préavis et vous devrez patienter une fois le quota atteint.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">%1 à la fois</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>Nous ne pouvons garantir la disponibilité continue des sources. Celles-ci peuvent être retirées, soumises à des limites de débit ou devenir inaccessibles par les sites d&apos;origine, à tout moment et sans préavis.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">Effacement terminé</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>Nous ne pouvons garantir qu&apos;un téléchargement réussisse, se termine ou offre la qualité sélectionnée. Certains éléments peuvent simplement échouer.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">Rien de téléchargé encore</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>Tout le contenu provient de tiers. Drift ne l&apos;héberge, ne le possède et ne le vérifie pas — vous êtes responsable de vous assurer d&apos;avoir le droit d&apos;utiliser tout ce que vous téléchargez.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">Haut</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>Je comprend</translation>
+        <source>New</source>
+        <translation type="unfinished">Nouveau</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>Continuer vers le marché</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">Rechercher</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Réessayez</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Aucun résultat pour « %1 »</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Installer</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Ajouter</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Effet</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Transition</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">Thème</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">Style visuel</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Animation</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Vidéo</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Audio</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">Enregistrer les téléchargements dans</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Téléchargement en cours…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Installation…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">Télécharger à nouveau</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">Télécharger</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">Mettre à jour</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Installer</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">Ajouter aux accessoires de visage</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">Ajouter au chutier</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Retour</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Pause</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">Lire l&apos;aperçu</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Taille</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">Style</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">Ajouter à la ligne du temps</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">S&apos;enregistre dans %1</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">Vous choisirez un dossier la première fois</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">Modifier</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10996,58 +10977,182 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>Banque de médias</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>Marché indisponible</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>Cette version ne comprend pas le marché.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>Rechercher des ressources</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>Rechercher des effets sonores</translation>
+        <translation type="unfinished">Rechercher des effets sonores</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>Rechercher, ou coller un lien</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">Chargement des effets sonores…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>Ressources</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>SFX</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>Vidéos de banque</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Chargement des sources…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>Impossible d&apos;accéder au marché</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">Impossible de charger les effets sonores</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>Réessayez</translation>
+        <translation type="unfinished">Réessayez</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">Aucun effet sonore ne correspond à « %1 ».</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">Aucun effet sonore ici.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">Tout afficher</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Réessayez</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">Rechercher, ou coller un lien</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Rechercher</translation>
+        <translation type="unfinished">Rechercher</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (%2 restants)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>Filtres — %n appliqué</numerusform>
+            <numerusform>Filtres — %n appliqués</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">Filtres</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">Obtenir de %1</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">Obtenir à partir de ce lien</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">Vérification de ce lien…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">Impossible d&apos;ouvrir ce lien</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Réessayez</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">Échec de la recherche</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Aucun résultat pour « %1 »</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">Rechercher dans cette source</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">Essayez des mots différents, une autre source ou effacez un filtre.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">Tapez ci-dessus et appuyez sur Enter.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">Ajouté au chutier</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">Téléchargements</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Réessayer</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">Marché indisponible</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">Ouvrir lien</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Ouvrir</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11969,6 +12074,10 @@
     <message>
         <source>Import folder</source>
         <translation>Importer un fichier</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15543,6 +15652,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished">Exporter la vidéo</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">Téléchargements</translation>
     </message>
@@ -16494,33 +16607,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>Marché</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>Compte</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>Compte connecté (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>Compte de marché connecté</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>Déconnecter</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>Dissocier le compte du marché de cet appareil</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16624,10 +16710,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Network</source>
         <translation>Réseau</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>Marché</translation>
     </message>
     <message>
         <source>About</source>
@@ -17188,53 +17270,30 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Ajouté au chutier</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>Chargement des effets sonores…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>Impossible de charger les effets sonores</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Réessayez</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Tous</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>Aucun effet sonore ne correspond à « %1 ».</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>Aucun effet sonore ici.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>Impossible de charger les effets sonores. Vérifiez votre connexion et réessayez.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Démarrage…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Téléchargement en cours…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>Impossible d&apos;écrire dans le dossier de données de l&apos;application.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>Impossible de télécharger ce son. Vérifiez votre connexion et réessayez.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Importation en cours…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Ce téléchargement était endommagé. Réessayez.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Dans la chute média</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Annulé</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19649,123 +19708,38 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>Enregistrer les téléchargements dans</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Tous</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">En attente…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (%2 restants)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>Filtres — %n appliqué</numerusform>
-            <numerusform>Filtres — %n appliqués</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Démarrage…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>Filtres</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>Obtenir de %1</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>Obtenir à partir de ce lien</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>Vérification de ce lien…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>Impossible d&apos;ouvrir ce lien</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>Échec de la recherche</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Réessayez</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>Aucun résultat pour « %1 »</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>Rechercher dans cette source</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>Colle un lien</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>Essayez des mots différents, une autre source ou effacez un filtre.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>Tapez ci-dessus et appuyez sur Enter.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>Collez un lien de page ci-dessus et appuyez sur Enter.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>Retour aux résultats</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>Par %1</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n pièce</numerusform>
-            <numerusform>%n pièces</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">Préparation…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>Téléchargement en cours…</translation>
+        <translation type="unfinished">Téléchargement en cours…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>Télécharger à nouveau</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Importation en cours…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>Télécharger</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">Impossible d&apos;importer ce fichier.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>Vous avez utilisé les téléchargements d&apos;aujourd&apos;hui de cette source</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Dans la chute média</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>S&apos;enregistre dans %1</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>Vous choisirez un dossier la première fois</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>Modifier</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">Annulé</translation>
     </message>
 </context>
 <context>
@@ -24736,10 +24710,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Média</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Marché</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Texte</translation>
     </message>
@@ -24948,6 +24918,59 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Holographic</source>
         <translation>Holographique</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">Impossible d&apos;enregistrer ce fichier.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">Le fichier téléchargé ne correspond pas à celui envoyé par le Marché.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">Limite quotidienne atteinte pour cette source. Réessayez plus tard.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">Cette source est temporairement indisponible.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">Cet élément n&apos;est plus disponible.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">Impossible d&apos;atteindre le Marché.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">Impossible de préparer ce fichier.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">Impossible de traiter cette demande.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">Le Marché a mis trop de temps à répondre. Réessayez.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">Impossible d&apos;atteindre le marché. Vérifiez votre connexion et réessayez.</translation>
     </message>
 </context>
 <context>

@@ -1038,21 +1038,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Загрузки</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>Сейчас ничего не загружается.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Очистить завершённые</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1283,6 +1268,10 @@
         <translation type="unfinished">Доступно обновление</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">Дополнения</translation>
     </message>
@@ -1423,10 +1412,6 @@
         <translation>Открыть ссылку</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>Не удалось подключиться к магазину.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>«%1» готов.</translation>
     </message>
@@ -1435,32 +1420,24 @@
         <translation>Загрузка…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>Ни один источник в магазине не умеет открывать ссылки.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>Источник не распознал эту ссылку.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>В каком источнике открыть ссылку?</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Загрузка источников…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>Запрос к источнику…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>Повторить попытку</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>Выбрать другой источник</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">Сохранять загрузки в</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">Загрузить</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1584,6 +1561,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>Импортировано из магазина.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5324,10 +5308,6 @@
         <translation>Собрать медиафайлы в папку</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Магазин</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Текст</translation>
     </message>
@@ -5443,6 +5423,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>Импортировать папку…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6107,6 +6091,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>Не удалось удалить стиль</translation>
     </message>
@@ -6496,6 +6484,33 @@
     <message>
         <source>Brightness</source>
         <translation>Яркость</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Запуск…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Загрузка…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Установка…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Отменено</translation>
     </message>
 </context>
 <context>
@@ -7087,6 +7102,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Установка…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Загрузка…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Отменено</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7157,41 +7191,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Загрузки</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%n активная</numerusform>
-            <numerusform>%n активные</numerusform>
-            <numerusform>%n активных</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>Нет активных загрузок</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>По %1 одновременно</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Очистить завершённые</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>Пока ничего не загружено</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>Загрузки из вкладки «Маркет» отображаются здесь во время выполнения.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7218,10 +7217,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>Зациклено, %1 с</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>Добавлено</translation>
     </message>
@@ -7235,97 +7230,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>Бесшовный цикл</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>Проигрывается и остаётся на экране</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>Появляется, остаётся и исчезает</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Назад</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Стиль</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>Цвета</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Сбросить</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 с</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>место для вашего текста</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>3D-модель, цикл каждые %1 с</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>Отслеживает лицо в клипе, к которому применена</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>Лицензия &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>Лицензия %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>Применить к выбранному клипу</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>Добавить на позицию курсора воспроизведения</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>Сначала выберите на таймлайне клип с лицом</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>Добавить к объектам для лица</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>Добавить в медиатеку</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>Выберите на таймлайне клип с лицом, чтобы применить этот объект.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>Выбрать цвет</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>Маркет недоступен в этой сборке.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Не удалось загрузить ресурсы Drift. Проверьте подключение и повторите попытку.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Запуск…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7336,79 +7244,32 @@
         <translation>Не удалось записать данные в папку приложения.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>Не удалось скачать этот ресурс. Проверьте подключение и повторите попытку.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">Загрузка…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Скачанный файл повреждён. Повторите попытку.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">В медиатеке</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Отменено</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>Не удалось добавить этот объект для лица.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">Импорт…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>Не удалось добавить этот ресурс в медиатеку.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>Применить</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Добавление</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>Добавлено к объектам для лица</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>Выберите видео или изображение, чтобы применить объект для лица</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Добавлено в медиатеку</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Не удалось загрузить ресурсы Drift</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Повторить попытку</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>Здесь пока нет ресурсов</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Ресурсы Drift ещё публикуются. Загляните позже.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>Обновить</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>Посмотреть все</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>Все ресурсы</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>Нет ресурсов Drift по запросу «%1».</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>Искать «%2» в категории «%1»</translation>
     </message>
 </context>
 <context>
@@ -7715,16 +7576,16 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>Активных загрузок: %n</numerusform>
-            <numerusform>Активных загрузок: %n</numerusform>
-            <numerusform>Активных загрузок: %n</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>Загрузки</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10863,6 +10724,10 @@
         <translation>Автоматическая рабочая область (по холсту)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>Загрузки</translation>
     </message>
@@ -10888,137 +10753,253 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>Маркет недоступен в этой сборке.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>Ожидание…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>Запуск…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>Подготовка…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>Отменено</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>Не удалось подключить учётную запись маркета.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>Сейчас в маркете ничего нет.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>Загрузка…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>Не удалось сохранить файл.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>Скачанный файл не совпадает с файлом, отправленным маркетом.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>Импорт…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>Не удалось импортировать файл.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>В медиатеке</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>Учётная запись маркета подключена.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>Дневной лимит этого источника исчерпан. Попробуйте позже.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>Для этого элемента нужна подключённая учётная запись.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>Недостаточно монет.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>Этот источник временно недоступен.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>Этот элемент больше недоступен.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>Не удалось связаться с маркетом.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>Не удалось подготовить файл.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>Не удалось выполнить запрос.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>Маркет слишком долго не отвечает. Повторите попытку.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>Не удалось связаться с маркетом. Проверьте подключение и повторите попытку.</translation>
+        <source>All</source>
+        <translation type="unfinished">Все</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>Маркет работает в экспериментальном режиме</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%n активная</numerusform>
+            <numerusform>%n активные</numerusform>
+            <numerusform>%n активных</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>Функция ещё разрабатывается и может измениться или перестать работать в любой момент. Перед использованием ознакомьтесь с её возможностями и ограничениями.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">Нет активных загрузок</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>В день доступно ограниченное число загрузок. Лимит небольшой, может измениться без предупреждения; когда он исчерпан, придётся подождать.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">По %1 одновременно</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>Мы не можем гарантировать постоянную доступность источников. Сайты, с которых берутся материалы, могут в любой момент без предупреждения удалить их, ограничить запросы или нарушить работу источника.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">Очистить завершённые</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>Мы не можем гарантировать, что загрузка начнётся, завершится или даст выбранное качество. Некоторые элементы загрузить не удастся.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">Пока ничего не загружено</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>Всё здесь предоставлено третьими лицами. Drift не хранит, не владеет и не проверяет эти материалы. Вы сами отвечаете за наличие прав на использование скачанного.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">Сверху</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>Понятно</translation>
+        <source>New</source>
+        <translation type="unfinished">Создать</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>Перейти в маркет</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">Поиск</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Повторить попытку</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Нет результатов для «%1»</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Установить</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Эффект</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Переход</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">Тема</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">Стиль</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Анимация</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Видео</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Аудио</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">Сохранять загрузки в</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Загрузка…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Установка…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">Загрузить снова</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">Загрузить</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">Обновить</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Установить</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">Добавить к объектам для лица</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">Добавить в медиатеку</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Пауза</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">Воспроизвести предпросмотр</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Размер</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">Стиль</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">Добавить на таймлайн</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">Сохраняется в %1</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">При первой загрузке потребуется выбрать папку</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">Изменить</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11033,58 +11014,185 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>Стоковые материалы</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>Маркет недоступен</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>Эта сборка не включает маркет.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>Поиск ресурсов</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>Поиск звуковых эффектов</translation>
+        <translation type="unfinished">Поиск звуковых эффектов</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>Введите запрос или вставьте ссылку</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">Загрузка звуковых эффектов…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>Ресурсы</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>SFX</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>Стоковое видео</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Загрузка источников…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>Не удалось связаться с маркетом</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">Не удалось загрузить звуковые эффекты</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>Повторить попытку</translation>
+        <translation type="unfinished">Повторить попытку</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">Нет звуковых эффектов, соответствующих «%1».</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">Здесь нет звуковых эффектов.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">Посмотреть все</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Повторить попытку</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">Введите запрос или вставьте ссылку</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Поиск</translation>
+        <translation type="unfinished">Поиск</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (осталось %2)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>Применён %n фильтр</numerusform>
+            <numerusform>Применено %n фильтра</numerusform>
+            <numerusform>Применено %n фильтров</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">Фильтры</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">Получить из %1</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">Получить по этой ссылке</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">Поиск по ссылке…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">Не удалось открыть ссылку</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Повторить попытку</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">Ошибка поиска</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Нет результатов для «%1»</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">Искать в этом источнике</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">Попробуйте другие слова или источник либо сбросьте фильтр.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">Введите запрос выше и нажмите Enter.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">Добавлено в медиатеку</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">Загрузки</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Повторить</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">Маркет недоступен</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">Открыть ссылку</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Открыть</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12009,6 +12117,10 @@
     <message>
         <source>Import folder</source>
         <translation>Импортировать папку</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15603,6 +15715,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">Экспортировать видео</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">Загрузки</translation>
     </message>
@@ -16554,33 +16670,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>Маркетплейс</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>Учётная запись</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>Аккаунт подключён (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>Аккаунт маркетплейса подключён</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>Отключить</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>Отвязать аккаунт маркетплейса от этого устройства</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16684,10 +16773,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Network</source>
         <translation>Сеть</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>Маркетплейс</translation>
     </message>
     <message>
         <source>About</source>
@@ -17248,53 +17333,30 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Добавлено в медиатеку</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>Загрузка звуковых эффектов…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>Не удалось загрузить звуковые эффекты</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Повторить попытку</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Все</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>Нет звуковых эффектов, соответствующих «%1».</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>Здесь нет звуковых эффектов.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>Не удалось загрузить звуковые эффекты. Проверьте подключение и повторите попытку.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Запуск…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Загрузка…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>Не удалось записать данные в папку приложения.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>Не удалось скачать этот звук. Проверьте подключение и повторите попытку.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Импорт…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Скачанный файл повреждён. Повторите попытку.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">В медиатеке</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">Отменено</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19711,125 +19773,38 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>Сохранять загрузки в</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Все</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">Ожидание…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (осталось %2)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>Применён %n фильтр</numerusform>
-            <numerusform>Применено %n фильтра</numerusform>
-            <numerusform>Применено %n фильтров</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Запуск…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>Фильтры</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>Получить из %1</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>Получить по этой ссылке</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>Поиск по ссылке…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>Не удалось открыть ссылку</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>Ошибка поиска</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Повторить попытку</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>Нет результатов для «%1»</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>Искать в этом источнике</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>Вставить ссылку</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>Попробуйте другие слова или источник либо сбросьте фильтр.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>Введите запрос выше и нажмите Enter.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>Вставьте выше ссылку на страницу и нажмите Enter.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>Назад к результатам</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>Автор: %1</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n монета</numerusform>
-            <numerusform>%n монеты</numerusform>
-            <numerusform>%n монет</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">Подготовка…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>Загрузка…</translation>
+        <translation type="unfinished">Загрузка…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>Загрузить снова</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Импорт…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>Загрузить</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">Не удалось импортировать файл.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>Вы исчерпали дневной лимит загрузок из этого источника</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">В медиатеке</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>Сохраняется в %1</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>При первой загрузке потребуется выбрать папку</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>Изменить</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">Отменено</translation>
     </message>
 </context>
 <context>
@@ -24813,10 +24788,6 @@ If playback stutters, try another.</source>
         <translation>Медиафайлы</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Магазин</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Текст</translation>
     </message>
@@ -25025,6 +24996,59 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>Голографический</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">Не удалось сохранить файл.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">Скачанный файл не совпадает с файлом, отправленным маркетом.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">Дневной лимит этого источника исчерпан. Попробуйте позже.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">Этот источник временно недоступен.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">Этот элемент больше недоступен.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">Не удалось связаться с маркетом.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">Не удалось подготовить файл.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">Не удалось выполнить запрос.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">Маркет слишком долго не отвечает. Повторите попытку.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">Не удалось связаться с маркетом. Проверьте подключение и повторите попытку.</translation>
     </message>
 </context>
 <context>

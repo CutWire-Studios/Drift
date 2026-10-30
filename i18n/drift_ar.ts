@@ -1041,21 +1041,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>التنزيلات</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>لا يتم تنزيل أي شيء حاليًا.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>مسح المكتملة</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1286,6 +1271,10 @@
         <translation type="unfinished">تحديث متوفر</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">الإضافات</translation>
     </message>
@@ -1426,10 +1415,6 @@
         <translation>فتح الرابط</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>تعذر الوصول إلى المتجر.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>“%1” جاهز.</translation>
     </message>
@@ -1438,32 +1423,24 @@
         <translation>جارٍ التنزيل…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>لا يمكن لأي مصدر في المتجر فتح الروابط.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>لم يتعرف ذلك المصدر على هذا الرابط.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>أي مصدر يجب أن يفتح هذا الرابط؟</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>جارٍ تحميل المصادر…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>جارٍ الاستعلام من ذلك المصدر…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>إعادة المحاولة</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>اختيار مصدر آخر</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">حفظ التنزيلات في</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">تنزيل</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1587,6 +1564,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>تم الاستيراد من المتجر.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5384,10 +5368,6 @@
         <translation>تجميع الوسائط في مجلد</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>المتجر</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>نص</translation>
     </message>
@@ -5509,6 +5489,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>استيراد مجلد…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6179,6 +6163,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>تعذر حذف المظهر</translation>
     </message>
@@ -6574,6 +6562,33 @@
     <message>
         <source>Brightness</source>
         <translation>السطوع</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">جارٍ البدء…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">جارٍ التثبيت…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">تم الإلغاء</translation>
     </message>
 </context>
 <context>
@@ -7165,6 +7180,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">جارٍ التثبيت…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">تم الإلغاء</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7241,44 +7275,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>التنزيلات</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%n نشط</numerusform>
-            <numerusform>%n نشط</numerusform>
-            <numerusform>%n نشطان</numerusform>
-            <numerusform>%n نشطة</numerusform>
-            <numerusform>%n نشطًا</numerusform>
-            <numerusform>%n نشط</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>لا توجد تنزيلات قيد التشغيل</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>%1 في المرة الواحدة</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>مسح المكتملة</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>لم يتم تنزيل أي شيء بعد</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>تظهر التنزيلات من علامة تبويب المتجر هنا أثناء تشغيلها.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7311,10 +7307,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>يتكرر، %1 s</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>تمت الإضافة</translation>
     </message>
@@ -7328,97 +7320,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>يتكرر بسلاسة</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>يبدأ بالدخول، ثم يثبت</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>يبدأ بالدخول، ويثبت، ثم ينتهي بالخروج</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>رجوع</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>النمط</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>الألوان</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>إعادة تعيين</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 s</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>مساحة لنصك</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>نموذج 3D، يتكرر كل %1 s</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>يتتبع وجهًا في المقطع الذي طُبّق عليه</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>ترخيص &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>ترخيص %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>تطبيق على المقطع المحدد</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>إضافة عند مؤشر التشغيل</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>حدد مقطعًا يحتوي على وجه في المخطط الزمني أولًا</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>إضافة إلى إكسسوارات الوجه</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>إضافة إلى حاوية الوسائط</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>حدد مقطعًا يحتوي على وجه في المخطط الزمني لتطبيق هذا الإكسسوار.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>اختيار اللون</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>المتجر غير متوفر في هذا الإصدار.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>تعذر تحميل عناصر Drift. تحقق من اتصالك وحاول مرة أخرى.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">جارٍ البدء…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7429,79 +7334,32 @@
         <translation>تعذر الكتابة في مجلد بيانات التطبيق.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>تعذر تنزيل هذا العنصر. تحقق من اتصالك وحاول مرة أخرى.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>كان هذا التنزيل تالفًا. حاول مرة أخرى.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">في حاوية الوسائط</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">تم الإلغاء</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>تعذر إضافة إكسسوار الوجه هذا.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">جارٍ الاستيراد…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>تعذر إضافة هذا العنصر إلى حاوية الوسائط.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>تطبيق</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>إضافة</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>تمت الإضافة إلى إكسسوارات الوجه</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>حدد مقطع فيديو أو صورة لتطبيق إكسسوار الوجه</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>تمت الإضافة إلى حاوية الوسائط</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>تعذر تحميل عناصر Drift</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>إعادة المحاولة</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>لا توجد عناصر هنا بعد</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>ما زالت عناصر Drift قيد النشر. تحقق مجددًا قريبًا.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>تحديث</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>عرض الكل</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>جميع العناصر</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>لا توجد عناصر Drift تطابق “%1”.</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>البحث في %1 عن “%2”</translation>
     </message>
 </context>
 <context>
@@ -7808,19 +7666,19 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>التنزيلات — %n قيد التشغيل</numerusform>
-            <numerusform>التنزيلات — %n قيد التشغيل</numerusform>
-            <numerusform>التنزيلات — %n قيد التشغيل</numerusform>
-            <numerusform>التنزيلات — %n قيد التشغيل</numerusform>
-            <numerusform>التنزيلات — %n قيد التشغيل</numerusform>
-            <numerusform>التنزيلات — %n قيد التشغيل</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>التنزيلات</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10983,6 +10841,10 @@
         <translation>مساحة عمل تلقائية (تتبع لوحة العمل)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>التنزيلات</translation>
     </message>
@@ -11008,137 +10870,256 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>المتجر غير متوفر في هذا الإصدار.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>جارٍ الانتظار…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>جارٍ البدء…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>جارٍ الإعداد…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>تم الإلغاء</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>تعذر ربط حساب المتجر.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>لا يوجد أي شيء متاح من المتجر حاليًا.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>جارٍ التنزيل…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>تعذر حفظ ذلك الملف.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>لم يتطابق الملف المنزّل مع ما أرسله المتجر.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>جارٍ الاستيراد…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>تعذر استيراد ذلك الملف.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>في حاوية الوسائط</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>تم ربط حساب المتجر.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>تم الوصول إلى الحد اليومي لهذا المصدر. حاول مرة أخرى لاحقًا.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>يتطلب هذا العنصر حسابًا مرتبطًا.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>لا توجد عملات كافية.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>هذا المصدر غير متوفر مؤقتًا.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>ذلك العنصر لم يعد متوفرًا.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>تعذر الوصول إلى المتجر.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>تعذر إعداد ذلك الملف.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>تعذر إكمال ذلك الطلب.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>استغرق المتجر وقتًا أطول من اللازم للاستجابة. حاول مرة أخرى.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>تعذر الوصول إلى المتجر. تحقق من اتصالك وحاول مرة أخرى.</translation>
+        <source>All</source>
+        <translation type="unfinished">الكل</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>المتجر تجريبي</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%n نشط</numerusform>
+            <numerusform>%n نشط</numerusform>
+            <numerusform>%n نشطان</numerusform>
+            <numerusform>%n نشطة</numerusform>
+            <numerusform>%n نشطًا</numerusform>
+            <numerusform>%n نشط</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>هذه الميزة لا تزال قيد التطوير وقد تتغير أو تتوقف عن العمل في أي وقت. قبل استخدامها، يُرجى قراءة ما يمكنها وما لا يمكنها فعله.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">لا توجد تنزيلات قيد التشغيل</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>تحصل على عدد محدود من التنزيلات يوميًا. الحد صغير، وقد يتغير دون إشعار، وبمجرد استنفاده سيتعين عليك الانتظار.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">%1 في المرة الواحدة</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>لا يمكننا ضمان بقاء أي مصدر متوفرًا. يمكن إزالة المصادر أو تقييد معدلها أو تعطلها من قِبل المواقع التي تسحب منها، في أي وقت ودون تحذير.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">مسح المكتملة</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>لا يمكننا ضمان نجاح التنزيل أو اكتماله أو منحك الجودة التي اخترتها. ستفشل بعض العناصر ببساطة.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">لم يتم تنزيل أي شيء بعد</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>كل شيء هنا يأتي من أطراف خارجية. لا تستضيفه Drift ولا تملكه ولا تدققه — وأنت مسؤول عن التأكد من امتلاكك حق استخدام ما تقوم بتنزيله.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">الأعلى</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>أفهم ذلك</translation>
+        <source>New</source>
+        <translation type="unfinished">جديد</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>المتابعة إلى المتجر</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">بحث</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">إعادة المحاولة</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">لا توجد نتائج لـ “%1”</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">تثبيت</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">إضافة</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">تأثير</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">المظهر</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">المظهر</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">حفظ التنزيلات في</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">جارٍ التثبيت…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">إعادة التنزيل</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">تنزيل</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">تحديث</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">تثبيت</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">إضافة إلى إكسسوارات الوجه</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">إضافة إلى حاوية الوسائط</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">رجوع</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">إيقاف مؤقت</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">تشغيل المعاينة</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">الحجم</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">النمط</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">إضافة إلى المخطط الزمني</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">يُحفظ في %1</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">ستختار مجلدًا في المرة الأولى</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">تغيير</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11153,58 +11134,194 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>محتوى جاهز</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>المتجر غير متوفر</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>لا يتضمن هذا الإصدار المتجر.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>البحث في العناصر</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>البحث في التأثيرات الصوتية</translation>
+        <translation type="unfinished">البحث في التأثيرات الصوتية</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>ابحث، أو الصق رابطًا</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">جارٍ تحميل المؤثرات الصوتية…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>العناصر</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>مؤثرات صوتية (SFX)</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>لقطات جاهزة</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>جارٍ تحميل المصادر…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>تعذر الوصول إلى المتجر</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">تعذر تحميل المؤثرات الصوتية</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>إعادة المحاولة</translation>
+        <translation type="unfinished">إعادة المحاولة</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">لا توجد مؤثرات صوتية تطابق ”%1“.</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">لا توجد مؤثرات صوتية هنا.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">عرض الكل</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">إعادة المحاولة</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">ابحث، أو الصق رابطًا</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>بحث</translation>
+        <translation type="unfinished">بحث</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (متبقٍ %2)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>الفلاتر — %n مطبق</numerusform>
+            <numerusform>الفلاتر — %n مطبق</numerusform>
+            <numerusform>الفلاتر — %n مطبقان</numerusform>
+            <numerusform>الفلاتر — %n مطبقة</numerusform>
+            <numerusform>الفلاتر — %n مطبقًا</numerusform>
+            <numerusform>الفلاتر — %n مطبق</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">الفلاتر</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">الحصول من %1</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">الحصول من هذا الرابط</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">جارٍ البحث عن هذا الرابط…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">تعذر فتح هذا الرابط</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">إعادة المحاولة</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">فشل البحث</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">لا توجد نتائج لـ “%1”</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">البحث في هذا المصدر</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">جرب كلمات مختلفة، أو مصدرًا آخر، أو امسح أحد الفلاتر.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">اكتب أعلاه واضغط على Enter.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">تمت الإضافة إلى حاوية الوسائط</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">التنزيلات</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">إعادة المحاولة</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">المتجر غير متوفر</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">فتح الرابط</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">فتح</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -12138,6 +12255,10 @@
     <message>
         <source>Import folder</source>
         <translation>استيراد مجلد</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15792,6 +15913,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">تصدير الفيديو</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">التنزيلات</translation>
     </message>
@@ -16743,33 +16868,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>المتجر</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>الحساب</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>الحساب متصل (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>حساب المتجر متصل</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>قطع الاتصال</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>إلغاء ربط حساب المتجر من هذا الجهاز</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16873,10 +16971,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Network</source>
         <translation>الشبكة</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>المتجر</translation>
     </message>
     <message>
         <source>About</source>
@@ -17437,53 +17531,30 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>تمت الإضافة إلى حاوية الوسائط</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>جارٍ تحميل المؤثرات الصوتية…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>تعذر تحميل المؤثرات الصوتية</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>إعادة المحاولة</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>الكل</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>لا توجد مؤثرات صوتية تطابق ”%1“.</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>لا توجد مؤثرات صوتية هنا.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>تعذر تحميل المؤثرات الصوتية. تحقق من اتصالك وحاول مرة أخرى.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">جارٍ البدء…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>تعذر الكتابة في مجلد بيانات التطبيق.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>تعذر تنزيل هذا الصوت. تحقق من اتصالك وحاول مرة أخرى.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">جارٍ الاستيراد…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>كان هذا التنزيل تالفًا. حاول مرة أخرى.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">في حاوية الوسائط</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">تم الإلغاء</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19906,131 +19977,38 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>حفظ التنزيلات في</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>الكل</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">جارٍ الانتظار…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (متبقٍ %2)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>الفلاتر — %n مطبق</numerusform>
-            <numerusform>الفلاتر — %n مطبق</numerusform>
-            <numerusform>الفلاتر — %n مطبقان</numerusform>
-            <numerusform>الفلاتر — %n مطبقة</numerusform>
-            <numerusform>الفلاتر — %n مطبقًا</numerusform>
-            <numerusform>الفلاتر — %n مطبق</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">جارٍ البدء…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>الفلاتر</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>الحصول من %1</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>الحصول من هذا الرابط</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>جارٍ البحث عن هذا الرابط…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>تعذر فتح هذا الرابط</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>فشل البحث</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>إعادة المحاولة</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>لا توجد نتائج لـ “%1”</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>البحث في هذا المصدر</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>لصق رابط</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>جرب كلمات مختلفة، أو مصدرًا آخر، أو امسح أحد الفلاتر.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>اكتب أعلاه واضغط على Enter.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>الصق رابط الصفحة أعلاه واضغط على Enter.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>العودة إلى النتائج</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>بواسطة %1</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n عملة</numerusform>
-            <numerusform>%n عملة</numerusform>
-            <numerusform>%n عملتان</numerusform>
-            <numerusform>%n عملات</numerusform>
-            <numerusform>%n عملةً</numerusform>
-            <numerusform>%n عملة</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">جارٍ الإعداد…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>جارٍ التنزيل…</translation>
+        <translation type="unfinished">جارٍ التنزيل…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>إعادة التنزيل</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">جارٍ الاستيراد…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>تنزيل</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">تعذر استيراد ذلك الملف.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>لقد استنفدت تنزيلات اليوم من هذا المصدر</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">في حاوية الوسائط</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>يُحفظ في %1</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>ستختار مجلدًا في المرة الأولى</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>تغيير</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">تم الإلغاء</translation>
     </message>
 </context>
 <context>
@@ -25059,10 +25037,6 @@ If playback stutters, try another.</source>
         <translation>الوسائط</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>المتجر</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>نص</translation>
     </message>
@@ -25271,6 +25245,59 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>هولوغرافي</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">تعذر حفظ ذلك الملف.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">لم يتطابق الملف المنزّل مع ما أرسله المتجر.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">تم الوصول إلى الحد اليومي لهذا المصدر. حاول مرة أخرى لاحقًا.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">هذا المصدر غير متوفر مؤقتًا.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">ذلك العنصر لم يعد متوفرًا.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">تعذر الوصول إلى المتجر.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">تعذر إعداد ذلك الملف.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">تعذر إكمال ذلك الطلب.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">استغرق المتجر وقتًا أطول من اللازم للاستجابة. حاول مرة أخرى.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">تعذر الوصول إلى المتجر. تحقق من اتصالك وحاول مرة أخرى.</translation>
     </message>
 </context>
 <context>

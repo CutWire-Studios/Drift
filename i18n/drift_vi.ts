@@ -1036,21 +1036,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Tải xuống</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>Không có gì tải xuống ngay bây giờ.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Đã xóa xong</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1281,6 +1266,10 @@
         <translation type="unfinished">Đã có bản cập nhật</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">Bổ trợ</translation>
     </message>
@@ -1421,10 +1410,6 @@
         <translation>Mở liên kết</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>Không thể kết nối với cửa hàng ứng dụng.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>“%1” đã sẵn sàng.</translation>
     </message>
@@ -1433,32 +1418,24 @@
         <translation>Đang tải xuống…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>Không có nguồn nào trên cửa hàng ứng dụng có thể mở liên kết.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>Nguồn đó không nhận ra liên kết này.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>Nguồn nào nên mở liên kết này?</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Đang tải nguồn…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>Đang hỏi nguồn đó…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>Thử lại</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>Chọn nguồn khác</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">Lưu các tệp tải xuống vào</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">Tải xuống</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1582,6 +1559,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>Được nhập từ cửa hàng ứng dụng.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5284,10 +5268,6 @@
         <translation>Thu thập phương tiện vào thư mục</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Chợ</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Văn bản</translation>
     </message>
@@ -5399,6 +5379,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>Nhập thư mục…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6059,6 +6043,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>Không thể xóa giao diện màu</translation>
     </message>
@@ -6444,6 +6432,33 @@
     <message>
         <source>Brightness</source>
         <translation>Độ sáng</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">Đang khởi động…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Đang tải xuống…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Đang cài đặt…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7035,6 +7050,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Đang cài đặt…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Đang tải xuống…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7101,39 +7135,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>Tải xuống</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%n đang hoạt động</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>Không có tải xuống nào đang chạy</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>%1 tại một thời điểm</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>Đã xóa xong</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>Chưa có gì được tải xuống</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>Các nội dung tải xuống từ thẻ Chợ sẽ hiển thị ở đây trong khi chúng chạy.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7156,10 +7157,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>Lặp, %1 s</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>Đã thêm</translation>
     </message>
@@ -7173,97 +7170,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>Lặp lại liền mạch</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>Phát vào, rồi giữ nguyên</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>Phát vào, giữ nguyên, phát ra</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Quay lại</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>Kiểu</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>Màu</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Đặt lại</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>%1 s</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>chỗ cho văn bản của bạn</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>Mô hình 3D, lặp lại cứ sau %1 giây</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>Theo dõi một khuôn mặt trong clip được áp dụng</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>Giấy phép &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>Giấy phép %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>Áp dụng cho clip đã chọn</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>Thêm vào đầu phát</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>Chọn clip có khuôn mặt trên dòng thời gian trước</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>Thêm vào đạo cụ khuôn mặt</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>Thêm vào ngăn phương tiện</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>Chọn một clip có khuôn mặt trên dòng thời gian để áp dụng đạo cụ này.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>Chọn màu</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>Chợ không có sẵn trong bản dựng này.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Không thể tải Tài nguyên Drift. Kiểm tra kết nối và thử lại.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Đang khởi động…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7274,79 +7184,32 @@
         <translation>Không thể ghi vào thư mục dữ liệu ứng dụng.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>Không thể tải nội dung đó xuống. Hãy kiểm tra kết nối của bạn và thử lại.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">Đang tải xuống…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Bản tải xuống đó đã bị hỏng. Hãy thử lại.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Trong ngăn phương tiện</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>Không thể thêm đạo cụ khuôn mặt đó.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">Đang nhập…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>Không thể thêm nội dung đó vào ngăn phương tiện.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>Áp dụng</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Thêm</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>Đã thêm vào Đạo cụ khuôn mặt</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>Chọn một video hoặc clip hình ảnh để áp dụng đạo cụ khuôn mặt</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Đã thêm vào ngăn phương tiện</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Không thể tải Tài nguyên Drift</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Thử lại</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>Chưa có tài nguyên nào ở đây</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Tài nguyên Drift vẫn đang được xuất bản. Hãy kiểm tra lại sớm.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>Làm mới</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>Xem tất cả</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>Tất cả tài nguyên</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>Không có tài nguyên Drift nào khớp với “%1”.</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>Tìm kiếm %1 cho “%2”</translation>
     </message>
 </context>
 <context>
@@ -7653,14 +7516,14 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>Tải xuống — %n đang chạy</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>Tải xuống</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10783,6 +10646,10 @@
         <translation>Không gian làm việc tự động (Theo Canvas)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>Tải xuống</translation>
     </message>
@@ -10808,137 +10675,251 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>Cửa hàng không có sẵn trong bản dựng này.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>Đang chờ…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>Đang khởi động…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>Đang chuẩn bị…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>Đã hủy</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>Không thể kết nối tài khoản cửa hàng.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>Không có gì có sẵn từ cửa hàng ngay bây giờ.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>Đang tải xuống…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>Không thể lưu tệp đó.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>Tệp đã tải xuống không khớp với những gì cửa hàng đã gửi.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>Đang nhập…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>Không thể nhập tệp đó.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>Trong ngăn phương tiện</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>Đã kết nối tài khoản Cửa hàng.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>Đã đạt đến giới hạn hàng ngày cho nguồn này. Hãy thử lại sau.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>Mục này cần một tài khoản được kết nối.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>Không đủ xu.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>Nguồn này tạm thời không có sẵn.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>Mặt hàng đó không còn nữa.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>Không thể đến được cửa hàng.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>Không thể chuẩn bị tệp đó.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>Không thể hoàn thành yêu cầu đó.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>Cửa hàng mất quá nhiều thời gian để phản hồi. Hãy thử lại.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>Không thể truy cập cửa hàng. Hãy kiểm tra kết nối của bạn và thử lại.</translation>
+        <source>All</source>
+        <translation type="unfinished">Tất cả</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>Cửa hàng đang được thử nghiệm</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%n đang hoạt động</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>Tính năng này vẫn đang được xây dựng và có thể thay đổi hoặc ngừng hoạt động bất cứ lúc nào. Trước khi sử dụng, vui lòng đọc những gì nó có thể và không thể làm.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">Không có tải xuống nào đang chạy</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>Bạn nhận được số lượng tải xuống giới hạn mỗi ngày. Giới hạn này nhỏ, có thể thay đổi mà không báo trước và sau khi sử dụng hết, bạn phải đợi.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">%1 tại một thời điểm</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>Chúng tôi không thể đảm bảo rằng bất kỳ nguồn nào vẫn có sẵn. Các nguồn có thể bị xóa, bị giới hạn tỷ lệ hoặc bị hỏng bởi các trang web mà chúng lấy từ đó bất cứ lúc nào mà không cần cảnh báo.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished">Đã xóa xong</translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>Chúng tôi không thể đảm bảo rằng quá trình tải xuống sẽ thành công, hoàn tất hoặc mang lại cho bạn chất lượng mà bạn đã chọn. Một số mặt hàng sẽ đơn giản là thất bại.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">Chưa có gì được tải xuống</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>Mọi thứ ở đây đều đến từ bên thứ ba. Drift không lưu trữ, sở hữu hoặc kiểm tra nó - bạn có trách nhiệm đảm bảo rằng bạn có quyền sử dụng bất cứ thứ gì bạn tải xuống.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">Trên</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>Tôi đã hiểu</translation>
+        <source>New</source>
+        <translation type="unfinished">Mới</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>Tiếp tục đến cửa hàng</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">Tìm kiếm</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Thử lại</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Không tìm thấy kết quả cho “%1”</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Cài đặt</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Thêm</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished">Chuyển cảnh</translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">Chủ đề</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">Giao diện màu</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">Hoạt ảnh</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">Video</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">Âm thanh</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">Lưu các tệp tải xuống vào</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Đang tải xuống…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Đang cài đặt…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">Tải xuống lần nữa</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">Tải xuống</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">Cập nhật</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Cài đặt</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">Thêm vào đạo cụ khuôn mặt</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">Thêm vào ngăn phương tiện</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Quay lại</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">Tạm dừng</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">Phát xem trước</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">Kích thước</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">Kiểu</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">Thêm vào dòng thời gian</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">Lưu vào %1</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">Bạn sẽ chọn một thư mục trong lần đầu tiên</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">Thay đổi</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10953,58 +10934,179 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>Kho</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>Cửa hàng không khả dụng</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>Bản dựng này không bao gồm cửa hàng.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>Tìm tài nguyên</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>Tìm hiệu ứng âm thanh</translation>
+        <translation type="unfinished">Tìm hiệu ứng âm thanh</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>Tìm kiếm, hoặc dán liên kết</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">Đang tải hiệu ứng âm thanh…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>Tài nguyên</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>SFX</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>Kho tư liệu</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>Đang tải nguồn…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>Không thể truy cập cửa hàng</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">Không thể tải hiệu ứng âm thanh</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>Thử lại</translation>
+        <translation type="unfinished">Thử lại</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">Không có hiệu ứng âm thanh nào khớp với “%1”.</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">Không có hiệu ứng âm thanh nào ở đây.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">Xem tất cả</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Thử lại</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">Tìm kiếm, hoặc dán liên kết</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>Tìm kiếm</translation>
+        <translation type="unfinished">Tìm kiếm</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (%2 còn lại)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>Bộ lọc — %n đã được áp dụng</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">Bộ lọc</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">Nhận từ %1</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">Nhận từ liên kết này</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">Đang tìm liên kết đó…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">Không thể mở liên kết đó</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">Thử lại</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">Tìm kiếm thất bại</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">Không tìm thấy kết quả cho “%1”</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">Tìm nguồn này</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">Hãy thử dùng từ ngữ khác, nguồn thông tin khác hoặc xóa bộ lọc.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">Nhập phía trên và nhấn Enter.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">Đã thêm vào ngăn phương tiện</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">Tải xuống</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Thử lại</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">Cửa hàng không khả dụng</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">Mở liên kết</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Mở</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11923,6 +12025,10 @@
     <message>
         <source>Import folder</source>
         <translation>Nhập thư mục</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15478,6 +15584,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation type="unfinished">Xuất video</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">Tải xuống</translation>
     </message>
@@ -16429,33 +16539,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>Cửa hàng</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>Tài khoản</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>Tài khoản được kết nối (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>Đã kết nối tài khoản cửa hàng</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>Ngắt kết nối</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>Hủy liên kết tài khoản Cửa hàng khỏi thiết bị này</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16559,10 +16642,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Network</source>
         <translation>Mạng</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>Cửa hàng</translation>
     </message>
     <message>
         <source>About</source>
@@ -17123,53 +17202,30 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Đã thêm vào ngăn phương tiện</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>Đang tải hiệu ứng âm thanh…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>Không thể tải hiệu ứng âm thanh</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Thử lại</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Tất cả</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>Không có hiệu ứng âm thanh nào khớp với “%1”.</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>Không có hiệu ứng âm thanh nào ở đây.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>Không thể tải hiệu ứng âm thanh. Hãy kiểm tra kết nối của bạn và thử lại.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Đang khởi động…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Đang tải xuống…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>Không thể ghi vào thư mục dữ liệu ứng dụng.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>Không thể tải xuống âm thanh đó. Hãy kiểm tra kết nối của bạn và thử lại.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Đang nhập…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>Bản tải xuống đó đã bị hỏng. Hãy thử lại.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Trong ngăn phương tiện</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19582,121 +19638,38 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>Lưu các tệp tải xuống vào</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Tất cả</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">Đang chờ…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (%2 còn lại)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>Bộ lọc — %n đã được áp dụng</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">Đang khởi động…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>Bộ lọc</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>Nhận từ %1</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>Nhận từ liên kết này</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>Đang tìm liên kết đó…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>Không thể mở liên kết đó</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>Tìm kiếm thất bại</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>Thử lại</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>Không tìm thấy kết quả cho “%1”</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>Tìm nguồn này</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>Dán một liên kết</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>Hãy thử dùng từ ngữ khác, nguồn thông tin khác hoặc xóa bộ lọc.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>Nhập phía trên và nhấn Enter.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>Dán liên kết trang vào ô phía trên và nhấn Enter.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>Quay lại kết quả</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>Bởi %1</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n xu</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">Đang chuẩn bị…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>Đang tải xuống…</translation>
+        <translation type="unfinished">Đang tải xuống…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>Tải xuống lần nữa</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">Đang nhập…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>Tải xuống</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">Không thể nhập tệp đó.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>Bạn đã sử dụng các lượt tải xuống hôm nay từ nguồn này</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">Trong ngăn phương tiện</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>Lưu vào %1</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>Bạn sẽ chọn một thư mục trong lần đầu tiên</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>Thay đổi</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -24650,10 +24623,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Phương tiện</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Chợ tiện ích</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>Văn bản</translation>
     </message>
@@ -24862,6 +24831,59 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Holographic</source>
         <translation>Óng ánh</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">Không thể lưu tệp đó.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">Tệp đã tải xuống không khớp với những gì cửa hàng đã gửi.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">Đã đạt đến giới hạn hàng ngày cho nguồn này. Hãy thử lại sau.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">Nguồn này tạm thời không có sẵn.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">Mặt hàng đó không còn nữa.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">Không thể đến được cửa hàng.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">Không thể chuẩn bị tệp đó.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">Không thể hoàn thành yêu cầu đó.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">Cửa hàng mất quá nhiều thời gian để phản hồi. Hãy thử lại.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">Không thể truy cập cửa hàng. Hãy kiểm tra kết nối của bạn và thử lại.</translation>
     </message>
 </context>
 <context>

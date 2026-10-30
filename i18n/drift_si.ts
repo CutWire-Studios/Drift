@@ -1037,21 +1037,6 @@
     </message>
 </context>
 <context>
-    <name>AndroidDownloadsSheet</name>
-    <message>
-        <source>Downloads</source>
-        <translation>බාගැනීම්</translation>
-    </message>
-    <message>
-        <source>Nothing downloading right now.</source>
-        <translation>දැනට කිසිවක් බාගත නොවේ.</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>අවසන් වූ ඒවා ඉවත් කරන්න</translation>
-    </message>
-</context>
-<context>
     <name>AndroidEasingSheet</name>
     <message>
         <source>Easing</source>
@@ -1282,6 +1267,10 @@
         <translation type="unfinished">යාවත්කාලීනයක් පවතී</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation type="unfinished">අමතර අංග</translation>
     </message>
@@ -1422,10 +1411,6 @@
         <translation>සබැඳිය විවෘත කරන්න</translation>
     </message>
     <message>
-        <source>Couldn’t reach the marketplace.</source>
-        <translation>වෙළඳපොළ වෙත ළඟා විය නොහැකි විය.</translation>
-    </message>
-    <message>
         <source>“%1” is ready.</source>
         <translation>“%1” සූදානම්.</translation>
     </message>
@@ -1434,32 +1419,24 @@
         <translation>බාගත වෙමින්…</translation>
     </message>
     <message>
-        <source>No source in the marketplace can open links.</source>
-        <translation>වෙළඳපොළේ ඇති කිසිදු මූලාශ්‍රයකට සබැඳි විවෘත කළ නොහැක.</translation>
-    </message>
-    <message>
-        <source>That source didn’t recognise this link.</source>
-        <translation>එම මූලාශ්‍රය මෙම සබැඳිය හඳුනා නොගත්තේය.</translation>
-    </message>
-    <message>
-        <source>Which source should open this link?</source>
-        <translation>මෙම සබැඳිය විවෘත කළ යුත්තේ කුමන මූලාශ්‍රයෙන්ද?</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>මූලාශ්‍ර පූරණය වෙමින්…</translation>
-    </message>
-    <message>
-        <source>Asking that source…</source>
-        <translation>එම මූලාශ්‍රයෙන් විමසමින්…</translation>
-    </message>
-    <message>
         <source>Try again</source>
         <translation>නැවත උත්සාහ කරන්න</translation>
     </message>
     <message>
-        <source>Pick another source</source>
-        <translation>වෙනත් මූලාශ්‍රයක් තෝරන්න</translation>
+        <source>The marketplace didn’t recognise this link.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">බාගැනීම් සුරකින ස්ථානය</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">බාගන්න</translation>
+    </message>
+    <message>
+        <source>Looking up the link…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -1583,6 +1560,13 @@
     <message>
         <source>Imported from the marketplace.</source>
         <translation>වෙළඳපොළෙන් ආයාත කරන ලදී.</translation>
+    </message>
+</context>
+<context>
+    <name>AndroidMarketplacePage</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5304,10 +5288,6 @@
         <translation>මාධ්‍ය ෆෝල්ඩරයකට එක්රැස් කරන්න</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>Market</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>පෙළ</translation>
     </message>
@@ -5421,6 +5401,10 @@
     <message>
         <source>Import Folder…</source>
         <translation>ෆෝල්ඩරය ආයාත කරන්න…</translation>
+    </message>
+    <message>
+        <source>Browse Marketplace…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Collect Media to Folder…</source>
@@ -6083,6 +6067,10 @@
         </translation>
     </message>
     <message>
+        <source>Could not import that look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not remove the look</source>
         <translation>පෙනුම ඉවත් කිරීමට නොහැකි විය</translation>
     </message>
@@ -6470,6 +6458,33 @@
     <message>
         <source>Brightness</source>
         <translation>දීප්තිය</translation>
+    </message>
+</context>
+<context>
+    <name>CommunityInstaller</name>
+    <message>
+        <source>Starting…</source>
+        <translation type="unfinished">ආරම්භ කරමින්…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">බාගත වෙමින්…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ස්ථාපනය කරමින්…</translation>
+    </message>
+    <message>
+        <source>This build cannot install that kind of item.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">අවලංගු කෙරිණි</translation>
     </message>
 </context>
 <context>
@@ -7061,6 +7076,25 @@
     </message>
 </context>
 <context>
+    <name>DownloadCenter</name>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ස්ථාපනය කරමින්…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">බාගත වෙමින්…</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">අවලංගු කෙරිණි</translation>
+    </message>
+</context>
+<context>
     <name>DownloadFormat</name>
     <message>
         <source>%1 B</source>
@@ -7129,40 +7163,6 @@
     </message>
 </context>
 <context>
-    <name>DownloadsWindow</name>
-    <message>
-        <source>Downloads</source>
-        <translation>බාගැනීම්</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n active</source>
-        <translation>
-            <numerusform>%nක් සක්‍රීයයි</numerusform>
-            <numerusform>%nක් සක්‍රීයයි</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>No downloads running</source>
-        <translation>කිසිදු බාගැනීමක් ක්‍රියාත්මක නොවේ</translation>
-    </message>
-    <message>
-        <source>%1 at a time</source>
-        <translation>වරකට %1ක් බැගින්</translation>
-    </message>
-    <message>
-        <source>Clear finished</source>
-        <translation>අවසන් වූ දෑ ඉවත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Nothing downloaded yet</source>
-        <translation>තවමත් කිසිවක් බාගෙන නැත</translation>
-    </message>
-    <message>
-        <source>Downloads from the Market tab show up here while they run.</source>
-        <translation>Market පටිත්තෙන් බාගන්නා දෑ ඒවා ක්‍රියාත්මක වන අතරතුර මෙහි දිස්වේ.</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetCard</name>
     <message>
         <source>Add</source>
@@ -7187,10 +7187,6 @@
         </translation>
     </message>
     <message>
-        <source>Loops, %1 s</source>
-        <translation>ලූප් වේ, %1 s</translation>
-    </message>
-    <message>
         <source>Added</source>
         <translation>එක් කරන ලදී</translation>
     </message>
@@ -7204,97 +7200,10 @@
     </message>
 </context>
 <context>
-    <name>DriftAssetDetail</name>
-    <message>
-        <source>Loops seamlessly</source>
-        <translation>බාධාවකින් තොරව ලූප් වේ</translation>
-    </message>
-    <message>
-        <source>Plays in, then holds</source>
-        <translation>ධාවනය වී, පසුව නතරව පවතී</translation>
-    </message>
-    <message>
-        <source>Plays in, holds, plays out</source>
-        <translation>ධාවනය වී, නතරව පැවතී, අවසානයේ ධාවනය වේ</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>ආපසු</translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation>විලාසය</translation>
-    </message>
-    <message>
-        <source>Colours</source>
-        <translation>වර්ණ</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>යළි සකසන්න</translation>
-    </message>
-    <message>
-        <source>%1 s</source>
-        <translation>තත් %1</translation>
-    </message>
-    <message>
-        <source>room for your text</source>
-        <translation>ඔබේ පෙළ සඳහා ඉඩ ඇත</translation>
-    </message>
-    <message>
-        <source>3D model, loops every %1 s</source>
-        <translation>3D ආකෘතිය, සෑම %1 s කට වරක්ම ලූප් වේ</translation>
-    </message>
-    <message>
-        <source>Tracks a face in the clip it is applied to</source>
-        <translation>එය යොදන ලද ක්ලිපයේ මුහුණක් හඹා යයි</translation>
-    </message>
-    <message>
-        <source>Licence &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</source>
-        <translation>බලපත්‍රය &lt;a href=&quot;%1&quot;&gt;CC BY-NC-SA 4.0&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>Licence %1</source>
-        <translation>බලපත්‍රය %1</translation>
-    </message>
-    <message>
-        <source>Apply to selected clip</source>
-        <translation>තෝරාගත් ක්ලිපයට යොදන්න</translation>
-    </message>
-    <message>
-        <source>Add at playhead</source>
-        <translation>ප්ලේහෙඩ් එක ඇති තැනට එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline first</source>
-        <translation>පළමුව කාලරේඛාව මත ඇති මුහුණක් සහිත ක්ලිපයක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Add to Face props</source>
-        <translation>Face props වෙත එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Add to media bin</source>
-        <translation>Media bin වෙත එක් කරන්න</translation>
-    </message>
-    <message>
-        <source>Select a clip with a face on the timeline to apply this prop.</source>
-        <translation>මෙම prop එක යෙදීමට කාලරේඛාව මත ඇති මුහුණක් සහිත ක්ලිපයක් තෝරන්න.</translation>
-    </message>
-    <message>
-        <source>Choose colour</source>
-        <translation>වර්ණය තෝරන්න</translation>
-    </message>
-</context>
-<context>
     <name>DriftAssetStore</name>
     <message>
-        <source>The marketplace is not available in this build.</source>
-        <translation>මෙම build එකෙහි Marketplace ලබාගත නොහැක.</translation>
-    </message>
-    <message>
-        <source>Could not load Drift Assets. Check your connection and try again.</source>
-        <translation>Drift Assets පූරණය කිරීමට නොහැකි විය. ඔබේ සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">ආරම්භ කරමින්…</translation>
     </message>
     <message>
         <source>That asset could not be installed.</source>
@@ -7305,79 +7214,32 @@
         <translation>යෙදුම් දත්ත ෆෝල්ඩරයට ලිවීමට නොහැකි විය.</translation>
     </message>
     <message>
-        <source>Could not download that asset. Check your connection and try again.</source>
-        <translation>එම asset එක බාගත කිරීමට නොහැකි විය. ඔබේ සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
+        <source>Downloading…</source>
+        <translation type="unfinished">බාගත වෙමින්…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>එම බාගැනීම හානි වී ඇත. නැවත උත්සාහ කරන්න.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">මාධ්‍ය බඳුනෙහි</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">අවලංගු කෙරිණි</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
         <translation>එම Face prop එක එක් කිරීමට නොහැකි විය.</translation>
     </message>
     <message>
+        <source>Added to face props</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Importing…</source>
+        <translation type="unfinished">ආයාත කරමින්…</translation>
+    </message>
+    <message>
         <source>Could not add that asset to the media bin.</source>
         <translation>එම asset එක Media bin වෙත එක් කිරීමට නොහැකි විය.</translation>
-    </message>
-</context>
-<context>
-    <name>DriftAssetsHome</name>
-    <message>
-        <source>Apply</source>
-        <translation>යොදන්න</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation>Add</translation>
-    </message>
-    <message>
-        <source>Added to Face props</source>
-        <translation>Face props වෙත එක් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Select a video or image clip to apply a face prop</source>
-        <translation>Face prop එකක් යෙදීමට වීඩියෝ හෝ පින්තූර ක්ලිපයක් තෝරන්න</translation>
-    </message>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Media bin වෙත එක් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Couldn’t load Drift Assets</source>
-        <translation>Drift Assets පූරණය කිරීමට නොහැකි විය</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>නැවත උත්සාහ කරන්න</translation>
-    </message>
-    <message>
-        <source>No assets here yet</source>
-        <translation>මෙහි තවමත් assets කිසිවක් නැත</translation>
-    </message>
-    <message>
-        <source>Drift Assets are still being published. Check back soon.</source>
-        <translation>Drift Assets තවමත් ප්‍රකාශයට පත් කරමින් පවතී. ළඟදීම නැවත පරීක්ෂා කරන්න.</translation>
-    </message>
-    <message>
-        <source>Refresh</source>
-        <translation>නැවුම් කරන්න</translation>
-    </message>
-    <message>
-        <source>See all</source>
-        <translation>සියල්ල බලන්න</translation>
-    </message>
-    <message>
-        <source>All assets</source>
-        <translation>සියලු වත්කම්</translation>
-    </message>
-    <message>
-        <source>No Drift Assets match “%1”.</source>
-        <translation>“%1” සඳහා ගැළපෙන Drift Assets හමු නොවීය.</translation>
-    </message>
-    <message>
-        <source>Search %1 for “%2”</source>
-        <translation>%1 තුළ “%2” සොයන්න</translation>
     </message>
 </context>
 <context>
@@ -7684,15 +7546,15 @@
 <context>
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
-        <source>Downloads — %n running</source>
-        <translation>
-            <numerusform>බාගැනීම් — %nක් ක්‍රියාත්මකයි</numerusform>
-            <numerusform>බාගැනීම් — %nක් ක්‍රියාත්මකයි</numerusform>
+        <source>Marketplace — %n download(s) running</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Downloads</source>
-        <translation>බාගැනීම්</translation>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10823,6 +10685,10 @@
         <translation>ස්වයංක්‍රීය වැඩබිම (කැන්වසය අනුව)</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>බාගැනීම්</translation>
     </message>
@@ -10848,137 +10714,252 @@
     </message>
 </context>
 <context>
-    <name>MarketClient</name>
+    <name>MarketChipsSection</name>
     <message>
-        <source>Marketplace is not available in this build.</source>
-        <translation>මෙම build එකෙහි Marketplace ලබාගත නොහැක.</translation>
-    </message>
-    <message>
-        <source>Waiting…</source>
-        <translation>රැඳී සිටිමින්…</translation>
-    </message>
-    <message>
-        <source>Starting…</source>
-        <translation>ආරම්භ කරමින්…</translation>
-    </message>
-    <message>
-        <source>Preparing…</source>
-        <translation>සූදානම් කරමින්…</translation>
-    </message>
-    <message>
-        <source>Cancelled</source>
-        <translation>අවලංගු කෙරිණි</translation>
-    </message>
-    <message>
-        <source>Could not connect the marketplace account.</source>
-        <translation>Marketplace ගිණුම සම්බන්ධ කිරීමට නොහැකි විය.</translation>
-    </message>
-    <message>
-        <source>Nothing is available from the marketplace right now.</source>
-        <translation>මේ මොහොතේ Marketplace හි කිසිවක් ලබාගත නොහැක.</translation>
-    </message>
-    <message>
-        <source>Downloading…</source>
-        <translation>බාගනිමින්…</translation>
-    </message>
-    <message>
-        <source>Could not save that file.</source>
-        <translation>එම ගොනුව සුරැකීමට නොහැකි විය.</translation>
-    </message>
-    <message>
-        <source>The downloaded file did not match what the marketplace sent.</source>
-        <translation>බාගත් ගොනුව Marketplace මඟින් එවන ලද දේට නොගැළපේ.</translation>
-    </message>
-    <message>
-        <source>Importing…</source>
-        <translation>ආයාත කරමින්…</translation>
-    </message>
-    <message>
-        <source>Could not import that file.</source>
-        <translation>එම ගොනුව ආයාත කිරීමට නොහැකි විය.</translation>
-    </message>
-    <message>
-        <source>In the media bin</source>
-        <translation>මාධ්‍ය බඳුනෙහි</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected.</source>
-        <translation>Marketplace ගිණුම සම්බන්ධ විය.</translation>
-    </message>
-    <message>
-        <source>Daily limit reached for this source. Try again later.</source>
-        <translation>මෙම මූලාශ්‍රය සඳහා දෛනික සීමාව ඉක්මවා ඇත. පසුව නැවත උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>This item needs a connected account.</source>
-        <translation>මෙම අයිතමය සඳහා සම්බන්ධිත ගිණුමක් අවශ්‍ය වේ.</translation>
-    </message>
-    <message>
-        <source>Not enough coins.</source>
-        <translation>කාසි ප්‍රමාණවත් නොවේ.</translation>
-    </message>
-    <message>
-        <source>This source is temporarily unavailable.</source>
-        <translation>මෙම මූලාශ්‍රය තාවකාලිකව ලබාගත නොහැක.</translation>
-    </message>
-    <message>
-        <source>That item is no longer available.</source>
-        <translation>එම අයිතමය තවදුරටත් ලබාගත නොහැක.</translation>
-    </message>
-    <message>
-        <source>Could not reach the marketplace.</source>
-        <translation>Marketplace වෙත සම්බන්ධ වීමට නොහැකි විය.</translation>
-    </message>
-    <message>
-        <source>Could not prepare that file.</source>
-        <translation>එම ගොනුව සූදානම් කිරීමට නොහැකි විය.</translation>
-    </message>
-    <message>
-        <source>Could not complete that request.</source>
-        <translation>එම ඉල්ලීම සම්පූර්ණ කිරීමට නොහැකි විය.</translation>
-    </message>
-    <message>
-        <source>The marketplace took too long to answer. Try again.</source>
-        <translation>Marketplace ප්‍රතිචාර දැක්වීමට වැඩි කාලයක් ගතවිය. නැවත උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
-        <translation>Marketplace වෙත සම්බන්ධ විය නොහැකි විය. ඔබේ සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
+        <source>All</source>
+        <translation type="unfinished">සියල්ල</translation>
     </message>
 </context>
 <context>
-    <name>MarketConsentPanel</name>
-    <message>
-        <source>The marketplace is experimental</source>
-        <translation>Marketplace යනු අත්හදා බැලීමේ මට්ටමේ පවතින අංගයකි</translation>
+    <name>MarketDownloadsSection</name>
+    <message numerus="yes">
+        <source>%n active</source>
+        <translation type="unfinished">
+            <numerusform>%nක් සක්‍රීයයි</numerusform>
+            <numerusform>%nක් සක්‍රීයයි</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This feature is still being built and can change or stop working at any time. Before you use it, please read what it can and cannot do.</source>
-        <translation>මෙම අංගය තවමත් නිර්මාණය වෙමින් පවතින අතර ඕනෑම වේලාවක වෙනස් වීමට හෝ ක්‍රියා විරහිත වීමට ඉඩ ඇත. ඔබ එය භාවිත කිරීමට පෙර, එයට කළ හැකි සහ කළ නොහැකි දෑ පිළිබඳව කරුණාකර කියවන්න.</translation>
+        <source>No downloads running</source>
+        <translation type="unfinished">කිසිදු බාගැනීමක් ක්‍රියාත්මක නොවේ</translation>
     </message>
     <message>
-        <source>You get a limited number of downloads per day. The limit is small, may change without notice, and once it is used up you have to wait.</source>
-        <translation>ඔබට දිනකට සීමිත බාගැනීම් සංඛ්‍යාවක් ලැබේ. සීමාව කුඩා වන අතර, දැනුම්දීමකින් තොරව වෙනස් විය හැක, එමෙන්ම එය අවසන් වූ පසු ඔබට රැඳී සිටීමට සිදුවේ.</translation>
+        <source>%1 at a time</source>
+        <translation type="unfinished">වරකට %1ක් බැගින්</translation>
     </message>
     <message>
-        <source>We cannot guarantee that any source stays available. Sources can be removed, rate-limited or broken by the sites they pull from, at any time and without warning.</source>
-        <translation>කිසිදු මූලාශ්‍රයක් දිගටම පවතිනු ඇති බවට අපට සහතික විය නොහැක. මූලාශ්‍ර ලබාගන්නා වෙබ් අඩවි මඟින් ඕනෑම වේලාවක සහ පූර්ව අනතුරු ඇඟවීමකින් තොරව මූලාශ්‍ර ඉවත් කිරීම, සීමා කිරීම හෝ අක්‍රිය වීම සිදුවිය හැක.</translation>
+        <source>Clear finished</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>We cannot guarantee that a download will succeed, finish, or give you the quality you picked. Some items will simply fail.</source>
-        <translation>බාගැනීමක් සාර්ථක වන බවට, අවසන් වන බවට හෝ ඔබ තෝරාගත් ගුණත්වය ලබාදෙන බවට අපට සහතික විය නොහැක. සමහර අයිතම හුදෙක්ම අසාර්ථක විය හැක.</translation>
+        <source>Nothing downloaded yet</source>
+        <translation type="unfinished">තවමත් කිසිවක් බාගෙන නැත</translation>
     </message>
     <message>
-        <source>Everything here comes from third parties. Drift does not host, own or vet it — you are responsible for making sure you have the right to use whatever you download.</source>
-        <translation>මෙහි ඇති සියල්ල තෙවන පාර්ශවයන්ගෙන් ලැබේ. Drift ඒවා සත්කාරකත්වය නොදරයි, හිමිකාරිත්වයක් නොදරයි හෝ තහවුරු නොකරයි — ඔබ බාගන්නා ඕනෑම දෙයක් භාවිත කිරීමට ඔබට අයිතියක් ඇති බව තහවුරු කරගැනීමට ඔබ වගකිව යුතුය.</translation>
+        <source>Downloads from the Marketplace show up here while they run.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketGridSection</name>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">ඉහළ</translation>
     </message>
     <message>
-        <source>I understand</source>
-        <translation>මට වැටහේ</translation>
+        <source>New</source>
+        <translation type="unfinished">නව</translation>
     </message>
     <message>
-        <source>Continue to the marketplace</source>
-        <translation>Marketplace වෙත ඉදිරියට යන්න</translation>
+        <source>Trending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation type="unfinished">සොයන්න</translation>
+    </message>
+    <message>
+        <source>Couldn’t load this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">“%1” සඳහා ප්‍රතිඵල නැත</translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemCard</name>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ස්ථාපනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Add</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemDetail</name>
+    <message>
+        <source>This needs a newer version of Drift. Update the app to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The install didn’t finish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">ප්‍රයෝගය</translation>
+    </message>
+    <message>
+        <source>Transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished">තේමාව</translation>
+    </message>
+    <message>
+        <source>Look</source>
+        <translation type="unfinished">පෙනුම (Look)</translation>
+    </message>
+    <message>
+        <source>Effect template</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Animation</source>
+        <translation type="unfinished">සජීවිකරණය</translation>
+    </message>
+    <message>
+        <source>3D object</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face prop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video</source>
+        <translation type="unfinished">වීඩියෝ</translation>
+    </message>
+    <message>
+        <source>Photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio</source>
+        <translation type="unfinished">ශ්‍රව්‍ය</translation>
+    </message>
+    <message>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save downloads to</source>
+        <translation type="unfinished">බාගැනීම් සුරකින ස්ථානය</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">බාගත වෙමින්…</translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ස්ථාපනය කරමින්…</translation>
+    </message>
+    <message>
+        <source>Download again</source>
+        <translation type="unfinished">නැවත බාගන්න</translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">බාගන්න</translation>
+    </message>
+    <message>
+        <source>Reinstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">යාවත්කාලීන කරන්න</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ස්ථාපනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Add to Face props</source>
+        <translation type="unfinished">Face props වෙත එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Add to media bin</source>
+        <translation type="unfinished">Media bin වෙත එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ආපසු</translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">විරාමය</translation>
+    </message>
+    <message>
+        <source>Play preview</source>
+        <translation type="unfinished">පෙරදසුන ධාවනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Licence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished">ප්‍රමාණය</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished">විලාසය</translation>
+    </message>
+    <message>
+        <source>An update is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to timeline</source>
+        <translation type="unfinished">කාලරේඛාවට එක් කරන්න</translation>
+    </message>
+    <message>
+        <source>Open on cutwire.studio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to %1</source>
+        <translation type="unfinished">%1 වෙත සුරැකේ</translation>
+    </message>
+    <message>
+        <source>You’ll choose a folder the first time</source>
+        <translation type="unfinished">ඔබ පළමු වරට ෆෝල්ඩරයක් තෝරා ගනු ඇත</translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">වෙනස් කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>MarketItemLoader</name>
+    <message>
+        <source>That item was not found.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -10993,58 +10974,182 @@
     </message>
 </context>
 <context>
-    <name>MarketTab</name>
-    <message>
-        <source>Stock</source>
-        <translation>ස්ටොක්</translation>
-    </message>
-    <message>
-        <source>Marketplace unavailable</source>
-        <translation>Marketplace ලබාගත නොහැක</translation>
-    </message>
-    <message>
-        <source>This build does not include the marketplace.</source>
-        <translation>මෙම build එකට Marketplace ඇතුළත් නොවේ.</translation>
-    </message>
-    <message>
-        <source>Search assets</source>
-        <translation>වත්කම් සොයන්න</translation>
-    </message>
+    <name>MarketSfxSection</name>
     <message>
         <source>Search sound effects</source>
-        <translation>ශබ්ද ප්‍රයෝග සොයන්න</translation>
+        <translation type="unfinished">ශබ්ද ප්‍රයෝග සොයන්න</translation>
     </message>
     <message>
-        <source>Search, or paste a link</source>
-        <translation>සොයන්න, නැතහොත් සබැඳියක් අලවන්න</translation>
+        <source>Loading sound effects…</source>
+        <translation type="unfinished">ශබ්ද ප්‍රයෝග පටවමින්…</translation>
     </message>
     <message>
-        <source>Assets</source>
-        <translation>වත්කම්</translation>
-    </message>
-    <message>
-        <source>SFX</source>
-        <translation>SFX</translation>
-    </message>
-    <message>
-        <source>Stock footage</source>
-        <translation>ස්ටොක් දර්ශන</translation>
-    </message>
-    <message>
-        <source>Loading sources…</source>
-        <translation>මූලාශ්‍ර පූරණය වෙමින්…</translation>
-    </message>
-    <message>
-        <source>Couldn’t reach the marketplace</source>
-        <translation>Marketplace වෙත සම්බන්ධ විය නොහැකි විය</translation>
+        <source>Couldn’t load sound effects</source>
+        <translation type="unfinished">ශබ්ද ප්‍රයෝග පැටවීමට නොහැකි විය</translation>
     </message>
     <message>
         <source>Try again</source>
-        <translation>නැවත උත්සාහ කරන්න</translation>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+    <message>
+        <source>No sound effects match “%1”.</source>
+        <translation type="unfinished">“%1” හා ගැලපෙන ශබ්ද ප්‍රයෝග නැත.</translation>
+    </message>
+    <message>
+        <source>No sound effects here.</source>
+        <translation type="unfinished">මෙහි ශබ්ද ප්‍රයෝග නැත.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketShelfSection</name>
+    <message>
+        <source>See all</source>
+        <translation type="unfinished">සියල්ල බලන්න</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>MarketStockBrowserSection</name>
+    <message>
+        <source>%1 didn’t respond.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left today</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n download(s) left</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Search, or paste a link</source>
+        <translation type="unfinished">සොයන්න, නැතහොත් සබැඳියක් අලවන්න</translation>
     </message>
     <message>
         <source>Search</source>
-        <translation>සොයන්න</translation>
+        <translation type="unfinished">සොයන්න</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2 left)</source>
+        <translation type="unfinished">%1 (%2ක් ඉතිරිව ඇත)</translation>
+    </message>
+    <message numerus="yes">
+        <source>Filters — %n applied</source>
+        <translation type="unfinished">
+            <numerusform>පෙරහන් — %nක් යොදා ඇත</numerusform>
+            <numerusform>පෙරහන් — %nක් යොදා ඇත</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished">පෙරහන්</translation>
+    </message>
+    <message>
+        <source>Get from %1</source>
+        <translation type="unfinished">%1 වෙතින් ලබාගන්න</translation>
+    </message>
+    <message>
+        <source>Get from this link</source>
+        <translation type="unfinished">මෙම සබැඳියෙන් ලබාගන්න</translation>
+    </message>
+    <message>
+        <source>Looking up that link…</source>
+        <translation type="unfinished">එම සබැඳිය සොයා බලමින්…</translation>
+    </message>
+    <message>
+        <source>Couldn’t open that link</source>
+        <translation type="unfinished">එම සබැඳිය විවෘත කිරීමට නොහැකි විය</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+    <message>
+        <source>Search failed</source>
+        <translation type="unfinished">සෙවීම අසාර්ථක විය</translation>
+    </message>
+    <message>
+        <source>No results for “%1”</source>
+        <translation type="unfinished">“%1” සඳහා ප්‍රතිඵල නැත</translation>
+    </message>
+    <message>
+        <source>Search this source</source>
+        <translation type="unfinished">මෙම මූලාශ්‍රය සොයන්න</translation>
+    </message>
+    <message>
+        <source>Try different words, another source, or clear a filter.</source>
+        <translation type="unfinished">වෙනත් වචන, වෙනත් මූලාශ්‍රයක් භාවිත කර බලන්න, නැතහොත් පෙරහනක් හිස් කරන්න.</translation>
+    </message>
+    <message>
+        <source>Type above and press Enter.</source>
+        <translation type="unfinished">ඉහත ටයිප් කර Enter ඔබන්න.</translation>
+    </message>
+</context>
+<context>
+    <name>MarketTimelineAdd</name>
+    <message>
+        <source>Added to the media bin</source>
+        <translation type="unfinished">Media bin වෙත එක් කරන ලදී</translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceView</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished">බාගැනීම්</translation>
+    </message>
+    <message>
+        <source>You’re offline. Showing what was saved last time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+    <message>
+        <source>Loading the Marketplace…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marketplace unavailable</source>
+        <translation type="unfinished">Marketplace ලබාගත නොහැක</translation>
+    </message>
+    <message>
+        <source>There is nothing to show right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open link</source>
+        <translation type="unfinished">සබැඳිය විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MarketplaceWindow</name>
+    <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -11966,6 +12071,10 @@
     <message>
         <source>Import folder</source>
         <translation>ෆෝල්ඩරය ආයාත කරන්න</translation>
+    </message>
+    <message>
+        <source>Browse the Marketplace</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Supported formats</source>
@@ -15540,6 +15649,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished">වීඩියෝව නිර්යාත කරන්න</translation>
     </message>
     <message>
+        <source>Marketplace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">බාගැනීම්</translation>
     </message>
@@ -16491,33 +16604,6 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SettingsMarketplacePage</name>
-    <message>
-        <source>Marketplace</source>
-        <translation>වෙළඳපොළ (Marketplace)</translation>
-    </message>
-    <message>
-        <source>Account</source>
-        <translation>ගිණුම</translation>
-    </message>
-    <message>
-        <source>Account connected (%1)</source>
-        <translation>ගිණුම සම්බන්ධයි (%1)</translation>
-    </message>
-    <message>
-        <source>Marketplace account connected</source>
-        <translation>Marketplace ගිණුම සම්බන්ධයි</translation>
-    </message>
-    <message>
-        <source>Disconnect</source>
-        <translation>විසන්ධි කරන්න</translation>
-    </message>
-    <message>
-        <source>Unlink the marketplace account from this device</source>
-        <translation>මෙම උපාංගයෙන් marketplace ගිණුම විසන්ධි කරන්න</translation>
-    </message>
-</context>
-<context>
     <name>SettingsNetworkPage</name>
     <message>
         <source>Network</source>
@@ -16621,10 +16707,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Network</source>
         <translation>ජාලය</translation>
-    </message>
-    <message>
-        <source>Marketplace</source>
-        <translation>වෙළඳපොළ (Marketplace)</translation>
     </message>
     <message>
         <source>About</source>
@@ -17185,53 +17267,30 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>SfxBrowser</name>
-    <message>
-        <source>Added to the media bin</source>
-        <translation>Media bin වෙත එක් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Loading sound effects…</source>
-        <translation>ශබ්ද ප්‍රයෝග පටවමින්…</translation>
-    </message>
-    <message>
-        <source>Couldn’t load sound effects</source>
-        <translation>ශබ්ද ප්‍රයෝග පැටවීමට නොහැකි විය</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>නැවත උත්සාහ කරන්න</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>සියල්ල</translation>
-    </message>
-    <message>
-        <source>No sound effects match “%1”.</source>
-        <translation>“%1” හා ගැලපෙන ශබ්ද ප්‍රයෝග නැත.</translation>
-    </message>
-    <message>
-        <source>No sound effects here.</source>
-        <translation>මෙහි ශබ්ද ප්‍රයෝග නැත.</translation>
-    </message>
-</context>
-<context>
     <name>SfxLibrary</name>
     <message>
-        <source>Could not load sound effects. Check your connection and try again.</source>
-        <translation>ශබ්ද ප්‍රයෝග පැටවීමට නොහැකි විය. ඔබේ සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
+        <source>Starting…</source>
+        <translation type="unfinished">ආරම්භ කරමින්…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">බාගත වෙමින්…</translation>
     </message>
     <message>
         <source>Could not write to the app data folder.</source>
         <translation>යෙදුම් දත්ත ෆෝල්ඩරයට ලිවීමට නොහැකි විය.</translation>
     </message>
     <message>
-        <source>Could not download that sound. Check your connection and try again.</source>
-        <translation>එම ශබ්දය බාගත කිරීමට නොහැකි විය. ඔබේ සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">ආයාත කරමින්…</translation>
     </message>
     <message>
-        <source>That download was damaged. Try again.</source>
-        <translation>එම බාගැනීම හානි වී ඇත. නැවත උත්සාහ කරන්න.</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">මාධ්‍ය බඳුනෙහි</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished">අවලංගු කෙරිණි</translation>
     </message>
     <message>
         <source>Could not add that sound to the media bin.</source>
@@ -19646,123 +19705,38 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>StockBrowser</name>
+    <name>StockInstaller</name>
     <message>
-        <source>Save downloads to</source>
-        <translation>බාගැනීම් සුරකින ස්ථානය</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>සියල්ල</translation>
+        <source>Waiting…</source>
+        <translation type="unfinished">රැඳී සිටිමින්…</translation>
     </message>
     <message>
-        <source>%1 (%2 left)</source>
-        <translation>%1 (%2ක් ඉතිරිව ඇත)</translation>
-    </message>
-    <message numerus="yes">
-        <source>Filters — %n applied</source>
-        <translation>
-            <numerusform>පෙරහන් — %nක් යොදා ඇත</numerusform>
-            <numerusform>පෙරහන් — %nක් යොදා ඇත</numerusform>
-        </translation>
+        <source>Starting…</source>
+        <translation type="unfinished">ආරම්භ කරමින්…</translation>
     </message>
     <message>
-        <source>Filters</source>
-        <translation>පෙරහන්</translation>
-    </message>
-    <message>
-        <source>Get from %1</source>
-        <translation>%1 වෙතින් ලබාගන්න</translation>
-    </message>
-    <message>
-        <source>Get from this link</source>
-        <translation>මෙම සබැඳියෙන් ලබාගන්න</translation>
-    </message>
-    <message>
-        <source>Looking up that link…</source>
-        <translation>එම සබැඳිය සොයා බලමින්…</translation>
-    </message>
-    <message>
-        <source>Couldn’t open that link</source>
-        <translation>එම සබැඳිය විවෘත කිරීමට නොහැකි විය</translation>
-    </message>
-    <message>
-        <source>Search failed</source>
-        <translation>සෙවීම අසාර්ථක විය</translation>
-    </message>
-    <message>
-        <source>Try again</source>
-        <translation>නැවත උත්සාහ කරන්න</translation>
-    </message>
-    <message>
-        <source>No results for “%1”</source>
-        <translation>“%1” සඳහා ප්‍රතිඵල නැත</translation>
-    </message>
-    <message>
-        <source>Search this source</source>
-        <translation>මෙම මූලාශ්‍රය සොයන්න</translation>
-    </message>
-    <message>
-        <source>Paste a link</source>
-        <translation>සබැඳියක් අලවන්න</translation>
-    </message>
-    <message>
-        <source>Try different words, another source, or clear a filter.</source>
-        <translation>වෙනත් වචන, වෙනත් මූලාශ්‍රයක් භාවිත කර බලන්න, නැතහොත් පෙරහනක් හිස් කරන්න.</translation>
-    </message>
-    <message>
-        <source>Type above and press Enter.</source>
-        <translation>ඉහත ටයිප් කර Enter ඔබන්න.</translation>
-    </message>
-    <message>
-        <source>Paste a page link above and press Enter.</source>
-        <translation>ඉහත පිටු සබැඳියක් අලවා Enter ඔබන්න.</translation>
-    </message>
-</context>
-<context>
-    <name>StockItemDetail</name>
-    <message>
-        <source>Back to results</source>
-        <translation>ප්‍රතිඵල වෙත ආපසු</translation>
-    </message>
-    <message>
-        <source>By %1</source>
-        <translation>%1 විසින්</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n coin(s)</source>
-        <translation>
-            <numerusform>%n කාසි</numerusform>
-            <numerusform>%n කාසි</numerusform>
-        </translation>
+        <source>Preparing…</source>
+        <translation type="unfinished">සූදානම් කරමින්…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation>බාගත වෙමින්…</translation>
+        <translation type="unfinished">බාගත වෙමින්…</translation>
     </message>
     <message>
-        <source>Download again</source>
-        <translation>නැවත බාගන්න</translation>
+        <source>Importing…</source>
+        <translation type="unfinished">ආයාත කරමින්…</translation>
     </message>
     <message>
-        <source>Download</source>
-        <translation>බාගන්න</translation>
+        <source>Could not import that file.</source>
+        <translation type="unfinished">එම ගොනුව ආයාත කිරීමට නොහැකි විය.</translation>
     </message>
     <message>
-        <source>You have used today’s downloads from this source</source>
-        <translation>ඔබ මෙම මූලාශ්‍රයෙන් අද දිනට හිමි බාගැනීම් භාවිත කර ඇත</translation>
+        <source>In the media bin</source>
+        <translation type="unfinished">මාධ්‍ය බඳුනෙහි</translation>
     </message>
     <message>
-        <source>Saves to %1</source>
-        <translation>%1 වෙත සුරැකේ</translation>
-    </message>
-    <message>
-        <source>You’ll choose a folder the first time</source>
-        <translation>ඔබ පළමු වරට ෆෝල්ඩරයක් තෝරා ගනු ඇත</translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation>වෙනස් කරන්න</translation>
+        <source>Cancelled</source>
+        <translation type="unfinished">අවලංගු කෙරිණි</translation>
     </message>
 </context>
 <context>
@@ -24731,10 +24705,6 @@ If playback stutters, try another.</source>
         <translation>මාධ්‍ය</translation>
     </message>
     <message>
-        <source>Market</source>
-        <translation>වෙළඳපොළ</translation>
-    </message>
-    <message>
         <source>Text</source>
         <translation>පෙළ</translation>
     </message>
@@ -24943,6 +24913,59 @@ If playback stutters, try another.</source>
     <message>
         <source>Holographic</source>
         <translation>හොලෝග්‍රැෆික් (Holographic)</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market</name>
+    <message>
+        <source>This needs Drift %1 or newer. Update Drift to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::FileFetch</name>
+    <message>
+        <source>Could not save that file.</source>
+        <translation type="unfinished">එම ගොනුව සුරැකීමට නොහැකි විය.</translation>
+    </message>
+    <message>
+        <source>The downloaded file did not match what the marketplace sent.</source>
+        <translation type="unfinished">බාගත් ගොනුව Marketplace මඟින් එවන ලද දේට නොගැළපේ.</translation>
+    </message>
+</context>
+<context>
+    <name>drift::market::MarketTransport</name>
+    <message>
+        <source>Daily limit reached for this source. Try again later.</source>
+        <translation type="unfinished">මෙම මූලාශ්‍රය සඳහා දෛනික සීමාව ඉක්මවා ඇත. පසුව නැවත උත්සාහ කරන්න.</translation>
+    </message>
+    <message>
+        <source>This source is temporarily unavailable.</source>
+        <translation type="unfinished">මෙම මූලාශ්‍රය තාවකාලිකව ලබාගත නොහැක.</translation>
+    </message>
+    <message>
+        <source>That item is no longer available.</source>
+        <translation type="unfinished">එම අයිතමය තවදුරටත් ලබාගත නොහැක.</translation>
+    </message>
+    <message>
+        <source>Could not reach the marketplace.</source>
+        <translation type="unfinished">Marketplace වෙත සම්බන්ධ වීමට නොහැකි විය.</translation>
+    </message>
+    <message>
+        <source>Could not prepare that file.</source>
+        <translation type="unfinished">එම ගොනුව සූදානම් කිරීමට නොහැකි විය.</translation>
+    </message>
+    <message>
+        <source>Could not complete that request.</source>
+        <translation type="unfinished">එම ඉල්ලීම සම්පූර්ණ කිරීමට නොහැකි විය.</translation>
+    </message>
+    <message>
+        <source>The marketplace took too long to answer. Try again.</source>
+        <translation type="unfinished">Marketplace ප්‍රතිචාර දැක්වීමට වැඩි කාලයක් ගතවිය. නැවත උත්සාහ කරන්න.</translation>
+    </message>
+    <message>
+        <source>Couldn’t reach the marketplace. Check your connection and try again.</source>
+        <translation type="unfinished">Marketplace වෙත සම්බන්ධ විය නොහැකි විය. ඔබේ සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
     </message>
 </context>
 <context>
