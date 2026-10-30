@@ -131,6 +131,10 @@ qt_add_executable(tst_editorstate
     ../src/app/online/marketplace/MarketInstall.cpp
     ../src/app/online/marketplace/StockInstaller.cpp
     ../src/app/online/marketplace/MarketSourceBrowser.cpp
+    ../src/app/online/marketplace/MarketplaceManifest.cpp
+    ../src/app/online/marketplace/CommunityInstaller.cpp
+    ../src/app/online/marketplace/MarketInstallRouter.cpp
+    ../src/app/online/assets/SfxLibrary.cpp
     ../src/app/online/downloads/DownloadCenter.cpp
     ../src/app/online/marketplace/MarketTransport.cpp
     ../src/app/online/assets/DriftAssetStore.cpp
@@ -369,6 +373,10 @@ qt_add_executable(tst_mcp
     ../src/app/online/marketplace/MarketInstall.cpp
     ../src/app/online/marketplace/StockInstaller.cpp
     ../src/app/online/marketplace/MarketSourceBrowser.cpp
+    ../src/app/online/marketplace/MarketplaceManifest.cpp
+    ../src/app/online/marketplace/CommunityInstaller.cpp
+    ../src/app/online/marketplace/MarketInstallRouter.cpp
+    ../src/app/online/assets/SfxLibrary.cpp
     ../src/app/online/downloads/DownloadCenter.cpp
     ../src/app/online/marketplace/MarketTransport.cpp
     ../src/app/online/assets/DriftAssetStore.cpp

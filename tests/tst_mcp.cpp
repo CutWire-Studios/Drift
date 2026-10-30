@@ -3,6 +3,7 @@
 #include "app/online/CloudProviders.h"
 
 #include <QAbstractSocket>
+#include <QBuffer>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDataStream>
@@ -53,6 +54,11 @@
 #include "app/bin/AssetLibrary.h"
 #include "app/bin/MediaBinController.h"
 #include "app/online/downloads/DownloadCenter.h"
+#include "app/online/assets/DriftAssetStore.h"
+#include "app/online/assets/SfxLibrary.h"
+#include "app/online/marketplace/CommunityInstaller.h"
+#include "app/online/marketplace/MarketInstallRouter.h"
+#include "app/online/marketplace/MarketplaceManifest.h"
 #include "app/online/marketplace/StockInstaller.h"
 
 #include <cmath>
@@ -156,7 +162,13 @@ private slots:
     void toolboxEndpointAllowsFramesAndActivity();
     void listScenesExposesThumb();
     void marketOpsNeedConfiguredService();
-    void marketSearchAndDownloadImportsAsset();
+    void marketStatusAndSectionSearch();
+    void marketSearchPagesWithMore();
+    void marketPreviewReturnsRawImage();
+    void marketInstallPlacesAsOneUndoStep();
+    void marketDownloadsListInjectedJobs();
+    void marketCancelAndRetryRouteByKind();
+    void marketDownloadAliasStillInstalls();
     void sceneOpsAcceptClipRef();
     void addEffectReportsHost();
     void graphicsAtTheSameTimeStackOnTheirOwnLanes();
@@ -6357,6 +6369,7 @@ class FakeMarket : public QObject
 public:
     QTcpServer server;
     int downloadsPosted = 0;
+    QString lastSort;
 
     QString base() const { return QStringLiteral("http://127.0.0.1:%1").arg(server.serverPort()); }
 
@@ -6448,7 +6461,47 @@ public:
                                                            {QStringLiteral("size"), wav.size()},
                                                            {QStringLiteral("sha256"), QString::fromLatin1(QCryptographicHash::hash(wav, QCryptographicHash::Sha256).toHex())},
                                                            {QStringLiteral("mime"), QStringLiteral("audio/wav")}}}}};
-        if (path == QLatin1String("/api/v1/marketplace/sources/stock.audio/items")) {
+        if (path == QLatin1String("/api/v1/marketplace")) {
+            const QJsonObject binding{{QStringLiteral("id"), QStringLiteral("stock.audio")}, {QStringLiteral("sort"), QStringLiteral("popular")}};
+            body = QJsonDocument(QJsonObject{
+                {QStringLiteral("schema"), 1},
+                {QStringLiteral("features"), QJsonObject{{QStringLiteral("previews"), true}}},
+                {QStringLiteral("sources"),
+                 QJsonObject{{QStringLiteral("stock.audio"),
+                              QJsonObject{{QStringLiteral("kind"), QStringLiteral("stock")},
+                                          {QStringLiteral("label"), QStringLiteral("Audio")},
+                                          {QStringLiteral("mediaKind"), QStringLiteral("audio")},
+                                          {QStringLiteral("searchable"), true},
+                                          {QStringLiteral("canResolve"), false},
+                                          {QStringLiteral("categories"),
+                                           QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("sfx")},
+                                                                  {QStringLiteral("label"), QStringLiteral("SFX")},
+                                                                  {QStringLiteral("children"), QJsonArray()}}}}}}}},
+                {QStringLiteral("pages"),
+                 QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("audio")},
+                                        {QStringLiteral("title"), QStringLiteral("Audio")},
+                                        {QStringLiteral("sections"),
+                                         QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("browser")},
+                                                                {QStringLiteral("type"), QStringLiteral("stock-browser")},
+                                                                {QStringLiteral("source"), binding}}}}}}}}).toJson(QJsonDocument::Compact);
+        } else if (path == QLatin1String("/api/v1/marketplace/sources/stock.audio/items/tone-1")) {
+            QJsonObject detail = item;
+            detail.insert(QStringLiteral("description"), QStringLiteral("A plain 440 Hz tone"));
+            detail.insert(QStringLiteral("webUrl"), QStringLiteral("https://example.test/tone-1"));
+            body = QJsonDocument(detail).toJson(QJsonDocument::Compact);
+        } else if (path == QLatin1String("/thumb.jpg")) {
+            QImage thumb(32, 16, QImage::Format_RGB32);
+            thumb.fill(Qt::darkCyan);
+            QBuffer png(&body);
+            png.open(QIODevice::WriteOnly);
+            thumb.save(&png, "PNG");
+            type = "image/png";
+        } else if (path == QLatin1String("/api/v1/marketplace/sources/stock.audio/items")
+                   && query.queryItemValue(QStringLiteral("q")) == QLatin1String("limited")) {
+            status = 429;
+            body = QJsonDocument(QJsonObject{{QStringLiteral("code"), QStringLiteral("rate_limited")}, {QStringLiteral("detail"), QStringLiteral("slow down")}}).toJson(QJsonDocument::Compact);
+        } else if (path == QLatin1String("/api/v1/marketplace/sources/stock.audio/items")) {
+            lastSort = query.queryItemValue(QStringLiteral("sort"));
             // Two pages: tone-1 with a cursor, then tone-2 (whose install fails server-side).
             if (query.queryItemValue(QStringLiteral("cursor")) == QLatin1String("p2")) {
                 QJsonObject second = item;
@@ -6488,6 +6541,41 @@ public:
 
 } // namespace
 
+namespace {
+
+// Everything the market toolbox needs, built the way the app builds it, minus the QML.
+struct MarketRig
+{
+    explicit MarketRig(AssetLibrary &library)
+        : manifest(nullptr, nullptr, cacheDir.path())
+        , router(&stock, &assets, &sfx, &community, DownloadCenter::instance())
+    {
+        stock.setAssetLibrary(&library);
+    }
+
+    McpMarketContext context() { return {&manifest, &router, DownloadCenter::instance(), &stock}; }
+
+    QTemporaryDir cacheDir;
+    StockInstaller stock;
+    DriftAssetStore assets;
+    SfxLibrary sfx;
+    CommunityInstaller community;
+    MarketplaceManifest manifest;
+    MarketInstallRouter router;
+};
+
+QJsonObject apply1(drift::mcp::McpDispatcher &dispatcher, const char *tool, const QJsonObject &args = {})
+{
+    return dispatcher.applyOne(QLatin1String(tool), args);
+}
+
+QString dump(const QJsonObject &o)
+{
+    return QString::fromUtf8(QJsonDocument(o).toJson(QJsonDocument::Compact));
+}
+
+} // namespace
+
 void McpTest::marketOpsNeedConfiguredService()
 {
     QStandardPaths::setTestModeEnabled(true);
@@ -6503,15 +6591,14 @@ void McpTest::marketOpsNeedConfiguredService()
 
     qputenv("DRIFT_MARKET_API_URL", "http://127.0.0.1:9/api/v1");
     const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MARKET_API_URL"); });
-    StockInstaller installer;
-    installer.setAssetLibrary(&library);
-    state.setStockInstaller(&installer);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
 
     reply = dispatcher.applyOne(QStringLiteral("market_status"), {});
     QVERIFY(reply.value(QStringLiteral("configured")).toBool());
 }
 
-void McpTest::marketSearchAndDownloadImportsAsset()
+void McpTest::marketStatusAndSectionSearch()
 {
     QStandardPaths::setTestModeEnabled(true);
     FakeMarket fake;
@@ -6521,77 +6608,392 @@ void McpTest::marketSearchAndDownloadImportsAsset()
 
     AssetLibrary library;
     AppController state(&library);
-    StockInstaller installer;
-    installer.setAssetLibrary(&library);
-    state.setStockInstaller(&installer);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
     drift::mcp::McpDispatcher dispatcher(&state);
-    DownloadCenter::instance()->clearFinished();
 
-    const QJsonObject status = dispatcher.applyOne(QStringLiteral("market_status"), {});
-    QVERIFY2(status.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(status).toJson(QJsonDocument::Compact)));
+    const QJsonObject status = apply1(dispatcher, "market_status", {{QStringLiteral("refresh"), true}, {QStringLiteral("layout"), true}});
+    QVERIFY2(status.value(QStringLiteral("ok")).toBool(), qPrintable(dump(status)));
     QVERIFY(status.value(QStringLiteral("configured")).toBool());
+    QVERIFY(!status.value(QStringLiteral("offline")).toBool());
+    QVERIFY(status.value(QStringLiteral("features")).toObject().value(QStringLiteral("previews")).toBool());
+    const QJsonArray sources = status.value(QStringLiteral("sources")).toArray();
+    QCOMPARE(sources.size(), 1);
+    QCOMPARE(sources.at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("stock.audio"));
+    QCOMPARE(sources.at(0).toObject().value(QStringLiteral("categories")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(),
+             QStringLiteral("sfx"));
+    const QJsonObject page = status.value(QStringLiteral("pages")).toArray().at(0).toObject();
+    QCOMPARE(page.value(QStringLiteral("id")).toString(), QStringLiteral("audio"));
+    const QJsonObject section = page.value(QStringLiteral("sections")).toArray().at(0).toObject();
+    QCOMPARE(section.value(QStringLiteral("id")).toString(), QStringLiteral("browser"));
+    QCOMPARE(section.value(QStringLiteral("source")).toString(), QStringLiteral("stock.audio"));
 
-    const QJsonObject bad = dispatcher.applyOne(QStringLiteral("market_search"), {{QStringLiteral("type"), QStringLiteral("hologram")}});
-    QCOMPARE(bad.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    const QJsonObject plain = apply1(dispatcher, "market_status");
+    QVERIFY(!plain.contains(QStringLiteral("pages")));
+    const QJsonObject one = apply1(dispatcher, "market_status", {{QStringLiteral("source"), QStringLiteral("stock.audio")}});
+    QCOMPARE(one.value(QStringLiteral("sources")).toArray().size(), 1);
+    QCOMPARE(one.value(QStringLiteral("sources")).toArray().at(0).toObject().value(QStringLiteral("label")).toString(), QStringLiteral("Audio"));
+    QCOMPARE(apply1(dispatcher, "market_status", {{QStringLiteral("source"), QStringLiteral("nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
 
-    const QJsonObject found = dispatcher.applyOne(QStringLiteral("market_search"), {{QStringLiteral("type"), QStringLiteral("audio")}, {QStringLiteral("q"), QStringLiteral("tone")}});
-    QVERIFY2(found.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(found).toJson(QJsonDocument::Compact)));
-    const QJsonArray items = found.value(QStringLiteral("items")).toArray();
-    QCOMPARE(items.size(), 1);
-    const QJsonObject row = items.at(0).toObject();
+    const QJsonObject bySection = apply1(dispatcher, "market_search", {{QStringLiteral("section"), QStringLiteral("audio/browser")}});
+    QVERIFY2(bySection.value(QStringLiteral("ok")).toBool(), qPrintable(dump(bySection)));
+    QCOMPARE(bySection.value(QStringLiteral("source")).toString(), QStringLiteral("stock.audio"));
+    QCOMPARE(fake.lastSort, QStringLiteral("popular"));
+    const QJsonObject row = bySection.value(QStringLiteral("items")).toArray().at(0).toObject();
     QCOMPARE(row.value(QStringLiteral("id")).toString(), QStringLiteral("tone-1"));
+    QCOMPARE(row.value(QStringLiteral("kind")).toString(), QStringLiteral("audio"));
     QCOMPARE(row.value(QStringLiteral("dur")).toDouble(), 1.0);
     QCOMPARE(row.value(QStringLiteral("by")).toString(), QStringLiteral("Drift"));
     QCOMPARE(row.value(QStringLiteral("variants")).toInt(), 1);
-    QVERIFY(found.value(QStringLiteral("has_more")).toBool());
-    QCOMPARE(found.value(QStringLiteral("offset")).toInt(), 0);
+    QVERIFY(row.value(QStringLiteral("tags")).isArray());
+    QVERIFY(!row.value(QStringLiteral("thumb")).toString().isEmpty());
+    QVERIFY(!row.value(QStringLiteral("installed")).toBool());
 
-    // more:true is the NEXT page, not page one again; the earlier ids still resolve.
-    const QJsonObject page2 = dispatcher.applyOne(QStringLiteral("market_search"), {{QStringLiteral("more"), true}});
-    QVERIFY2(page2.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(page2).toJson(QJsonDocument::Compact)));
-    QCOMPARE(page2.value(QStringLiteral("offset")).toInt(), 1);
-    QCOMPARE(page2.value(QStringLiteral("items")).toArray().size(), 1);
-    QCOMPARE(page2.value(QStringLiteral("items")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("tone-2"));
-    QVERIFY(!page2.value(QStringLiteral("has_more")).toBool());
-    QCOMPARE(dispatcher.applyOne(QStringLiteral("market_search"), {{QStringLiteral("more"), true}}).value(QStringLiteral("error")).toString(),
-             QStringLiteral("not_found"));
-    QVERIFY(dispatcher.applyOne(QStringLiteral("market_item"), {{QStringLiteral("id"), QStringLiteral("tone-1")}}).value(QStringLiteral("ok")).toBool());
+    const QJsonObject overridden = apply1(dispatcher, "market_search", {{QStringLiteral("section"), QStringLiteral("audio/browser")}, {QStringLiteral("sort"), QStringLiteral("newest")}});
+    QVERIFY(overridden.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(fake.lastSort, QStringLiteral("newest"));
 
-    QCOMPARE(dispatcher.applyOne(QStringLiteral("market_download"), {{QStringLiteral("id"), QStringLiteral("nope-9")}}).value(QStringLiteral("error")).toString(),
+    QCOMPARE(apply1(dispatcher, "market_search", {{QStringLiteral("section"), QStringLiteral("audio/missing")}}).value(QStringLiteral("error")).toString(),
              QStringLiteral("not_found"));
-    QCOMPARE(dispatcher.applyOne(QStringLiteral("market_download"), {{QStringLiteral("id"), QStringLiteral("tone-1")}, {QStringLiteral("dir"), QStringLiteral("relative/dir")}}).value(QStringLiteral("error")).toString(),
+    QCOMPARE(apply1(dispatcher, "market_search", {{QStringLiteral("q"), QStringLiteral("x")}}).value(QStringLiteral("error")).toString(),
              QStringLiteral("bad_args"));
-    // A job the service refuses is a failure, not {ok:true, status:"failed"}.
-    const QJsonObject failed = dispatcher.applyOne(QStringLiteral("market_download"), {{QStringLiteral("id"), QStringLiteral("tone-2")}, {QStringLiteral("wait"), 30}});
-    QVERIFY2(!failed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(failed).toJson(QJsonDocument::Compact)));
-    QCOMPARE(failed.value(QStringLiteral("status")).toString(), QStringLiteral("failed"));
+    QCOMPARE(apply1(dispatcher, "market_search", {{QStringLiteral("source"), QStringLiteral("stock.hologram")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(apply1(dispatcher, "market_search", {{QStringLiteral("type"), QStringLiteral("hologram")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    const QJsonObject limited = apply1(dispatcher, "market_search", {{QStringLiteral("source"), QStringLiteral("stock.audio")}, {QStringLiteral("q"), QStringLiteral("limited")}});
+    QVERIFY(!limited.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(limited.value(QStringLiteral("error")).toString(), QStringLiteral("rate_limited"));
+
+    const QJsonObject item = apply1(dispatcher, "market_item", {{QStringLiteral("source"), QStringLiteral("stock.audio")}, {QStringLiteral("id"), QStringLiteral("tone-1")}});
+    QVERIFY2(item.value(QStringLiteral("ok")).toBool(), qPrintable(dump(item)));
+    const QJsonObject full = item.value(QStringLiteral("item")).toObject();
+    QCOMPARE(full.value(QStringLiteral("description")).toString(), QStringLiteral("A plain 440 Hz tone"));
+    QCOMPARE(full.value(QStringLiteral("web_url")).toString(), QStringLiteral("https://example.test/tone-1"));
+    QCOMPARE(full.value(QStringLiteral("variants")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("wav"));
+}
+
+void McpTest::marketSearchPagesWithMore()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    FakeMarket fake;
+    QVERIFY(fake.start());
+    qputenv("DRIFT_MARKET_API_URL", (fake.base() + QStringLiteral("/api/v1")).toUtf8());
+    const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MARKET_API_URL"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(apply1(dispatcher, "market_status", {{QStringLiteral("refresh"), true}}).value(QStringLiteral("ok")).toBool());
+
+    const QJsonObject source{{QStringLiteral("source"), QStringLiteral("stock.audio")}};
+    QJsonObject firstArgs = source;
+    firstArgs.insert(QStringLiteral("q"), QStringLiteral("tone"));
+    const QJsonObject first = apply1(dispatcher, "market_search", firstArgs);
+    QVERIFY2(first.value(QStringLiteral("ok")).toBool(), qPrintable(dump(first)));
+    QCOMPARE(first.value(QStringLiteral("items")).toArray().size(), 1);
+    QVERIFY(first.value(QStringLiteral("has_more")).toBool());
+    QCOMPARE(first.value(QStringLiteral("next_cursor")).toString(), QStringLiteral("p2"));
+    QCOMPARE(first.value(QStringLiteral("offset")).toInt(), 0);
+    QCOMPARE(first.value(QStringLiteral("quota")).toObject().value(QStringLiteral("remaining")).toInt(), 4);
+
+    QJsonObject moreArgs = source;
+    moreArgs.insert(QStringLiteral("more"), true);
+    const QJsonObject second = apply1(dispatcher, "market_search", moreArgs);
+    QVERIFY2(second.value(QStringLiteral("ok")).toBool(), qPrintable(dump(second)));
+    QCOMPARE(second.value(QStringLiteral("offset")).toInt(), 1);
+    QCOMPARE(second.value(QStringLiteral("items")).toArray().size(), 1);
+    QCOMPARE(second.value(QStringLiteral("items")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("tone-2"));
+    QVERIFY(!second.value(QStringLiteral("has_more")).toBool());
+    QVERIFY(!second.contains(QStringLiteral("next_cursor")));
+    QCOMPARE(apply1(dispatcher, "market_search", moreArgs).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+
+    QJsonObject cursorArgs = source;
+    cursorArgs.insert(QStringLiteral("cursor"), QStringLiteral("p2"));
+    const QJsonObject resumed = apply1(dispatcher, "market_search", cursorArgs);
+    QVERIFY2(resumed.value(QStringLiteral("ok")).toBool(), qPrintable(dump(resumed)));
+    QCOMPARE(resumed.value(QStringLiteral("items")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("tone-2"));
+
+    const QJsonObject alias = apply1(dispatcher, "market_search", {{QStringLiteral("type"), QStringLiteral("audio")}});
+    QCOMPARE(alias.value(QStringLiteral("source")).toString(), QStringLiteral("stock.audio"));
+}
+
+void McpTest::marketPreviewReturnsRawImage()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    FakeMarket fake;
+    QVERIFY(fake.start());
+    qputenv("DRIFT_MARKET_API_URL", (fake.base() + QStringLiteral("/api/v1")).toUtf8());
+    const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MARKET_API_URL"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(apply1(dispatcher, "market_status", {{QStringLiteral("refresh"), true}}).value(QStringLiteral("ok")).toBool());
+    // The item cache outlives a test, so list again to pick up this server's thumbnail URL.
+    QVERIFY(apply1(dispatcher, "market_search", {{QStringLiteral("source"), QStringLiteral("stock.audio")}}).value(QStringLiteral("ok")).toBool());
+
+    const QJsonObject args{{QStringLiteral("source"), QStringLiteral("stock.audio")}, {QStringLiteral("id"), QStringLiteral("tone-1")}};
+    const QJsonObject raw = apply1(dispatcher, "market_preview", args);
+    QVERIFY2(drift::mcp::isRawResult(raw), qPrintable(dump(raw)));
+    QVERIFY(!raw.value(QStringLiteral("isError")).toBool());
+    const QJsonArray content = raw.value(QStringLiteral("content")).toArray();
+    QCOMPARE(content.size(), 2);
+    const QJsonObject meta = QJsonDocument::fromJson(content.at(0).toObject().value(QStringLiteral("text")).toString().toUtf8()).object();
+    QCOMPARE(meta.value(QStringLiteral("mime")).toString(), QStringLiteral("image/png"));
+    QCOMPARE(meta.value(QStringLiteral("w")).toInt(), 32);
+    QCOMPARE(meta.value(QStringLiteral("h")).toInt(), 16);
+    QVERIFY(QFile::exists(meta.value(QStringLiteral("path")).toString()));
+    QCOMPARE(content.at(1).toObject().value(QStringLiteral("type")).toString(), QStringLiteral("image"));
+    QCOMPARE(content.at(1).toObject().value(QStringLiteral("mimeType")).toString(), QStringLiteral("image/jpeg"));
+    QVERIFY(!content.at(1).toObject().value(QStringLiteral("data")).toString().isEmpty());
+
+    QJsonObject metaOnly = args;
+    metaOnly.insert(QStringLiteral("image"), false);
+    const QJsonObject plain = apply1(dispatcher, "market_preview", metaOnly);
+    QVERIFY(!drift::mcp::isRawResult(plain));
+    QVERIFY(plain.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(plain.value(QStringLiteral("path")).toString(), meta.value(QStringLiteral("path")).toString());
+
+    QJsonObject noPreview = args;
+    noPreview.insert(QStringLiteral("what"), QStringLiteral("preview"));
+    QCOMPARE(apply1(dispatcher, "market_preview", noPreview).value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+
+    const QJsonObject batched = dispatcher.apply(
+        {{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("market_preview")}, {QStringLiteral("args"), args}}}}});
+    QVERIFY(!batched.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(batched.value(QStringLiteral("failed")).toObject().value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+}
+
+void McpTest::marketInstallPlacesAsOneUndoStep()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    FakeMarket fake;
+    QVERIFY(fake.start());
+    qputenv("DRIFT_MARKET_API_URL", (fake.base() + QStringLiteral("/api/v1")).toUtf8());
+    const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MARKET_API_URL"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
+    drift::mcp::McpDispatcher dispatcher(&state);
+    DownloadCenter::instance()->clearFinished();
+    QVERIFY(apply1(dispatcher, "market_status", {{QStringLiteral("refresh"), true}}).value(QStringLiteral("ok")).toBool());
+
+    const QJsonObject item{{QStringLiteral("source"), QStringLiteral("stock.audio")}, {QStringLiteral("id"), QStringLiteral("tone-1")}};
+    const auto historyTotal = [&] { return apply1(dispatcher, "list_history").value(QStringLiteral("total")).toInt(); };
+
+    QJsonObject lone = item;
+    lone.insert(QStringLiteral("place"), QJsonObject{{QStringLiteral("at"), 0}});
+    QCOMPARE(apply1(dispatcher, "market_install", lone).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QCOMPARE(fake.downloadsPosted, 0);
+
+    QJsonObject relative = item;
+    relative.insert(QStringLiteral("dir"), QStringLiteral("relative/dir"));
+    QCOMPARE(apply1(dispatcher, "market_install", relative).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+
+    // A job the service refuses is a failure, not {ok:true}.
+    QVERIFY(apply1(dispatcher, "market_search", {{QStringLiteral("source"), QStringLiteral("stock.audio")}}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(apply1(dispatcher, "market_search", {{QStringLiteral("source"), QStringLiteral("stock.audio")}, {QStringLiteral("more"), true}}).value(QStringLiteral("ok")).toBool());
+    const QJsonObject failed = apply1(dispatcher, "market_install", {{QStringLiteral("source"), QStringLiteral("stock.audio")}, {QStringLiteral("id"), QStringLiteral("tone-2")}, {QStringLiteral("wait"), 30}});
+    QVERIFY2(!failed.value(QStringLiteral("ok")).toBool(), qPrintable(dump(failed)));
+    QCOMPARE(failed.value(QStringLiteral("job")).toObject().value(QStringLiteral("status")).toString(), QStringLiteral("failed"));
     QVERIFY(!failed.value(QStringLiteral("error")).toString().isEmpty());
-    QCOMPARE(dispatcher.applyOne(QStringLiteral("market_downloads"), {{QStringLiteral("clear"), true}}).value(QStringLiteral("n")).toInt(), 0);
+    DownloadCenter::instance()->clearFinished();
 
-    const QJsonObject item = dispatcher.applyOne(QStringLiteral("market_item"), {{QStringLiteral("id"), QStringLiteral("tone-1")}});
-    QCOMPARE(item.value(QStringLiteral("item")).toObject().value(QStringLiteral("variants")).toArray().at(0).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("wav"));
-
-    const QJsonObject job = dispatcher.applyOne(QStringLiteral("market_download"), {{QStringLiteral("id"), QStringLiteral("tone-1")}, {QStringLiteral("wait"), 30}});
-    QVERIFY2(job.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(job).toJson(QJsonDocument::Compact)));
-    QCOMPARE(job.value(QStringLiteral("status")).toString(), QStringLiteral("done"));
-    const QString asset = job.value(QStringLiteral("asset")).toString();
+    const int before = historyTotal();
+    QJsonObject placing = item;
+    placing.insert(QStringLiteral("wait"), 30);
+    placing.insert(QStringLiteral("place"), QJsonObject{{QStringLiteral("at"), 0}});
+    const QJsonObject reply = apply1(dispatcher, "market_install", placing);
+    QVERIFY2(reply.value(QStringLiteral("ok")).toBool(), qPrintable(dump(reply)));
+    const QJsonObject result = reply.value(QStringLiteral("result")).toObject();
+    const QString asset = result.value(QStringLiteral("asset")).toString();
     QVERIFY(!asset.isEmpty());
-    QVERIFY(QFile::exists(job.value(QStringLiteral("path")).toString()));
+    QCOMPARE(reply.value(QStringLiteral("job")).toObject().value(QStringLiteral("status")).toString(), QStringLiteral("done"));
+    QVERIFY(!reply.value(QStringLiteral("clip")).toString().isEmpty());
+    QCOMPARE(reply.value(QStringLiteral("requested")).toDouble(), 0.0);
+    QVERIFY(reply.contains(QStringLiteral("placed")));
+    QCOMPARE(historyTotal() - before, 1);
     QCOMPARE(fake.downloadsPosted, 2);
 
-    const QJsonObject assets = dispatcher.applyOne(QStringLiteral("list_assets"), {});
     bool inBin = false;
-    for (const QJsonValue &v : assets.value(QStringLiteral("assets")).toArray())
+    for (const QJsonValue &v : apply1(dispatcher, "list_assets").value(QStringLiteral("assets")).toArray())
         inBin = inBin || v.toObject().value(QStringLiteral("id")).toString() == asset;
     QVERIFY(inBin);
+    QVERIFY(QFile::exists(result.value(QStringLiteral("path")).toString()));
 
-    const QJsonObject jobs = dispatcher.applyOne(QStringLiteral("market_downloads"), {});
-    QCOMPARE(jobs.value(QStringLiteral("n")).toInt(), 1);
-    QCOMPARE(jobs.value(QStringLiteral("active")).toInt(), 0);
-    const QJsonObject cancel = dispatcher.applyOne(QStringLiteral("market_cancel_download"), {{QStringLiteral("id"), QStringLiteral("tone-1")}});
-    QCOMPARE(cancel.value(QStringLiteral("error")).toString(), QStringLiteral("conflict"));
-    QCOMPARE(dispatcher.applyOne(QStringLiteral("market_downloads"), {{QStringLiteral("clear"), true}}).value(QStringLiteral("n")).toInt(), 0);
-    QFile::remove(job.value(QStringLiteral("path")).toString());
+    const QJsonObject done = apply1(dispatcher, "market_search", {{QStringLiteral("source"), QStringLiteral("stock.audio")}});
+    QVERIFY(done.value(QStringLiteral("items")).toArray().at(0).toObject().value(QStringLiteral("installed")).toBool());
+
+    QFile::remove(result.value(QStringLiteral("path")).toString());
+    DownloadCenter::instance()->clearFinished();
+}
+
+void McpTest::marketDownloadsListInjectedJobs()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    AssetLibrary library;
+    AppController state(&library);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
+    drift::mcp::McpDispatcher dispatcher(&state);
+    DownloadCenter *center = DownloadCenter::instance();
+    center->clearFinished();
+    const auto cleanup = qScopeGuard([center] {
+        DownloadCenter::Job stop;
+        stop.id = QStringLiteral("addon:demo");
+        stop.kind = QStringLiteral("addon");
+        stop.status = QStringLiteral("cancelled");
+        center->upsert(stop);
+        center->clearFinished();
+    });
+
+    DownloadCenter::Job addon;
+    addon.id = QStringLiteral("addon:demo");
+    addon.kind = QStringLiteral("addon");
+    addon.title = QStringLiteral("Demo addon");
+    addon.status = QStringLiteral("downloading");
+    addon.progress = 0.4;
+    addon.cancellable = true;
+    center->upsert(addon);
+    DownloadCenter::Job update;
+    update.id = QStringLiteral("update");
+    update.kind = QStringLiteral("update");
+    update.title = QStringLiteral("Drift update");
+    update.status = QStringLiteral("failed");
+    update.error = QStringLiteral("boom");
+    update.retryable = true;
+    center->upsert(update);
+
+    const QJsonObject all = apply1(dispatcher, "market_downloads");
+    QVERIFY2(all.value(QStringLiteral("ok")).toBool(), qPrintable(dump(all)));
+    QCOMPARE(all.value(QStringLiteral("n")).toInt(), 2);
+    QCOMPARE(all.value(QStringLiteral("active")).toInt(), 1);
+    QJsonObject addonRow;
+    for (const QJsonValue &v : all.value(QStringLiteral("jobs")).toArray()) {
+        if (v.toObject().value(QStringLiteral("kind")).toString() == QLatin1String("addon"))
+            addonRow = v.toObject();
+    }
+    QCOMPARE(addonRow.value(QStringLiteral("id")).toString(), QStringLiteral("addon:demo"));
+    QCOMPARE(addonRow.value(QStringLiteral("status")).toString(), QStringLiteral("downloading"));
+    QVERIFY(addonRow.value(QStringLiteral("cancellable")).toBool());
+
+    const QJsonObject onlyUpdate = apply1(dispatcher, "market_downloads", {{QStringLiteral("kind"), QStringLiteral("update")}});
+    QCOMPARE(onlyUpdate.value(QStringLiteral("n")).toInt(), 1);
+    const QJsonObject updateRow = onlyUpdate.value(QStringLiteral("jobs")).toArray().at(0).toObject();
+    QCOMPARE(updateRow.value(QStringLiteral("error")).toString(), QStringLiteral("boom"));
+    QVERIFY(updateRow.value(QStringLiteral("retryable")).toBool());
+
+    const QJsonObject downloads = dispatcher.inspect({{QStringLiteral("detail"), true}}).value(QStringLiteral("jobs")).toObject().value(QStringLiteral("downloads")).toObject();
+    QCOMPARE(downloads.value(QStringLiteral("active")).toInt(), 1);
+    QCOMPARE(downloads.value(QStringLiteral("byKind")).toObject().value(QStringLiteral("addon")).toInt(), 1);
+
+    QCOMPARE(apply1(dispatcher, "market_downloads", {{QStringLiteral("clear"), true}}).value(QStringLiteral("n")).toInt(), 1);
+}
+
+void McpTest::marketCancelAndRetryRouteByKind()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    AssetLibrary library;
+    AppController state(&library);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
+    drift::mcp::McpDispatcher dispatcher(&state);
+    DownloadCenter *center = DownloadCenter::instance();
+    center->clearFinished();
+
+    QStringList calls;
+    center->registerHandler(QStringLiteral("addon"),
+                            [&calls](const QString &id) { calls << QStringLiteral("cancel ") + id; },
+                            [&calls](const QString &id) { calls << QStringLiteral("retry ") + id; });
+    center->registerHandler(QStringLiteral("update"),
+                            [&calls](const QString &id) { calls << QStringLiteral("cancel ") + id; },
+                            [&calls](const QString &id) { calls << QStringLiteral("retry ") + id; });
+    const auto cleanup = qScopeGuard([center] {
+        center->registerHandler(QStringLiteral("addon"), {}, {});
+        center->registerHandler(QStringLiteral("update"), {}, {});
+        DownloadCenter::Job stop;
+        stop.id = QStringLiteral("addon:demo");
+        stop.kind = QStringLiteral("addon");
+        stop.status = QStringLiteral("cancelled");
+        center->upsert(stop);
+        center->clearFinished();
+    });
+
+    DownloadCenter::Job addon;
+    addon.id = QStringLiteral("addon:demo");
+    addon.kind = QStringLiteral("addon");
+    addon.status = QStringLiteral("downloading");
+    addon.cancellable = true;
+    addon.retryable = true;
+    center->upsert(addon);
+    DownloadCenter::Job update;
+    update.id = QStringLiteral("update");
+    update.kind = QStringLiteral("update");
+    update.status = QStringLiteral("failed");
+    update.retryable = true;
+    center->upsert(update);
+
+    QCOMPARE(apply1(dispatcher, "market_cancel_download", {{QStringLiteral("id"), QStringLiteral("nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(apply1(dispatcher, "market_retry_download", {{QStringLiteral("id"), QStringLiteral("nope")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    const QJsonObject cancelled = apply1(dispatcher, "market_cancel_download", {{QStringLiteral("id"), QStringLiteral("addon:demo")}});
+    QVERIFY2(cancelled.value(QStringLiteral("ok")).toBool(), qPrintable(dump(cancelled)));
+    QCOMPARE(cancelled.value(QStringLiteral("job")).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("addon:demo"));
+    QCOMPARE(calls, QStringList{QStringLiteral("cancel addon:demo")});
+
+    QCOMPARE(apply1(dispatcher, "market_cancel_download", {{QStringLiteral("id"), QStringLiteral("update")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("conflict"));
+    QCOMPARE(apply1(dispatcher, "market_retry_download", {{QStringLiteral("id"), QStringLiteral("addon:demo")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("conflict"));
+
+    const QJsonObject retried = apply1(dispatcher, "market_retry_download", {{QStringLiteral("id"), QStringLiteral("update")}});
+    QVERIFY2(retried.value(QStringLiteral("ok")).toBool(), qPrintable(dump(retried)));
+    QCOMPARE(calls, (QStringList{QStringLiteral("cancel addon:demo"), QStringLiteral("retry update")}));
+
+    QSignalSpy opened(&rig.manifest, &MarketplaceManifest::openRequested);
+    QVERIFY(apply1(dispatcher, "market_open", {{QStringLiteral("tab"), QStringLiteral("downloads")}}).value(QStringLiteral("opened")).toBool());
+    QCOMPARE(opened.size(), 1);
+    QCOMPARE(opened.at(0).at(1).toString(), QStringLiteral("downloads"));
+    QCOMPARE(apply1(dispatcher, "market_open", {{QStringLiteral("page"), QStringLiteral("nowhere")}}).value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+}
+
+void McpTest::marketDownloadAliasStillInstalls()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    FakeMarket fake;
+    QVERIFY(fake.start());
+    qputenv("DRIFT_MARKET_API_URL", (fake.base() + QStringLiteral("/api/v1")).toUtf8());
+    const auto unset = qScopeGuard([] { qunsetenv("DRIFT_MARKET_API_URL"); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    MarketRig rig(library);
+    state.setMarketplace(rig.context());
+    drift::mcp::McpDispatcher dispatcher(&state);
+    DownloadCenter::instance()->clearFinished();
+
+    QVERIFY(drift::mcp::isKnownOp(QStringLiteral("market_download")));
+    for (const QJsonValue &tool : drift::mcp::toolboxDirectTools(QStringLiteral("market")))
+        QVERIFY(tool.toObject().value(QStringLiteral("name")).toString() != QLatin1String("market_download"));
+
+    const QJsonObject job = apply1(dispatcher, "market_download", {{QStringLiteral("source"), QStringLiteral("stock.audio")}, {QStringLiteral("id"), QStringLiteral("tone-1")}, {QStringLiteral("wait"), 30}});
+    QVERIFY2(job.value(QStringLiteral("ok")).toBool(), qPrintable(dump(job)));
+    QVERIFY(!job.value(QStringLiteral("result")).toObject().value(QStringLiteral("asset")).toString().isEmpty());
+    QCOMPARE(fake.downloadsPosted, 1);
+    QFile::remove(job.value(QStringLiteral("result")).toObject().value(QStringLiteral("path")).toString());
+    DownloadCenter::instance()->clearFinished();
 }
 
 // The detail row of one clip from inspect({clip}).

@@ -1307,7 +1307,8 @@ QString agentGuideText()
         "  not_found, type_mismatch (also: wrong clip kind for the op), unknown_op, unknown_toolbox,\n"
         "  wrong_endpoint, wrong_toolbox, apply_failed, import_failed, import_timeout, export_busy,\n"
         "  export_failed, export_timeout, capture_failed, conflict, unsupported (no vector renderer\n"
-        "  in this build), market_unavailable, market_error, download_failed,\n"
+        "  in this build), market_unavailable, market_error, rate_limited, app_too_old, quota_exceeded,\n"
+        "  install_timeout, download_failed,\n"
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
@@ -1334,7 +1335,8 @@ QString agentGuideText()
         "- generate_subtitles-> jobs.subtitleGen.{active,progress,status}\n"
         "- detect_scenes     -> jobs.sceneDetect.{active,progress,status}\n"
         "- set_clip_reverse  -> jobs.reverseRender.{active,progress,status}\n"
-        "- market_download   -> jobs.market.active (count), or market_downloads for per-job status\n"
+        "- market_install    -> jobs.downloads.{active,byKind} (every download, addons and updates included),\n"
+        "  or market_downloads for per-job status\n"
         "- transcribe, diarize, tts_generate, sfx_generate, add_voice, voiceover_from_subtitles return {job_id}: poll get_job({id});\n"
         "  inspect({detail:true}).jobs.list shows recent ones, finished included.\n"
         "jobs.* keys exist only while a job runs. Segmentation, denoise, and face detection report\n"
@@ -1385,8 +1387,11 @@ QString agentGuideText()
         "Finding media: import_media takes absolute paths only. Drift will not list folders. When\n"
         "the user gives a partial name, glob or search the host with YOUR own tools (find, ls,\n"
         "whatever the client exposes), then pass those absolute paths to import_media and confirm\n"
-        "missing:[] is empty. Stock footage comes from the market toolbox (market_status first —\n"
-        "the user must have accepted the terms in the app).\n"
+        "missing:[] is empty. Stock footage, Drift assets (3D models, Lottie, face props), sound effects and\n"
+        "community add-ons (effects, looks, themes, templates) come from the market toolbox: market_status\n"
+        "lists the sources, market_search finds items, market_preview shows one, and market_install({wait,\n"
+        "place}) installs it and can drop it on the timeline in one call. market_downloads lists every\n"
+        "transfer including add-on and update downloads.\n"
         "\n"
         "Titles and captions (text toolbox):\n"
         "1. list_text_presets, then add_text({text, preset}) or apply_text_preset on an existing\n"
@@ -1434,7 +1439,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"audio", "Waveforms, silence, loudness, ducking, beat detection, beat-synced cuts, clip volume."},
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
-        {"market", "Stock media from the Cutwire marketplace: search or resolve a link, download into the bin. Downloads spend a per-machine quota."},
+        {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
         {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon)."},
     };
@@ -1551,7 +1556,7 @@ QJsonArray homepageTools()
                        "{x,y,w,h,rotation,opacity} is always present (values at the playhead) and "
                        "animated lists the keyframed properties. verbose=true returns every field. "
                        "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
-                       "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|market} only while "
+                       "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|downloads} only while "
                        "active, and jobs.list holds get_job's records; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
                       {QStringLiteral("detail"),

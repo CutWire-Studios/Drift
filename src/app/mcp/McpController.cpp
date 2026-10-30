@@ -715,8 +715,17 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                                     {QStringLiteral("scenes"), int(m_app->scenes()->list().size())}});
         }
         if (DownloadCenter::instance()->activeCount() > 0) {
-            jobs.insert(QStringLiteral("market"),
-                        QJsonObject{{QStringLiteral("active"), DownloadCenter::instance()->activeCount()}});
+            QJsonObject byKind;
+            for (const QVariant &row : DownloadCenter::instance()->jobs()) {
+                const QVariantMap job = row.toMap();
+                if (job.value(QStringLiteral("finished")).toBool())
+                    continue;
+                const QString kind = job.value(QStringLiteral("kind")).toString();
+                byKind.insert(kind, byKind.value(kind).toInt() + 1);
+            }
+            jobs.insert(QStringLiteral("downloads"),
+                        QJsonObject{{QStringLiteral("active"), DownloadCenter::instance()->activeCount()},
+                                    {QStringLiteral("byKind"), byKind}});
         }
         const QJsonArray jobList = m_app->m_jobs->jobs();
         if (!jobList.isEmpty())
