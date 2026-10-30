@@ -1858,59 +1858,113 @@
         { "save_multicam_combined", "multicam", "Bake a single program track",
           "Write the session as one combined program track and end it.",
           objectSchema({}) },
-        { "market_status", "market", "Check the marketplace before searching it",
-          "Whether this build has a marketplace and the catalog: types (video, photo, audio, …) with their "
-          "providers, each provider's capabilities (search, featured, resolve), filters and quota.",
-          objectSchema({}), true, false, true },
-        { "market_search", "market", "Find stock video, photos or audio to import",
-          "Search one provider of one type and return up to `limit` listings as {id, title, type, "
-          "provider, dur, w, h, by?, thumb?, variants?}. Omit q for a provider's featured "
-          "listing. filters takes the ids from market_status. more:true fetches the next page of "
-          "the previous search (has_more says whether there is one; offset is where the page starts "
-          "in the accumulated results, so market_item still resolves earlier ids). Blocks until the "
-          "service answers. A resolve-only provider (no search capability) needs market_resolve instead. "
-          "thumb is a URL an agent can fetch with its own tools to look at the item.",
-          objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Free-text query; empty = featured"))},
-                        {QStringLiteral("type"), stringProp(QStringLiteral("Type id from market_status (default: the current one)"))},
-                        {QStringLiteral("provider"), stringProp(QStringLiteral("Provider id from market_status (default: the current one)"))},
-                        {QStringLiteral("filters"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("description"), QStringLiteral("Filter id → value, using the filters market_status lists for the provider")}}},
-                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max listings to return"), 1, 30), 30)},
-                        {QStringLiteral("more"), boolProp(QStringLiteral("Fetch the next page of the last search instead of a new one"))}}),
+        { "market_status", "market", "See what the marketplace offers before searching it",
+          "Whether this build has a marketplace and what it serves: {configured, offline, revision, features, "
+          "sources:[{id, kind, label, mediaKind, searchable, canResolve, categories (with children), providers?, sorts?}]}. "
+          "Sources are stock.<type> (video, photo, audio, music, greenscreen), drift-assets, sfx and "
+          "community.<kind> (effect, transition, audio-effect, look, theme, effect-template). "
+          "source:<id> returns that one source in full. layout:true adds pages:[{id, title, sections:[{id, type, "
+          "title, source}]}] so a section can be searched by its \"page/section\" name. refresh:true re-reads the "
+          "server's manifest first (waits up to 15 s).",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id for the full detail of one source"))},
+                        {QStringLiteral("layout"), boolProp(QStringLiteral("Include the pages and sections"))},
+                        {QStringLiteral("refresh"), boolProp(QStringLiteral("Re-fetch the manifest from the server first"))}}),
+          true, false, true },
+        { "market_search", "market", "Find stock media, Drift assets, sounds or community add-ons",
+          "List one source, or run a section's own binding with section:\"page/section\" (its sort, category and "
+          "page size become defaults). Returns {source, items:[{id, title, kind, dur?, w?, h?, by?, tags, category?, "
+          "thumb, preview?, variants:n, installed}], next_cursor?, has_more, quota?, warnings?}. Omit q for the "
+          "featured listing. category, sort and period use the values market_status lists for the source; "
+          "provider \"*\" asks every provider; filters is a map of filter id to value. more:true fetches the next "
+          "page of the previous search of that source (earlier ids stay valid); cursor restarts from a returned "
+          "next_cursor. type is an alias for source:\"stock.<type>\". Blocks until the service answers. "
+          "A resolve-only source needs market_resolve. Errors rate_limited, app_too_old and quota_exceeded come back "
+          "as {ok:false, error, detail}.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id from market_status"))},
+                        {QStringLiteral("section"), stringProp(QStringLiteral("page/section from market_status({layout:true}); runs that section's binding"))},
+                        {QStringLiteral("q"), stringProp(QStringLiteral("Free-text query; empty = featured"))},
+                        {QStringLiteral("category"), stringProp(QStringLiteral("Category id from market_status"))},
+                        {QStringLiteral("sort"), stringProp(QStringLiteral("Sort id from market_status"))},
+                        {QStringLiteral("period"), stringProp(QStringLiteral("Trending window, for sources that have one"))},
+                        {QStringLiteral("provider"), stringProp(QStringLiteral("Provider id; * searches all of them"))},
+                        {QStringLiteral("filters"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("description"), QStringLiteral("Filter id -> value, using the filters market_status lists for the source")}}},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Items per page"), 1, 50), 24)},
+                        {QStringLiteral("cursor"), stringProp(QStringLiteral("next_cursor from an earlier result"))},
+                        {QStringLiteral("more"), boolProp(QStringLiteral("Fetch the next page of the previous search instead of a new one"))},
+                        {QStringLiteral("type"), stringProp(QStringLiteral("Alias for source:\"stock.<type>\""))}}),
           true, false, false },
-        { "market_resolve", "market", "Turn a pasted page URL into a downloadable listing",
-          "For providers that resolve links (YouTube-style) rather than search. Returns {item} "
-          "with variants; pass its id to market_download. Can take a while — it blocks up to 90 s.",
-          objectSchema({{QStringLiteral("url"), stringProp(QStringLiteral("Page URL the user pasted"))}},
+        { "market_item", "market", "Read one listing in full",
+          "One item fetched from the service: description, license, variants:[{id, label, w, h}], thumb, preview, "
+          "web_url, min_app_version, installed, install_state, extra. Use it to pick a variant for market_install.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search"))}},
+                       {QStringLiteral("source"), QStringLiteral("id")}),
+          true, false, true },
+        { "market_resolve", "market", "Turn a pasted page URL into a listing",
+          "For sources that resolve links (YouTube-style) rather than search. Returns {item} with variants; pass its "
+          "source and id to market_install. Can take a while: blocks for wait seconds (default 90).",
+          objectSchema({{QStringLiteral("url"), stringProp(QStringLiteral("Page URL the user pasted"))},
+                        {QStringLiteral("wait"), propWithDefault(integerProp(QStringLiteral("Seconds to wait for the link to resolve"), 1, 300), 90)}},
                        {QStringLiteral("url")}),
           true, false, false },
-        { "market_item", "market", "Read one listing's variants and license",
-          "Full detail of an item from the last market_search or market_resolve result, including "
-          "variants:[{id, label, w, h}] for market_download and preview/license when present.",
-          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))}},
-                       {QStringLiteral("id")}),
+        { "market_preview", "market", "Look at a listing's thumbnail or preview",
+          "Fetches the item's thumbnail (what:thumb) or preview (what:preview), caches it under the app cache and "
+          "returns a downscaled JPEG as image content with meta {path, w, h, mime}. Video and audio previews return "
+          "meta {path, mime, dur} only, no image. image:false returns just the meta. Not batchable in apply: call it "
+          "directly.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Item id"))},
+                        {QStringLiteral("what"), propWithDefault(enumProp(QStringLiteral("Which image"), {QStringLiteral("thumb"), QStringLiteral("preview")}), QStringLiteral("thumb"))},
+                        {QStringLiteral("image"), propWithDefault(boolProp(QStringLiteral("Return the image itself")), true)},
+                        {QStringLiteral("max"), propWithDefault(integerProp(QStringLiteral("Longest side in pixels"), 128, 1024), 512)}},
+                       {QStringLiteral("source"), QStringLiteral("id")}),
           true, false, true },
-        { "market_download", "market", "Fetch a listing into the media bin",
-          "Start downloading an item; when it finishes the file is imported and the job carries "
-          "its asset id, ready for place_clip. SPENDS the provider's per-machine quota (see "
-          "market_status) and cannot be undone. Async: returns the job at once; pass wait:<seconds> "
-          "to block until it finishes (max 600), or poll market_downloads. With wait, a job that "
-          "ends failed or cancelled comes back {ok:false, error, detail, job}. A job for an item "
-          "that is still running fails conflict; an id not in the last search/resolve result fails "
-          "not_found.",
-          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))},
-                        {QStringLiteral("variant"), stringProp(QStringLiteral("Variant id from market_item (default: the provider's default)"))},
-                        {QStringLiteral("dir"), stringProp(QStringLiteral("Absolute folder to write the file into (default: Drift's own media area)"))},
-                        {QStringLiteral("wait"), propWithDefault(integerProp(QStringLiteral("Seconds to block for completion; 0 returns immediately"), 0, 600), 0)}},
+        { "market_install", "market", "Install a listing into the project or the app",
+          "Install an item: stock media, Drift assets and sounds land in the media bin; community items install as an "
+          "effect, theme, look or template; face props go to the face-prop library. Stock items SPEND the provider's "
+          "per-machine quota (see market_search quota). Not undoable. Without wait it returns {job} at once; with wait:<seconds> "
+          "(max 600) it blocks and returns {ok, job, result} where result is {asset} | {prop} | {effect} | {theme} | "
+          "{look} | {template}. A failed or cancelled install comes back {ok:false, error, detail, job}. variant is a "
+          "variant id from market_item; dir (stock only) is an absolute folder to save into. place:{at, track, new_track} "
+          "puts the asset on the timeline once installed (needs wait > 0 and a bin asset) and adds {clip, placed, "
+          "requested, reason?}; the placement is one undo step. An item that is still installing fails conflict.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))},
+                        {QStringLiteral("variant"), stringProp(QStringLiteral("Variant id from market_item (default: the source's default)"))},
+                        {QStringLiteral("dir"), stringProp(QStringLiteral("Absolute folder to save into (stock sources only; default: Drift's own media area)"))},
+                        {QStringLiteral("wait"), propWithDefault(integerProp(QStringLiteral("Seconds to block for completion; 0 returns immediately"), 0, 600), 0)},
+                        {QStringLiteral("place"), objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds (default: playhead)"))},
+                                                                {QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
+                                                                {QStringLiteral("new_track"), boolProp(QStringLiteral("Place on a new track"))}})}},
+                       {QStringLiteral("source"), QStringLiteral("id")}),
+          false, false, false },
+        { "market_downloads", "market", "Poll marketplace, add-on and update downloads",
+          "Every transfer the app runs: {active, jobs:[{id, kind, title, status, phase, progress, bytes, total, speed, "
+          "error?, error_code?, retryable, cancellable, result?}]}. kind is stock | community | drift-asset | sfx | "
+          "addon | update. status runs waiting -> queued/processing -> downloading -> importing/installing -> done, "
+          "or failed/cancelled. result carries the asset id or path once done. kind filters; clear:true forgets "
+          "finished jobs.",
+          objectSchema({{QStringLiteral("kind"), stringProp(QStringLiteral("Only jobs of this kind"))},
+                        {QStringLiteral("clear"), boolProp(QStringLiteral("Forget finished, failed and cancelled jobs"))}}),
+          true, false, true },
+        { "market_cancel_download", "market", "Stop a running download",
+          "Cancel a running job of any kind by its id from market_downloads. Finished jobs fail conflict. Not undoable.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Job id from market_downloads"))}},
+                       {QStringLiteral("id")}),
+          false, true, true },
+        { "market_retry_download", "market", "Retry a failed or cancelled download",
+          "Restart a failed or cancelled job of any kind by its id from market_downloads. Stock retries spend quota "
+          "again. Jobs that are not retryable fail conflict.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Job id from market_downloads"))}},
                        {QStringLiteral("id")}),
           false, false, false },
-        { "market_downloads", "market", "Poll marketplace downloads",
-          "Every download this session as {id, title, kind, status, phase, progress, error?, path?, "
-          "asset?}. status runs waiting → queued/processing → downloading → importing → done, or "
-          "failed/cancelled; asset is the bin id once done. clear:true forgets finished jobs.",
-          objectSchema({{QStringLiteral("clear"), boolProp(QStringLiteral("Forget finished, failed and cancelled jobs"))}}),
-          true, false, true },
-        { "market_cancel_download", "market", "Stop a marketplace download",
-          "Cancel a running download by item id. Not undoable.",
-          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id of the running download"))}},
-                       {QStringLiteral("id")}),
-          false, true, true }
+        { "market_open", "market", "Show the user a marketplace page",
+          "Ask the app window to open the Marketplace on a page (ids from market_status({layout:true})), on the "
+          "downloads tab (tab:\"downloads\"), or on one item's detail. Returns {opened:true} once requested; "
+          "a headless instance has no window to show it in.",
+          objectSchema({{QStringLiteral("page"), stringProp(QStringLiteral("Page id"))},
+                        {QStringLiteral("tab"), stringProp(QStringLiteral("\"downloads\" for the downloads tab"))},
+                        {QStringLiteral("item"), objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                                                               {QStringLiteral("id"), stringProp(QStringLiteral("Item id"))}},
+                                                              {QStringLiteral("source"), QStringLiteral("id")})}}),
+          false, false, true }

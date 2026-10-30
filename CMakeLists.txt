@@ -1051,6 +1051,8 @@ qt_add_executable(drift
     src/app/online/marketplace/CommunityInstaller.cpp
     src/app/online/marketplace/MarketInstallRouter.h
     src/app/online/marketplace/MarketInstallRouter.cpp
+    src/app/online/marketplace/MarketServices.h
+    src/app/online/marketplace/MarketServices.cpp
     src/app/online/downloads/DownloadCenter.h
     src/app/online/downloads/DownloadCenter.cpp
     src/app/online/downloads/DownloadBridges.h

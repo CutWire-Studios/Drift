@@ -1155,6 +1155,12 @@ QJsonArray endpointList()
     return endpoints;
 }
 
+// market_download was renamed market_install; the old name still works but is not listed.
+QString canonicalOp(const QString &name)
+{
+    return name == QLatin1String("market_download") ? QStringLiteral("market_install") : name;
+}
+
 const QHash<QString, int> &opIndex()
 {
     static const QHash<QString, int> k = [] {
@@ -1169,7 +1175,7 @@ const QHash<QString, int> &opIndex()
 
 const Op *findOp(const QString &name)
 {
-    const int i = opIndex().value(name, -1);
+    const int i = opIndex().value(canonicalOp(name), -1);
     return i < 0 ? nullptr : &ops().at(i);
 }
 
@@ -1216,7 +1222,9 @@ QStringList undoExemptOps()
 {
     static const QStringList k = {
         QStringLiteral("import_media"),        QStringLiteral("import_media_bytes"),
-        QStringLiteral("market_download"),     QStringLiteral("market_cancel_download"),
+        QStringLiteral("market_install"),      QStringLiteral("market_download"),
+        QStringLiteral("market_cancel_download"), QStringLiteral("market_retry_download"),
+        QStringLiteral("market_open"),
         QStringLiteral("seek"),                QStringLiteral("play"),
         QStringLiteral("open_composite"),      QStringLiteral("flatten_composite"),
         QStringLiteral("pause"),               QStringLiteral("undo"),
@@ -1664,7 +1672,7 @@ bool isHomepageTool(const QString &name)
 
 bool isKnownOp(const QString &name)
 {
-    return opIndex().contains(name);
+    return opIndex().contains(canonicalOp(name));
 }
 
 bool isReadOnlyOp(const QString &name)

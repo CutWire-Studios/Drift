@@ -14,6 +14,7 @@
 #include "engine/project/ProjectBundle.h"
 #include "app/editor/TimelineClipsModel.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/mcp/tools/McpMarket.h"
 #include "app/online/CloudProviders.h"
 #include "core/project/GuideSet.h"
 
@@ -51,7 +52,6 @@ struct MediaInfo;
 
 class QTimer;
 class AddonManager;
-class StockInstaller;
 class JobRegistry;
 
 namespace drift {
@@ -574,8 +574,8 @@ public:
                                        const QString &undoText);
 
     void setAddonManager(AddonManager *manager);
-    void setStockInstaller(StockInstaller *installer) { m_stockInstaller = installer; }
-    StockInstaller *stockInstaller() const { return m_stockInstaller; }
+    void setMarketplace(const McpMarketContext &context) { m_marketplace = context; }
+    const McpMarketContext &marketplace() const { return m_marketplace; }
     AddonManager *addonManager() const { return m_addonManager; }
     // Strip chip click — folds `prop`'s curve away, or brings it back. Purely a view filter: the
     // chip stays put either way, and the animation keeps playing while it is hidden.
@@ -2012,7 +2012,7 @@ protected:
 
     AssetLibrary *m_assetLibrary = nullptr;
     AddonManager *m_addonManager = nullptr;
-    StockInstaller *m_stockInstaller = nullptr;
+    McpMarketContext m_marketplace;
     JobRegistry *m_jobs = nullptr;
     CloudProviders *m_cloud = nullptr;
     // These trees must outlive m_playback: the compositor thread holds a bare

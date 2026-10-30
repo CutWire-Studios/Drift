@@ -62,6 +62,7 @@ public:
 
     QVariantList items() const { return m_items; }
     bool hasMore() const { return !m_nextCursor.isEmpty(); }
+    QString nextCursor() const { return m_nextCursor; }
     bool loading() const { return m_loading; }
     QString error() const { return m_error; }
     QString errorCode() const { return m_errorCode; }
@@ -70,6 +71,8 @@ public:
 
     Q_INVOKABLE void reload();
     Q_INVOKABLE void loadMore();
+    // Replaces the items with the page that starts at a cursor an earlier listing returned.
+    void loadFrom(const QString &cursor);
     Q_INVOKABLE void cancel();
 
 signals:

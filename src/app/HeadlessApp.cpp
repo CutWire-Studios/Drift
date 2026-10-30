@@ -11,7 +11,7 @@
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"
-#include "app/online/marketplace/StockInstaller.h"
+#include "app/online/marketplace/MarketServices.h"
 
 // QApplication rather than QGuiApplication: the model layer is shared with the GUI build
 // and this keeps the two paths on one application type. Nothing here opens a window.
@@ -154,9 +154,8 @@ int runHeadless(int argc, char *argv[])
     static EditorState editorState(&assetLibrary);
     static AddonManager addonManager;
     editorState.setAddonManager(&addonManager);
-    static StockInstaller stockInstaller;
-    stockInstaller.setAssetLibrary(&assetLibrary);
-    editorState.setStockInstaller(&stockInstaller);
+    static MarketServices market(assetLibrary, editorState, addonManager);
+    editorState.setMarketplace(market.context());
 
     // consumeStartupProject() is the hook the QML window normally calls once it is up;
     // here there is no window to wait for. Only positional arguments are considered, so

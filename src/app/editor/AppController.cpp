@@ -6,7 +6,6 @@
 #include "engine/render2d/pdf/PdfClipRenderer.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "app/bin/AssetLibrary.h"
-#include "app/online/marketplace/StockInstaller.h"
 #include "app/platform/FileDialogs.h"
 #include "core/project/clip/Clip.h"
 #include "core/effects/Mask.h"

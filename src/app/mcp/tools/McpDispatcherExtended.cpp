@@ -3588,21 +3588,57 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     }
 
     if (tool.startsWith(QLatin1String("market_"))) {
-        StockInstaller *market = m_controller->stockInstaller();
+        const McpMarketContext &market = m_controller->marketplace();
         if (tool == QLatin1String("market_status"))
-            return marketStatus(market);
+            return marketStatus(market, args);
         if (tool == QLatin1String("market_search"))
             return marketSearch(market, args);
-        if (tool == QLatin1String("market_resolve"))
-            return marketResolve(market, argString(args, QStringLiteral("url")));
         if (tool == QLatin1String("market_item"))
-            return marketItem(market, argString(args, QStringLiteral("id")));
-        if (tool == QLatin1String("market_download"))
-            return marketDownload(market, args);
+            return marketItem(market, args);
+        if (tool == QLatin1String("market_resolve"))
+            return marketResolve(market, args);
+        if (tool == QLatin1String("market_preview"))
+            return marketPreview(market, args);
         if (tool == QLatin1String("market_downloads"))
-            return marketDownloads(market, jsonBool(args.value(QStringLiteral("clear"))));
+            return marketDownloads(market, args);
         if (tool == QLatin1String("market_cancel_download"))
             return marketCancelDownload(market, argString(args, QStringLiteral("id")));
+        if (tool == QLatin1String("market_retry_download"))
+            return marketRetryDownload(market, argString(args, QStringLiteral("id")));
+        if (tool == QLatin1String("market_open"))
+            return marketOpen(market, args);
+        if (tool == QLatin1String("market_install") || tool == QLatin1String("market_download")) {
+            const bool place = args.contains(QStringLiteral("place"));
+            if (place && args.value(QStringLiteral("wait")).toInt(0) <= 0)
+                return err("bad_args", QStringLiteral("place needs wait > 0 so the item is installed before it is placed"));
+            if (place && args.value(QStringLiteral("source")).toString().startsWith(QLatin1String("community.")))
+                return err("bad_args", QStringLiteral("place only applies to items that land in the media bin"));
+            QJsonObject installed = marketInstall(market, args);
+            if (!place || !installed.value(QStringLiteral("ok")).toBool())
+                return installed;
+            const QString asset = installed.value(QStringLiteral("result")).toObject().value(QStringLiteral("asset")).toString();
+            if (asset.isEmpty()) {
+                QJsonObject out = err("bad_args", QStringLiteral("place only applies to items that land in the media bin; this one did not"));
+                out.insert(QStringLiteral("job"), installed.value(QStringLiteral("job")));
+                out.insert(QStringLiteral("result"), installed.value(QStringLiteral("result")));
+                return out;
+            }
+            QJsonObject placeArgs = args.value(QStringLiteral("place")).toObject();
+            placeArgs.insert(QStringLiteral("asset"), asset);
+            const QJsonObject placed = applyOne(QStringLiteral("place_clip"), placeArgs);
+            if (!placed.value(QStringLiteral("ok")).toBool()) {
+                QJsonObject out = placed;
+                out.insert(QStringLiteral("job"), installed.value(QStringLiteral("job")));
+                out.insert(QStringLiteral("result"), installed.value(QStringLiteral("result")));
+                return out;
+            }
+            installed.insert(QStringLiteral("clip"), placed.value(QStringLiteral("id")));
+            installed.insert(QStringLiteral("placed"), placed.value(QStringLiteral("placed")));
+            installed.insert(QStringLiteral("requested"), placed.value(QStringLiteral("requested")));
+            if (placed.contains(QStringLiteral("reason")))
+                installed.insert(QStringLiteral("reason"), placed.value(QStringLiteral("reason")));
+            return installed;
+        }
     }
 
     return unknownOpError(tool);

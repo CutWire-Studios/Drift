@@ -122,6 +122,19 @@ void MarketSourceBrowser::loadMore()
     start(true);
 }
 
+void MarketSourceBrowser::loadFrom(const QString &cursor)
+{
+    m_debounce.stop();
+    stopRequest();
+    m_items.clear();
+    m_quota.clear();
+    m_warnings.clear();
+    emit itemsChanged();
+    setError({}, {});
+    m_nextCursor = cursor;
+    start(true);
+}
+
 void MarketSourceBrowser::start(bool append)
 {
     if (m_source.isEmpty())

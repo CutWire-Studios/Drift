@@ -684,6 +684,13 @@ bool McpDispatcher::isUndoable(const QString &tool) const
     return !undoExemptOps().contains(tool);
 }
 
+namespace {
+
+// Ops whose image:true reply is raw image content, which a batch has no slot for.
+const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLiteral("market_preview")};
+
+} // namespace
+
 QJsonObject McpDispatcher::apply(const QJsonObject &args)
 {
     const QJsonArray ops = args.value(QStringLiteral("ops")).toArray();
@@ -708,10 +715,11 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         const QJsonObject op = ops.at(i).toObject();
         const QString tool = op.value(QStringLiteral("tool")).toString();
         const QJsonObject opArgs = op.value(QStringLiteral("args")).toObject();
+        const bool rawImage = kRawResultOps.contains(tool)
+                              && jsonBool(opArgs.value(QStringLiteral("image")), tool == QLatin1String("market_preview"));
         const QJsonObject one =
-            tool == QLatin1String("get_waveform") && jsonBool(opArgs.value(QStringLiteral("image")))
-                ? err("bad_args", QStringLiteral("image:true cannot be batched — call get_waveform directly"))
-                : applyOne(tool, opArgs);
+            rawImage ? err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool))
+                     : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
             m_controller->mcp()->endBatch(batchLabel(i),
                                       hadUndoable && i > 0);
