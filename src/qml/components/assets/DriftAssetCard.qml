@@ -22,12 +22,12 @@ FocusScope {
     signal openRequested()
     signal actionRequested()
 
-    readonly property string kind: asset.kind || ""
-    readonly property real aspect: kind === "lottie" && Number(asset.preview_height) > 0
-                                   ? Number(asset.preview_width) / Number(asset.preview_height) : 1
+    readonly property string kind: asset.mediaKind || ""
+    readonly property real aspect: kind === "lottie" && Number(asset.height) > 0
+                                   ? Number(asset.width) / Number(asset.height) : 1
     readonly property string installState: {
-        void DriftAssets.revision
-        return DriftAssets.state(asset.id)
+        void MarketInstall.revision
+        return MarketInstall.installState(asset)
     }
     readonly property bool playing: autoplay || hover.hovered || root.activeFocus
 
@@ -36,8 +36,8 @@ FocusScope {
     activeFocusOnTab: true
 
     Accessible.role: Accessible.Button
-    Accessible.name: asset.name || ""
-    Accessible.description: asset.description || ""
+    Accessible.name: asset.title || ""
+    Accessible.description: asset.subtitle || ""
 
     Keys.onReturnPressed: root.openRequested()
     Keys.onEnterPressed: root.openRequested()
@@ -49,14 +49,12 @@ FocusScope {
         if (styles > 1)
             bits.push(qsTr("%n style(s)", "", styles))
         if (kind === "lottie") {
-            const d = Number(asset.duration || 0)
+            const d = Number(asset.durationMs || 0) / 1000
             if (d > 0)
                 bits.push(qsTr("%1 s").arg(Math.round(d * 10) / 10))
-            const n = Object.keys(asset.slots || {}).length
+            const n = Object.keys((asset.extra || {}).slots || {}).length
             if (n > 0)
                 bits.push(qsTr("%n colour(s)", "", n))
-        } else if (kind === "object" && asset.animation) {
-            bits.push(qsTr("Loops, %1 s").arg(Math.round(Number(asset.animation.duration || 0) * 10) / 10))
         }
         return bits.join("  ")
     }
@@ -99,7 +97,7 @@ FocusScope {
                 Image {
                     id: still
                     anchors.fill: parent
-                    source: root.asset.poster_url || root.asset.thumb_url || ""
+                    source: root.asset.thumbUrl || ""
                     fillMode: root.kind === "lottie" ? Image.PreserveAspectFit : Image.PreserveAspectCrop
                     asynchronous: true
                     sourceSize.height: Math.ceil(root.previewHeight * Screen.devicePixelRatio)
@@ -110,7 +108,7 @@ FocusScope {
                 AnimatedImage {
                     id: motion
                     anchors.fill: parent
-                    source: root.playing ? (root.asset.preview_url || "") : ""
+                    source: root.playing ? (root.asset.previewUrl || "") : ""
                     fillMode: still.fillMode
                     asynchronous: true
                     playing: root.playing && status === AnimatedImage.Ready
@@ -190,7 +188,7 @@ FocusScope {
 
         Text {
             width: parent.width
-            text: root.asset.name || ""
+            text: root.asset.title || ""
             color: Theme.c.driftAssetCard.foreground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSm

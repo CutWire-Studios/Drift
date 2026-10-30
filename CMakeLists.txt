@@ -1487,6 +1487,8 @@ qt_add_qml_module(drift
         src/ui/theme/backdrop/WindowBackdrop.cpp
         src/app/online/marketplace/MarketSourceBrowser.h
         src/app/online/marketplace/MarketSourceBrowser.cpp
+        src/app/online/marketplace/MarketItemLoader.h
+        src/app/online/marketplace/MarketItemLoader.cpp
         ${DRIFT_BACKDROP_PLATFORM_SOURCES}
     QML_FILES
         src/qml/Shell.qml
@@ -1696,6 +1698,19 @@ qt_add_qml_module(drift
         src/qml/components/assets/SoundsTab.qml
         src/qml/components/assets/TransitionsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml
+        src/qml/components/marketplace/MarketplaceView.qml
+        src/qml/components/marketplace/MarketplacePage.qml
+        src/qml/components/marketplace/MarketItemCard.qml
+        src/qml/components/marketplace/MarketItemDetail.qml
+        src/qml/components/marketplace/MarketTimelineAdd.qml
+        src/qml/components/marketplace/sections/MarketHeroSection.qml
+        src/qml/components/marketplace/sections/MarketNoticeSection.qml
+        src/qml/components/marketplace/sections/MarketShelfSection.qml
+        src/qml/components/marketplace/sections/MarketGridSection.qml
+        src/qml/components/marketplace/sections/MarketChipsSection.qml
+        src/qml/components/marketplace/sections/MarketStockBrowserSection.qml
+        src/qml/components/marketplace/sections/MarketSfxSection.qml
+        src/qml/components/marketplace/sections/MarketDownloadsSection.qml
         src/qml/components/assets/MarketTab.qml
         src/qml/components/assets/MarketSearchField.qml
         src/qml/components/assets/DriftAssetsHome.qml

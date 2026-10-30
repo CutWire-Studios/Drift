@@ -9,6 +9,7 @@ Rectangle {
     property bool compact: false
     property string justAddedId: ""
     property var previewPlayer: null
+    signal openRequested(var sound)
     signal keepRequested(var sound)
     signal useRequested(var sound)
 
@@ -24,11 +25,11 @@ Rectangle {
     readonly property bool isCurrent: previewPlayer.soundId === modelData.id
     readonly property bool isPlaying: isCurrent && previewPlayer.playbackState === MediaPlayer.PlayingState
     readonly property string installState: {
-        void Sfx.revision
-        return Sfx.state(modelData.id)
+        void MarketInstall.revision
+        return MarketInstall.installState(modelData)
     }
     readonly property bool busy: installState === "installing"
-    readonly property var peaks: modelData.peaks || []
+    readonly property var peaks: Sfx.peaksOf(modelData)
     readonly property real progress: isCurrent && previewPlayer.duration > 0
                                      ? Math.min(1, previewPlayer.position / previewPlayer.duration) : 0
 
@@ -38,13 +39,14 @@ Rectangle {
     color: rowHover.hovered ? Theme.c.sfxSoundRow.backgroundHover : "transparent"
 
     HoverHandler { id: rowHover }
+    TapHandler { onTapped: root.openRequested(root.modelData) }
 
     IconButton {
         id: playButton
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         glyph: root.isPlaying ? Theme.icons.pause : Theme.icons.play
-        enabled: !!root.modelData.preview_url
+        enabled: !!root.modelData.previewUrl
         tooltip: root.isPlaying ? qsTr("Pause") : qsTr("Play preview")
         onClicked: {
             if (root.isPlaying) {
@@ -53,7 +55,7 @@ Rectangle {
             }
             if (!root.isCurrent) {
                 previewPlayer.soundId = root.modelData.id
-                previewPlayer.source = root.modelData.preview_url
+                previewPlayer.source = root.modelData.previewUrl
             }
             previewPlayer.play()
         }
@@ -70,7 +72,7 @@ Rectangle {
 
         Text {
             width: parent.width
-            text: root.modelData.name || ""
+            text: root.modelData.title || ""
             color: Theme.c.sfxSoundRow.foreground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSm
@@ -78,7 +80,7 @@ Rectangle {
         }
         Text {
             width: parent.width
-            text: formatDuration(root.modelData.duration)
+            text: formatDuration(Number(root.modelData.durationMs || 0) / 1000)
             color: Theme.c.sfxSoundRow.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
