@@ -2,6 +2,7 @@
 
 #include "app/bin/AssetLibrary.h"
 #include "app/online/market/MarketClient.h"
+#include "app/online/marketplace/MarketTransport.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -53,7 +54,7 @@ void SfxLibrary::refresh()
         return;
     m_loading = true;
     emit loadingChanged();
-    QNetworkReply *reply = m_market->signedGet(QStringLiteral("/sfx"));
+    QNetworkReply *reply = drift::market::MarketTransport::instance()->get(QStringLiteral("/sfx"));
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         m_loading = false;

@@ -3,6 +3,7 @@
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/online/market/MarketClient.h"
+#include "app/online/marketplace/MarketTransport.h"
 #include "engine/face/props/FacePropCatalog.h"
 
 #include <QCryptographicHash>
@@ -73,7 +74,7 @@ void DriftAssetStore::refresh()
     }
     m_loading = true;
     emit loadingChanged();
-    QNetworkReply *reply = m_market->signedGet(QStringLiteral("/assets"));
+    QNetworkReply *reply = drift::market::MarketTransport::instance()->get(QStringLiteral("/assets"));
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         m_loading = false;

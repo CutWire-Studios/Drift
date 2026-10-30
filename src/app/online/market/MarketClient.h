@@ -16,6 +16,10 @@ class QNetworkReply;
 class QNetworkRequest;
 class QTimer;
 
+namespace drift::market {
+class MarketTransport;
+}
+
 // Talks to market.cutwire.org. Lives in the app layer, not driftengine, so tools/ and tests/
 // that do not need the marketplace keep working with no extra network stack.
 //
@@ -121,9 +125,6 @@ public:
     Q_INVOKABLE QVariantMap downloadInfo(const QString &itemId) const;
     Q_INVOKABLE QVariantMap itemById(const QString &itemId) const;
 
-    // A signed GET on the Drift API, for other stores that share this identity (Drift Assets).
-    QNetworkReply *signedGet(const QString &path) { return get(apiUrl(path)); }
-
 signals:
     void catalogLoadingChanged();
     void catalogErrorChanged();
@@ -146,12 +147,6 @@ signals:
 
 private:
     struct Job;
-
-    static QString apiBase();
-    QUrl apiUrl(const QString &path) const;
-    QNetworkReply *get(const QUrl &url);
-    QNetworkReply *post(const QUrl &url, const QByteArray &body);
-    void sign(QNetworkRequest *request, const QByteArray &method, const QByteArray &body) const;
 
     void setCatalogLoading(bool loading);
     void setCatalogError(const QString &error, bool retryable = true);
@@ -187,20 +182,8 @@ private:
     void importReadyFile(const QString &itemId, const QString &path, const QString &displayName);
 
 
-    // Wording of last resort. The service curates the sentence per reason and sanitizes it
-    // before it goes out, so these only cover a reply that carried no detail at all — a
-    // proxy error page, or a connection that never reached the service.
-    static QString fallbackMessageForCode(const QString &code);
-    // Whether offering the user a retry is honest. A geoblocked item or an unsupported link
-    // will fail identically forever; a timeout or a blocked source may not.
-    static bool isRetryable(const QString &code, const QString &reason);
-    // Returns the sentence to show. Pass a QNetworkReply error to distinguish a service
-    // reply from never having reached the service.
-    static QString parseProblem(const QByteArray &body, int httpStatus, QString *codeOut,
-                                QString *reasonOut = nullptr, bool *retryableOut = nullptr,
-                                int networkError = 0);
-
     AssetLibrary *m_library = nullptr;
+    drift::market::MarketTransport *m_transport = nullptr;
     QNetworkAccessManager *m_network = nullptr;
     QTimer *m_pollTimer = nullptr;
 

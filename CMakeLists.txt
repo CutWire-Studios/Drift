@@ -70,7 +70,7 @@ set(DRIFT_ADDON_CLIENT_TOKEN "79a388bba9301cacc81cc6eb0724c81e948e1b27c69aee1b"
     CACHE STRING "Client token sent to the addon service as X-Drift-Client")
 
 # --- Marketplace -----------------------------------------------------------
-# Stock catalog at market.cutwire.org. Empty URL or key disables the Market tab.
+# Marketplace API at cutwire.studio. Empty URL or key disables the Market tab.
 # The HMAC key is not a user secret — it ships in the binary — and exists so requests can be
 # signed and a stable client id derived. See docs/marketplace/README.md.
 #
@@ -78,7 +78,7 @@ set(DRIFT_ADDON_CLIENT_TOKEN "79a388bba9301cacc81cc6eb0724c81e948e1b27c69aee1b"
 #                  -DDRIFT_MARKET_CLIENT_KEY=...
 #
 #   cmake -B build -DDRIFT_MARKET_API_URL=      # no marketplace
-set(DRIFT_MARKET_API_URL "https://market.cutwire.org/api/v1"
+set(DRIFT_MARKET_API_URL "https://cutwire.studio/api/v1"
     CACHE STRING "Marketplace API base; empty disables the marketplace")
 set(DRIFT_MARKET_CLIENT_KEY "5409a0bebab4446f88e51d06024a5cf9a694ee141a6a1c6be7a49e45b6687438"
     CACHE STRING "HMAC key for marketplace client identity and request signing")
@@ -1041,6 +1041,8 @@ qt_add_executable(drift
     src/app/online/market/MarketIdentity.cpp
     src/app/online/market/MarketClient.h
     src/app/online/market/MarketClient.cpp
+    src/app/online/marketplace/MarketTransport.h
+    src/app/online/marketplace/MarketTransport.cpp
     src/app/online/assets/DriftAssetStore.h
     src/app/online/assets/DriftAssetStore.cpp
     src/app/online/assets/SfxLibrary.h
