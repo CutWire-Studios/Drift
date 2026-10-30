@@ -1568,6 +1568,7 @@ qt_add_qml_module(drift
         src/qml/DenoiseWindow.qml
         src/qml/RestoreWindow.qml
         src/qml/DownloadsWindow.qml
+        src/qml/MarketplaceWindow.qml
         src/qml/SpeedCurveWindow.qml
         src/qml/FadeCurveWindow.qml
         src/qml/MediaPreviewWindow.qml

@@ -446,10 +446,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             spacing: Theme.spacingSm
 
-            EditorHeaderDownloadsButton {
-                onClicked: root.downloadsRequested()
-            }
-
+            EditorHeaderDownloadsButton { }
 
             EditorHeaderSettingsButton { }
 

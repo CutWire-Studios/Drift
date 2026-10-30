@@ -58,7 +58,6 @@ const PanelType kPanelTypes[] = {
 // Tab ids and labels mirror AssetsPanel.qml / PropertiesPanel.qml.
 const PanelType kAssetTabTypes[] = {
     {"assets.media", QT_TRANSLATE_NOOP("WorkspaceStore", "Media")},
-    {"assets.market", QT_TRANSLATE_NOOP("WorkspaceStore", "Market")},
     {"assets.text", QT_TRANSLATE_NOOP("WorkspaceStore", "Text")},
     {"assets.subtitles", QT_TRANSLATE_NOOP("WorkspaceStore", "Subtitles")},
     {"assets.speech", QT_TRANSLATE_NOOP("WorkspaceStore", "Speech")},

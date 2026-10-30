@@ -369,6 +369,8 @@ void SearchIndex::addCommands()
         addRow({QStringLiteral("command"), label, {}, {}, {}, target, true}, keywords);
     };
     command(tr("Export video"), QStringLiteral("render save mp4"), QStringLiteral("dialog:export"));
+    command(tr("Marketplace"), QStringLiteral("market store stock footage photos music sound effects sfx assets community effects themes looks"),
+            QStringLiteral("dialog:marketplace"));
     command(tr("Downloads"), QStringLiteral("download link"), QStringLiteral("dialog:downloads"));
     command(tr("Language…"), QStringLiteral("translate locale"), QStringLiteral("dialog:language"));
     command(tr("Video size and layout"), QStringLiteral("canvas resolution aspect ratio"),

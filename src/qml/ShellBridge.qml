@@ -197,6 +197,10 @@ QtObject {
             else
                 main.openAddonManager()
             break
+        case "marketplace":
+            if (main.openMarketplace)
+                main.openMarketplace(params.page !== undefined ? params.page : "")
+            break
         case "debugInfo": main.openDebugInfo(); break
         case "about": main.openAboutDialog(); break
         case "update": main.openUpdateDialog(); break

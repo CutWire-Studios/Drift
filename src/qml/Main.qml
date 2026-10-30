@@ -111,7 +111,6 @@ ApplicationWindow {
                 appWindow: window
                 header: editorHeader
                 assets: assetsPanel
-                downloadsLoader: downloadsWindowLoader
             }
         }
     }
@@ -305,7 +304,7 @@ ApplicationWindow {
         }
         const tools = [segmentationWindowLoader, denoiseWindowLoader, restoreWindowLoader,
                        multicamWindowLoader, speedCurveWindowLoader, fadeCurveWindowLoader,
-                       downloadsWindowLoader]
+                       marketplaceWindowLoader]
         for (var t = 0; t < tools.length; ++t) {
             if (tools[t].shown) {
                 tools[t].item.close()
@@ -526,7 +525,7 @@ ApplicationWindow {
             window.openUpdateDialog()
         }
         function onDownloadStarted() {
-            downloadsWindowLoader.ensure().show()
+            window.openMarketplace("downloads")
         }
         function onQuitRequested() {
             window.close()
@@ -642,25 +641,35 @@ ApplicationWindow {
         }
     }
 
+    // Kept loaded so the last page, its search and its scroll are still there on reopening.
     LazyLoader {
-        id: downloadsWindowLoader
+        id: marketplaceWindowLoader
+        keepLoaded: true
         sourceComponent: Component {
-            DownloadsWindow { }
+            MarketplaceWindow { }
         }
     }
 
-    // Shows the downloads window the first time a download starts, then stays out of the way:
+    // Shows the Downloads tab the first time a download starts, then stays out of the way:
     // reopening on every later job would yank focus mid-edit for something the header
     // badge already reports.
-    property bool downloadsWindowShownOnce: false
+    property bool downloadsAutoOpened: false
 
     Connections {
         target: Downloads
         function onJobStarted(id) {
-            if (window.downloadsWindowShownOnce)
+            if (window.downloadsAutoOpened)
                 return
-            window.downloadsWindowShownOnce = true
-            downloadsWindowLoader.ensure().show()
+            window.downloadsAutoOpened = true
+            window.openMarketplace("downloads")
+        }
+    }
+
+    // MCP market_open, and anything else that asks the app to show a page or a listing.
+    Connections {
+        target: Marketplace
+        function onOpenRequested(page, tab, source, itemId) {
+            window.openMarketplace(tab.length > 0 ? tab : page, source, itemId)
         }
     }
 
@@ -793,6 +802,11 @@ ApplicationWindow {
     // not bound to one clip, so it survives any edit and only closes when the document does.
     function openMulticam() {
         multicamWindowLoader.ensure().openSession()
+    }
+
+    // A page id or "downloads", plus a listing to show. Empty arguments reopen the last page.
+    function openMarketplace(pageOrTab, source, itemId) {
+        marketplaceWindowLoader.ensure().open(pageOrTab || "", source || "", itemId || "")
     }
 
     // Panels that no workspace has room for. One window per type, kept for the session.
@@ -1499,7 +1513,7 @@ ApplicationWindow {
 
         EditorWorkspace {
             id: workspace
-            onDownloadsRequested: downloadsWindowLoader.ensure().show()
+            onDownloadsRequested: window.openMarketplace("downloads")
         }
     }
 

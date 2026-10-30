@@ -1,10 +1,11 @@
 import QtQuick
 import Drift
 
+// Opens the Marketplace window: on the Downloads tab while something is downloading, on the
+// page last shown otherwise.
 Item {
     id: downloadsButton
-    signal clicked()
-    // The app update also lands in the Downloads window, so the button shows while
+    // The app update also lands in the Downloads tab, so the button shows while
     // one is running even without the marketplace.
     readonly property int activeCount: Downloads.activeCount
     visible: StockInstaller.configured || activeCount > 0
@@ -17,13 +18,13 @@ Item {
     IconButton {
         id: downloadsBtn
         anchors.fill: parent
-        glyph: Theme.icons.download
+        glyph: Theme.icons.store
         variant: "ghost"
         active: downloadsButton.activeCount > 0
         tooltip: downloadsButton.activeCount > 0
-                 ? qsTr("Downloads — %n running", "", downloadsButton.activeCount)
-                 : qsTr("Downloads")
-        onClicked: downloadsButton.clicked()
+                 ? qsTr("Marketplace — %n download(s) running", "", downloadsButton.activeCount)
+                 : qsTr("Marketplace")
+        onClicked: ShellBridge.main.openMarketplace(downloadsButton.activeCount > 0 ? "downloads" : "")
     }
 
     // Count rather than a plain dot: with a queue behind a three-at-a-time cap,
