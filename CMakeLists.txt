@@ -2201,6 +2201,7 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidHomeTab.qml
         src/qml/components/android/AndroidMyVideosTab.qml
         src/qml/components/android/pages/AndroidAddPage.qml
+        src/qml/components/android/pages/AndroidMarketplacePage.qml
         src/qml/components/android/pages/AndroidStickerPage.qml
         src/qml/components/android/pages/AndroidTransformPage.qml
         src/qml/components/android/pages/AndroidTextStylePage.qml

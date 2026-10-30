@@ -375,7 +375,7 @@ ApplicationWindow {
     }
 
     // A share that arrived from another app, cold or warm. Media goes onto a timeline; text is
-    // a link and belongs to the marketplace resolver, which step 6 fills in.
+    // a link and belongs to the marketplace resolver.
     function routeIncomingIntent(intent) {
         if (!intent || !intent.kind)
             return
@@ -522,6 +522,8 @@ ApplicationWindow {
         onActivated: {
             if (window.subPage) {
                 if (window.closeTopMenu() || window.closeTopModal())
+                    return
+                if (window.subPageKind === "marketplace" && window.subPage.handleBack())
                     return
                 window.closeSubPage()
                 return
@@ -905,6 +907,15 @@ ApplicationWindow {
             window.forceClose = true
             window.close()
         })
+    }
+
+    function openMarketplace(pageOrTab, source, itemId) {
+        if (window.subPageKind !== "marketplace") {
+            window.closeSubPage()
+            window.subPage = stack.push(marketplacePageComponent)
+            window.subPageKind = "marketplace"
+        }
+        window.subPage.view.open(pageOrTab || "", source || "", itemId || "")
     }
 
     function openAddonManager(kind) {
@@ -1299,6 +1310,21 @@ ApplicationWindow {
             Component.onDestruction: if (window.subPage === this) { window.subPage = null; window.subPageKind = "" }
 
             SettingsPane { anchors.fill: parent; mobile: true }
+        }
+    }
+
+    Component {
+        id: marketplacePageComponent
+        AndroidMarketplacePage {
+            onBackRequested: if (!handleBack()) window.closeSubPage()
+            Component.onDestruction: if (window.subPage === this) { window.subPage = null; window.subPageKind = "" }
+        }
+    }
+
+    Connections {
+        target: Marketplace
+        function onOpenRequested(page, tab, source, itemId) {
+            window.openMarketplace(tab.length > 0 ? tab : page, source, itemId)
         }
     }
 

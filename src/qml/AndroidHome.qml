@@ -82,6 +82,15 @@ Item {
                 IconButton {
                     buttonSize: Theme.androidIconButtonSize
                     iconSize: Theme.iconSizeLg
+                    glyph: Theme.icons.store
+                    variant: "text"
+                    tooltip: qsTr("Marketplace")
+                    onClicked: ShellBridge.main.openMarketplace()
+                }
+
+                IconButton {
+                    buttonSize: Theme.androidIconButtonSize
+                    iconSize: Theme.iconSizeLg
                     glyph: Theme.icons.puzzle
                     variant: "text"
                     tooltip: qsTr("Extras")

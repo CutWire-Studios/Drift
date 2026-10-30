@@ -256,10 +256,6 @@ Item {
             linkImportSheet.dismiss()
             return true
         }
-        if (downloadsSheet.opened) {
-            downloadsSheet.dismiss()
-            return true
-        }
         if (projectSheet.opened) {
             projectSheet.dismiss()
             return true
@@ -408,7 +404,7 @@ Item {
                 exportProgressDialog.openDialog()
             }
             onProjectMenuRequested: projectSheet.open()
-            onDownloadsRequested: downloadsSheet.open()
+            onDownloadsRequested: ShellBridge.main.openMarketplace("downloads")
             onNotificationsRequested: notificationsSheet.open()
         }
 
@@ -643,6 +639,8 @@ Item {
                 EditorState.addTransformLayerForSelection()
             else if (addPages[tabId] !== undefined)
                 root.openTool(addPages[tabId])
+            else if (tabId === "market")
+                ShellBridge.main.openMarketplace()
             else
                 root.openAssetsTab(tabId)
         }
@@ -651,10 +649,6 @@ Item {
     AndroidProjectSheet {
         id: projectSheet
         onPicked: (actionId) => root.runProjectAction(actionId)
-    }
-
-    AndroidDownloadsSheet {
-        id: downloadsSheet
     }
 
     AndroidNotificationsSheet {
