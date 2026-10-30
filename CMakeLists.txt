@@ -1535,6 +1535,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/DepthLight3dOverlay.qml
         src/qml/components/preview/Checkerboard.qml
         src/qml/components/android/AndroidTransformOverlay.qml
+        src/qml/components/android/AndroidClipCropOverlay.qml
         src/qml/components/android/AndroidCropOverlay.qml
         src/qml/SegmentationWindow.qml
         src/qml/MulticamWindow.qml
@@ -1979,6 +1980,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/LazyLoader.qml
         src/qml/components/android/AndroidLifecycle.qml
         src/qml/components/dialogs/AddonManagerDialog.qml
+        src/qml/components/dialogs/AddonManagerPanel.qml
         src/qml/components/dialogs/AddonStartupDialog.qml
         src/qml/components/dialogs/AccelerationFailedDialog.qml
         src/qml/components/dialogs/MissingAddonsDialog.qml
@@ -2151,11 +2153,42 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidLayoutTemplateCard.qml
         src/qml/components/android/AndroidLayoutSummarySwatch.qml
         src/qml/components/android/AndroidLayoutSectionLabel.qml
-        src/qml/components/android/AndroidHomeWordmark.qml
-        src/qml/components/android/AndroidHomeStartTile.qml
         src/qml/components/android/AndroidHomeRecentCard.qml
         src/qml/components/android/AndroidFadeSliderRow.qml
         src/qml/components/android/AndroidDownloadJobRow.qml
+        src/qml/components/android/AndroidToolPage.qml
+        src/qml/components/android/AndroidClipRangeBar.qml
+        src/qml/components/android/AndroidSubPage.qml
+        src/qml/components/android/AndroidHomeTab.qml
+        src/qml/components/android/AndroidMyVideosTab.qml
+        src/qml/components/android/pages/AndroidAddPage.qml
+        src/qml/components/android/pages/AndroidStickerPage.qml
+        src/qml/components/android/pages/AndroidTransformPage.qml
+        src/qml/components/android/pages/AndroidTextStylePage.qml
+        src/qml/components/android/pages/AndroidTextSettingsPage.qml
+        src/qml/components/android/pages/AndroidTextAnimationPage.qml
+        src/qml/components/android/pages/AndroidAnimationPage.qml
+        src/qml/components/android/pages/AndroidBlendingPage.qml
+        src/qml/components/android/pages/AndroidDetailsPage.qml
+        src/qml/components/android/pages/AndroidSubtitlesPage.qml
+        src/qml/components/android/pages/AndroidShapeStylePage.qml
+        src/qml/components/android/pages/AndroidStabilizePage.qml
+        src/qml/components/android/pages/AndroidMotionPage.qml
+        src/qml/components/android/pages/AndroidModel3dPage.qml
+        src/qml/components/android/pages/AndroidPdfPage.qml
+        src/qml/components/android/pages/AndroidCameraPage.qml
+        src/qml/components/android/pages/AndroidMaskEditPage.qml
+        src/qml/components/android/pages/AndroidTransitionPage.qml
+        src/qml/components/android/pages/AndroidAudioEffectsPage.qml
+        src/qml/components/android/pages/AndroidVolumePage.qml
+        src/qml/components/android/pages/AndroidSpeedPage.qml
+        src/qml/components/android/pages/AndroidFiltersPage.qml
+        src/qml/components/android/pages/AndroidAdjustPage.qml
+        src/qml/components/android/pages/AndroidShapePage.qml
+        src/qml/components/android/pages/AndroidTextPage.qml
+        src/qml/components/android/pages/AndroidMaskPage.qml
+        src/qml/components/android/pages/AndroidCropPage.qml
+        src/qml/components/android/pages/AndroidBackgroundPage.qml
         src/qml/components/android/AndroidCropHint.qml
         src/qml/components/android/AndroidCropGrip.qml
         src/qml/components/android/AndroidCropFrame.qml

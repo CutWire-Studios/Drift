@@ -97,6 +97,9 @@ ApplicationWindow {
     property var homePage: null
     // The preview-and-edit screen while it is on the stack; Back pops it before anything else.
     property var mediaPreviewPage: null
+    // The full-screen Settings or Extras page while it is on the stack; Back pops it first.
+    property var subPage: null
+    property string subPageKind: ""
 
     function confirmIfDirty(action) {
         if (!EditorState.projectFile.hasUnsavedChanges) {
@@ -189,16 +192,20 @@ ApplicationWindow {
     // included, so anything imported before it is gone by the time addClipFromAsset() would
     // run. The import has to happen on the far side of the reset, which means the caller can
     // only hand over something that survives it. Pass nothing to open the picker.
-    function beginQuickEdit(urls) {
+    // `then(assetIndex)` runs once the editor is up with the clip on the timeline.
+    function beginQuickEdit(urls, then) {
         window.confirmIfDirty(function() {
             EditorState.projectFile.newProject()
             const landed = function(added) {
+                let index = -1
                 if (added > 0) {
-                    const index = AssetLibrary.count - added
+                    index = AssetLibrary.count - added
                     window.applyInferredSetup(index)
                     EditorState.addClipFromAsset(index)
                 }
                 window.showEditor()
+                if (then && index >= 0)
+                    Qt.callLater(then, index)
             }
             if (urls && urls.length > 0)
                 MediaImport.importUrls(urls, false, landed)
@@ -207,8 +214,130 @@ ApplicationWindow {
         })
     }
 
+    // Asset waiting for its preview-and-edit save, after which it goes onto a timeline and into
+    // the export dialog. -1 when no crop/trim quick action is in flight.
+    property int _pendingMediaEdit: -1
+
+    // Crop and trim quick actions: the picked file opens in preview-and-edit on the matching tab,
+    // and its Save (a non-destructive trim, or a crop re-encode) carries on to export.
+    function beginMediaEdit(mode) {
+        window.confirmIfDirty(function() {
+            EditorState.projectFile.newProject()
+            MediaImport.pickAndImport(function(added) {
+                if (added <= 0)
+                    return
+                const index = AssetLibrary.count - added
+                const asset = AssetLibrary.assetAt(index)
+                const kind = asset ? asset.kind : ""
+                if (mode === "crop" ? kind === "audio" : kind === "image") {
+                    Toasts.info(mode === "crop" ? qsTr("Pick a video or image to crop.")
+                                                : qsTr("Pick a video or audio file to trim."))
+                    return
+                }
+                window._pendingMediaEdit = index
+                window.openMediaPreview(index)
+                if (window.mediaPreviewPage)
+                    window.mediaPreviewPage.mode = mode
+            })
+        })
+    }
+
+    Connections {
+        target: EditorState.bin
+        function onEditFinished(ok, message) {
+            if (!ok || EditorState.bin.editIsConversion || window._pendingMediaEdit < 0)
+                return
+            const index = window._pendingMediaEdit
+            window._pendingMediaEdit = -1
+            Qt.callLater(function() {
+                window.applyInferredSetup(index)
+                EditorState.addClipFromAsset(index)
+                window.showEditor()
+                Qt.callLater(function() {
+                    if (window.editorPage)
+                        window.editorPage.openExport(false)
+                })
+            })
+        }
+    }
+
+    Connections {
+        target: EditorState
+        function onProjectReset() { window._pendingMediaEdit = -1 }
+    }
+
+    property real _stillSeconds: 5
+
+    ThemedDialog {
+        id: stillDurationDialog
+        title: qsTr("Video length")
+        acceptText: qsTr("Export")
+        preferredWidth: Theme.dialogWidthSm
+        onAccepted: {
+            EditorState.setClipDuration(0, 0, window._stillSeconds)
+            if (window.editorPage)
+                window.editorPage.openExport(false)
+        }
+
+        contentItem: Column {
+            spacing: Theme.spacingLg
+            width: parent ? parent.width : Theme.dialogWidthSm
+
+            ThemedLabel {
+                text: qsTr("How long should the image play?")
+                wrapMode: Text.WordWrap
+                width: parent.width
+            }
+
+            ThemedNumberField {
+                width: parent.width
+                from: 0.5
+                to: 300
+                step: 0.5
+                decimals: 1
+                unit: "s"
+                value: window._stillSeconds
+                onEdited: (v) => window._stillSeconds = v
+            }
+        }
+    }
+
     function openLayoutChooser() {
         layoutSheet.openSheet()
+    }
+
+    // Home's quick-action tiles other than "quick".
+    function runQuickAction(id) {
+        switch (id) {
+        case "filter":
+            window.beginQuickEdit(null, function() { window.editorPage.openTool("filters") })
+            break
+        case "adjust":
+        case "text":
+        case "sticker":
+            window.beginQuickEdit(null, function() { window.editorPage.openTool(id) })
+            break
+        case "crop":
+        case "trim":
+            window.beginMediaEdit(id)
+            break
+        case "toAudio":
+            window.beginQuickEdit(null, function() { window.editorPage.openExport(true) })
+            break
+        case "toVideo":
+            window.beginQuickEdit(null, function(index) {
+                const asset = AssetLibrary.assetAt(index)
+                if (asset && asset.kind === "image") {
+                    window._stillSeconds = 5
+                    stillDurationDialog.open()
+                } else {
+                    window.editorPage.openExport(false)
+                }
+            })
+            break
+        default:
+            window.beginQuickEdit(null)
+        }
     }
 
     function showHome() {
@@ -391,6 +520,12 @@ ApplicationWindow {
         sequences: [StandardKey.Back, "Esc"]
         context: Qt.ApplicationShortcut
         onActivated: {
+            if (window.subPage) {
+                if (window.closeTopMenu() || window.closeTopModal())
+                    return
+                window.closeSubPage()
+                return
+            }
             if (window.toolWindowOpen) {
                 window.closeTopToolWindow()
                 return
@@ -426,10 +561,8 @@ ApplicationWindow {
             layoutSheet.dismiss()
             return true
         }
-        // debugInfoDialog before settingsDialog: it opens from inside Settings, so it is the
-        // one on top whenever both are up.
-        const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, debugInfoDialogLoader.item, settingsDialogLoader.item, projectPropertiesDialog,
-                        recoveryDialog, unsavedDialog, addonStartupDialog, addonManagerDialogLoader.item,
+        const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, debugInfoDialogLoader.item, projectPropertiesDialog,
+                        recoveryDialog, unsavedDialog, addonStartupDialog,
                         missingAddonsDialogLoader.item, updateDialogLoader.item,
                         reverseProgressDialogLoader.item, subtitleProgressDialogLoader.item]
         for (var i = 0; i < modals.length; ++i) {
@@ -646,10 +779,8 @@ ApplicationWindow {
         onRejected: window._pendingAfterUnsaved = null
     }
 
-    LazyLoader { id: addonManagerDialogLoader; sourceComponent: Component { AddonManagerDialog { } } }
-
     function importUserPackage(url) {
-        addonManagerDialogLoader.ensure().importUserPackage(url)
+        window.openAddonManager().importUserPackage(url)
     }
     AddonStartupDialog { id: addonStartupDialog }
     LazyLoader { id: missingAddonsDialogLoader; sourceComponent: Component { MissingAddonsDialog { } } }
@@ -658,7 +789,6 @@ ApplicationWindow {
     // Kept after its first close: it holds the last benchmark result.
     LazyLoader { id: debugInfoDialogLoader; keepLoaded: true; sourceComponent: Component { DebugInfoDialog { } } }
 
-    LazyLoader { id: settingsDialogLoader; sourceComponent: Component { SettingsDialog { } } }
     LazyLoader { id: aboutDialogLoader; sourceComponent: Component { AboutDialog { } } }
     LazyLoader { id: shellSwitchDialogLoader; sourceComponent: Component { ShellSwitchDialog { } } }
     LazyLoader { id: subtitleProgressDialogLoader; sourceComponent: Component { SubtitleProgressDialog { } } }
@@ -721,7 +851,22 @@ ApplicationWindow {
     // Opened from the overflow menu, which used to switch the asset sheet to a
     // settings tab.
     function openSettings() {
-        settingsDialogLoader.ensure().open()
+        if (window.subPageKind === "settings")
+            return
+        window.closeSubPage()
+        window.subPage = stack.push(settingsPageComponent)
+        window.subPageKind = "settings"
+    }
+
+    // Settings and Extras are pages on the phone, not the dialogs the desktop shell opens.
+    function closeSubPage() {
+        const page = window.subPage
+        if (!page)
+            return
+        window.subPage = null
+        window.subPageKind = ""
+        if (stack.currentItem === page)
+            stack.pop()
     }
 
     function switchShell(target) {
@@ -763,10 +908,14 @@ ApplicationWindow {
     }
 
     function openAddonManager(kind) {
-        if (kind === undefined)
-            addonManagerDialogLoader.ensure().open()
-        else
-            addonManagerDialogLoader.ensure().openForKind(kind)
+        if (window.subPageKind !== "extras") {
+            window.closeSubPage()
+            window.subPage = stack.push(extrasPageComponent)
+            window.subPageKind = "extras"
+        }
+        if (kind !== undefined)
+            window.subPage.panel.openForKind(kind)
+        return window.subPage.panel
     }
 
     function openExtras() {
@@ -799,6 +948,9 @@ ApplicationWindow {
                                            || speedCurveWindowLoader.shown || fadeCurveWindowLoader.shown
                                            || multicamWindowLoader.shown
                                            || window.mediaPreviewPage !== null
+
+    // A full-page tool (AndroidToolPage) is open in the editor; the editor's handleBack cancels it.
+    readonly property bool toolPageOpen: window.editorPage !== null && window.editorPage.toolPageOpen
 
     function closeTopToolWindow() {
         if (segmentationWindowLoader.shown)
@@ -1130,9 +1282,42 @@ ApplicationWindow {
             Component.onDestruction: if (window.homePage === this) window.homePage = null
             onEnterEditor: window.showEditor()
             onNewProjectRequested: window.startNewProject()
-            onQuickEditRequested: window.beginQuickEdit(null)
+            onQuickActionRequested: (id) => {
+                if (id === "quick")
+                    window.beginQuickEdit(null)
+                else
+                    window.runQuickAction(id)
+            }
             onOpenProjectRequested: window.openProjectFile()
             onOpenRecentRequested: (path) => window.openRecent(path)
+        }
+    }
+
+    Component {
+        id: settingsPageComponent
+        AndroidSubPage {
+            title: qsTr("Settings")
+            onBackRequested: window.closeSubPage()
+            Component.onDestruction: if (window.subPage === this) { window.subPage = null; window.subPageKind = "" }
+
+            SettingsPane { anchors.fill: parent; mobile: true }
+        }
+    }
+
+    Component {
+        id: extrasPageComponent
+        AndroidSubPage {
+            title: qsTr("Extras")
+            property alias panel: extrasPanel
+            onBackRequested: window.closeSubPage()
+            Component.onDestruction: if (window.subPage === this) { window.subPage = null; window.subPageKind = "" }
+
+            AddonManagerPanel {
+                id: extrasPanel
+                anchors.fill: parent
+                anchors.margins: Theme.androidPagePadding
+                Component.onCompleted: refresh()
+            }
         }
     }
 

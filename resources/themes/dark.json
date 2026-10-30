@@ -3680,6 +3680,16 @@
       "border": "$semantic.panel.border",
       "borderWidth": "$metrics.borderWidth"
     },
+    "androidToolPage": {
+      "background": "$semantic.surface.app",
+      "footerBackground": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "foreground": "$semantic.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "actionBackground": "$semantic.panel.accent",
+      "actionForeground": "$semantic.panel.foreground"
+    },
     "androidBottomSheet": {
       "background": "$semantic.surface.panel",
       "radius": "$metrics.radius.md"
@@ -3943,6 +3953,18 @@
       "foregroundMuted": "$semantic.mutedForeground",
       "missingDot": "$semantic.mutedForeground",
       "presentDot": "$semantic.constructive"
+    },
+    "androidHomeTabBar": {
+      "background": "$semantic.surface.panel",
+      "border": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "active": "$semantic.primary",
+      "inactive": "$semantic.mutedForeground"
+    },
+    "androidHomeMyVideos": {
+      "badgeBackground": "$semantic.surface.panel",
+      "badgeForeground": "$semantic.panel.foreground",
+      "badgeRadius": "$metrics.radius.sm"
     },
     "androidHomeStartTile": {
       "background": "$semantic.surface.panel",

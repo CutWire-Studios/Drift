@@ -166,6 +166,15 @@ Item {
     // pass over several clips stays on the page being worked in.
     property string textTab: "text"
 
+    // "" shows the tabbed inspector. "style", "settings" and "animate" show just that slice with
+    // the tab bar hidden, for the phone tool pages.
+    property string mode: ""
+    readonly property bool showContent: mode === "" && textTab === "text"
+    readonly property bool showFont: (mode === "" && textTab === "text") || mode === "style" || mode === "settings"
+    readonly property bool showSpacing: (mode === "" && textTab === "text") || mode === "settings"
+    readonly property bool showStyle: mode === "style" || (mode === "" && textTab === "style")
+    readonly property bool showAnimate: mode === "animate" || (mode === "" && textTab === "animate")
+
     // The content field's user-dragged height and the id of the clip its text was loaded from,
     // so a commit can never land on a clip selected after the typing began.
     property real contentFieldHeight: 96
@@ -355,6 +364,7 @@ Item {
 
         TextInspectorTabBar {
             width: parent.width
+            visible: root.mode === ""
             textTab: root.textTab
             onTabSelected: function(tabId) { root.textTab = tabId }
         }

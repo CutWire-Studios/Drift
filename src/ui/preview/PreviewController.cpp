@@ -102,6 +102,7 @@ PreviewController::PreviewController(AppController &app, QObject *parent)
 
     connect(this, &PreviewController::modeChanged, this, &PreviewController::updateActiveTool);
     connect(this, &PreviewController::canvasCropModeChanged, this, &PreviewController::updateActiveTool);
+    connect(this, &PreviewController::clipCropModeChanged, this, &PreviewController::updateActiveTool);
     connect(this, &PreviewController::guideEditSetIdChanged, this, &PreviewController::updateActiveTool);
     connect(this, &PreviewController::maskEditActiveChanged, this, &PreviewController::updateActiveTool);
 
@@ -126,6 +127,8 @@ void PreviewController::updateActiveTool()
     QString tool = QStringLiteral("transform");
     if (m_canvasCropMode)
         tool = QStringLiteral("crop");
+    else if (m_clipCropMode)
+        tool = QStringLiteral("clipCrop");
     else if (!m_guideEditSetId.isEmpty())
         tool = QStringLiteral("guideEdit");
     else if (!m_maskingTool.isEmpty() && m_mode != QLatin1String("3d")) {
@@ -1152,6 +1155,10 @@ void PreviewController::setCanvasCropMode(bool active)
     if (m_canvasCropMode == active)
         return;
     m_canvasCropMode = active;
+    if (active && m_clipCropMode) {
+        m_clipCropMode = false;
+        emit clipCropModeChanged();
+    }
     // Both modes claim the preview's grips and pointer, so entering one leaves the other.
     if (active && m_maskEditMode) {
         m_maskEditMode = false;
@@ -1163,6 +1170,27 @@ void PreviewController::setCanvasCropMode(bool active)
         setMaskingTool(QString());
     }
     emit canvasCropModeChanged();
+}
+
+void PreviewController::setClipCropMode(bool active)
+{
+    if (m_clipCropMode == active)
+        return;
+    m_clipCropMode = active;
+    if (active && m_canvasCropMode) {
+        m_canvasCropMode = false;
+        emit canvasCropModeChanged();
+    }
+    if (active) {
+        if (m_maskEditMode) {
+            m_maskEditMode = false;
+            emit maskEditModeChanged();
+        }
+        setGuideEditSetId(QString());
+        setMode(QStringLiteral("2d"));
+        setMaskingTool(QString());
+    }
+    emit clipCropModeChanged();
 }
 
 bool PreviewController::maskEditActive() const

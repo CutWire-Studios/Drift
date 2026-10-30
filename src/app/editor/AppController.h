@@ -254,6 +254,7 @@ class AppController : public QObject
     Q_PROPERTY(bool exportByAgent READ exportByAgent NOTIFY exportInProgressChanged)
     Q_PROPERTY(double exportProgress READ exportProgress NOTIFY exportProgressChanged)
     Q_PROPERTY(bool canShareExport READ canShareExport NOTIFY canShareExportChanged)
+    Q_PROPERTY(QVariantList exportHistory READ exportHistory NOTIFY exportHistoryChanged)
     Q_PROPERTY(bool subtitleGenerating READ subtitleGenerating NOTIFY subtitleGeneratingChanged)
     Q_PROPERTY(double subtitleGenProgress READ subtitleGenProgress NOTIFY subtitleGenProgressChanged)
     Q_PROPERTY(QString subtitleGenStatus READ subtitleGenStatus NOTIFY subtitleGenStatusChanged)
@@ -456,6 +457,7 @@ public:
     void setExportRequestedByAgent(bool byAgent) { m_exportRequestedByAgent = byAgent; }
     double exportProgress() const;
     bool canShareExport() const;
+    QVariantList exportHistory() const;
     bool subtitleGenerating() const { return m_subtitleGenerating; }
     double subtitleGenProgress() const { return m_subtitleGenProgress; }
     QString subtitleGenStatus() const { return m_subtitleGenStatus; }
@@ -790,7 +792,7 @@ public:
     // Folds every committed edit between the two calls into one undo step, for controls that
     // write through plain setters (a scrubbed number field). Nothing is pushed if nothing changed.
     Q_INVOKABLE void beginEditGroup();
-    Q_INVOKABLE void endEditGroup(const QString &undoText);
+    Q_INVOKABLE bool endEditGroup(const QString &undoText);
     Q_INVOKABLE void applyCanvasCrop(double x, double y, double width, double height);
     Q_INVOKABLE bool timelineHasVisualClips() const;
     Q_INVOKABLE bool shouldConfigureProjectForAsset(int assetIndex) const;
@@ -798,7 +800,10 @@ public:
     bool projectLayoutChosen() const { return m_projectLayoutChosen; }
     Q_INVOKABLE void markProjectLayoutChosen();
     Q_INVOKABLE void selectClip(int trackIndex, int clipIndex);
-    void selectClipUnderPlayhead();
+    Q_INVOKABLE void selectClipUnderPlayhead();
+    // [track, clip] of the clip with this id, or [] when it is gone. Indices shift as clips are
+    // added and removed; ids do not.
+    Q_INVOKABLE QVariantList locateClip(const QString &clipId) const;
     Q_INVOKABLE void addToSelection(int trackIndex, int clipIndex);
     Q_INVOKABLE void setSelection(const QVariantList &pairs);
     Q_INVOKABLE void selectAllClips();
@@ -1416,6 +1421,9 @@ public:
     Q_INVOKABLE void clearWorkArea();
     Q_INVOKABLE void toggleLoopWorkArea();
     Q_INVOKABLE void freezeFrameAtPlayhead();
+    Q_INVOKABLE void previewClipRange(int trackIndex, int clipIndex);
+    Q_INVOKABLE void clearPreviewRange();
+    Q_INVOKABLE QVariantMap clipTimelineRange(int track, int clip) const;
     Q_INVOKABLE void copySelection();
     Q_INVOKABLE void cutSelection();
     Q_INVOKABLE void pasteAtPlayhead();
@@ -1559,6 +1567,10 @@ public:
     // Same publish-to-gallery step as shareLastExport, handed to a player instead of a share
     // sheet. Shares the m_sharingExport guard, so the two cannot run the copy twice at once.
     Q_INVOKABLE void playLastExport();
+    Q_INVOKABLE void removeExport(const QString &uri);
+    // shareLastExport / playLastExport for any export-history entry (uri from exportHistory).
+    Q_INVOKABLE void shareFile(const QString &uri);
+    Q_INVOKABLE void viewFile(const QString &uri);
     // Copies a file into the shared media collection (Movies/Music/Pictures under "Drift") so it
     // outlives the app's own storage. Marketplace downloads land in AppDataLocation, which is gone
     // on uninstall or a "clear data" and invisible to every file manager — for something the user
@@ -1629,6 +1641,7 @@ signals:
     void exportInProgressChanged();
     void exportProgressChanged();
     void canShareExportChanged();
+    void exportHistoryChanged();
     // `location` is a human-readable folder ("Movies/Drift"), empty when ok is false.
     void savedToGallery(const QString &displayName, bool ok, const QString &location,
                         const QString &error);
@@ -2070,6 +2083,8 @@ protected:
     QFuture<void> m_exportFuture;
     QUrl m_lastExportUrl;
     QString m_lastExportName;
+    void recordExport(const QUrl &url, double durationSeconds, qint64 sizeBytes, const QString &thumbnail);
+    void openExportedFile(const QString &uri, bool share);
     // Android: the publish-to-gallery copy behind Share is on a worker, so canShareExport reports
     // false while it runs — that both hides the button (the dialog binds its visibility to it) and
     // stops a second tap from starting the copy again. Unused on desktop.

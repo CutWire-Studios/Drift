@@ -15,7 +15,7 @@ Column {
     property alias accentOutlineWidthField: accentSection.accentOutlineWidthField
     width: parent ? parent.width : implicitWidth
     spacing: Theme.spacingMd
-    visible: inspector.textTab === "style" && inspector.hasTextStyle
+    visible: inspector.showStyle && inspector.hasTextStyle
 
     TextInspectorPresetSection {
         width: parent.width

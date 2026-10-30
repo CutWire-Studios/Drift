@@ -6,7 +6,7 @@ Column {
     property var inspector
     width: parent ? parent.width : implicitWidth
     spacing: Theme.spacingMd
-    visible: inspector.textTab === "animate" && inspector.hasTextStyle
+    visible: inspector.showAnimate && inspector.hasTextStyle
 
     TextInspectorAnimSlotBar {
         inspector: root.inspector

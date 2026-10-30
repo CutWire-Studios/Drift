@@ -20,11 +20,13 @@
 #include "engine/face/tracking/FaceTrack.h"
 #include "engine/encode/writers/MatteWriter.h"
 #include "engine/encode/MediaEditor.h"
+#include "engine/compositor/FrameCompositor.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
+#include <QImage>
 #include <QFile>
 #include <QFileInfo>
 #include <QFutureWatcher>
@@ -33,6 +35,7 @@
 #include <QLockFile>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QPointer>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTimer>
@@ -643,6 +646,7 @@ void ProjectFileController::writeProjectBundle(const QUrl &url, const std::optio
                     const QString location = projectLocation(url);
                     setCurrentProjectPath(location);
                     addRecentProject(location);
+                    queueSaveThumbnail(location);
                     setDirty(false);
                     deleteRecoveryFile();
                     emit projectMetadataChanged();
@@ -680,6 +684,7 @@ void ProjectFileController::writeProjectBundle(const QUrl &url, const std::optio
     const QString location = projectLocation(url);
     setCurrentProjectPath(location);
     addRecentProject(location);
+    queueSaveThumbnail(location);
     setDirty(false);
     deleteRecoveryFile();
     emit projectMetadataChanged();
@@ -1677,15 +1682,36 @@ QVariantList ProjectFileController::recentProjects() const
 {
     QSettings settings;
     const QStringList paths = settings.value(QStringLiteral("recentProjects")).toStringList();
+    QVariantMap ids = settings.value(QStringLiteral("recentProjectIds")).toMap();
+    const QString thumbDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation))
+                                 .filePath(QStringLiteral("thumbs"));
+    bool idsChanged = false;
     QVariantList out;
     for (const QString &path : paths) {
-        if (path.startsWith(QLatin1String("content://"), Qt::CaseInsensitive)) {
+        const bool isContent = path.startsWith(QLatin1String("content://"), Qt::CaseInsensitive);
+        QString id = ids.value(path).toString();
+        if (id.isEmpty() && !isContent && QFileInfo::exists(path)) {
+            QString error;
+            if (const auto manifest = drift::bundle::readManifest(path, &error)) {
+                id = manifest->projectId;
+                ids.insert(path, id);
+                idsChanged = true;
+            }
+        }
+        const QString thumbPath = id.isEmpty() ? QString() : QDir(thumbDir).filePath(id + QStringLiteral(".jpg"));
+        const QString thumbnail =
+            !thumbPath.isEmpty() && QFileInfo::exists(thumbPath) ? QUrl::fromLocalFile(thumbPath).toString()
+                                                                 : QString();
+        if (isContent) {
             // QFileInfo knows nothing about a document id, so every Android recent used to render
             // as "(missing)". The provider is the only thing that can answer either question.
             out.append(QVariantMap{
                 {QStringLiteral("path"), path},
                 {QStringLiteral("name"), AndroidUri::displayName(QUrl(path))},
                 {QStringLiteral("exists"), projectLocationExists(path)},
+                {QStringLiteral("thumbnail"), thumbnail},
+                {QStringLiteral("modified"), QDateTime()},
+                {QStringLiteral("sizeBytes"), qint64(0)},
             });
             continue;
         }
@@ -1694,9 +1720,54 @@ QVariantList ProjectFileController::recentProjects() const
             {QStringLiteral("path"), path},
             {QStringLiteral("name"), info.fileName()},
             {QStringLiteral("exists"), info.exists()},
+            {QStringLiteral("thumbnail"), thumbnail},
+            {QStringLiteral("modified"), info.exists() ? info.lastModified() : QDateTime()},
+            {QStringLiteral("sizeBytes"), info.exists() ? info.size() : qint64(0)},
         });
     }
+    if (idsChanged)
+        settings.setValue(QStringLiteral("recentProjectIds"), ids);
     return out;
+}
+
+void ProjectFileController::queueSaveThumbnail(const QString &location)
+{
+    // Compositing drives the decoder pool that playback is also using, so a save while playing
+    // simply goes without a new thumbnail rather than interrupting it.
+    if (location.isEmpty() || m_isolatedSession || m_app->m_playing || m_app->m_project.tracks().isEmpty())
+        return;
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (base.isEmpty())
+        return;
+    const QString projectId = m_app->m_project.id();
+    const QString outPath = QDir(base).filePath(QStringLiteral("thumbs/%1.jpg").arg(projectId));
+    {
+        QSettings settings;
+        QVariantMap ids = settings.value(QStringLiteral("recentProjectIds")).toMap();
+        ids.insert(location, projectId);
+        settings.setValue(QStringLiteral("recentProjectIds"), ids);
+    }
+
+    const drift::TimeUs playheadUs = m_app->m_playheadUs;
+    const double previewScale = m_app->m_project.width() > 640 ? 640.0 / m_app->m_project.width() : 1.0;
+    const auto snapshot = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
+    const QPointer<ProjectFileController> self(this);
+    (void)QtConcurrent::run([self, snapshot, playheadUs, previewScale, outPath]() {
+        FrameCompositor compositor;
+        compositor.setProject(snapshot.get());
+        FrameCompositor::RenderOptions options;
+        options.previewScale = previewScale;
+        QImage frame = compositor.compositeAt(playheadUs, options);
+        if (frame.isNull())
+            return;
+        if (frame.width() > 320)
+            frame = frame.scaledToWidth(320, Qt::SmoothTransformation);
+        QDir().mkpath(QFileInfo(outPath).absolutePath());
+        if (!frame.convertToFormat(QImage::Format_RGB32).save(outPath, "JPEG", 85))
+            return;
+        if (self)
+            QMetaObject::invokeMethod(self, [self]() { if (self) emit self->recentProjectsChanged(); }, Qt::QueuedConnection);
+    });
 }
 
 void ProjectFileController::addRecentProject(const QString &path)

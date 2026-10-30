@@ -24,7 +24,7 @@ Grid {
             selected: modelData.id.length === 0
                       ? (!inspector.slotHasPreset && !inspector.slotData.custom)
                       : inspector.slotData.preset === modelData.id
-            playing: inspector.textTab === "animate" && inspector.visible && !EditorState.playing
+            playing: inspector.showAnimate && inspector.visible && !EditorState.playing
                      && modelData.id.length > 0
                      && (Theme.touchUi ? selected : hovered)
             onClicked: inspector.pickPreset(modelData.id)

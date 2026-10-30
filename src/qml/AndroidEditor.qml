@@ -9,12 +9,11 @@ Item {
 
     signal backRequested()
 
-    property string sheetKind: "" // "" | "assets" | "properties"
+    property string sheetKind: "" // "" | "assets"
 
     // How much of the window bottom a sheet that does not blank the editor is covering.
-    // The canvas sheet is hosted by the window, the properties sheet by this page.
+    // The canvas sheet is hosted by the window.
     readonly property real nonBlockingSheetHeight: Math.max(
-        (propertiesSheet.opened && !propertiesSheet.blocking) ? propertiesSheet.panelHeight : 0,
         (ShellBridge.main?.nonBlockingSheetHeight ?? 0),
         composer.coveredHeight,
         textEditBar.coveredHeight)
@@ -28,6 +27,115 @@ Item {
         previewFullscreen = false
     }
 
+    // A full-page tool is up. AndroidMain reads this so Back and the stack leave the editor alone.
+    readonly property bool toolPageOpen: toolPage.isOpen
+
+    // Opens the shared tool page with `source` (a Component, or a URL relative to
+    // AndroidToolPage.qml) as its controls. opts: see AndroidToolPage.qml. Returns false when a
+    // page is already open.
+    function openToolPage(source, opts) {
+        composer.close()
+        preview.textEditor.commit()
+        closeSheets()
+        return toolPage.open(Object.assign({}, opts || {}, { source: source }))
+    }
+
+    // Full-page tools. Add an entry here when a page lands: `url` is relative to
+    // components/android/AndroidToolPage.qml. addPage: the page adds its own clip, so no
+    // selection is passed in. needsClip: act on the selected clip, else the one under the playhead.
+    readonly property var toolSpecs: ({
+        "filters": { url: "pages/AndroidFiltersPage.qml", title: qsTr("Effects"), editLabel: qsTr("Effects"),
+                     showRangeBar: true, needsClip: true },
+        "adjust": { url: "pages/AndroidAdjustPage.qml", title: qsTr("Adjust"), editLabel: qsTr("Adjust"),
+                    showRangeBar: true, needsClip: true },
+        "audio": { url: "pages/AndroidVolumePage.qml", title: qsTr("Volume"), editLabel: qsTr("Volume"),
+                   showRangeBar: true, needsClip: true },
+        "speed": { url: "pages/AndroidSpeedPage.qml", title: qsTr("Speed"), editLabel: qsTr("Speed"),
+                   showRangeBar: true, needsClip: true },
+        "transform": { url: "pages/AndroidTransformPage.qml", title: qsTr("Transform"), editLabel: qsTr("Transform"),
+                       showRangeBar: true, needsClip: true },
+        "crop": { url: "pages/AndroidCropPage.qml", title: qsTr("Crop"), editLabel: qsTr("Crop"),
+                  showRangeBar: false, needsClip: false },
+        "background": { url: "pages/AndroidBackgroundPage.qml", title: qsTr("Background"),
+                        editLabel: qsTr("Background"), showRangeBar: false, needsClip: false },
+        "sticker": { url: "pages/AndroidStickerPage.qml", title: qsTr("Sticker"),
+                     editLabel: qsTr("Add sticker"), showRangeBar: true, addPage: true },
+        "shape": { url: "pages/AndroidShapePage.qml", title: qsTr("Shape"),
+                   editLabel: qsTr("Add shape"), showRangeBar: true, addPage: true },
+        "text": { url: "pages/AndroidTextPage.qml", title: qsTr("Text"),
+                  editLabel: qsTr("Add text"), showRangeBar: true, addPage: true },
+        "textStyle": { url: "pages/AndroidTextStylePage.qml", title: qsTr("Text style"),
+                       editLabel: qsTr("Text style"), showRangeBar: true, needsClip: true },
+        "textSettings": { url: "pages/AndroidTextSettingsPage.qml", title: qsTr("Text settings"),
+                          editLabel: qsTr("Text settings"), showRangeBar: false, needsClip: true },
+        "textAnim": { url: "pages/AndroidTextAnimationPage.qml", title: qsTr("Text animation"),
+                      editLabel: qsTr("Text animation"), showRangeBar: true, needsClip: true },
+        "animation": { url: "pages/AndroidAnimationPage.qml", title: qsTr("Animation"),
+                       editLabel: qsTr("Animation"), showRangeBar: true, needsClip: true },
+        "blending": { url: "pages/AndroidBlendingPage.qml", title: qsTr("Blending"),
+                      editLabel: qsTr("Blending"), showRangeBar: false, needsClip: true },
+        "shapeStyle": { url: "pages/AndroidShapeStylePage.qml", title: qsTr("Shape style"),
+                        editLabel: qsTr("Shape style"), showRangeBar: true, needsClip: true },
+        "stabilize": { url: "pages/AndroidStabilizePage.qml", title: qsTr("Stabilize"),
+                       editLabel: qsTr("Stabilize"), showRangeBar: true, needsClip: true },
+        "motion": { url: "pages/AndroidMotionPage.qml", title: qsTr("Motion"),
+                    editLabel: qsTr("Motion"), showRangeBar: true, needsClip: true },
+        "model3d": { url: "pages/AndroidModel3dPage.qml", title: qsTr("3D Model"),
+                     editLabel: qsTr("3D Model"), showRangeBar: true, needsClip: true },
+        "pdf": { url: "pages/AndroidPdfPage.qml", title: qsTr("PDF"),
+                 editLabel: qsTr("PDF"), showRangeBar: true, needsClip: true },
+        "camera": { url: "pages/AndroidCameraPage.qml", title: qsTr("Camera"),
+                    editLabel: qsTr("Camera"), showRangeBar: true, needsClip: true },
+        "maskEdit": { url: "pages/AndroidMaskEditPage.qml", title: qsTr("Mask"),
+                      editLabel: qsTr("Mask"), showRangeBar: true, needsClip: true },
+        "audioFxEdit": { url: "pages/AndroidAudioEffectsPage.qml", title: qsTr("Audio FX"),
+                         editLabel: qsTr("Audio FX"), showRangeBar: true, needsClip: true },
+        "transition": { url: "pages/AndroidTransitionPage.qml", title: qsTr("Transition"),
+                        editLabel: qsTr("Transition"), showRangeBar: false, needsClip: false },
+        "subtitles": { url: "pages/AndroidSubtitlesPage.qml", title: qsTr("Subtitles"),
+                       editLabel: qsTr("Subtitles"), showRangeBar: false, needsClip: true },
+        "details": { url: "pages/AndroidDetailsPage.qml", title: qsTr("Details"),
+                     editLabel: qsTr("Details"), showRangeBar: false, needsClip: true },
+        "mask": { url: "pages/AndroidMaskPage.qml", title: qsTr("Mask"),
+                  editLabel: qsTr("Add mask"), showRangeBar: true, addPage: true, needsClip: true }
+    })
+
+    // The selected clip, or the one under the playhead. False (with a hint) when there is none.
+    function ensureClipSelected() {
+        if (EditorState.selectedTrack < 0 || EditorState.selectedClip < 0)
+            EditorState.selectClipUnderPlayhead()
+        if (EditorState.selectedTrack >= 0 && EditorState.selectedClip >= 0)
+            return true
+        Toasts.info(qsTr("Tap a clip to edit it"))
+        return false
+    }
+
+    function openTool(toolId, props) {
+        const spec = root.toolSpecs[toolId]
+        if (!spec)
+            return false
+        if (spec.needsClip && !root.ensureClipSelected())
+            return false
+        return root.openToolPage(spec.url, {
+            title: spec.title,
+            editLabel: spec.editLabel,
+            showRangeBar: spec.showRangeBar,
+            previewFraction: spec.addPage ? 0.4 : undefined,
+            trackIndex: spec.addPage ? -1 : undefined,
+            clipIndex: spec.addPage ? -1 : undefined,
+            props: props
+        })
+    }
+
+    function openExport(audioOnly) {
+        composer.close()
+        closeSheets()
+        if (audioOnly)
+            exportDialog.openAudioOnly()
+        else
+            exportDialog.openDialog()
+    }
+
     readonly property var projectFilter: [qsTr("Drift project (*.drift)")]
 
     function openAssetsTab(tabId) {
@@ -39,8 +147,6 @@ Item {
         assetsSheet.title = assetsPanel.tabLabel(tabId)
         if (!assetsSheet.opened)
             assetsSheet.open()
-        if (propertiesSheet.opened)
-            propertiesSheet.dismiss()
     }
 
     // The rail's [+]. Clears whatever sheet is up first: the add menu is a step on
@@ -53,21 +159,8 @@ Item {
         rail.activeId = ""
         if (assetsSheet.opened)
             assetsSheet.dismiss()
-        if (propertiesSheet.opened)
-            propertiesSheet.dismiss()
         if (!addMenu.opened)
             addMenu.open()
-    }
-
-    function openPropertiesSheet() {
-        composer.close()
-        preview.textEditor.commit()
-        sheetKind = "properties"
-        rail.activeId = "edit"
-        if (!propertiesSheet.opened)
-            propertiesSheet.open()
-        if (assetsSheet.opened)
-            assetsSheet.dismiss()
     }
 
     // The toolbar's fourth slot. Clears the browsers first: the sheet is a peer of them,
@@ -77,8 +170,6 @@ Item {
         preview.textEditor.commit()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
-        if (propertiesSheet.opened)
-            propertiesSheet.dismiss()
         if (fadeSheet.opened)
             fadeSheet.dismiss()
         if (!moreToolsSheet.opened)
@@ -90,8 +181,6 @@ Item {
         preview.textEditor.commit()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
-        if (propertiesSheet.opened)
-            propertiesSheet.dismiss()
         if (moreToolsSheet.opened)
             moreToolsSheet.dismiss()
         if (!fadeSheet.opened)
@@ -103,8 +192,6 @@ Item {
         preview.textEditor.commit()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
-        if (propertiesSheet.opened)
-            propertiesSheet.dismiss()
         if (moreToolsSheet.opened)
             moreToolsSheet.dismiss()
         if (fadeSheet.opened)
@@ -142,8 +229,6 @@ Item {
             fadeSheet.dismiss()
         if (assetsSheet.opened)
             assetsSheet.dismiss()
-        if (propertiesSheet.opened)
-            propertiesSheet.dismiss()
     }
 
     // Android Back, delegated from AndroidMain. Returns true when it consumed the press,
@@ -191,16 +276,20 @@ Item {
             addMenu.dismiss()
             return true
         }
-        if (assetsSheet.opened || propertiesSheet.opened) {
+        if (assetsSheet.opened) {
             root.closeSheets()
             return true
         }
-        if (EditorState.preview.canvasCropMode) {
+        if (EditorState.preview.canvasCropMode && !toolPage.isOpen) {
             EditorState.preview.canvasCropMode = false
             return true
         }
         if (root.previewFullscreen) {
             root.exitPreviewFullscreen()
+            return true
+        }
+        if (toolPage.isOpen) {
+            toolPage.cancel()
             return true
         }
         return false
@@ -272,9 +361,7 @@ Item {
             ShellBridge.main.openLayoutChooser()
             break
         case "crop":
-            // The overlay carries its own Cancel/Apply, and the preview goes
-            // fullscreen for it, so this only has to start the mode.
-            EditorState.preview.canvasCropMode = true
+            root.openTool("crop", { mode: "video" })
             break
         case "properties":
             ShellBridge.main.openProjectProperties()
@@ -470,7 +557,7 @@ Item {
                         id: timeline
                         anchors.fill: parent
                         onOpenMediaRequested: root.openAssetsTab("media")
-                        onOpenPropertiesRequested: root.openPropertiesSheet()
+                        onOpenPropertiesRequested: root.openTool("details")
                         onSubtitleCueTapped: index => root.openCueComposer(index)
                     }
 
@@ -532,17 +619,30 @@ Item {
             width: parent.width
             visible: !root.previewFullscreen
             onTabRequested: (tabId) => root.openAssetsTab(tabId)
-            onEditRequested: root.openPropertiesSheet()
+            onToolRequested: (toolId, props) => root.openTool(toolId, props)
+            onEditTextRequested: root.startInlineTextEdit(EditorState.selectedTrack,
+                                                          EditorState.selectedClip, false)
             onAddRequested: root.openAddMenu()
         }
+    }
+
+    AndroidToolPage {
+        id: toolPage
+        anchors.fill: parent
+        previewItem: preview
+        previewHome: editorSplit
+        previewHomeBefore: timelinePane
     }
 
     AndroidAddMenu {
         id: addMenu
         // A transform layer is added straight away; everything else opens its assets tab.
         onPicked: (tabId) => {
+            const addPages = { "stickers": "sticker", "shapes": "shape", "text": "text", "masks": "mask" }
             if (tabId === "transformLayer")
                 EditorState.addTransformLayerForSelection()
+            else if (addPages[tabId] !== undefined)
+                root.openTool(addPages[tabId])
             else
                 root.openAssetsTab(tabId)
         }
@@ -610,34 +710,6 @@ Item {
         }
     }
 
-    AndroidBottomSheet {
-        id: propertiesSheet
-        title: qsTr("Edit")
-        doneText: qsTr("Done")
-        // Edits here land on the timeline as they are made, so the sheet has to let you
-        // watch them: playback keeps running and the preview stays scrubbable behind it.
-        // The 0.64 detent this used to carry is gone with it — the common edits moved to
-        // the clip toolbar, so it no longer has to open on "barely two properties".
-        blocking: false
-        onDoneRequested: root.closeSheets()
-        onClosed: {
-            if (sheetKind === "properties") {
-                sheetKind = ""
-                if (rail.activeId === "edit")
-                    rail.activeId = ""
-            }
-        }
-
-        PropertiesPanel {
-            id: propertiesPanel
-            anchors.fill: parent
-            sheetMode: true
-            onBrowseEffectsRequested: root.openAssetsTab("effects")
-            onBrowseAudioEffectsRequested: root.openAssetsTab("sounds")
-            onCueEditRequested: index => root.openCueComposer(index)
-        }
-    }
-
     AndroidTextComposer {
         id: composer
         anchors.left: parent.left
@@ -646,7 +718,7 @@ Item {
         anchors.leftMargin: root.SafeArea.margins.left
         anchors.rightMargin: root.SafeArea.margins.right
         anchors.bottomMargin: Math.max(root.SafeArea.margins.bottom, Theme.keyboardInset)
-        z: 10
+        z: 101
     }
 
     // Only the buttons: the text is edited on the preview itself, which stays visible above this.
@@ -660,7 +732,7 @@ Item {
         anchors.leftMargin: root.SafeArea.margins.left
         anchors.rightMargin: root.SafeArea.margins.right
         anchors.bottomMargin: Math.max(root.SafeArea.margins.bottom, Theme.keyboardInset)
-        z: 10
+        z: 101
     }
 
     ExportDialog {
@@ -714,6 +786,9 @@ Item {
     Connections {
         target: EditorState.preview
         function onCanvasCropModeChanged() {
+            // The crop page hosts the preview itself; fullscreen would take it back.
+            if (toolPage.isOpen)
+                return
             if (EditorState.preview.canvasCropMode)
                 root.closeSheets()
             root.previewFullscreen = EditorState.preview.canvasCropMode

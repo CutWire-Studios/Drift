@@ -867,6 +867,11 @@ void PlaybackEngine::checkEndOfTimeline(drift::TimeUs timeUs)
 
     drift::TimeUs loopIn = 0;
     drift::TimeUs loopOut = 0;
+    if (hasPreviewRange()) {
+        if (timeUs >= m_previewRangeEndUs)
+            setPlayheadUs(m_previewRangeStartUs);
+        return;
+    }
     if (shouldLoopWorkArea(&loopIn, &loopOut)) {
         if (timeUs >= loopOut) {
             setPlayheadUs(loopIn);

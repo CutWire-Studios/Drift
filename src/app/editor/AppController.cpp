@@ -105,6 +105,7 @@
 #include <QCryptographicHash>
 #include <QCursor>
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
@@ -5695,7 +5696,10 @@ void AppController::setPlaying(bool playing)
     m_playing = playing;
     if (m_playing) {
         const drift::TimeUs durationUs = m_project.durationUs();
-        if (m_loopWorkAreaEnabled && m_project.hasWorkArea()) {
+        if (m_playback.hasPreviewRange()) {
+            if (m_playheadUs >= m_playback.previewRangeEndUs() || m_playheadUs < m_playback.previewRangeStartUs())
+                setPlayheadUs(m_playback.previewRangeStartUs());
+        } else if (m_loopWorkAreaEnabled && m_project.hasWorkArea()) {
             const drift::TimeUs loopIn = m_project.workAreaInUs();
             const drift::TimeUs loopOut = m_project.workAreaOutUs();
             if (m_playheadUs >= loopOut || m_playheadUs < loopIn)
@@ -7364,6 +7368,19 @@ void AppController::selectClipUnderPlayhead()
             }
         }
     }
+}
+
+QVariantList AppController::locateClip(const QString &clipId) const
+{
+    const QList<drift::Track> &tracks = m_project.tracks();
+    for (int t = 0; t < tracks.size(); ++t) {
+        const QList<drift::Clip> &clips = tracks.at(t).clips;
+        for (int c = 0; c < clips.size(); ++c) {
+            if (clips.at(c).id == clipId)
+                return {t, c};
+        }
+    }
+    return {};
 }
 
 void AppController::addToSelection(int trackIndex, int clipIndex)
@@ -11756,13 +11773,14 @@ void AppController::beginEditGroup()
     m_mcpController->beginBatch();
 }
 
-void AppController::endEditGroup(const QString &undoText)
+bool AppController::endEditGroup(const QString &undoText)
 {
     if (m_editGroupRevision < 0)
-        return;
+        return false;
     const bool changed = m_mcpController->revision() != m_editGroupRevision;
     m_editGroupRevision = -1;
     m_mcpController->endBatch(undoText.isEmpty() ? tr("Edit value") : undoText, changed);
+    return changed;
 }
 
 void AppController::cancelPreviewDrag()
@@ -20292,6 +20310,38 @@ QString AppController::newFreezeFramePath(const QString &projectId)
                                   .arg(QUuid::createUuid().toString(QUuid::WithoutBraces)));
 }
 
+void AppController::previewClipRange(int trackIndex, int clipIndex)
+{
+    if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
+        return;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    if (clipIndex < 0 || clipIndex >= track.clips.size())
+        return;
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    const drift::TimeUs startUs = clip.timelineStart;
+    const drift::TimeUs endUs = clip.timelineStart + clip.timelineDuration;
+    m_playback.setPreviewRange(startUs, endUs);
+    if (m_playheadUs < startUs || m_playheadUs >= endUs)
+        setPlayheadUs(startUs);
+}
+
+void AppController::clearPreviewRange()
+{
+    m_playback.clearPreviewRange();
+}
+
+QVariantMap AppController::clipTimelineRange(int track, int clip) const
+{
+    if (track < 0 || track >= m_project.tracks().size())
+        return {};
+    const drift::Track &t = m_project.tracks().at(track);
+    if (clip < 0 || clip >= t.clips.size())
+        return {};
+    const drift::Clip &c = t.clips.at(clip);
+    return {{QStringLiteral("startSeconds"), drift::usToSeconds(c.timelineStart)},
+            {QStringLiteral("endSeconds"), drift::usToSeconds(c.timelineStart + c.timelineDuration)}};
+}
+
 void AppController::freezeFrameAtPlayhead()
 {
     if (!m_assetLibrary)
@@ -22143,6 +22193,8 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
         // On the worker: probing a disconnected network share can block for many seconds.
         error = exportTargetProblem(outputUrl, outputPath);
         bool ok = error.isEmpty() && Exporter::run(snapshot, exportSettings, outputPath, &error, report);
+        // Before the commit: on Android the staged file is gone once it has been streamed out.
+        const qint64 sizeBytes = ok ? QFileInfo(outputPath).size() : 0;
         // Android: the encoder needs a real file, and the document the user picked is only
         // reachable through the resolver, so the finished encode is streamed into it — the bar
         // runs a second time for that, and cancel still lands.
@@ -22162,11 +22214,33 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
         if (!ok)
             discardWriteTarget(outputPath, outputUrl, disposable);
 
+        QString thumbnail;
+        if (ok) {
+            const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+            const QString hash =
+                QString::fromLatin1(QCryptographicHash::hash(outputUrl.toString().toUtf8(),
+                                                             QCryptographicHash::Sha1).toHex().left(16));
+            const QString thumbPath = QDir(base).filePath(QStringLiteral("thumbs/export-%1.jpg").arg(hash));
+            FrameCompositor compositor;
+            compositor.setProject(&snapshot);
+            QImage frame = compositor.compositeAt(0);
+            if (!frame.isNull()) {
+                if (frame.width() > 320)
+                    frame = frame.scaledToWidth(320, Qt::SmoothTransformation);
+                QDir().mkpath(QFileInfo(thumbPath).absolutePath());
+                if (frame.convertToFormat(QImage::Format_RGB32).save(thumbPath, "JPEG", 85))
+                    thumbnail = thumbPath;
+            }
+        }
+        const double durationSeconds = drift::usToSeconds(snapshot.durationUs());
+
         QMetaObject::invokeMethod(
             this,
-            [this, ok, error, outputUrl]() {
+            [this, ok, error, outputUrl, sizeBytes, thumbnail, durationSeconds]() {
                 m_exportInProgress = false;
                 m_exportProgress = ok ? 1.0 : 0.0;
+                if (ok)
+                    recordExport(outputUrl, durationSeconds, sizeBytes, thumbnail);
 #ifdef Q_OS_ANDROID
                 m_lastExportUrl = ok ? outputUrl : QUrl();
                 m_lastExportName = ok ? exportDisplayName(outputUrl) : QString();
@@ -22188,6 +22262,128 @@ void AppController::exportWithSettings(const QUrl &outputUrl, const QVariantMap 
             },
             Qt::QueuedConnection);
     });
+}
+
+void AppController::recordExport(const QUrl &url, double durationSeconds, qint64 sizeBytes,
+                                 const QString &thumbnail)
+{
+    const QString uri = url.toString();
+    const QString name = exportDisplayName(url);
+    QSettings settings;
+    QVariantList history = settings.value(QStringLiteral("exports/history")).toList();
+    for (qsizetype i = history.size() - 1; i >= 0; --i) {
+        if (history.at(i).toMap().value(QStringLiteral("uri")).toString() == uri)
+            history.removeAt(i);
+    }
+    history.prepend(QVariantMap{
+        {QStringLiteral("uri"), uri},
+        {QStringLiteral("name"), name},
+        {QStringLiteral("created"), QDateTime::currentDateTime().toString(Qt::ISODate)},
+        {QStringLiteral("durationSeconds"), durationSeconds},
+        {QStringLiteral("sizeBytes"), sizeBytes},
+        {QStringLiteral("mime"),
+         QMimeDatabase().mimeTypeForFile(name, QMimeDatabase::MatchExtension).name()},
+        {QStringLiteral("thumbnail"), thumbnail.isEmpty() ? QString() : QUrl::fromLocalFile(thumbnail).toString()},
+    });
+    while (history.size() > 100)
+        history.removeLast();
+    settings.setValue(QStringLiteral("exports/history"), history);
+    emit exportHistoryChanged();
+}
+
+QVariantList AppController::exportHistory() const
+{
+    const QVariantList history = QSettings().value(QStringLiteral("exports/history")).toList();
+    QVariantList out;
+    for (const QVariant &entry : history) {
+        QVariantMap map = entry.toMap();
+        const QUrl url(map.value(QStringLiteral("uri")).toString());
+        bool exists;
+#ifdef Q_OS_ANDROID
+        if (AndroidUri::isContentUri(url))
+            exists = AndroidUri::openForRead(url) != nullptr;
+        else
+#endif
+            exists = QFileInfo::exists(url.toLocalFile());
+        if (!exists)
+            continue;
+        const QString thumb = QUrl(map.value(QStringLiteral("thumbnail")).toString()).toLocalFile();
+        if (!thumb.isEmpty() && !QFileInfo::exists(thumb))
+            map.insert(QStringLiteral("thumbnail"), QString());
+        out.append(map);
+    }
+    return out;
+}
+
+void AppController::removeExport(const QString &uri)
+{
+    QSettings settings;
+    QVariantList history = settings.value(QStringLiteral("exports/history")).toList();
+    bool removed = false;
+    for (qsizetype i = history.size() - 1; i >= 0; --i) {
+        const QVariantMap map = history.at(i).toMap();
+        if (map.value(QStringLiteral("uri")).toString() != uri)
+            continue;
+        const QString thumb = QUrl(map.value(QStringLiteral("thumbnail")).toString()).toLocalFile();
+        if (!thumb.isEmpty())
+            QFile::remove(thumb);
+        history.removeAt(i);
+        removed = true;
+    }
+    if (!removed)
+        return;
+    settings.setValue(QStringLiteral("exports/history"), history);
+    emit exportHistoryChanged();
+}
+
+void AppController::openExportedFile(const QString &uri, bool share)
+{
+    const QUrl source(uri);
+    if (source.isEmpty())
+        return;
+#ifdef Q_OS_ANDROID
+    if (m_sharingExport)
+        return;
+    m_sharingExport = true;
+    emit canShareExportChanged();
+    setLastMessage(share ? tr("Getting your video ready to share…") : tr("Opening your video…"));
+
+    const QString name = exportDisplayName(source);
+    (void)QtConcurrent::run([this, source, name, share]() {
+        Exporter::BackgroundHold hold(QStringLiteral("Preparing to share"));
+        QString error;
+        const QUrl published = Exporter::publishToGallery(source, name, &error);
+        QMetaObject::invokeMethod(
+            this,
+            [this, published, error, share]() {
+                m_sharingExport = false;
+                emit canShareExportChanged();
+                if (published.isEmpty()) {
+                    setLastMessage(error, QStringLiteral("error"));
+                    return;
+                }
+                const bool opened = share ? FileDialogs().shareFile(published) : FileDialogs().viewFile(published);
+                if (!opened)
+                    setLastMessage(share ? tr("Nothing on this device can share that file")
+                                         : tr("Nothing on this device can play that file"),
+                                   QStringLiteral("error"));
+            },
+            Qt::QueuedConnection);
+    });
+#else
+    if (!share)
+        QDesktopServices::openUrl(source);
+#endif
+}
+
+void AppController::shareFile(const QString &uri)
+{
+    openExportedFile(uri, true);
+}
+
+void AppController::viewFile(const QString &uri)
+{
+    openExportedFile(uri, false);
 }
 
 bool AppController::canShareExport() const

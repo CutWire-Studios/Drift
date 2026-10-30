@@ -44,6 +44,8 @@ class PreviewController : public QObject
     // Library set whose guides are being dragged on the preview; empty when not editing.
     Q_PROPERTY(QString guideEditSetId READ guideEditSetId WRITE setGuideEditSetId NOTIFY guideEditSetIdChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
+    // Phone crop page: the selected clip's source frame is edited on the preview. Exclusive with canvasCropMode.
+    Q_PROPERTY(bool clipCropMode READ clipCropMode WRITE setClipCropMode NOTIFY clipCropModeChanged)
     Q_PROPERTY(QString maskViewMode READ maskViewMode WRITE setMaskViewMode NOTIFY maskViewModeChanged)
     // The masking workspace's drawing tool: "" (none), "rect", "ellipse", "polygon", "brush", "ai"
     // or "tracker". Session state, like the rest of this class.
@@ -53,7 +55,7 @@ class PreviewController : public QObject
     // itself a request to edit it, so the toggle is only needed to keep the handles up while some
     // *other* clip is selected.
     Q_PROPERTY(bool maskEditActive READ maskEditActive NOTIFY maskEditActiveChanged)
-    // The one tool that owns the preview's pointer: "crop", "guideEdit", "maskDraw", "maskBrush",
+    // The one tool that owns the preview's pointer: "crop", "clipCrop", "guideEdit", "maskDraw", "maskBrush",
     // "maskAi", "tracker", "mask" or "transform", in that order of precedence. The masking tools
     // and the mask editor are 2D tools, so 3D falls through to "transform".
     Q_PROPERTY(QString activeTool READ activeTool NOTIFY activeToolChanged)
@@ -86,6 +88,8 @@ public:
     void setGuideEditSetId(const QString &id);
     bool canvasCropMode() const { return m_canvasCropMode; }
     void setCanvasCropMode(bool active);
+    bool clipCropMode() const { return m_clipCropMode; }
+    void setClipCropMode(bool active);
     QString maskViewMode() const { return m_maskViewMode; }
     void setMaskViewMode(const QString &mode);
     bool maskEditMode() const { return m_maskEditMode; }
@@ -222,6 +226,7 @@ signals:
     void guidesEnabledChanged();
     void guideEditSetIdChanged();
     void canvasCropModeChanged();
+    void clipCropModeChanged();
     void maskEditModeChanged();
     void maskViewModeChanged();
     void maskingToolChanged();
@@ -272,6 +277,7 @@ private:
     bool m_guidesEnabled = false;
     QString m_guideEditSetId;
     bool m_canvasCropMode = false;
+    bool m_clipCropMode = false;
     bool m_maskEditMode = false;
     QString m_maskViewMode = QStringLiteral("off");
     QString m_maskingTool;

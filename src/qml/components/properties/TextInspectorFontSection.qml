@@ -5,11 +5,12 @@ CollapsibleSection {
     id: root
     property var inspector
     width: parent.width
-    title: qsTr("Font")
+    title: inspector.mode === "settings" ? qsTr("Alignment") : qsTr("Font")
     collapsible: false
     visible: inspector.hasTextStyle
 
     Text {
+        visible: inspector.mode !== "settings"
         text: qsTr("Font")
         SearchAnchor {
             searchId: "text-font"
@@ -22,12 +23,14 @@ CollapsibleSection {
     }
 
     FontPicker {
+        visible: inspector.mode !== "settings"
         width: parent.width
         family: inspector.textStyle.fontFamily
         onFamilyPicked: family => inspector.setTextStyleKey("fontFamily", family)
     }
 
     Row {
+        visible: inspector.mode !== "settings"
         width: parent.width
         spacing: 8
 
@@ -62,6 +65,7 @@ CollapsibleSection {
     }
 
     Row {
+        visible: inspector.mode !== "settings"
         width: parent.width
         spacing: 8
 
@@ -133,6 +137,7 @@ CollapsibleSection {
     }
 
     Row {
+        visible: inspector.mode !== "style"
         width: parent.width
         spacing: Theme.spacingMd
 

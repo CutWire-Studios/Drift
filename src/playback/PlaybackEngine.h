@@ -78,6 +78,17 @@ public:
     void setLoopWorkArea(bool enabled) { m_loopWorkArea = enabled; }
     bool loopWorkArea() const { return m_loopWorkArea; }
 
+    // Loops playback inside [startUs, endUs) and beats the work-area loop while set.
+    void setPreviewRange(drift::TimeUs startUs, drift::TimeUs endUs)
+    {
+        m_previewRangeStartUs = startUs;
+        m_previewRangeEndUs = endUs;
+    }
+    void clearPreviewRange() { m_previewRangeStartUs = m_previewRangeEndUs = 0; }
+    bool hasPreviewRange() const { return m_previewRangeEndUs > m_previewRangeStartUs; }
+    drift::TimeUs previewRangeStartUs() const { return m_previewRangeStartUs; }
+    drift::TimeUs previewRangeEndUs() const { return m_previewRangeEndUs; }
+
     void setVoiceoverRecording(bool rec) { m_voiceoverRecording = rec; }
     bool isVoiceoverRecording() const { return m_voiceoverRecording; }
 
@@ -291,6 +302,8 @@ private:
     // samples in — not necessarily the project's rate, since the device has the final say.
     int m_sampleRate = 48000;
     bool m_loopWorkArea = false;
+    drift::TimeUs m_previewRangeStartUs = 0;
+    drift::TimeUs m_previewRangeEndUs = 0;
     bool m_voiceoverRecording = false;
     // processedUSecs() is cumulative from QAudioSink::start(), not from the last clock reset.
     // This is where the current stream's first sample sits in the sink's output, captured on the

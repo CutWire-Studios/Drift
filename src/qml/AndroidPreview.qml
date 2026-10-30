@@ -17,6 +17,8 @@ Item {
 
     // Typing on the clip itself: the compositor draws the text and caret, a hidden field takes input.
     readonly property alias textEditor: viewport.textEditor
+    // The tool overlay on the preview now, for pages that drive it (the crop page).
+    readonly property alias toolHost: viewport.toolHost
 
     // PointerHandlers (clip DragHandler, view pinch) hit-test their parent's
     // bounds, not z-order. A sheet in Overlay is visually on top of this preview
@@ -109,7 +111,8 @@ Item {
                 toolHost.tools: ({
                     transform: transformTool,
                     mask: maskTool,
-                    crop: cropTool
+                    crop: cropTool,
+                    clipCrop: clipCropTool
                 })
                 toolHost.companion: dropCompanion
                 toolHost.companionTools: ["transform", "mask"]
@@ -250,6 +253,11 @@ Item {
         AndroidCropOverlay {
             previewCanvas: viewport.canvas
         }
+    }
+
+    Component {
+        id: clipCropTool
+        AndroidClipCropOverlay { }
     }
 
     // Lifted asset cards can be dropped on the preview as well as on the timeline: overlays land

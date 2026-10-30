@@ -243,6 +243,7 @@ private:
     void rememberEmbeddedSources(const QList<drift::bundle::MediaEntry> &media);
     void reportMissingAddons(const QList<drift::bundle::AddonRef> &addons);
     void addRecentProject(const QString &path);
+    void queueSaveThumbnail(const QString &location);
     // Off the GUI thread unless `synchronous` (quitting), which waits out any write in flight.
     void writeRecoveryFile(bool synchronous = false);
     void deleteRecoveryFile();

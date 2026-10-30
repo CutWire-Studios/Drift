@@ -33,6 +33,28 @@ Item {
 
     property bool didResize: false
 
+    // Locked w / h of the frame; 0 leaves it free. Read by the grips.
+    property real aspect: 0
+    // The phone crop page owns Apply/Cancel and the readout, so the overlay shows only the frame.
+    property bool hostedByPage: false
+
+    function gripReleased() {
+    }
+
+    // The frame is re-fitted to the ratio about its centre, within the canvas-sized area at most.
+    onAspectChanged: {
+        if (aspect <= 0)
+            return
+        const cx = cropX + cropW / 2
+        const cy = cropY + cropH / 2
+        let w = Math.min(cropW, cropH * aspect)
+        let h = w / aspect
+        cropW = w
+        cropH = h
+        cropX = cx - w / 2
+        cropY = cy - h / 2
+    }
+
     readonly property bool changed: outW !== projW || outH !== projH
                                     || Math.round(cropX) !== 0 || Math.round(cropY) !== 0
 
@@ -43,9 +65,13 @@ Item {
         cropH = projH
     }
 
-    function apply() {
+    function commit() {
         if (changed)
             EditorState.applyCanvasCrop(cropX, cropY, cropW, cropH)
+    }
+
+    function apply() {
+        commit()
         EditorState.preview.canvasCropMode = false
     }
 
@@ -90,6 +116,7 @@ Item {
     }
 
     AndroidCropHint {
+        visible: !root.hostedByPage
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Theme.spacingLg
@@ -99,6 +126,7 @@ Item {
     // Readout + commit. Pinned to the bottom of the viewport rather than to the
     // frame: at a small crop the frame-following row landed under a fingertip.
     Row {
+        visible: !root.hostedByPage
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: Theme.spacingMd

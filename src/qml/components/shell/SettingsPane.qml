@@ -15,6 +15,9 @@ Item {
     id: root
 
     property string currentPage: "general"
+    // The phone shell has no workspaces, timeline toolbar or keyboard to configure.
+    property bool mobile: false
+    readonly property var mobileHiddenPages: ["workspaces", "toolbar", "keymap"]
     readonly property string query: searchField.text.trim().toLowerCase()
     readonly property bool narrow: width < 640
     readonly property real sidebarWidth: 220
@@ -36,10 +39,12 @@ Item {
         { id: "about", title: qsTr("About"), keywords: "version updates debug info diagnostics" }
     ]
     readonly property var visiblePages: pages.filter(
-        (page) => page.id !== "marketplace" || (Market.configured && Market.authenticated))
+        (page) => (page.id !== "marketplace" || (Market.configured && Market.authenticated))
+            && !(mobile && mobileHiddenPages.includes(page.id)))
 
     readonly property bool searchHasMatches: generalPage.hasMatches || appearancePage.hasMatches
-        || workspacesPage.hasMatches        || timelinePage.hasMatches || toolbarPage.hasMatches || keymapPage.hasMatches
+        || (!mobile && (workspacesPage.hasMatches || toolbarPage.hasMatches || keymapPage.hasMatches))
+        || timelinePage.hasMatches
         || previewPage.hasMatches || performancePage.hasMatches || audioPage.hasMatches || aiPage.hasMatches
         || networkPage.hasMatches || marketplacePage.hasMatches || aboutPage.hasMatches
 
@@ -179,7 +184,7 @@ Item {
             SettingsWorkspacesPage {
                 id: workspacesPage
                 query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+                visible: !root.mobile && (root.query.length > 0 ? hasMatches : pageId === root.currentPage)
             }
 
             SettingsTimelinePage {
@@ -191,13 +196,13 @@ Item {
             SettingsToolbarPage {
                 id: toolbarPage
                 query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+                visible: !root.mobile && (root.query.length > 0 ? hasMatches : pageId === root.currentPage)
             }
 
             SettingsKeymapPage {
                 id: keymapPage
                 query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+                visible: !root.mobile && (root.query.length > 0 ? hasMatches : pageId === root.currentPage)
             }
 
             SettingsPreviewPage {
