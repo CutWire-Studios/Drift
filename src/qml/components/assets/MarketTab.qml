@@ -2,8 +2,7 @@ import QtQuick
 import Drift
 // The Market: one search field, then text tabs, Drift Assets and sound effects first and the
 // stock types from the marketplace catalog after them. Drift Assets and sound effects are
-// CutWire's own and free, so they need no opt-in; the consent gate stands in front of the stock
-// tabs only, which is where the quotas and third-party terms it explains actually apply.
+// CutWire's own and free.
 Item {
     id: root
 
@@ -17,9 +16,9 @@ Item {
 
     readonly property string query: field.text.trim()
     readonly property real sidePadding: compact ? Theme.androidPagePadding : Theme.pagePadding
-    // Until the catalog is in (no consent yet, still loading, or unreachable) the stock tabs
-    // collapse into one that leads to the consent panel or the loading and error states.
-    readonly property var stockTabs: Market.consented && Market.types.length > 0
+    // Until the catalog is in (still loading, or unreachable) the stock tabs collapse into one
+    // that leads to the loading and error states.
+    readonly property var stockTabs: Market.types.length > 0
                                      ? Market.types
                                      : [{ id: "stock", label: qsTr("Stock") }]
 
@@ -40,10 +39,6 @@ Item {
 
     // A search that the pack could not answer, carried over to stock footage.
     function searchStock(typeId) {
-        if (!Market.consented) {
-            root.showSection("stock")
-            return
-        }
         // Switching type already starts a search with the field's text; only an unchanged type
         // needs asking.
         const sameType = Market.activeTypeId === typeId
@@ -53,7 +48,7 @@ Item {
     }
 
     // Market.types is not persisted, and StockBrowser can't ask for it: it only shows once the
-    // types are there. Without this, consent from an earlier run leaves no stock tabs at all.
+    // types are there. Without this, a fresh run leaves no stock tabs at all.
     onVisibleChanged: ensureCatalog()
     Component.onCompleted: ensureCatalog()
     function ensureCatalog() {
@@ -61,8 +56,6 @@ Item {
             return
         if (!Sfx.loaded && !Sfx.loading)
             Sfx.refresh()
-        if (!Market.consented)
-            return
         if (Market.types.length === 0 && !Market.catalogLoading)
             Market.refreshCatalog()
     }
@@ -72,10 +65,6 @@ Item {
         function onActiveTypeIdChanged() {
             if (root.stockSection && Market.activeTypeId)
                 root.section = Market.activeTypeId
-        }
-        function onConsentedChanged() {
-            if (Market.consented && root.section === "stock")
-                root.section = Market.activeTypeId || "stock"
         }
     }
 
@@ -115,7 +104,7 @@ Item {
                                ? qsTr("Search sound effects")
                                : (Market.canResolve ? qsTr("Search, or paste a link") : qsTr("Search"))
             onSubmitted: {
-                if (root.stockSection && Market.consented)
+                if (root.stockSection)
                     stock.submitQuery()
             }
             onCancelRequested: Market.cancelSearch()
@@ -166,7 +155,7 @@ Item {
             visible: root.section === "assets"
             compact: root.compact
             query: root.section === "assets" ? root.query : ""
-            stockTypes: Market.consented && Market.types.length > 0
+            stockTypes: Market.types.length > 0
                         ? Market.types : [{ id: "stock", label: qsTr("Stock footage") }]
             onSearchStockRequested: (typeId) => root.searchStock(typeId)
         }
@@ -178,17 +167,10 @@ Item {
             query: root.section === "sfx" ? root.query : ""
         }
 
-        MarketConsentPanel {
-            anchors.fill: parent
-            visible: root.stockSection && !Market.consented
-            sideMargin: root.sidePadding
-            onAccepted: root.ensureCatalog()
-        }
-
         EmptyState {
             anchors.centerIn: parent
             width: parent.width
-            visible: root.stockSection && Market.consented && Market.catalogLoading
+            visible: root.stockSection && Market.catalogLoading
                      && Market.types.length === 0
             glyph: Theme.icons.spinner
             glyphSpinning: true
@@ -198,7 +180,7 @@ Item {
         EmptyState {
             anchors.centerIn: parent
             width: parent.width
-            visible: root.stockSection && Market.consented && !Market.catalogLoading
+            visible: root.stockSection && !Market.catalogLoading
                      && Market.catalogError.length > 0 && Market.types.length === 0
             glyph: Theme.icons.error
             title: qsTr("Couldn’t reach the marketplace")
@@ -211,7 +193,7 @@ Item {
         StockBrowser {
             id: stock
             anchors.fill: parent
-            visible: root.stockSection && Market.consented && Market.types.length > 0
+            visible: root.stockSection && Market.types.length > 0
             compact: root.compact
             query: root.query
         }

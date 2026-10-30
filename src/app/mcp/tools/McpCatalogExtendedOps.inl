@@ -1859,11 +1859,8 @@
           "Write the session as one combined program track and end it.",
           objectSchema({}) },
         { "market_status", "market", "Check the marketplace before searching it",
-          "Whether this build has a marketplace, whether the user has accepted its terms, the "
-          "account (if connected), and the catalog: types (video, photo, audio, …) with their "
-          "providers, each provider's capabilities (search, featured, resolve), filters and quota. "
-          "consented:false means every other market op will fail consent_required — the user "
-          "accepts in the app (Assets → Market); an agent cannot accept for them.",
+          "Whether this build has a marketplace and the catalog: types (video, photo, audio, …) with their "
+          "providers, each provider's capabilities (search, featured, resolve), filters and quota.",
           objectSchema({}), true, false, true },
         { "market_search", "market", "Find stock video, photos or audio to import",
           "Search one provider of one type and return up to `limit` listings as {id, title, type, "

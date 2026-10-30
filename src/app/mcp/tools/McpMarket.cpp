@@ -44,11 +44,6 @@ QJsonObject gate(MarketClient *client)
 {
     if (!client || !client->configured())
         return err("market_unavailable", QStringLiteral("This build has no marketplace service configured"));
-    if (!client->consented()) {
-        return err("consent_required",
-                   QStringLiteral("The user has not accepted the marketplace terms. They accept them in the "
-                                  "app (Assets → Market); an agent cannot accept on their behalf"));
-    }
     return {};
 }
 
@@ -197,16 +192,9 @@ bool jobFinished(const QVariantMap &info)
 
 QJsonObject marketStatus(MarketClient *client)
 {
-    QJsonObject out = ok({{QStringLiteral("configured"), client && client->configured()},
-                          {QStringLiteral("consented"), client && client->consented()}});
+    QJsonObject out = ok({{QStringLiteral("configured"), client && client->configured()}});
     if (!client || !client->configured()) {
         out.insert(QStringLiteral("hint"), QStringLiteral("This build has no marketplace service configured"));
-        return out;
-    }
-    if (!client->consented()) {
-        out.insert(QStringLiteral("hint"),
-                   QStringLiteral("The user must accept the marketplace terms in the app (Assets → Market) "
-                                  "before search or download work; an agent cannot accept for them"));
         return out;
     }
     out.insert(QStringLiteral("authenticated"), client->authenticated());

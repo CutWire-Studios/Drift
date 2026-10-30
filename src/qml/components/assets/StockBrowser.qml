@@ -117,7 +117,7 @@ Item {
     onVisibleChanged: ensureResults()
     Component.onCompleted: ensureResults()
     function ensureResults() {
-        if (!visible || !Market.configured || !Market.consented)
+        if (!visible || !Market.configured)
             return
         if (Market.types.length === 0 && !Market.catalogLoading)
             Market.refreshCatalog()

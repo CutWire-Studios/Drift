@@ -1299,7 +1299,7 @@ QString agentGuideText()
         "  not_found, type_mismatch (also: wrong clip kind for the op), unknown_op, unknown_toolbox,\n"
         "  wrong_endpoint, wrong_toolbox, apply_failed, import_failed, import_timeout, export_busy,\n"
         "  export_failed, export_timeout, capture_failed, conflict, unsupported (no vector renderer\n"
-        "  in this build), market_unavailable, consent_required, market_error, download_failed,\n"
+        "  in this build), market_unavailable, market_error, download_failed,\n"
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
@@ -1426,7 +1426,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"audio", "Waveforms, silence, loudness, ducking, beat detection, beat-synced cuts, clip volume."},
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
-        {"market", "Stock media from the Cutwire marketplace: search or resolve a link, download into the bin. Needs the user's one-time consent in the app; downloads spend a per-machine quota."},
+        {"market", "Stock media from the Cutwire marketplace: search or resolve a link, download into the bin. Downloads spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
         {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon)."},
     };

@@ -154,7 +154,7 @@ private slots:
     void applyRejectsWaveformImage();
     void toolboxEndpointAllowsFramesAndActivity();
     void listScenesExposesThumb();
-    void marketOpsGateOnConsent();
+    void marketOpsNeedConfiguredService();
     void marketSearchAndDownloadImportsAsset();
     void sceneOpsAcceptClipRef();
     void addEffectReportsHost();
@@ -6507,10 +6507,9 @@ public:
 
 } // namespace
 
-void McpTest::marketOpsGateOnConsent()
+void McpTest::marketOpsNeedConfiguredService()
 {
     QStandardPaths::setTestModeEnabled(true);
-    QSettings().remove(QStringLiteral("market/consented"));
     AssetLibrary library;
     AppController state(&library);
     drift::mcp::McpDispatcher dispatcher(&state);
@@ -6526,16 +6525,9 @@ void McpTest::marketOpsGateOnConsent()
     MarketClient client;
     client.setAssetLibrary(&library);
     state.setMarketClient(&client);
-    QVERIFY(!client.consented());
 
     reply = dispatcher.applyOne(QStringLiteral("market_status"), {});
     QVERIFY(reply.value(QStringLiteral("configured")).toBool());
-    QVERIFY(!reply.value(QStringLiteral("consented")).toBool());
-    QVERIFY(reply.value(QStringLiteral("hint")).toString().contains(QStringLiteral("accept")));
-    for (const char *op : {"market_search", "market_resolve", "market_item", "market_download"}) {
-        reply = dispatcher.applyOne(QLatin1String(op), {{QStringLiteral("id"), QStringLiteral("x")}, {QStringLiteral("url"), QStringLiteral("http://x")}, {QStringLiteral("q"), QStringLiteral("x")}});
-        QCOMPARE(reply.value(QStringLiteral("error")).toString(), QStringLiteral("consent_required"));
-    }
 }
 
 void McpTest::marketSearchAndDownloadImportsAsset()
@@ -6550,14 +6542,11 @@ void McpTest::marketSearchAndDownloadImportsAsset()
     AppController state(&library);
     MarketClient client;
     client.setAssetLibrary(&library);
-    client.acceptTerms();
     state.setMarketClient(&client);
-    QSettings().remove(QStringLiteral("market/consented"));
     drift::mcp::McpDispatcher dispatcher(&state);
 
     const QJsonObject status = dispatcher.applyOne(QStringLiteral("market_status"), {});
     QVERIFY2(status.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(status).toJson(QJsonDocument::Compact)));
-    QVERIFY(status.value(QStringLiteral("consented")).toBool());
     const QJsonArray types = status.value(QStringLiteral("types")).toArray();
     QCOMPARE(types.size(), 1);
     const QJsonObject provider = types.at(0).toObject().value(QStringLiteral("providers")).toArray().at(0).toObject();

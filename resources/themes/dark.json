@@ -3303,13 +3303,6 @@
       "radius": "$metrics.radius.sm",
       "scrim": "$semantic.scrimStrong"
     },
-    "marketConsentPanel": {
-      "bullet": "$semantic.mutedForeground",
-      "bulletRadius": "$metrics.radius.pill",
-      "icon": "$semantic.warning",
-      "iconBackground": "$semantic.panel.accent",
-      "iconRadius": "$metrics.radius.md"
-    },
     "marketSearchField": {
       "background": "$semantic.panel.accent",
       "borderFocus": "$semantic.focusRing",

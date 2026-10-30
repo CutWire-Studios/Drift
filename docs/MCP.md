@@ -112,11 +112,6 @@ Mesa's llvmpipe covers 3.3 in software; a GPU host can use an EGL platform plugi
 instead. Started without a usable context, Drift still serves MCP and still edits
 projects — it says so on stderr, and only render, capture and export fail.
 
-**Marketplace consent is granted in the GUI only.** A headless instance answers every
-`market` op with `consent_required` unless the same settings profile already carries
-`market/consented=true` from a GUI session that accepted the terms — there is deliberately
-no op that accepts them.
-
 ## Workflow
 
 The `initialize` reply carries a short `instructions` string with the essentials; the eight homepage tools are:
@@ -197,7 +192,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `scene` | Shot detection, what is in each shot, scene-synced cuts |
 | `ui` | Theme, shortcuts, editor preferences, guides |
 | `multicam` | Multi-camera session: set up, switch at the playhead, save |
-| `market` | Stock media from the Cutwire marketplace: status/consent, search, resolve a link, download into the bin |
+| `market` | Stock media from the Cutwire marketplace: status, search, resolve a link, download into the bin |
 | `transcript` | Word-level transcripts stored on each asset, reading them (`get_transcript`), cutting by words (`cut_words`) or source ranges (`keep_ranges`), building a sequence from an edit list (`assemble`), speaker labels (`diarize`) — see [Editing speech](#editing-speech) |
 | `voice` | ElevenLabs / Fish Audio voiceover (`tts_generate`), ElevenLabs sound effects (`sfx_generate`), `list_voices`, `cloud_provider_status` — see [Cloud voices](#cloud-voices); local Chatterbox TTS, voice library and subtitle voiceovers — see [Local voices](#local-voices) |
 
@@ -727,10 +722,8 @@ are text-only; build a shape's look from `list_gradient_presets` / `list_text_ef
 ### Stock media from the marketplace
 
 The `market` toolbox wraps the same service the Assets → Market tab uses (`docs/marketplace`).
-It is gated twice: the build must ship a marketplace service (`market_status.configured`), and
-**the user must have accepted the marketplace terms in the app** (`market_status.consented`).
-Every other market op fails `consent_required` until then; there is deliberately no op to
-accept on the user's behalf, because downloads spend a per-machine quota.
+The build must ship a marketplace service (`market_status.configured`); every market op fails
+`market_unavailable` otherwise. Downloads spend a per-machine quota.
 
 | Call | Effect |
 |---|---|
@@ -741,7 +734,7 @@ accept on the user's behalf, because downloads spend a per-machine quota.
 | `market_download({id, variant, dir, wait})` | Starts the download, **spends quota**, imports the file into the bin when done and reports its `asset` id. `id` must come from the last search/resolve (`not_found` otherwise); `dir` must be absolute. `wait:<seconds>` blocks for completion and turns a `failed`/`cancelled` job into `{ok:false, error, detail, job}`; otherwise poll `market_downloads()` or `inspect({detail:true}).jobs.market` |
 | `market_downloads({clear})` / `market_cancel_download({id})` | Job list with status/progress/error/path/asset; cancel a running one |
 
-Errors: `market_unavailable`, `consent_required`, `market_error`, and the service's own codes
+Errors: `market_unavailable`, `market_error`, and the service's own codes
 (`rate_limited`, `auth_required`, `payment_required`, `provider_unavailable`, `not_found`,
 `download_failed`). Coin prices appear only when non-zero; nothing in the reply says "free".
 

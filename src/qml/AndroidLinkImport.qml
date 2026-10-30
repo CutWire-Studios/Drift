@@ -17,7 +17,7 @@ import Drift
 AndroidBottomSheet {
     id: root
 
-    // "" | "consent" | "catalog" | "choosing" | "resolving" | "downloading" | "done" | "failed"
+    // "" | "catalog" | "choosing" | "resolving" | "downloading" | "done" | "failed"
     property string state: ""
     property string sourceUrl: ""
     property string itemId: ""
@@ -75,12 +75,6 @@ AndroidBottomSheet {
         root.message = ""
         root.failureCode = ""
         root.canRetry = false
-        // The share sheet is the one way into a store download that never passes the Market tab,
-        // so the opt-in has to be asked for here too or it is not an opt-in.
-        if (!Market.consented) {
-            root.state = "consent"
-            return
-        }
         if (Market.types.length === 0) {
             root.state = "catalog"
             if (!Market.catalogLoading)
@@ -192,14 +186,6 @@ AndroidBottomSheet {
     Item {
         anchors.fill: parent
 
-        // --- The marketplace opt-in -------------------------------------------
-        MarketConsentPanel {
-            anchors.fill: parent
-            visible: root.state === "consent"
-            sideMargin: Theme.androidPagePadding + root.safeLeft
-            onAccepted: root.loadProviders()
-        }
-
         // --- Choosing a source ------------------------------------------------
         Column {
             anchors.fill: parent
@@ -254,7 +240,7 @@ AndroidBottomSheet {
             anchors.rightMargin: Theme.androidPagePadding + root.safeRight
             topPadding: Theme.spacingXl
             spacing: Theme.spacingXl
-            visible: root.state !== "choosing" && root.state !== "consent"
+            visible: root.state !== "choosing"
 
             AndroidLinkBusyStatus {
                 width: parent.width

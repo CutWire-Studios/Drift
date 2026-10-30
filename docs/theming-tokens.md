@@ -2324,11 +2324,6 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | effectTemplateCard | mosaicDividerWidth | $metrics.borderWidth | $metrics.borderWidth |
 | effectTemplateCard | radius | $metrics.radius.sm | $metrics.radius.sm |
 | effectTemplateCard | scrim | $semantic.scrimStrong | $semantic.scrimStrong |
-| marketConsentPanel | bullet | $semantic.mutedForeground | $semantic.mutedForeground |
-| marketConsentPanel | bulletRadius | $metrics.radius.pill | $metrics.radius.pill |
-| marketConsentPanel | icon | $semantic.warning | $semantic.warning |
-| marketConsentPanel | iconBackground | $semantic.panel.accent | $semantic.panel.accent |
-| marketConsentPanel | iconRadius | $metrics.radius.md | $metrics.radius.md |
 | marketSearchField | background | $semantic.panel.accent | $semantic.panel.accent |
 | marketSearchField | borderFocus | $semantic.focusRing | $semantic.focusRing |
 | marketSearchField | borderWidth | $metrics.borderWidthFocus | $metrics.borderWidthFocus |

@@ -1672,7 +1672,6 @@ qt_add_qml_module(drift
         src/qml/components/assets/SoundsTab.qml
         src/qml/components/assets/TransitionsTab.qml
         src/qml/components/assets/MediaAssetsTab.qml
-        src/qml/components/assets/MarketConsentPanel.qml
         src/qml/components/assets/MarketTab.qml
         src/qml/components/assets/MarketSearchField.qml
         src/qml/components/assets/DriftAssetsHome.qml
