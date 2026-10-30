@@ -960,14 +960,6 @@
       "descriptionSource": "Restores every shortcut to its original key."
     },
     {
-      "id": "marketplace-account",
-      "target": "settings:marketplace#marketplace-account",
-      "context": "SettingsMarketplacePage",
-      "source": "Account",
-      "keywords": "",
-      "needs": []
-    },
-    {
       "id": "network-proxy",
       "target": "settings:network#network-proxy",
       "context": "SettingsNetworkPage",
@@ -1384,12 +1376,6 @@
       "context": "SettingsPane",
       "source": "Network",
       "keywords": "proxy http socks internet firewall"
-    },
-    {
-      "id": "marketplace",
-      "context": "SettingsPane",
-      "source": "Marketplace",
-      "keywords": "market store account sign in"
     },
     {
       "id": "about",

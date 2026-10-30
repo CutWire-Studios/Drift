@@ -381,7 +381,7 @@ ApplicationWindow {
             return
         if (intent.kind === "view") {
             const url = intent.urls && intent.urls.length > 0 ? String(intent.urls[0]) : ""
-            if (url === "" || Market.handleIncomingUrl(url))
+            if (url === "")
                 return
             if (Addons.isUserPackage(url)) {
                 window.importUserPackage(url)
@@ -1025,7 +1025,7 @@ ApplicationWindow {
             Qt.callLater(window.importUserPackage, launched)
             launched = ""
         }
-        if (launched !== "" && !Market.handleIncomingUrl(launched)) {
+        if (launched !== "") {
             // Unless the previous session left a snapshot: loading the launched project
             // deletes it unasked, so park the URL and let the recovery prompt run first.
             if (EditorState.projectFile.recoveryAvailable && !EditorState.preferences.reopenLastProject) {
@@ -1151,8 +1151,6 @@ ApplicationWindow {
     Connections {
         target: FileDialogs
         function onLaunchUrlReceived(url) {
-            if (Market.handleIncomingUrl(url))
-                return
             if (Addons.isUserPackage(url)) {
                 window.importUserPackage(url)
                 return

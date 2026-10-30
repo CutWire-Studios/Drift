@@ -35,18 +35,16 @@ Item {
         { id: "audio", title: qsTr("Audio"), keywords: "sound speakers microphone output input" },
         { id: "ai", title: qsTr("AI & Cloud"), keywords: "agent mcp claude cursor api key elevenlabs voice scene detection" },
         { id: "network", title: qsTr("Network"), keywords: "proxy http socks internet firewall" },
-        { id: "marketplace", title: qsTr("Marketplace"), keywords: "market store account sign in" },
         { id: "about", title: qsTr("About"), keywords: "version updates debug info diagnostics" }
     ]
     readonly property var visiblePages: pages.filter(
-        (page) => (page.id !== "marketplace" || (Market.configured && Market.authenticated))
-            && !(mobile && mobileHiddenPages.includes(page.id)))
+        (page) => !(mobile && mobileHiddenPages.includes(page.id)))
 
     readonly property bool searchHasMatches: generalPage.hasMatches || appearancePage.hasMatches
         || (!mobile && (workspacesPage.hasMatches || toolbarPage.hasMatches || keymapPage.hasMatches))
         || timelinePage.hasMatches
         || previewPage.hasMatches || performancePage.hasMatches || audioPage.hasMatches || aiPage.hasMatches
-        || networkPage.hasMatches || marketplacePage.hasMatches || aboutPage.hasMatches
+        || networkPage.hasMatches || aboutPage.hasMatches
 
     onCurrentPageChanged: flick.contentY = 0
 
@@ -231,12 +229,6 @@ Item {
 
             SettingsNetworkPage {
                 id: networkPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
-            }
-
-            SettingsMarketplacePage {
-                id: marketplacePage
                 query: root.query
                 visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
             }

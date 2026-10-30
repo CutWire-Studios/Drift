@@ -207,10 +207,9 @@ public:
 class FileOpenFilter : public QObject
 {
 public:
-    explicit FileOpenFilter(AppController *controller, MarketClient *market, QObject *parent = nullptr)
+    explicit FileOpenFilter(AppController *controller, QObject *parent = nullptr)
         : QObject(parent)
         , m_controller(controller)
-        , m_market(market)
     {
     }
 
@@ -219,8 +218,6 @@ protected:
     {
         if (event->type() == QEvent::FileOpen) {
             const auto *open = static_cast<QFileOpenEvent *>(event);
-            if (m_market && m_market->handleIncomingUrl(open->url()))
-                return true;
             m_controller->projectFile()->queueExternalProject(open->url());
             return true;
         }
@@ -229,7 +226,6 @@ protected:
 
 private:
     AppController *m_controller = nullptr;
-    MarketClient *m_market = nullptr;
 };
 
 #ifdef Q_OS_ANDROID
@@ -804,7 +800,7 @@ int main(int argc, char *argv[])
     if (const QString themeOverride = qEnvironmentVariable("DRIFT_THEME"); !themeOverride.isEmpty())
         ThemeManager::shared()->applySessionOverride(themeOverride);
 
-    app.installEventFilter(new FileOpenFilter(&editorState, &marketClient, &app));
+    app.installEventFilter(new FileOpenFilter(&editorState, &app));
     {
         // Hoisted deliberately: QCoreApplication::arguments() rebuilds and returns a QStringList
         // BY VALUE on every call, so `const QString &arg = app.arguments().at(i)` bound a
@@ -816,8 +812,6 @@ int main(int argc, char *argv[])
         for (int i = 1; i < args.size(); ++i) {
             const QString &arg = args.at(i);
             const QUrl url(arg);
-            if (!url.scheme().isEmpty() && marketClient.handleIncomingUrl(url))
-                continue;
             forwarded.append(arg);
         }
         editorState.projectFile()->queueExternalProject(ProjectFileController::startupProjectUrlFromArguments(forwarded));

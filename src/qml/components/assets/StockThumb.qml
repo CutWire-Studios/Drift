@@ -20,7 +20,6 @@ Rectangle {
     readonly property bool busy: job.status === "waiting" || job.status === "queued"
                                  || job.status === "processing" || job.status === "downloading"
                                  || job.status === "importing"
-    readonly property int price: Number(item.price_coins || 0)
     readonly property string kind: item.media_kind || item.type || ""
     readonly property bool isVideo: kind === "video" || kind === "greenscreen"
 
@@ -77,25 +76,6 @@ Rectangle {
                 loops: MediaPlayer.Infinite
                 Component.onCompleted: play()
             }
-        }
-    }
-
-    Rectangle {
-        visible: root.price > 0
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.margins: Theme.spacingSm
-        color: Theme.c.stockThumb.badgeBackground
-        radius: Theme.c.stockThumb.badgeRadius
-        width: coinLabel.implicitWidth + Theme.spacingLg
-        height: coinLabel.implicitHeight + Theme.spacingSm
-        Text {
-            id: coinLabel
-            anchors.centerIn: parent
-            text: String(root.price)
-            color: Theme.c.stockThumb.foregroundOnMedia
-            font.pixelSize: Theme.fontSizeXs
-            font.family: Theme.fontFamily
         }
     }
 

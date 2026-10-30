@@ -1864,7 +1864,7 @@
           objectSchema({}), true, false, true },
         { "market_search", "market", "Find stock video, photos or audio to import",
           "Search one provider of one type and return up to `limit` listings as {id, title, type, "
-          "provider, dur, w, h, coins?, by?, thumb?, variants?}. Omit q for a provider's featured "
+          "provider, dur, w, h, by?, thumb?, variants?}. Omit q for a provider's featured "
           "listing. filters takes the ids from market_status. more:true fetches the next page of "
           "the previous search (has_more says whether there is one; offset is where the page starts "
           "in the accumulated results, so market_item still resolves earlier ids). Blocks until the "
@@ -1885,7 +1885,7 @@
           true, false, false },
         { "market_item", "market", "Read one listing's variants and license",
           "Full detail of an item from the last market_search or market_resolve result, including "
-          "variants:[{id, label, w, h, coins?}] for market_download and preview/license when present.",
+          "variants:[{id, label, w, h}] for market_download and preview/license when present.",
           objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))}},
                        {QStringLiteral("id")}),
           true, false, true },

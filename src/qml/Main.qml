@@ -1071,8 +1071,8 @@ ApplicationWindow {
         const urls = intent.urls || []
         if (intent.kind === "view") {
             const url = urls.length > 0 ? String(urls[0]) : ""
-            if (url === "" || Market.handleIncomingUrl(url))
-                return url !== ""
+            if (url === "")
+                return false
             if (Addons.isUserPackage(url)) {
                 window.importUserPackage(url)
                 return false

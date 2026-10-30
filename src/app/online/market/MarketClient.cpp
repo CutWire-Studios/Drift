@@ -45,7 +45,6 @@ constexpr int kMaxConcurrentDownloads = 3;
 // that often would have three transfers respinning it hundreds of times a second.
 constexpr int kSpeedSampleMs = 400;
 constexpr int kSearchLimit = 30;
-constexpr qint64 kTokenRefreshSkewSecs = 60;
 
 QString settingsKey(const char *name)
 {
@@ -157,12 +156,11 @@ MarketClient::MarketClient(QObject *parent)
 
     m_lastDownloadDir = QSettings().value(settingsKey("lastDownloadDir")).toUrl();
 
-    loadStoredAuth();
-    if (configured()) {
+    for (const char *key : {"accessToken", "refreshToken", "expiresAt", "accountId", "accountName", "coins",
+                            "consented"})
+        QSettings().remove(settingsKey(key));
+    if (configured())
         QDir().mkpath(downloadsRoot());
-        if (!m_refreshToken.isEmpty())
-            fetchMe();
-    }
 }
 
 MarketClient::~MarketClient() = default;
@@ -773,35 +771,6 @@ QVariantMap MarketClient::itemById(const QString &itemId) const
     return m_items.at(at).toMap();
 }
 
-bool MarketClient::handleIncomingUrl(const QUrl &url)
-{
-    if (!isAuthCallbackUrl(url))
-        return false;
-    const QUrlQuery query(url);
-    const QString code = query.queryItemValue(QStringLiteral("code"));
-    const QString state = query.queryItemValue(QStringLiteral("state"));
-    if (code.isEmpty()) {
-        emit authFinished(false, tr("Could not connect the marketplace account."));
-        return true;
-    }
-    exchangeCode(code, state);
-    return true;
-}
-
-void MarketClient::disconnectAccount()
-{
-    const QString refresh = m_refreshToken;
-    clearAuth();
-    emit authChanged();
-    if (!configured() || refresh.isEmpty())
-        return;
-    QJsonObject body;
-    body.insert(QStringLiteral("refresh_token"), refresh);
-    QNetworkReply *reply =
-        post(apiUrl(QStringLiteral("/auth/logout")), QJsonDocument(body).toJson(QJsonDocument::Compact));
-    connect(reply, &QNetworkReply::finished, reply, &QObject::deleteLater);
-}
-
 QUrl MarketClient::apiUrl(const QString &path) const
 {
     QString base = apiBase();
@@ -828,14 +797,6 @@ void MarketClient::sign(QNetworkRequest *request, const QByteArray &method, cons
     request->setRawHeader("X-Cutwire-App", appHeader().toUtf8());
     request->setRawHeader("X-Cutwire-Distribution", distributionId().toUtf8());
     request->setHeader(QNetworkRequest::UserAgentHeader, appHeader());
-    applyAuthHeader(request);
-}
-
-void MarketClient::applyAuthHeader(QNetworkRequest *request) const
-{
-    if (m_accessToken.isEmpty())
-        return;
-    request->setRawHeader("Authorization", QByteArray("Bearer ") + m_accessToken.toUtf8());
 }
 
 QNetworkReply *MarketClient::get(const QUrl &url)
@@ -1417,167 +1378,10 @@ void MarketClient::importReadyFile(const QString &itemId, const QString &path,
     emit downloadImported(itemId, displayName);
 }
 
-void MarketClient::loadStoredAuth()
-{
-    QSettings settings;
-    m_accessToken = settings.value(settingsKey("accessToken")).toString();
-    m_refreshToken = settings.value(settingsKey("refreshToken")).toString();
-    m_tokenExpiresAt = settings.value(settingsKey("expiresAt")).toLongLong();
-    m_accountId = settings.value(settingsKey("accountId")).toString();
-    m_accountName = settings.value(settingsKey("accountName")).toString();
-    m_coins = settings.value(settingsKey("coins")).toInt();
-}
-
-void MarketClient::storeAuth()
-{
-    QSettings settings;
-    settings.setValue(settingsKey("accessToken"), m_accessToken);
-    settings.setValue(settingsKey("refreshToken"), m_refreshToken);
-    settings.setValue(settingsKey("expiresAt"), m_tokenExpiresAt);
-    settings.setValue(settingsKey("accountId"), m_accountId);
-    settings.setValue(settingsKey("accountName"), m_accountName);
-    settings.setValue(settingsKey("coins"), m_coins);
-}
-
-void MarketClient::clearAuth()
-{
-    m_accessToken.clear();
-    m_refreshToken.clear();
-    m_tokenExpiresAt = 0;
-    m_accountId.clear();
-    m_accountName.clear();
-    m_coins = 0;
-    QSettings settings;
-    settings.remove(settingsKey("accessToken"));
-    settings.remove(settingsKey("refreshToken"));
-    settings.remove(settingsKey("expiresAt"));
-    settings.remove(settingsKey("accountId"));
-    settings.remove(settingsKey("accountName"));
-    settings.remove(settingsKey("coins"));
-}
-
-void MarketClient::applyAccount(const QJsonObject &account)
-{
-    if (account.isEmpty())
-        return;
-    m_accountId = account.value(QStringLiteral("id")).toString(m_accountId);
-    m_accountName = account.value(QStringLiteral("display_name")).toString(m_accountName);
-    if (account.contains(QStringLiteral("coins")))
-        m_coins = account.value(QStringLiteral("coins")).toInt();
-}
-
-void MarketClient::exchangeCode(const QString &code, const QString &state)
-{
-    if (!configured()) {
-        emit authFinished(false, tr("Marketplace is not available in this build."));
-        return;
-    }
-    QJsonObject body;
-    body.insert(QStringLiteral("code"), code);
-    if (!state.isEmpty())
-        body.insert(QStringLiteral("state"), state);
-    QNetworkReply *reply =
-        post(apiUrl(QStringLiteral("/auth/token")), QJsonDocument(body).toJson(QJsonDocument::Compact));
-    connect(reply, &QNetworkReply::finished, this, [this, reply] {
-        reply->deleteLater();
-        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        const QByteArray payload = reply->readAll();
-        if (reply->error() != QNetworkReply::NoError) {
-            QString errorCode;
-            emit authFinished(false, parseProblem(payload, status, &errorCode, nullptr, nullptr,
-                                                  int(reply->error())));
-            return;
-        }
-        const QJsonObject obj = QJsonDocument::fromJson(payload).object();
-        m_accessToken = obj.value(QStringLiteral("access_token")).toString();
-        m_refreshToken = obj.value(QStringLiteral("refresh_token")).toString();
-        const int expiresIn = obj.value(QStringLiteral("expires_in")).toInt();
-        m_tokenExpiresAt = QDateTime::currentSecsSinceEpoch() + qMax(0, expiresIn);
-        applyAccount(obj.value(QStringLiteral("account")).toObject());
-        storeAuth();
-        emit authChanged();
-        emit authFinished(true, tr("Marketplace account connected."));
-        refreshCatalog();
-    });
-}
-
-void MarketClient::refreshAccessToken(const std::function<void(bool)> &then)
-{
-    if (m_refreshToken.isEmpty() || !configured()) {
-        then(false);
-        return;
-    }
-    if (m_refreshingToken) {
-        then(false);
-        return;
-    }
-    m_refreshingToken = true;
-    QJsonObject body;
-    body.insert(QStringLiteral("refresh_token"), m_refreshToken);
-    QNetworkReply *reply =
-        post(apiUrl(QStringLiteral("/auth/refresh")), QJsonDocument(body).toJson(QJsonDocument::Compact));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, then] {
-        reply->deleteLater();
-        m_refreshingToken = false;
-        if (reply->error() != QNetworkReply::NoError) {
-            clearAuth();
-            emit authChanged();
-            then(false);
-            return;
-        }
-        const QJsonObject obj = QJsonDocument::fromJson(reply->readAll()).object();
-        m_accessToken = obj.value(QStringLiteral("access_token")).toString();
-        const QString refresh = obj.value(QStringLiteral("refresh_token")).toString();
-        if (!refresh.isEmpty())
-            m_refreshToken = refresh;
-        const int expiresIn = obj.value(QStringLiteral("expires_in")).toInt();
-        m_tokenExpiresAt = QDateTime::currentSecsSinceEpoch() + qMax(0, expiresIn);
-        applyAccount(obj.value(QStringLiteral("account")).toObject());
-        storeAuth();
-        emit authChanged();
-        then(true);
-    });
-}
-
-void MarketClient::fetchMe()
-{
-    if (m_accessToken.isEmpty())
-        return;
-    const auto go = [this] {
-        QNetworkReply *reply = get(apiUrl(QStringLiteral("/me")));
-        connect(reply, &QNetworkReply::finished, this, [this, reply] {
-            reply->deleteLater();
-            const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            if (status == 401) {
-                refreshAccessToken([this](bool ok) {
-                    if (ok)
-                        fetchMe();
-                });
-                return;
-            }
-            if (reply->error() != QNetworkReply::NoError)
-                return;
-            applyAccount(QJsonDocument::fromJson(reply->readAll()).object());
-            storeAuth();
-            emit authChanged();
-        });
-    };
-    if (m_tokenExpiresAt > 0
-        && QDateTime::currentSecsSinceEpoch() + kTokenRefreshSkewSecs >= m_tokenExpiresAt) {
-        refreshAccessToken([go](bool) { go(); });
-        return;
-    }
-    go();
-}
-
 QString MarketClient::fallbackMessageForCode(const QString &code)
 {
     if (code == QLatin1String("rate_limited"))
         return tr("Daily limit reached for this source. Try again later.");
-    if (code == QLatin1String("auth_required"))
-        return tr("This item needs a connected account.");
-    if (code == QLatin1String("payment_required"))
-        return tr("Not enough coins.");
     if (code == QLatin1String("provider_unavailable"))
         return tr("This source is temporarily unavailable.");
     if (code == QLatin1String("not_found"))
@@ -1614,10 +1418,8 @@ bool MarketClient::isRetryable(const QString &code, const QString &reason)
     // broken. reset_at carries the real answer.
     if (code == QLatin1String("rate_limited"))
         return false;
-    // Signing is a build/deployment mismatch, and no account exists to spend or connect
-    // from this screen, so none of these change on a second press.
-    if (code == QLatin1String("invalid_client") || code == QLatin1String("auth_required")
-        || code == QLatin1String("payment_required"))
+    // Signing is a build/deployment mismatch and does not change on a second press.
+    if (code == QLatin1String("invalid_client"))
         return false;
     return true;
 }
@@ -1638,10 +1440,6 @@ QString MarketClient::parseProblem(const QByteArray &body, int httpStatus, QStri
             code = QStringLiteral("provider_unavailable");
         else if (httpStatus == 429)
             code = QStringLiteral("rate_limited");
-        else if (httpStatus == 401 || httpStatus == 403)
-            code = QStringLiteral("auth_required");
-        else if (httpStatus == 402)
-            code = QStringLiteral("payment_required");
         else if (httpStatus == 404)
             code = QStringLiteral("not_found");
         else if (httpStatus == 503)

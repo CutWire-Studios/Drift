@@ -727,16 +727,16 @@ The build must ship a marketplace service (`market_status.configured`); every ma
 
 | Call | Effect |
 |---|---|
-| `market_status()` | Types → providers with capabilities (`search`, `featured`, `resolve`), filters (with option ids) and quota, plus account/coins when connected |
-| `market_search({q, type, provider, filters, limit})` | One page of listings `{id, title, type, provider, dur, w, h, coins?, by?, thumb?, variants?}` plus `offset` and `has_more`; `more:true` fetches the **next** page (earlier ids stay valid for `market_item`/`market_download`); `thumb` is a URL you can fetch with your own tools to look at the item |
+| `market_status()` | Types → providers with capabilities (`search`, `featured`, `resolve`), filters (with option ids) and quota |
+| `market_search({q, type, provider, filters, limit})` | One page of listings `{id, title, type, provider, dur, w, h, by?, thumb?, variants?}` plus `offset` and `has_more`; `more:true` fetches the **next** page (earlier ids stay valid for `market_item`/`market_download`); `thumb` is a URL you can fetch with your own tools to look at the item |
 | `market_resolve({url})` | For resolve-only providers (pasted page links); blocks up to 90 s and returns one `item` |
 | `market_item({id})` | Variants, preview and license of a listing from the last search/resolve |
 | `market_download({id, variant, dir, wait})` | Starts the download, **spends quota**, imports the file into the bin when done and reports its `asset` id. `id` must come from the last search/resolve (`not_found` otherwise); `dir` must be absolute. `wait:<seconds>` blocks for completion and turns a `failed`/`cancelled` job into `{ok:false, error, detail, job}`; otherwise poll `market_downloads()` or `inspect({detail:true}).jobs.market` |
 | `market_downloads({clear})` / `market_cancel_download({id})` | Job list with status/progress/error/path/asset; cancel a running one |
 
 Errors: `market_unavailable`, `market_error`, and the service's own codes
-(`rate_limited`, `auth_required`, `payment_required`, `provider_unavailable`, `not_found`,
-`download_failed`). Coin prices appear only when non-zero; nothing in the reply says "free".
+(`rate_limited`, `provider_unavailable`, `not_found`,
+`download_failed`).
 
 `DRIFT_MARKET_API_URL` in the environment points the client at another service (tests use a
 local fake) without rebuilding.

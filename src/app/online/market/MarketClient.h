@@ -51,8 +51,7 @@ class MarketClient : public QObject
     Q_PROPERTY(bool searchErrorRetryable READ searchErrorRetryable NOTIFY searchErrorChanged)
     // The frozen `code` behind searchError, or empty when the failure did not carry one. The
     // message is what to show; this is for deciding what to *offer* alongside it, which differs
-    // per code — not_found can be opened in a browser, auth_required gets no call to action at
-    // all. `reason` is deliberately not exposed: it is additive and must degrade to the bare
+    // per code — not_found can be opened in a browser. `reason` is deliberately not exposed: it is additive and must degrade to the bare
     // code, which isRetryable() already does in here.
     Q_PROPERTY(QString searchErrorCode READ searchErrorCode NOTIFY searchErrorChanged)
     Q_PROPERTY(bool hasMore READ hasMore NOTIFY itemsChanged)
@@ -62,9 +61,6 @@ class MarketClient : public QObject
     Q_PROPERTY(QVariantList downloads READ downloads NOTIFY downloadsRevisionChanged)
     Q_PROPERTY(int activeDownloadCount READ activeDownloadCount NOTIFY downloadsRevisionChanged)
     Q_PROPERTY(int maxConcurrentDownloads READ maxConcurrentDownloads CONSTANT)
-    Q_PROPERTY(bool authenticated READ authenticated NOTIFY authChanged)
-    Q_PROPERTY(QString accountName READ accountName NOTIFY authChanged)
-    Q_PROPERTY(int coins READ coins NOTIFY authChanged)
 
 public:
     explicit MarketClient(QObject *parent = nullptr);
@@ -99,9 +95,6 @@ public:
     QVariantList downloads() const;
     int activeDownloadCount() const;
     int maxConcurrentDownloads() const;
-    bool authenticated() const { return !m_accessToken.isEmpty(); }
-    QString accountName() const { return m_accountName; }
-    int coins() const { return m_coins; }
 
     // The one-time opt-in gate. Nothing in the store — catalog, search, resolve or download —
     // is offered until this has been given, so a user cannot reach a rate-limited third-party
@@ -128,11 +121,6 @@ public:
     Q_INVOKABLE QVariantMap downloadInfo(const QString &itemId) const;
     Q_INVOKABLE QVariantMap itemById(const QString &itemId) const;
 
-    // Website redirect (cutwire:// or https://market.cutwire.org/app/auth/callback). True when
-    // the URL was consumed so callers must not treat it as a project file.
-    Q_INVOKABLE bool handleIncomingUrl(const QUrl &url);
-    Q_INVOKABLE void disconnectAccount();
-
     // A signed GET on the Drift API, for other stores that share this identity (Drift Assets).
     QNetworkReply *signedGet(const QString &path) { return get(apiUrl(path)); }
 
@@ -155,8 +143,6 @@ signals:
     // Raised once per job when it is first accepted, so the manager window can show itself
     // without polling activeDownloadCount.
     void downloadStarted(const QString &itemId);
-    void authChanged();
-    void authFinished(bool ok, const QString &message);
 
 private:
     struct Job;
@@ -166,7 +152,6 @@ private:
     QNetworkReply *get(const QUrl &url);
     QNetworkReply *post(const QUrl &url, const QByteArray &body);
     void sign(QNetworkRequest *request, const QByteArray &method, const QByteArray &body) const;
-    void applyAuthHeader(QNetworkRequest *request) const;
 
     void setCatalogLoading(bool loading);
     void setCatalogError(const QString &error, bool retryable = true);
@@ -201,13 +186,6 @@ private:
     void failJob(const QString &itemId, const QString &code, const QString &message);
     void importReadyFile(const QString &itemId, const QString &path, const QString &displayName);
 
-    void loadStoredAuth();
-    void storeAuth();
-    void clearAuth();
-    void applyAccount(const QJsonObject &account);
-    void exchangeCode(const QString &code, const QString &state);
-    void refreshAccessToken(const std::function<void(bool)> &then);
-    void fetchMe();
 
     // Wording of last resort. The service curates the sentence per reason and sanitizes it
     // before it goes out, so these only cover a reply that carried no detail at all — a
@@ -258,11 +236,4 @@ private:
     QStringList m_jobOrder;
     int m_downloadsRevision = 0;
 
-    QString m_accessToken;
-    QString m_refreshToken;
-    qint64 m_tokenExpiresAt = 0;
-    QString m_accountId;
-    QString m_accountName;
-    int m_coins = 0;
-    bool m_refreshingToken = false;
 };

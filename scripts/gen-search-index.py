@@ -35,7 +35,6 @@ FILE_TARGETS = {
     "SettingsAudioPage.qml": "settings:audio",
     "SettingsAiPage.qml": "settings:ai",
     "SettingsNetworkPage.qml": "settings:network",
-    "SettingsMarketplacePage.qml": "settings:marketplace",
     "SettingsAboutPage.qml": "settings:about",
     "ColorPanel.qml": "panel:color",
     "LooksPanel.qml": "panel:looks",

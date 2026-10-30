@@ -25,7 +25,6 @@ Rectangle {
     readonly property bool busy: job.status === "waiting" || job.status === "queued"
                                  || job.status === "processing" || job.status === "downloading"
                                  || job.status === "importing"
-    readonly property int price: Number(item.price_coins || 0)
 
     color: Theme.c.stockItemDetail.background
 
@@ -148,14 +147,6 @@ Rectangle {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
                     wrapMode: Text.WordWrap
-                }
-                Text {
-                    width: parent.width
-                    visible: root.price > 0
-                    text: qsTr("%n coin(s)", "", root.price)
-                    color: Theme.c.stockItemDetail.foreground
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeXs
                 }
             }
 

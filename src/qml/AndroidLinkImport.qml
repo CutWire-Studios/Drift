@@ -146,9 +146,7 @@ AndroidBottomSheet {
         root.state = "failed"
         root.message = Market.searchError
         root.failureCode = Market.searchErrorCode
-        // auth_required is a sentence and nothing else — the product rule is absolute: no sign-in
-        // prompt, no account CTA, no marketplace URL anywhere in the app.
-        root.canRetry = Market.searchErrorRetryable && root.failureCode !== "auth_required"
+        root.canRetry = Market.searchErrorRetryable
     }
 
     Connections {
@@ -168,8 +166,7 @@ AndroidBottomSheet {
             root.state = "failed"
             root.message = message
             root.failureCode = code
-            root.canRetry = code !== "auth_required" && code !== "rate_limited"
-                            && code !== "payment_required" && code !== "not_found"
+            root.canRetry = code !== "rate_limited" && code !== "not_found"
         }
 
         function onDownloadImported(itemId, name) {

@@ -2263,7 +2263,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsGeneralPage.qml
         src/qml/components/shell/SettingsGroupHeader.qml
         src/qml/components/shell/SettingsKeymapPage.qml
-        src/qml/components/shell/SettingsMarketplacePage.qml
         src/qml/components/shell/SettingsNetworkPage.qml
         src/qml/components/shell/SettingsPage.qml
         src/qml/components/shell/SettingsPerformancePage.qml

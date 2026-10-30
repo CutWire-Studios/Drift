@@ -6430,7 +6430,6 @@ public:
                                {QStringLiteral("provider"), QStringLiteral("fake")},
                                {QStringLiteral("title"), QStringLiteral("Test tone")},
                                {QStringLiteral("duration_ms"), 1000},
-                               {QStringLiteral("price_coins"), 0},
                                {QStringLiteral("creator"), QJsonObject{{QStringLiteral("name"), QStringLiteral("Drift")}}},
                                {QStringLiteral("thumb_url"), base() + QStringLiteral("/thumb.jpg")},
                                {QStringLiteral("variants"), QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("wav")}, {QStringLiteral("label"), QStringLiteral("WAV")}}}}};
@@ -6566,7 +6565,6 @@ void McpTest::marketSearchAndDownloadImportsAsset()
     QCOMPARE(row.value(QStringLiteral("id")).toString(), QStringLiteral("tone-1"));
     QCOMPARE(row.value(QStringLiteral("dur")).toDouble(), 1.0);
     QCOMPARE(row.value(QStringLiteral("by")).toString(), QStringLiteral("Drift"));
-    QVERIFY(!row.contains(QStringLiteral("coins")));
     QCOMPARE(row.value(QStringLiteral("variants")).toInt(), 1);
     QVERIFY(found.value(QStringLiteral("has_more")).toBool());
     QCOMPARE(found.value(QStringLiteral("offset")).toInt(), 0);

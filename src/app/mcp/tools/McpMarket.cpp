@@ -80,8 +80,6 @@ QJsonObject compactItem(const QVariantMap &item, bool full)
         out.insert(QStringLiteral("w"), item.value(QStringLiteral("width")).toInt());
         out.insert(QStringLiteral("h"), item.value(QStringLiteral("height")).toInt());
     }
-    if (item.value(QStringLiteral("price_coins")).toInt() > 0)
-        out.insert(QStringLiteral("coins"), item.value(QStringLiteral("price_coins")).toInt());
     if (item.contains(QStringLiteral("downloadable")) && !item.value(QStringLiteral("downloadable")).toBool())
         out.insert(QStringLiteral("downloadable"), false);
     const QString by = item.value(QStringLiteral("creator")).toMap().value(QStringLiteral("name")).toString();
@@ -107,8 +105,6 @@ QJsonObject compactItem(const QVariantMap &item, bool full)
                 row.insert(QStringLiteral("w"), variant.value(QStringLiteral("width")).toInt());
                 row.insert(QStringLiteral("h"), variant.value(QStringLiteral("height")).toInt());
             }
-            if (variant.value(QStringLiteral("price_coins")).toInt() > 0)
-                row.insert(QStringLiteral("coins"), variant.value(QStringLiteral("price_coins")).toInt());
             rows.append(row);
         }
         if (!rows.isEmpty())
@@ -196,11 +192,6 @@ QJsonObject marketStatus(MarketClient *client)
     if (!client || !client->configured()) {
         out.insert(QStringLiteral("hint"), QStringLiteral("This build has no marketplace service configured"));
         return out;
-    }
-    out.insert(QStringLiteral("authenticated"), client->authenticated());
-    if (client->authenticated()) {
-        out.insert(QStringLiteral("account"), client->accountName());
-        out.insert(QStringLiteral("coins"), client->coins());
     }
     out.insert(QStringLiteral("active_downloads"), client->activeDownloadCount());
     if (!ensureCatalog(client)) {
