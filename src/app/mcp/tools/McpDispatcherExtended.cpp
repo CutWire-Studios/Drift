@@ -14,6 +14,7 @@
 
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/bin/MediaBinController.h"
 #include "app/editor/ProjectFileController.h"
 #include "ui/preview/PreviewController.h"
 #include "ui/theme/ThemeManager.h"
@@ -885,6 +886,106 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!m_controller->removeAsset(index))
             return err("bad_args", QStringLiteral("Remove refused"));
         return ok({{QStringLiteral("removed"), index}});
+    }
+
+    if (tool == QLatin1String("list_folders")) {
+        const BinFolderListModel *folders = m_controller->bin()->folderModel();
+        AssetLibrary *lib = m_controller->assetLibrary();
+        QHash<QString, int> counts;
+        for (int i = 0; lib && i < lib->count(); ++i)
+            ++counts[lib->assetAt(i).value(QStringLiteral("folderId")).toString()];
+        QJsonArray out;
+        for (int i = 0; i < folders->count(); ++i) {
+            const QVariantMap f = folders->folderAt(i);
+            const QString id = f.value(QStringLiteral("id")).toString();
+            out.append(QJsonObject{{QStringLiteral("id"), id},
+                                   {QStringLiteral("name"), f.value(QStringLiteral("name")).toString()},
+                                   {QStringLiteral("parentId"), f.value(QStringLiteral("parentId")).toString()},
+                                   {QStringLiteral("count"), counts.value(id)}});
+        }
+        return ok({{QStringLiteral("folders"), out}});
+    }
+
+    if (tool == QLatin1String("create_folder")) {
+        const QString name = argString(args, QStringLiteral("name")).trimmed();
+        if (name.isEmpty())
+            return err("bad_args", QStringLiteral("name required"));
+        QString parent;
+        if (!resolveFolder(args.value(QStringLiteral("parent")), &parent))
+            return err("not_found", QStringLiteral("Unknown or ambiguous parent folder"));
+        const QString id = m_controller->bin()->createFolder(name, parent);
+        if (id.isEmpty())
+            return err("failed", QStringLiteral("Folder not created"));
+        return ok({{QStringLiteral("id"), id}});
+    }
+
+    if (tool == QLatin1String("move_asset_to_folder")) {
+        const int index = resolveAsset(args.value(QStringLiteral("asset")));
+        if (index < 0)
+            return err("not_found", QStringLiteral("Unknown asset"));
+        QString folder;
+        if (!resolveFolder(args.value(QStringLiteral("folder")), &folder))
+            return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+        const bool changed = m_controller->bin()->moveAssetToFolder(index, folder);
+        return ok({{QStringLiteral("asset"), m_controller->assetLibrary()->assetIdAt(index)},
+                   {QStringLiteral("folderId"), folder}, {QStringLiteral("changed"), changed}});
+    }
+
+    if (tool == QLatin1String("rename_folder")) {
+        QString folder;
+        if (!resolveFolder(args.value(QStringLiteral("folder")), &folder) || folder.isEmpty())
+            return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+        const QString name = argString(args, QStringLiteral("name")).trimmed();
+        if (name.isEmpty())
+            return err("bad_args", QStringLiteral("name required"));
+        const bool changed = m_controller->bin()->renameFolder(folder, name);
+        return ok({{QStringLiteral("id"), folder}, {QStringLiteral("name"), name}, {QStringLiteral("changed"), changed}});
+    }
+
+    if (tool == QLatin1String("delete_folder")) {
+        QString folder;
+        if (!resolveFolder(args.value(QStringLiteral("folder")), &folder) || folder.isEmpty())
+            return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+        MediaBinController *bin = m_controller->bin();
+        if (!jsonBool(args.value(QStringLiteral("recursive")))) {
+            if (!bin->deleteFolder(folder))
+                return err("failed", QStringLiteral("Folder not deleted"));
+            return ok({{QStringLiteral("deleted"), QJsonArray{folder}}, {QStringLiteral("removedAssets"), 0}});
+        }
+
+        // Parents before children, so deleting from the back never lifts a doomed subfolder.
+        const BinFolderListModel *folders = bin->folderModel();
+        QStringList subtree{folder};
+        for (int n = 0; n < subtree.size(); ++n) {
+            for (int i = 0; i < folders->count(); ++i) {
+                const QVariantMap f = folders->folderAt(i);
+                const QString id = f.value(QStringLiteral("id")).toString();
+                if (f.value(QStringLiteral("parentId")).toString() == subtree.at(n) && !subtree.contains(id))
+                    subtree.append(id);
+            }
+        }
+        AssetLibrary *lib = m_controller->assetLibrary();
+        QStringList assets;
+        QJsonArray inUse;
+        for (int i = 0; lib && i < lib->count(); ++i) {
+            if (!subtree.contains(lib->assetAt(i).value(QStringLiteral("folderId")).toString()))
+                continue;
+            assets.append(lib->assetIdAt(i));
+            if (m_controller->clipCountForAsset(i) > 0)
+                inUse.append(lib->assetIdAt(i));
+        }
+        if (!inUse.isEmpty())
+            return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("in_use")},
+                    {QStringLiteral("detail"), QStringLiteral("Assets under this folder have clips on the timeline")},
+                    {QStringLiteral("assets"), inUse}};
+
+        m_controller->mcp()->beginBatch();
+        const int removed = assets.isEmpty() ? 0 : m_controller->removeAssets(assets);
+        for (int i = subtree.size() - 1; i >= 0; --i)
+            bin->deleteFolder(subtree.at(i));
+        m_controller->mcp()->endBatch(QStringLiteral("Folder deleted"), true);
+        return ok({{QStringLiteral("deleted"), QJsonArray::fromStringList(subtree)},
+                   {QStringLiteral("removedAssets"), removed}});
     }
 
     if (tool == QLatin1String("replace_asset")) {

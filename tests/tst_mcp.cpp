@@ -51,6 +51,7 @@
 #include "ui/preview/PreviewController.h"
 #include "TestZip.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/bin/MediaBinController.h"
 #include "app/online/market/MarketClient.h"
 
 #include <cmath>
@@ -235,6 +236,7 @@ private slots:
     void paintDiscoveryOpsListPresets();
     void duplicateLayerAndUserPresetLifecycle();
     void rotationOpsRoundTripThroughInspect();
+    void binFolderOps();
 };
 
 static QJsonObject rpc(const QString &method, const QJsonObject &params = {}, int id = 1)
@@ -330,9 +332,9 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 21500);
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 21800);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 10800);
+                .toJson(QJsonDocument::Compact).size() < 10900);
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -6940,6 +6942,71 @@ void McpTest::rotationOpsRoundTripThroughInspect()
                  .value(QStringLiteral("changed")).toBool());
     QCOMPARE(dispatcher.applyOne(QStringLiteral("set_asset_rotation"), {{QStringLiteral("asset"), QStringLiteral("nope")}, {QStringLiteral("degrees"), 0}})
                  .value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+}
+
+void McpTest::binFolderOps()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate audio fixtures");
+    QTemporaryDir dir;
+    const QString a = dir.filePath(QStringLiteral("a.wav"));
+    const QString b = dir.filePath(QStringLiteral("b.wav"));
+    QVERIFY(writeClickTrack(a, 1));
+    QVERIFY(writeClickTrack(b, 1));
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    auto call = [&](const char *tool, const QJsonObject &args) {
+        const QJsonObject r = dispatcher.applyOne(QLatin1String(tool), args);
+        if (!r.value(QStringLiteral("ok")).toBool())
+            qWarning().noquote() << tool << QJsonDocument(r).toJson(QJsonDocument::Compact);
+        return r;
+    };
+
+    const QString voice = call("create_folder", {{QStringLiteral("name"), QStringLiteral("Voice")}}).value(QStringLiteral("id")).toString();
+    QVERIFY(!voice.isEmpty());
+    const QString takes = call("create_folder", {{QStringLiteral("name"), QStringLiteral("Takes")}, {QStringLiteral("parent"), QStringLiteral("voice")}})
+                              .value(QStringLiteral("id")).toString();
+    QVERIFY(!takes.isEmpty());
+    QVERIFY(call("import_media", {{QStringLiteral("paths"), QJsonArray{a}}, {QStringLiteral("folder"), takes}}).value(QStringLiteral("ok")).toBool());
+    QVERIFY(call("import_media", {{QStringLiteral("paths"), QJsonArray{b}}}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.bin()->currentFolderId(), QString());
+
+    QJsonArray assets = call("list_assets", {}).value(QStringLiteral("assets")).toArray();
+    QCOMPARE(assets.at(0).toObject().value(QStringLiteral("folderId")).toString(), takes);
+    QCOMPARE(assets.at(1).toObject().value(QStringLiteral("folderId")).toString(), QString());
+
+    QJsonObject r = call("move_asset_to_folder", {{QStringLiteral("asset"), 1}, {QStringLiteral("folder"), voice}});
+    QVERIFY(r.value(QStringLiteral("changed")).toBool());
+    const QJsonArray folders = call("list_folders", {}).value(QStringLiteral("folders")).toArray();
+    QCOMPARE(folders.size(), 2);
+    QCOMPARE(folders.at(0).toObject().value(QStringLiteral("count")).toInt(), 1);
+    QCOMPARE(folders.at(1).toObject().value(QStringLiteral("parentId")).toString(), voice);
+
+    QVERIFY(call("rename_folder", {{QStringLiteral("folder"), takes}, {QStringLiteral("name"), QStringLiteral("Raw")}})
+                .value(QStringLiteral("changed")).toBool());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("move_asset_to_folder"), {{QStringLiteral("asset"), 0}, {QStringLiteral("folder"), QStringLiteral("nope")}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
+
+    // Plain delete lifts the children; recursive drops the whole subtree and its assets in one undo step.
+    r = call("delete_folder", {{QStringLiteral("folder"), takes}});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(library.assetAt(0).value(QStringLiteral("folderId")).toString(), voice);
+    QVERIFY(call("undo", {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(library.assetAt(0).value(QStringLiteral("folderId")).toString(), takes);
+
+    r = call("delete_folder", {{QStringLiteral("folder"), voice}, {QStringLiteral("recursive"), true}});
+    QCOMPARE(r.value(QStringLiteral("removedAssets")).toInt(), 2);
+    QCOMPARE(library.count(), 0);
+    QCOMPARE(state.bin()->folderModel()->count(), 0);
+    QVERIFY(call("undo", {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(library.count(), 2);
+    QCOMPARE(state.bin()->folderModel()->count(), 2);
+
+    QVERIFY(!importAndPlace(dispatcher, a, 0.0).isEmpty());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("delete_folder"), {{QStringLiteral("folder"), voice}, {QStringLiteral("recursive"), true}})
+                 .value(QStringLiteral("error")).toString(), QStringLiteral("in_use"));
+    QCOMPARE(state.bin()->folderModel()->count(), 2);
 }
 
 void McpTest::removeSilenceCutsMiddleGapWithDeclick()

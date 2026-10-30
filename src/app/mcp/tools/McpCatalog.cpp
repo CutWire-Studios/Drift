@@ -514,10 +514,12 @@ const QList<Op> &ops()
           "new files is not undoable.",
           objectSchema({{QStringLiteral("paths"),
                          arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
-                                   QStringLiteral("Absolute file paths from your own filesystem search"))}},
+                                   QStringLiteral("Absolute file paths from your own filesystem search"))},
+                        {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) new files land in; \"\" for the bin root. Default: the folder the user is viewing. Paths already in the bin stay where they are"))}},
                        {QStringLiteral("paths")}) },
         { "list_assets", "media", "See what is in the bin",
-          "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h}]}. There is no "
+          "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId}]}; "
+          "folderId \"\" is the bin root (see list_folders). There is no "
           "recording timestamp — \"in the order I shot them\" cannot be recovered from this list; "
           "sort by name or by the order they were imported.",
           objectSchema({}), true, false, true },
@@ -526,6 +528,35 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
                         {QStringLiteral("name"), stringProp(QStringLiteral("New display name"))}},
                        {QStringLiteral("asset"), QStringLiteral("name")}) },
+        { "list_folders", "media", "See the bin's folder tree",
+          "List media-bin folders. Returns {folders:[{id, name, parentId, count}]}; parentId \"\" is "
+          "the bin root and count is the number of assets directly inside.",
+          objectSchema({}), true, false, true },
+        { "create_folder", "media", "Make a bin folder",
+          "Create a media-bin folder. Names need not be unique. Returns {id}.",
+          objectSchema({{QStringLiteral("name"), stringProp(QStringLiteral("Folder name"))},
+                        {QStringLiteral("parent"), stringProp(QStringLiteral("Parent folder id (or unique name); omit or \"\" for the bin root"))}},
+                       {QStringLiteral("name")}) },
+        { "move_asset_to_folder", "media", "File an asset into a bin folder",
+          "Move a bin asset into a folder. Clips on the timeline are unaffected. Returns {asset, "
+          "folderId, changed}.",
+          objectSchema({{QStringLiteral("asset"), assetRefProp()},
+                        {QStringLiteral("folder"), stringProp(QStringLiteral("Folder id (or unique name); \"\" for the bin root"))}},
+                       {QStringLiteral("asset"), QStringLiteral("folder")}) },
+        { "rename_folder", "media", "Rename a bin folder",
+          "Rename a media-bin folder. Returns {id, name, changed}.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Folder id (or unique name)"))},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("New name"))}},
+                       {QStringLiteral("folder"), QStringLiteral("name")}) },
+        { "delete_folder", "media", "Remove a bin folder",
+          "Delete a media-bin folder. By default its assets and subfolders move up to its parent, "
+          "as in the app. recursive:true instead removes every subfolder and every asset under it "
+          "from the bin; it fails in_use (changing nothing) if any of those assets has clips on the "
+          "timeline. One undo step. Returns {deleted:[folder ids], removedAssets}.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Folder id (or unique name)"))},
+                        {QStringLiteral("recursive"), boolProp(QStringLiteral("Also remove subfolders and their assets (default false)"))}},
+                       {QStringLiteral("folder")}),
+          false, true },
 
         { "add_track", "timeline", "Need a new lane",
           "Prepend a track. New track becomes index 0, so every existing track index shifts down by "

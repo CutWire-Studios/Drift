@@ -588,6 +588,32 @@ int McpDispatcher::resolveAsset(const QJsonValue &value) const
     return -1;
 }
 
+bool McpDispatcher::resolveFolder(const QJsonValue &value, QString *id) const
+{
+    const QString key = value.toString().trimmed();
+    if (key.isEmpty()) {
+        *id = QString();
+        return true;
+    }
+    const BinFolderListModel *folders = m_controller->bin()->folderModel();
+    if (folders->indexOfId(key) >= 0) {
+        *id = key;
+        return true;
+    }
+    QString match;
+    for (int i = 0; i < folders->count(); ++i) {
+        if (folders->folderAt(i).value(QStringLiteral("name")).toString().compare(key, Qt::CaseInsensitive) != 0)
+            continue;
+        if (!match.isEmpty())
+            return false;
+        match = folders->idAt(i);
+    }
+    if (match.isEmpty())
+        return false;
+    *id = match;
+    return true;
+}
+
 QJsonObject McpDispatcher::clipFeedback(const ClipRef &ref, const QJsonObject &extra) const
 {
     if (!ref.valid())
@@ -992,7 +1018,12 @@ QJsonObject McpDispatcher::opImportMedia(const QJsonObject &args)
         else if (lib->indexOfPath(path) >= 0)
             existing.append(path);
     }
+    QString folder = m_controller->bin()->currentFolderId();
+    if (args.contains(QStringLiteral("folder")) && !resolveFolder(args.value(QStringLiteral("folder")), &folder))
+        return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+    lib->setImportFolderId(folder);
     const QStringList ids = lib->importLocalPaths(paths);
+    lib->setImportFolderId(m_controller->bin()->currentFolderId());
     if (ids.isEmpty() && !missing.isEmpty())
         return err("import_failed", QStringLiteral("No readable files"));
     // Rows already in the bin whose file changed in place are re-probed by the import.
@@ -1054,6 +1085,7 @@ QJsonObject McpDispatcher::opListAssets() const
                 {QStringLiteral("dur"), a.value(QStringLiteral("durationSeconds")).toDouble()},
                 {QStringLiteral("w"), a.value(QStringLiteral("width")).toInt()},
                 {QStringLiteral("h"), a.value(QStringLiteral("height")).toInt()},
+                {QStringLiteral("folderId"), a.value(QStringLiteral("folderId")).toString()},
             });
         }
     }

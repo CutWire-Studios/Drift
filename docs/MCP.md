@@ -178,7 +178,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 
 | Toolbox | When to use |
 |---------|-------------|
-| `media` | Import (paths/bytes), list, rename, remove, replace, export still, `set_asset_rotation` (lossless orientation override for a sideways video), PDF clips (`inspect_pdf`, `set_pdf_options`) — see [PDF documents](#pdf-documents) |
+| `media` | Import (paths/bytes, optionally into a bin `folder`), list, rename, remove, replace, export still, bin folders (`list_folders`, `create_folder`, `move_asset_to_folder`, `rename_folder`, `delete_folder`), `set_asset_rotation` (lossless orientation override for a sideways video), PDF clips (`inspect_pdf`, `set_pdf_options`) — see [PDF documents](#pdf-documents) |
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link |
 | `canvas` | Transform (including 3D tilt, depth and perspective), flip, blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
 | `playback` | Seek, play, pause, In/Out work area |
