@@ -24,6 +24,8 @@
 #include <QOpenGLShaderProgram>
 #include <QScopeGuard>
 #include <QVector2D>
+#include <QVector4D>
+#include <QtMath>
 
 #include <algorithm>
 #include <cmath>
@@ -500,6 +502,56 @@ GlTarget cropTarget(GlRuntime &rt, GlTarget source, const QRectF &crop)
     return out;
 }
 
+// A straightened source frame: each output pixel is a point of the crop window in the turned
+// picture, turned back into the source. Same mapping as drift::cropSourceFrame on the CPU; outside
+// the source it is transparent. Targets are straight alpha with v = 0 the top row, like an image.
+constexpr const char *kStraightenCropFragShader = R"(#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_layer;
+uniform vec4 u_frame; // normalised x, y, w, h of the window in the turned picture
+uniform vec2 u_size;  // source size in pixels
+uniform vec2 u_turn;  // cos, sin of the clockwise straighten angle
+void main() {
+    vec2 centre = 0.5 * u_size;
+    vec2 p = (u_frame.xy + v_texCoord * u_frame.zw) * u_size - centre;
+    vec2 uv = (vec2(u_turn.x * p.x + u_turn.y * p.y, -u_turn.y * p.x + u_turn.x * p.y) + centre) / u_size;
+    if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0))))
+        fragColor = vec4(0.0);
+    else
+        fragColor = texture(u_layer, uv);
+}
+)";
+
+GlTarget straightenCropTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget source,
+                              const QRectF &crop, double angle)
+{
+    QOpenGLShaderProgram *program = rt.builtinProgram(
+        QStringLiteral("__straighten_crop__"), kQuadVertexShader, kStraightenCropFragShader);
+    if (!program)
+        return cropTarget(rt, std::move(source), crop);
+    GlTarget out = rt.acquireTarget(qMax(1, qRound(crop.width() * source.width)),
+                                    qMax(1, qRound(crop.height() * source.height)));
+    if (!out.isValid())
+        return source;
+    const double radians = qDegreesToRadians(angle);
+    out.fbo->bind();
+    gl->glViewport(0, 0, out.width, out.height);
+    gl->glDisable(GL_BLEND);
+    program->bind();
+    program->setUniformValue("u_layer", 0);
+    program->setUniformValue("u_frame", QVector4D(crop.x(), crop.y(), crop.width(), crop.height()));
+    program->setUniformValue("u_size", QVector2D(source.width, source.height));
+    program->setUniformValue("u_turn", QVector2D(std::cos(radians), std::sin(radians)));
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, source.texture());
+    bindQuad(rt, gl);
+    program->release();
+    out.fbo->release();
+    rt.releaseTarget(std::move(source));
+    return out;
+}
+
 GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
                            const QSize &size);
 GlTarget promoteMaskMedia(GlRuntime &rt, QOpenGLExtraFunctions *gl, const MaskMediaFrame &media);
@@ -599,7 +651,9 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
         target = nestedLayerTarget(rt, gl, *layer.nested);
     } else if (layer.video.isValid()) {
         target = promoteVideoFrameToTargetCached(rt, gl, layer.video);
-        if (target.isValid() && layer.videoCrop != QRectF(0, 0, 1, 1))
+        if (target.isValid() && layer.videoCropAngle != 0.0)
+            target = straightenCropTarget(rt, gl, std::move(target), layer.videoCrop, layer.videoCropAngle);
+        else if (target.isValid() && layer.videoCrop != QRectF(0, 0, 1, 1))
             target = cropTarget(rt, std::move(target), layer.videoCrop);
     } else {
 #ifdef DRIFT_WITH_SKIA

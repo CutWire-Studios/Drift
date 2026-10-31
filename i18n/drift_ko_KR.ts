@@ -9259,6 +9259,10 @@
         <translation>높이</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>시작 시점</translation>
     </message>
@@ -12895,6 +12899,14 @@
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
         <translation>상자를 드래그하여 자르세요. 원본 비디오는 유지되므로 나중에 자르기를 변경할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>

@@ -9259,6 +9259,10 @@
         <translation>高度</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>开始于</translation>
     </message>
@@ -12895,6 +12899,14 @@
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
         <translation>拖动选框进行裁剪。原视频保留可用，之后可更改裁剪</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>

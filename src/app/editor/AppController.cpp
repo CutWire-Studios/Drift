@@ -4834,6 +4834,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("name"), clip.name},
         {QStringLiteral("path"), clip.path},
         {QStringLiteral("sourceFrame"), clip.sourceFrame},
+        {QStringLiteral("sourceFrameAngle"), clip.sourceFrameAngle},
         {QStringLiteral("sourceWidth"), sourceAsset ? sourceAsset->width : 0},
         {QStringLiteral("sourceHeight"), sourceAsset ? sourceAsset->height : 0},
         {QStringLiteral("sourceRotation"), sourceAsset ? sourceAsset->rotationDegrees : 0},
@@ -5403,7 +5404,8 @@ bool AppController::setAssetRotation(int assetIndex, int degrees)
     return true;
 }
 
-bool AppController::setClipSourceFrame(const QString &clipId, double x, double y, double w, double h)
+bool AppController::setClipSourceFrame(const QString &clipId, double x, double y, double w, double h,
+                                       double angle)
 {
     const QRectF frame = drift::normalizedSourceFrame(x, y, w, h);
     for (int t = 0; t < m_project.tracks().size(); ++t) {
@@ -5412,15 +5414,18 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
             if (old.id != clipId
                 || (old.type != drift::ClipType::Video && old.type != drift::ClipType::Image))
                 continue;
-            if (old.sourceFrame == frame)
+            const double turn = std::isnan(angle) ? old.sourceFrameAngle : drift::normalizedSourceAngle(angle);
+            if (old.sourceFrame == frame && old.sourceFrameAngle == turn)
                 return true;
             const QRectF previousFrame = old.sourceFrame;
             const drift::Project before = m_project.detachedCopy();
             auto &clip = m_project.tracks()[t].clips[c];
             clip.sourceFrame = frame;
+            clip.sourceFrameAngle = turn;
             if (const auto *asset = m_project.asset(clip.assetId)) {
+                // Displayed orientation: the file's own tag plus this clip's correction, as decoded.
                 int sw = asset->width, sh = asset->height;
-                if (qAbs(asset->rotationDegrees) % 180 == 90)
+                if (qAbs(asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
                     std::swap(sw, sh);
                 if (sw > 0 && sh > 0) {
                     const auto fittedSize = [&](const QRectF &r) {

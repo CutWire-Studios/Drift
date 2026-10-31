@@ -9323,6 +9323,10 @@
         <translation>Wysokość</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>Zaczyna się o</translation>
     </message>
@@ -13007,6 +13011,14 @@
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
         <translation>Przeciągnij ramkę, aby wykadrować. Oryginalne wideo pozostaje dostępne, więc kadrowanie można zmienić później.</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>

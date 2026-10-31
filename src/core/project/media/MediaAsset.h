@@ -24,6 +24,20 @@ inline QRectF normalizedSourceFrame(double x, double y, double w, double h)
     h = qBound(0.001, h, 1.0);
     return {qBound(0.0, x, 1.0 - w), qBound(0.0, y, 1.0 - h), w, h};
 }
+// Straighten angle of a clip's source frame, in degrees, wrapped to (-180, 180]. The source is
+// turned clockwise by this much about its centre before sourceFrame is cut out of it, so the crop
+// box stays level while the picture under it rotates (Clip::sourceFrameAngle).
+inline double normalizedSourceAngle(double degrees)
+{
+    if (!std::isfinite(degrees))
+        return 0.0;
+    double a = std::fmod(degrees, 360.0);
+    if (a > 180.0)
+        a -= 360.0;
+    else if (a <= -180.0)
+        a += 360.0;
+    return qAbs(a) < 1e-4 ? 0.0 : a;
+}
 inline QJsonArray sourceFrameToJson(const QRectF &r)
 {
     return {r.x(), r.y(), r.width(), r.height()};

@@ -331,6 +331,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.sourceFrame != QRectF(0, 0, 1, 1))
         json.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame));
+    if (clip.sourceFrameAngle != 0.0)
+        json.insert(QStringLiteral("sourceFrameAngle"), clip.sourceFrameAngle);
     if (!clip.motionTrackers.isEmpty()) {
         QJsonArray trackers;
         for (const MotionTracker &tracker : clip.motionTrackers)
@@ -411,6 +413,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
     clip.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
+    clip.sourceFrameAngle = drift::normalizedSourceAngle(object.value(QStringLiteral("sourceFrameAngle")).toDouble());
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();
     clip.filmstripPath = object.value(QStringLiteral("filmstripPath")).toString();
     clip.emoji = object.value(QStringLiteral("emoji")).toString();
@@ -508,6 +511,7 @@ Clip clipFromJsonV1(const QJsonObject &object, const QList<QString> &assetOrder)
     clip.name = object.value(QStringLiteral("name")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
     clip.sourceFrame = drift::sourceFrameFromJson(object.value(QStringLiteral("sourceFrame")).toArray());
+    clip.sourceFrameAngle = drift::normalizedSourceAngle(object.value(QStringLiteral("sourceFrameAngle")).toDouble());
     clip.type = clipTypeFromString(object.value(QStringLiteral("kind")).toString());
     clip.textContent = object.value(QStringLiteral("textContent")).toString();
     clip.thumbnailPath = object.value(QStringLiteral("thumbnailPath")).toString();

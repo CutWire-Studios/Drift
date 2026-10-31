@@ -123,6 +123,7 @@ private slots:
     void textResultRoundsNumbers();
     void validateRejectsWrongType();
     void setTransformWrites3dPose();
+    void clipCropRoundTrip();
     void validateEnumAndRange();
     void effectParamWritesRejectUnknownKeys();
     void setTransformKeysOnlyAnimatedOrAutoKeyed();
@@ -349,6 +350,7 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
+    qDebug() << "CATSIZE" << QJsonDocument(compact).toJson(QJsonDocument::Compact).size() << QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}})).toJson(QJsonDocument::Compact).size();
     QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 22200);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
                 .toJson(QJsonDocument::Compact).size() < 11100);
@@ -5187,6 +5189,127 @@ void McpTest::textResultRoundsNumbers()
     QCOMPARE(result.value(QStringLiteral("isError")).toBool(), false);
 }
 
+static QJsonObject inspectRow(drift::mcp::McpDispatcher &dispatcher, const QString &clip)
+{
+    return dispatcher.inspect({{QStringLiteral("clip"), clip}}).value(QStringLiteral("tracks")).toArray().at(0).toObject()
+        .value(QStringLiteral("items")).toArray().at(0).toObject();
+}
+
+void McpTest::clipCropRoundTrip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("crop-asset");
+    asset.kind = drift::MediaKind::Video;
+    asset.path = QStringLiteral("/nonexistent/crop.mp4");
+    asset.width = 1920;
+    asset.height = 1080;
+    state.project()->addAsset(asset);
+
+    drift::Track track{.type = drift::TrackType::Video};
+    drift::Clip video;
+    video.id = QStringLiteral("crop-clip");
+    video.type = drift::ClipType::Video;
+    video.assetId = asset.id;
+    video.path = asset.path;
+    video.timelineDuration = drift::secondsToUs(5.0);
+    video.srcOut = drift::secondsToUs(5.0);
+    track.clips.append(video);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(track);
+    const QJsonObject clipRef{{QStringLiteral("clip"), video.id}};
+
+    const QJsonObject initial = dispatcher.applyOne(QStringLiteral("get_clip_crop"), clipRef);
+    QVERIFY2(initial.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(initial).toJson(QJsonDocument::Compact)));
+    QVERIFY(!initial.value(QStringLiteral("crop")).toObject().value(QStringLiteral("cropped")).toBool());
+    QCOMPARE(initial.value(QStringLiteral("crop")).toObject().value(QStringLiteral("w")).toDouble(), 1.0);
+    QCOMPARE(initial.value(QStringLiteral("crop")).toObject().value(QStringLiteral("sourceWidth")).toInt(), 1920);
+
+    QJsonObject pixels = clipRef;
+    pixels.insert(QStringLiteral("units"), QStringLiteral("pixels"));
+    pixels.insert(QStringLiteral("x"), 480);
+    pixels.insert(QStringLiteral("y"), 270);
+    pixels.insert(QStringLiteral("w"), 960);
+    pixels.insert(QStringLiteral("h"), 540);
+    const QJsonObject set = dispatcher.applyOne(QStringLiteral("set_clip_crop"), pixels);
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson(QJsonDocument::Compact)));
+    QVERIFY(set.value(QStringLiteral("crop")).toObject().value(QStringLiteral("cropped")).toBool());
+    QCOMPARE(set.value(QStringLiteral("crop")).toObject().value(QStringLiteral("x")).toDouble(), 0.25);
+    QCOMPARE(set.value(QStringLiteral("crop")).toObject().value(QStringLiteral("h")).toDouble(), 0.5);
+    QCOMPARE(set.value(QStringLiteral("crop")).toObject().value(QStringLiteral("pixels")).toObject().value(QStringLiteral("width")).toInt(), 960);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0.25, 0.25, 0.5, 0.5));
+    QCOMPARE(inspectRow(dispatcher, video.id).value(QStringLiteral("crop")).toArray().size(), 4);
+
+    // Omitted fields keep their value; the window stays inside the source.
+    QJsonObject nudge = clipRef;
+    nudge.insert(QStringLiteral("x"), 0.9);
+    const QJsonObject nudged = dispatcher.applyOne(QStringLiteral("set_clip_crop"), nudge);
+    QVERIFY(nudged.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(nudged.value(QStringLiteral("crop")).toObject().value(QStringLiteral("x")).toDouble(), 0.5);
+    QCOMPARE(nudged.value(QStringLiteral("crop")).toObject().value(QStringLiteral("w")).toDouble(), 0.5);
+
+    // Straighten: set, kept when a later call omits it, saved with the project, cleared by reset.
+    QJsonObject level = clipRef;
+    level.insert(QStringLiteral("angle"), -3.5);
+    const QJsonObject levelled = dispatcher.applyOne(QStringLiteral("set_clip_crop"), level);
+    QVERIFY2(levelled.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(levelled).toJson(QJsonDocument::Compact)));
+    QCOMPARE(levelled.value(QStringLiteral("crop")).toObject().value(QStringLiteral("angle")).toDouble(), -3.5);
+    QJsonObject widen = clipRef;
+    widen.insert(QStringLiteral("x"), 0.0);
+    const QJsonObject widened = dispatcher.applyOne(QStringLiteral("set_clip_crop"), widen);
+    QCOMPARE(widened.value(QStringLiteral("crop")).toObject().value(QStringLiteral("angle")).toDouble(), -3.5);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrameAngle, -3.5);
+    QCOMPARE(inspectRow(dispatcher, video.id).value(QStringLiteral("cropAngle")).toDouble(), -3.5);
+    {
+        const drift::Project reloaded = drift::Project::fromJson(state.project()->toJson());
+        QCOMPARE(reloaded.tracks().at(0).clips.at(0).sourceFrameAngle, -3.5);
+    }
+
+    QJsonObject bad = clipRef;
+    bad.insert(QStringLiteral("w"), 0);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_clip_crop"), bad).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    QJsonObject reset = clipRef;
+    reset.insert(QStringLiteral("reset"), true);
+    const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("set_clip_crop"), reset);
+    QVERIFY(cleared.value(QStringLiteral("ok")).toBool());
+    QVERIFY(!cleared.value(QStringLiteral("crop")).toObject().value(QStringLiteral("cropped")).toBool());
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrameAngle, 0.0);
+    QVERIFY(!inspectRow(dispatcher, video.id).contains(QStringLiteral("crop")));
+    QVERIFY(!inspectRow(dispatcher, video.id).contains(QStringLiteral("cropAngle")));
+    QVERIFY(!inspectRow(dispatcher, video.id).contains(QStringLiteral("sourceFrameAngle")));
+
+    // Pixels follow the clip's own orientation correction, not the bin asset's.
+    state.project()->tracks()[0].clips[0].rotationCorrection = 90;
+    const QJsonObject turned = dispatcher.applyOne(QStringLiteral("get_clip_crop"), clipRef)
+                                   .value(QStringLiteral("crop")).toObject();
+    QCOMPARE(turned.value(QStringLiteral("sourceWidth")).toInt(), 1080);
+    QCOMPARE(turned.value(QStringLiteral("sourceHeight")).toInt(), 1920);
+
+    // The canvas box follows that orientation too: a portrait 1080x1920 view fitted to a 1920x1080
+    // canvas is 607.5x1080; cropping it to half height makes it twice as wide, not half as tall.
+    state.project()->setResolution(1920, 1080);
+    drift::Clip &turnedClip = state.project()->tracks()[0].clips[0];
+    turnedClip.transformW.setKeyframe(0, 607.5);
+    turnedClip.transformH.setKeyframe(0, 1080.0);
+    QJsonObject halfHeight = clipRef;
+    halfHeight.insert(QStringLiteral("h"), 0.5);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_crop"), halfHeight).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.propertyValueAt(0, 0, QStringLiteral("width"), 0.0, 0.0), 1215.0);
+    QCOMPARE(state.propertyValueAt(0, 0, QStringLiteral("height"), 0.0, 0.0), 1080.0);
+    QVERIFY(drift::mcp::isReadOnlyOp(QStringLiteral("get_clip_crop")));
+    QVERIFY(!drift::mcp::isReadOnlyOp(QStringLiteral("set_clip_crop")));
+
+    const QString text = addTextClip(dispatcher);
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("get_clip_crop"), {{QStringLiteral("clip"), text}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("type_mismatch"));
+}
+
 void McpTest::setTransformWrites3dPose()
 {
     AssetLibrary library;
@@ -7094,12 +7217,6 @@ void McpTest::marketDownloadAliasStillInstalls()
 }
 
 // The detail row of one clip from inspect({clip}).
-static QJsonObject inspectRow(drift::mcp::McpDispatcher &dispatcher, const QString &clip)
-{
-    return dispatcher.inspect({{QStringLiteral("clip"), clip}}).value(QStringLiteral("tracks")).toArray().at(0).toObject()
-        .value(QStringLiteral("items")).toArray().at(0).toObject();
-}
-
 void McpTest::updateBookmarkKeepsTimeWhenAtOmitted()
 {
     AssetLibrary library;

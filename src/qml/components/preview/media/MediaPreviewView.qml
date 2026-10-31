@@ -33,6 +33,11 @@ Item {
     property real cropY: 0
     property real cropW: 1
     property real cropH: 1
+    // Straighten, degrees clockwise (Clip::sourceFrameAngle). Timeline clips only: a bin item's
+    // crop is rendered into a new file, which has no way to turn the picture.
+    property real cropAngle: 0
+    // The angle the clip had when opened, so levelling a saved tilt back to 0° is still a change.
+    property real openedAngle: 0
     // A full-size crop is normally clean, but Reset must still be savable so it can replace a
     // previously stored crop with the whole picture.
     property bool frameResetPending: false
@@ -50,6 +55,7 @@ Item {
     readonly property bool isAudio: kind === "audio"
     readonly property bool isVideo: kind === "video"
     readonly property bool canCrop: !isAudio
+    readonly property bool canStraighten: canCrop && clipId.length > 0
     readonly property bool canTrim: clipId.length === 0 && !isImage && durationSeconds > 0.05
     // Timeline clips cannot be trimmed from the crop editor, but they still need the
     // filmstrip/ruler so the user can scrub to the exact frame being cropped.
@@ -72,10 +78,12 @@ Item {
 
     readonly property bool cropDirty: cropX > 0.001 || cropY > 0.001
                                       || cropW < 0.999 || cropH < 0.999
+                                      || Math.abs(cropAngle) > 1e-4
     readonly property bool trimDirty: canTrim
                                       && (Math.abs(inSeconds - persistedInSeconds) > 0.02
                                           || Math.abs(outSeconds - persistedOutSeconds) > 0.02)
     readonly property bool dirty: cropDirty || trimDirty || frameResetPending
+                                  || Math.abs(cropAngle - openedAngle) > 1e-4
     readonly property bool saving: EditorState.bin.editing && !EditorState.bin.editIsConversion
 
     // Bin videos end on a second page that offers an upscale; everything else saves directly.
@@ -117,6 +125,7 @@ Item {
                                      || asset.trimOutSeconds < 0)
                                     ? root.durationSeconds : asset.trimOutSeconds
         resetEdits()
+        root.openedAngle = 0
         const frame = asset.sourceFrame
         if (root.canCrop && frame) {
             root.cropX = frame.x; root.cropY = frame.y
@@ -160,6 +169,7 @@ Item {
         root.cropY = 0
         root.cropW = 1
         root.cropH = 1
+        root.cropAngle = 0
         root.frameResetPending = true
     }
 
@@ -198,6 +208,8 @@ Item {
         const frame = clip.sourceFrame
         root.cropX = frame.x; root.cropY = frame.y
         root.cropW = frame.width; root.cropH = frame.height
+        root.cropAngle = clip.sourceFrameAngle || 0
+        root.openedAngle = root.cropAngle
         root.frameResetPending = false
         EditorState.assetPreview.beginClip(track, index)
         root.seekTo(root.inSeconds)
@@ -376,6 +388,8 @@ Item {
                 // overflows into the transport row above and the footer below.
                 if (root.canScrub)
                     h -= stripBlock.height + Theme.spacingLg
+                if (root.canStraighten)
+                    h -= straightenRow.height + Theme.spacingLg
                 return Math.max(80, h)
             }
             radius: Theme.c.mediaPreviewWindow.stageRadius
@@ -388,6 +402,8 @@ Item {
                 id: still
                 visible: !root.isAudio
                 anchors.fill: parent
+                // The crop box stays level; the picture turns under it, about its centre.
+                rotation: root.canStraighten ? root.cropAngle : 0
                 fillMode: Image.PreserveAspectFit
                 asynchronous: root.isImage
                 // Frame pixels change behind one URL, so only a still may be cached.
@@ -467,6 +483,59 @@ Item {
                         editing: !root.saving
                     }
                 }
+            }
+        }
+
+        Row {
+            id: straightenRow
+            visible: root.canStraighten
+            width: parent.width
+            height: visible ? implicitHeight : 0
+            spacing: Theme.spacingMd
+
+            ThemedLabel {
+                id: straightenLabel
+                anchors.verticalCenter: parent.verticalCenter
+                size: "sm"
+                tone: "muted"
+                text: qsTr("Straighten")
+            }
+
+            ThemedSlider {
+                id: straightenSlider
+                label: qsTr("Straighten")
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(80, parent.width - straightenLabel.implicitWidth - straightenValue.width
+                                    - straightenReset.width - parent.spacing * 3)
+                from: -180
+                to: 180
+                stepSize: 0.1
+                enabled: !root.saving
+                valueFormatter: v => Number(v).toFixed(1) + "°"
+                value: root.cropAngle
+                onMoved: root.cropAngle = Math.round(value * 10) / 10
+            }
+
+            ThemedLabel {
+                id: straightenValue
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(implicitWidth, 52)
+                font.family: Theme.monoFontFamily
+                size: "xs"
+                tone: "muted"
+                text: Number(root.cropAngle).toFixed(1) + "°"
+            }
+
+            IconButton {
+                id: straightenReset
+                anchors.verticalCenter: parent.verticalCenter
+                glyph: Theme.icons.reset
+                tooltip: qsTr("Level (0°)")
+                buttonSize: 30
+                iconSize: Theme.iconSizeSm
+                variant: "ghost"
+                enabled: !root.saving && root.cropAngle !== 0
+                onClicked: root.cropAngle = 0
             }
         }
 
@@ -877,7 +946,8 @@ Item {
                     return
                 }
                 if (root.clipId.length > 0) {
-                    if (EditorState.setClipSourceFrame(root.clipId, root.cropX, root.cropY, root.cropW, root.cropH))
+                    if (EditorState.setClipSourceFrame(root.clipId, root.cropX, root.cropY, root.cropW, root.cropH,
+                                                       root.cropAngle))
                         root.closeRequested()
                     return
                 }

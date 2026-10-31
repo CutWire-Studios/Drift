@@ -452,6 +452,13 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
         m.remove(QStringLiteral("fadeShape"));
         m.remove(QStringLiteral("fadeHandles"));
     }
+    // A QRectF has no JSON form; spell a real crop out as [x, y, w, h] (see get_clip_crop).
+    const QRectF sourceFrame = m.take(QStringLiteral("sourceFrame")).toRectF();
+    if (!sourceFrame.isNull() && sourceFrame != QRectF(0, 0, 1, 1))
+        m.insert(QStringLiteral("crop"), drift::sourceFrameToJson(sourceFrame).toVariantList());
+    // Straighten, likewise only when set: every clip map carries it, most of them at 0.
+    if (const double angle = m.take(QStringLiteral("sourceFrameAngle")).toDouble(); angle != 0.0)
+        m.insert(QStringLiteral("cropAngle"), angle);
     if (m.value(QStringLiteral("audioStreamIndex")).toInt() == 0)
         m.remove(QStringLiteral("audioStreamIndex"));
     if (m.value(QStringLiteral("pan")).toDouble() == 0.0)
@@ -527,6 +534,41 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
         for (const char *key : {"rotationX", "rotationY", "z", "perspective"}) {
             const QString k = QLatin1String(key);
             out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
+        }
+    }
+    return out;
+}
+
+QJsonObject McpController::clipCrop(int trackIndex, int clipIndex) const
+{
+    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
+        return {};
+    const drift::Clip &clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
+        return {};
+    const QRectF &frame = clip.sourceFrame;
+    QJsonObject out{
+        {QStringLiteral("x"), frame.x()},
+        {QStringLiteral("y"), frame.y()},
+        {QStringLiteral("w"), frame.width()},
+        {QStringLiteral("h"), frame.height()},
+        {QStringLiteral("angle"), clip.sourceFrameAngle},
+        {QStringLiteral("cropped"), frame != QRectF(0, 0, 1, 1) || clip.sourceFrameAngle != 0.0},
+    };
+    // The window is in the displayed source, so pixels are too. Display orientation is the file's
+    // own tag plus this clip's correction, as the decoder applies it — not the bin's override.
+    if (const drift::MediaAsset *asset = m_app->m_project.asset(clip.assetId)) {
+        int sw = asset->width, sh = asset->height;
+        if (qAbs(asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
+            std::swap(sw, sh);
+        if (sw > 0 && sh > 0) {
+            out.insert(QStringLiteral("sourceWidth"), sw);
+            out.insert(QStringLiteral("sourceHeight"), sh);
+            out.insert(QStringLiteral("pixels"),
+                       QJsonObject{{QStringLiteral("x"), qRound(frame.x() * sw)},
+                                   {QStringLiteral("y"), qRound(frame.y() * sh)},
+                                   {QStringLiteral("width"), qRound(frame.width() * sw)},
+                                   {QStringLiteral("height"), qRound(frame.height() * sh)}});
         }
     }
     return out;

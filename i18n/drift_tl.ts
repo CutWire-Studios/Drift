@@ -9346,6 +9346,10 @@
         <source>File</source>
         <translation>File</translation>
     </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>GlobalSearchPopup</name>
@@ -13067,6 +13071,14 @@
     <message>
         <source>Done</source>
         <translation>Tapos na</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

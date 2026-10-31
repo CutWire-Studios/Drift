@@ -9291,6 +9291,10 @@
         <translation>উচ্চতা</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>এ শুরু হয়</translation>
     </message>
@@ -12951,6 +12955,14 @@
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
         <translation>ক্রপ করতে বাক্সটি টানুন। মূল ভিডিওটি উপলব্ধ থাকবে, তাই ক্রপ পরবর্তীতে পরিবর্তন করা যাবে।</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>

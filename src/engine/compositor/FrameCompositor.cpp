@@ -16,6 +16,7 @@
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include "engine/render2d/text/TextLayout.h"
 #include "engine/compositor/layers/TransformLayer.h"
+#include "engine/compositor/SourceFrameCrop.h"
 #include "core/text/animation/TextAnimationPreset.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/render3d/models/ModelAsset.h"
@@ -901,7 +902,7 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
         return {};
 
     const QRectF crop = clip.sourceFrame;
-    const bool framed = crop != QRectF(0, 0, 1, 1);
+    const bool framed = crop != QRectF(0, 0, 1, 1) || clip.sourceFrameAngle != 0.0;
     const int boundW = framed ? qCeil(maxWidth / crop.width()) : maxWidth;
     const int boundH = framed ? qCeil(maxHeight / crop.height()) : maxHeight;
     QImage image;
@@ -912,13 +913,8 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
         image = ClipReaderPool::instance().readVideoFrame(read.path, streamIdFor(clip.id), read.sourceUs,
                                                           boundW, boundH, clip.rotationCorrection);
     }
-    if (framed && !image.isNull()) {
-        const int left = qBound(0, qRound(crop.x() * image.width()), image.width() - 1);
-        const int top = qBound(0, qRound(crop.y() * image.height()), image.height() - 1);
-        image = image.copy(left, top,
-                           qBound(1, qRound(crop.width() * image.width()), image.width() - left),
-                           qBound(1, qRound(crop.height() * image.height()), image.height() - top));
-    }
+    if (framed)
+        image = drift::cropSourceFrame(image, crop, clip.sourceFrameAngle);
     return image;
 }
 
@@ -1133,6 +1129,7 @@ void fillGpuLayerPixels(GpuLayer &layer, const drift::Clip &clip, drift::TimeUs 
         if (video.isValid()) {
             layer.video = video;
             layer.videoCrop = clip.sourceFrame;
+            layer.videoCropAngle = clip.sourceFrameAngle;
             return;
         }
     }

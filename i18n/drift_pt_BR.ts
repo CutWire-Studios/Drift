@@ -9291,6 +9291,10 @@
         <translation>Altura</translation>
     </message>
     <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts at</source>
         <translation>Começa em</translation>
     </message>
@@ -12951,6 +12955,14 @@
     <message>
         <source>Drag the box to crop. The original video stays available, so the crop can be changed later.</source>
         <translation>Arraste a caixa para cortar. O vídeo original permanece disponível, então o corte pode ser alterado mais tarde.</translation>
+    </message>
+    <message>
+        <source>Straighten</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Level (0°)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Pause</source>
