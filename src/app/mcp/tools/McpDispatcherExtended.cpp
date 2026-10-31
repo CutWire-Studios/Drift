@@ -1466,7 +1466,9 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         double x = 0, y = 0, w = 1, h = 1, angle = 0;
         if (!jsonBool(args.value(QStringLiteral("reset")))) {
             const QJsonValue turn = args.value(QStringLiteral("angle"));
-            angle = turn.isUndefined() || turn.isNull() ? qQNaN() : jsonNumber(turn, 0);
+            if (!turn.isUndefined() && !turn.isNull() && !turn.isDouble())
+                return err("bad_args", QStringLiteral("angle must be a number"));
+            angle = turn.isDouble() ? turn.toDouble() : qQNaN();
             const QString units = args.value(QStringLiteral("units")).toString(QStringLiteral("normalized"));
             double sx = 1, sy = 1;
             if (units == QLatin1String("pixels")) {

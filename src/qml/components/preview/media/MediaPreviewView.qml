@@ -78,12 +78,12 @@ Item {
 
     readonly property bool cropDirty: cropX > 0.001 || cropY > 0.001
                                       || cropW < 0.999 || cropH < 0.999
-                                      || Math.abs(cropAngle) > 0.01
+                                      || Math.abs(cropAngle) > 1e-4
     readonly property bool trimDirty: canTrim
                                       && (Math.abs(inSeconds - persistedInSeconds) > 0.02
                                           || Math.abs(outSeconds - persistedOutSeconds) > 0.02)
     readonly property bool dirty: cropDirty || trimDirty || frameResetPending
-                                  || Math.abs(cropAngle - openedAngle) > 0.01
+                                  || Math.abs(cropAngle - openedAngle) > 1e-4
     readonly property bool saving: EditorState.bin.editing && !EditorState.bin.editIsConversion
 
     // Bin videos end on a second page that offers an upscale; everything else saves directly.
@@ -507,8 +507,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.max(80, parent.width - straightenLabel.implicitWidth - straightenValue.width
                                     - straightenReset.width - parent.spacing * 3)
-                from: -45
-                to: 45
+                from: -180
+                to: 180
                 stepSize: 0.1
                 enabled: !root.saving
                 valueFormatter: v => Number(v).toFixed(1) + "°"
