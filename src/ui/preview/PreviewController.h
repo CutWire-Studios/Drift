@@ -148,6 +148,15 @@ public:
     Q_INVOKABLE QVariantMap applyGizmoDrag(const QVariantMap &start, const QString &handle,
                                            double pressX, double pressY, double nowX, double nowY,
                                            bool snap, double scale);
+    // The 3D gizmo's frame for several 3D layers: a box (kind "group") at the centroid of their
+    // centres in world space, unturned. Empty when none of the boxes can take part.
+    Q_INVOKABLE QVariantMap groupGizmoPivot(const QVariantList &boxes) const;
+    // applyGizmoDrag for the frame from groupGizmoPivot: the drag moves, turns or scales the
+    // members as one body about the pivot, each from its box at the grab (startBoxes), and the
+    // frame's new pose is returned. Scale handles all grow the group uniformly.
+    Q_INVOKABLE QVariantMap applyGroupGizmoDrag(const QVariantMap &pivot, const QVariantList &startBoxes,
+                                                const QString &handle, double pressX, double pressY,
+                                                double nowX, double nowY, bool snap, double scale);
     // For a clipsAtPlayhead box with a 3D pose: the QtQuick transform of an item laid out at
     // (x, y, w, h) * scale in overlay px, placing its content where the clip renders.
     Q_INVOKABLE QMatrix4x4 clipPoseMatrix(const QVariantMap &box, double x, double y, double w,
@@ -168,6 +177,13 @@ public:
     Q_INVOKABLE QVariantMap snapResize(const QVariantMap &box, double width, double height,
                                        int dxSign, int dySign, bool centrePivot,
                                        double tolerance) const;
+    // Moves several clips as one body from where they stood at the grab (clipsAtPlayhead boxes), all
+    // in canvas px: each clip's centre goes to pivot + R(rotationDeg) * S(scaleX, scaleY) * (centre -
+    // pivot) + (dx, dy), its size follows the scale and its angle the rotation. Written through the
+    // single-clip preview setters, so keyframing and blocked-transform notices behave the same.
+    Q_INVOKABLE void applyGroupTransform(const QVariantList &startBoxes, double pivotX, double pivotY,
+                                         double scaleX, double scaleY, double rotationDeg, double dx,
+                                         double dy);
     Q_INVOKABLE QVariantList clipsAtPlayhead() const;
     // Topmost visible clip under a canvas point at the playhead, rotation-aware; empty if none.
     Q_INVOKABLE QVariantMap clipAtCanvasPoint(double canvasX, double canvasY) const;

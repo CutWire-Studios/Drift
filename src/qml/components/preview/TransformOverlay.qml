@@ -29,6 +29,8 @@ Item {
     readonly property var gizmoBox: {
         if (!mode3d)
             return null
+        if (group3dBoxes.length >= 2)
+            return groupPivot
         if (cameraBox && cameraBox.track === EditorState.selectedTrack
                 && cameraBox.clip === EditorState.selectedClip)
             return cameraBox
@@ -42,11 +44,45 @@ Item {
     }
     readonly property var gizmoLive: gizmo.livePose
 
+    // Several 3D layers selected: one gizmo at their centroid moves, turns and scales them together.
+    // Global axes only, since a group has no frame of its own to be "local" to. Cameras and lights
+    // are not members.
+    readonly property var group3dBoxes: {
+        void EditorState.selectionRevision
+        if (!mode3d)
+            return []
+        const out = []
+        for (const b of overlayClips) {
+            if (b.layer3d && b.kind !== "transform" && b.kind !== "camera"
+                    && EditorState.selectionContains(b.track, b.clip))
+                out.push(b)
+        }
+        return out
+    }
+    readonly property var groupPivot: group3dBoxes.length >= 2
+        ? EditorState.preview.groupGizmoPivot(group3dBoxes) : null
+    readonly property bool groupDragging: !!gizmoLive && !!gizmoBox && gizmoBox.kind === "group"
+
     // A transform layer being moved: the clips under it are drawn from a model that is not
     // rebuilt mid-drag, so their outlines would hang in the old place and are hidden meanwhile.
     property int movingLayerTrack: -1
     readonly property int hiddenChildrenOf: movingLayerTrack >= 0 ? movingLayerTrack
         : (gizmoLive && gizmoBox && gizmoBox.kind === "transform" ? gizmoBox.track : -1)
+
+    // Several clips selected in the flat view: one frame moves, scales and turns them together.
+    // The transform layers' own boxes are not members; their children are picked individually.
+    readonly property var groupBoxes: {
+        void EditorState.selectionRevision
+        if (mode3d)
+            return []
+        const out = []
+        for (const b of overlayClips) {
+            if (b.kind !== "transform" && EditorState.selectionContains(b.track, b.clip))
+                out.push(b)
+        }
+        return out
+    }
+    readonly property bool groupMode: groupBoxes.length >= 2
 
     // The selected clip's box, and the transform clip over it (innermost) when there is one.
     readonly property var selectedBox: {
@@ -127,6 +163,107 @@ Item {
         clipRepeater.model = next
     }
 
+    // Marquee on empty canvas, in overlay px.
+    property bool marqueeActive: false
+    property rect marqueeRect: Qt.rect(0, 0, 0, 0)
+
+    function pointInQuad(q, x, y) {
+        let sign = 0
+        for (let i = 0; i < 4; ++i) {
+            const a = q[i]
+            const b = q[(i + 1) % 4]
+            const cross = (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x)
+            if (cross !== 0) {
+                if (sign !== 0 && (cross > 0) !== (sign > 0))
+                    return false
+                sign = cross
+            }
+        }
+        return true
+    }
+
+    // True when a press at this canvas point lands on a clip box or the group frame, which own it.
+    function pressHitsBox(cx, cy) {
+        if (groupMode) {
+            for (const b of groupBoxes) {
+                if (b.quad && b.quad.length === 4 && pointInQuad(b.quad, cx, cy))
+                    return true
+            }
+        }
+        for (const b of overlayClips) {
+            if (b.kind === "transform" && !(b.track === EditorState.selectedTrack && b.clip === EditorState.selectedClip))
+                continue
+            if (b.quad && b.quad.length === 4 && pointInQuad(b.quad, cx, cy))
+                return true
+        }
+        return false
+    }
+
+    function quadHitsRect(q, r) {
+        let l = Infinity, t = Infinity, rr = -Infinity, bb = -Infinity
+        for (const p of q) {
+            l = Math.min(l, p.x); rr = Math.max(rr, p.x)
+            t = Math.min(t, p.y); bb = Math.max(bb, p.y)
+        }
+        if (rr < r.x || l > r.x + r.width || bb < r.y || t > r.y + r.height)
+            return false
+        // Bounding boxes meet: a corner of either shape inside the other, or crossing edges.
+        const rc = [{x: r.x, y: r.y}, {x: r.x + r.width, y: r.y},
+                    {x: r.x + r.width, y: r.y + r.height}, {x: r.x, y: r.y + r.height}]
+        for (const p of q) {
+            if (p.x >= r.x && p.x <= r.x + r.width && p.y >= r.y && p.y <= r.y + r.height)
+                return true
+        }
+        for (const p of rc) {
+            if (pointInQuad(q, p.x, p.y))
+                return true
+        }
+        const cross = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+        for (let i = 0; i < 4; ++i) {
+            const a = q[i], b = q[(i + 1) % 4]
+            for (let j = 0; j < 4; ++j) {
+                const c = rc[j], d = rc[(j + 1) % 4]
+                if (cross(a, b, c) * cross(a, b, d) < 0 && cross(c, d, a) * cross(c, d, b) < 0)
+                    return true
+            }
+        }
+        return false
+    }
+
+    function finishMarquee(additive) {
+        const pairs = []
+        const r = Qt.rect(marqueeRect.x, marqueeRect.y, marqueeRect.width, marqueeRect.height)
+        for (const b of overlayClips) {
+            if (b.kind === "transform" || !b.quad || b.quad.length !== 4)
+                continue
+            const sx = width / Math.max(1, b.canvasWidth)
+            const sy = height / Math.max(1, b.canvasHeight)
+            const cr = Qt.rect(r.x / sx, r.y / sy, r.width / sx, r.height / sy)
+            if (quadHitsRect(b.quad, cr))
+                pairs.push({ track: b.track, clip: b.clip })
+        }
+        if (additive) {
+            for (const p of EditorState.selection) {
+                if (!pairs.some(q => q.track === p.track && q.clip === p.clip))
+                    pairs.unshift(p)
+            }
+        }
+        if (pairs.length > 0)
+            EditorState.setSelection(pairs)
+        else if (!additive)
+            EditorState.setSelection([])
+    }
+
+    // Shift or Ctrl+click: the clip joins the selection, or leaves it when it is already in.
+    function toggleSelected(track, clip) {
+        if (!EditorState.selectionContains(track, clip)) {
+            EditorState.addToSelection(track, clip)
+            return
+        }
+        const rest = EditorState.selection.filter(p => !(p.track === track && p.clip === clip))
+        EditorState.setSelection(rest)
+    }
+
     function endInteraction() {
         EditorState.commitPreviewDrag()
         interacting = false
@@ -203,6 +340,41 @@ Item {
         function onViewChanged() { root.refreshOverlay() }
     }
 
+    // Presses that no box takes: a drag across the canvas box-selects. Below every box handler.
+    DragHandler {
+        id: marqueeDrag
+        target: null
+        enabled: EditorState.preview.mode !== "3d" && !root.interacting
+        property point press: Qt.point(0, 0)
+        property bool started: false
+
+        onActiveChanged: {
+            if (active) {
+                const p = root.mapFromItem(null, marqueeDrag.centroid.scenePressPosition.x,
+                                           marqueeDrag.centroid.scenePressPosition.y)
+                const c = root.overlayClips.length > 0 ? root.overlayClips[0] : null
+                const sx = c ? root.width / Math.max(1, c.canvasWidth) : 1
+                const sy = c ? root.height / Math.max(1, c.canvasHeight) : 1
+                marqueeDrag.press = p
+                marqueeDrag.started = !root.pressHitsBox(p.x / sx, p.y / sy)
+                root.marqueeActive = marqueeDrag.started
+                root.marqueeRect = Qt.rect(p.x, p.y, 0, 0)
+            } else if (marqueeDrag.started) {
+                marqueeDrag.started = false
+                root.marqueeActive = false
+                root.finishMarquee((marqueeDrag.centroid.modifiers & (Qt.ShiftModifier | Qt.ControlModifier)) !== 0)
+            }
+        }
+        onCentroidChanged: {
+            if (!active || !marqueeDrag.started)
+                return
+            const p = root.mapFromItem(null, marqueeDrag.centroid.scenePosition.x,
+                                       marqueeDrag.centroid.scenePosition.y)
+            root.marqueeRect = Qt.rect(Math.min(p.x, marqueeDrag.press.x), Math.min(p.y, marqueeDrag.press.y),
+                                       Math.abs(p.x - marqueeDrag.press.x), Math.abs(p.y - marqueeDrag.press.y))
+        }
+    }
+
     Repeater {
         id: clipRepeater
 
@@ -247,7 +419,14 @@ Item {
                 }
                 return false
             }
-            visible: (!isTransform || selected) && !childOfMovingLayer
+            // A member of the multi-selection: outlined as selected, moved through the group frame.
+            readonly property bool inGroup: root.groupMode && !isTransform
+                                            && EditorState.selectionContains(box.track, box.clip)
+            // Dragged with the 3D group gizmo: the model is not rebuilt mid-drag, so it would hang behind.
+            readonly property bool movedByGroupGizmo: root.groupDragging && box.layer3d === true
+                                                      && !isTransform
+                                                      && EditorState.selectionContains(box.track, box.clip)
+            visible: (!isTransform || selected) && !childOfMovingLayer && !movedByGroupGizmo
             enabled: visible
             readonly property bool isText: box.kind === "text"
             // The gizmo's live pose while it drags this clip: the model is not rebuilt mid-drag.
@@ -369,7 +548,7 @@ Item {
             // tracksChanged refresh would steal focus from property-panel fields.
             // Focus is taken explicitly when the user clicks or drags the box.
             Keys.onPressed: function(event) {
-                if (!handle.selected || root.mode3d)
+                if (!(handle.selected || handle.inGroup) || root.mode3d)
                     return
                 const step = (event.modifiers & Qt.ShiftModifier) ? 10 : 1
                 let dx = 0
@@ -382,23 +561,38 @@ Item {
                 default: return
                 }
                 EditorState.beginPreviewDrag()
-                EditorState.previewSetClipPosition(
-                    handle.box.track,
-                    handle.box.clip,
-                    handle.box.x + dx,
-                    handle.box.y + dy)
+                if (root.groupMode) {
+                    EditorState.preview.applyGroupTransform(root.groupBoxes, 0, 0, 1, 1, 0, dx, dy)
+                } else {
+                    EditorState.previewSetClipPosition(
+                        handle.box.track,
+                        handle.box.clip,
+                        handle.box.x + dx,
+                        handle.box.y + dy)
+                }
                 EditorState.commitPreviewDrag()
                 event.accepted = true
             }
 
             TransformOverlayBoxBorder {
-                selected: handle.selected
+                selected: handle.selected || handle.inGroup
                 transformClip: handle.isTransform
                 coveredBySelectedLayer: handle.coveredBySelectedLayer
             }
 
             TapHandler {
+                id: boxTap
+                property int pressMods: 0
+                onPressedChanged: {
+                    if (pressed)
+                        boxTap.pressMods = boxTap.point.modifiers
+                }
                 onTapped: (eventPoint) => {
+                    if (!handle.isTransform && (boxTap.pressMods & (Qt.ShiftModifier | Qt.ControlModifier))) {
+                        root.toggleSelected(handle.box.track, handle.box.clip)
+                        handle.forceActiveFocus()
+                        return
+                    }
                     // Tapping inside a selected layer's frame picks the clip under the pointer,
                     // so the group's children stay one tap away.
                     if (handle.isTransform) {
@@ -433,7 +627,7 @@ Item {
                 // Off while a grip is held too: a handler on the parent item can
                 // otherwise take the grab from the grip once the drag threshold
                 // is passed, turning a resize into a move.
-                enabled: handle.selected && !handle.resizing && !root.mode3d
+                enabled: handle.selected && !handle.resizing && !root.mode3d && !root.groupMode
                 cursorShape: Qt.SizeAllCursor
 
                 // Press point in canvas px. The box rides the cursor as it moves, so the
@@ -504,7 +698,7 @@ Item {
             // (-1 = left/top, +1 = right/bottom, 0 = stays put). The opposite
             // edge or corner is the anchor and does not move.
             Repeater {
-                model: (handle.selected && !root.mode3d)
+                model: (handle.selected && !root.mode3d && !root.groupMode)
                        ? [
                            { dx: -1, dy:  0, cursor: Qt.SizeHorCursor },
                            { dx:  1, dy:  0, cursor: Qt.SizeHorCursor },
@@ -540,6 +734,27 @@ Item {
         }
     }
 
+    TransformOverlayGroupBox {
+        id: groupBox
+        visible: root.groupMode
+        enabled: root.groupMode
+        z: 890
+        overlay: root
+        boxes: root.groupBoxes
+    }
+
+    Rectangle {
+        visible: root.marqueeActive && (root.marqueeRect.width > 2 || root.marqueeRect.height > 2)
+        x: root.marqueeRect.x
+        y: root.marqueeRect.y
+        width: root.marqueeRect.width
+        height: root.marqueeRect.height
+        z: 890
+        color: Qt.rgba(Theme.c.timelineMarqueeRect.background.r, Theme.c.timelineMarqueeRect.background.g, Theme.c.timelineMarqueeRect.background.b, 0.12)
+        border.width: Theme.c.timelineMarqueeRect.borderWidth
+        border.color: Theme.c.timelineMarqueeRect.border
+    }
+
     // With a clip inside a transform layer selected: the layer's frame, dashed, and a chip that
     // selects it (Shift+G does the same). Alt+click is not used: Alt drags the window on Linux.
     Item {
@@ -572,9 +787,12 @@ Item {
         sx: root.width / Math.max(1, root.gizmoBox ? root.gizmoBox.canvasWidth : 1)
         // Hidden while the box itself is dragged, which it would not follow.
         box: root.interacting && dragging === "" ? null : root.gizmoBox
+        groupBoxes: root.group3dBoxes
         onDragStarted: {
             root.interacting = true
-            EditorState.selectClip(box.track, box.clip)
+            // A group keeps its selection; picking one member would collapse it.
+            if (box.kind !== "group")
+                EditorState.selectClip(box.track, box.clip)
         }
         onDragFinished: root.endInteraction()
     }

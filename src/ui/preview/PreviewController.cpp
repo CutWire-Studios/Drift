@@ -18,6 +18,7 @@
 #include <QSettings>
 #include <QVector4D>
 
+#include <algorithm>
 #include <cmath>
 
 using namespace drift::appdetail;
@@ -68,6 +69,19 @@ drift::snap::Targets canvasSnapTargets(double width, double height, const QVaria
     for (const QVariant &v : guides.value(QStringLiteral("y")).toList())
         targets.y << v.toDouble();
     return targets;
+}
+
+// A member's centre in world space (canvas px about the canvas centre, y down, +z toward the viewer),
+// through the transform layers over it.
+QVector3D groupMemberCentre(const QVariantMap &box)
+{
+    const double w = box.value(QStringLiteral("width")).toDouble();
+    const double h = box.value(QStringLiteral("height")).toDouble();
+    const QPointF c = previewBoxParent(box).map(QPointF(box.value(QStringLiteral("x")).toDouble() + w * 0.5,
+                                                        box.value(QStringLiteral("y")).toDouble() + h * 0.5));
+    return QVector3D(float(c.x() - box.value(QStringLiteral("canvasWidth")).toDouble() * 0.5),
+                     float(c.y() - box.value(QStringLiteral("canvasHeight")).toDouble() * 0.5),
+                     float(box.value(QStringLiteral("z")).toDouble()));
 }
 
 } // namespace
@@ -373,6 +387,162 @@ QVariantMap PreviewController::applyGizmoDrag(const QVariantMap &start, const QS
     out.insert(QStringLiteral("rotation"), pose.rotation);
     out.insert(QStringLiteral("rotationX"), pose.pose3d.rotationX);
     out.insert(QStringLiteral("rotationY"), pose.pose3d.rotationY);
+    out.insert(QStringLiteral("z"), pose.pose3d.positionZ);
+    return out;
+}
+
+QVariantMap PreviewController::groupGizmoPivot(const QVariantList &boxes) const
+{
+    QVector3D sum;
+    int count = 0;
+    QVariantMap first;
+    for (const QVariant &value : boxes) {
+        const QVariantMap box = value.toMap();
+        // A tilted parent has no gizmo geometry, so such a clip does not take part.
+        if (!previewBoxParent(box).isAffine())
+            continue;
+        if (count == 0)
+            first = box;
+        sum += groupMemberCentre(box);
+        ++count;
+    }
+    if (count == 0)
+        return {};
+    // The centroid of the members' centres. The frame is a nominal square: only its centre matters.
+    constexpr double kSize = 100.0;
+    const QVector3D c = sum / float(count);
+    const double cw = first.value(QStringLiteral("canvasWidth")).toDouble();
+    const double ch = first.value(QStringLiteral("canvasHeight")).toDouble();
+    return {
+        {QStringLiteral("kind"), QStringLiteral("group")},
+        {QStringLiteral("track"), -1},
+        {QStringLiteral("clip"), -1},
+        {QStringLiteral("x"), c.x() + cw * 0.5 - kSize * 0.5},
+        {QStringLiteral("y"), c.y() + ch * 0.5 - kSize * 0.5},
+        {QStringLiteral("width"), kSize},
+        {QStringLiteral("height"), kSize},
+        {QStringLiteral("rotation"), 0.0},
+        {QStringLiteral("rotationX"), 0.0},
+        {QStringLiteral("rotationY"), 0.0},
+        {QStringLiteral("z"), c.z()},
+        {QStringLiteral("perspective"),
+         first.value(QStringLiteral("perspective"), drift::kDefaultClipPerspective)},
+        {QStringLiteral("canvasWidth"), cw},
+        {QStringLiteral("canvasHeight"), ch},
+    };
+}
+
+QVariantMap PreviewController::applyGroupGizmoDrag(const QVariantMap &pivot, const QVariantList &startBoxes,
+                                                   const QString &handle, double pressX, double pressY,
+                                                   double nowX, double nowY, bool snap, double scale)
+{
+    using namespace drift::gizmo;
+    const Tool tool = toolFromString(m_gizmoTool);
+    const Pose start = gizmoPoseFromBox(pivot);
+    const DragResult result = drag(start, tool, orientationFromString(m_gizmoOrientation), handle,
+                                   QPointF(pressX, pressY), QPointF(nowX, nowY), snap, scale, gizmoView());
+    const Pose &pose = result.pose;
+
+    const QVector3D centre0(float(start.rect.center().x() - start.canvas.width() * 0.5),
+                            float(start.rect.center().y() - start.canvas.height() * 0.5),
+                            float(start.pose3d.positionZ));
+    const QVector3D centre1(float(pose.rect.center().x() - pose.canvas.width() * 0.5),
+                            float(pose.rect.center().y() - pose.canvas.height() * 0.5),
+                            float(pose.pose3d.positionZ));
+    // The pivot starts unturned, so the turn it ends with is the group's. Every scale handle grows the
+    // group uniformly: an axis of the pivot is not an axis the members share.
+    QMatrix4x4 turn;
+    turn.rotate(float(pose.pose3d.rotationX), 1.f, 0.f, 0.f);
+    turn.rotate(float(pose.pose3d.rotationY), 0.f, 1.f, 0.f);
+    turn.rotate(float(pose.rotation), 0.f, 0.f, 1.f);
+    double factor = 1.0;
+    if (tool == Tool::Scale) {
+        factor = handle == QLatin1String("xy") ? result.uniformFactor
+               : handle == QLatin1String("x")  ? pose.rect.width() / std::max(1.0, start.rect.width())
+                                               : pose.rect.height() / std::max(1.0, start.rect.height());
+    }
+
+    m_app.beginImplicitPreviewDrag(tool == Tool::Move     ? AppController::tr("Move clip in 3D")
+                             : tool == Tool::Rotate ? AppController::tr("Rotate clip in 3D")
+                                                    : AppController::tr("Scale clip"));
+    bool wrote = false;
+    for (const QVariant &value : startBoxes) {
+        const QVariantMap box = value.toMap();
+        const int trackIndex = box.value(QStringLiteral("track")).toInt();
+        const int clipIndex = box.value(QStringLiteral("clip")).toInt();
+        const QTransform parent = previewBoxParent(box);
+        if (!m_app.isValidClipIndex(trackIndex, clipIndex) || !parent.isAffine())
+            continue;
+        drift::Clip &clip = m_app.m_project.tracks()[trackIndex].clips[clipIndex];
+
+        const double w = box.value(QStringLiteral("width")).toDouble();
+        const double h = box.value(QStringLiteral("height")).toDouble();
+        const double cw = box.value(QStringLiteral("canvasWidth")).toDouble();
+        const double ch = box.value(QStringLiteral("canvasHeight")).toDouble();
+        const QVector3D moved = centre1 + turn.mapVector((groupMemberCentre(box) - centre0) * float(factor));
+        bool invertible = false;
+        const QTransform inverse = parent.inverted(&invertible);
+        const QPointF local = invertible ? inverse.map(QPointF(moved.x() + cw * 0.5, moved.y() + ch * 0.5))
+                                         : QPointF(moved.x() + cw * 0.5, moved.y() + ch * 0.5);
+        const double nw = tool == Tool::Scale ? std::max(1.0, w * factor) : w;
+        const double nh = tool == Tool::Scale ? std::max(1.0, h * factor) : h;
+
+        const drift::TimeUs relative = qMax<drift::TimeUs>(0, m_app.m_playheadUs - clip.timelineStart);
+        bool wroteClip = false;
+        QStringList keys;
+        const auto write = [&](drift::KeyframeTrack<double> &track, double v, const QString &key) {
+            if (writeKeyframeValue(track, relative, v, m_app.m_autoKeyEnabled, false)) {
+                wroteClip = true;
+                keys << key;
+            }
+        };
+        write(clip.transformX, local.x() - nw * 0.5, QStringLiteral("x"));
+        write(clip.transformY, local.y() - nh * 0.5, QStringLiteral("y"));
+        write(clip.positionZ, moved.z(), QStringLiteral("z"));
+        if (tool == Tool::Rotate) {
+            QMatrix4x4 own;
+            own.rotate(float(box.value(QStringLiteral("rotationX")).toDouble()), 1.f, 0.f, 0.f);
+            own.rotate(float(box.value(QStringLiteral("rotationY")).toDouble()), 0.f, 1.f, 0.f);
+            own.rotate(float(box.value(QStringLiteral("rotation")).toDouble()), 0.f, 0.f, 1.f);
+            double nearest[3] = {box.value(QStringLiteral("rotationX")).toDouble(),
+                                 box.value(QStringLiteral("rotationY")).toDouble(),
+                                 box.value(QStringLiteral("rotation")).toDouble()};
+            double angles[3];
+            eulerFromMatrix(turn * own, nearest, angles);
+            write(clip.rotationX, angles[0], QStringLiteral("rotationX"));
+            write(clip.rotationY, angles[1], QStringLiteral("rotationY"));
+            write(clip.rotation, angles[2], QStringLiteral("rotation"));
+        } else if (tool == Tool::Scale) {
+            write(clip.transformW, nw, QStringLiteral("width"));
+            write(clip.transformH, nh, QStringLiteral("height"));
+            if (clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle) {
+                const int pixelSize = qBound(
+                    8, qRound(box.value(QStringLiteral("pixelSize"), 64).toDouble() * factor), 800);
+                if (clip.textStyle.pixelSize != pixelSize) {
+                    clip.textStyle.pixelSize = pixelSize;
+                    wroteClip = true;
+                    keys << QStringLiteral("text.pixelSize");
+                }
+            }
+        }
+        if (!wroteClip)
+            continue;
+        wrote = true;
+        clip.layer3d = true;
+        m_app.emitPreviewEdit(trackIndex, clipIndex, keys);
+    }
+    if (!wrote) {
+        emit m_app.transformBlocked(AppController::tr("Turn on Auto keyframes to change this"));
+        return pivot;
+    }
+
+    // The frame follows the move and the scale; a turn is not drawn onto it, so the handles stay
+    // on the axes they were grabbed on.
+    QVariantMap out = pivot;
+    out.insert(QStringLiteral("x"), pose.rect.x());
+    out.insert(QStringLiteral("y"), pose.rect.y());
+    out.insert(QStringLiteral("width"), pose.rect.width());
+    out.insert(QStringLiteral("height"), pose.rect.height());
     out.insert(QStringLiteral("z"), pose.pose3d.positionZ);
     return out;
 }
@@ -1279,6 +1449,53 @@ void PreviewController::setMaskEditMode(bool active)
     if (active)
         setGuideEditSetId(QString());
     emit maskEditModeChanged();
+}
+
+void PreviewController::applyGroupTransform(const QVariantList &startBoxes, double pivotX,
+                                            double pivotY, double scaleX, double scaleY,
+                                            double rotationDeg, double dx, double dy)
+{
+    const double rad = rotationDeg * M_PI / 180.0;
+    const double cs = std::cos(rad);
+    const double sn = std::sin(rad);
+    const bool scaled = scaleX != 1.0 || scaleY != 1.0;
+    for (const QVariant &value : startBoxes) {
+        const QVariantMap box = value.toMap();
+        const int trackIndex = box.value(QStringLiteral("track")).toInt();
+        const int clipIndex = box.value(QStringLiteral("clip")).toInt();
+        const double w = box.value(QStringLiteral("width")).toDouble();
+        const double h = box.value(QStringLiteral("height")).toDouble();
+        const double x = box.value(QStringLiteral("x")).toDouble();
+        const double y = box.value(QStringLiteral("y")).toDouble();
+        const QPointF c = mapFromClipSpace(box, x + w * 0.5, y + h * 0.5);
+        const double rx = (c.x() - pivotX) * scaleX;
+        const double ry = (c.y() - pivotY) * scaleY;
+        const QPointF moved(pivotX + cs * rx - sn * ry + dx, pivotY + sn * rx + cs * ry + dy);
+        const QPointF local = mapToClipSpace(box, moved.x(), moved.y());
+        if (scaled) {
+            const double nw = std::max(1.0, w * std::abs(scaleX));
+            const double nh = std::max(1.0, h * std::abs(scaleY));
+            const double nx = local.x() - nw * 0.5;
+            const double ny = local.y() - nh * 0.5;
+            if (box.value(QStringLiteral("kind")).toString() == QLatin1String("text")) {
+                const int size = std::max(1, int(std::lround(box.value(QStringLiteral("pixelSize"), 64).toDouble()
+                                                             * std::sqrt(std::abs(scaleX * scaleY)))));
+                m_app.previewSetTextRect(trackIndex, clipIndex, nx, ny, nw, nh, size);
+            } else {
+                m_app.previewSetClipRect(trackIndex, clipIndex, nx, ny, nw, nh);
+            }
+        } else {
+            m_app.previewSetClipPosition(trackIndex, clipIndex, local.x() - w * 0.5, local.y() - h * 0.5);
+        }
+        if (rotationDeg != 0.0) {
+            double deg = std::fmod(box.value(QStringLiteral("rotation")).toDouble() + rotationDeg, 360.0);
+            if (deg > 180.0)
+                deg -= 360.0;
+            if (deg <= -180.0)
+                deg += 360.0;
+            m_app.previewSetClipRotation(trackIndex, clipIndex, deg);
+        }
+    }
 }
 
 QPointF PreviewController::mapToClipSpace(const QVariantMap &box, double x, double y) const

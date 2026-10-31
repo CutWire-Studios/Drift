@@ -2057,6 +2057,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/transform/TransformOverlayParentChip.qml
         src/qml/components/preview/transform/TransformOverlayLayerChip.qml
         src/qml/components/preview/transform/TransformOverlayBoxBorder.qml
+        src/qml/components/preview/transform/TransformOverlayGroupBox.qml
         src/qml/components/preview/text/InlineTextSelectionHandle.qml
         src/qml/components/preview/status/PreviewVoiceoverBadge.qml
         src/qml/components/preview/status/PreviewGapCaption.qml

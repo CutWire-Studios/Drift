@@ -9,7 +9,7 @@ Item {
     required property var target
     required property var overlay
 
-    visible: rotateHandle.target.selected && !rotateHandle.overlay.mode3d
+    visible: rotateHandle.target.selected && !rotateHandle.overlay.mode3d && !rotateHandle.overlay.groupMode
     width: 14
     height: 14
     x: rotateHandle.target.width / 2 - width / 2
