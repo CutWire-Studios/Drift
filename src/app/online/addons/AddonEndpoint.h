@@ -16,6 +16,9 @@
 #ifndef DRIFT_ADDON_INDEX_URL
 #define DRIFT_ADDON_INDEX_URL ""
 #endif
+#ifndef DRIFT_ADDON_CATALOG_URL
+#define DRIFT_ADDON_CATALOG_URL ""
+#endif
 #ifndef DRIFT_ADDON_CLIENT_TOKEN
 #define DRIFT_ADDON_CLIENT_TOKEN ""
 #endif
@@ -23,6 +26,24 @@
 namespace drift::addon {
 
 inline const QString kIndexUrl = QStringLiteral(DRIFT_ADDON_INDEX_URL);
+// The store catalog lives next to the index (…/v1/index -> …/v1/catalog) unless configured.
+inline QString catalogUrl()
+{
+    const QString configured = QStringLiteral(DRIFT_ADDON_CATALOG_URL);
+    if (!configured.isEmpty() || !kIndexUrl.endsWith(QLatin1String("/v1/index")))
+        return configured;
+    return kIndexUrl.chopped(int(qstrlen("/index"))) + QStringLiteral("/catalog");
+}
+
+// Catalog image paths are relative to this.
+inline QString mediaBaseUrl()
+{
+    const QString catalog = catalogUrl();
+    if (!catalog.endsWith(QLatin1String("/catalog")))
+        return {};
+    return catalog.chopped(int(qstrlen("catalog"))) + QStringLiteral("media/");
+}
+
 inline const QString kClientToken = QStringLiteral(DRIFT_ADDON_CLIENT_TOKEN);
 
 // False when the build was configured with an empty index URL. The manager then lists nothing and

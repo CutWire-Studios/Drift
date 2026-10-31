@@ -130,7 +130,8 @@ QtObject {
     }
 
     // Deep links from global search: action:<id>, workspace:<id>, panel:<type>[#anchor|#tab=<n>[/anchor]],
-    // settings:<page>[#anchor], dialog:<name>[?key=value], theme:<light|dark|id>. Anything else is ignored.
+    // settings:<page>[#anchor], dialog:<name>[?key=value], extras:<addon/<id>|target>, theme:<light|dark|id>.
+    // Anything else is ignored.
     function navigate(target) {
         const colon = target.indexOf(":")
         if (colon < 0)
@@ -161,6 +162,9 @@ QtObject {
             ShellBridge._openDialog(name, ShellBridge._parseParams(query))
             break
         }
+        case "extras":
+            ShellBridge.main.openExtrasTarget(rest.startsWith("addon/") ? "addon:" + rest.slice(6) : rest)
+            break
         case "theme":
             if (rest === "light" || rest === "dark")
                 Theme.setDarkMode(rest === "dark")

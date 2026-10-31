@@ -1144,32 +1144,6 @@
       "borderWidth": "$metrics.borderWidth",
       "link": "$semantic.primary"
     },
-    "addonStartupPackRow": {
-      "radius": "$metrics.radius.md",
-      "background": "$semantic.panel.secondary.background",
-      "borderWidth": "$metrics.borderWidth",
-      "border": "$semantic.panel.secondary.border"
-    },
-    "addonStartupDialog": {
-      "divider": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth"
-    },
-    "addonManagerRow": {
-      "radius": "$metrics.radius.md",
-      "backgroundHover": "$semantic.popoverHover",
-      "background": "$semantic.panel.secondary.background",
-      "borderWidth": "$metrics.borderWidth",
-      "borderHighlight": "$semantic.primary",
-      "border": "$semantic.panel.secondary.border",
-      "foregroundError": "$semantic.destructive",
-      "foregroundMuted": "$semantic.mutedForeground"
-    },
-    "addonManagerDialog": {
-      "statusBusy": "$semantic.mutedForeground",
-      "status": "$semantic.destructive",
-      "restartForeground": "$semantic.destructive",
-      "skeletonRadius": "$metrics.radius.md"
-    },
     "layoutChooserDialog": {
       "listBackground": "$semantic.surface.app",
       "listBorder": "$semantic.panel.border",
@@ -3414,6 +3388,37 @@
       "stateFailed": "$semantic.destructive",
       "stateInstalled": "$semantic.constructive",
       "stateUpdate": "$semantic.primary",
+      "warning": "$semantic.warning"
+    },
+    "extrasStore": {
+      "background": "$semantic.surface.app",
+      "barBackground": "$semantic.surface.panel",
+      "barBorder": "$semantic.panel.border",
+      "borderWidth": "$metrics.borderWidth",
+      "cardBackground": "$semantic.panel.accent",
+      "cardBackgroundHover": "$semantic.popoverHover",
+      "cardBorder": "$semantic.panel.border",
+      "cardBorderSelected": "$semantic.primary",
+      "cardRadius": "$metrics.radius.md",
+      "chipBackground": "$semantic.panel.accent",
+      "chipRadius": "$metrics.radius.md",
+      "detailBackground": "$semantic.surface.app",
+      "foreground": "$semantic.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "itemHover": "$semantic.popoverHover",
+      "itemSelected": "$semantic.panel.accent",
+      "pillBackground": "$semantic.primary",
+      "pillForeground": "$semantic.primaryForeground",
+      "pillRadius": "$metrics.radius.pill",
+      "sidebarBackground": "$semantic.surface.panel",
+      "sidebarBorder": "$semantic.panel.border",
+      "stateFailed": "$semantic.destructive",
+      "stateInstalled": "$semantic.constructive",
+      "stateUpdate": "$semantic.primary",
+      "tileBackground": "$semantic.panel.secondary.background",
+      "tileForeground": "$semantic.foreground",
+      "tileForegroundOnAccent": "$semantic.onMedia",
+      "tileRadius": "$metrics.radius.md",
       "warning": "$semantic.warning"
     },
     "maskPresetCard": {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "app/online/addons/AddonCatalog.h"
+
 #include <QHash>
 #include <QJsonObject>
 #include <QMutex>
@@ -14,6 +16,8 @@
 
 class QNetworkAccessManager;
 
+using drift::addon::AddonCatalog;
+
 // Downloads and installs addons. Lives in the app layer, not driftengine, so tools/ and tests/
 // keep working with no network stack — they read the registry (drift::addon::AddonRegistry) and
 // never write it.
@@ -24,6 +28,12 @@ class AddonManager : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QVariantList catalog READ catalog NOTIFY catalogChanged)
+    // Store metadata. `categories` is the catalog's list in order, plus {id:"other", title:"Other"}
+    // when some row has no catalog entry; `collections` keeps only addon ids that have a row.
+    Q_PROPERTY(QVariantList categories READ categories NOTIFY catalogChanged)
+    Q_PROPERTY(QVariantList collections READ collections NOTIFY catalogChanged)
+    // {ids, count, downloadSize, active}: everything pending or running, in install order.
+    Q_PROPERTY(QVariantMap queue READ queue NOTIFY queueChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool refreshing READ refreshing NOTIFY refreshingChanged)
     // Header attention nudge: offer the core video / transitions / audio packs when they are not
@@ -40,9 +50,16 @@ public:
 
     // One row per known addon: id, name, description, details, author, license, kind, version,
     // installedVersion, downloadSize, installedSize, items, state.
-    // state is one of: available, downloading, installing, installed, update-available, failed,
-    // needs-newer-app (minAppVersion is above this build; also sets minAppVersion on the row).
+    // state is one of: available, queued, downloading, installing, installed, update-available,
+    // failed, needs-newer-app (minAppVersion is above this build; also sets minAppVersion on the
+    // row). Store fields from the catalog: categories, tagline, summary, useCases, howTo, unlocks,
+    // requires [{id, name, installed, reason, kind?}], recommends [{id, name, reason, installed}],
+    // images [{src, caption, width, height}] with absolute URLs, icon, accent, keywords, links,
+    // family, order. Entries marked hidden produce no row.
     QVariantList catalog() const;
+    QVariantList categories() const;
+    QVariantList collections() const;
+    QVariantMap queue() const;
     QString status() const;
     bool refreshing() const;
 
@@ -55,7 +72,15 @@ public:
     // launching offline is quiet rather than an error.
     Q_INVOKABLE void refresh(bool force = false);
 
+    // install() is installMany({id}). Dependencies the catalog names are queued ahead of the
+    // addon; installed and already-running ids are skipped, update-available ones are queued.
     Q_INVOKABLE void install(const QString &id);
+    Q_INVOKABLE void installMany(const QStringList &ids);
+    // What installMany(ids) would do: {ids (install order), added [{id, name, reason, forName}],
+    // missing [{forId, forName, requirement}], downloadSize, count}.
+    Q_INVOKABLE QVariantMap planInstall(const QStringList &ids) const;
+    // The catalog() row for this id, or an empty map.
+    Q_INVOKABLE QVariantMap entry(const QString &id) const;
     Q_INVOKABLE void cancel(const QString &id);
     Q_INVOKABLE void uninstall(const QString &id);
 
@@ -132,6 +157,7 @@ public:
 
 signals:
     void catalogChanged();
+    void queueChanged();
     void statusChanged();
     void refreshingChanged();
     void remindEssentialChanged();
@@ -165,12 +191,34 @@ private:
     void finishDownload(const QString &id);
     void beginExtract(const QString &id, const QString &packagePath);
     void failTransfer(const QString &id, const QString &message);
+    enum class Outcome { Succeeded, Failed, Cancelled };
+    // Frees the id's place in the queue: dependents still waiting for a failed or cancelled id are
+    // dropped, then the next item starts.
+    void settle(const QString &id, Outcome outcome);
+    void pump();
+    void queueExtract(const QString &id);
+    void startNextExtract();
+    void loadCatalog();
+    void fetchCatalog(bool force);
+    bool applyCatalog(const QByteArray &json);
+    AddonCatalog::Plan planFor(const QStringList &ids) const;
+    QString addonName(const QString &id) const;
+    QList<AddonCatalog::IndexRow> indexRows() const;
+    bool pendingId(const QString &id) const;
     void sweepDownloadCache();
     QString askForOtherAcceleration(const QString &failed, const QString &error);
 
     QString m_status;
     bool m_refreshing = false;
     QList<QJsonObject> m_remote;
+    AddonCatalog m_catalog;
+    bool m_catalogFetching = false;
+    // Ids waiting for a download slot, in install order, and what each must wait for.
+    QStringList m_queue;
+    QHash<QString, QStringList> m_needs;
+    // Downloaded and waiting for the one extraction at a time.
+    QStringList m_extractWaiting;
+    QString m_extractingId;
     QHash<QString, std::shared_ptr<Transfer>> m_transfers;
     QHash<QString, QString> m_failures;
     // Download links expire after an hour, so an install started from a stale cached index gets

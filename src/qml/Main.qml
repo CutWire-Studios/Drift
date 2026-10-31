@@ -304,7 +304,7 @@ ApplicationWindow {
         }
         const tools = [segmentationWindowLoader, denoiseWindowLoader, restoreWindowLoader,
                        multicamWindowLoader, speedCurveWindowLoader, fadeCurveWindowLoader,
-                       marketplaceWindowLoader]
+                       marketplaceWindowLoader, extrasWindowLoader]
         for (var t = 0; t < tools.length; ++t) {
             if (tools[t].shown) {
                 tools[t].item.close()
@@ -313,7 +313,7 @@ ApplicationWindow {
         }
         const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, debugInfoDialogLoader.item,
                         settingsDialogLoader.item, imageViewerDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
-                        addonManagerDialogLoader.item, missingAddonsDialogLoader.item, addonStartupDialog,
+                        missingAddonsDialogLoader.item,
                         projectSetupDialogLoader.item, layoutChooserDialogLoader.item,
                         languageChooserDialogLoader.item, recoveryDialogLoader.item,
                         reverseProgressDialogLoader.item, subtitleProgressDialogLoader.item]
@@ -386,7 +386,8 @@ ApplicationWindow {
     property bool showStartScreen: false
 
     // Header Extras icon pulses while true; never auto-opens a dialog.
-    readonly property alias addonAttentionNeeded: addonStartupDialog.needsAttention
+    property string addonAttentionTarget: ""
+    readonly property bool addonAttentionNeeded: addonAttentionTarget !== ""
 
     function promptLanguageChooserIfNeeded() {
         if (!EditorState.preferences.needsUiLanguagePrompt)
@@ -415,7 +416,11 @@ ApplicationWindow {
 
     // Quiet catalog refresh for the header attention indicator.
     function refreshAddonAttention() {
-        addonStartupDialog.refreshAttention()
+        if (Addons.refreshing)
+            return
+        const updates = Addons.remindUpdates && Addons.updatableAddons().length > 0
+        const essential = Addons.remindEssential && Addons.missingEssentialAddons().length > 0
+        addonAttentionTarget = updates ? "updates" : (essential ? "essentials" : "")
     }
 
     // Settings / header: reopen platform layout picker anytime.
@@ -487,15 +492,13 @@ ApplicationWindow {
         }
     }
 
+    // Kept loaded so the store keeps its section and open detail between visits.
     LazyLoader {
-        id: addonManagerDialogLoader
+        id: extrasWindowLoader
+        keepLoaded: true
         sourceComponent: Component {
-            AddonManagerDialog { }
+            ExtrasWindow { }
         }
-    }
-
-    AddonStartupDialog {
-        id: addonStartupDialog
     }
 
     LazyLoader {
@@ -957,26 +960,24 @@ ApplicationWindow {
         })
     }
 
+    // target: "" | category id | "addon:<id>" | "kind:<kind>" | "installed" | "updates" | "custom".
+    function openExtrasTarget(target) {
+        extrasWindowLoader.ensure().open(target || "")
+    }
+
     // Opened from the header, and from every empty state that a missing addon causes.
     function openAddonManager(kind) {
-        if (kind === undefined)
-            addonManagerDialogLoader.ensure().open()
-        else
-            addonManagerDialogLoader.ensure().openForKind(kind)
+        openExtrasTarget(kind ? "kind:" + kind : "")
     }
 
     // A .driftfx from Drift Forge; an empty url asks with a file dialog. Shared with the effects
     // panel's Import button.
     function importUserPackage(url) {
-        addonManagerDialogLoader.ensure().importUserPackage(url)
+        extrasWindowLoader.ensure().importUserPackage(url)
     }
 
-    // Header Extras button: open the essential/update nudge when the icon is pulsing,
-    // otherwise the full manager — same idea as the update badge vs silent check.
     function openExtras() {
-        if (addonStartupDialog.openForAttention())
-            return
-        openAddonManager()
+        openExtrasTarget(addonAttentionTarget)
     }
 
     // Opened from the header badge, which only exists while there is something to show.

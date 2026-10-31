@@ -523,7 +523,7 @@ ApplicationWindow {
             if (window.subPage) {
                 if (window.closeTopMenu() || window.closeTopModal())
                     return
-                if (window.subPageKind === "marketplace" && window.subPage.handleBack())
+                if ((window.subPageKind === "marketplace" || window.subPageKind === "extras") && window.subPage.handleBack())
                     return
                 window.closeSubPage()
                 return
@@ -564,7 +564,7 @@ ApplicationWindow {
             return true
         }
         const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, debugInfoDialogLoader.item, projectPropertiesDialog,
-                        recoveryDialog, unsavedDialog, addonStartupDialog,
+                        recoveryDialog, unsavedDialog,
                         missingAddonsDialogLoader.item, updateDialogLoader.item,
                         reverseProgressDialogLoader.item, subtitleProgressDialogLoader.item]
         for (var i = 0; i < modals.length; ++i) {
@@ -782,9 +782,8 @@ ApplicationWindow {
     }
 
     function importUserPackage(url) {
-        window.openAddonManager().importUserPackage(url)
+        window.openExtrasTarget("").importUserPackage(url)
     }
-    AddonStartupDialog { id: addonStartupDialog }
     LazyLoader { id: missingAddonsDialogLoader; sourceComponent: Component { MissingAddonsDialog { } } }
     LazyLoader { id: accelerationFailedDialogLoader; sourceComponent: Component { AccelerationFailedDialog { } } }
     LazyLoader { id: updateDialogLoader; sourceComponent: Component { UpdateDialog { } } }
@@ -932,21 +931,25 @@ ApplicationWindow {
         window.subPage.view.open(pageOrTab || "", source || "", itemId || "")
     }
 
-    function openAddonManager(kind) {
+    // target: "" | category id | "addon:<id>" | "kind:<kind>" | "installed" | "updates" | "custom".
+    // An open Extras page keeps its place unless a target is given.
+    function openExtrasTarget(target) {
         if (window.subPageKind !== "extras") {
             window.closeSubPage()
-            window.subPage = stack.push(extrasPageComponent)
+            window.subPage = stack.push(extrasPageComponent, { target: target || "" })
             window.subPageKind = "extras"
+        } else if (target) {
+            window.subPage.store.open(target)
         }
-        if (kind !== undefined)
-            window.subPage.panel.openForKind(kind)
-        return window.subPage.panel
+        return window.subPage
+    }
+
+    function openAddonManager(kind) {
+        openExtrasTarget(kind ? "kind:" + kind : "")
     }
 
     function openExtras() {
-        if (addonStartupDialog.openForAttention())
-            return
-        openAddonManager()
+        openExtrasTarget(addonAttentionTarget)
     }
 
     function openUpdateDialog() {
@@ -961,10 +964,15 @@ ApplicationWindow {
         aboutDialogLoader.ensure().open()
     }
 
-    readonly property alias addonAttentionNeeded: addonStartupDialog.needsAttention
+    property string addonAttentionTarget: ""
+    readonly property bool addonAttentionNeeded: addonAttentionTarget !== ""
 
     function refreshAddonAttention() {
-        addonStartupDialog.refreshAttention()
+        if (Addons.refreshing)
+            return
+        const updates = Addons.remindUpdates && Addons.updatableAddons().length > 0
+        const essential = Addons.remindEssential && Addons.missingEssentialAddons().length > 0
+        addonAttentionTarget = updates ? "updates" : (essential ? "essentials" : "")
     }
 
     // True while any of the full-screen clip tools owns the display, so the editor's
@@ -1344,18 +1352,9 @@ ApplicationWindow {
 
     Component {
         id: extrasPageComponent
-        AndroidSubPage {
-            title: qsTr("Extras")
-            property alias panel: extrasPanel
-            onBackRequested: window.closeSubPage()
+        AndroidExtrasPage {
+            onBackRequested: if (!handleBack()) window.closeSubPage()
             Component.onDestruction: if (window.subPage === this) { window.subPage = null; window.subPageKind = "" }
-
-            AddonManagerPanel {
-                id: extrasPanel
-                anchors.fill: parent
-                anchors.margins: Theme.androidPagePadding
-                Component.onCompleted: refresh()
-            }
         }
     }
 

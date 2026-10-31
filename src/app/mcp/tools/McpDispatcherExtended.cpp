@@ -3467,6 +3467,16 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("install_addon"))
         return m_controller->mcp()->installAddon(argString(args, QStringLiteral("id")));
 
+    if (tool == QLatin1String("install_addons")) {
+        QStringList ids;
+        for (const QJsonValue &v : args.value(QStringLiteral("ids")).toArray())
+            ids.append(v.toString());
+        return m_controller->mcp()->installAddons(ids);
+    }
+
+    if (tool == QLatin1String("addon_details"))
+        return m_controller->mcp()->addonDetails(argString(args, QStringLiteral("id")));
+
     if (tool == QLatin1String("cancel_addon_install"))
         return m_controller->mcp()->cancelAddonInstall(argString(args, QStringLiteral("id")));
 

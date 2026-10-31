@@ -1,0 +1,1582 @@
+{
+  "schema": 1,
+  "revision": "f1a4e57dd935483f",
+  "generated": "2026-10-31T17:11:04+00:00",
+  "categories": [
+    {
+      "id": "essentials",
+      "title": "Essentials",
+      "subtitle": "The basics most projects need",
+      "icon": "star",
+      "order": 10
+    },
+    {
+      "id": "effects-transitions",
+      "title": "Effects & Transitions",
+      "subtitle": "Style your clips and move between them",
+      "icon": "sparkles",
+      "order": 20
+    },
+    {
+      "id": "color-looks",
+      "title": "Color & Looks",
+      "subtitle": "One-click film and creative color grades",
+      "icon": "palette",
+      "order": 30
+    },
+    {
+      "id": "text-fonts-stickers",
+      "title": "Text, Fonts & Stickers",
+      "subtitle": "Titles, typefaces and emoji to decorate your video",
+      "icon": "type",
+      "order": 40
+    },
+    {
+      "id": "captions-speech",
+      "title": "Captions & Speech",
+      "subtitle": "Turn speech into text, and text into speech",
+      "icon": "captions",
+      "order": 50
+    },
+    {
+      "id": "audio-cleanup",
+      "title": "Audio Cleanup & Analysis",
+      "subtitle": "Clean up sound and find what is in it",
+      "icon": "audio",
+      "order": 60
+    },
+    {
+      "id": "cutouts-masking",
+      "title": "Cutouts & Masking",
+      "subtitle": "Separate people and objects from the background",
+      "icon": "scissors",
+      "order": 70
+    },
+    {
+      "id": "enhance-restore",
+      "title": "Enhance & Restore",
+      "subtitle": "Sharper, cleaner video with a sense of depth",
+      "icon": "wand",
+      "order": 80
+    },
+    {
+      "id": "faces-fun",
+      "title": "Faces & Fun",
+      "subtitle": "Playful effects that follow faces",
+      "icon": "smile",
+      "order": 90
+    },
+    {
+      "id": "smart-editing",
+      "title": "Smart Editing",
+      "subtitle": "Let Drift find the moments worth keeping",
+      "icon": "brain",
+      "order": 100
+    },
+    {
+      "id": "ai-assistant",
+      "title": "AI Assistant",
+      "subtitle": "A helper that runs on your own computer",
+      "icon": "bot",
+      "order": 110
+    },
+    {
+      "id": "engines-runtimes",
+      "title": "Engines & Runtimes",
+      "subtitle": "Behind-the-scenes parts other add-ons rely on",
+      "icon": "cpu",
+      "order": 120
+    }
+  ],
+  "collections": [
+    {
+      "id": "start-here",
+      "title": "Start here",
+      "addons": [
+        "effects.core",
+        "transitions.core",
+        "audioeffects.core",
+        "fonts.essentials"
+      ]
+    },
+    {
+      "id": "popular-ai",
+      "title": "Popular AI tools",
+      "addons": [
+        "whisper.small",
+        "rvm.mobilenetv3",
+        "deepfilternet.v3",
+        "restore.models",
+        "sam2.tiny"
+      ]
+    },
+    {
+      "id": "creative-packs",
+      "title": "Creative packs",
+      "addons": [
+        "effects.trending",
+        "looks.essentials",
+        "transitions.core",
+        "stickers.harmonyos"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "deepfilternet.v3",
+      "tagline": "Remove background noise from voices",
+      "summary": "Cleans up hiss, hum and room noise while keeping the voice clear. Good for rescuing recordings made in noisy places.",
+      "categories": [
+        "audio-cleanup"
+      ],
+      "keywords": [
+        "denoise",
+        "noise reduction",
+        "hiss",
+        "hum",
+        "clean audio"
+      ],
+      "icon": "audio",
+      "useCases": [
+        "Clean up a phone recording",
+        "Reduce fan or air-conditioner noise",
+        "Make interviews clearer"
+      ],
+      "howTo": [
+        "Select a clip with audio on the timeline",
+        "Open the Inspector",
+        "Choose Remove noise",
+        "Compare before and after, then apply"
+      ],
+      "unlocks": [
+        {
+          "label": "Remove noise",
+          "location": "Inspector, audio section"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "effects.core",
+      "tagline": "Everyday effects to fix and style your clips",
+      "summary": "A big library of effects for correcting color, blurring, adding glow or glitch, removing green screens and retouching faces. Some effects use depth to relight a scene or blur the background, which works best with the Depth add-on.",
+      "categories": [
+        "essentials",
+        "effects-transitions"
+      ],
+      "keywords": [
+        "blur",
+        "glow",
+        "glitch",
+        "green screen",
+        "chroma key",
+        "beauty",
+        "retouch",
+        "vignette"
+      ],
+      "icon": "sparkles",
+      "useCases": [
+        "Fix exposure, tint and saturation on a dull clip",
+        "Blur or glow parts of a shot",
+        "Remove a green screen background",
+        "Smooth skin and add subtle makeup",
+        "Add a glitch or warp for a stylish moment"
+      ],
+      "howTo": [
+        "Select a clip on the timeline",
+        "Open the Effects panel and browse or search for an effect",
+        "Click an effect to add it to the clip",
+        "Adjust its sliders in the Inspector"
+      ],
+      "unlocks": [
+        {
+          "label": "Video effects",
+          "location": "Effects panel"
+        },
+        {
+          "label": "Green screen",
+          "location": "Effects panel"
+        },
+        {
+          "label": "Face retouch",
+          "location": "Effects panel"
+        }
+      ],
+      "requires": [],
+      "recommends": [
+        {
+          "id": "depth.vda-small",
+          "reason": "Unlocks 3D relighting, background blur and fog"
+        }
+      ],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "face.landmark",
+      "tagline": "Funny face effects that follow faces",
+      "summary": "Finds faces in your clip once, so warps and other face effects stay locked on as people move.",
+      "categories": [
+        "faces-fun"
+      ],
+      "keywords": [
+        "face",
+        "warp",
+        "funny",
+        "landmarks",
+        "big eyes"
+      ],
+      "icon": "smile",
+      "useCases": [
+        "Add funny face warps to a vlog",
+        "Retouch faces consistently through a clip",
+        "Make playful reaction videos"
+      ],
+      "howTo": [
+        "Select a clip with faces on the timeline",
+        "Open the Effects panel",
+        "Add a Funny face effect",
+        "Let Drift scan the clip, then adjust"
+      ],
+      "unlocks": [
+        {
+          "label": "Funny face warps",
+          "location": "Effects panel"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "llm.qwen35-4b",
+      "tagline": "A small AI assistant that runs on your computer",
+      "summary": "A language model that lets the local agent read and edit your open project. Everything stays on your computer, no account needed.",
+      "categories": [
+        "ai-assistant"
+      ],
+      "keywords": [
+        "llm",
+        "agent",
+        "assistant",
+        "chat",
+        "local ai",
+        "qwen"
+      ],
+      "icon": "bot",
+      "useCases": [
+        "Ask the assistant to make edits for you",
+        "Work without sending your project online",
+        "Experiment with an AI helper offline"
+      ],
+      "howTo": [
+        "Open the Agent panel",
+        "Choose the local model",
+        "Type what you want done to your project"
+      ],
+      "unlocks": [
+        {
+          "label": "Local agent",
+          "location": "Agent panel"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "llama-runtime",
+          "prefer": {
+            "linux-x64": "llama.cpp.cpu.linux-x64"
+          },
+          "default": null,
+          "reason": "Runs on the local agent runtime"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "object.yolox-tiny",
+      "tagline": "Find moments by what is in the shot",
+      "summary": "Looks at each scene and names the people, animals, vehicles and objects in it. Lets you search and rank scenes by what they contain.",
+      "categories": [
+        "smart-editing"
+      ],
+      "keywords": [
+        "scene labels",
+        "object detection",
+        "search",
+        "find",
+        "shot"
+      ],
+      "icon": "brain",
+      "useCases": [
+        "Find every shot with a dog",
+        "Sort scenes by what appears in them",
+        "Pick the best clips from long footage"
+      ],
+      "howTo": [
+        "Select a long clip on the timeline",
+        "Open the Scenes tool and detect scenes",
+        "Run scene labels",
+        "Search or filter the scenes by what you want"
+      ],
+      "unlocks": [
+        {
+          "label": "Scene labels and search",
+          "location": "Scenes tool"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "match": "onnxruntime.cpu.*",
+      "tagline": "The AI engine that works on every computer",
+      "summary": "Powers Drift's AI tools such as captions, cutouts and noise removal. It runs on your computer's processor and is installed automatically the first time an AI tool needs it.",
+      "categories": [
+        "engines-runtimes"
+      ],
+      "keywords": [
+        "onnx",
+        "ai engine",
+        "runtime",
+        "cpu"
+      ],
+      "icon": "cpu",
+      "useCases": [
+        "Required by every AI tool in Drift",
+        "Works on any computer, no special graphics card needed"
+      ],
+      "howTo": [
+        "Pick an AI tool and install it; the engine is added automatically",
+        "Nothing else to set up"
+      ],
+      "unlocks": [
+        {
+          "label": "All AI tools",
+          "location": "Throughout Drift"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "restore.models",
+      "tagline": "Upscale and clean up low-quality video",
+      "summary": "Sharpens and enlarges footage with models made for anime, live action and 3D animation, and cleans up compression and noise. Choose the model that suits your footage.",
+      "categories": [
+        "enhance-restore"
+      ],
+      "keywords": [
+        "upscale",
+        "upscaler",
+        "enhance",
+        "denoise",
+        "anime",
+        "sharpen",
+        "4k"
+      ],
+      "icon": "wand",
+      "useCases": [
+        "Upscale old or low-resolution clips",
+        "Clean up blocky compressed video",
+        "Sharpen anime and cartoons"
+      ],
+      "howTo": [
+        "Select a clip on the timeline",
+        "Open the Enhance video tool",
+        "Pick a model and preview it",
+        "Run it to create the enhanced clip"
+      ],
+      "unlocks": [
+        {
+          "label": "Enhance video",
+          "location": "Enhance video tool"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "rvm.mobilenetv3",
+      "tagline": "Cut people out of the background automatically",
+      "summary": "Removes the background behind people with no clicking, keeping soft edges so hair looks natural. Works across a whole clip.",
+      "categories": [
+        "cutouts-masking"
+      ],
+      "keywords": [
+        "background removal",
+        "matting",
+        "remove background",
+        "person",
+        "green screen"
+      ],
+      "icon": "scissors",
+      "useCases": [
+        "Replace or blur the background without a green screen",
+        "Put text behind a person",
+        "Make a quick cutout for a thumbnail or overlay"
+      ],
+      "howTo": [
+        "Select a clip with a person on the timeline",
+        "Open the People cutout tool",
+        "Run the cutout and preview the result",
+        "Place something behind it or apply effects"
+      ],
+      "unlocks": [
+        {
+          "label": "People cutout",
+          "location": "People cutout tool"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "rvm.resnet50",
+          "reason": "Higher quality, slower"
+        }
+      ],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "whisper.small",
+      "tagline": "Turn speech into captions automatically",
+      "summary": "Listens to your clip and writes subtitles for what is said, in about 99 languages. Captions appear on the timeline ready to edit and style.",
+      "categories": [
+        "captions-speech"
+      ],
+      "keywords": [
+        "subtitles",
+        "transcribe",
+        "speech to text",
+        "whisper",
+        "captions"
+      ],
+      "icon": "captions",
+      "useCases": [
+        "Add subtitles to an interview or vlog",
+        "Transcribe a talk to edit by text",
+        "Make videos accessible and easier to watch muted",
+        "Translate your workflow by starting from an accurate transcript"
+      ],
+      "howTo": [
+        "Select a clip with speech on the timeline",
+        "Open the Captions panel",
+        "Choose Create captions from speech",
+        "Edit the generated lines if needed"
+      ],
+      "unlocks": [
+        {
+          "label": "Create captions from speech",
+          "location": "Captions panel"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "align.wav2vec2-en",
+          "reason": "Word-accurate timing for English"
+        },
+        {
+          "id": "silero.vad",
+          "reason": "Tighter caption timing"
+        }
+      ],
+      "images": [],
+      "links": [],
+      "order": 10
+    },
+    {
+      "id": "align.wav2vec2-en",
+      "tagline": "Exact word timing for English captions",
+      "summary": "Pins each spoken English word to the moment it was said. Cuts and captions land between words instead of in the middle of them.",
+      "categories": [
+        "captions-speech"
+      ],
+      "keywords": [
+        "forced alignment",
+        "word timing",
+        "karaoke",
+        "transcript"
+      ],
+      "icon": "captions",
+      "useCases": [
+        "Cut by editing the transcript text",
+        "Word-by-word highlighted captions",
+        "Cleaner cuts between sentences"
+      ],
+      "howTo": [
+        "Create captions from speech on an English clip",
+        "Open the Captions panel",
+        "Refine word timing, or edit the transcript to cut",
+        "The better timing is used automatically"
+      ],
+      "unlocks": [
+        {
+          "label": "Word-accurate captions",
+          "location": "Captions panel"
+        },
+        {
+          "label": "Transcript-based cutting",
+          "location": "Captions panel"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "whisper.small",
+          "reason": "Needed to create the transcript"
+        }
+      ],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "id": "audio.clap",
+      "tagline": "Describe sounds and search clips by sound",
+      "summary": "Tags what you can hear, such as applause or rain, and finds moments that match a sound you describe. Helps you search and sort media by how it sounds.",
+      "categories": [
+        "audio-cleanup",
+        "smart-editing"
+      ],
+      "keywords": [
+        "sound tags",
+        "sound search",
+        "sfx",
+        "ambience"
+      ],
+      "icon": "audio",
+      "useCases": [
+        "Find the applause in a long recording",
+        "Search for a whoosh or rain sound",
+        "Rank clips by how well they match a sound"
+      ],
+      "howTo": [
+        "Select a clip or section",
+        "Open audio analysis",
+        "Ask for sound tags or search for a sound",
+        "Jump to the matching moments"
+      ],
+      "unlocks": [
+        {
+          "label": "Sound tags and sound search",
+          "location": "Audio analysis"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "audio.ast",
+          "reason": "Adds speech and music detection"
+        }
+      ],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "id": "depth.vda-small",
+      "tagline": "Understand depth for lighting and focus",
+      "summary": "Works out how far away everything in a shot is. This lets effects add lights that fall on the scene, blur the background realistically, add fog or place titles behind people.",
+      "categories": [
+        "enhance-restore"
+      ],
+      "keywords": [
+        "depth",
+        "3d",
+        "relight",
+        "depth of field",
+        "fog",
+        "blur"
+      ],
+      "icon": "layers",
+      "useCases": [
+        "Blur the background like a real camera lens",
+        "Add fog that gets thicker with distance",
+        "Light a scene from a new direction",
+        "Put text behind a person"
+      ],
+      "howTo": [
+        "Select a clip on the timeline",
+        "Open the Effects panel",
+        "Add a depth effect such as Depth of field",
+        "Let Drift analyze the clip, then adjust the effect"
+      ],
+      "unlocks": [
+        {
+          "label": "3D relight and depth of field",
+          "location": "Effects panel"
+        },
+        {
+          "label": "Depth fog and titles behind people",
+          "location": "Effects panel"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "id": "effects.trending",
+      "tagline": "Eye-catching looks for short videos",
+      "summary": "Effects made for social clips, such as sparkle, beat shake, kaleidoscope and lightning. Also includes ready-made effect templates that move with the beat of your music.",
+      "categories": [
+        "effects-transitions"
+      ],
+      "keywords": [
+        "tiktok",
+        "shorts",
+        "reels",
+        "beat",
+        "sparkle",
+        "kaleidoscope",
+        "templates"
+      ],
+      "icon": "zap",
+      "useCases": [
+        "Make a clip pop on a short-form video",
+        "Shake or flash the picture on the beat",
+        "Add sparkle or lightning to a highlight",
+        "Start from a ready-made effect template"
+      ],
+      "howTo": [
+        "Select a clip on the timeline",
+        "Open the Effects panel and look for the Trending effects",
+        "Add one to your clip",
+        "Adjust it in the Inspector, or pick a template to apply several at once"
+      ],
+      "unlocks": [
+        {
+          "label": "Trending effects",
+          "location": "Effects panel"
+        },
+        {
+          "label": "Beat-synced effect templates",
+          "location": "Effects panel"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "match": "llama.cpp.cpu.*",
+      "tagline": "The engine that runs the local assistant",
+      "summary": "A small program that runs a language model on your computer's processor, so the local agent works without a graphics card. Installed automatically when needed.",
+      "categories": [
+        "ai-assistant",
+        "engines-runtimes"
+      ],
+      "keywords": [
+        "llama",
+        "runtime",
+        "local agent",
+        "cpu"
+      ],
+      "icon": "cpu",
+      "useCases": [
+        "Required by the local assistant model"
+      ],
+      "howTo": [
+        "Install it together with an assistant model",
+        "No other setup is needed"
+      ],
+      "unlocks": [
+        {
+          "label": "Local agent",
+          "location": "Agent panel"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "match": "onnxruntime.cuda.*",
+      "tagline": "Faster AI on NVIDIA graphics cards",
+      "summary": "The same AI features, sped up by an NVIDIA graphics card. Needs a recent NVIDIA driver, and falls back to the processor if the card cannot be used.",
+      "categories": [
+        "engines-runtimes"
+      ],
+      "keywords": [
+        "nvidia",
+        "cuda",
+        "gpu",
+        "faster",
+        "ai engine"
+      ],
+      "icon": "zap",
+      "useCases": [
+        "Speed up captions, cutouts and enhancement",
+        "Handy for long clips and big projects"
+      ],
+      "howTo": [
+        "Install this engine",
+        "Open the AI engine details and choose NVIDIA graphics",
+        "Run any AI tool as usual"
+      ],
+      "unlocks": [
+        {
+          "label": "Faster AI tools",
+          "location": "Throughout Drift"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "id": "rvm.resnet50",
+      "tagline": "Cleaner people cutouts for difficult shots",
+      "summary": "A larger, slower version of People Cutout with tighter edges on fine hair and fast motion. Works alongside the standard version, and you can switch between them.",
+      "categories": [
+        "cutouts-masking"
+      ],
+      "keywords": [
+        "background removal",
+        "matting",
+        "high quality",
+        "hair"
+      ],
+      "icon": "scissors",
+      "useCases": [
+        "Get cleaner edges on messy hair",
+        "Cut out people moving quickly",
+        "Final-quality cutouts"
+      ],
+      "howTo": [
+        "Open the People cutout tool on a clip",
+        "Pick the Best quality option",
+        "Run the cutout and wait for it to finish"
+      ],
+      "unlocks": [
+        {
+          "label": "Best quality cutout",
+          "location": "People cutout tool"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 20
+    },
+    {
+      "id": "audio.ast",
+      "tagline": "Tell speech, music and silence apart",
+      "summary": "Marks which parts of your timeline are speech, music or silence and names the sounds in between. Useful for quickly understanding long recordings.",
+      "categories": [
+        "audio-cleanup"
+      ],
+      "keywords": [
+        "speech",
+        "music",
+        "silence",
+        "sound classification"
+      ],
+      "icon": "audio",
+      "useCases": [
+        "See where the music starts and stops",
+        "Find speech sections quickly",
+        "Name the sounds in a recording"
+      ],
+      "howTo": [
+        "Select a clip or the whole timeline",
+        "Open audio analysis",
+        "Run the analysis",
+        "Use the results to jump around or cut"
+      ],
+      "unlocks": [
+        {
+          "label": "Speech and music sections",
+          "location": "Audio analysis"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "audio.clap",
+          "reason": "Adds searchable sound tags"
+        }
+      ],
+      "images": [],
+      "links": [],
+      "order": 30
+    },
+    {
+      "match": "onnxruntime.migraphx.*",
+      "tagline": "Faster AI on AMD graphics cards",
+      "summary": "The same AI features, sped up by an AMD Radeon card. It needs ROCm with MIGraphX installed on your computer, and falls back to the processor if it is missing.",
+      "categories": [
+        "engines-runtimes"
+      ],
+      "keywords": [
+        "amd",
+        "radeon",
+        "rocm",
+        "gpu",
+        "faster",
+        "ai engine"
+      ],
+      "icon": "zap",
+      "useCases": [
+        "Speed up AI tools on a Radeon card"
+      ],
+      "howTo": [
+        "Install ROCm with MIGraphX on your computer",
+        "Install this engine",
+        "Open the AI engine details and choose AMD graphics"
+      ],
+      "unlocks": [
+        {
+          "label": "Faster AI tools",
+          "location": "Throughout Drift"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 30
+    },
+    {
+      "id": "sam2.tiny",
+      "tagline": "Click a subject and cut it out of a clip",
+      "summary": "Click on a person or object and Drift follows it through the whole clip, cutting it out from the background. Works for things as well as people.",
+      "categories": [
+        "cutouts-masking"
+      ],
+      "keywords": [
+        "segment",
+        "mask",
+        "object cutout",
+        "tracking",
+        "sam"
+      ],
+      "icon": "scissors",
+      "useCases": [
+        "Cut out a pet, car or product",
+        "Apply an effect to just one subject",
+        "Track something across a clip"
+      ],
+      "howTo": [
+        "Select a clip on the timeline",
+        "Open the Masking workspace",
+        "Choose the subject cutout tool and click what you want",
+        "Check the result as you play the clip"
+      ],
+      "unlocks": [
+        {
+          "label": "Subject cutout",
+          "location": "Masking workspace"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 30
+    },
+    {
+      "id": "silero.vad",
+      "tagline": "Find exactly where people are talking",
+      "summary": "Detects speech so silence removal skips breaths, music and room noise instead of treating them as talking. Also tightens caption timing.",
+      "categories": [
+        "captions-speech",
+        "smart-editing"
+      ],
+      "keywords": [
+        "silence",
+        "voice activity",
+        "speech detection",
+        "jump cut"
+      ],
+      "icon": "mic",
+      "useCases": [
+        "Cut out pauses automatically",
+        "Keep music and ambience while trimming silence",
+        "Get tighter caption timing"
+      ],
+      "howTo": [
+        "Select a clip with speech",
+        "Open the Detect / Remove Silence tool",
+        "Choose the voice detection method",
+        "Review and apply the cuts"
+      ],
+      "unlocks": [
+        {
+          "label": "Voice detection method",
+          "location": "Detect / Remove Silence"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 30
+    },
+    {
+      "id": "transitions.core",
+      "tagline": "Over a hundred ways to move between clips",
+      "summary": "Fades, wipes, slides, zooms, page turns and many more transitions to join two clips smoothly. From simple cuts to dramatic effects such as a cube flip or water drop.",
+      "categories": [
+        "essentials",
+        "effects-transitions"
+      ],
+      "keywords": [
+        "fade",
+        "wipe",
+        "slide",
+        "zoom",
+        "page turn",
+        "dissolve"
+      ],
+      "icon": "layers",
+      "useCases": [
+        "Fade smoothly between scenes",
+        "Add a quick slide or zoom to keep a fast pace",
+        "Use a dramatic transition for a big reveal"
+      ],
+      "howTo": [
+        "Place two clips next to each other on the timeline",
+        "Open the Transitions panel",
+        "Drag a transition onto the join between the clips",
+        "Change its length in the Inspector"
+      ],
+      "unlocks": [
+        {
+          "label": "Transitions",
+          "location": "Transitions panel"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 30
+    },
+    {
+      "id": "audioeffects.core",
+      "tagline": "Clean up voices and add fun sound effects",
+      "summary": "Tools like EQ, compressor and noise gate help voices sound clear and even. Also includes voice changers, echo, telephone, radio and vinyl effects for creative touches.",
+      "categories": [
+        "essentials",
+        "audio-cleanup"
+      ],
+      "keywords": [
+        "eq",
+        "compressor",
+        "limiter",
+        "noise gate",
+        "de-esser",
+        "voice changer",
+        "echo",
+        "reverb"
+      ],
+      "icon": "audio",
+      "useCases": [
+        "Make a voice clearer and more even",
+        "Remove soft background noise between phrases",
+        "Make a voice sound like a phone call or radio",
+        "Add echo or chorus for atmosphere"
+      ],
+      "howTo": [
+        "Select an audio or video clip on the timeline",
+        "Open the Audio effects panel",
+        "Pick an effect to add it to the clip",
+        "Tune it with the sliders in the Inspector"
+      ],
+      "unlocks": [
+        {
+          "label": "Audio effects",
+          "location": "Audio effects panel"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 40
+    },
+    {
+      "id": "diarize.pyannote-eres2net",
+      "tagline": "Label who is speaking and when",
+      "summary": "Works out which person is talking in a recording and labels each line with the speaker. Great for interviews and conversations.",
+      "categories": [
+        "captions-speech"
+      ],
+      "keywords": [
+        "speaker",
+        "diarization",
+        "interview",
+        "who is speaking"
+      ],
+      "icon": "mic",
+      "useCases": [
+        "Label speakers in an interview",
+        "Give each speaker their own caption color",
+        "Find a person's lines quickly"
+      ],
+      "howTo": [
+        "Create captions from speech on a clip",
+        "Open the Captions panel",
+        "Choose to label speakers",
+        "Rename the speakers if you like"
+      ],
+      "unlocks": [
+        {
+          "label": "Speaker labels",
+          "location": "Captions panel"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "whisper.small",
+          "reason": "Needed to create the transcript"
+        }
+      ],
+      "images": [],
+      "links": [],
+      "order": 40
+    },
+    {
+      "match": "onnxruntime.ep.webgpu.*",
+      "tagline": "Speed boost for AI on any graphics card",
+      "summary": "Makes AI features faster using an AMD, Intel or NVIDIA graphics card, with no extra toolkit to install. It adds to the AI engine you already have.",
+      "categories": [
+        "engines-runtimes"
+      ],
+      "keywords": [
+        "webgpu",
+        "gpu",
+        "faster",
+        "speed",
+        "ai engine"
+      ],
+      "icon": "zap",
+      "useCases": [
+        "Get faster AI without installing GPU toolkits"
+      ],
+      "howTo": [
+        "Install this speed boost",
+        "Open the AI engine details and enable it",
+        "Run any AI tool as usual"
+      ],
+      "unlocks": [
+        {
+          "label": "Faster AI tools",
+          "location": "Throughout Drift"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Speeds up the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 40
+    },
+    {
+      "id": "fonts.essentials",
+      "tagline": "21 good-looking fonts for titles and captions",
+      "summary": "A hand-picked set of fonts covering bold display styles, clean sans-serifs, editorial serifs and playful options. Handy so your titles look good on any computer.",
+      "categories": [
+        "essentials",
+        "text-fonts-stickers"
+      ],
+      "keywords": [
+        "typeface",
+        "title",
+        "caption",
+        "text",
+        "display"
+      ],
+      "icon": "type",
+      "useCases": [
+        "Give titles a bold, modern look",
+        "Keep captions easy to read",
+        "Use the same fonts on every device"
+      ],
+      "howTo": [
+        "Add a text clip to the timeline",
+        "Select it and open the Inspector",
+        "Choose the new font from the font list"
+      ],
+      "unlocks": [
+        {
+          "label": "21 extra fonts",
+          "location": "Text font list"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 50
+    },
+    {
+      "match": "pdfium.*",
+      "tagline": "Show PDF pages on your timeline",
+      "summary": "Lets Drift display PDF pages as clips that stay sharp at any zoom. Handy for slides, documents and presentations.",
+      "categories": [
+        "engines-runtimes"
+      ],
+      "keywords": [
+        "pdf",
+        "document",
+        "slides",
+        "pages"
+      ],
+      "icon": "file",
+      "useCases": [
+        "Put slides or documents in a video",
+        "Scroll through the pages of a PDF",
+        "Keep text sharp when zooming in"
+      ],
+      "howTo": [
+        "Install the PDF viewer",
+        "Import a PDF into the media bin",
+        "Drag it onto the timeline"
+      ],
+      "unlocks": [
+        {
+          "label": "PDF clips",
+          "location": "Media bin and timeline"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 50
+    },
+    {
+      "id": "tts.chatterbox-multilingual",
+      "tagline": "Natural voiceovers in 21 languages",
+      "summary": "Turns written text into speech and can copy a voice from a short sample. Runs on your computer, so your scripts stay private.",
+      "categories": [
+        "captions-speech"
+      ],
+      "keywords": [
+        "voiceover",
+        "text to speech",
+        "tts",
+        "voice clone",
+        "narration"
+      ],
+      "icon": "mic",
+      "useCases": [
+        "Narrate a video without recording",
+        "Make voiceovers in another language",
+        "Match your own voice from a short recording"
+      ],
+      "howTo": [
+        "Open the Text to speech tool",
+        "Type or paste your script and choose a language",
+        "Optionally add a short voice sample to match",
+        "Generate and place the audio on the timeline"
+      ],
+      "unlocks": [
+        {
+          "label": "Text to speech",
+          "location": "Text to speech tool"
+        },
+        {
+          "label": "Voice cloning",
+          "location": "Text to speech tool"
+        }
+      ],
+      "requires": [
+        {
+          "kind": "onnxruntime",
+          "prefer": {
+            "android-arm64": "onnxruntime.cpu.android-arm64",
+            "linux-arm64": "onnxruntime.cpu.linux-arm64",
+            "linux-x64": "onnxruntime.cpu.linux-x64",
+            "osx-arm64": "onnxruntime.cpu.osx-arm64",
+            "osx-x64": "onnxruntime.cpu.osx-x64",
+            "win-arm64": "onnxruntime.cpu.win-arm64",
+            "win-x64": "onnxruntime.cpu.win-x64"
+          },
+          "default": null,
+          "reason": "Runs on the AI engine"
+        }
+      ],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 50
+    },
+    {
+      "id": "stickers.harmonyos",
+      "tagline": "Colorful emoji stickers for your timeline",
+      "summary": "Smileys, hearts, hands, animals, food and more, as stickers you can drop onto a video. Also adds the emoji font so every emoji shows correctly in your text.",
+      "categories": [
+        "text-fonts-stickers"
+      ],
+      "keywords": [
+        "emoji",
+        "sticker",
+        "smiley",
+        "heart",
+        "reaction"
+      ],
+      "icon": "smile",
+      "useCases": [
+        "Add a reaction to a funny moment",
+        "Decorate a short video",
+        "Use emoji inside titles and captions"
+      ],
+      "howTo": [
+        "Open the Stickers panel",
+        "Search or browse for an emoji",
+        "Drag it onto the timeline or click to add it",
+        "Move and resize it in the preview"
+      ],
+      "unlocks": [
+        {
+          "label": "Emoji stickers",
+          "location": "Stickers panel"
+        },
+        {
+          "label": "Emoji in text",
+          "location": "Text clips"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 60
+    },
+    {
+      "id": "looks.essentials",
+      "tagline": "Film looks and editor's-choice color grades",
+      "summary": "One-click color looks, including film emulations of classic stocks and hand-made grades. Each look has an intensity slider so you can make it as subtle as you like.",
+      "categories": [
+        "color-looks"
+      ],
+      "keywords": [
+        "lut",
+        "film",
+        "grade",
+        "cinematic",
+        "preset",
+        "color"
+      ],
+      "icon": "palette",
+      "useCases": [
+        "Give a whole video a consistent look quickly",
+        "Get a classic film feel",
+        "Start from a grade and fine-tune it"
+      ],
+      "howTo": [
+        "Select a clip and open the Color workspace",
+        "Open the Looks panel",
+        "Click a look to preview it",
+        "Use the intensity slider to blend it in"
+      ],
+      "unlocks": [
+        {
+          "label": "Looks",
+          "location": "Color workspace, Looks panel"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 70
+    },
+    {
+      "id": "looks.extra",
+      "tagline": "Hundreds more creative color looks",
+      "summary": "A large extra collection of creative color looks for when the essentials are not enough. Works the same way, with an intensity slider for each.",
+      "categories": [
+        "color-looks"
+      ],
+      "keywords": [
+        "lut",
+        "grade",
+        "creative",
+        "preset",
+        "color"
+      ],
+      "icon": "palette",
+      "useCases": [
+        "Explore bolder, more stylized colors",
+        "Match the mood of a scene",
+        "Find a look that fits your brand"
+      ],
+      "howTo": [
+        "Select a clip and open the Color workspace",
+        "Open the Looks panel",
+        "Browse or search the extra looks",
+        "Click one and adjust its intensity"
+      ],
+      "unlocks": [
+        {
+          "label": "More looks",
+          "location": "Color workspace, Looks panel"
+        }
+      ],
+      "requires": [],
+      "recommends": [],
+      "images": [],
+      "links": [],
+      "order": 80
+    }
+  ]
+}

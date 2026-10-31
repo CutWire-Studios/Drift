@@ -28,6 +28,7 @@
 #include <QMetaMethod>
 #include <QThread>
 #include <QJsonArray>
+#include <QLocale>
 #include <QJsonDocument>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -37,6 +38,7 @@
 #include <QStandardPaths>
 #include <QtConcurrent>
 
+#include <algorithm>
 #include <atomic>
 #include <tuple>
 #include <utility>
@@ -46,6 +48,8 @@ using namespace drift::addon;
 namespace {
 
 constexpr qint64 kIndexMaxAgeSeconds = 6 * 60 * 60;
+// Large models make parallel downloads slow each other down, so one at a time.
+constexpr int kMaxConcurrentDownloads = 1;
 
 // The packs every install is nudged to keep as addons so shader/audio fixes can ship without an
 // app release. Order matches the Extras category order (video → transitions → audio).
@@ -71,6 +75,11 @@ const QStringList kQuickSetupOptionalIds = {
 QString cachedIndexPath()
 {
     return QDir(addonsDir()).filePath(QStringLiteral("index.json"));
+}
+
+QString cachedCatalogPath()
+{
+    return QDir(addonsDir()).filePath(QStringLiteral("catalog.json"));
 }
 
 QString settingsKey(const char *name)
@@ -111,6 +120,9 @@ AddonManager::AddonManager(QObject *parent)
 {
     QDir().mkpath(addonDownloadCacheDir());
     sweepDownloadCache();
+
+    connect(this, &AddonManager::catalogChanged, this, &AddonManager::queueChanged);
+    loadCatalog();
 
     // Serve whatever we already know immediately, then go and check.
     QFile cached(cachedIndexPath());
@@ -194,8 +206,97 @@ void AddonManager::setRefreshing(bool refreshing)
 QVariantList AddonManager::catalog() const
 {
     QVariantList rows;
+    const QList<AddonCatalog::IndexRow> index = indexRows();
+    const QString platformKey = currentPlatform();
+    const QString mediaBase = mediaBaseUrl();
+    const QList<InstalledAddon> &installedList = installedAddons();
+
+    const auto requirementRows = [&](const QJsonObject &entry) {
+        QVariantList out;
+        for (const QJsonValue &value : entry.value(QStringLiteral("requires")).toArray()) {
+            const QJsonObject requirement = value.toObject();
+            const QString kind = requirement.value(QStringLiteral("kind")).toString();
+            QString provider = requirement.value(QStringLiteral("id")).toString();
+            bool installed = !provider.isEmpty() && installedAddon(provider);
+            if (provider.isEmpty()) {
+                for (const InstalledAddon &candidate : installedList) {
+                    const bool provides = std::any_of(candidate.provides.cbegin(), candidate.provides.cend(),
+                                                      [&](const InstalledProvide &p) { return p.kind == kind; });
+                    if (provides) {
+                        provider = candidate.id;
+                        installed = true;
+                        break;
+                    }
+                }
+            }
+            if (provider.isEmpty())
+                provider = AddonCatalog::pickProvider(requirement, index, platformKey).value_or(QString());
+            out.append(QVariantMap{
+                {QStringLiteral("id"), provider},
+                {QStringLiteral("name"), provider.isEmpty() ? kind : addonName(provider)},
+                {QStringLiteral("kind"), kind},
+                {QStringLiteral("installed"), installed},
+                {QStringLiteral("reason"), requirement.value(QStringLiteral("reason")).toString()},
+            });
+        }
+        return out;
+    };
+    const auto recommendRows = [&](const QJsonObject &entry) {
+        QVariantList out;
+        for (const QJsonValue &value : entry.value(QStringLiteral("recommends")).toArray()) {
+            const QJsonObject recommendation = value.toObject();
+            const QString target = recommendation.value(QStringLiteral("id")).toString();
+            out.append(QVariantMap{
+                {QStringLiteral("id"), target},
+                {QStringLiteral("name"), addonName(target)},
+                {QStringLiteral("reason"), recommendation.value(QStringLiteral("reason")).toString()},
+                {QStringLiteral("installed"), installedAddon(target) != nullptr},
+            });
+        }
+        return out;
+    };
+    const auto imageRows = [&](const QJsonObject &entry) {
+        QVariantList out;
+        for (const QJsonValue &value : entry.value(QStringLiteral("images")).toArray()) {
+            const QJsonObject image = value.toObject();
+            out.append(QVariantMap{
+                {QStringLiteral("src"), mediaBase + image.value(QStringLiteral("src")).toString()},
+                {QStringLiteral("caption"), image.value(QStringLiteral("caption")).toString()},
+                {QStringLiteral("width"), image.value(QStringLiteral("width")).toInt()},
+                {QStringLiteral("height"), image.value(QStringLiteral("height")).toInt()},
+            });
+        }
+        return out;
+    };
+    const auto storeFields = [&](QVariantMap &row, const QJsonObject &entry, const QString &id) {
+        const QString description = row.value(QStringLiteral("description")).toString();
+        const QString tagline = entry.value(QStringLiteral("tagline")).toString();
+        const QJsonArray categories = entry.value(QStringLiteral("categories")).toArray();
+        row.insert(QStringLiteral("categories"),
+                   entry.isEmpty() ? QVariant(QStringList{QStringLiteral("other")})
+                                   : QVariant(categories.toVariantList()));
+        row.insert(QStringLiteral("tagline"), tagline.isEmpty() ? description : tagline);
+        row.insert(QStringLiteral("summary"), entry.value(QStringLiteral("summary")).toString());
+        row.insert(QStringLiteral("useCases"), entry.value(QStringLiteral("useCases")).toArray().toVariantList());
+        row.insert(QStringLiteral("howTo"), entry.value(QStringLiteral("howTo")).toArray().toVariantList());
+        row.insert(QStringLiteral("unlocks"), entry.value(QStringLiteral("unlocks")).toArray().toVariantList());
+        row.insert(QStringLiteral("requires"), requirementRows(entry));
+        row.insert(QStringLiteral("recommends"), recommendRows(entry));
+        row.insert(QStringLiteral("images"), imageRows(entry));
+        row.insert(QStringLiteral("icon"), entry.value(QStringLiteral("icon")).toString());
+        row.insert(QStringLiteral("accent"), entry.value(QStringLiteral("accent")).toString());
+        row.insert(QStringLiteral("keywords"), entry.value(QStringLiteral("keywords")).toArray().toVariantList());
+        row.insert(QStringLiteral("links"), entry.value(QStringLiteral("links")).toArray().toVariantList());
+        const QString match = entry.value(QStringLiteral("match")).toString();
+        row.insert(QStringLiteral("family"), match.isEmpty() ? id : match);
+        row.insert(QStringLiteral("order"), entry.value(QStringLiteral("order")).toInt(1000));
+    };
+
     for (const QJsonObject &addon : m_remote) {
         const QString id = addon.value(QStringLiteral("id")).toString();
+        const QJsonObject storeEntry = m_catalog.entryFor(id);
+        if (storeEntry.value(QStringLiteral("hidden")).toBool())
+            continue;
         const QString version = addon.value(QStringLiteral("version")).toString();
         const InstalledAddon *installed = installedAddon(id);
         const QString minAppVersion = addon.value(QStringLiteral("minAppVersion")).toString();
@@ -205,6 +306,8 @@ QVariantList AddonManager::catalog() const
         QString state = QStringLiteral("available");
         if (const auto transfer = m_transfers.value(id))
             state = transfer->extracting ? QStringLiteral("installing") : QStringLiteral("downloading");
+        else if (m_queue.contains(id) || m_awaitingFreshIndex.contains(id))
+            state = QStringLiteral("queued");
         else if (m_failures.contains(id))
             state = QStringLiteral("failed");
         else if (installed)
@@ -221,7 +324,7 @@ QVariantList AddonManager::catalog() const
         const QJsonArray platforms = addon.value(QStringLiteral("platforms")).toArray();
         const QString platform = platforms.isEmpty() ? QString() : platforms.at(0).toString();
 
-        rows.append(QVariantMap{
+        QVariantMap row{
             {QStringLiteral("id"), id},
             {QStringLiteral("unofficial"), installed && installed->unofficial},
             {QStringLiteral("name"), addon.value(QStringLiteral("name")).toString()},
@@ -242,7 +345,9 @@ QVariantList AddonManager::catalog() const
             {QStringLiteral("error"), m_failures.value(id)},
             {QStringLiteral("platform"), platform},
             {QStringLiteral("minAppVersion"), minAppVersion},
-        });
+        };
+        storeFields(row, storeEntry, id);
+        rows.append(row);
     }
 
     // Installed from a file or the custom folder, and unknown to the store.
@@ -255,7 +360,7 @@ QVariantList AddonManager::catalog() const
         QStringList kinds;
         for (const InstalledProvide &provide : installed.provides)
             kinds.append(provide.kind);
-        rows.append(QVariantMap{
+        QVariantMap row{
             {QStringLiteral("id"), installed.id},
             {QStringLiteral("custom"), true},
             {QStringLiteral("unofficial"), installed.unofficial},
@@ -275,9 +380,176 @@ QVariantList AddonManager::catalog() const
             {QStringLiteral("error"), QString()},
             {QStringLiteral("platform"), QString()},
             {QStringLiteral("minAppVersion"), QString()},
-        });
+        };
+        storeFields(row, QJsonObject(), installed.id);
+        row.insert(QStringLiteral("categories"), QStringList());
+        rows.append(row);
     }
     return rows;
+}
+
+QVariantList AddonManager::categories() const
+{
+    QList<QJsonObject> sorted;
+    for (const QJsonValue &value : m_catalog.categories())
+        sorted.append(value.toObject());
+    std::stable_sort(sorted.begin(), sorted.end(), [](const QJsonObject &a, const QJsonObject &b) {
+        return a.value(QStringLiteral("order")).toInt() < b.value(QStringLiteral("order")).toInt();
+    });
+    QVariantList out;
+    for (const QJsonObject &category : sorted)
+        out.append(category.toVariantMap());
+
+    const QVariantList rows = catalog();
+    const bool usesOther = std::any_of(rows.cbegin(), rows.cend(), [](const QVariant &row) {
+        return row.toMap().value(QStringLiteral("categories")).toStringList().contains(QStringLiteral("other"));
+    });
+    if (usesOther)
+        out.append(QVariantMap{{QStringLiteral("id"), QStringLiteral("other")},
+                               {QStringLiteral("title"), QStringLiteral("Other")}});
+    return out;
+}
+
+QVariantList AddonManager::collections() const
+{
+    QSet<QString> present;
+    for (const QVariant &row : catalog())
+        present.insert(row.toMap().value(QStringLiteral("id")).toString());
+    QVariantList out;
+    for (const QJsonValue &value : m_catalog.collections()) {
+        QJsonObject collection = value.toObject();
+        QJsonArray kept;
+        for (const QJsonValue &id : collection.value(QStringLiteral("addons")).toArray()) {
+            if (present.contains(id.toString()))
+                kept.append(id);
+        }
+        if (kept.isEmpty())
+            continue;
+        collection.insert(QStringLiteral("addons"), kept);
+        out.append(collection.toVariantMap());
+    }
+    return out;
+}
+
+QVariantMap AddonManager::queue() const
+{
+    QStringList ids;
+    if (!m_extractingId.isEmpty())
+        ids.append(m_extractingId);
+    QStringList running = m_transfers.keys();
+    running.sort();
+    for (const QString &id : running) {
+        if (!ids.contains(id))
+            ids.append(id);
+    }
+    ids += m_awaitingFreshIndex;
+    ids += m_queue;
+
+    double size = 0;
+    for (const QJsonObject &addon : m_remote) {
+        if (ids.contains(addon.value(QStringLiteral("id")).toString()))
+            size += addon.value(QStringLiteral("downloadSize")).toDouble();
+    }
+    return {
+        {QStringLiteral("ids"), ids},
+        {QStringLiteral("count"), int(ids.size())},
+        {QStringLiteral("downloadSize"), size},
+        {QStringLiteral("active"), !m_transfers.isEmpty() || !m_awaitingFreshIndex.isEmpty()},
+    };
+}
+
+QVariantMap AddonManager::entry(const QString &id) const
+{
+    for (const QVariant &row : catalog()) {
+        if (row.toMap().value(QStringLiteral("id")).toString() == id)
+            return row.toMap();
+    }
+    return {};
+}
+
+QString AddonManager::addonName(const QString &id) const
+{
+    for (const QJsonObject &addon : m_remote) {
+        if (addon.value(QStringLiteral("id")).toString() == id)
+            return addon.value(QStringLiteral("name")).toString();
+    }
+    if (const InstalledAddon *installed = installedAddon(id))
+        return installed->name;
+    return id;
+}
+
+QList<AddonCatalog::IndexRow> AddonManager::indexRows() const
+{
+    QList<AddonCatalog::IndexRow> rows;
+    for (const QJsonObject &addon : m_remote)
+        rows.append({addon.value(QStringLiteral("id")).toString(), kindsOf(addon)});
+    return rows;
+}
+
+bool AddonManager::pendingId(const QString &id) const
+{
+    return m_transfers.contains(id) || m_queue.contains(id) || m_awaitingFreshIndex.contains(id);
+}
+
+void AddonManager::loadCatalog()
+{
+    for (const QString &path : {cachedCatalogPath(), QStringLiteral(":/addons/default-catalog.json")}) {
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly) && applyCatalog(file.readAll()))
+            return;
+    }
+}
+
+bool AddonManager::applyCatalog(const QByteArray &json)
+{
+    const AddonCatalog parsed = AddonCatalog::parse(QJsonDocument::fromJson(json).object());
+    if (!parsed.valid())
+        return false;
+    m_catalog = parsed;
+    emit catalogChanged();
+    return true;
+}
+
+void AddonManager::fetchCatalog(bool force)
+{
+    const QString url = catalogUrl();
+    if (m_catalogFetching || url.isEmpty())
+        return;
+    const QFileInfo cached(cachedCatalogPath());
+    if (!force && cached.exists()
+        && cached.lastModified().secsTo(QDateTime::currentDateTime()) < kIndexMaxAgeSeconds)
+        return;
+
+    m_catalogFetching = true;
+    QNetworkRequest request{QUrl(url)};
+    request.setRawHeader("Accept-Language", QLocale().bcp47Name().toUtf8());
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
+    const QString etag = QSettings().value(settingsKey("catalogEtag")).toString();
+    if (cached.exists() && !etag.isEmpty())
+        request.setRawHeader("If-None-Match", etag.toUtf8());
+
+    QNetworkReply *reply = m_network->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply] {
+        reply->deleteLater();
+        m_catalogFetching = false;
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (status == 304) {
+            QFile(cachedCatalogPath()).setFileTime(QDateTime::currentDateTime(), QFileDevice::FileModificationTime);
+            return;
+        }
+        if (reply->error() != QNetworkReply::NoError)
+            return;
+        const QByteArray body = reply->readAll();
+        if (!applyCatalog(body))
+            return;
+        QSaveFile cache(cachedCatalogPath());
+        if (cache.open(QIODevice::WriteOnly)) {
+            cache.write(body);
+            cache.commit();
+        }
+        QSettings().setValue(settingsKey("catalogEtag"), QString::fromUtf8(reply->rawHeader("ETag")));
+    });
 }
 
 bool AddonManager::hasKind(const QString &kind) const
@@ -515,6 +787,8 @@ void AddonManager::refresh(bool force)
         return;
     }
 
+    fetchCatalog(force);
+
     if (!force) {
         const QFileInfo cached(cachedIndexPath());
         if (cached.exists() && cached.lastModified().secsTo(QDateTime::currentDateTime()) < kIndexMaxAgeSeconds)
@@ -547,6 +821,7 @@ void AddonManager::refresh(bool force)
             for (const QString &id : waiting) {
                 m_failures.insert(id, error);
                 emit transferFailed(id, error);
+                settle(id, Outcome::Failed);
             }
             if (!waiting.isEmpty())
                 emit catalogChanged();
@@ -562,6 +837,7 @@ void AddonManager::refresh(bool force)
             for (const QString &id : waiting) {
                 m_failures.insert(id, error);
                 emit transferFailed(id, error);
+                settle(id, Outcome::Failed);
             }
             if (!waiting.isEmpty())
                 emit catalogChanged();
@@ -577,6 +853,7 @@ void AddonManager::refresh(bool force)
         const QStringList waiting = std::exchange(m_awaitingFreshIndex, {});
         for (const QString &id : waiting)
             startDownload(id);
+        pump();
     });
 }
 
@@ -609,20 +886,177 @@ bool AddonManager::applyIndex(const QByteArray &json, bool fromCache)
 
 void AddonManager::install(const QString &id)
 {
-    if (m_transfers.contains(id) || !addonServiceConfigured())
+    installMany({id});
+}
+
+AddonCatalog::Plan AddonManager::planFor(const QStringList &ids) const
+{
+    QSet<QString> installedIds;
+    QSet<QString> installedKinds;
+    for (const InstalledAddon &installed : installedAddons()) {
+        installedIds.insert(installed.id);
+        for (const InstalledProvide &provide : installed.provides)
+            installedKinds.insert(provide.kind);
+    }
+
+    QStringList wanted;
+    for (const QString &id : ids) {
+        if (wanted.contains(id) || pendingId(id))
+            continue;
+        const auto remote = std::find_if(m_remote.cbegin(), m_remote.cend(), [&](const QJsonObject &addon) {
+            return addon.value(QStringLiteral("id")).toString() == id;
+        });
+        if (remote == m_remote.cend())
+            continue;
+        const QString minAppVersion = remote->value(QStringLiteral("minAppVersion")).toString();
+        if (!minAppVersion.isEmpty() && drift::compareVersions(QStringLiteral(DRIFT_VERSION), minAppVersion) < 0)
+            continue;
+        const InstalledAddon *installed = installedAddon(id);
+        if (installed
+            && drift::compareVersions(installed->version, remote->value(QStringLiteral("version")).toString()) >= 0)
+            continue;
+        wanted.append(id);
+    }
+
+    AddonCatalog::Plan plan =
+        m_catalog.resolve(wanted, indexRows(), installedIds, installedKinds, currentPlatform());
+    // Dependencies already on their way stay in `needs`, so the dependent still waits for them.
+    plan.ids.erase(std::remove_if(plan.ids.begin(), plan.ids.end(),
+                                  [&](const QString &id) { return pendingId(id); }),
+                   plan.ids.end());
+    plan.added.erase(std::remove_if(plan.added.begin(), plan.added.end(),
+                                    [&](const AddonCatalog::Added &a) { return pendingId(a.id); }),
+                     plan.added.end());
+    return plan;
+}
+
+QVariantMap AddonManager::planInstall(const QStringList &ids) const
+{
+    const AddonCatalog::Plan plan = planFor(ids);
+    QVariantList added;
+    for (const AddonCatalog::Added &a : plan.added) {
+        added.append(QVariantMap{{QStringLiteral("id"), a.id},
+                                 {QStringLiteral("name"), addonName(a.id)},
+                                 {QStringLiteral("reason"), a.reason},
+                                 {QStringLiteral("forName"), addonName(a.forId)}});
+    }
+    QVariantList missing;
+    for (const AddonCatalog::Missing &m : plan.missing) {
+        missing.append(QVariantMap{{QStringLiteral("forId"), m.forId},
+                                   {QStringLiteral("forName"), addonName(m.forId)},
+                                   {QStringLiteral("requirement"), m.requirement}});
+    }
+    double size = 0;
+    for (const QJsonObject &addon : m_remote) {
+        if (plan.ids.contains(addon.value(QStringLiteral("id")).toString()))
+            size += addon.value(QStringLiteral("downloadSize")).toDouble();
+    }
+    return {
+        {QStringLiteral("ids"), plan.ids},
+        {QStringLiteral("added"), added},
+        {QStringLiteral("missing"), missing},
+        {QStringLiteral("downloadSize"), size},
+        {QStringLiteral("count"), int(plan.ids.size())},
+    };
+}
+
+void AddonManager::installMany(const QStringList &ids)
+{
+    if (!addonServiceConfigured())
         return;
 
-    m_failures.remove(id);
-    // A failed refresh never consumes the 403 retry, so a fresh attempt must re-arm it.
-    m_retried.remove(id);
-    // The in-flight refresh may replace an expired download URL; wait for it instead of racing.
-    if (m_refreshing) {
-        if (!m_awaitingFreshIndex.contains(id))
+    const AddonCatalog::Plan plan = planFor(ids);
+    if (plan.ids.isEmpty())
+        return;
+    for (const QString &id : plan.ids) {
+        m_failures.remove(id);
+        // A failed refresh never consumes the 403 retry, so a fresh attempt must re-arm it.
+        m_retried.remove(id);
+        m_needs.insert(id, plan.needs.value(id));
+        m_queue.append(id);
+        emit progressChanged(id, 0.0, QStringLiteral("queued"));
+    }
+    emit catalogChanged();
+    pump();
+}
+
+void AddonManager::pump()
+{
+    while (true) {
+        int used = int(m_awaitingFreshIndex.size());
+        for (const auto &transfer : std::as_const(m_transfers)) {
+            if (!transfer->extracting)
+                ++used;
+        }
+        if (used >= kMaxConcurrentDownloads)
+            return;
+
+        int pick = -1;
+        for (int i = 0; i < m_queue.size() && pick < 0; ++i) {
+            const QStringList needs = m_needs.value(m_queue.at(i));
+            const bool blocked = std::any_of(needs.cbegin(), needs.cend(), [&](const QString &need) {
+                return need != m_queue.at(i) && pendingId(need);
+            });
+            if (!blocked)
+                pick = i;
+        }
+        if (pick < 0)
+            return;
+
+        const QString id = m_queue.takeAt(pick);
+        // The in-flight refresh may replace an expired download URL; wait for it instead of racing.
+        if (m_refreshing) {
             m_awaitingFreshIndex.append(id);
-        emit catalogChanged();
+            emit catalogChanged();
+        } else {
+            startDownload(id);
+        }
+    }
+}
+
+void AddonManager::settle(const QString &id, Outcome outcome)
+{
+    m_needs.remove(id);
+    if (outcome != Outcome::Succeeded) {
+        QStringList dead{id};
+        while (!dead.isEmpty()) {
+            const QString gone = dead.takeFirst();
+            const QStringList waiting = m_queue;
+            for (const QString &queued : waiting) {
+                if (!m_needs.value(queued).contains(gone))
+                    continue;
+                m_queue.removeAll(queued);
+                m_needs.remove(queued);
+                QString reason = QStringLiteral("Cancelled");
+                if (outcome == Outcome::Failed) {
+                    reason = QStringLiteral("Needs %1").arg(addonName(gone));
+                    m_failures.insert(queued, reason);
+                }
+                emit transferFailed(queued, reason);
+                dead.append(queued);
+            }
+        }
+    }
+    emit catalogChanged();
+    pump();
+}
+
+void AddonManager::queueExtract(const QString &id)
+{
+    if (m_extractingId.isEmpty()) {
+        beginExtract(id, m_transfers.value(id)->packagePath);
         return;
     }
-    startDownload(id);
+    m_extractWaiting.append(id);
+    emit catalogChanged();
+}
+
+void AddonManager::startNextExtract()
+{
+    if (!m_extractingId.isEmpty() || m_extractWaiting.isEmpty())
+        return;
+    const QString id = m_extractWaiting.takeFirst();
+    beginExtract(id, m_transfers.value(id)->packagePath);
 }
 
 void AddonManager::startDownload(const QString &id)
@@ -654,8 +1088,7 @@ void AddonManager::startDownload(const QString &id)
     const qint64 have = QFileInfo(partial).size();
     transfer->file.setFileName(partial);
     if (!transfer->file.open(QIODevice::WriteOnly | QIODevice::Append)) {
-        m_failures.insert(id, QStringLiteral("Cannot write to the download cache"));
-        emit catalogChanged();
+        failTransfer(id, QStringLiteral("Cannot write to the download cache"));
         return;
     }
 
@@ -712,7 +1145,8 @@ void AddonManager::finishDownload(const QString &id)
 
     if (transfer->cancelled) {
         m_transfers.remove(id);
-        emit catalogChanged();
+        emit transferFailed(id, QStringLiteral("Cancelled"));
+        settle(id, Outcome::Cancelled);
         return;
     }
 
@@ -743,7 +1177,7 @@ void AddonManager::finishDownload(const QString &id)
         return;
     }
 
-    beginExtract(id, transfer->packagePath);
+    queueExtract(id);
 }
 
 void AddonManager::beginExtract(const QString &id, const QString &packagePath)
@@ -753,6 +1187,7 @@ void AddonManager::beginExtract(const QString &id, const QString &packagePath)
         return;
 
     transfer->extracting = true;
+    m_extractingId = id;
     emit catalogChanged();
     emit progressChanged(id, 0.0, QStringLiteral("Installing"));
 
@@ -767,18 +1202,20 @@ void AddonManager::beginExtract(const QString &id, const QString &packagePath)
                 const auto [ok, message] = watcher->result();
                 const auto finished = m_transfers.value(id);
                 m_transfers.remove(id);
+                m_extractingId.clear();
                 QFile::remove(packagePath);
 
                 if (!ok) {
                     if (finished && finished->cancelled) {
-                        emit catalogChanged();
                         emit transferFailed(id, QStringLiteral("Cancelled"));
-                        return;
+                        settle(id, Outcome::Cancelled);
+                    } else {
+                        m_failures.insert(id, message);
+                        setStatus(message);
+                        emit transferFailed(id, message);
+                        settle(id, Outcome::Failed);
                     }
-                    m_failures.insert(id, message);
-                    setStatus(message);
-                    emit catalogChanged();
-                    emit transferFailed(id, message);
+                    startNextExtract();
                     return;
                 }
 
@@ -792,6 +1229,8 @@ void AddonManager::beginExtract(const QString &id, const QString &packagePath)
                 reloadForKinds(kinds);
                 emit catalogChanged();
                 emit transferSucceeded(id);
+                settle(id, Outcome::Succeeded);
+                startNextExtract();
             });
 
     watcher->setFuture(QtConcurrent::run([transfer, packagePath, destination]() -> QPair<bool, QString> {
@@ -815,13 +1254,27 @@ void AddonManager::failTransfer(const QString &id, const QString &message)
     setStatus(message);
     emit catalogChanged();
     emit transferFailed(id, message);
+    settle(id, Outcome::Failed);
 }
 
 void AddonManager::cancel(const QString &id)
 {
+    if (m_queue.removeAll(id) > 0 || m_awaitingFreshIndex.removeAll(id) > 0) {
+        emit transferFailed(id, QStringLiteral("Cancelled"));
+        settle(id, Outcome::Cancelled);
+        return;
+    }
+
     const auto transfer = m_transfers.value(id);
     if (!transfer)
         return;
+    if (m_extractWaiting.removeAll(id) > 0) {
+        m_transfers.remove(id);
+        QFile::remove(transfer->packagePath);
+        emit transferFailed(id, QStringLiteral("Cancelled"));
+        settle(id, Outcome::Cancelled);
+        return;
+    }
 
     transfer->cancelled = true;
     if (transfer->reply)

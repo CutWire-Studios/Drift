@@ -305,6 +305,9 @@ public:
     QJsonObject autoReframe(int trackIndex, int clipIndex, double aspect, const QString &mode);
     QJsonObject listAddons() const;
     QJsonObject installAddon(const QString &id);
+    QJsonObject installAddons(const QStringList &ids);
+    static QJsonObject addonPlanReply(const QVariantMap &plan);
+    QJsonObject addonDetails(const QString &id);
     QJsonObject cancelAddonInstall(const QString &id);
     QJsonObject setAcceleration(const QString &variant);
 

@@ -1245,6 +1245,7 @@ QStringList undoExemptOps()
         QStringLiteral("set_beat_layers"),     QStringLiteral("detect_beats"),
         QStringLiteral("list_speed_curve"),    QStringLiteral("list_fade_curve"),
         QStringLiteral("install_addon"),       QStringLiteral("cancel_addon_install"),
+        QStringLiteral("install_addons"),
         QStringLiteral("create_effect"),       QStringLiteral("update_effect"),
         QStringLiteral("delete_effect"),       QStringLiteral("export_effect"),
         QStringLiteral("set_acceleration"),    QStringLiteral("switch_angle"),

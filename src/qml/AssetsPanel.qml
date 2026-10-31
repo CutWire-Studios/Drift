@@ -918,7 +918,7 @@ PanelFrame {
                 // rather than running off-window when the panel is dragged narrow.
                 x: Math.max(root.railHidden ? 0 : -Theme.tabRailWidth, assetsContent.width - width - Theme.pagePadding)
                 y: assetsHeader.height + Theme.pagePadding + Theme.controlHeight + 4
-                onAddonManagerRequested: ShellBridge.main.openAddonManager("stickers")
+                onExtrasRequested: ShellBridge.main.openAddonManager("stickers")
                 onAdded: root.addCompleted()
             }
 

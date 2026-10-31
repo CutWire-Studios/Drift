@@ -68,8 +68,12 @@ void bridgeAddons(DownloadCenter *center, AddonManager *addons)
                      [=](const QString &id, double fraction, const QString &phase) {
         DownloadCenter::Job job = base(id);
         const bool installing = phase == QLatin1String("Installing");
-        job.status = installing ? QStringLiteral("installing") : QStringLiteral("downloading");
+        const bool queued = phase == QLatin1String("queued");
+        job.status = installing ? QStringLiteral("installing")
+                     : queued   ? QStringLiteral("queued")
+                                : QStringLiteral("downloading");
         job.phase = installing ? QCoreApplication::translate("DownloadCenter", "Installing…")
+                    : queued   ? QCoreApplication::translate("DownloadCenter", "Waiting…")
                                : QCoreApplication::translate("DownloadCenter", "Downloading…");
         job.progress = fraction;
         job.error.clear();

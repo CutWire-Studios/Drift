@@ -4792,6 +4792,12 @@ QJsonObject McpController::listAddons() const
                 continue;
             seen.insert(id);
             const QString state = row.value(QStringLiteral("state")).toString();
+            QJsonArray requiredIds;
+            for (const QVariant &r : row.value(QStringLiteral("requires")).toList()) {
+                const QString requiredId = r.toMap().value(QStringLiteral("id")).toString();
+                if (!requiredId.isEmpty())
+                    requiredIds.append(requiredId);
+            }
             addons.append(QJsonObject{
                 {QStringLiteral("id"), id},
                 {QStringLiteral("name"), row.value(QStringLiteral("name")).toString()},
@@ -4800,6 +4806,9 @@ QJsonObject McpController::listAddons() const
                 {QStringLiteral("state"), state},
                 {QStringLiteral("installed"),
                  state == QLatin1String("installed") || state == QLatin1String("update-available")},
+                {QStringLiteral("categories"), QJsonArray::fromStringList(row.value(QStringLiteral("categories")).toStringList())},
+                {QStringLiteral("tagline"), row.value(QStringLiteral("tagline")).toString()},
+                {QStringLiteral("requires"), requiredIds},
             });
         }
     }
@@ -4817,15 +4826,66 @@ QJsonObject McpController::listAddons() const
     return ok({{QStringLiteral("addons"), addons}});
 }
 
-QJsonObject McpController::installAddon(const QString &id)
+QJsonObject McpController::addonPlanReply(const QVariantMap &plan)
+{
+    QJsonArray added;
+    for (const QVariant &v : plan.value(QStringLiteral("added")).toList()) {
+        const QVariantMap a = v.toMap();
+        added.append(QJsonObject{{QStringLiteral("id"), a.value(QStringLiteral("id")).toString()},
+                                 {QStringLiteral("name"), a.value(QStringLiteral("name")).toString()},
+                                 {QStringLiteral("reason"), a.value(QStringLiteral("reason")).toString()},
+                                 {QStringLiteral("forName"), a.value(QStringLiteral("forName")).toString()}});
+    }
+    QJsonArray missing;
+    for (const QVariant &v : plan.value(QStringLiteral("missing")).toList()) {
+        const QVariantMap m = v.toMap();
+        missing.append(QJsonObject{{QStringLiteral("forId"), m.value(QStringLiteral("forId")).toString()},
+                                   {QStringLiteral("requirement"), m.value(QStringLiteral("requirement")).toString()}});
+    }
+    return {{QStringLiteral("started"), !plan.value(QStringLiteral("ids")).toStringList().isEmpty()},
+            {QStringLiteral("ids"), QJsonArray::fromStringList(plan.value(QStringLiteral("ids")).toStringList())},
+            {QStringLiteral("added"), added},
+            {QStringLiteral("missing"), missing},
+            {QStringLiteral("downloadSize"), plan.value(QStringLiteral("downloadSize")).toDouble()}};
+}
+
+QJsonObject McpController::installAddons(const QStringList &ids)
 {
     using namespace drift::mcp;
     if (!m_app->m_addonManager)
         return err("bad_args", QStringLiteral("Addon manager is only available in the running editor"));
+    QStringList cleaned;
+    for (const QString &id : ids) {
+        if (!id.trimmed().isEmpty())
+            cleaned.append(id.trimmed());
+    }
+    if (cleaned.isEmpty())
+        return err("bad_args", QStringLiteral("ids required"));
+    const QVariantMap plan = m_app->m_addonManager->planInstall(cleaned);
+    m_app->m_addonManager->installMany(cleaned);
+    return ok(addonPlanReply(plan));
+}
+
+QJsonObject McpController::installAddon(const QString &id)
+{
+    using namespace drift::mcp;
     if (id.trimmed().isEmpty())
         return err("bad_args", QStringLiteral("id required"));
-    m_app->m_addonManager->install(id);
-    return ok({{QStringLiteral("started"), true}, {QStringLiteral("id"), id}});
+    QJsonObject reply = installAddons({id});
+    if (!reply.contains(QStringLiteral("error")))
+        reply.insert(QStringLiteral("id"), id);
+    return reply;
+}
+
+QJsonObject McpController::addonDetails(const QString &id)
+{
+    using namespace drift::mcp;
+    if (!m_app->m_addonManager)
+        return err("bad_args", QStringLiteral("Addon manager is only available in the running editor"));
+    const QVariantMap row = m_app->m_addonManager->entry(id);
+    if (row.isEmpty())
+        return err("not_found", QStringLiteral("No add-on with id %1").arg(id));
+    return ok(QJsonObject::fromVariantMap(row));
 }
 
 QJsonObject McpController::cancelAddonInstall(const QString &id)

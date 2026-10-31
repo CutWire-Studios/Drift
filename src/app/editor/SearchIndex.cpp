@@ -546,12 +546,11 @@ void SearchIndex::addAddons()
         if (state != QLatin1String("installed") && state != QLatin1String("update-available"))
             continue;
         const QString kind = e.value(QLatin1String("kind")).toString();
-        QString target = QStringLiteral("dialog:addonManager?kind=") + kind;
+        const QString target = QStringLiteral("extras:addon/") + e.value(QLatin1String("id")).toString();
         QString sub = tr("Extras");
         for (const AddonPlace &place : kAddonPlaces) {
             if (kind == QLatin1String(place.kind)) {
-                target = QLatin1String(place.target);
-                sub = panelLabel(target.section(QLatin1Char('#'), 0, 0).mid(6));
+                sub = panelLabel(QString::fromLatin1(place.target).section(QLatin1Char('#'), 0, 0).mid(6));
                 break;
             }
         }

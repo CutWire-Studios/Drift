@@ -7,7 +7,7 @@ import Drift
 Popup {
     id: root
 
-    signal addonManagerRequested()
+    signal extrasRequested()
     // A clip landed on the timeline. The phone shell closes the sheet this picker
     // hangs off on this.
     signal added()
@@ -92,7 +92,7 @@ Popup {
             actionVariant: "primary"
             onActionTriggered: {
                 root.close()
-                root.addonManagerRequested()
+                root.extrasRequested()
             }
         }
 

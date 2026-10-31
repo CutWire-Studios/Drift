@@ -1679,13 +1679,30 @@
           "bin asset of its own, so point the clip back at the original instead.",
           objectSchema(clipRefProps()), false, true },
         { "list_addons", "ai", "What add-ons exist",
-          "Returns {addons:[{id, name, kind, version, state, installed}]}. Use id with install_addon.",
+          "Returns {addons:[{id, name, kind, version, state, installed, categories, tagline, requires}]}. "
+          "state is available, queued, downloading, installing, installed, update-available, failed or "
+          "needs-newer-app. requires lists the add-on ids it needs. Use id with install_addon; "
+          "addon_details has the full store entry.",
           objectSchema({}), true, false, true },
         { "install_addon", "ai", "Install a model or pack",
-          "Start downloading and installing an add-on from list_addons. Async: poll list_addons for "
-          "state. Not undoable.",
+          "Queue an add-on from list_addons for download and install, after whatever it requires "
+          "(an AI model pulls in the AI engine). Downloads run one at a time. Async: poll list_addons "
+          "for state. Returns the plan {ids, added:[{id, name, reason, forName}], missing, downloadSize}; "
+          "ids is empty when nothing needed doing. Not undoable.",
           objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Add-on id from list_addons"))}},
                        {QStringLiteral("id")}) },
+        { "install_addons", "ai", "Install several add-ons",
+          "install_addon for a list, planned together so shared requirements download once. Returns the "
+          "same plan. Not undoable.",
+          objectSchema({{QStringLiteral("ids"),
+                         arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
+                                   QStringLiteral("Add-on ids from list_addons"))}},
+                       {QStringLiteral("ids")}) },
+        { "addon_details", "ai", "Describe an add-on",
+          "The store entry for one add-on: name, tagline, summary, useCases, howTo, unlocks, requires "
+          "(with installed flags), recommends, size, state and categories.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Add-on id from list_addons"))}},
+                       {QStringLiteral("id")}), true, false, true },
         { "cancel_addon_install", "ai", "Stop an add-on install",
           "Cancel an in-flight install_addon. Not undoable.",
           objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Add-on id"))}},

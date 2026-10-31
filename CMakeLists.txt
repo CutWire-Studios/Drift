@@ -75,6 +75,8 @@ option(DRIFT_QML_PREVIEWS "Build the --preview component windows and *_Preview.q
 # benefit. That is also why it is fine in CMakeCache.txt.
 set(DRIFT_ADDON_INDEX_URL "https://drift-addons.cutwire.org/v1/index"
     CACHE STRING "Addon index endpoint; empty disables the addon service")
+set(DRIFT_ADDONS_CATALOG_URL ""
+    CACHE STRING "Addon store catalog endpoint; empty derives it from DRIFT_ADDON_INDEX_URL (…/v1/index -> …/v1/catalog)")
 set(DRIFT_ADDON_CLIENT_TOKEN "79a388bba9301cacc81cc6eb0724c81e948e1b27c69aee1b"
     CACHE STRING "Client token sent to the addon service as X-Drift-Client")
 
@@ -1053,6 +1055,7 @@ qt_add_executable(drift
     src/app/color/LookThumbnailService.cpp
     src/app/online/addons/AddonEndpoint.h
     src/app/online/addons/AddonManager.h
+    src/app/online/addons/AddonCatalog.cpp
     src/app/online/addons/AddonManager.cpp
     src/app/jobs/JobRegistry.h
     src/app/jobs/JobRegistry.cpp
@@ -1453,6 +1456,12 @@ qt_add_resources(drift "drift_marketplace"
     FILES resources/marketplace/default-manifest.json
 )
 
+qt_add_resources(drift "drift_addon_catalog"
+    PREFIX "/"
+    BASE resources
+    FILES resources/addons/default-catalog.json
+)
+
 # Global search index written by scripts/gen-search-index.py; loaded at :/search-index.json.
 qt_add_resources(drift "drift_search_index"
     PREFIX "/"
@@ -1592,6 +1601,7 @@ qt_add_qml_module(drift
         src/qml/DenoiseWindow.qml
         src/qml/RestoreWindow.qml
         src/qml/MarketplaceWindow.qml
+        src/qml/ExtrasWindow.qml
         src/qml/SpeedCurveWindow.qml
         src/qml/FadeCurveWindow.qml
         src/qml/MediaPreviewWindow.qml
@@ -2039,9 +2049,6 @@ qt_add_qml_module(drift
         src/qml/components/shell/ToolWindow.qml
         src/qml/components/shell/LazyLoader.qml
         src/qml/components/android/AndroidLifecycle.qml
-        src/qml/components/dialogs/AddonManagerDialog.qml
-        src/qml/components/dialogs/AddonManagerPanel.qml
-        src/qml/components/dialogs/AddonStartupDialog.qml
         src/qml/components/dialogs/AccelerationFailedDialog.qml
         src/qml/components/dialogs/MissingAddonsDialog.qml
         src/qml/components/dialogs/AboutDialog.qml
@@ -2224,6 +2231,7 @@ qt_add_qml_module(drift
         src/qml/components/android/AndroidMyVideosTab.qml
         src/qml/components/android/pages/AndroidAddPage.qml
         src/qml/components/android/pages/AndroidMarketplacePage.qml
+        src/qml/components/android/pages/AndroidExtrasPage.qml
         src/qml/components/android/pages/AndroidStickerPage.qml
         src/qml/components/android/pages/AndroidTransformPage.qml
         src/qml/components/android/pages/AndroidTextStylePage.qml
@@ -2287,8 +2295,6 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/DebugInfoSystemTab.qml
         src/qml/components/dialogs/DebugInfoPlaybackTab.qml
         src/qml/components/dialogs/DebugInfoBenchRow.qml
-        src/qml/components/dialogs/AddonStartupPackRow.qml
-        src/qml/components/dialogs/AddonManagerRow.qml
         src/qml/components/UpscaleModelCard.qml
         src/qml/components/shell/RecentProjectsPopup.qml
         src/qml/components/shell/StartScreen.qml
@@ -2344,6 +2350,12 @@ qt_add_qml_module(drift
         src/qml/components/quicksetup/QuickSetupCommunityPage.qml
         src/qml/components/quicksetup/QuickSetupMockEditor.qml
         src/qml/components/quicksetup/QuickSetupTipArt.qml
+        src/qml/components/extras/ExtrasIcon.qml
+        src/qml/components/extras/ExtrasIconTile.qml
+        src/qml/components/extras/ExtrasCard.qml
+        src/qml/components/extras/ExtrasDetail.qml
+        src/qml/components/extras/ExtrasInstallBar.qml
+        src/qml/components/extras/ExtrasStore.qml
         src/qml/components/shell/SettingsThemeEntry.qml
         src/qml/components/shell/SettingsThemeList.qml
         src/qml/components/shell/SettingsTimelinePage.qml
@@ -2681,6 +2693,7 @@ endif()
 # Defined here rather than in the header so there is exactly one place to change them.
 target_compile_definitions(drift PRIVATE
     DRIFT_ADDON_INDEX_URL="${DRIFT_ADDON_INDEX_URL}"
+    DRIFT_ADDON_CATALOG_URL="${DRIFT_ADDONS_CATALOG_URL}"
     DRIFT_ADDON_CLIENT_TOKEN="${DRIFT_ADDON_CLIENT_TOKEN}"
     DRIFT_MARKET_API_URL="${DRIFT_MARKET_API_URL}"
     DRIFT_MARKET_CLIENT_KEY="${DRIFT_MARKET_CLIENT_KEY}"

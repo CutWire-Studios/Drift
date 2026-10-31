@@ -66,7 +66,7 @@ QtObject {
             return Theme.icons.error
         if (job.status === "cancelled")
             return Theme.icons.x
-        if (job.status === "waiting")
+        if (job.status === "waiting" || job.status === "queued")
             return Theme.icons.clock
         return Theme.icons.download
     }
@@ -86,7 +86,7 @@ QtObject {
             return job.errorMessage
         if (job.status === "cancelled")
             return qsTr("Cancelled")
-        if (job.status === "waiting")
+        if (job.status === "waiting" || job.status === "queued")
             return qsTr("Waiting for a free slot")
         if (job.status === "done") {
             if (job.doneDetail)

@@ -100,6 +100,7 @@ qt_add_executable(tst_editorstate
     ../src/app/jobs/audio/TtsController.cpp
     ../src/app/jobs/audio/VoiceLibrary.cpp
     ../src/ui/preview/PreviewController.cpp
+    ../src/app/online/addons/AddonCatalog.cpp
     ../src/app/online/addons/AddonManager.cpp
     ../src/app/jobs/JobRegistry.cpp
     ../src/app/online/CloudProviders.cpp
@@ -197,6 +198,14 @@ target_link_libraries(tst_addonpackage PRIVATE Qt6::Test driftengine)
 target_compile_definitions(tst_addonpackage PRIVATE
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME AddonPackage COMMAND tst_addonpackage)
+
+qt_add_executable(tst_addoncatalog
+    tst_addoncatalog.cpp
+    ../src/app/online/addons/AddonCatalog.cpp
+)
+target_include_directories(tst_addoncatalog PRIVATE ../src)
+target_link_libraries(tst_addoncatalog PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME AddonCatalog COMMAND tst_addoncatalog)
 
 qt_add_executable(tst_marketidentity
     tst_marketidentity.cpp
@@ -351,6 +360,7 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/audio/TtsController.cpp
     ../src/app/jobs/audio/VoiceLibrary.cpp
     ../src/ui/preview/PreviewController.cpp
+    ../src/app/online/addons/AddonCatalog.cpp
     ../src/app/online/addons/AddonManager.cpp
     ../src/app/jobs/JobRegistry.cpp
     ../src/app/online/CloudProviders.cpp
