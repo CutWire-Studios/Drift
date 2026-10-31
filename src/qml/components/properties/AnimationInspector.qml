@@ -216,6 +216,11 @@ Item {
         Text {
             visible: root.supportsBodyAnim
             text: qsTr("In")
+            SearchAnchor {
+                searchId: "animation-in"
+                title: qsTr("In animation")
+                keywords: "intro enter fade slide pop zoom bounce"
+            }
             color: Theme.c.animationInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -253,6 +258,11 @@ Item {
         Text {
             visible: root.supportsBodyAnim
             text: qsTr("Out")
+            SearchAnchor {
+                searchId: "animation-out"
+                title: qsTr("Out animation")
+                keywords: "outro exit fade slide pop zoom"
+            }
             color: Theme.c.animationInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -287,7 +297,14 @@ Item {
             }
         }
 
+        SearchAnchor {
+            searchId: "animation-custom-curve"
+            title: qsTr("Custom curve")
+            keywords: "easing"
+            target: animationCustomCurveButton
+        }
         ThemedButton {
+            id: animationCustomCurveButton
             visible: root.supportsBodyAnim
                      && ((root.animIn.curve || "") === "custom"
                          || (root.animOut.curve || "") === "custom"

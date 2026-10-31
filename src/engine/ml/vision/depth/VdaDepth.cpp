@@ -253,7 +253,7 @@ bool VdaDepth::Impl::ensureLoaded()
 
     // fp16 only pays on a GPU provider; on CPU ONNX Runtime runs a half graph through inserted
     // casts and it measured about 30% slower than fp32.
-    const bool wantHalf = !drift::ort::providerToTry().isEmpty() && !root.fp16.encoder.isEmpty();
+    const bool wantHalf = !drift::ort::providerToTry("depth").isEmpty() && !root.fp16.encoder.isEmpty();
     const ModelFiles files = wantHalf || root.fp32.encoder.isEmpty() ? root.fp16 : root.fp32;
 
     Ort::Env &env = drift::ort::env();

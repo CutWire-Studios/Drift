@@ -41,6 +41,7 @@ Rectangle {
     required property string duration
     required property string thumbnailPath
     required property int assetIndex
+    required property string maskRole
     required property int depth
     required property bool expanded
     required property bool expandable
@@ -124,6 +125,7 @@ Rectangle {
             duration: root.duration
             proxyState: root.isFolder ? "" : host.proxyStateOf(root.assetId)
             editFriendly: !root.isFolder && host.editFriendlyOf(root.assetId)
+            maskRole: root.maskRole
             // Derived from the actual thumbnail width
             // rather than a magic constant.
             width: Math.max(0, parent.width - listThumbFrame.width
@@ -284,6 +286,7 @@ Rectangle {
         kind: root.kind
         assetId: root.assetId
         assetIndex: root.assetIndex
+        maskRole: root.maskRole
     }
 
     MediaAssetsFolderMenu {

@@ -6,6 +6,7 @@ Item {
 
     property string mode: "lanes"
     property bool normalize: false
+    property bool showHandles: false
     property bool animatedOnly: false
     property bool hasTargets: false
     property bool allTargetsKeyed: false
@@ -18,6 +19,7 @@ Item {
     signal clearKeys()
     signal modeRequested(string mode)
     signal normalizeToggled()
+    signal showHandlesToggled()
     signal fitAll()
     signal fitSelection()
     signal animatedOnlyToggled()
@@ -31,99 +33,119 @@ Item {
         color: Theme.c.keyframesToolbar.border
     }
 
-    Row {
-        anchors.left: parent.left
-        anchors.leftMargin: Theme.spacingMd
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.spacingXs
+    Flickable {
+        id: flick
+        anchors.fill: parent
+        clip: true
+        interactive: contentWidth > width
+        contentWidth: row.width + Theme.spacingMd * 2
+        contentHeight: height
+        flickableDirection: Flickable.HorizontalFlick
+        boundsBehavior: Flickable.StopAtBounds
 
-        IconButton {
-            glyph: Theme.icons.chevronLeft
-            tooltip: qsTr("Previous keyframe (Alt+Left)")
-            onClicked: root.prevKey()
-        }
+        Row {
+            id: row
+            x: Theme.spacingMd
+            y: (flick.height - height) / 2
+            spacing: Theme.spacingXs
 
-        IconButton {
-            glyph: root.hasTargets && root.allTargetsKeyed ? Theme.icons.diamondMinus
-                                                           : Theme.icons.diamondPlus
-            enabled: root.hasTargets
-            tooltip: root.hasTargets && root.allTargetsKeyed
-                     ? qsTr("Remove keyframes at the playhead (K)")
-                     : qsTr("Add keyframes at the playhead (K)")
-            onClicked: root.toggleKey()
-        }
+            IconButton {
+                glyph: Theme.icons.chevronLeft
+                tooltip: qsTr("Previous keyframe (Alt+Left)")
+                onClicked: root.prevKey()
+            }
 
-        IconButton {
-            glyph: Theme.icons.chevronRight
-            tooltip: qsTr("Next keyframe (Alt+Right)")
-            onClicked: root.nextKey()
-        }
+            IconButton {
+                glyph: root.hasTargets && root.allTargetsKeyed ? Theme.icons.diamondMinus
+                                                               : Theme.icons.diamondPlus
+                enabled: root.hasTargets
+                tooltip: root.hasTargets && root.allTargetsKeyed
+                         ? qsTr("Remove keyframes at the playhead (K)")
+                         : qsTr("Add keyframes at the playhead (K)")
+                onClicked: root.toggleKey()
+            }
 
-        IconButton {
-            glyph: Theme.icons.trash
-            enabled: root.canClear
-            tooltip: qsTr("Clear all keyframes of the selected properties")
-            onClicked: root.clearKeys()
-        }
+            IconButton {
+                glyph: Theme.icons.chevronRight
+                tooltip: qsTr("Next keyframe (Alt+Right)")
+                onClicked: root.nextKey()
+            }
 
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.c.panelFrame.borderWidth
-            height: Theme.controlHeightSm
-            color: Theme.c.keyframesToolbar.separator
-        }
+            IconButton {
+                glyph: Theme.icons.trash
+                enabled: root.canClear
+                tooltip: qsTr("Clear all keyframes of the selected properties")
+                onClicked: root.clearKeys()
+            }
 
-        ThemedToggleButton {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Lanes")
-            checked: root.mode === "lanes"
-            tooltip: qsTr("Show keyframes as diamonds on lanes")
-            onClicked: root.modeRequested("lanes")
-        }
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.c.panelFrame.borderWidth
+                height: Theme.controlHeightSm
+                color: Theme.c.keyframesToolbar.separator
+            }
 
-        ThemedToggleButton {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Curves")
-            checked: root.mode === "curves"
-            tooltip: qsTr("Show keyframes as value curves")
-            onClicked: root.modeRequested("curves")
-        }
+            ThemedToggleButton {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Lanes")
+                checked: root.mode === "lanes"
+                tooltip: qsTr("Show keyframes as diamonds on lanes")
+                onClicked: root.modeRequested("lanes")
+            }
 
-        ThemedToggleButton {
-            visible: root.mode === "curves"
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Normalize")
-            checked: root.normalize
-            tooltip: qsTr("Scale every curve to fill the height")
-            onClicked: root.normalizeToggled()
-        }
+            ThemedToggleButton {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Curves")
+                checked: root.mode === "curves"
+                tooltip: qsTr("Show keyframes as value curves")
+                onClicked: root.modeRequested("curves")
+            }
 
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: Theme.c.panelFrame.borderWidth
-            height: Theme.controlHeightSm
-            color: Theme.c.keyframesToolbar.separator
-        }
+            ThemedToggleButton {
+                visible: root.mode === "curves"
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Normalize")
+                checked: root.normalize
+                tooltip: qsTr("Scale every curve to fill the height")
+                onClicked: root.normalizeToggled()
+            }
 
-        IconButton {
-            glyph: Theme.icons.zoomFit
-            tooltip: qsTr("Fit the clip in view")
-            onClicked: root.fitAll()
-        }
+            ThemedToggleButton {
+                visible: root.mode === "curves"
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Handles")
+                checked: root.showHandles
+                tooltip: qsTr("Show bezier handles on the focused curve. Without them, drag a curve to bend it")
+                onClicked: root.showHandlesToggled()
+            }
 
-        IconButton {
-            glyph: Theme.icons.maximize
-            enabled: root.canFitSelection
-            tooltip: qsTr("Fit the selected keyframes in view")
-            onClicked: root.fitSelection()
-        }
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.c.panelFrame.borderWidth
+                height: Theme.controlHeightSm
+                color: Theme.c.keyframesToolbar.separator
+            }
 
-        ThemedChip {
-            anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Animated only")
-            selected: root.animatedOnly
-            tooltip: qsTr("Hide properties that have no keyframes")
-            onClicked: root.animatedOnlyToggled()
+            IconButton {
+                glyph: Theme.icons.zoomFit
+                tooltip: qsTr("Fit the clip in view")
+                onClicked: root.fitAll()
+            }
+
+            IconButton {
+                glyph: Theme.icons.maximize
+                enabled: root.canFitSelection
+                tooltip: qsTr("Fit the selected keyframes in view")
+                onClicked: root.fitSelection()
+            }
+
+            ThemedChip {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Animated only")
+                selected: root.animatedOnly
+                tooltip: qsTr("Hide properties that have no keyframes")
+                onClicked: root.animatedOnlyToggled()
+            }
         }
     }
 }

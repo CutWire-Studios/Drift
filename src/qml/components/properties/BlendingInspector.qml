@@ -30,6 +30,11 @@ Item {
 
         Text {
             text: qsTr("Blend mode")
+            SearchAnchor {
+                searchId: "blending-blend-mode"
+                title: qsTr("Blend mode")
+                keywords: "multiply screen overlay add"
+            }
             color: Theme.c.blendingInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

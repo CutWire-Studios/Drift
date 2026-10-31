@@ -111,6 +111,11 @@ Item {
                          ? qsTr("Trace the subject and pin the result as a mask layer")
                          : qsTr("Select a video clip first")
                 onClicked: {
+                    if (!ShellBridge.phoneShell) {
+                        Workspaces.activeId = "masking-tracking"
+                        Qt.callLater(() => EditorState.preview.maskingTool = "ai")
+                        return
+                    }
                     const data = EditorState.selectedClipData
                     ShellBridge.main.openSegmentation(
                         EditorState.selectedTrack, EditorState.selectedClip,

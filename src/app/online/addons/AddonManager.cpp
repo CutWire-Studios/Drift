@@ -24,6 +24,9 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFutureWatcher>
+#include <QCoreApplication>
+#include <QMetaMethod>
+#include <QThread>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QNetworkAccessManager>
@@ -106,9 +109,22 @@ AddonManager::AddonManager(QObject *parent)
     }
 
     refresh();
+
+    drift::ort::setProviderFailureHandler([this](const QString &failed, const QString &error) {
+        return askForOtherAcceleration(failed, error);
+    });
+    // A load paused on the question must not outlive the window that would answer it.
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
+        QMutexLocker lock(&m_askMutex);
+        m_quitting = true;
+        m_askAnswered.wakeAll();
+    });
 }
 
-AddonManager::~AddonManager() = default;
+AddonManager::~AddonManager()
+{
+    drift::ort::setProviderFailureHandler({});
+}
 
 QString AddonManager::status() const
 {
@@ -329,6 +345,8 @@ QVariantList AddonManager::accelerationOptions() const
             continue;
         if (variant == QLatin1String("cuda"))
             rows.append(row(variant, tr("NVIDIA graphics (faster)")));
+        else if (variant == QLatin1String("migraphx"))
+            rows.append(row(variant, tr("AMD graphics (faster)")));
         else if (variant == QLatin1String("webgpu"))
             rows.append(row(variant, tr("Graphics card (faster)")));
         else
@@ -363,9 +381,77 @@ void AddonManager::setAcceleration(const QString &variant)
     emit kindChanged(QString::fromLatin1(drift::ort::kRuntimeKind));
 }
 
+QString AddonManager::accelerationProblem() const
+{
+    const QString wanted = drift::ort::preferredVariant();
+    if (wanted == QLatin1String("cpu"))
+        return {};
+    QString core = drift::ort::activeVariant();
+    if (core.isEmpty()) {
+        const QList<drift::ort::RuntimeInfo> runtimes = drift::ort::installedRuntimes();
+        if (runtimes.isEmpty())
+            return {};
+        core = runtimes.first().variant;
+    }
+    const QString variant = drift::ort::variantExplicit() ? wanted : core;
+    return drift::ort::providerSetupProblem(variant);
+}
+
 bool AddonManager::runtimeRestartRequired() const
 {
     return m_runtimeRestartRequired;
+}
+
+QVariantList AddonManager::fallbackAccelerationOptions(const QString &failed) const
+{
+    const QString active = drift::ort::activeVariant();
+    QVariantList rows;
+    for (const QVariant &option : accelerationOptions()) {
+        const QVariantMap row = option.toMap();
+        const QString value = row.value(QStringLiteral("value")).toString();
+        if (value == failed || !row.value(QStringLiteral("available")).toBool())
+            continue;
+        // A different core only loads on the next launch, which is no use to the job waiting.
+        const bool usableNow = value == QLatin1String("auto") || value == QLatin1String("cpu")
+            || value == active || !drift::ort::pluginEpNameForVariant(value).isEmpty();
+        if (usableNow)
+            rows.append(row);
+    }
+    return rows;
+}
+
+QString AddonManager::askForOtherAcceleration(const QString &failed, const QString &error)
+{
+    // Blocking here would freeze the dialog that answers, so loads on the GUI thread just report.
+    if (QThread::currentThread() == thread()) {
+        QMetaObject::invokeMethod(this, [this, failed, error] {
+            emit accelerationFailed(failed, error, false);
+        }, Qt::QueuedConnection);
+        return {};
+    }
+    // Headless runs have nobody to ask.
+    if (!isSignalConnected(QMetaMethod::fromSignal(&AddonManager::accelerationFailed)))
+        return {};
+
+    QMutexLocker lock(&m_askMutex);
+    if (m_quitting)
+        return {};
+    m_askAnswer.reset();
+    QMetaObject::invokeMethod(this, [this, failed, error] {
+        emit accelerationFailed(failed, error, true);
+    }, Qt::QueuedConnection);
+    while (!m_askAnswer && !m_quitting)
+        m_askAnswered.wait(&m_askMutex);
+    return m_quitting ? QString() : *m_askAnswer;
+}
+
+void AddonManager::answerAccelerationFailure(const QString &variant)
+{
+    if (!variant.isEmpty())
+        setAcceleration(variant);
+    QMutexLocker lock(&m_askMutex);
+    m_askAnswer = variant;
+    m_askAnswered.wakeAll();
 }
 
 void AddonManager::refresh(bool force)
@@ -796,6 +882,40 @@ bool AddonManager::isUserPackage(const QUrl &url) const
     return file && file->read(8) == QByteArrayLiteral("DRIFTFX\0");
 }
 
+namespace {
+
+// name, kind, error
+using UserPackageResult = std::tuple<QString, QString, QString>;
+
+UserPackageResult extractUserPackage(const QString &packagePath, const QString &appData)
+{
+    QString error;
+    const auto manifest = readManifest(packagePath, &error, Container::User);
+    if (!manifest)
+        return {QString(), QString(), error};
+    const PackageProvide provide = manifest->provides.first();
+    const QString folder = manifest->files.first().path.mid(provide.root.size() + 1).section(QLatin1Char('/'), 0, 0);
+
+    // Extracted next to its final home so the last step is a rename on the same filesystem.
+    // The user folders (<AppData>/effects, <AppData>/transitions) are the same roots the
+    // catalogs already scan for unsigned packages.
+    const QDir kindDir(QDir(appData).filePath(provide.kind));
+    const QString staging = kindDir.filePath(QStringLiteral(".import-") + folder);
+    PackageInfo info;
+    if (!drift::addon::install(packagePath, staging, {}, &info, &error, Container::User))
+        return {manifest->name, provide.kind, error};
+
+    const QString destination = kindDir.filePath(folder);
+    QDir(destination).removeRecursively();
+    const bool moved = QDir().rename(QDir(staging).filePath(provide.root + QLatin1Char('/') + folder), destination);
+    QDir(staging).removeRecursively();
+    if (!moved)
+        return {info.name, provide.kind, QStringLiteral("cannot move %1 into place").arg(folder)};
+    return {info.name, provide.kind, QString()};
+}
+
+} // namespace
+
 void AddonManager::installUserPackage()
 {
     if (m_userPackagePath.isEmpty())
@@ -803,9 +923,8 @@ void AddonManager::installUserPackage()
     const QString packagePath = std::exchange(m_userPackagePath, QString());
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
-    using Result = std::tuple<QString, QString, QString>; // name, kind, error
-    auto *watcher = new QFutureWatcher<Result>(this);
-    connect(watcher, &QFutureWatcher<Result>::finished, this, [this, watcher, packagePath] {
+    auto *watcher = new QFutureWatcher<UserPackageResult>(this);
+    connect(watcher, &QFutureWatcher<UserPackageResult>::finished, this, [this, watcher, packagePath] {
         watcher->deleteLater();
         QFile::remove(packagePath);
         const auto [name, kind, error] = watcher->result();
@@ -814,31 +933,16 @@ void AddonManager::installUserPackage()
         emit userPackageInstalled(name, error);
     });
 
-    watcher->setFuture(QtConcurrent::run([packagePath, appData]() -> Result {
-        QString error;
-        const auto manifest = readManifest(packagePath, &error, Container::User);
-        if (!manifest)
-            return {QString(), QString(), error};
-        const PackageProvide provide = manifest->provides.first();
-        const QString folder = manifest->files.first().path.mid(provide.root.size() + 1).section(QLatin1Char('/'), 0, 0);
+    watcher->setFuture(QtConcurrent::run([packagePath, appData] { return extractUserPackage(packagePath, appData); }));
+}
 
-        // Extracted next to its final home so the last step is a rename on the same filesystem.
-        // The user folders (<AppData>/effects, <AppData>/transitions) are the same roots the
-        // catalogs already scan for unsigned packages.
-        const QDir kindDir(QDir(appData).filePath(provide.kind));
-        const QString staging = kindDir.filePath(QStringLiteral(".import-") + folder);
-        PackageInfo info;
-        if (!drift::addon::install(packagePath, staging, {}, &info, &error, Container::User))
-            return {manifest->name, provide.kind, error};
-
-        const QString destination = kindDir.filePath(folder);
-        QDir(destination).removeRecursively();
-        const bool moved = QDir().rename(QDir(staging).filePath(provide.root + QLatin1Char('/') + folder), destination);
-        QDir(staging).removeRecursively();
-        if (!moved)
-            return {info.name, provide.kind, QStringLiteral("cannot move %1 into place").arg(folder)};
-        return {info.name, provide.kind, QString()};
-    }));
+QString AddonManager::installUserPackageFile(const QString &path)
+{
+    const auto [name, kind, error] =
+        extractUserPackage(path, QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    if (error.isEmpty())
+        reloadForKinds({kind});
+    return error;
 }
 
 QVariantMap AddonManager::inspectAddonFile(const QUrl &url)

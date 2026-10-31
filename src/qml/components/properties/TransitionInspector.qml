@@ -225,6 +225,11 @@ Item {
                 spacing: 4
                 Text {
                     text: qsTr("Duration")
+                    SearchAnchor {
+                        searchId: "transition-duration"
+                        title: qsTr("Transition duration")
+                        keywords: "length"
+                    }
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
@@ -253,6 +258,11 @@ Item {
                 spacing: 4
                 Text {
                     text: qsTr("Curve")
+                    SearchAnchor {
+                        searchId: "transition-curve"
+                        title: qsTr("Transition curve")
+                        keywords: "easing"
+                    }
                     color: Theme.c.transitionInspector.foregroundMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs

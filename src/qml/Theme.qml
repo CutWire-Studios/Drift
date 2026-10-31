@@ -323,10 +323,20 @@ QtObject {
     readonly property color gizmoUniform: ThemeManager.semantic.gizmo.uniform
     readonly property color gizmoHot: ThemeManager.semantic.gizmo.hot
 
+    // A token group as a plain object, for C++ items whose style property is a QVariantMap.
+    function plainMap(group) {
+        const out = {}
+        for (const key of group.keys())
+            out[key] = group[key]
+        return out
+    }
+
     // --- Colors: keyframe curves ------------------------------------------------
     readonly property var keyframeCurveColors: ThemeManager.semantic.keyframe.curves
     readonly property var keyframeCurveRamp: ThemeManager.semantic.keyframe.ramp
     function keyframeCurveColor(prop) {
+        if (!prop)
+            return keyframeCurveRamp[0]
         if (keyframeCurveColors[prop])
             return keyframeCurveColors[prop]
         let hash = 0
@@ -610,6 +620,7 @@ QtObject {
         shapes: "shapes",
         chevronDown: "chevron-down",
         chevronUp: "chevron-up",
+        chevronsUpDown: "chevrons-up-down",
         chevronsRight: "chevrons-right",
         x: "x",
         messageSquare: "message-square",
@@ -665,6 +676,7 @@ QtObject {
         chevronLeft: "chevron-left",
         check: "check",
         pencil: "pencil",
+        spline: "spline",
         clock: "clock",
         lock: "lock",
         lockOpen: "lock-open",
@@ -695,6 +707,10 @@ QtObject {
         smartphone: "smartphone",
         monitor: "monitor",
         square: "square",
+        circle: "circle",
+        pentagon: "pentagon",
+        brush: "brush",
+        crosshair: "crosshair",
         ratio: "ratio",
 
         // Brand marks (layout chooser)

@@ -112,11 +112,6 @@ Mesa's llvmpipe covers 3.3 in software; a GPU host can use an EGL platform plugi
 instead. Started without a usable context, Drift still serves MCP and still edits
 projects — it says so on stderr, and only render, capture and export fail.
 
-**Marketplace consent is granted in the GUI only.** A headless instance answers every
-`market` op with `consent_required` unless the same settings profile already carries
-`market/consented=true` from a GUI session that accepted the terms — there is deliberately
-no op that accepts them.
-
 ## Workflow
 
 The `initialize` reply carries a short `instructions` string with the essentials; the eight homepage tools are:
@@ -152,8 +147,8 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Composites | `make_composite` (selection-based) moves the selected clips into a nested timeline and leaves one `composite` clip plus a bin item. `open_composite({clip})` / `({sequence})` makes that timeline the one every op edits; `open_composite({main:true})` returns. Adding content past a composite's end never lengthens placed instances, and shortening the content never shortens them (or the adjustment clips hosted on them) — trim them with `set_duration`; their trim limit follows the content. `set_clip_speed` retimes a composite as a unit: on an untrimmed instance, `speed = currentDuration / target` makes it end at `target`. `set_speed_curve` also works on composites. One level only: no composites inside composites. `flatten_composite` renders the clip to a video file (async, poll `export_status`) and swaps it in. `export_video` always renders the main timeline |
 | Export | `export_video` is async — poll `inspect().export` or `export_status`. The output path is normalised, so use the `path` echoed back. Named sizes: `list_export_presets` + `export_with_preset` |
 | Atomicity | `apply` is **not** atomic: on failure the ops before it stay applied. The failure reply is `{ok:false, error:"apply_failed", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops that ran]}` — `done` never contains the failed op. An ops array cannot reference an id produced earlier in the same batch — end the batch after `set_speed_curve` |
-| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_loop_work_area`, `export_video`, `save_project`, `quit_instance`, `set_theme`, `export_theme`, `import_theme`, `select_theme`, `set_preview_view`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_download`, `market_cancel_download`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`, `import_effect`, `rename/delete/export/import_effect_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
-| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict`, `unsupported` (a build without the vector renderer), and from the market toolbox `market_unavailable`, `consent_required`, `market_error`, `download_failed`. `type_mismatch` is also the answer when an op gets the wrong **kind** of clip (a shape to `apply_text_preset`, a title to `set_shape_style`, an image to `set_clip_orientation`) |
+| Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_loop_work_area`, `export_video`, `save_project`, `quit_instance`, `set_theme`, `export_theme`, `import_theme`, `select_theme`, `set_preview_view`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_install` (alias `market_download`), `market_cancel_download`, `market_retry_download`, `market_open`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`, `import_effect`, `rename/delete/export/import_effect_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
+| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict`, `unsupported` (a build without the vector renderer), and from the market toolbox `market_unavailable`, `consent_required`, `market_error`, `rate_limited`, `app_too_old`, `quota_exceeded`, `install_timeout`, `download_failed`. `type_mismatch` is also the answer when an op gets the wrong **kind** of clip (a shape to `apply_text_preset`, a title to `set_shape_style`, an image to `set_clip_orientation`) |
 | UI themes | No op edits theme tokens. `export_theme({path, name, theme?, mode?})` writes a copy (`copy`: every resolved token; `starter`: `extends` + core palette, metrics, typography, motion, window) to a file; edit it with your own file tools, then `import_theme({path, replace:true, select:true})`. Import errors name the bad key; fix and re-import. `list_themes` / `select_theme` switch between installed themes. Built-in ids (`dark`, `light`, `graphite`, `frost`) and `system` are reserved and cannot be imported or removed. Format: `docs/theming.md` |
 | Change detection | Every `inspect` includes `revision`; pass `since:<revision>` to get `{unchanged:true}` when state is current |
 | Media import | Absolute paths or `file://`, or `import_media_bytes` (base64 — always pass an explicit `path`). **No directory listing.** If the user gave a fuzzy name (`GX010023.mp4` in Downloads), glob/search with **your own filesystem tools**, then pass the hits to `import_media` and confirm `missing:[]` is empty |
@@ -168,7 +163,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `package_project` | `jobs.package.{active, progress}` |
 | `generate_subtitles` | `jobs.subtitleGen.{active, progress, status}` |
 | `set_clip_reverse` (video) | `jobs.reverseRender.{active, progress, status}` |
-| `market_download` | `jobs.market.active` (count of running downloads); per-job status, progress, error, path and asset from `market_downloads` |
+| `market_install` | `jobs.downloads.{active, byKind}` (every running download, add-ons and updates included); per-job status, progress, error and result from `market_downloads` |
 | `detect_scenes` | `jobs.sceneDetect.{active, progress, status, clip, scenes}` (also present, inactive, while a scan result is loaded) |
 | `run_segmentation`, `segment_clip`, `apply_denoise`, `detect_faces` | No progress field — re-read `inspect({clips:true, detail:true})` and compare |
 | `stabilize_clip` | Per-clip `stabilizing` / `stabilizeProgress` / `stabilizeStatus` on the detail clip row |
@@ -178,7 +173,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 
 | Toolbox | When to use |
 |---------|-------------|
-| `media` | Import (paths/bytes), list, rename, remove, replace, export still, `set_asset_rotation` (lossless orientation override for a sideways video), PDF clips (`inspect_pdf`, `set_pdf_options`) — see [PDF documents](#pdf-documents) |
+| `media` | Import (paths/bytes, optionally into a bin `folder`), list, rename, remove, replace, export still, bin folders (`list_folders`, `create_folder`, `move_asset_to_folder`, `rename_folder`, `delete_folder`), `set_asset_rotation` (lossless orientation override for a sideways video), PDF clips (`inspect_pdf`, `set_pdf_options`) — see [PDF documents](#pdf-documents) |
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link |
 | `canvas` | Transform (including 3D tilt, depth and perspective), flip, blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
 | `playback` | Seek, play, pause, In/Out work area |
@@ -197,7 +192,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 | `scene` | Shot detection, what is in each shot, scene-synced cuts |
 | `ui` | Theme, shortcuts, editor preferences, guides |
 | `multicam` | Multi-camera session: set up, switch at the playhead, save |
-| `market` | Stock media from the Cutwire marketplace: status/consent, search, resolve a link, download into the bin |
+| `market` | The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons; browse, preview, install (optionally onto the timeline), manage downloads |
 | `transcript` | Word-level transcripts stored on each asset, reading them (`get_transcript`), cutting by words (`cut_words`) or source ranges (`keep_ranges`), building a sequence from an edit list (`assemble`), speaker labels (`diarize`) — see [Editing speech](#editing-speech) |
 | `voice` | ElevenLabs / Fish Audio voiceover (`tts_generate`), ElevenLabs sound effects (`sfx_generate`), `list_voices`, `cloud_provider_status` — see [Cloud voices](#cloud-voices); local Chatterbox TTS, voice library and subtitle voiceovers — see [Local voices](#local-voices) |
 
@@ -724,26 +719,29 @@ ids (`list_shapes` rows carry `kind` and the default box `aspect`): basic `recta
 `set_keyframe({prop:"shape.cornerRadius"})` or `shape.layer.<id>.<field>`. Looks and style packs
 are text-only; build a shape's look from `list_gradient_presets` / `list_text_effects`.
 
-### Stock media from the marketplace
+### The marketplace
 
-The `market` toolbox wraps the same service the Assets → Market tab uses (`docs/marketplace`).
-It is gated twice: the build must ship a marketplace service (`market_status.configured`), and
-**the user must have accepted the marketplace terms in the app** (`market_status.consented`).
-Every other market op fails `consent_required` until then; there is deliberately no op to
-accept on the user's behalf, because downloads spend a per-machine quota.
+The `market` toolbox drives the same server-defined marketplace the app's Marketplace window shows.
+The build must ship a marketplace service (`market_status.configured`); every market op fails
+`market_unavailable` otherwise. Sources are `stock.<type>` (video, photo, audio, music, greenscreen),
+`drift-assets`, `sfx` and `community.<kind>` (effect, transition, audio-effect, look, theme,
+effect-template). Stock installs spend a per-machine quota; the rest are free.
 
 | Call | Effect |
 |---|---|
-| `market_status()` | Types → providers with capabilities (`search`, `featured`, `resolve`), filters (with option ids) and quota, plus account/coins when connected |
-| `market_search({q, type, provider, filters, limit})` | One page of listings `{id, title, type, provider, dur, w, h, coins?, by?, thumb?, variants?}` plus `offset` and `has_more`; `more:true` fetches the **next** page (earlier ids stay valid for `market_item`/`market_download`); `thumb` is a URL you can fetch with your own tools to look at the item |
-| `market_resolve({url})` | For resolve-only providers (pasted page links); blocks up to 90 s and returns one `item` |
-| `market_item({id})` | Variants, preview and license of a listing from the last search/resolve |
-| `market_download({id, variant, dir, wait})` | Starts the download, **spends quota**, imports the file into the bin when done and reports its `asset` id. `id` must come from the last search/resolve (`not_found` otherwise); `dir` must be absolute. `wait:<seconds>` blocks for completion and turns a `failed`/`cancelled` job into `{ok:false, error, detail, job}`; otherwise poll `market_downloads()` or `inspect({detail:true}).jobs.market` |
-| `market_downloads({clear})` / `market_cancel_download({id})` | Job list with status/progress/error/path/asset; cancel a running one |
+| `market_status({source, layout, refresh})` | `{configured, offline, revision, features, sources:[{id, kind, label, mediaKind, searchable, canResolve, categories, providers?, sorts?}]}`; `source` returns one source in full, `layout:true` adds `pages:[{id, title, sections:[{id, type, title, source}]}]`, `refresh:true` re-reads the manifest (waits up to 15 s) |
+| `market_search({source \| section, q, category, sort, period, provider, filters, limit, cursor, more})` | `{source, items:[{id, title, kind, dur?, w?, h?, by?, tags, category?, thumb, preview?, variants, installed}], next_cursor?, has_more, quota?, warnings?}`. `section:"page/section"` runs that section's own binding (sort, category, page size). `provider:"*"` asks every provider. `more:true` fetches the next page of the previous search of that source. `type` is an alias for `source:"stock.<type>"`. Blocks until the service answers |
+| `market_item({source, id})` | One item in full: description, license, `variants:[{id, label, w, h}]`, `web_url`, `min_app_version`, `installed`, `install_state`, `extra` |
+| `market_resolve({url, wait})` | For sources that resolve pasted page links; blocks up to `wait` seconds (default 90) and returns one `item` |
+| `market_preview({source, id, what, image, max})` | Downscaled JPEG of the thumbnail (`what:"thumb"`, default) or preview as image content, meta `{path, w, h, mime}`. Video and audio previews return meta `{path, mime, dur}` only. `image:false` returns just the meta. Cannot be batched in `apply` |
+| `market_install({source, id, variant, dir, wait, place})` | Returns `{job}` at once, or after `wait` seconds (max 600) `{ok, job, result}` with `result` one of `{asset}`, `{prop}`, `{effect}`, `{theme}`, `{look}`, `{template}`. `dir` is an absolute folder and only applies to stock. `place:{at, track, new_track}` needs `wait > 0` and a bin asset; it places the clip through `place_clip` (one undo step) and adds `{clip, placed, requested, reason?}`. A failed or cancelled install is `{ok:false, error, detail, job}`; an install still running is `conflict`. `market_download` is a hidden alias |
+| `market_downloads({kind, clear})` | Every transfer the app runs, add-ons and updates included: `{active, jobs:[{id, kind, title, status, phase, progress, bytes, total, speed, error?, error_code?, retryable, cancellable, result?}]}` |
+| `market_cancel_download({id})` / `market_retry_download({id})` | Cancel a running job or retry a failed/cancelled one, any kind; returns `{job}`. A finished or non-cancellable job is `conflict` |
+| `market_open({page, tab, item})` | Asks the app window to open the Marketplace on a page, the downloads tab (`tab:"downloads"`) or one item (`item:{source, id}`); `{opened:true}` |
 
-Errors: `market_unavailable`, `consent_required`, `market_error`, and the service's own codes
-(`rate_limited`, `auth_required`, `payment_required`, `provider_unavailable`, `not_found`,
-`download_failed`). Coin prices appear only when non-zero; nothing in the reply says "free".
+Errors: `market_unavailable`, `market_error`, `install_timeout`, and the service's own codes
+(`rate_limited`, `app_too_old`, `quota_exceeded`, `provider_unavailable`, `not_found`,
+`download_failed`).
 
 `DRIFT_MARKET_API_URL` in the environment points the client at another service (tests use a
 local fake) without rebuilding.

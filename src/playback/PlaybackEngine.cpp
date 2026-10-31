@@ -15,6 +15,7 @@
 #include <QVariantMap>
 
 #ifdef Q_OS_ANDROID
+#include <QCoreApplication>
 #include <QJniEnvironment>
 #include <QJniObject>
 #include <QtCore/qcoreapplication_platform.h>
@@ -269,7 +270,11 @@ PlaybackEngine::~PlaybackEngine()
 #ifdef Q_OS_ANDROID
     // A focus change already in flight on the Android UI thread must not find this engine.
     g_audioFocusEngine.store(nullptr, std::memory_order_release);
-    abandonAudioFocus();
+    // The editor is a static in main(), so this usually runs from exit() after the application and
+    // Qt's own globals are gone; runOnAndroidMainThread() then crashes. Android releases a dead
+    // process's focus itself.
+    if (QCoreApplication::instance())
+        abandonAudioFocus();
 #endif
     m_playing = false;
     m_compositeTimer.stop();
@@ -862,6 +867,11 @@ void PlaybackEngine::checkEndOfTimeline(drift::TimeUs timeUs)
 
     drift::TimeUs loopIn = 0;
     drift::TimeUs loopOut = 0;
+    if (hasPreviewRange()) {
+        if (timeUs >= m_previewRangeEndUs)
+            setPlayheadUs(m_previewRangeStartUs);
+        return;
+    }
     if (shouldLoopWorkArea(&loopIn, &loopOut)) {
         if (timeUs >= loopOut) {
             setPlayheadUs(loopIn);
@@ -1011,6 +1021,7 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     options.allowProxies = true;
     options.deferAudioAnalysis = true;
     options.editor = m_editorView;
+    options.maskView = m_maskView;
     if (m_scopeConsumers > 0
         && (!m_playing || !m_scopeTimer.isValid() || m_scopeTimer.hasExpired(kScopeIntervalMs)))
         options.scopeReadbackWidth = kScopeReadbackWidth;
@@ -1040,6 +1051,15 @@ void PlaybackEngine::setEditorView(const FrameCompositor::RenderOptions::EditorV
         && m_editorView.navigating == view.navigating)
         return;
     m_editorView = view;
+    if (!m_playing)
+        refreshFrame();
+}
+
+void PlaybackEngine::setMaskView(const FrameCompositor::RenderOptions::MaskView &view)
+{
+    if (m_maskView == view)
+        return;
+    m_maskView = view;
     if (!m_playing)
         refreshFrame();
 }

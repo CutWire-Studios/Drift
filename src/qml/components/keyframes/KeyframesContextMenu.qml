@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
-import "KeyframesModel.js" as Model
 
 Item {
     id: root
@@ -49,11 +48,7 @@ Item {
     function selectRow() {
         if (!hit)
             return
-        const refs = []
-        const dots = Model.laneDots(panel.rows, hit.row)
-        for (let i = 0; i < dots.length; ++i)
-            Array.prototype.push.apply(refs, dots[i].refs)
-        panel.selection.replace(refs)
+        panel.selection.replace(panel.rowsModel.rowRefs(hit.row))
     }
 
     visible: false
@@ -80,17 +75,17 @@ Item {
         ThemedMenuItem {
             text: qsTr("Copy")
             enabled: root.hasSelection
-            onTriggered: root.panel.handleAction("copy")
+            onTriggered: root.panel.handleAction("copy", true)
         }
         ThemedMenuItem {
             text: qsTr("Paste at playhead")
             enabled: EditorState.keyframes.clipboardCount > 0
-            onTriggered: root.panel.handleAction("paste")
+            onTriggered: root.panel.handleAction("paste", true)
         }
         ThemedMenuItem {
             text: qsTr("Delete")
             enabled: root.hasSelection
-            onTriggered: root.panel.handleAction("delete")
+            onTriggered: root.panel.handleAction("delete", true)
         }
         ThemedMenuSeparator { }
         ThemedMenuItem {

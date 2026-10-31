@@ -44,13 +44,20 @@ class PreviewController : public QObject
     // Library set whose guides are being dragged on the preview; empty when not editing.
     Q_PROPERTY(QString guideEditSetId READ guideEditSetId WRITE setGuideEditSetId NOTIFY guideEditSetIdChanged)
     Q_PROPERTY(bool canvasCropMode READ canvasCropMode WRITE setCanvasCropMode NOTIFY canvasCropModeChanged)
+    // Phone crop page: the selected clip's source frame is edited on the preview. Exclusive with canvasCropMode.
+    Q_PROPERTY(bool clipCropMode READ clipCropMode WRITE setClipCropMode NOTIFY clipCropModeChanged)
+    Q_PROPERTY(QString maskViewMode READ maskViewMode WRITE setMaskViewMode NOTIFY maskViewModeChanged)
+    // The masking workspace's drawing tool: "" (none), "rect", "ellipse", "polygon", "brush", "ai"
+    // or "tracker". Session state, like the rest of this class.
+    Q_PROPERTY(QString maskingTool READ maskingTool WRITE setMaskingTool NOTIFY maskingToolChanged)
     Q_PROPERTY(bool maskEditMode READ maskEditMode WRITE setMaskEditMode NOTIFY maskEditModeChanged)
     // Whether the preview should be showing mask handles right now. Selecting a mask clip is
     // itself a request to edit it, so the toggle is only needed to keep the handles up while some
     // *other* clip is selected.
     Q_PROPERTY(bool maskEditActive READ maskEditActive NOTIFY maskEditActiveChanged)
-    // The one tool that owns the preview's pointer: "crop", "guideEdit", "mask" or "transform", in
-    // that order of precedence. Masks are a 2D tool, so 3D falls through to "transform".
+    // The one tool that owns the preview's pointer: "crop", "clipCrop", "guideEdit", "maskDraw", "maskBrush",
+    // "maskAi", "tracker", "mask" or "transform", in that order of precedence. The masking tools
+    // and the mask editor are 2D tools, so 3D falls through to "transform".
     Q_PROPERTY(QString activeTool READ activeTool NOTIFY activeToolChanged)
     // Grips are drawn only while the picture holds still and there is a canvas to put them on.
     Q_PROPERTY(bool handlesVisible READ handlesVisible NOTIFY handlesVisibleChanged)
@@ -81,8 +88,14 @@ public:
     void setGuideEditSetId(const QString &id);
     bool canvasCropMode() const { return m_canvasCropMode; }
     void setCanvasCropMode(bool active);
+    bool clipCropMode() const { return m_clipCropMode; }
+    void setClipCropMode(bool active);
+    QString maskViewMode() const { return m_maskViewMode; }
+    void setMaskViewMode(const QString &mode);
     bool maskEditMode() const { return m_maskEditMode; }
     void setMaskEditMode(bool active);
+    QString maskingTool() const { return m_maskingTool; }
+    void setMaskingTool(const QString &tool);
     bool maskEditActive() const;
     QString activeTool() const { return m_activeTool; }
     bool handlesVisible() const { return m_handlesVisible; }
@@ -135,6 +148,15 @@ public:
     Q_INVOKABLE QVariantMap applyGizmoDrag(const QVariantMap &start, const QString &handle,
                                            double pressX, double pressY, double nowX, double nowY,
                                            bool snap, double scale);
+    // The 3D gizmo's frame for several 3D layers: a box (kind "group") at the centroid of their
+    // centres in world space, unturned. Empty when none of the boxes can take part.
+    Q_INVOKABLE QVariantMap groupGizmoPivot(const QVariantList &boxes) const;
+    // applyGizmoDrag for the frame from groupGizmoPivot: the drag moves, turns or scales the
+    // members as one body about the pivot, each from its box at the grab (startBoxes), and the
+    // frame's new pose is returned. Scale handles all grow the group uniformly.
+    Q_INVOKABLE QVariantMap applyGroupGizmoDrag(const QVariantMap &pivot, const QVariantList &startBoxes,
+                                                const QString &handle, double pressX, double pressY,
+                                                double nowX, double nowY, bool snap, double scale);
     // For a clipsAtPlayhead box with a 3D pose: the QtQuick transform of an item laid out at
     // (x, y, w, h) * scale in overlay px, placing its content where the clip renders.
     Q_INVOKABLE QMatrix4x4 clipPoseMatrix(const QVariantMap &box, double x, double y, double w,
@@ -155,6 +177,13 @@ public:
     Q_INVOKABLE QVariantMap snapResize(const QVariantMap &box, double width, double height,
                                        int dxSign, int dySign, bool centrePivot,
                                        double tolerance) const;
+    // Moves several clips as one body from where they stood at the grab (clipsAtPlayhead boxes), all
+    // in canvas px: each clip's centre goes to pivot + R(rotationDeg) * S(scaleX, scaleY) * (centre -
+    // pivot) + (dx, dy), its size follows the scale and its angle the rotation. Written through the
+    // single-clip preview setters, so keyframing and blocked-transform notices behave the same.
+    Q_INVOKABLE void applyGroupTransform(const QVariantList &startBoxes, double pivotX, double pivotY,
+                                         double scaleX, double scaleY, double rotationDeg, double dx,
+                                         double dy);
     Q_INVOKABLE QVariantList clipsAtPlayhead() const;
     // Topmost visible clip under a canvas point at the playhead, rotation-aware; empty if none.
     Q_INVOKABLE QVariantMap clipAtCanvasPoint(double canvasX, double canvasY) const;
@@ -175,6 +204,12 @@ public:
     // out of step: the host clip's rect at the playhead, and the mask layers on that track
     // covering it. Empty when the selection names no maskable track.
     Q_INVOKABLE QVariantMap maskEditorState() const;
+    // The frame the masking overlays place against: the selection's mask target, with `inside`
+    // telling whether that target is under the playhead (hasFrame follows it).
+    Q_INVOKABLE QVariantMap maskingFrame() const;
+    // maskingFrame for a given media clip rather than the selection: the frame trackers work in when
+    // an adjustment layer is selected. Empty (hasFrame false) for an invalid clip.
+    Q_INVOKABLE QVariantMap trackerFrameOf(int trackIndex, int clipIndex) const;
     // What the depth handles need, as one snapshot: the selected media clip's frame on the canvas
     // and every enabled depth effect with a handle (relight, depth of field) on its stack, with
     // parameters resolved at the playhead. Empty when there is nothing to show.
@@ -207,7 +242,10 @@ signals:
     void guidesEnabledChanged();
     void guideEditSetIdChanged();
     void canvasCropModeChanged();
+    void clipCropModeChanged();
     void maskEditModeChanged();
+    void maskViewModeChanged();
+    void maskingToolChanged();
     void maskEditActiveChanged();
     void activeToolChanged();
     void handlesVisibleChanged();
@@ -222,6 +260,8 @@ private:
     // The viewpoint the gizmo is drawn and solved from: the scene camera when one covers the
     // playhead, otherwise none (each clip's own eye).
     drift::gizmo::View gizmoView() const;
+    // A clip's frame at the playhead: rect, rotation and pose with keyframes evaluated, and its parent transform.
+    QVariantMap clipFrameMap(int trackIndex, int clipIndex) const;
     // The selected clip's relief in 3D mode, as the compositor lays it out. False when there is none.
     struct SelectedRelief;
     bool selectedRelief(SelectedRelief *out) const;
@@ -230,6 +270,7 @@ private:
     bool selectedModelLights(SelectedModelLights *out) const;
     // Hands the current mode and viewpoint to the preview renderer.
     void pushView();
+    void pushMaskView();
     void flyCamera(int trackIndex, int clipIndex, double turnRightDeg, double turnUpDeg, double forward,
                    double right, double up);
     void setView(const drift::EditorView3d &view);
@@ -252,7 +293,10 @@ private:
     bool m_guidesEnabled = false;
     QString m_guideEditSetId;
     bool m_canvasCropMode = false;
+    bool m_clipCropMode = false;
     bool m_maskEditMode = false;
+    QString m_maskViewMode = QStringLiteral("off");
+    QString m_maskingTool;
     QString m_activeTool = QStringLiteral("transform");
     bool m_handlesVisible = false;
 };

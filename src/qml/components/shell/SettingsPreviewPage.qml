@@ -16,6 +16,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Show guides")
+        searchId: "preview-show-guides"
         description: qsTr("Alignment guides drawn over the preview.")
         keywords: "alignment grid lines"
         query: page.query
@@ -28,6 +29,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Guide sets")
+        searchId: "preview-guide-sets"
         description: qsTr("Choose which guide sets are drawn over the preview.")
         keywords: "alignment grid lines"
         stacked: true
@@ -59,6 +61,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Background")
+        searchId: "preview-background"
         description: qsTr("Fill behind clips that don’t cover the whole screen.")
         keywords: "solid color blur transparent fill"
         query: page.query
@@ -85,6 +88,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Background colour")
+        searchId: "preview-background-colour"
         description: qsTr("Colour of the solid background.")
         keywords: "fill color"
         available: EditorState.projectFile.background.kind === "color"
@@ -98,6 +102,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Blur strength")
+        searchId: "preview-blur-strength"
         description: qsTr("How much the background is blurred behind clips.")
         keywords: "fill blur"
         stacked: true
@@ -126,6 +131,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Preview quality")
+        searchId: "preview-quality"
         description: qsTr("Lower is smoother while editing. Full matches an export exactly; Auto renders only the pixels on screen.")
         keywords: "resolution eco lower smoother"
         query: page.query
@@ -141,6 +147,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Decoding")
+        searchId: "preview-decoding"
         description: qsTr("How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K.")
         keywords: "decoder hardware software gpu stutter"
         query: page.query
@@ -179,6 +186,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Faster preview (experimental)")
+        searchId: "preview-faster-vaapi"
         description: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
         keywords: "zero copy vaapi gpu hardware"
         available: EditorState.preferences.vaapiZeroCopySupported
@@ -192,6 +200,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Faster preview (experimental)")
+        searchId: "preview-faster-mediacodec"
         description: qsTr("Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart.")
         keywords: "zero copy mediacodec gpu hardware"
         available: EditorState.preferences.mediaCodecZeroCopySupported
@@ -205,6 +214,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Graphics card")
+        searchId: "preview-graphics-card"
         description: qsTr("Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart.")
         keywords: "gpu integrated discrete nvidia power battery"
         available: EditorState.preferences.gpuPreferenceSupported
@@ -232,6 +242,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Graphics card")
+        searchId: "preview-graphics-card-system-settings"
         description: qsTr("Choose which graphics card Drift runs on in Windows Settings, under Display > Graphics. Takes effect after restart.")
         keywords: "gpu windows display nvidia"
         available: EditorState.preferences.gpuPreferenceInSystemSettings
@@ -251,6 +262,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Use proxies for preview")
+        searchId: "preview-use-proxies"
         description: qsTr("Play clips from their low-resolution proxies where one exists. Export always uses the original media.")
         keywords: "proxy low resolution optimized"
         query: page.query
@@ -263,6 +275,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Proxy resolution")
+        searchId: "preview-proxy-resolution"
         description: qsTr("Size of new proxies. Proxies made at another size are not used until you create them again.")
         keywords: "proxy size 720p 1080p"
         query: page.query
@@ -290,6 +303,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Proxy name patterns")
+        searchId: "preview-proxy-name-patterns"
         description: qsTr("Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically.")
         keywords: "proxy naming file name regex"
         stacked: true

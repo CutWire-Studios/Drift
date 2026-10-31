@@ -7,7 +7,7 @@
 #include "app/editor/AppController.h"
 #include "ui/preview/PreviewController.h"
 #include "app/mcp/McpDetail.h"
-#include "app/online/market/MarketClient.h"
+#include "app/online/downloads/DownloadCenter.h"
 #include "app/jobs/JobRegistry.h"
 #include "app/jobs/audio/TtsController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
@@ -24,6 +24,7 @@
 #include "engine/addons/AddonRegistry.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/audio/analysis/AudioOnsets.h"
+#include "engine/ml/audio/AudioTagging.h"
 #include "engine/ml/speech/transcription/CtcAligner.h"
 #include "engine/ml/speech/DeepFilterDenoiser.h"
 #include "engine/face/tracking/FaceLandmarker.h"
@@ -39,6 +40,9 @@
 #include "engine/ml/speech/SpeechAudio.h"
 #include "engine/ml/vision/depth/VdaDepth.h"
 #include "engine/diagnostics/sheets/WaveformSheet.h"
+#include "engine/diagnostics/sheets/AudioSheet.h"
+#include "engine/audio/analysis/AudioEvents.h"
+#include "engine/audio/analysis/AudioSync.h"
 #include "engine/ml/speech/transcription/WhisperTranscriber.h"
 #include "app/mcp/protocol/McpJson.h"
 
@@ -56,6 +60,7 @@
 #include <QtConcurrent>
 
 #include <QClipboard>
+#include <QFutureWatcher>
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QJsonDocument>
@@ -85,6 +90,7 @@ using drift::mcpdetail::sceneRowsFromAnalysis;
 McpController::McpController(AppController *app, QObject *parent)
     : QObject(parent)
     , m_app(app)
+    , m_imageLog(new AgentImageLog(this))
 {
 #ifndef Q_OS_WASM
     m_mcp = std::make_unique<drift::mcp::McpServer>(m_app);
@@ -126,6 +132,7 @@ McpController::McpController(AppController *app, QObject *parent)
                     break;
                 }
             });
+    connect(m_mcp.get(), &drift::mcp::McpServer::toolCallResult, m_imageLog, &AgentImageLog::recordResult);
 #endif
     // Loaded here so the property already reads correctly for anything constructed on
     // this object, but NOT acted on here — headless mode constructs the same
@@ -400,7 +407,7 @@ QJsonObject mcpDetailRow(const QVariantMap &clipMap, const QVariantMap &transfor
     } else {
         if (mask.value(QStringLiteral("mediaPath")).toString().isEmpty()) {
             for (const char *key : {"mediaPath", "mediaFgrPath", "mediaSrcOffsetUs", "mediaFit",
-                                    "mediaChannel", "mediaLoop"})
+                                    "mediaChannel", "mediaLoop", "mediaTimeBase"})
                 mask.remove(QLatin1String(key));
         }
         if (!mask.value(QStringLiteral("animated")).toBool())
@@ -756,9 +763,18 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                                     {QStringLiteral("clip"), m_app->scenes()->clipId()},
                                     {QStringLiteral("scenes"), int(m_app->scenes()->list().size())}});
         }
-        if (m_app->m_marketClient && m_app->m_marketClient->activeDownloadCount() > 0) {
-            jobs.insert(QStringLiteral("market"),
-                        QJsonObject{{QStringLiteral("active"), m_app->m_marketClient->activeDownloadCount()}});
+        if (DownloadCenter::instance()->activeCount() > 0) {
+            QJsonObject byKind;
+            for (const QVariant &row : DownloadCenter::instance()->jobs()) {
+                const QVariantMap job = row.toMap();
+                if (job.value(QStringLiteral("finished")).toBool())
+                    continue;
+                const QString kind = job.value(QStringLiteral("kind")).toString();
+                byKind.insert(kind, byKind.value(kind).toInt() + 1);
+            }
+            jobs.insert(QStringLiteral("downloads"),
+                        QJsonObject{{QStringLiteral("active"), DownloadCenter::instance()->activeCount()},
+                                    {QStringLiteral("byKind"), byKind}});
         }
         const QJsonArray jobList = m_app->m_jobs->jobs();
         if (!jobList.isEmpty())
@@ -2449,6 +2465,10 @@ QJsonObject McpController::aiCapabilities() const
          "diarize / transcribe({diarize:true}) — who is speaking when"},
         {"depth-model", drift::VdaDepth::modelPresent(),
          "depth estimation for the depth effects — 3D relighting, depth of field, fog, occlusion"},
+        {"audio-tag-model", drift::ClapTagger::modelPresent(),
+         "audio_tag / audio_find / audio_rank — name the sounds and sections of audio, find or rank media by a sound"},
+        {"audio-class-model", drift::AstClassifier::modelPresent(),
+         "audio_presence — where speech and music are; also speech / music in audio_tag and audio_sheet"},
     };
 
     QJsonArray models;
@@ -3169,6 +3189,1266 @@ QJsonObject McpController::analyzeLoudness(int trackIndex, int clipIndex, double
     return ok({{QStringLiteral("lufs"), measured.integratedLufs},
                {QStringLiteral("true_peak_db"), measured.truePeakDb},
                {QStringLiteral("duration"), measured.durationSeconds}});
+}
+
+namespace {
+
+constexpr int kMcpAudioRate = 48000;
+constexpr double kMcpMaxMeasureSeconds = 3600.0;
+constexpr double kMcpMaxAnalysisSeconds = 600.0;
+constexpr int kMcpMaxAudioEvents = 500;
+constexpr int kMcpMaxSyncCues = 400;
+constexpr int kMcpMaxCurvePoints = 600;
+constexpr int kMcpMaxGapRows = 50;
+constexpr int kMcpMaxClipRows = 20;
+constexpr int kMcpMaxPresenceRows = 300;
+constexpr int kMcpMaxRankedAssets = 100;
+constexpr double kMcpSilentDbfs = -60.0;
+constexpr int kMcpSheetMaxFrames = 30;
+constexpr int kMcpSheetLongEdge = 1600;
+constexpr int kMcpSheetJpegQuality = 88;
+constexpr int kMcpSheetFrameHeight = 280;
+constexpr double kMcpSheetFrameLag = 0.15;
+
+struct MixedAudio
+{
+    QVector<float> mono;
+    drift::LoudnessReport loudness;
+};
+
+// Mixes the project at 48 kHz in windows off the GUI thread, feeding the loudness pass as it
+// pulls and keeping the mono fold-down when the event detector wants it. Master clipping is off:
+// a hot mix has to read as hot, not as the 1.0 the soft clipper pins it to.
+MixedAudio mixAnalysis(const drift::Project &snap, double startSeconds, double durSeconds,
+                       bool wantMono, bool wantLoudness)
+{
+    const qint64 frames = static_cast<qint64>(durSeconds * kMcpAudioRate);
+    if (frames <= 0)
+        return {};
+    MixedAudio out;
+    if (wantMono)
+        out.mono.resize(static_cast<qsizetype>(frames));
+    const drift::TimeUs startUs = drift::secondsToUs(startSeconds);
+    AudioMixer mixer;
+    mixer.setProject(&snap);
+    mixer.setMasterClipEnabled(false);
+    const auto fill = [&](float *dst, qint64 offset, int maxFrames) {
+        const int n = static_cast<int>(qMin<qint64>(maxFrames, frames - offset));
+        if (n <= 0)
+            return 0;
+        std::fill(dst, dst + static_cast<qsizetype>(n) * 2, 0.0f);
+        mixer.mix(startUs + offset * drift::kUsPerSecond / kMcpAudioRate, n, kMcpAudioRate, dst);
+        if (wantMono) {
+            for (int i = 0; i < n; ++i)
+                out.mono[static_cast<qsizetype>(offset + i)] = 0.5f * (dst[i * 2] + dst[i * 2 + 1]);
+        }
+        return n;
+    };
+    if (wantLoudness) {
+        out.loudness = drift::analyzeLoudness(frames, kMcpAudioRate, fill);
+    } else {
+        constexpr int kChunk = 1 << 16;
+        QVector<float> buffer(kChunk * 2);
+        for (qint64 done = 0; done < frames; done += kChunk)
+            fill(buffer.data(), done, kChunk);
+    }
+    return out;
+}
+
+MixedAudio blockingMixAnalysis(const drift::Project &snap, double startSeconds, double durSeconds,
+                               bool wantMono, bool wantLoudness)
+{
+    auto out = std::make_shared<MixedAudio>();
+    QEventLoop loop;
+    (void)QtConcurrent::run([&snap, &loop, out, startSeconds, durSeconds, wantMono, wantLoudness]() {
+        *out = mixAnalysis(snap, startSeconds, durSeconds, wantMono, wantLoudness);
+        QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+    });
+    loop.exec();
+    return *out;
+}
+
+drift::AudioEventsResult detectEvents(const QVector<float> &mono, double startSeconds, bool leadIn)
+{
+    drift::AudioEventsOptions options;
+    options.leadIn = leadIn;
+    return drift::AudioEvents::analyze(mono.constData(), mono.size(), kMcpAudioRate, startSeconds, options);
+}
+
+drift::AudioEventsResult blockingEvents(const QVector<float> &mono, double startSeconds, bool leadIn)
+{
+    auto out = std::make_shared<drift::AudioEventsResult>();
+    QEventLoop loop;
+    (void)QtConcurrent::run([&mono, &loop, out, startSeconds, leadIn]() {
+        *out = detectEvents(mono, startSeconds, leadIn);
+        QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+    });
+    loop.exec();
+    return *out;
+}
+
+// Starts of the clips on video tracks, and their ends where nothing follows inside the
+// timeline: the places the picture changes, strictly inside (start, end).
+QList<double> videoCutTimes(const drift::Project &project, double start, double end)
+{
+    QList<double> raw;
+    const double projectEnd = drift::usToSeconds(project.durationUs());
+    for (const drift::Track &track : project.tracks()) {
+        if (track.type != drift::TrackType::Video)
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            raw.append(drift::usToSeconds(clip.timelineStart));
+            const double e = drift::usToSeconds(clip.timelineEnd());
+            if (e < projectEnd - 0.001)
+                raw.append(e);
+        }
+    }
+    std::sort(raw.begin(), raw.end());
+    QList<double> cuts;
+    for (double t : std::as_const(raw)) {
+        if (t <= start + 0.001 || t >= end - 0.001)
+            continue;
+        if (!cuts.isEmpty() && t - cuts.last() < 0.001)
+            continue;
+        cuts.append(t);
+    }
+    return cuts;
+}
+
+QJsonObject curveJson(const drift::LoudnessCurve &curve, double offset)
+{
+    const int n = curve.lufs.size();
+    const int stride = qMax(1, (n + kMcpMaxCurvePoints - 1) / kMcpMaxCurvePoints);
+    QJsonArray values;
+    for (int i = 0; i < n; i += stride)
+        values.append(round2(curve.lufs.at(i)));
+    return {{QStringLiteral("t0"), round3(offset + curve.t0)},
+            {QStringLiteral("dt"), round3(curve.dt * stride)},
+            {QStringLiteral("lufs"), values}};
+}
+
+QJsonObject loudnessJson(const drift::LoudnessReport &r, double offset, bool curves)
+{
+    QJsonObject o;
+    if (r.hasIntegrated)
+        o.insert(QStringLiteral("lufs"), round2(r.integratedLufs));
+    if (r.hasLra)
+        o.insert(QStringLiteral("lra_lu"), round2(r.lraLu));
+    if (r.hasTruePeak) {
+        o.insert(QStringLiteral("true_peak_db"), round2(r.truePeakDb));
+        o.insert(QStringLiteral("sample_peak_db"), round2(r.samplePeakDb));
+    }
+    if (!r.momentary.lufs.isEmpty()) {
+        o.insert(QStringLiteral("max_momentary"),
+                 QJsonObject{{QStringLiteral("at"), round3(offset + r.maxMomentaryAt)},
+                             {QStringLiteral("lufs"), round2(r.maxMomentaryLufs)}});
+    }
+    if (!r.shortTerm.lufs.isEmpty())
+        o.insert(QStringLiteral("max_short_term_lufs"), round2(r.maxShortTermLufs));
+    QJsonArray runs;
+    for (const drift::ClippingRun &c : r.clippingRuns) {
+        if (runs.size() >= kMcpMaxClipRows)
+            break;
+        runs.append(QJsonObject{{QStringLiteral("at"), round3(offset + c.start)}, {QStringLiteral("samples"), c.samples}});
+    }
+    o.insert(QStringLiteral("clipping"),
+             QJsonObject{{QStringLiteral("samples"), static_cast<double>(r.clippedSamples)},
+                         {QStringLiteral("runs"), r.clippingRuns.size()},
+                         {QStringLiteral("at"), runs}});
+    QJsonArray gaps;
+    for (const drift::LoudnessGap &g : r.gaps) {
+        if (gaps.size() >= kMcpMaxGapRows)
+            break;
+        QJsonObject row{{QStringLiteral("start"), round3(offset + g.start)},
+                        {QStringLiteral("end"), round3(offset + g.end)},
+                        {QStringLiteral("level_lufs"), round2(g.levelLufs)},
+                        {QStringLiteral("kind"), g.kind}};
+        if (!g.where.isEmpty())
+            row.insert(QStringLiteral("where"), g.where);
+        gaps.append(row);
+    }
+    o.insert(QStringLiteral("gaps"), gaps);
+    if (r.gaps.size() > gaps.size())
+        o.insert(QStringLiteral("gaps_total"), r.gaps.size());
+    if (curves) {
+        o.insert(QStringLiteral("momentary"), curveJson(r.momentary, offset));
+        o.insert(QStringLiteral("short_term"), curveJson(r.shortTerm, offset));
+    }
+    return o;
+}
+
+QJsonObject eventJson(const drift::AudioEvent &e)
+{
+    return {{QStringLiteral("at"), round3(e.seconds)},
+            {QStringLiteral("kind"), e.kind == drift::AudioEvent::Kind::Swell ? QStringLiteral("swell") : QStringLiteral("hit")},
+            {QStringLiteral("strength"), round2(e.strength)},
+            {QStringLiteral("level_db"), round2(e.levelDbfs)},
+            {QStringLiteral("prominence_db"), round2(e.prominenceDb)},
+            {QStringLiteral("band"), e.band},
+            {QStringLiteral("length_ms"), e.lengthMs}};
+}
+
+QJsonObject syncStatsJson(const drift::AudioSyncStats &st)
+{
+    QJsonObject o{{QStringLiteral("n"), st.n},
+                  {QStringLiteral("tolerance_ms"), st.toleranceMs},
+                  {QStringLiteral("hit_within_tolerance"), st.hitWithinTolerance},
+                  {QStringLiteral("hit_within_100ms"), st.hitWithin100},
+                  {QStringLiteral("answered_by_swell"), st.answeredBySwell},
+                  {QStringLiteral("answered_by_level_peak"), st.answeredByLevelPeak}};
+    if (st.hasMedianOffset)
+        o.insert(QStringLiteral("median_abs_offset_ms"), st.medianAbsOffsetMs);
+    if (st.hasChance) {
+        o.insert(QStringLiteral("chance_within_tolerance"), st.chanceTolerance);
+        o.insert(QStringLiteral("chance_within_100ms"), st.chance100);
+    }
+    if (st.hasAccents) {
+        o.insert(QStringLiteral("accent_min_db"), st.accentMinDb);
+        o.insert(QStringLiteral("accent_within_tolerance"), st.accentWithinTolerance);
+        o.insert(QStringLiteral("accent_chance_within_tolerance"), st.accentChanceTolerance);
+        o.insert(QStringLiteral("accent_within_100ms"), st.accentWithin100);
+        o.insert(QStringLiteral("accent_chance_within_100ms"), st.accentChance100);
+    }
+    QJsonArray none;
+    for (double t : st.noSound)
+        none.append(round3(t));
+    o.insert(QStringLiteral("no_sound"), none);
+    return o;
+}
+
+QJsonObject syncItemJson(const drift::AudioSyncItem &it)
+{
+    QJsonObject o{{QStringLiteral("at"), round3(it.seconds)}, {QStringLiteral("status"), drift::syncStatusName(it.status)}};
+    if (it.answered) {
+        o.insert(QStringLiteral("offset_ms"), std::round(it.offsetMs * 10.0) / 10.0);
+        o.insert(QStringLiteral("event_at"), round3(it.eventSeconds));
+        o.insert(QStringLiteral("prominence_db"), round2(it.eventProminenceDb));
+    }
+    if (it.hasAccent)
+        o.insert(QStringLiteral("accent_offset_ms"), std::round(it.accentOffsetMs * 10.0) / 10.0);
+    return o;
+}
+
+template <typename F>
+auto blockingRun(F f)
+{
+    using R = decltype(f());
+    auto out = std::make_shared<R>();
+    QEventLoop loop;
+    (void)QtConcurrent::run([&loop, out, f = std::move(f)]() mutable {
+        *out = f();
+        QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+    });
+    loop.exec();
+    return *out;
+}
+
+// An error object when the audio.clap / audio.ast model cannot be used, else {}. Missing and
+// failed-to-load are both addon_missing, with the install call or the loader's reason.
+QJsonObject clapUnavailable(const char *tool)
+{
+    using namespace drift::mcp;
+    if (!drift::ClapTagger::modelPresent())
+        return err("addon_missing", QStringLiteral("%1 needs the audio tagging model: install_addon({id:\"audio.clap\"})")
+                                        .arg(QLatin1String(tool)));
+    if (!blockingRun([] { return drift::ClapTagger::instance().available(); }))
+        return err("addon_missing", drift::ClapTagger::instance().lastError());
+    return {};
+}
+
+QJsonObject astUnavailable(const char *tool)
+{
+    using namespace drift::mcp;
+    if (!drift::AstClassifier::modelPresent())
+        return err("addon_missing", QStringLiteral("%1 needs the speech and music model: install_addon({id:\"audio.ast\"})")
+                                        .arg(QLatin1String(tool)));
+    if (!blockingRun([] { return drift::AstClassifier::instance().available(); }))
+        return err("addon_missing", drift::AstClassifier::instance().lastError());
+    return {};
+}
+
+QJsonObject unknownTerm(const QString &term)
+{
+    using namespace drift::mcp;
+    const QStringList closest = drift::ClapTagger::instance().closestTerms(term, 8);
+    QJsonObject o = err("unknown_term", QStringLiteral("\"%1\" is not in the vocabulary (322 sound, music and ambience terms; no free text). Closest: %2")
+                                            .arg(term, closest.join(QStringLiteral("; "))));
+    o.insert(QStringLiteral("closest"), QJsonArray::fromStringList(closest));
+    return o;
+}
+
+// The models were calibrated on ffmpeg's mono downmix, 0.707 * (L + R); the mixer's analysis mono
+// is the mean, 0.5 * (L + R).
+QVector<float> modelGain(const QVector<float> &mono)
+{
+    QVector<float> out = mono;
+    for (float &v : out)
+        v *= static_cast<float>(M_SQRT2);
+    return out;
+}
+
+QJsonObject tagJson(const drift::ClapTag &t)
+{
+    QJsonObject o{{QStringLiteral("tag"), t.text}, {QStringLiteral("z"), round2(t.z)}};
+    if (!t.kind.isEmpty())
+        o.insert(QStringLiteral("sound"), t.kind);
+    return o;
+}
+
+QJsonObject taggedEventJson(const drift::AudioEvent &e, const drift::TaggedEvent *t)
+{
+    QJsonObject o = eventJson(e);
+    if (!t)
+        return o;
+    o.insert(QStringLiteral("sound"), t->kind);
+    o.insert(QStringLiteral("label"), t->label);
+    QJsonArray tags;
+    for (const drift::ClapTag &tag : t->tags)
+        tags.append(tagJson(tag));
+    o.insert(QStringLiteral("tags"), tags);
+    o.insert(QStringLiteral("exposed"), t->exposed);
+    if (t->hasAst) {
+        QJsonArray ast;
+        for (const drift::AstLabel &l : t->ast)
+            ast.append(QJsonObject{{QStringLiteral("label"), l.label}, {QStringLiteral("p"), round2(l.probability)}});
+        o.insert(QStringLiteral("ast"), ast);
+        o.insert(QStringLiteral("speech"), round2(t->speech));
+    }
+    if (!t->soundsLike.isEmpty()) {
+        QJsonArray like;
+        for (const drift::ClapTag &tag : t->soundsLike) {
+            like.append(QJsonObject{{QStringLiteral("term"), tag.text},
+                                    {QStringLiteral("z"), round2(tag.z)},
+                                    {QStringLiteral("verdict"), drift::clapVerdict(tag.z)}});
+        }
+        o.insert(QStringLiteral("sounds_like"), like);
+    }
+    return o;
+}
+
+QJsonObject sectionJson(const drift::ClapSection &s, double offset)
+{
+    static const char *const names[] = {"music_genre", "music_mood", "instruments", "ambience", "voice"};
+    QJsonObject o{{QStringLiteral("start"), round3(offset + s.start)},
+                  {QStringLiteral("end"), round3(offset + s.end)},
+                  {QStringLiteral("label"), s.label},
+                  {QStringLiteral("windows"), s.windows},
+                  {QStringLiteral("coherence"), round2(s.coherence)}};
+    if (s.levelDb > -120.0)
+        o.insert(QStringLiteral("level_lufs"), std::round(s.levelDb * 10.0) / 10.0);
+    QJsonObject tags;
+    for (int c = 0; c < drift::kClapSectionCategories; ++c) {
+        QJsonArray rows;
+        for (const drift::ClapTag &t : s.tags[c])
+            rows.append(tagJson(t));
+        tags.insert(QLatin1String(names[c]), rows);
+    }
+    o.insert(QStringLiteral("tags"), tags);
+    if (s.hasAst) {
+        QJsonArray top;
+        for (const drift::AstLabel &l : s.ast.top)
+            top.append(QJsonObject{{QStringLiteral("label"), l.label}, {QStringLiteral("p"), round2(l.probability)}});
+        o.insert(QStringLiteral("speech"), round2(s.ast.speech));
+        o.insert(QStringLiteral("music"), round2(s.ast.music));
+        o.insert(QStringLiteral("silence"), round2(s.ast.silence));
+        o.insert(QStringLiteral("ast_top"), top);
+    }
+    return o;
+}
+
+QJsonObject presenceJson(const drift::AstPresence &p, double offset)
+{
+    QJsonArray rows;
+    for (const drift::AstPresenceSpan &s : p.spans) {
+        if (rows.size() >= kMcpMaxPresenceRows)
+            break;
+        rows.append(QJsonObject{{QStringLiteral("start"), round3(offset + s.start)},
+                                {QStringLiteral("end"), round3(offset + s.end)},
+                                {QStringLiteral("kind"), s.kind}});
+    }
+    QJsonObject o{{QStringLiteral("speech_seconds"), round2(p.speechSeconds)},
+                  {QStringLiteral("music_seconds"), round2(p.musicSeconds)},
+                  {QStringLiteral("silence_seconds"), round2(p.silenceSeconds)},
+                  {QStringLiteral("segments"), rows}};
+    if (p.spans.size() > rows.size())
+        o.insert(QStringLiteral("truncated"), true);
+    return o;
+}
+
+std::vector<float> astInput(const QVector<float> &modelMono)
+{
+    return drift::AstClassifier::resample48kTo16k(modelMono.constData(), modelMono.size());
+}
+
+QJsonObject momentJson(const drift::AudioMoment &m, double offset)
+{
+    return {{QStringLiteral("start"), round3(offset + m.start)},
+            {QStringLiteral("end"), round3(offset + m.end)},
+            {QStringLiteral("z"), round2(m.z)},
+            {QStringLiteral("cosine"), round3(m.cosine)},
+            {QStringLiteral("verdict"), drift::clapVerdict(m.z)},
+            {QStringLiteral("source"), m.event ? QStringLiteral("event") : QStringLiteral("window")}};
+}
+
+QString findSummary(const QString &term, const QList<drift::AudioMoment> &moments)
+{
+    if (moments.isEmpty())
+        return QStringLiteral("No moments scored for \"%1\".").arg(term);
+    const drift::AudioMoment &best = moments.first();
+    QString text = QStringLiteral("Best match for \"%1\": %2 (z %3), %4-%5 s.")
+                       .arg(term, drift::clapVerdict(best.z)).arg(double(best.z), 0, 'f', 1)
+                       .arg(best.start, 0, 'f', 1).arg(best.end, 0, 'f', 1);
+    if (best.z < 2.0f)
+        text += QStringLiteral(" Below 2 nothing in this audio sounds like it.");
+    return text;
+}
+
+} // namespace
+
+struct McpController::ResolvedAudio
+{
+    drift::Project snap;
+    double start = 0.0;
+    double duration = 0.0;
+    QString source;
+    QString title;
+    QString assetPath;      // asset mode on a video file: where the frames come from
+    bool leadIn = false;    // the span begins where the sound does
+    QList<double> cuts;     // video cut points inside the span
+};
+
+QJsonObject McpController::resolveAudio(const AudioRequest &request, double maxSeconds,
+                                        ResolvedAudio *out) const
+{
+    using namespace drift::mcp;
+    out->source = request.mode;
+    if (request.mode == QLatin1String("clip")) {
+        if (!m_app->isValidClipIndex(request.track, request.clip))
+            return err("not_found", QStringLiteral("Unknown clip"));
+        const drift::Clip &clip = m_app->m_project.tracks().at(request.track).clips.at(request.clip);
+        out->snap = m_app->m_project.detachedCopy();
+        muteAllButClip(out->snap, audibleClipIdFor(m_app->m_project, clip));
+        out->start = drift::usToSeconds(clip.timelineStart);
+        out->duration = drift::usToSeconds(clip.timelineDuration);
+        out->title = clip.path.isEmpty() ? QStringLiteral("Clip") : QFileInfo(clip.path).fileName();
+        out->leadIn = true;
+    } else if (request.mode == QLatin1String("asset")) {
+        const drift::MediaAsset *asset = m_app->m_project.asset(request.assetId);
+        if (!asset)
+            return err("not_found", QStringLiteral("Unknown asset"));
+        if (asset->path.isEmpty())
+            return err("type_mismatch", QStringLiteral("Asset has no file"));
+        const double total = drift::usToSeconds(asset->durationUs);
+        out->start = qMax(0.0, request.start);
+        out->duration = request.duration > 0.0 ? qMin(request.duration, total - out->start) : total - out->start;
+        if (out->duration <= 0.0)
+            return err("bad_args", QStringLiteral("Range is past the end of the asset"));
+        const bool audioOnly = asset->kind == drift::MediaKind::Audio;
+        drift::Clip clip;
+        clip.id = QStringLiteral("audio-analysis");
+        clip.type = audioOnly ? drift::ClipType::Audio : drift::ClipType::Video;
+        clip.path = asset->path;
+        clip.srcIn = drift::secondsToUs(out->start);
+        clip.srcOut = drift::secondsToUs(out->start + out->duration);
+        clip.timelineStart = 0;
+        clip.timelineDuration = drift::secondsToUs(out->duration);
+        out->snap.tracks().clear();
+        drift::Track track;
+        track.type = audioOnly ? drift::TrackType::Audio : drift::TrackType::Video;
+        track.clips.append(clip);
+        out->snap.tracks().append(track);
+        out->title = asset->name.isEmpty() ? QFileInfo(asset->path).fileName() : asset->name;
+        out->leadIn = out->start <= 0.001;
+        if (asset->kind == drift::MediaKind::Video)
+            out->assetPath = asset->path;
+    } else {
+        if (request.duration <= 0.0)
+            return err("bad_args", QStringLiteral("duration required for a timeline range (or pass clip/asset)"));
+        out->snap = m_app->m_project.detachedCopy();
+        out->start = qMax(0.0, request.start);
+        out->duration = request.duration;
+        out->title = QStringLiteral("Timeline");
+        out->leadIn = out->start <= 0.001;
+    }
+    if (out->duration <= 0.0)
+        return err("bad_args", QStringLiteral("Nothing to analyse"));
+    if (out->duration > maxSeconds)
+        return err("bad_args", QStringLiteral("duration must be <= %1 seconds").arg(maxSeconds));
+    if (request.mode != QLatin1String("asset"))
+        out->cuts = videoCutTimes(m_app->m_project, out->start, out->start + out->duration);
+    return {};
+}
+
+QJsonObject McpController::audioMeasure(const AudioRequest &request) const
+{
+    using namespace drift::mcp;
+    ResolvedAudio audio;
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxMeasureSeconds, &audio); !failure.isEmpty())
+        return failure;
+    const MixedAudio mixed = blockingMixAnalysis(audio.snap, audio.start, audio.duration, false, true);
+    if (!mixed.loudness.ok)
+        return err("bad_args", QStringLiteral("No audio in range"));
+    QJsonObject out = loudnessJson(mixed.loudness, audio.start, request.curve);
+    out.insert(QStringLiteral("source"), audio.source);
+    out.insert(QStringLiteral("start"), round3(audio.start));
+    out.insert(QStringLiteral("duration"), round3(audio.duration));
+    if (!mixed.loudness.hasTruePeak)
+        out.insert(QStringLiteral("silent"), true);
+    return ok(out);
+}
+
+QJsonObject McpController::audioEvents(const AudioRequest &request) const
+{
+    using namespace drift::mcp;
+    ResolvedAudio audio;
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxAnalysisSeconds, &audio); !failure.isEmpty())
+        return failure;
+    const MixedAudio mixed = blockingMixAnalysis(audio.snap, audio.start, audio.duration, true, false);
+    const drift::AudioEventsResult found = blockingEvents(mixed.mono, audio.start, audio.leadIn);
+
+    QList<drift::AudioEvent> events;
+    int swells = 0;
+    for (const drift::AudioEvent &e : found.events) {
+        if (e.prominenceDb < request.minProminence)
+            continue;
+        events.append(e);
+        swells += e.kind == drift::AudioEvent::Kind::Swell;
+    }
+    const int total = events.size();
+    const int limit = qBound(1, request.limit, kMcpMaxAudioEvents);
+    if (events.size() > limit) {
+        std::stable_sort(events.begin(), events.end(), [](const drift::AudioEvent &a, const drift::AudioEvent &b) {
+            return a.prominenceDb > b.prominenceDb;
+        });
+        events.resize(limit);
+        std::sort(events.begin(), events.end(),
+                  [](const drift::AudioEvent &a, const drift::AudioEvent &b) { return a.seconds < b.seconds; });
+    }
+    QJsonArray rows;
+    for (const drift::AudioEvent &e : std::as_const(events))
+        rows.append(eventJson(e));
+    return ok({{QStringLiteral("source"), audio.source},
+               {QStringLiteral("start"), round3(audio.start)},
+               {QStringLiteral("duration"), round3(audio.duration)},
+               {QStringLiteral("n"), total},
+               {QStringLiteral("swells"), swells},
+               {QStringLiteral("truncated"), total > events.size()},
+               {QStringLiteral("events"), rows}});
+}
+
+QJsonObject McpController::audioSync(const AudioRequest &request) const
+{
+    using namespace drift::mcp;
+    ResolvedAudio audio;
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxAnalysisSeconds, &audio); !failure.isEmpty())
+        return failure;
+
+    QList<double> cues;
+    if (request.hasAt) {
+        for (double t : request.at) {
+            if (t >= audio.start && t <= audio.start + audio.duration)
+                cues.append(t);
+        }
+    } else {
+        cues = audio.cuts;
+    }
+    if (cues.isEmpty()) {
+        return err("not_found", request.hasAt ? QStringLiteral("None of the at times fall inside the range")
+                                              : QStringLiteral("No cuts between video clips in that range — pass at:[…] with the times to check"));
+    }
+    std::sort(cues.begin(), cues.end());
+    const bool truncated = cues.size() > kMcpMaxSyncCues;
+    if (truncated)
+        cues.resize(kMcpMaxSyncCues);
+
+    const MixedAudio mixed = blockingMixAnalysis(audio.snap, audio.start, audio.duration, true, false);
+    const drift::AudioEventsResult found = blockingEvents(mixed.mono, audio.start, audio.leadIn);
+    drift::AudioSyncOptions options;
+    options.toleranceSeconds = qBound(5.0, request.toleranceMs, 250.0) / 1000.0;
+    options.levels = &found.levels;
+    const drift::AudioSyncResult sync = drift::matchSync(cues, found.events, options);
+
+    QJsonArray items;
+    for (const drift::AudioSyncItem &it : sync.items)
+        items.append(syncItemJson(it));
+    QJsonObject out{{QStringLiteral("source"), audio.source},
+                    {QStringLiteral("start"), round3(audio.start)},
+                    {QStringLiteral("duration"), round3(audio.duration)},
+                    {QStringLiteral("cues"), request.hasAt ? QStringLiteral("at") : QStringLiteral("cuts")},
+                    {QStringLiteral("events"), found.events.size()},
+                    {QStringLiteral("stats"), syncStatsJson(sync.stats)},
+                    {QStringLiteral("items"), items}};
+    if (truncated)
+        out.insert(QStringLiteral("truncated"), true);
+    return ok(out);
+}
+
+QJsonObject McpController::audioTag(const AudioRequest &request)
+{
+    using namespace drift::mcp;
+    if (const QJsonObject missing = clapUnavailable("audio_tag"); !missing.isEmpty())
+        return missing;
+    ResolvedAudio audio;
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxAnalysisSeconds, &audio); !failure.isEmpty())
+        return failure;
+    const MixedAudio mixed = blockingMixAnalysis(audio.snap, audio.start, audio.duration, true, false);
+    const drift::AudioEventsResult found = blockingEvents(mixed.mono, audio.start, audio.leadIn);
+    const QVector<float> mono = modelGain(mixed.mono);
+
+    drift::AudioTagOptions options;
+    options.maxTagged = qBound(1, request.tagLimit, 96);
+    options.sections = request.sections;
+    options.astEvents = drift::AstClassifier::modelPresent() ? qMax(1, options.maxTagged / 20) : 0;
+    options.astSections = drift::AstClassifier::modelPresent() ? 3 : 0;
+    const QList<double> &cues = request.hasAt ? request.at : audio.cuts;
+    for (double t : cues)
+        options.near.append(t - audio.start);
+    const drift::AudioTags tags = blockingRun([&]() {
+        return drift::tagAudio(mono.constData(), mono.size(), audio.start, found.events, options);
+    });
+    if (!tags.clap)
+        return err("internal", tags.clapError);
+
+    QList<const drift::TaggedEvent *> byEvent(found.events.size(), nullptr);
+    for (const drift::TaggedEvent &t : tags.events)
+        byEvent[t.index] = &t;
+    QJsonArray events;
+    for (int i = 0; i < found.events.size(); ++i) {
+        if (byEvent.at(i))
+            events.append(taggedEventJson(found.events.at(i), byEvent.at(i)));
+    }
+    QJsonArray sections;
+    QStringList labels;
+    for (const drift::ClapSection &s : tags.sections) {
+        sections.append(sectionJson(s, audio.start));
+        labels << QStringLiteral("%1-%2 s %3").arg(audio.start + s.start, 0, 'f', 1).arg(audio.start + s.end, 0, 'f', 1).arg(s.label);
+    }
+    QJsonObject out{{QStringLiteral("source"), audio.source},
+                    {QStringLiteral("start"), round3(audio.start)},
+                    {QStringLiteral("duration"), round3(audio.duration)},
+                    {QStringLiteral("models"), QJsonObject{{QStringLiteral("clap"), true}, {QStringLiteral("ast"), tags.ast}}},
+                    {QStringLiteral("n_events"), found.events.size()},
+                    {QStringLiteral("tagged"), events.size()},
+                    {QStringLiteral("sections"), sections},
+                    {QStringLiteral("events"), events},
+                    {QStringLiteral("summary"), QStringLiteral("%1 section(s)%2; %3 of %4 events tagged.")
+                                                    .arg(sections.size())
+                                                    .arg(labels.isEmpty() ? QString() : QStringLiteral(": ") + labels.mid(0, 6).join(QStringLiteral("; ")))
+                                                    .arg(events.size()).arg(found.events.size())}};
+    if (!tags.ast)
+        out.insert(QStringLiteral("note"), tags.astError.isEmpty()
+                       ? QStringLiteral("Speech and music need the audio.ast addon: install_addon({id:\"audio.ast\"})")
+                       : tags.astError);
+    return ok(out);
+}
+
+QJsonObject McpController::audioFind(const AudioRequest &request)
+{
+    using namespace drift::mcp;
+    const QString term = request.term.trimmed();
+    if (term.isEmpty())
+        return err("bad_args", QStringLiteral("term required (one of the vocabulary terms)"));
+    if (const QJsonObject missing = clapUnavailable("audio_find"); !missing.isEmpty())
+        return missing;
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    const int termIndex = clap.termIndex(term);
+    if (termIndex < 0)
+        return unknownTerm(term);
+    ResolvedAudio audio;
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxAnalysisSeconds, &audio); !failure.isEmpty())
+        return failure;
+    const MixedAudio mixed = blockingMixAnalysis(audio.snap, audio.start, audio.duration, true, false);
+    const drift::AudioEventsResult found = blockingEvents(mixed.mono, audio.start, audio.leadIn);
+    const QVector<float> mono = modelGain(mixed.mono);
+    const drift::MomentIndex index = blockingRun([&]() {
+        return drift::indexMoments(clap, mono.constData(), mono.size(), audio.start, found.events);
+    });
+    if (!index.valid())
+        return err("internal", clap.lastError());
+    const QList<drift::AudioMoment> moments = drift::findMoments(clap, index, termIndex, qBound(1, request.top, 20));
+    QJsonArray rows;
+    for (const drift::AudioMoment &m : moments)
+        rows.append(momentJson(m, audio.start));
+    const QString canonical = clap.vocabularyTerms().at(termIndex);
+    return ok({{QStringLiteral("term"), canonical},
+               {QStringLiteral("category"), clap.termCategory(termIndex)},
+               {QStringLiteral("source"), audio.source},
+               {QStringLiteral("start"), round3(audio.start)},
+               {QStringLiteral("duration"), round3(audio.duration)},
+               {QStringLiteral("candidates"), static_cast<int>(index.entries.size())},
+               {QStringLiteral("moments"), rows},
+               {QStringLiteral("summary"), findSummary(canonical, moments)}});
+}
+
+QJsonObject McpController::audioRank(const AudioRequest &request)
+{
+    using namespace drift::mcp;
+    const QString term = request.term.trimmed();
+    if (term.isEmpty())
+        return err("bad_args", QStringLiteral("term required (one of the vocabulary terms)"));
+    if (const QJsonObject missing = clapUnavailable("audio_rank"); !missing.isEmpty())
+        return missing;
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    const int termIndex = clap.termIndex(term);
+    if (termIndex < 0)
+        return unknownTerm(term);
+
+    struct Item
+    {
+        QString id, name, path;
+        double seconds = 0.0;
+    };
+    QList<Item> items;
+    auto add = [&](const drift::MediaAsset &a) {
+        if (a.path.isEmpty() || (a.kind != drift::MediaKind::Audio && a.kind != drift::MediaKind::Video))
+            return;
+        items.append({a.id, a.name.isEmpty() ? QFileInfo(a.path).fileName() : a.name, a.path, drift::usToSeconds(a.durationUs)});
+    };
+    if (request.assetIds.isEmpty()) {
+        for (const drift::MediaAsset &a : m_app->m_project.assets())
+            add(a);
+        std::sort(items.begin(), items.end(), [](const Item &a, const Item &b) { return a.name.localeAwareCompare(b.name) < 0; });
+    } else {
+        for (const QString &id : request.assetIds) {
+            if (const drift::MediaAsset *a = m_app->m_project.asset(id))
+                add(*a);
+        }
+    }
+    if (items.isEmpty())
+        return err("not_found", QStringLiteral("No audio or video assets to rank"));
+    const bool truncated = items.size() > kMcpMaxRankedAssets;
+    if (truncated)
+        items = items.mid(0, kMcpMaxRankedAssets);
+
+    struct Ranked
+    {
+        Item item;
+        bool audio = false;
+        drift::ClapEmbedding embedding{};
+        double peakDb = -120.0;
+    };
+    const QList<Ranked> ranked = blockingRun([&]() {
+        QList<Ranked> out;
+        for (const Item &item : items) {
+            Ranked r;
+            r.item = item;
+            const std::vector<drift::ClapSpan> windows = drift::ClapTagger::clipSpans(
+                static_cast<qint64>(item.seconds * kMcpAudioRate));
+            std::vector<drift::ClapEmbedding> parts;
+            float peak = 0.0f;
+            for (const drift::ClapSpan &w : windows) {
+                std::vector<float> pcm = drift::readMono(item.path, drift::secondsToUs(double(w.begin) / kMcpAudioRate),
+                                                         drift::secondsToUs(double(w.end) / kMcpAudioRate), kMcpAudioRate);
+                if (pcm.empty())
+                    continue;
+                for (float &v : pcm) {
+                    v *= static_cast<float>(M_SQRT2);
+                    peak = std::max(peak, std::abs(v));
+                }
+                drift::ClapEmbedding e;
+                if (drift::ClapTagger::instance().embedClip(pcm.data(), static_cast<qint64>(pcm.size()), &e, 1))
+                    parts.push_back(e);
+            }
+            if (!parts.empty()) {
+                r.audio = true;
+                r.embedding = drift::ClapTagger::meanOf(parts);
+                r.peakDb = 20.0 * std::log10(std::max(peak, 1e-6f) / M_SQRT2);
+            }
+            out.append(r);
+        }
+        return out;
+    });
+
+    struct Row
+    {
+        QJsonObject json;
+        float z;
+        bool silent;
+    };
+    QList<Row> rows;
+    QStringList skipped;
+    for (const Ranked &r : ranked) {
+        if (!r.audio) {
+            skipped << r.item.name;
+            continue;
+        }
+        const auto scores = clap.termScores(r.embedding);
+        const float z = scores[static_cast<size_t>(termIndex)].z;
+        const bool silent = r.peakDb < kMcpSilentDbfs;
+        const QList<drift::ClapTag> like = clap.topTerms(r.embedding, 1, {QStringLiteral("quality"), QStringLiteral("production")});
+        QJsonObject o{{QStringLiteral("asset"), r.item.id},
+                      {QStringLiteral("name"), r.item.name},
+                      {QStringLiteral("z"), round2(z)},
+                      {QStringLiteral("cosine"), round3(scores[static_cast<size_t>(termIndex)].cosine)},
+                      {QStringLiteral("verdict"), silent ? QStringLiteral("no match") : drift::clapVerdict(z)},
+                      {QStringLiteral("near_silent"), silent}};
+        if (!like.isEmpty())
+            o.insert(QStringLiteral("sounds_most_like"), QStringLiteral("%1 (z %2)").arg(like.first().text).arg(double(like.first().z), 0, 'f', 1));
+        rows.append({o, z, silent});
+    }
+    std::stable_sort(rows.begin(), rows.end(), [](const Row &a, const Row &b) {
+        return a.silent != b.silent ? !a.silent : a.z > b.z;
+    });
+    QJsonArray results;
+    int strong = 0, plausible = 0, weak = 0;
+    for (const Row &r : rows) {
+        if (results.size() < qBound(1, request.top, 100))
+            results.append(r.json);
+        if (r.silent)
+            continue;
+        const QString verdict = r.json.value(QStringLiteral("verdict")).toString();
+        strong += verdict == QLatin1String("strong");
+        plausible += verdict == QLatin1String("plausible");
+        weak += verdict == QLatin1String("weak");
+    }
+    const QString canonical = clap.vocabularyTerms().at(termIndex);
+    QString summary = QStringLiteral("Ranked %1 asset(s) for \"%2\": %3 strong, %4 plausible, %5 weak.")
+                          .arg(rows.size()).arg(canonical).arg(strong).arg(plausible).arg(weak);
+    if (!rows.isEmpty() && !rows.first().silent)
+        summary += QStringLiteral(" Best: %1 (z %2, %3).").arg(rows.first().json.value(QStringLiteral("name")).toString())
+                       .arg(double(rows.first().z), 0, 'f', 1).arg(rows.first().json.value(QStringLiteral("verdict")).toString());
+    QJsonObject out{{QStringLiteral("term"), canonical},
+                    {QStringLiteral("ranked"), rows.size()},
+                    {QStringLiteral("results"), results},
+                    {QStringLiteral("summary"), summary}};
+    if (!skipped.isEmpty())
+        out.insert(QStringLiteral("skipped_no_audio"), QJsonArray::fromStringList(skipped));
+    if (truncated)
+        out.insert(QStringLiteral("truncated"), true);
+    return ok(out);
+}
+
+QJsonObject McpController::audioPresence(const AudioRequest &request)
+{
+    using namespace drift::mcp;
+    if (const QJsonObject missing = astUnavailable("audio_presence"); !missing.isEmpty())
+        return missing;
+    ResolvedAudio audio;
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxAnalysisSeconds, &audio); !failure.isEmpty())
+        return failure;
+    const MixedAudio mixed = blockingMixAnalysis(audio.snap, audio.start, audio.duration, true, false);
+    const QVector<float> mono = modelGain(mixed.mono);
+    const drift::AstPresence presence = blockingRun([&]() {
+        const std::vector<float> pcm = astInput(mono);
+        return drift::astPresence(drift::AstClassifier::instance(), pcm.data(), static_cast<qint64>(pcm.size()));
+    });
+    if (!presence.ok)
+        return err("internal", presence.error);
+    QJsonObject out = presenceJson(presence, audio.start);
+    out.insert(QStringLiteral("source"), audio.source);
+    out.insert(QStringLiteral("start"), round3(audio.start));
+    out.insert(QStringLiteral("duration"), round3(audio.duration));
+    out.insert(QStringLiteral("summary"),
+               QStringLiteral("Speech %1 s, music %2 s, silence %3 s of %4 s.")
+                   .arg(presence.speechSeconds, 0, 'f', 1).arg(presence.musicSeconds, 0, 'f', 1)
+                   .arg(presence.silenceSeconds, 0, 'f', 1).arg(audio.duration, 0, 'f', 1));
+    return ok(out);
+}
+
+struct McpController::AudioSheetJob
+{
+    ResolvedAudio audio;
+    AudioRequest request;
+    QList<double> cues;
+    std::shared_ptr<const drift::Project> frameProject;
+};
+
+QJsonObject McpController::prepareAudioSheet(const AudioRequest &request, std::shared_ptr<AudioSheetJob> *out)
+{
+    using namespace drift::mcp;
+    m_app->setPlaying(false);
+
+    auto job = std::make_shared<AudioSheetJob>();
+    job->request = request;
+    ResolvedAudio &audio = job->audio;
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxAnalysisSeconds, &audio); !failure.isEmpty())
+        return failure;
+
+    job->cues = audio.cuts;
+    if (request.hasAt) {
+        job->cues.clear();
+        for (double t : request.at) {
+            if (t > audio.start && t < audio.start + audio.duration)
+                job->cues.append(t);
+        }
+        std::sort(job->cues.begin(), job->cues.end());
+    }
+    if (request.frames && (request.mode != QLatin1String("asset") || !audio.assetPath.isEmpty()))
+        job->frameProject = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
+    *out = job;
+    return {};
+}
+
+QJsonObject McpController::renderAudioSheet(const AudioSheetJob &job, QImage *sheet)
+{
+    using namespace drift::mcp;
+    const AudioRequest &request = job.request;
+    const ResolvedAudio &audio = job.audio;
+    const QList<double> &cues = job.cues;
+
+    const MixedAudio mixed = mixAnalysis(audio.snap, audio.start, audio.duration, true, true);
+    if (!mixed.loudness.ok)
+        return err("bad_args", QStringLiteral("No audio in range"));
+    const drift::AudioEventsResult found = detectEvents(mixed.mono, audio.start, audio.leadIn);
+    drift::audiosheet::Input in;
+    in.title = audio.title;
+    in.startSeconds = audio.start;
+    in.durationSeconds = audio.duration;
+    in.mono = mixed.mono.constData();
+    in.monoFrames = mixed.mono.size();
+    in.sampleRate = kMcpAudioRate;
+    in.loudness = mixed.loudness;
+    in.events = found.events;
+    in.cuts = cues;
+    if (!cues.isEmpty()) {
+        drift::AudioSyncOptions options;
+        options.levels = &found.levels;
+        in.sync = drift::matchSync(cues, found.events, options);
+        in.hasSync = true;
+    }
+
+    drift::AudioTags tagged;
+    drift::AstPresence presence;
+    if (request.tags && (drift::ClapTagger::modelPresent() || drift::AstClassifier::modelPresent())) {
+        const QVector<float> modelMono = modelGain(mixed.mono);
+        drift::AudioTagOptions options;
+        options.astEvents = 1;
+        for (double c : cues)
+            options.near.append(c - audio.start);
+        tagged = drift::tagAudio(modelMono.constData(), modelMono.size(), audio.start, found.events, options);
+        if (tagged.ast) {
+            const std::vector<float> pcm = astInput(modelMono);
+            presence = drift::astPresence(drift::AstClassifier::instance(), pcm.data(), static_cast<qint64>(pcm.size()));
+        }
+        for (const drift::ClapSection &s : tagged.sections)
+            in.sections.append({audio.start + s.start, audio.start + s.end, s.label});
+        for (const drift::AstPresenceSpan &s : presence.spans) {
+            if (s.kind.startsWith(QLatin1String("speech")) || s.kind == QLatin1String("music"))
+                in.presence.append({audio.start + s.start, audio.start + s.end, s.kind});
+        }
+        if (!tagged.events.isEmpty()) {
+            in.labels = drift::audiosheet::defaultEventLabels(in);
+            for (const drift::TaggedEvent &t : std::as_const(tagged.events)) {
+                if (t.label.isEmpty())
+                    continue;
+                in.labels[t.index].kind = t.kind;
+                in.labels[t.index].text = t.label;
+            }
+        }
+    }
+
+    if (audio.duration >= AudioOnsets::kMinAnalysisSec) {
+        const AudioBeatAnalysis beats = runBeatAnalysis(audio.snap, drift::secondsToUs(audio.start),
+                                                        drift::secondsToUs(audio.duration), audio.start);
+        if (beats.bpm > 0.0) {
+            in.bpm = beats.bpm;
+            in.beats = beats.beats;
+            const int per = qMax(1, beats.beatsPerBar);
+            for (int i = qBound(0, beats.firstDownbeat, qMax(0, beats.beats.size() - 1)); i < beats.beats.size(); i += per)
+                in.downbeats.append(beats.beats.at(i));
+        }
+    }
+
+    // A frame just after each cut, the way the frames tool renders its tiles, plus the first
+    // moment of the span.
+    QList<double> frameTimes;
+    if (job.frameProject) {
+        const double end = audio.start + audio.duration;
+        QList<double> candidates;
+        if (cues.isEmpty() || cues.first() - audio.start > kMcpSheetFrameLag)
+            candidates.append(audio.start);
+        for (double c : std::as_const(cues))
+            candidates.append(qMin(c + kMcpSheetFrameLag, end - 0.05));
+        const QList<int> pick = drift::framesheet::selectUniform(candidates.size(), qMin(candidates.size(), kMcpSheetMaxFrames));
+        for (int i : pick)
+            frameTimes.append(candidates.at(i));
+    }
+    QList<drift::audiosheet::FrameAt> frames;
+    if (!frameTimes.isEmpty()) {
+        FrameSource src;
+        src.project = job.frameProject;
+        if (request.mode == QLatin1String("asset"))
+            src.path = audio.assetPath;
+        FrameCompositor compositor;
+        compositor.setProject(src.project.get());
+        const int maxH = kMcpSheetFrameHeight;
+        const int maxW = src.source() ? maxH * 2
+                                      : qMax(1, int(std::lround(double(maxH) * src.longEdge()
+                                                                / double(qMax(1, src.project->height())))));
+        for (double t : frameTimes) {
+            const QImage image = src.render(compositor, t, maxW, maxH);
+            if (!image.isNull())
+                frames.append({t, image});
+        }
+    }
+    in.frames = frames;
+
+    drift::audiosheet::Options opt;
+    opt.width = request.width;
+    *sheet = drift::audiosheet::render(in, opt);
+    if (sheet->isNull())
+        return err("capture_failed", QStringLiteral("Could not render the audio sheet"));
+
+    const drift::LoudnessReport &lo = mixed.loudness;
+    int swells = 0;
+    for (const drift::AudioEvent &e : found.events)
+        swells += e.kind == drift::AudioEvent::Kind::Swell;
+    QStringList parts;
+    if (lo.hasIntegrated)
+        parts << QStringLiteral("%1 LUFS").arg(lo.integratedLufs, 0, 'f', 1);
+    if (lo.hasTruePeak)
+        parts << QStringLiteral("TP %1 dBTP").arg(lo.truePeakDb, 0, 'f', 1);
+    if (lo.hasLra)
+        parts << QStringLiteral("LRA %1 LU").arg(lo.lraLu, 0, 'f', 1);
+    parts << QStringLiteral("%1 events (%2 swells)").arg(found.events.size()).arg(swells);
+    if (in.bpm > 0.0)
+        parts << QStringLiteral("~%1 BPM").arg(in.bpm, 0, 'f', 0);
+    if (!lo.gaps.isEmpty())
+        parts << QStringLiteral("%1 gaps").arg(lo.gaps.size());
+    if (!tagged.sections.isEmpty())
+        parts << QStringLiteral("%1 sections").arg(tagged.sections.size());
+    if (presence.ok)
+        parts << QStringLiteral("speech %1 s, music %2 s").arg(presence.speechSeconds, 0, 'f', 0).arg(presence.musicSeconds, 0, 'f', 0);
+    if (in.hasSync) {
+        const drift::AudioSyncStats &st = in.sync.stats;
+        parts << QStringLiteral("%1 cuts, %2% with an onset within %3 ms").arg(st.n).arg(100.0 * st.hitWithinTolerance, 0, 'f', 0).arg(st.toleranceMs, 0, 'f', 0);
+    }
+
+    QJsonObject meta = ok({
+        {QStringLiteral("source"), audio.source},
+        {QStringLiteral("start"), round3(audio.start)},
+        {QStringLiteral("duration"), round3(audio.duration)},
+        {QStringLiteral("summary"), QStringLiteral("Audio sheet %1: %2.").arg(audio.title, parts.join(QStringLiteral(", ")))},
+        {QStringLiteral("events"), found.events.size()},
+        {QStringLiteral("swells"), swells},
+        {QStringLiteral("cuts"), cues.size()},
+        {QStringLiteral("frames"), frames.size()},
+    });
+    const QJsonObject loud = loudnessJson(lo, audio.start, false);
+    for (auto it = loud.begin(); it != loud.end(); ++it)
+        meta.insert(it.key(), it.value());
+    if (in.bpm > 0.0)
+        meta.insert(QStringLiteral("bpm"), round2(in.bpm));
+    if (request.tags) {
+        QJsonObject models{{QStringLiteral("clap"), tagged.clap}, {QStringLiteral("ast"), tagged.ast}};
+        meta.insert(QStringLiteral("tags"), models);
+        QJsonArray missing;
+        if (!drift::ClapTagger::modelPresent())
+            missing.append(QStringLiteral("audio.clap"));
+        if (!drift::AstClassifier::modelPresent())
+            missing.append(QStringLiteral("audio.ast"));
+        if (!missing.isEmpty())
+            meta.insert(QStringLiteral("tags_missing"), missing);
+        if (!tagged.clapError.isEmpty() || !tagged.astError.isEmpty())
+            meta.insert(QStringLiteral("tags_error"), tagged.clapError.isEmpty() ? tagged.astError : tagged.clapError);
+        QJsonArray sections;
+        for (const drift::ClapSection &s : std::as_const(tagged.sections))
+            sections.append(QJsonObject{{QStringLiteral("start"), round3(audio.start + s.start)},
+                                        {QStringLiteral("end"), round3(audio.start + s.end)},
+                                        {QStringLiteral("label"), s.label}});
+        meta.insert(QStringLiteral("sections"), sections);
+        QJsonArray taggedEvents;
+        for (const drift::TaggedEvent &t : std::as_const(tagged.events)) {
+            taggedEvents.append(QJsonObject{{QStringLiteral("at"), round3(found.events.at(t.index).seconds)},
+                                            {QStringLiteral("sound"), t.kind},
+                                            {QStringLiteral("label"), t.label}});
+        }
+        meta.insert(QStringLiteral("tagged_events"), taggedEvents);
+        if (presence.ok) {
+            meta.insert(QStringLiteral("presence"), presenceJson(presence, audio.start));
+        }
+    }
+    if (in.hasSync) {
+        meta.insert(QStringLiteral("sync"), syncStatsJson(in.sync.stats));
+        QJsonObject counts;
+        for (const drift::AudioSyncItem &item : std::as_const(in.sync.items)) {
+            const QString name = drift::syncStatusName(item.status);
+            counts.insert(name, counts.value(name).toInt() + 1);
+        }
+        meta.insert(QStringLiteral("sync_counts"), counts);
+        QJsonArray items;
+        for (const drift::AudioSyncItem &item : std::as_const(in.sync.items)) {
+            if (items.size() >= kMcpMaxSyncCues)
+                break;
+            items.append(syncItemJson(item));
+        }
+        meta.insert(QStringLiteral("sync_items"), items);
+    }
+
+    return meta;
+}
+
+QJsonObject McpController::audioSheet(const AudioRequest &request)
+{
+    using namespace drift::mcp;
+    std::shared_ptr<AudioSheetJob> job;
+    if (const QJsonObject failure = prepareAudioSheet(request, &job); !failure.isEmpty())
+        return failure;
+
+    auto sheet = std::make_shared<QImage>();
+    auto meta = std::make_shared<QJsonObject>();
+    QEventLoop loop;
+    (void)QtConcurrent::run([job, sheet, meta, &loop]() {
+        *meta = renderAudioSheet(*job, sheet.get());
+        QMetaObject::invokeMethod(&loop, &QEventLoop::quit, Qt::QueuedConnection);
+    });
+    loop.exec();
+    if (!meta->value(QStringLiteral("ok")).toBool())
+        return *meta;
+
+    if (request.toPath) {
+        const QString outPath = newCapturePath(m_app->m_project.id(), QStringLiteral("audiosheet"), QStringLiteral("png"));
+        if (outPath.isEmpty() || !sheet->save(outPath, "PNG"))
+            return err("capture_failed", QStringLiteral("Could not write PNG"));
+        meta->insert(QStringLiteral("path"), outPath);
+        meta->insert(QStringLiteral("w"), sheet->width());
+        meta->insert(QStringLiteral("h"), sheet->height());
+        return *meta;
+    }
+    QImage shown = *sheet;
+    if (qMax(shown.width(), shown.height()) > kMcpSheetLongEdge)
+        shown = shown.scaled(kMcpSheetLongEdge, kMcpSheetLongEdge, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    meta->insert(QStringLiteral("w"), shown.width());
+    meta->insert(QStringLiteral("h"), shown.height());
+    return imageResult(*meta, encodeJpeg(shown, kMcpSheetJpegQuality), QStringLiteral("image/jpeg"));
+}
+
+void McpController::generateAudioSheet(const QVariantMap &options)
+{
+    using namespace drift::mcp;
+    if (m_audioSheetBusy)
+        return;
+    AudioRequest request;
+    request.mode = options.value(QStringLiteral("mode"), QStringLiteral("timeline")).toString();
+    request.track = options.value(QStringLiteral("track"), -1).toInt();
+    request.clip = options.value(QStringLiteral("clip"), -1).toInt();
+    request.start = options.value(QStringLiteral("start")).toDouble();
+    request.duration = options.value(QStringLiteral("duration")).toDouble();
+    request.width = options.value(QStringLiteral("width"), request.width).toInt();
+    request.frames = options.value(QStringLiteral("frames"), true).toBool();
+    request.tags = options.value(QStringLiteral("tags"), true).toBool();
+
+    std::shared_ptr<AudioSheetJob> job;
+    if (const QJsonObject failure = prepareAudioSheet(request, &job); !failure.isEmpty()) {
+        m_audioSheetResult = failure.toVariantMap();
+        emit audioSheetChanged();
+        return;
+    }
+    m_audioSheetBusy = true;
+    emit audioSheetChanged();
+
+    auto sheet = std::make_shared<QImage>();
+    auto *watcher = new QFutureWatcher<QJsonObject>(this);
+    connect(watcher, &QFutureWatcher<QJsonObject>::finished, this, [this, watcher, sheet]() {
+        QJsonObject meta = watcher->result();
+        watcher->deleteLater();
+        if (meta.value(QStringLiteral("ok")).toBool()) {
+            const QString dir = m_imageLog->sessionDir();
+            const QString path = dir.isEmpty() ? QString()
+                                               : QDir(dir).filePath(QStringLiteral("audio-sheet-%1.png").arg(++m_audioSheetSeq));
+            if (path.isEmpty() || !sheet->save(path, "PNG")) {
+                meta = err("capture_failed", QStringLiteral("Could not write PNG"));
+            } else {
+                if (!m_audioSheetPath.isEmpty())
+                    QFile::remove(m_audioSheetPath);
+                m_audioSheetPath = path;
+                meta.insert(QStringLiteral("path"), path);
+                meta.insert(QStringLiteral("url"), QUrl::fromLocalFile(path).toString());
+                meta.insert(QStringLiteral("w"), sheet->width());
+                meta.insert(QStringLiteral("h"), sheet->height());
+            }
+        }
+        meta.remove(QStringLiteral("sync_items"));
+        m_audioSheetResult = meta.toVariantMap();
+        m_audioSheetBusy = false;
+        emit audioSheetChanged();
+    });
+    watcher->setFuture(QtConcurrent::run([job, sheet]() { return renderAudioSheet(*job, sheet.get()); }));
+}
+
+struct McpController::AudioSearchIndex
+{
+    drift::MomentIndex moments;
+};
+
+QStringList McpController::audioVocabulary() const
+{
+    return drift::ClapTagger::modelPresent() ? drift::ClapTagger::instance().vocabularyTerms() : QStringList();
+}
+
+void McpController::searchAudioSheet(const QVariantMap &options)
+{
+    using namespace drift::mcp;
+    if (m_audioSearchBusy)
+        return;
+    auto finish = [this](const QJsonObject &result) {
+        m_audioSearchResult = result.toVariantMap();
+        m_audioSearchBusy = false;
+        emit audioSearchChanged();
+    };
+    AudioRequest request;
+    request.mode = options.value(QStringLiteral("mode"), QStringLiteral("timeline")).toString();
+    request.track = options.value(QStringLiteral("track"), -1).toInt();
+    request.clip = options.value(QStringLiteral("clip"), -1).toInt();
+    request.start = options.value(QStringLiteral("start")).toDouble();
+    request.duration = options.value(QStringLiteral("duration")).toDouble();
+    const QString term = options.value(QStringLiteral("term")).toString().trimmed();
+
+    m_audioSearchBusy = true;
+    emit audioSearchChanged();
+    if (!drift::ClapTagger::modelPresent())
+        return finish(err("addon_missing", QStringLiteral("Install the audio tagging add-on to search by sound")));
+    const int termIndex = drift::ClapTagger::instance().termIndex(term);
+    if (termIndex < 0)
+        return finish(term.isEmpty() ? err("bad_args", QStringLiteral("Type a sound to look for")) : unknownTerm(term));
+    auto audio = std::make_shared<ResolvedAudio>();
+    if (const QJsonObject failure = resolveAudio(request, kMcpMaxAnalysisSeconds, audio.get()); !failure.isEmpty())
+        return finish(failure);
+
+    const QString key = QStringLiteral("%1|%2|%3|%4|%5|%6|%7")
+                            .arg(request.mode).arg(request.track).arg(request.clip).arg(request.assetId)
+                            .arg(audio->start).arg(audio->duration).arg(m_editRevision);
+    const std::shared_ptr<AudioSearchIndex> cached = key == m_audioSearchKey ? m_audioSearchIndex : nullptr;
+
+    struct Outcome
+    {
+        QJsonObject result;
+        std::shared_ptr<AudioSearchIndex> index;
+    };
+    auto *watcher = new QFutureWatcher<Outcome>(this);
+    connect(watcher, &QFutureWatcher<Outcome>::finished, this, [this, watcher, key, finish]() {
+        const Outcome outcome = watcher->result();
+        watcher->deleteLater();
+        if (outcome.index) {
+            m_audioSearchIndex = outcome.index;
+            m_audioSearchKey = key;
+        }
+        finish(outcome.result);
+    });
+    watcher->setFuture(QtConcurrent::run([audio, cached, termIndex]() -> Outcome {
+        drift::ClapTagger &clap = drift::ClapTagger::instance();
+        if (!clap.available())
+            return {err("addon_missing", clap.lastError()), nullptr};
+        std::shared_ptr<AudioSearchIndex> index = cached;
+        if (!index) {
+            const MixedAudio mixed = mixAnalysis(audio->snap, audio->start, audio->duration, true, false);
+            const drift::AudioEventsResult found = detectEvents(mixed.mono, audio->start, audio->leadIn);
+            const QVector<float> mono = modelGain(mixed.mono);
+            index = std::make_shared<AudioSearchIndex>();
+            index->moments = drift::indexMoments(clap, mono.constData(), mono.size(), audio->start, found.events);
+            if (!index->moments.valid())
+                return {err("internal", clap.lastError()), nullptr};
+        }
+        const QList<drift::AudioMoment> moments = drift::findMoments(clap, index->moments, termIndex, 8);
+        QJsonArray rows;
+        for (const drift::AudioMoment &m : moments)
+            rows.append(momentJson(m, audio->start));
+        const QString canonical = clap.vocabularyTerms().at(termIndex);
+        return {ok({{QStringLiteral("term"), canonical},
+                    {QStringLiteral("moments"), rows},
+                    {QStringLiteral("summary"), findSummary(canonical, moments)}}),
+                index};
+    }));
 }
 
 QJsonObject McpController::normalizeVolume(int trackIndex, int clipIndex, double targetLufs)

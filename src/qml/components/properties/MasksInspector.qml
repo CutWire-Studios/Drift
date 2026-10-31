@@ -64,7 +64,7 @@ Item {
                 "star": qsTr("Star"),
                 "heart": qsTr("Heart"),
                 "bars": qsTr("Bars"),
-                "freeform": qsTr("Freeform")
+                "freeform": qsTr("Polygon")
             })
             displayText: labels[model[currentIndex]] || model[currentIndex]
             currentIndex: Math.max(0, model.indexOf((root.clipData.mask && root.clipData.mask.shape) || "none"))
@@ -86,6 +86,11 @@ Item {
             Text {
                 width: parent.width
                 text: qsTr("Combine")
+                SearchAnchor {
+                    searchId: "masks-combine"
+                    title: qsTr("Combine")
+                    keywords: "add subtract intersect"
+                }
                 color: Theme.c.masksInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -128,6 +133,11 @@ Item {
         // they get the same row: diamond, prev/next key navigation, easing chips. The prop ids are
         // "mask.<key>"; redirectToKeyframeHost is what walks from the selected media clip to the
         // adjustment actually carrying the mask.
+        SearchAnchor {
+            searchId: "masks-feather"
+            title: qsTr("Feather")
+            keywords: "soft edge blur"
+        }
         Repeater {
             // `shapes` is what the rasterizer actually reads for each shape (see
             // MaskApplier::maskPath): Bars derives both bands from `h` alone and ignores the
@@ -175,6 +185,11 @@ Item {
             visible: root.maskShape !== "none"
             Text {
                 text: qsTr("Invert")
+                SearchAnchor {
+                    searchId: "masks-invert"
+                    title: qsTr("Invert")
+                    keywords: "reverse"
+                }
                 color: Theme.c.masksInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs

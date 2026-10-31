@@ -27,6 +27,14 @@ ThemedContextMenu {
         onTriggered: root.importFolderRequested()
     }
 
+    ThemedMenuItem {
+        visible: !!ShellBridge.main && !!ShellBridge.main.openMarketplace
+        height: visible ? implicitHeight : 0
+        text: qsTr("Browse Marketplace…")
+        icon.name: Theme.icons.store
+        onTriggered: ShellBridge.main.openMarketplace("")
+    }
+
     ThemedMenuSeparator {
         visible: root.showCollect && FileDialogs.supportsDirectoryPicker()
         height: visible ? implicitHeight : 0

@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import Drift
-import "../keyframes/ScaleMath.js" as ScaleMath
 Item {
     id: root
 
@@ -66,7 +65,7 @@ Item {
             return 1
         const w = transformAt("width", canvasW)
         const h = transformAt("height", canvasH)
-        return ScaleMath.scaleOf(w, h, canvasW, canvasH)
+        return EditorState.keyframes.scaleOf(w, h, canvasW, canvasH)
     }
 
     // Scale is presented as a single control, but the project stores its animation as two
@@ -132,7 +131,7 @@ Item {
         const s = scaleDragStart
         if (!s || s.scale <= 0)
             return
-        const r = ScaleMath.scaledRect(s, scale, scaleAnchor)
+        const r = EditorState.keyframes.scaledRect(s, scale, scaleAnchor)
         const k = r.k
         const x = r.x
         const y = r.y
@@ -217,6 +216,11 @@ Item {
             Item {
                 width: parent.width
                 height: posLinkButton.height
+                SearchAnchor {
+                    searchId: "transform-position"
+                    title: qsTr("Position")
+                    keywords: "move x y"
+                }
 
                 Text {
                     anchors.left: parent.left
@@ -276,6 +280,11 @@ Item {
             Item {
                 width: parent.width
                 height: sizeLinkButton.height
+                SearchAnchor {
+                    searchId: "transform-scale"
+                    title: qsTr("Scale")
+                    keywords: "size zoom resize"
+                }
 
                 Text {
                     anchors.left: parent.left
@@ -456,7 +465,14 @@ Item {
                 font.weight: Font.Medium
             }
 
+            SearchAnchor {
+                searchId: "transform-opacity"
+                title: qsTr("Opacity")
+                keywords: "transparency alpha fade"
+                target: transformOpacityRow
+            }
             PropertyKeyframeRow {
+                id: transformOpacityRow
                 width: parent.width
                 propDef: root.propOpacity
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.opacity && root.clipData.keyframes.opacity.points) || []
@@ -466,7 +482,14 @@ Item {
                 percent: true
             }
 
+            SearchAnchor {
+                searchId: "transform-rotation"
+                title: qsTr("Rotation")
+                keywords: "angle rotate 90"
+                target: transformRotationRow
+            }
             PropertyKeyframeRow {
+                id: transformRotationRow
                 width: parent.width
                 propDef: root.propRotation
                 keyframeList: (root.clipData.keyframes && root.clipData.keyframes.rotation && root.clipData.keyframes.rotation.points) || []
@@ -636,6 +659,11 @@ Item {
             Text {
                 visible: root.clipKind === "video"
                 text: qsTr("Fix orientation")
+                SearchAnchor {
+                    searchId: "transform-fix-orientation"
+                    title: qsTr("Fix orientation")
+                    keywords: "rotate sideways"
+                }
                 color: Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -674,6 +702,11 @@ Item {
 
             Text {
                 text: qsTr("Flip")
+                SearchAnchor {
+                    searchId: "transform-flip"
+                    title: qsTr("Flip")
+                    keywords: "mirror horizontal vertical"
+                }
                 color: Theme.c.transformInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -705,7 +738,14 @@ Item {
                 }
             }
 
+            SearchAnchor {
+                searchId: "transform-reset-size"
+                title: qsTr("Reset position & size")
+                keywords: "fit"
+                target: transformResetButton
+            }
             ThemedButton {
+                id: transformResetButton
                 text: qsTr("Reset position & size")
                 onClicked: EditorState.resetClipTransform(
                                EditorState.selectedTrack, EditorState.selectedClip)

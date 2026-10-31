@@ -34,6 +34,14 @@ enum class MaskMediaChannel { Luma, Alpha };
 QString maskMediaChannelToString(MaskMediaChannel channel);
 MaskMediaChannel maskMediaChannelFromString(const QString &channel);
 
+// What a media mask's frames are indexed by. HostSource follows the masked clip's source time
+// (a segmentation matte traced from that clip). Adjustment plays the media from the carrying
+// adjustment's own start, so a matte laid over a span of the track runs straight through cuts.
+enum class MaskMediaTimeBase { HostSource, Adjustment };
+
+QString maskMediaTimeBaseToString(MaskMediaTimeBase base);
+MaskMediaTimeBase maskMediaTimeBaseFromString(const QString &base);
+
 // How an entry folds into the coverage accumulated by the entries before it. The first enabled
 // entry has nothing to combine with, so its op is ignored and it simply seeds the accumulator —
 // otherwise a lone Subtract or Intersect would blank the clip.
@@ -77,6 +85,7 @@ struct Mask
     MaskMediaChannel mediaChannel = MaskMediaChannel::Luma;
     // Wrap video coverage back to the start once it runs out, instead of holding the last frame.
     bool mediaLoop = false;
+    MaskMediaTimeBase mediaTimeBase = MaskMediaTimeBase::HostSource;
 
     // Media only, and only from the people-cutout backend: the colour-decontaminated foreground,
     // which is what removes background spill from hair edges. Same size, timebase and offset as
@@ -99,6 +108,16 @@ struct Mask
     // to express. Between two keys with matching vertex counts the positions interpolate
     // linearly; a mismatch holds the earlier key rather than inventing a correspondence.
     QMap<TimeUs, QVector<QPointF>> pathKeys;
+
+    // Media only, and only for AI cutouts: brush fixes of single frames. Keyed by *media* time, the
+    // index the compositor reads the matte frame at. Each value is a PNG the size of the matte whose
+    // gray is the corrected coverage and whose alpha is how much of the pixel the user painted;
+    // the compositor mixes it over the decoded frame. A fix does not follow motion.
+    QMap<TimeUs, QString> mediaPatches;
+    // The patch for the frame at `mediaUs`, or empty when none lies within `tolerance` of it.
+    QString patchAt(TimeUs mediaUs, TimeUs tolerance) const;
+    // The key `patchAt` would use, else -1.
+    TimeUs patchKeyAt(TimeUs mediaUs, TimeUs tolerance) const;
 
     // Media coverage is decoded per frame by the compositor, so it has no rasterizable path.
     bool isMedia() const { return shape == MaskShape::Media && !mediaPath.isEmpty(); }

@@ -225,6 +225,11 @@ Item {
             spacing: 4
             Text {
                 text: qsTr("Clip name")
+                SearchAnchor {
+                    searchId: "general-clip-name"
+                    title: qsTr("Clip name")
+                    keywords: "rename"
+                }
                 color: Theme.c.generalInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -293,6 +298,11 @@ Item {
 
                     Text {
                         text: qsTr("Crop")
+                        SearchAnchor {
+                            searchId: "general-crop"
+                            title: qsTr("Crop")
+                            keywords: "cut frame"
+                        }
                         color: Theme.c.generalInspector.foregroundMuted
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeXs
@@ -482,6 +492,11 @@ Item {
                 spacing: 4
                 Text {
                     text: qsTr("Duration")
+                    SearchAnchor {
+                        searchId: "general-duration"
+                        title: qsTr("Duration")
+                        keywords: "length"
+                    }
                     color: Theme.c.generalInspector.foregroundMuted
                     font.pixelSize: Theme.fontSizeXs
                     font.family: Theme.fontFamily
@@ -508,6 +523,11 @@ Item {
 
             Text {
                 text: qsTr("Trim")
+                SearchAnchor {
+                    searchId: "general-trim"
+                    title: qsTr("Trim")
+                    keywords: "in out start end"
+                }
                 HoverHandler { id: tipHover1217 }
                 TapHandler {
                     id: tipTap1217

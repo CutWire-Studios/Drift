@@ -3,7 +3,7 @@ import QtQuick
 import Drift
 
 // How a download job renders as words. Shared, because there are two hosts for the same jobs —
-// the desktop DownloadsWindow and the phone's AndroidDownloadsSheet — and a size or a status
+// the desktop Marketplace and the phone's download rows — and a size or a status
 // that reads differently in the two is a bug that nothing would catch.
 QtObject {
     id: downloadFormat

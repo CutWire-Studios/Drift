@@ -176,12 +176,15 @@ ToolWindow {
                     function onCurrentFrameChanged() {
                         programPreview.textureSize = EditorState.playback.previewTextureSize
                         programPreview.textureId = EditorState.playback.previewTextureId
+                    programPreview.image = EditorState.playback.previewImage
+                        programPreview.image = EditorState.playback.previewImage
                     }
                 }
 
                 Component.onCompleted: {
                     programPreview.textureSize = EditorState.playback.previewTextureSize
                     programPreview.textureId = EditorState.playback.previewTextureId
+                    programPreview.image = EditorState.playback.previewImage
                 }
 
                 ThemedLabel {

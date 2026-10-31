@@ -131,18 +131,19 @@ Item {
             root.editTextRequested()
             break
         case "fade":
-            root.fadeRequested()
+            if (ShellBridge.main.editorPage)
+                ShellBridge.main.editorPage.openTool("audio")
             break
         case "speed":
-            ShellBridge.main.openSpeedCurve(EditorState.selectedTrack, EditorState.selectedClip)
+            if (ShellBridge.main.editorPage)
+                ShellBridge.main.editorPage.openTool("speed")
             break
         case "duplicate":
             EditorState.duplicateSelectedClip()
             break
-        // The Transform tab of the properties sheet is where a transform clip is edited.
         case "transform":
             if (ShellBridge.main.editorPage)
-                ShellBridge.main.editorPage.openPropertiesSheet()
+                ShellBridge.main.editorPage.openTool("transform")
             break
         case "transformTogether":
             EditorState.makeTransformLayerFromSelection()
@@ -150,11 +151,10 @@ Item {
         case "delete":
             EditorState.deleteSelectedClip()
             break
-        // Duration is a field, not a button: the transition inspector already owns it, and
-        // the properties sheet is what shows the inspector for the current selection.
+        // Duration is a field, not a button: the transition page's inspector owns it.
         case "transitionDuration":
             if (ShellBridge.main.editorPage)
-                ShellBridge.main.editorPage.openPropertiesSheet()
+                ShellBridge.main.editorPage.openTool("transition")
             break
         case "transitionCurve":
             ShellBridge.main.openTransitionCurve(EditorState.selectedTransitionTrack,

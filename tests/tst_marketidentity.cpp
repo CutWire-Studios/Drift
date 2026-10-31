@@ -17,7 +17,6 @@ private slots:
     void signatureCoversClientId();
     void pathAndQueryEncoding();
     void clientIdIsStableForSameFingerprint();
-    void authCallbackUrls();
 };
 
 void TestMarketIdentity::sha256OfEmptyBody()
@@ -89,16 +88,6 @@ void TestMarketIdentity::clientIdIsStableForSameFingerprint()
     QCOMPARE(a, b);
     QVERIFY(a != c);
     QCOMPARE(a.size(), 64);
-}
-
-void TestMarketIdentity::authCallbackUrls()
-{
-    QVERIFY(isAuthCallbackUrl(QUrl(QStringLiteral("cutwire://market/auth/callback?code=abc"))));
-    QVERIFY(isAuthCallbackUrl(QUrl(QStringLiteral("https://market.cutwire.org/app/auth/callback?code=abc"))));
-    QVERIFY(isAuthCallbackUrl(QUrl(QStringLiteral("cutwire://market/auth/callback/?code=abc"))));
-    QVERIFY(!isAuthCallbackUrl(QUrl(QStringLiteral("cutwire://market/other"))));
-    QVERIFY(!isAuthCallbackUrl(QUrl(QStringLiteral("https://evil.example/app/auth/callback?code=abc"))));
-    QVERIFY(!isAuthCallbackUrl(QUrl(QStringLiteral("file:///tmp/project.drift"))));
 }
 
 QTEST_APPLESS_MAIN(TestMarketIdentity)

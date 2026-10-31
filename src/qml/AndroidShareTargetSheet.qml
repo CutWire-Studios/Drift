@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import Drift
 // What a share into an already-open project asks.
 //
@@ -31,37 +32,49 @@ AndroidBottomSheet {
         root.open()
     }
 
-    Column {
+    Flickable {
+        id: scroll
         anchors.fill: parent
-        topPadding: Theme.spacingLg
+        clip: true
+        contentWidth: width
+        contentHeight: optionColumn.implicitHeight
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
 
-        SheetActionRow {
-            width: parent.width
-            label: qsTr("Add to this project")
-            detail: qsTr("Import at the playhead and stay here")
-            glyph: Theme.icons.plus
-            sideInset: root.safeLeft
-            sideInsetRight: root.safeRight
-            onClicked: {
-                Haptics.select()
-                const urls = root.pendingUrls
-                root.dismiss()
-                root.addToProject(urls)
+        Column {
+            id: optionColumn
+            width: scroll.width
+            topPadding: Theme.spacingLg
+            bottomPadding: Theme.spacingLg
+
+            SheetActionRow {
+                width: parent.width
+                label: qsTr("Add to this project")
+                detail: qsTr("Import at the playhead and stay here")
+                glyph: Theme.icons.plus
+                sideInset: root.safeLeft
+                sideInsetRight: root.safeRight
+                onClicked: {
+                    Haptics.select()
+                    const urls = root.pendingUrls
+                    root.dismiss()
+                    root.addToProject(urls)
+                }
             }
-        }
 
-        SheetActionRow {
-            width: parent.width
-            label: qsTr("New quick edit")
-            detail: qsTr("Start a new project from this clip")
-            glyph: Theme.icons.sparkles
-            sideInset: root.safeLeft
-            sideInsetRight: root.safeRight
-            onClicked: {
-                Haptics.select()
-                const urls = root.pendingUrls
-                root.dismiss()
-                root.startQuickEdit(urls)
+            SheetActionRow {
+                width: parent.width
+                label: qsTr("New quick edit")
+                detail: qsTr("Start a new project from this clip")
+                glyph: Theme.icons.sparkles
+                sideInset: root.safeLeft
+                sideInsetRight: root.safeRight
+                onClicked: {
+                    Haptics.select()
+                    const urls = root.pendingUrls
+                    root.dismiss()
+                    root.startQuickEdit(urls)
+                }
             }
         }
     }

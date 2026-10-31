@@ -50,6 +50,7 @@
 #include <cmath>
 #include <QtMath>
 
+#include <type_traits>
 #include <unordered_map>
 
 namespace {
@@ -145,9 +146,17 @@ struct NestedViewsScope
 // later head-trim (which moves srcIn but not mediaSrcOffsetUs) or a speed change would otherwise
 // slide the coverage off the picture. Every reader of a media mask must agree on this number, or
 // the warm request and the composite read land on different frames.
+//
+// MaskMediaTimeBase::Adjustment is for media that is not traced from the host (a hand-placed
+// matte video): it plays from the adjustment's own start, immune to the host's trim and speed.
 drift::TimeUs maskMediaSourceUs(const drift::Clip &host, const drift::Mask &mask,
+                                drift::TimeUs adjustmentStartUs, drift::TimeUs adjustmentSrcInUs,
                                 drift::TimeUs timelineUs)
 {
+    // srcIn rides along because a split or head-trim moves the adjustment's start without moving
+    // its offset; without it the tail would replay the matte from frame 0.
+    if (mask.mediaTimeBase == drift::MaskMediaTimeBase::Adjustment)
+        return qMax<drift::TimeUs>(0, timelineUs - adjustmentStartUs + adjustmentSrcInUs + mask.mediaSrcOffsetUs);
     return qMax<drift::TimeUs>(0, host.timelineToSourceUs(timelineUs) - mask.mediaSrcOffsetUs);
 }
 
@@ -209,9 +218,11 @@ drift::TimeUs maskMediaDurationUs(const QString &path)
 
 // maskMediaSourceUs, folded into the media's length for a looping mask video. The coverage read,
 // its sidecar and the warm-up all use this, so the warm lands on the frame the read asks for.
-drift::TimeUs maskMediaTimeUs(const drift::Clip &host, const drift::Mask &mask, drift::TimeUs timelineUs)
+drift::TimeUs maskMediaTimeUs(const drift::Clip &host, const drift::Mask &mask,
+                              drift::TimeUs adjustmentStartUs, drift::TimeUs adjustmentSrcInUs,
+                              drift::TimeUs timelineUs)
 {
-    drift::TimeUs mediaUs = maskMediaSourceUs(host, mask, timelineUs);
+    drift::TimeUs mediaUs = maskMediaSourceUs(host, mask, adjustmentStartUs, adjustmentSrcInUs, timelineUs);
     if (mask.mediaLoop && !maskMediaIsStillImage(mask.mediaPath)) {
         // Wrapping needs the media's length, which only a probe knows; asking for it per frame is
         // a cache hit after the first.
@@ -229,7 +240,8 @@ void forEachLaneMediaMask(const drift::Project &project, int trackIndex, const d
 {
     for (const drift::LaneMask &laneMask : drift::laneMasksAt(project, trackIndex, timelineUs, clip.id)) {
         if (laneMask.mask.isMedia())
-            visit(clip, laneMask.mask, streamIdFor(laneMask.adjustmentId));
+            visit(clip, laneMask.mask, streamIdFor(laneMask.adjustmentId), laneMask.adjustmentStartUs,
+                  laneMask.adjustmentSrcInUs);
     }
 }
 
@@ -260,7 +272,7 @@ void forEachMediaMask(const drift::Project &project, drift::TimeUs timelineUs, V
                     continue;
                 if (!clip.containsTime(timelineUs) || !clip.mask.isMedia())
                     continue;
-                visit(clip, clip.mask, streamIdFor(clip.id));
+                visit(clip, clip.mask, streamIdFor(clip.id), clip.timelineStart, clip.srcIn);
             }
             continue;
         }
@@ -401,7 +413,8 @@ void collectActivePaths(const drift::Project *project, drift::TimeUs timelineUs,
 
     // Retained separately from clip.path: mask media has its own reader, and dropping it here
     // would tear the worker down and re-open the file every frame.
-    const auto retainMask = [&](const drift::Clip &, const drift::Mask &mask, quint64) {
+    const auto retainMask = [&](const drift::Clip &, const drift::Mask &mask, quint64, drift::TimeUs,
+                                  drift::TimeUs) {
         videoPaths.insert(mask.mediaPath);
         if (!mask.mediaFgrPath.isEmpty() && !mask.invert)
             videoPaths.insert(mask.mediaFgrPath);
@@ -506,8 +519,10 @@ QList<ClipReaderPool::VideoRequest> collectVideoRequests(const drift::Project *p
 
     // Mask media decodes like any other video, so warm it alongside the sources rather than
     // stalling the composite on a serial read later.
-    const auto warmMask = [&](const drift::Clip &host, const drift::Mask &mask, quint64 streamId) {
-        const drift::TimeUs mediaUs = maskMediaTimeUs(host, mask, timelineUs);
+    const auto warmMask = [&](const drift::Clip &host, const drift::Mask &mask, quint64 streamId,
+                              drift::TimeUs adjustmentStartUs, drift::TimeUs adjustmentSrcInUs) {
+        const drift::TimeUs mediaUs =
+            maskMediaTimeUs(host, mask, adjustmentStartUs, adjustmentSrcInUs, timelineUs);
         if (!maskMediaIsStillImage(mask.mediaPath)) {
             requests.append(ClipReaderPool::VideoRequest{
                 mask.mediaPath, streamId, mediaUs, maxWidth, maxHeight});
@@ -1185,7 +1200,7 @@ MaskMediaFrame decodeMaskMedia(const QString &path, quint64 streamId, drift::Tim
 // because this is the only place that knows the frame time; the GPU fold consumes the pair.
 void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
                        const QList<drift::LaneMask> &laneMasks, drift::TimeUs timelineUs,
-                       int canvasWidth, int canvasHeight)
+                       int canvasWidth, int canvasHeight, int fps)
 {
     if (laneMasks.isEmpty())
         return;
@@ -1195,17 +1210,28 @@ void fillGpuLayerMasks(GpuLayer &layer, const drift::Clip &host,
         layer.masks.append(laneMask.mask);
 
     layer.maskMedia.resize(layer.masks.size());
+    layer.maskPatch.resize(layer.masks.size());
     for (int i = 0; i < laneMasks.size(); ++i) {
         const drift::Mask &mask = laneMasks.at(i).mask;
         if (!mask.isMedia())
             continue;
 
         const quint64 streamId = streamIdFor(laneMasks.at(i).adjustmentId);
-        const drift::TimeUs mediaUs = maskMediaTimeUs(host, mask, timelineUs);
+        const drift::TimeUs mediaUs =
+            maskMediaTimeUs(host, mask, laneMasks.at(i).adjustmentStartUs,
+                            laneMasks.at(i).adjustmentSrcInUs, timelineUs);
         // Media that failed to decode must not silently blank the clip — a null entry
         // contributes nothing rather than covering nothing.
         layer.maskMedia[i] =
             decodeMaskMedia(mask.mediaPath, streamId, mediaUs, canvasWidth, canvasHeight);
+
+        // A brush fix of this frame. It is drawn over the decoded coverage by the GPU fold, so the
+        // matte video keeps decoding as usual.
+        if (!mask.mediaPatches.isEmpty()) {
+            const QString patch = mask.patchAt(mediaUs, drift::frameDurationUs(fps) / 2);
+            if (!patch.isEmpty())
+                layer.maskPatch[i] = decodedStillImage(patch, canvasWidth, canvasHeight);
+        }
 
         // The decontaminated foreground, when the cutout produced one. Bound only for a lone
         // media mask, which is what a segmentation makes: with a stack there is no single entry
@@ -1493,7 +1519,7 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     if (!editingText)
         applyClipBodyAnimation(clip, timelineUs, w, h, &destRect, &opacity, &rotation);
 
-    fillGpuLayerMasks(layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight);
+    fillGpuLayerMasks(layer, clip, laneMasks, timelineUs, canvasWidth, canvasHeight, projectFps);
     layer.rect = destRect;
     layer.rotation = rotation;
     // Depth sorting needs a pose to sort by, and the dest-reading blend modes copy the canvas
@@ -1556,6 +1582,7 @@ void appendTextEditDecor(GpuScene &scene, const GpuItem &textItem, const drift::
     layer.effects.clear();
     layer.masks.clear();
     layer.maskMedia.clear();
+    layer.maskPatch.clear();
     layer.fgr = {};
     layer.faceSlots.clear();
     layer.depth.reset();
@@ -1572,6 +1599,88 @@ void appendTextEditDecor(GpuScene &scene, const GpuItem &textItem, const drift::
     Q_UNUSED(scene); Q_UNUSED(textItem); Q_UNUSED(clip); Q_UNUSED(edit); Q_UNUSED(timelineUs);
     Q_UNUSED(projectWidth); Q_UNUSED(projectHeight); Q_UNUSED(renderScale);
 #endif
+}
+
+// A composite's models leave its flat picture and join this scene right after it, placed through
+// the composite's pose. They are then seen by this scene's camera (or the 3D view) in depth and
+// occlude against the clips around them, instead of being baked flat into one card. Everything
+// else in the composite stays on that card.
+//
+// A model stays baked when something laid out on the composite's card would have to follow it:
+// masks on the composite, a tilted transform layer over either, a nested adjustment above it, or
+// a depth occluder indexed into the nested scene.
+void liftNestedModels(GpuScene &scene, int compositeIndex, const QSizeF &canvas)
+{
+    GpuItem &composite = scene.items[compositeIndex];
+    const GpuLayer &host = composite.layer;
+    if (!host.nested || !host.masks.isEmpty() || (host.hasParent && !host.parent.isAffine()))
+        return;
+
+    // Nested world (canvas px about the centre) -> the composite's unit quad -> outer world. Depth
+    // scales with the card, so a shrunken composite keeps its models' proportions.
+    const double zScale = std::sqrt(std::abs(host.rect.width() * host.rect.height())
+                                    / (canvas.width() * canvas.height()));
+    QMatrix4x4 toQuad;
+    toQuad.scale(float(2.0 / canvas.width()), float(2.0 / canvas.height()), float(zScale));
+    const QMatrix4x4 hostWorld =
+        drift::clipQuadToWorld(host.rect, host.rotation, host.flipH, host.flipV, host.pose3d, canvas) * toQuad;
+
+    const auto rekeyed = [](const auto &inputs, int base) {
+        std::remove_cvref_t<decltype(inputs)> out;
+        for (auto it = inputs.cbegin(); it != inputs.cend(); ++it) {
+            const qsizetype slash = it.key().indexOf(QLatin1Char('/'));
+            out.insert(QStringLiteral("%1/%2").arg(it.key().left(slash).toInt() + base).arg(it.key().mid(slash + 1)),
+                       it.value());
+        }
+        return out;
+    };
+
+    auto nested = std::make_shared<GpuScene>(*host.nested);
+    QList<GpuItem> lifted;
+    bool underAdjustment = false;
+    // Top-down, so an adjustment is seen before the layers it grades.
+    for (qsizetype i = nested->items.size() - 1; i >= 0; --i) {
+        const GpuItem &candidate = nested->items.at(i);
+        if (candidate.isAdjustment) {
+            underAdjustment = true;
+            continue;
+        }
+        const GpuLayer &source = candidate.layer;
+        if (candidate.isTransition || underAdjustment || !source.model3d || source.occluderItem >= 0
+            || (source.hasParent && !source.parent.isAffine())) {
+            continue;
+        }
+        GpuItem item = nested->items.takeAt(i);
+        for (GpuItem &remaining : nested->items) {
+            if (remaining.layer.occluderItem > i)
+                --remaining.layer.occluderItem;
+        }
+        GpuLayer &layer = item.layer;
+        const QMatrix4x4 nestedParent =
+            layer.hasParent ? drift::worldParentFromAffine(layer.parent, canvas) : QMatrix4x4();
+        layer.liftWorld = hostWorld * nestedParent * layer.liftWorld;
+        layer.parent = host.parent;
+        layer.hasParent = host.hasParent;
+        layer.viewProj = host.viewProj;
+        layer.viewActive = host.viewActive;
+        layer.layoutCanvas = host.layoutCanvas;
+        layer.opacity *= host.opacity;
+        if (item.blend == drift::BlendMode::Normal)
+            item.blend = composite.blend;
+        layer.depthOcclude = layer.depthOcclude && item.blend == drift::BlendMode::Normal;
+        // The composite's own chain grades its models too, after theirs, the way a lane's does.
+        const int base = int(layer.effects.size());
+        layer.effects.append(host.effects);
+        layer.trackInputs.insert(rekeyed(host.trackInputs, base));
+        layer.audioInputs.insert(rekeyed(host.audioInputs, base));
+        if (!layer.globalAudio)
+            layer.globalAudio = host.globalAudio;
+        lifted.prepend(std::move(item));
+    }
+    if (lifted.isEmpty())
+        return;
+    composite.layer.nested = std::move(nested);
+    scene.items.append(lifted);
 }
 
 // `nested` builds a composite's timeline: its layer sits on the parent's canvas, so the project
@@ -1903,8 +2012,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                     const drift::Mask resolved = clip.mask.isAnimated()
                                                      ? clip.mask.resolvedAt(maskTimeUs)
                                                      : clip.mask;
-                    fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{resolved, clip.id}},
-                                      timelineUs, width, height);
+                    fillGpuLayerMasks(item.layer, clip, {drift::LaneMask{resolved, clip.id, clip.timelineStart, clip.srcIn}},
+                                      timelineUs, width, height, fps);
                 }
                 item.layer.rect = QRectF(0, 0, width, height);
                 item.layer.opacity = opacityForClip(clip, timelineUs);
@@ -1933,7 +2042,12 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             placeRelief(clip, item.layer);
             placeModelLights(clip, item.layer);
             applyDepthOcclusion(project, scene, item.layer, nearestOccluder, occluders);
+            if (!nested && options.maskView.mode != MaskViewMode::Off && options.maskView.clipId == clip.id) {
+                item.layer.maskView = options.maskView.mode;
+                item.layer.maskViewTint = options.maskViewTint;
+            }
             scene.items.append(item);
+            liftNestedModels(scene, int(scene.items.size()) - 1, QSizeF(width, height));
             if (editingText)
                 appendTextEditDecor(scene, item, clip, options.textEdit, timelineUs, projectWidth, projectHeight,
                                     renderScale);
@@ -1952,6 +2066,13 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
 }
 
 } // namespace
+
+drift::TimeUs FrameCompositor::maskMediaSourceTimeUs(const drift::Clip &host, const drift::Mask &mask,
+                                                     drift::TimeUs adjustmentStartUs,
+                                                     drift::TimeUs adjustmentSrcInUs, drift::TimeUs timelineUs)
+{
+    return maskMediaSourceUs(host, mask, adjustmentStartUs, adjustmentSrcInUs, timelineUs);
+}
 
 FrameCompositor::TextEditGeometry FrameCompositor::textEditGeometry(const drift::Clip &clip,
                                                                     const QString &renderedText,

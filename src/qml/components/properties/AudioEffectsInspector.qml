@@ -103,6 +103,11 @@ Item {
         // Integer models: previewSet* rebuilds selectedClipAudioEffects as a new
         // QVariantList on every tick. A list model would regenerate delegates and
         // destroy the pressed slider; a count only changes when effects are added/removed.
+        SearchAnchor {
+            searchId: "audiofx-settings"
+            title: qsTr("Audio effect settings")
+            keywords: "parameters"
+        }
         Repeater {
             model: root.hasAudio ? root.selectedAudioEffects.length : 0
             delegate: Column {

@@ -66,6 +66,12 @@ class PreferencesController : public QObject
     Q_PROPERTY(QString preferredGpu READ preferredGpu WRITE setPreferredGpu NOTIFY preferredGpuChanged)
     Q_PROPERTY(bool gpuPreferenceSupported READ gpuPreferenceSupported CONSTANT)
     Q_PROPERTY(bool gpuPreferenceInSystemSettings READ gpuPreferenceInSystemSettings CONSTANT)
+    // Graphics API the interface is drawn with (GraphicsApiChoice.h), next launch. uiGraphicsApis
+    // lists what this platform offers; uiGraphicsApiRevertedFrom names a choice this launch fell
+    // back from after it failed to start.
+    Q_PROPERTY(QString uiGraphicsApi READ uiGraphicsApi WRITE setUiGraphicsApi NOTIFY uiGraphicsApiChanged)
+    Q_PROPERTY(QStringList uiGraphicsApis READ uiGraphicsApis CONSTANT)
+    Q_PROPERTY(QString uiGraphicsApiRevertedFrom READ uiGraphicsApiRevertedFrom CONSTANT)
     Q_PROPERTY(bool invertTimelineScroll READ invertTimelineScroll WRITE setInvertTimelineScroll
                    NOTIFY invertTimelineScrollChanged)
     Q_PROPERTY(bool autoCrossfadeOverlaps READ autoCrossfadeOverlaps WRITE setAutoCrossfadeOverlaps
@@ -102,8 +108,10 @@ class PreferencesController : public QObject
     Q_PROPERTY(QString uiLanguage READ uiLanguage WRITE setUiLanguage NOTIFY uiLanguageChanged)
     Q_PROPERTY(QVariantList uiLanguages READ uiLanguages NOTIFY uiLanguageChanged)
     Q_PROPERTY(bool needsUiLanguagePrompt READ needsUiLanguagePrompt NOTIFY uiLanguageChanged)
-    // Extra UI scale on top of the OS display scale. QSettings("ui/scale"), 1.0..2.0 in
-    // 0.25 steps. Applied as QT_SCALE_FACTOR before QApplication; a change needs a restart.
+    // QSettings("ui/scale"), 1.0..2.0 in 0.25 steps. Extra scale on top of the OS display scale,
+    // except where applyStoredUiScale is given the OS scale (Windows): there it is the absolute
+    // size, 1.0 being 96 DPI. Applied as QT_SCALE_FACTOR before QApplication; a change needs a
+    // restart.
     Q_PROPERTY(double uiScale READ uiScale WRITE setUiScale NOTIFY uiScaleChanged)
     Q_PROPERTY(double appliedUiScale READ appliedUiScale CONSTANT)
     Q_PROPERTY(bool uiScaleNeedsRestart READ uiScaleNeedsRestart NOTIFY uiScaleChanged)
@@ -175,6 +183,10 @@ public:
     void setPreferredGpu(const QString &id);
     bool gpuPreferenceSupported() const;
     bool gpuPreferenceInSystemSettings() const;
+    QString uiGraphicsApi() const { return m_uiGraphicsApi; }
+    void setUiGraphicsApi(const QString &id);
+    QStringList uiGraphicsApis() const;
+    QString uiGraphicsApiRevertedFrom() const;
     bool invertTimelineScroll() const { return m_invertTimelineScroll; }
     void setInvertTimelineScroll(bool enabled);
     bool autoCrossfadeOverlaps() const { return m_autoCrossfadeOverlaps; }
@@ -236,9 +248,13 @@ public:
     void setUiScale(double scale);
     // Snaps to 1.0, 1.25, 1.5, 1.75, or 2.0. Safe before any PreferencesController exists.
     static double storedUiScale();
-    // Writes QT_SCALE_FACTOR from ui/scale unless the environment already set one.
+    // Once per install: sets ui/scale from the primary screen's short side, 1080 rows being 1.0,
+    // and records ui/autoScaleDone. Same preconditions as applyStoredUiScale.
+    static void autoUiScaleOnce(int shortSide, double osDisplayScale);
+    // Writes QT_SCALE_FACTOR from ui/scale unless the environment already set one. With
+    // osDisplayScale, ui/scale is the absolute size and the factor is divided by it.
     // Call once before QApplication; organization/application names must already be set.
-    static void applyStoredUiScale();
+    static void applyStoredUiScale(double osDisplayScale = 0.0);
     QString interfaceShell() const { return m_interfaceShell; }
     void setInterfaceShell(const QString &shell);
     QString appliedShell() const;
@@ -275,6 +291,7 @@ signals:
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
     void preferredGpuChanged();
+    void uiGraphicsApiChanged();
     void invertTimelineScrollChanged();
     void autoCrossfadeOverlapsChanged();
     void autoSelectUnderPlayheadChanged();
@@ -287,7 +304,7 @@ signals:
     void uiScaleChanged();
     void interfaceShellChanged();
     void performanceChanged();
-    // setVaapiZeroCopy, setMediaCodecZeroCopy and setPreferredGpu take effect on the next
+    // setVaapiZeroCopy, setMediaCodecZeroCopy, setPreferredGpu and setUiGraphicsApi take effect on the next
     // launch. AppController turns this into a status toast.
     void restartNoticeRequested(const QString &text);
 
@@ -307,6 +324,7 @@ private:
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
     QString m_preferredGpu = QStringLiteral("auto");
+    QString m_uiGraphicsApi;
     bool m_invertTimelineScroll = false;
     bool m_autoCrossfadeOverlaps = true;
     bool m_autoSelectUnderPlayhead = false;

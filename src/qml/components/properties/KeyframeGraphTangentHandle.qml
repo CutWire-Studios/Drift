@@ -16,34 +16,15 @@ Item {
         host.yForValue(host.handleValue(modelData.point, modelData.outgoing), entry)
 
     anchors.fill: parent
-    z: 4
-
-    // Leader line from the key out to the grip.
-    Rectangle {
-        x: root.keyX
-        y: root.keyY
-        width: Math.hypot(root.tipX - root.keyX + root.dragDx,
-                          root.tipY - root.keyY + root.dragDy)
-        height: Theme.c.keyframeGraphTangentHandle.leaderWidth
-        color: root.modelData.color
-        opacity: Theme.c.keyframeGraphTangentHandle.leaderOpacity
-        transformOrigin: Item.TopLeft
-        rotation: Math.atan2(root.tipY - root.keyY + root.dragDy,
-                             root.tipX - root.keyX + root.dragDx)
-                  * 180 / Math.PI
-    }
 
     property real dragDx: 0
     property real dragDy: 0
 
-    Rectangle {
+    // Only the hit area: KeyframeCurvesItem draws the handle from the host's drag state.
+    Item {
         id: grip
-        width: 8
-        height: 8
-        radius: Theme.c.keyframeGraphTangentHandle.radius
-        color: Theme.c.keyframeGraphTangentHandle.background
-        border.width: Theme.c.keyframeGraphTangentHandle.borderWidth
-        border.color: root.modelData.color
+        width: 12
+        height: 12
         x: root.tipX - width / 2 + root.dragDx
         y: root.tipY - height / 2 + root.dragDy
 

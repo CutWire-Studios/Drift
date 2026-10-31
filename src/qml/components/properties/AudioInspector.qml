@@ -43,7 +43,14 @@ Item {
         width: root.width
         spacing: Theme.spacingXl
 
+        SearchAnchor {
+            searchId: "audio-volume"
+            title: qsTr("Volume")
+            keywords: "loud gain level mute"
+            target: audioVolumeRow
+        }
         PropertyKeyframeRow {
+            id: audioVolumeRow
             width: root.width
             propDef: root.propVolume
             keyframeList: (root.clipData.keyframes && root.clipData.keyframes.volume && root.clipData.keyframes.volume.points) || []
@@ -73,6 +80,11 @@ Item {
                 Text {
                     width: parent.width / 2
                     text: qsTr("Pan")
+                    SearchAnchor {
+                        searchId: "audio-pan"
+                        title: qsTr("Pan")
+                        keywords: "balance left right stereo"
+                    }
                     color: Theme.c.audioInspector.foregroundMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
@@ -141,6 +153,11 @@ Item {
             Text {
                 width: parent.width
                 text: qsTr("Audio track")
+                SearchAnchor {
+                    searchId: "audio-track"
+                    title: qsTr("Audio track")
+                    keywords: "extract stream"
+                }
                 color: Theme.c.audioInspector.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -217,7 +234,14 @@ Item {
                 font.pixelSize: Theme.fontSizeXs
             }
 
+            SearchAnchor {
+                searchId: "audio-remove-noise"
+                title: qsTr("Remove noise…")
+                keywords: "denoise hiss background clean"
+                target: audioRemoveNoiseButton
+            }
             ThemedButton {
+                id: audioRemoveNoiseButton
                 visible: denoiseSection.denoiseReady && denoiseSection.runtimeReady
                 width: parent.width
                 text: qsTr("Remove noise…")
@@ -253,6 +277,11 @@ Item {
         Text {
             visible: root.fileAudio
             text: qsTr("Auto subtitles")
+            SearchAnchor {
+                searchId: "audio-auto-subtitles"
+                title: qsTr("Auto subtitles")
+                keywords: "captions transcribe speech whisper"
+            }
             color: Theme.c.audioInspector.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs

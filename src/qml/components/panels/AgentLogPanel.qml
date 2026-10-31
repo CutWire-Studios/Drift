@@ -117,6 +117,9 @@ PanelFrame {
             required property var modelData
             readonly property bool expanded: root.expandedId === modelData.id
             readonly property bool failed: !modelData.pending && !modelData.ok
+            readonly property int imageId: EditorState.mcp.imageLog.count >= 0
+                                           ? EditorState.mcp.imageLog.entryForCall(modelData.id) : -1
+            readonly property url imageUrl: imageId >= 0 ? EditorState.mcp.imageLog.entry(imageId).url : ""
 
             width: ListView.view.width
             height: 28 + (expanded ? detail.height + Theme.spacingSm : 0)
@@ -159,6 +162,33 @@ PanelFrame {
                     font.family: Theme.monoFontFamily
                     font.pixelSize: Theme.fontSizeXs
                     font.weight: Font.Medium
+                }
+
+                Rectangle {
+                    visible: row.imageId >= 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 40
+                    height: 22
+                    radius: 2
+                    color: Theme.c.agentViews.tileBackground
+                    border.color: Theme.c.agentViews.tileBorder
+                    border.width: 1
+                    clip: true
+
+                    Image {
+                        anchors.fill: parent
+                        anchors.margins: 1
+                        source: row.imageUrl
+                        sourceSize.height: 44
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: ShellBridge.main.openImageViewer(row.imageId)
+                    }
                 }
 
                 Text {

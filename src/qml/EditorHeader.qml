@@ -415,7 +415,6 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: videoSizeDialogLoader.ensure().openDialog()
             }
-            EditorHeaderWorkspaceButton { }
         }
 
         // Absorbs leftover space so the groups stay apart but can compress.
@@ -428,8 +427,8 @@ Item {
             id: searchField
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
-            Layout.minimumWidth: 140
-            Layout.maximumWidth: 360
+            Layout.minimumWidth: 260
+            Layout.maximumWidth: 520
             onExportRequested: root.exportVideo()
             onDownloadsRequested: root.downloadsRequested()
             onLanguageRequested: languageChooserDialogLoader.ensure().openFromHeader()
@@ -447,10 +446,7 @@ Item {
             Layout.alignment: Qt.AlignVCenter
             spacing: Theme.spacingSm
 
-            EditorHeaderDownloadsButton {
-                onClicked: root.downloadsRequested()
-            }
-
+            EditorHeaderDownloadsButton { }
 
             EditorHeaderSettingsButton { }
 

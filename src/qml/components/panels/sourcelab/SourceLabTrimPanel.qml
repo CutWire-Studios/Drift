@@ -3,6 +3,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "sourcelab-trim"
+        title: qsTr("Trim source clip")
+        keywords: "trim cut in out start end ranges subclip split scene detection favorite reject marker"
+    }
 
     property bool shown: false
 

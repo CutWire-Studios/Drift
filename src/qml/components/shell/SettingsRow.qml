@@ -9,6 +9,7 @@ Item {
     property string title: ""
     property string description: ""
     property string keywords: ""
+    property string searchId: ""
     property string query: ""
     property bool stacked: false
     property bool available: true
@@ -20,6 +21,15 @@ Item {
     readonly property real contentHeight: stacked
         ? textColumn.height + Theme.spacingMd + controlHost.height
         : Math.max(textColumn.height, controlHost.height)
+
+    Component.onCompleted: {
+        if (root.searchId !== "")
+            ShellBridge.registerAnchor(root.searchId, root)
+    }
+    Component.onDestruction: {
+        if (root.searchId !== "")
+            ShellBridge.unregisterAnchor(root.searchId, root)
+    }
 
     visible: available && matches
     width: parent.width

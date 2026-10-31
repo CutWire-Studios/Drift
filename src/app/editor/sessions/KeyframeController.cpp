@@ -1,6 +1,8 @@
 #include "app/editor/sessions/KeyframeController.h"
 
 #include "app/editor/AppController.h"
+#include "app/editor/sessions/KeyframeCurves.h"
+#include "app/editor/sessions/KeyframeRows.h"
 #include "core/effects/Mask.h"
 #include "core/project/sources/Model3dSource.h"
 #include "core/project/sources/PdfSource.h"
@@ -13,6 +15,7 @@
 #include <QSet>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace {
@@ -241,6 +244,57 @@ QVariantList KeyframeController::animatableProperties(int track, int clip) const
     return out;
 }
 
+QVariantList KeyframeController::keysFor(int track, int clip, const QString &prop) const
+{
+    return m_app->clipKeyframes(track, clip, prop);
+}
+
+bool KeyframeController::snapEnabled() const
+{
+    return m_app->snapEnabled();
+}
+
+double KeyframeController::scaleOf(double w, double h, double canvasW, double canvasH)
+{
+    return std::max(w / canvasW, h / canvasH);
+}
+
+QVariantMap KeyframeController::scaledRect(const QVariantMap &start, double scale, const QPointF &anchor)
+{
+    const auto num = [&start](const char *key) { return start.value(QLatin1String(key)).toDouble(); };
+    const double k = scale / num("scale");
+    const double w = std::max(1.0, num("w") * k);
+    const double h = std::max(1.0, num("h") * k);
+    const double ex = (anchor.x() - 0.5) * (num("w") - w);
+    const double ey = (anchor.y() - 0.5) * (num("h") - h);
+    const double rot = num("rot");
+    const double cx = num("x") + num("w") / 2 + ex * std::cos(rot) - ey * std::sin(rot);
+    const double cy = num("y") + num("h") / 2 + ex * std::sin(rot) + ey * std::cos(rot);
+    return {{QStringLiteral("x"), cx - w / 2},
+            {QStringLiteral("y"), cy - h / 2},
+            {QStringLiteral("w"), w},
+            {QStringLiteral("h"), h},
+            {QStringLiteral("k"), k}};
+}
+
+void KeyframeController::previewScale(int track, int clip, const QVariantMap &start, double scale)
+{
+    if (start.value(QStringLiteral("scale")).toDouble() <= 0 || !m_app->isValidClipIndex(track, clip))
+        return;
+    const QVariantMap r = scaledRect(start, scale, QPointF(0.5, 0.5));
+    const double x = r.value(QStringLiteral("x")).toDouble();
+    const double y = r.value(QStringLiteral("y")).toDouble();
+    const double w = r.value(QStringLiteral("w")).toDouble();
+    const double h = r.value(QStringLiteral("h")).toDouble();
+    const drift::ClipType type = m_app->m_project.tracks().at(track).clips.at(clip).type;
+    if (type == drift::ClipType::Text || type == drift::ClipType::Subtitle) {
+        const double pixelSize = start.value(QStringLiteral("pixelSize"), 64).toDouble();
+        m_app->previewSetTextRect(track, clip, x, y, w, h, qRound(pixelSize * r.value(QStringLiteral("k")).toDouble()));
+    } else {
+        m_app->previewSetClipRect(track, clip, x, y, w, h);
+    }
+}
+
 bool KeyframeController::resolveKey(int track, int clip, const QString &prop, double seconds,
                                     KeyTarget *out) const
 {
@@ -296,6 +350,41 @@ QList<KeyframeController::KeyTarget> KeyframeController::expandLinked(const QLis
             out.append(mirror);
     }
     return out;
+}
+
+// Keying Scale pins x and y at the same time (addKeysAt), so a Scale key carries those pins along
+// when it moves. Only keys exactly at its time count, not other x or y keys near it.
+QList<KeyframeController::KeyTarget> KeyframeController::withPins(const QList<KeyTarget> &keys) const
+{
+    QList<KeyTarget> out = keys;
+    const drift::TimeUs eps = drift::secondsToUs(KeyframeRows::kTimeEps);
+    for (const KeyTarget &key : keys) {
+        if (key.prop != QLatin1String("width") && key.prop != QLatin1String("height"))
+            continue;
+        const drift::Clip &host = m_app->m_project.tracks().at(key.track).clips.at(key.clip);
+        for (const QString &name : {QStringLiteral("x"), QStringLiteral("y")}) {
+            const drift::KeyframeTrack<double> *kt = m_app->propKeyframeTrack(host, name);
+            if (!kt)
+                continue;
+            const drift::TimeUs rel = kt->nearestKeyframe(key.rel, eps);
+            if (rel < 0)
+                continue;
+            const bool present = std::any_of(out.cbegin(), out.cend(), [&](const KeyTarget &o) {
+                return o.track == key.track && o.clip == key.clip && o.rel == rel && o.prop == name;
+            });
+            if (!present)
+                out.append(KeyTarget{name, key.track, key.clip, rel, 0.0});
+        }
+    }
+    return out;
+}
+
+QStringList KeyframeController::movedProps(const QStringList &props) const
+{
+    QStringList out = props;
+    if (out.contains(QStringLiteral("width")) || out.contains(QStringLiteral("height")))
+        out << QStringLiteral("x") << QStringLiteral("y");
+    return mirrorLinkedProps(out);
 }
 
 QStringList KeyframeController::mirrorLinkedProps(const QStringList &props) const
@@ -504,7 +593,7 @@ void KeyframeController::restorePreviewTracks(int track, int clip, const QVarian
     const drift::Project &original = m_app->m_previewDragBefore;
     for (const QVariant &ref : keys) {
         const QString prop = ref.toMap().value(QStringLiteral("prop")).toString();
-        for (const QString &name : mirrorLinkedProps({prop})) {
+        for (const QString &name : movedProps({prop})) {
             int hostTrack = track;
             int hostClip = clip;
             m_app->redirectToKeyframeHost(&hostTrack, &hostClip, name);
@@ -543,7 +632,7 @@ QVariantList KeyframeController::applyMove(const QList<KeyTarget> &own, double d
     QList<KeyTarget> moving;
     drift::TimeUs low = std::numeric_limits<drift::TimeUs>::min();
     drift::TimeUs high = std::numeric_limits<drift::TimeUs>::max();
-    for (const KeyTarget &key : expandLinked(own)) {
+    for (const KeyTarget &key : expandLinked(withPins(own))) {
         const drift::Clip &host = m_app->m_project.tracks().at(key.track).clips.at(key.clip);
         if (key.rel < 0 || key.rel > host.timelineDuration)
             continue;
@@ -567,11 +656,110 @@ QVariantList KeyframeController::applyMove(const QList<KeyTarget> &own, double d
     }
 
     QVariantList refs;
-    for (const Moved &m : moved)
+    QVariantList collisions;
+    for (const Moved &m : moved) {
         refs.append(keyRef(m.from, m.to));
+        if (m.to == m.from.rel)
+            continue;
+        const drift::Clip &host = m_app->m_project.tracks().at(m.from.track).clips.at(m.from.clip);
+        const drift::KeyframeTrack<double> *kt = m_app->propKeyframeTrack(host, m.from.prop);
+        const bool movesAway = std::any_of(moved.cbegin(), moved.cend(), [&m](const Moved &o) {
+            return o.from.track == m.from.track && o.from.clip == m.from.clip && o.from.prop == m.from.prop
+                   && o.from.rel == m.to;
+        });
+        if (kt && kt->keyframes().contains(m.to) && !movesAway)
+            collisions.append(refs.last());
+    }
+    setCollisions(collisions);
     if (*changed)
         relocate(moved);
     return refs;
+}
+
+void KeyframeController::setCollisions(const QVariantList &collisions)
+{
+    if (m_collisions == collisions)
+        return;
+    m_collisions = collisions;
+    emit collisionsChanged();
+}
+
+void KeyframeController::clearCollisions()
+{
+    setCollisions({});
+}
+
+bool KeyframeController::sameRefs(const QVariantList &a, const QVariantList &b)
+{
+    if (a.size() != b.size())
+        return false;
+    const auto id = [](const QVariant &v) {
+        const QVariantMap m = v.toMap();
+        return m.value(QStringLiteral("prop")).toString() + QLatin1Char('@')
+               + QString::number(qRound64(m.value(QStringLiteral("seconds")).toDouble() * 1e6));
+    };
+    QSet<QString> ids;
+    for (const QVariant &v : a)
+        ids.insert(id(v));
+    return std::all_of(b.cbegin(), b.cend(), [&](const QVariant &v) { return ids.contains(id(v)); });
+}
+
+bool KeyframeController::collides(const QString &prop, double seconds) const
+{
+    const qint64 us = qRound64(seconds * 1e6);
+    return std::any_of(m_collisions.cbegin(), m_collisions.cend(), [&](const QVariant &c) {
+        const QVariantMap cm = c.toMap();
+        return cm.value(QStringLiteral("prop")).toString() == prop
+               && qRound64(cm.value(QStringLiteral("seconds")).toDouble() * 1e6) == us;
+    });
+}
+
+bool KeyframeController::collidesWith(const QVariantList &refs) const
+{
+    return std::any_of(refs.cbegin(), refs.cend(), [this](const QVariant &r) {
+        const QVariantMap rm = r.toMap();
+        return collides(rm.value(QStringLiteral("prop")).toString(), rm.value(QStringLiteral("seconds")).toDouble());
+    });
+}
+
+double KeyframeController::baseValue(int track, int clip, const QString &prop) const
+{
+    return m_app->propertyBaseValue(track, clip, prop, 0.0);
+}
+
+QVariantMap KeyframeController::curveRange(const QString &prop, const QVariantList &points, double base, bool hasRange,
+                                           double min, double max) const
+{
+    QList<KeyframeCurves::Point> pts;
+    for (const QVariant &p : points)
+        pts.append(KeyframeCurves::pointFromMap(p.toMap()));
+    const KeyframeCurves::Range range = KeyframeCurves::valueRange(prop, pts, base, hasRange, min, max);
+    return {{QStringLiteral("min"), range.min}, {QStringLiteral("max"), range.max}};
+}
+
+QVariantList KeyframeController::nudgeKeys(int track, int clip, const QVariantList &keys, double dtSeconds)
+{
+    if (!m_app->isValidClipIndex(track, clip) || keys.isEmpty())
+        return {};
+    const bool continuing = m_app->previewDragActive() && m_app->m_previewDragAuto && track == m_nudgeTrack
+                            && clip == m_nudgeClip && sameRefs(keys, m_nudgeResult);
+    if (!continuing) {
+        if (m_app->previewDragActive() && m_app->m_previewDragAuto)
+            m_app->commitPreviewDrag();
+        m_nudgeBase = keys;
+        m_nudgeTotal = 0.0;
+        m_nudgeTrack = track;
+        m_nudgeClip = clip;
+    }
+    m_app->beginImplicitPreviewDrag(tr("Nudge keyframes"));
+    m_nudgeResult = previewMoveKeys(track, clip, m_nudgeBase, m_nudgeTotal + dtSeconds);
+    if (m_nudgeResult.size() == m_nudgeBase.size() && !m_nudgeResult.isEmpty()) {
+        m_nudgeTotal = m_nudgeResult.first().toMap().value(QStringLiteral("seconds")).toDouble()
+                       - m_nudgeBase.first().toMap().value(QStringLiteral("seconds")).toDouble();
+    } else {
+        m_nudgeTotal += dtSeconds;
+    }
+    return m_nudgeResult;
 }
 
 // Shared by previewStretchKeys. A factor that would merge two selected keys is refused, leaving the
@@ -581,7 +769,7 @@ QVariantList KeyframeController::applyStretch(const QList<KeyTarget> &own, doubl
     const double scale = qMax(factor, 0.05);
 
     QList<Moved> moved;
-    for (const KeyTarget &key : expandLinked(own)) {
+    for (const KeyTarget &key : expandLinked(withPins(own))) {
         const drift::Clip &host = m_app->m_project.tracks().at(key.track).clips.at(key.clip);
         if (key.rel < 0 || key.rel > host.timelineDuration)
             continue;
@@ -618,6 +806,37 @@ QVariantList KeyframeController::applyStretch(const QList<KeyTarget> &own, doubl
     return refs;
 }
 
+double KeyframeController::snapKeyTime(double seconds, double pxPerSecond, const QVariantList &otherKeyTimes,
+                                       bool snap) const
+{
+    const double fps = std::max(1, m_app->m_project.fps());
+    const double framed = std::round(seconds * fps) / fps;
+    if (!snap || pxPerSecond <= 0.0)
+        return framed;
+    const double radius = 8.0 / pxPerSecond;
+    double best = framed;
+    double bestDist = radius;
+    auto consider = [&](double target) {
+        const double d = std::abs(target - seconds);
+        if (d <= bestDist) {
+            bestDist = d;
+            best = target;
+        }
+    };
+    consider(drift::usToSeconds(m_app->m_playheadUs));
+    for (const QVariant &t : otherKeyTimes)
+        consider(t.toDouble());
+    return best;
+}
+
+static QStringList propsOf(const QVariantList &keys)
+{
+    QStringList props;
+    for (const QVariant &ref : keys)
+        props.append(ref.toMap().value(QStringLiteral("prop")).toString());
+    return props;
+}
+
 QVariantList KeyframeController::previewMoveKeys(int track, int clip, const QVariantList &keys,
                                                  double dtSeconds)
 {
@@ -628,7 +847,7 @@ QVariantList KeyframeController::previewMoveKeys(int track, int clip, const QVar
     restorePreviewTracks(track, clip, keys);
     bool changed = false;
     const QVariantList refs = applyMove(resolveKeys(track, clip, keys), dtSeconds, &changed);
-    m_app->emitPreviewFrame();
+    m_app->emitPreviewEdit(track, clip, movedProps(propsOf(keys)));
     return refs;
 }
 
@@ -645,6 +864,7 @@ QVariantList KeyframeController::moveKeys(int track, int clip, const QVariantLis
         m_app->pushProjectEdit(before, tr("Move keyframes"));
         m_app->finishEdit(tr("Keyframes moved"));
     }
+    clearCollisions();
     return refs;
 }
 
@@ -657,7 +877,7 @@ QVariantList KeyframeController::previewStretchKeys(int track, int clip, const Q
         m_app->beginPreviewDrag(tr("Stretch keyframes"));
     restorePreviewTracks(track, clip, keys);
     const QVariantList refs = applyStretch(resolveKeys(track, clip, keys), pivotSeconds, factor);
-    m_app->emitPreviewFrame();
+    m_app->emitPreviewEdit(track, clip, movedProps(propsOf(keys)));
     return refs;
 }
 

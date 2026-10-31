@@ -15,33 +15,60 @@ Item {
     id: root
 
     property string currentPage: "general"
+    // The phone shell has no workspaces, timeline toolbar or keyboard to configure.
+    property bool mobile: false
+    readonly property var mobileHiddenPages: ["workspaces", "toolbar", "keymap"]
     readonly property string query: searchField.text.trim().toLowerCase()
     readonly property bool narrow: width < 640
     readonly property real sidebarWidth: 220
     readonly property real pageMargin: narrow ? Theme.pagePadding : Theme.spacing3xl
 
     readonly property var pages: [
-        { id: "general", title: qsTr("General") },
-        { id: "appearance", title: qsTr("Appearance") },
-        { id: "workspaces", title: qsTr("Workspaces") },
-        { id: "timeline", title: qsTr("Timeline") },
-        { id: "toolbar", title: qsTr("Timeline toolbar") },
-        { id: "keymap", title: qsTr("Keyboard shortcuts") },
-        { id: "preview", title: qsTr("Preview") },
-        { id: "performance", title: qsTr("Performance") },
-        { id: "audio", title: qsTr("Audio") },
-        { id: "ai", title: qsTr("AI & Cloud") },
-        { id: "network", title: qsTr("Network") },
-        { id: "marketplace", title: qsTr("Marketplace") },
-        { id: "about", title: qsTr("About") }
+        { id: "general", title: qsTr("General"), keywords: "language locale startup autosave recovery cache backup" },
+        { id: "appearance", title: qsTr("Appearance"), keywords: "theme dark light color workspace layout translucency" },
+        { id: "workspaces", title: qsTr("Workspaces"), keywords: "workspace layout panel window monitor screen dock preset" },
+        { id: "timeline", title: qsTr("Timeline"), keywords: "scroll wheel horizontal vertical crossfade transition overview minimap" },
+        { id: "toolbar", title: qsTr("Timeline toolbar"), keywords: "toolbar buttons customize" },
+        { id: "keymap", title: qsTr("Keyboard shortcuts"), keywords: "keymap keys hotkeys bindings" },
+        { id: "preview", title: qsTr("Preview"), keywords: "quality resolution decode proxies guides background graphics gpu" },
+        { id: "performance", title: qsTr("Performance"), keywords: "advanced tuning cache memory ram vram read-ahead buffer drop frames hardware encoder export pool" },
+        { id: "audio", title: qsTr("Audio"), keywords: "sound speakers microphone output input" },
+        { id: "ai", title: qsTr("AI & Cloud"), keywords: "agent mcp claude cursor api key elevenlabs voice scene detection" },
+        { id: "network", title: qsTr("Network"), keywords: "proxy http socks internet firewall" },
+        { id: "about", title: qsTr("About"), keywords: "version updates debug info diagnostics" }
     ]
     readonly property var visiblePages: pages.filter(
-        (page) => page.id !== "marketplace" || (Market.configured && Market.authenticated))
+        (page) => !(mobile && mobileHiddenPages.includes(page.id)))
 
-    readonly property bool searchHasMatches: generalPage.hasMatches || appearancePage.hasMatches
-        || workspacesPage.hasMatches        || timelinePage.hasMatches || toolbarPage.hasMatches || keymapPage.hasMatches
-        || previewPage.hasMatches || performancePage.hasMatches || audioPage.hasMatches || aiPage.hasMatches
-        || networkPage.hasMatches || marketplacePage.hasMatches || aboutPage.hasMatches
+    readonly property bool searchHasMatches: {
+        for (const slot of [generalSlot, appearanceSlot, workspacesSlot, timelineSlot, toolbarSlot, keymapSlot,
+                            previewSlot, performanceSlot, audioSlot, aiSlot, networkSlot, aboutSlot]) {
+            if (slot.hasMatches)
+                return true
+        }
+        return false
+    }
+
+    // A page exists only while it is the open one, or while a search needs every page's rows to
+    // test against the query. Building all twelve up front dominated the dialog's open time.
+    component PageSlot: Loader {
+        id: slot
+
+        required property string pageId
+        property bool allowed: true
+
+        readonly property bool hasMatches: item !== null && item.hasMatches
+        readonly property bool shown: item !== null && (root.query.length > 0 ? item.hasMatches : true)
+
+        width: parent.width
+        // implicitHeight, not height: the Loader writes its own height back onto the item, so a
+        // page collapsed to 0 during a search would stay 0.
+        height: shown ? item.implicitHeight : 0
+        // Clipped rather than hidden: a hidden page would hide its rows too, and the rows' own
+        // visibility is what hasMatches reads.
+        clip: !shown
+        active: allowed && (root.query.length > 0 || root.currentPage === pageId)
+    }
 
     onCurrentPageChanged: flick.contentY = 0
 
@@ -164,82 +191,79 @@ Item {
             topPadding: Theme.spacingXl
             bottomPadding: Theme.spacing3xl
 
-            SettingsGeneralPage {
-                id: generalPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: generalSlot
+                pageId: "general"
+                sourceComponent: SettingsGeneralPage { query: root.query }
             }
 
-            SettingsAppearancePage {
-                id: appearancePage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: appearanceSlot
+                pageId: "appearance"
+                sourceComponent: SettingsAppearancePage { query: root.query }
             }
 
-            SettingsWorkspacesPage {
-                id: workspacesPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: workspacesSlot
+                pageId: "workspaces"
+                allowed: !root.mobile
+                sourceComponent: SettingsWorkspacesPage { query: root.query }
             }
 
-            SettingsTimelinePage {
-                id: timelinePage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: timelineSlot
+                pageId: "timeline"
+                sourceComponent: SettingsTimelinePage { query: root.query }
             }
 
-            SettingsToolbarPage {
-                id: toolbarPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: toolbarSlot
+                pageId: "toolbar"
+                allowed: !root.mobile
+                sourceComponent: SettingsToolbarPage { query: root.query }
             }
 
-            SettingsKeymapPage {
-                id: keymapPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: keymapSlot
+                pageId: "keymap"
+                allowed: !root.mobile
+                sourceComponent: SettingsKeymapPage { query: root.query }
             }
 
-            SettingsPreviewPage {
-                id: previewPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: previewSlot
+                pageId: "preview"
+                sourceComponent: SettingsPreviewPage { query: root.query }
             }
 
-            SettingsPerformancePage {
-                id: performancePage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: performanceSlot
+                pageId: "performance"
+                sourceComponent: SettingsPerformancePage { query: root.query }
             }
 
-            SettingsAudioPage {
-                id: audioPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: audioSlot
+                pageId: "audio"
+                sourceComponent: SettingsAudioPage { query: root.query }
             }
 
-            SettingsAiPage {
-                id: aiPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: aiSlot
+                pageId: "ai"
+                sourceComponent: SettingsAiPage { query: root.query }
             }
 
-            SettingsNetworkPage {
-                id: networkPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: networkSlot
+                pageId: "network"
+                sourceComponent: SettingsNetworkPage { query: root.query }
             }
 
-            SettingsMarketplacePage {
-                id: marketplacePage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
-            }
-
-            SettingsAboutPage {
-                id: aboutPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: aboutSlot
+                pageId: "about"
+                sourceComponent: SettingsAboutPage { query: root.query }
             }
 
             EmptyState {

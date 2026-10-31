@@ -48,6 +48,4 @@ QString appHeader();
 // Package type from -DDRIFT_DISTRIBUTION (windows, flatpak, android-play, ...).
 QString distributionId();
 
-bool isAuthCallbackUrl(const QUrl &url);
-
 } // namespace drift::market

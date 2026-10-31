@@ -7,7 +7,6 @@ import Drift
 Rectangle {
     id: vertex
 
-    required property var modelData
     required property int index
     required property var mask
     required property var frame
@@ -20,22 +19,33 @@ Rectangle {
     width: vs
     height: vs
     radius: vs / 2
-    color: vertexArea.containsMouse || vertexArea.pressed
-           ? Theme.c.maskOverlayVertexHandle.backgroundHover : Theme.c.maskOverlayVertexHandle.background
+    readonly property bool picked: vertex.mask.selectedVertices.indexOf(vertex.index) >= 0
+    readonly property bool hot: vertexArea.containsMouse || vertexArea.pressed
+    // Selected vertices are filled with the accent; the rest are hollow-looking inverses of it.
+    color: vertex.picked
+           ? (vertex.hot ? Theme.c.maskOverlayVertexHandle.backgroundHover
+                         : Theme.c.maskOverlayVertexHandle.background)
+           : (vertex.hot ? Theme.c.maskOverlayVertexHandle.background
+                         : Theme.c.maskOverlayVertexHandle.border)
     border.width: Theme.c.maskOverlayVertexHandle.borderWidth
-    border.color: Theme.c.maskOverlayVertexHandle.border
+    border.color: vertex.picked ? Theme.c.maskOverlayVertexHandle.border
+                                : Theme.c.maskOverlayVertexHandle.background
 
-    // Live position during a drag, so the dot tracks the cursor without
-    // waiting for the model to come back.
-    property real liveVx: -1e12
-    property real liveVy: -1e12
-    readonly property real vx: liveVx > -1e11 ? liveVx : modelData.x
-    readonly property real vy: liveVy > -1e11 ? liveVy : modelData.y
+    readonly property var pt: vertex.mask.displayPoints[vertex.index]
+    readonly property real vx: pt ? pt.x : 0
+    readonly property real vy: pt ? pt.y : 0
 
-    parent: vertex.frame
     x: vx * vertex.frame.width - vs / 2
     y: vy * vertex.frame.height - vs / 2
     z: 200
+
+    // The removal rebuilds the vertex Repeater, which would destroy this delegate while its
+    // MouseArea is still inside the handler that asked for it.
+    function removeDeferred() {
+        const id = vertex.mask.layerId
+        const i = vertex.index
+        Qt.callLater(() => EditorState.masking.editSession.removePoint(id, i))
+    }
 
     MouseArea {
         id: vertexArea
@@ -48,33 +58,55 @@ Rectangle {
         onWheel: (wheel) => { wheel.accepted = false }
 
         property bool pressedByTouch: false
+        property bool dragging: false
+        property bool moved: false
+        property bool collapseOnClick: false
 
         onPressed: (mouse) => {
             pressedByTouch = mouse.source !== Qt.MouseEventNotSynthesized
             if (mouse.button === Qt.RightButton) {
-                EditorState.removeMaskPoint(vertex.mask.layerTrack,
-                                            vertex.mask.layerClip, vertex.index)
+                vertex.removeDeferred()
                 return
             }
-            vertex.overlay.interacting = true
+            const session = EditorState.masking.editSession
+            const id = vertex.mask.layerId
+            collapseOnClick = false
+            if (mouse.modifiers & Qt.ControlModifier) {
+                session.setPointSelected(id, vertex.index, 2)
+            } else if (mouse.modifiers & Qt.ShiftModifier) {
+                session.setPointSelected(id, vertex.index, 1)
+            } else if (vertex.picked) {
+                collapseOnClick = true
+            } else {
+                session.setPointSelected(id, vertex.index, 0)
+            }
             vertex.mask.forceActiveFocus()
-            EditorState.beginPreviewDrag(qsTr("Mask changed"))
+            // Toggled off: the vertex is no longer part of anything to drag.
+            if (session.selectedPoints.indexOf(vertex.index) < 0)
+                return
+            if (!session.begin(id, vertex.frame.width, vertex.frame.height))
+                return
+            dragging = true
+            moved = false
+            vertex.overlay.interacting = true
         }
 
         onPositionChanged: (mouse) => {
-            if (!pressed || mouse.buttons !== Qt.LeftButton)
+            if (!pressed || !dragging || mouse.buttons !== Qt.LeftButton)
                 return
+            moved = true
             const p = mapToItem(vertex.frame, mouse.x, mouse.y)
-            vertex.liveVx = p.x / Math.max(1, vertex.frame.width)
-            vertex.liveVy = p.y / Math.max(1, vertex.frame.height)
-            vertex.mask.writePointAt(vertex.index, vertex.liveVx, vertex.liveVy)
+            EditorState.masking.editSession.movePointGroup(vertex.index,
+                                                           p.x / Math.max(1, vertex.frame.width),
+                                                           p.y / Math.max(1, vertex.frame.height))
         }
 
         function finish() {
-            if (vertex.liveVx < -1e11)
+            if (!dragging)
                 return
-            vertex.liveVx = -1e12
-            vertex.liveVy = -1e12
+            dragging = false
+            if (collapseOnClick && !moved)
+                EditorState.masking.editSession.setPointSelected(vertex.mask.layerId, vertex.index, 0)
             vertex.overlay.endInteraction()
         }
 
@@ -83,13 +115,12 @@ Rectangle {
 
         // Touch has no right button: hold a vertex still to delete it.
         onPressAndHold: (mouse) => {
-            if (!pressedByTouch || vertex.liveVx > -1e11
-                    || !(mouse.buttons & Qt.LeftButton))
+            if (!pressedByTouch || !dragging || moved || !(mouse.buttons & Qt.LeftButton))
                 return
-            EditorState.cancelPreviewDrag()
+            dragging = false
+            EditorState.masking.editSession.cancel()
             vertex.overlay.interacting = false
-            EditorState.removeMaskPoint(vertex.mask.layerTrack,
-                                        vertex.mask.layerClip, vertex.index)
+            vertex.removeDeferred()
         }
     }
 }

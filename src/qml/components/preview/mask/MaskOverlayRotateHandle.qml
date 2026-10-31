@@ -32,9 +32,11 @@ Rectangle {
         onWheel: (wheel) => { wheel.accepted = false }
 
         onPressed: {
+            if (!EditorState.masking.editSession.begin(knob.mask.layerId, knob.frame.width,
+                                                       knob.frame.height))
+                return
             knob.overlay.interacting = true
             knob.mask.forceActiveFocus()
-            EditorState.beginPreviewDrag(qsTr("Mask changed"))
         }
 
         onPositionChanged: (mouse) => {
@@ -43,16 +45,12 @@ Rectangle {
             // Angle is measured in the clip frame, so map through it rather than
             // through the rotating box.
             const p = mapToItem(knob.frame, mouse.x, mouse.y)
-            const cx = knob.mask.mx * knob.frame.width
-            const cy = knob.mask.my * knob.frame.height
-            let deg = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI + 90
-            if ((mouse.modifiers & Qt.ShiftModifier) !== 0)
-                deg = Math.round(deg / 15) * 15
-            knob.mask.liveRotation = deg
-            knob.mask.writeLive()
+            EditorState.masking.editSession.rotate(p.x / Math.max(1, knob.frame.width),
+                                                   p.y / Math.max(1, knob.frame.height),
+                                                   (mouse.modifiers & Qt.ShiftModifier) !== 0)
         }
 
-        onReleased: { knob.mask.clearLive(); knob.overlay.endInteraction() }
-        onCanceled: { knob.mask.clearLive(); knob.overlay.endInteraction() }
+        onReleased: knob.overlay.endInteraction()
+        onCanceled: knob.overlay.endInteraction()
     }
 }

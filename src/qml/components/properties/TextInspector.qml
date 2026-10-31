@@ -69,7 +69,10 @@ Item {
                                              400: "Regular", 500: "Medium", 600: "SemiBold",
                                              700: "Bold", 800: "ExtraBold", 900: "Black"
                                          })
-    readonly property var accentRules: ["none", "firstWord", "lastWord", "everyOther", "everyNth",
+    readonly property var caseOptions: ["none", "upper", "lower", "title", "sentence"]
+    readonly property var caseLabels: [qsTr("As typed"), qsTr("UPPERCASE"), qsTr("lowercase"),
+                                       qsTr("Title Case"), qsTr("Sentence case")]
+    readonly property var accentRules:["none", "firstWord", "lastWord", "everyOther", "everyNth",
                                         "longestWord", "randomStable", "karaoke"]
     readonly property var accentRuleLabels: ["No accent", "First word", "Last word", "Every other word",
                                              "Every Nth word", "Longest word", "Random words",
@@ -165,6 +168,15 @@ Item {
     // Sub-page of the inspector: "text", "style" or "animate". Survives selection changes so a
     // pass over several clips stays on the page being worked in.
     property string textTab: "text"
+
+    // "" shows the tabbed inspector. "style", "settings" and "animate" show just that slice with
+    // the tab bar hidden, for the phone tool pages.
+    property string mode: ""
+    readonly property bool showContent: mode === "" && textTab === "text"
+    readonly property bool showFont: (mode === "" && textTab === "text") || mode === "style" || mode === "settings"
+    readonly property bool showSpacing: (mode === "" && textTab === "text") || mode === "settings"
+    readonly property bool showStyle: mode === "style" || (mode === "" && textTab === "style")
+    readonly property bool showAnimate: mode === "animate" || (mode === "" && textTab === "animate")
 
     // The content field's user-dragged height and the id of the clip its text was loaded from,
     // so a commit can never land on a clip selected after the typing began.
@@ -355,6 +367,7 @@ Item {
 
         TextInspectorTabBar {
             width: parent.width
+            visible: root.mode === ""
             textTab: root.textTab
             onTabSelected: function(tabId) { root.textTab = tabId }
         }

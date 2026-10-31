@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
-import "KeyframesModel.js" as Model
 
 Item {
     id: root
@@ -11,6 +10,7 @@ Item {
 
     readonly property var timeView: panel.timeView
     readonly property var selection: panel.selection
+    readonly property var rowsModel: panel.rowsModel
     readonly property alias anchorProxy: anchorProxy
     readonly property bool dragging: dotDrag
     readonly property bool busy: dotDrag || marqueeActive
@@ -29,54 +29,42 @@ Item {
     property var dragResult: []
     property real dragOrigin: 0
     property var marqueeBase: []
+    property real pressContentX: 0
+    property real pressContentY: 0
+    property real lastX: 0
+    property real lastY: 0
+    property bool lastInvert: false
+    property real dragTime: 0
+    property string hoverTip: ""
+    readonly property real edgeZone: 24
+    readonly property real fps: Math.max(1, EditorState.projectFile.projectFps())
+    readonly property real slop: touch || Theme.touchInput ? 14 : 8
 
     signal contextRequested(real x, real y, var hit)
 
     function hitTest(x, y, slop) {
-        const rows = panel.rows
-        const idx = Math.floor((y + lanes.list.contentY) / lanes.rowHeight)
-        if (idx < 0 || idx >= rows.length)
+        const hit = rowsModel.hitTest(x, y, lanes.contentY, lanes.rowHeight, slop)
+        if (hit.row < 0)
             return null
-        const dots = Model.laneDots(rows, idx)
-        let best = null
-        let bestDist = slop + 0.5
-        for (let i = 0; i < dots.length; ++i) {
-            const d = Math.abs(timeView.xFor(dots[i].seconds) - x)
-            if (d < bestDist) {
-                bestDist = d
-                best = dots[i]
-            }
-        }
-        return {
-            "row": idx,
-            "rowData": rows[idx],
-            "dot": best,
-            "refs": best ? best.refs : [],
-            "seconds": best ? best.seconds : timeView.secondsFor(x)
-        }
-    }
-
-    function removeRefs(refs) {
-        const drop = {}
-        for (let i = 0; i < refs.length; ++i)
-            drop[Model.keyId(refs[i].prop, refs[i].seconds)] = true
-        selection.replace(selection.refs().filter(r => !drop[Model.keyId(r.prop, r.seconds)]))
+        hit.rowData = panel.rows[hit.row]
+        return hit
     }
 
     function startDotDrag() {
         dragRefs = selection.refs()
         dragResult = dragRefs
         dragOrigin = pressHit.seconds
+        dragTime = dragOrigin
         EditorState.beginPreviewDrag(qsTr("Move keyframes"))
         dotDrag = true
     }
 
-    function updateDotDrag(x) {
-        const raw = Math.max(timeView.clipStart,
-                             Math.min(timeView.clipStart + timeView.clipDuration,
-                                      dragOrigin + (x - pressX) / timeView.pxPerSecond))
-        const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clip, dragRefs,
-                                                          EditorState.snapTime(raw) - dragOrigin)
+    function updateDotDrag(x, invertSnap) {
+        lastInvert = !!invertSnap
+        const dt = rowsModel.moveDelta(dragOrigin, x - pressX + timeView.contentX - pressContentX, dragRefs,
+                                       lastInvert, false)
+        dragTime = dragOrigin + dt
+        const res = EditorState.keyframes.previewMoveKeys(panel.track, panel.clip, dragRefs, dt)
         if (res && res.length > 0) {
             dragResult = res
             selection.replace(res)
@@ -85,6 +73,7 @@ Item {
 
     function finishDotDrag() {
         EditorState.commitPreviewDrag()
+        EditorState.keyframes.clearCollisions()
         selection.replace(dragResult)
         dotDrag = false
     }
@@ -92,6 +81,7 @@ Item {
     function cancelDrag() {
         if (dotDrag) {
             EditorState.cancelPreviewDrag()
+            EditorState.keyframes.clearCollisions()
             selection.replace(dragRefs)
             dotDrag = false
         }
@@ -100,45 +90,76 @@ Item {
     }
 
     function updateMarquee(x, y) {
-        const x0 = Math.max(0, Math.min(pressX, x))
-        const x1 = Math.min(width, Math.max(pressX, x))
-        const y0 = Math.max(0, Math.min(pressY, y))
-        const y1 = Math.min(height, Math.max(pressY, y))
-        marquee.x = x0
-        marquee.y = y0
-        marquee.width = x1 - x0
-        marquee.height = y1 - y0
-        const s0 = timeView.secondsFor(x0)
-        const s1 = timeView.secondsFor(x1)
-        const first = Math.floor((y0 + lanes.list.contentY) / lanes.rowHeight)
-        const last = Math.floor((y1 + lanes.list.contentY) / lanes.rowHeight)
-        const refs = marqueeBase.slice()
-        for (let r = Math.max(0, first); r <= last && r < panel.rows.length; ++r) {
-            const dots = Model.laneDots(panel.rows, r)
-            for (let i = 0; i < dots.length; ++i) {
-                if (dots[i].seconds >= s0 && dots[i].seconds <= s1)
-                    Array.prototype.push.apply(refs, dots[i].refs)
-            }
+        const anchorX = pressX - (timeView.contentX - pressContentX)
+        const anchorY = pressY - (lanes.contentY - pressContentY)
+        const px = Math.max(0, Math.min(width, x))
+        const py = Math.max(0, Math.min(height, y))
+        const x0 = Math.min(anchorX, px)
+        const x1 = Math.max(anchorX, px)
+        const y0 = Math.min(anchorY, py)
+        const y1 = Math.max(anchorY, py)
+        marquee.x = Math.max(0, x0)
+        marquee.y = Math.max(0, y0)
+        marquee.width = Math.min(width, x1) - marquee.x
+        marquee.height = Math.min(height, y1) - marquee.y
+        selection.replace(rowsModel.marqueeRefs(x0, x1, y0, y1, lanes.contentY, lanes.rowHeight,
+                                                marqueeBase))
+    }
+
+    function edgePush(pos, size) {
+        if (pos < edgeZone)
+            return -(edgeZone - pos) * 0.5
+        if (pos > size - edgeZone)
+            return (pos - (size - edgeZone)) * 0.5
+        return 0
+    }
+
+    function autoScroll() {
+        const dx = edgePush(lastX, width)
+        const dy = marqueeActive ? edgePush(lastY, height) : 0
+        if (dx === 0 && dy === 0)
+            return
+        if (dx !== 0) {
+            const lo = lanes.scrollMin
+            const hi = Math.max(lo, lanes.scrollMin + lanes.scrollTotal - lanes.width)
+            timeView.contentX = Math.max(lo, Math.min(hi, timeView.contentX + dx))
         }
-        selection.replace(refs)
+        if (dy !== 0)
+            lanes.scrollBy(dy)
+        if (marqueeActive)
+            updateMarquee(lastX, lastY)
+        else
+            updateDotDrag(lastX, lastInvert)
+    }
+
+    function readoutText() {
+        const frames = Math.round((dragTime - dragOrigin) * fps)
+        return panel.formatTimecode(dragTime) + "  " + (frames >= 0 ? "+" : "") + frames
+    }
+
+    function tipFor(hit) {
+        if (!hit || !hit.dot)
+            return ""
+        const row = hit.rowData
+        let text = (row.label ?? "") + "\n" + panel.formatTimecode(hit.seconds)
+        if (row.type !== "group") {
+            const keys = row.keys
+            for (let i = 0; i < keys.length; ++i) {
+                if (Math.abs(keys[i].seconds - hit.seconds) < 1e-4) {
+                    text += "\n" + Number(keys[i].value).toFixed(row.decimals ?? 2)
+                    break
+                }
+            }
+        } else {
+            text += "\n" + qsTr("%n key(s)", "", hit.refs.length)
+        }
+        return text
     }
 
     function pressDot(mods, hit) {
-        const selected = Model.refsSelected(selection, hit.refs)
-        if (mods & (Qt.ControlModifier | Qt.MetaModifier)) {
-            if (selected) {
-                removeRefs(hit.refs)
-                return false
-            }
-            selection.add(hit.refs)
-        } else if (mods & Qt.ShiftModifier) {
-            selection.add(hit.refs)
-        } else if (!selected) {
-            selection.replace(hit.refs)
-        } else {
-            collapseOnRelease = true
-        }
-        return true
+        const outcome = selection.press(mods, hit.refs)
+        collapseOnRelease = outcome === 2
+        return outcome !== 0
     }
 
     function beginMarquee(mods) {
@@ -147,7 +168,7 @@ Item {
     }
 
     function openContext(x, y, hit) {
-        if (hit && hit.dot && !Model.refsSelected(selection, hit.refs))
+        if (hit && hit.dot && !selection.hasAll(hit.refs))
             selection.replace(hit.refs)
         contextRequested(x, y, hit)
     }
@@ -163,6 +184,29 @@ Item {
         visible: root.marqueeActive && width > 2 && height > 2
     }
 
+    KeyframesDragReadout {
+        visible: root.dotDrag
+        text: root.readoutText()
+        x: Math.max(0, Math.min(root.width - width, root.lastX + Theme.spacingXl))
+        y: Math.max(0, root.lastY - height - Theme.spacingLg)
+    }
+
+    Timer {
+        interval: 16
+        repeat: true
+        running: root.dotDrag || root.marqueeActive
+        onTriggered: root.autoScroll()
+    }
+
+    ThemedToolTip {
+        parent: root
+        delay: 600
+        x: root.lastX + Theme.spacingXl
+        y: root.lastY + Theme.spacingXl
+        text: root.hoverTip
+        visible: root.hoverTip !== "" && !area.pressed
+    }
+
     Connections {
         target: root.panel
 
@@ -174,7 +218,7 @@ Item {
         id: area
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         pressAndHoldInterval: Theme.touchLiftInterval
         cursorShape: root.dotDrag ? Qt.SizeHorCursor
                                   : (root.lanes.hoverRow >= 0 ? Qt.PointingHandCursor : Qt.ArrowCursor)
@@ -184,9 +228,20 @@ Item {
             root.touch = mouse.source !== Qt.MouseEventNotSynthesized
             root.pressX = mouse.x
             root.pressY = mouse.y
+            root.lastX = mouse.x
+            root.lastY = mouse.y
+            root.pressContentX = root.timeView.contentX
+            root.pressContentY = root.lanes.contentY
+            root.hoverTip = ""
             root.collapseOnRelease = false
-            root.pressHit = root.hitTest(mouse.x, mouse.y, root.touch ? 14 : 6)
+            root.pressHit = root.hitTest(mouse.x, mouse.y, root.slop)
             root.mode = ""
+            if (mouse.button === Qt.MiddleButton) {
+                root.panStartX = root.timeView.contentX
+                root.panStartY = root.lanes.contentY
+                root.mode = "pan"
+                return
+            }
             if (mouse.button === Qt.RightButton) {
                 if (!root.touch)
                     root.openContext(mouse.x, mouse.y, root.pressHit)
@@ -194,7 +249,7 @@ Item {
             }
             if (root.touch) {
                 root.panStartX = root.timeView.contentX
-                root.panStartY = root.lanes.list.contentY
+                root.panStartY = root.lanes.contentY
                 root.mode = "touch"
                 return
             }
@@ -223,10 +278,13 @@ Item {
         }
 
         onPositionChanged: (mouse) => {
+            root.lastX = mouse.x
+            root.lastY = mouse.y
             if (!pressed) {
-                const hit = root.hitTest(mouse.x, mouse.y, 6)
+                const hit = root.hitTest(mouse.x, mouse.y, root.slop)
                 root.lanes.hoverRow = hit && hit.dot ? hit.row : -1
                 root.lanes.hoverSeconds = hit && hit.dot ? hit.seconds : 0
+                root.hoverTip = root.tipFor(hit)
                 return
             }
             const moved = Math.abs(mouse.x - root.pressX) > 3 || Math.abs(mouse.y - root.pressY) > 3
@@ -237,13 +295,13 @@ Item {
             }
             if (root.mode === "pan") {
                 root.timeView.contentX = root.panStartX - (mouse.x - root.pressX)
-                root.lanes.list.contentY = Math.max(0, Math.min(root.lanes.maxContentY(),
+                root.lanes.contentY = Math.max(0, Math.min(root.lanes.maxContentY(),
                                                                 root.panStartY - (mouse.y - root.pressY)))
             } else if (root.mode === "dot") {
                 if (!root.dotDrag && moved)
                     root.startDotDrag()
                 if (root.dotDrag)
-                    root.updateDotDrag(mouse.x)
+                    root.updateDotDrag(mouse.x, mouse.modifiers & Qt.AltModifier)
             } else if (root.mode === "marquee") {
                 if (!root.marqueeActive && moved)
                     root.marqueeActive = true
@@ -268,7 +326,7 @@ Item {
             } else if (mode === "touch") {
                 const hit = root.pressHit
                 if (hit && hit.dot) {
-                    if (Model.refsSelected(root.selection, hit.refs))
+                    if (root.selection.hasAll(hit.refs))
                         root.openContext(mouse.x, mouse.y, hit)
                     else
                         root.selection.replace(hit.refs)
@@ -278,26 +336,24 @@ Item {
             }
         }
 
-        onCanceled: {
-            if (root.mode === "dot" && root.dotDrag)
-                root.finishDotDrag()
-            root.marqueeActive = false
-            root.mode = ""
-        }
+        onCanceled: root.cancelDrag()
 
-        onExited: root.lanes.hoverRow = -1
+        onExited: {
+            root.lanes.hoverRow = -1
+            root.hoverTip = ""
+        }
 
         onDoubleClicked: (mouse) => {
             if (mouse.button !== Qt.LeftButton)
                 return
-            const hit = root.hitTest(mouse.x, mouse.y, root.touch ? 14 : 6)
+            const hit = root.hitTest(mouse.x, mouse.y, root.slop)
             if (!hit)
                 return
             if (hit.dot)
                 EditorState.playheadSeconds = hit.seconds
             else if (hit.rowData.type !== "group")
                 EditorState.keyframes.addKeysAt(root.panel.track, root.panel.clip, hit.rowData.tracks,
-                                                EditorState.snapTime(hit.seconds))
+                                                root.panel.snapKeyTime(hit.seconds, [], false))
         }
 
         onWheel: (wheel) => {

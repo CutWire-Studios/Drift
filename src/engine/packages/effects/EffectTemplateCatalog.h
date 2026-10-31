@@ -73,3 +73,7 @@ QString effectTemplateCategoryLabel(const QString &categoryId);
 void reloadEffectTemplateCatalog(const QStringList &packageRoots = {});
 
 QStringList defaultEffectTemplateSearchPaths();
+
+// Installs a template.json into the user templates folder and reloads the catalog. Returns an
+// error message, empty on success; idOut receives the template id.
+QString installUserTemplate(const QString &templateJsonPath, QString *idOut = nullptr);

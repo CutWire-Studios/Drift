@@ -1,16 +1,21 @@
 import QtQuick
 import Drift
 
-// One recent project. Long-press and the corner button open the same menu;
-// the button is the visible equivalent of the gesture.
+// One recent project, as a card on Home's strip or (row) a line in the Projects list.
+// Long-press and the corner button open the same menu; the button is the visible
+// equivalent of the gesture.
 Rectangle {
     id: card
 
     required property var modelData
+    property bool row: false
 
     signal openRequested(string path)
 
-    height: Theme.androidHomeRecentCardHeight
+    readonly property real margin: row ? Theme.spacingMd : Theme.spacingSm
+
+    height: row ? Theme.androidHomeRecentCardHeight
+                : thumb.height + textColumn.implicitHeight + margin * 2 + Theme.spacingSm
     radius: Theme.c.androidHomeRecentCard.radius
     color: Theme.c.androidHomeRecentCard.background
     border.width: Theme.c.androidHomeRecentCard.borderWidth
@@ -25,71 +30,106 @@ Rectangle {
         return n.replace(/\.drift$/i, "") || qsTr("Untitled")
     }
 
-    Column {
-        anchors.fill: parent
-        anchors.margins: Theme.spacingLg
-        spacing: Theme.spacingSm
+    readonly property string detailText: {
+        const parts = []
+        const m = card.modelData.modified
+        if (m && !isNaN(m.getTime()))
+            parts.push(Qt.formatDateTime(m, Locale.ShortFormat))
+        if (card.modelData.sizeBytes > 0)
+            parts.push(DownloadFormat.formatBytes(card.modelData.sizeBytes))
+        return parts.join(" · ")
+    }
 
-        Rectangle {
-            width: parent.width
-            height: 32
-            radius: Theme.c.androidHomeRecentCard.thumbRadius
-            color: Theme.c.androidHomeRecentCard.thumbBackground
+    Rectangle {
+        id: thumb
+        x: card.margin
+        y: card.margin
+        height: card.row ? card.height - card.margin * 2 : width * 9 / 16
+        width: card.row ? height * 16 / 9 : card.width - card.margin * 2
+        radius: Theme.c.androidHomeRecentCard.thumbRadius
+        color: Theme.c.androidHomeRecentCard.thumbBackground
+        clip: true
 
-            IconGlyph {
-                anchors.centerIn: parent
-                glyph: Theme.icons.film
-                iconSize: 18
-                iconColor: Theme.c.androidHomeRecentCard.icon
-            }
-
-            // Same on-disk signal the desktop recents list carries;
-            // the card's dimming alone did not say what was wrong.
-            AndroidAttentionDot {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: 4
-                dotColor: card.modelData.exists === false
-                          ? Theme.c.androidHomeRecentCard.missingDot
-                          : Theme.c.androidHomeRecentCard.presentDot
-            }
+        IconGlyph {
+            anchors.centerIn: parent
+            visible: image.status !== Image.Ready
+            glyph: Theme.icons.film
+            iconSize: 18
+            iconColor: Theme.c.androidHomeRecentCard.icon
         }
+
+        // The thumbnail file is overwritten in place on every save, so the same URL must be
+        // re-read rather than served from the image cache.
+        Image {
+            id: image
+            anchors.fill: parent
+            source: card.modelData.thumbnail || ""
+            cache: false
+            asynchronous: true
+            fillMode: Image.PreserveAspectCrop
+        }
+
+        // Same on-disk signal the desktop recents list carries;
+        // the card's dimming alone did not say what was wrong.
+        AndroidAttentionDot {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 4
+            dotColor: card.modelData.exists === false
+                      ? Theme.c.androidHomeRecentCard.missingDot
+                      : Theme.c.androidHomeRecentCard.presentDot
+        }
+    }
+
+    Column {
+        id: textColumn
+        spacing: 2
+        x: card.row ? thumb.x + thumb.width + Theme.spacingMd : card.margin
+        y: card.row ? (card.height - implicitHeight) / 2 : thumb.y + thumb.height + Theme.spacingSm
+        width: card.width - x - (card.row ? Theme.iconButtonSize + Theme.spacingXs : card.margin)
 
         Text {
             width: parent.width
             text: card.projectLabel
             color: Theme.c.androidHomeRecentCard.foreground
             font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeXs
+            font.pixelSize: card.row ? Theme.fontSizeSm : Theme.fontSizeXs
             font.weight: Font.Medium
             elide: Text.ElideMiddle
         }
 
-        // Elided from the left: on a narrow card the tail — the folder
-        // and file name — is the half that tells two projects apart.
         Text {
             width: parent.width
-            text: card.modelData.path
+            visible: text.length > 0
+            text: card.detailText
             color: Theme.c.androidHomeRecentCard.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
-            elide: Text.ElideLeft
+            elide: Text.ElideRight
         }
     }
 
     MouseArea {
         anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         pressAndHoldInterval: 450
         property bool heldMenu: false
         onPressed: heldMenu = false
-        onPressAndHold: {
+        // Only a finger long-presses; a real mouse has the right button and the corner button.
+        onPressAndHold: (mouse) => {
+            if (mouse.source === Qt.MouseEventNotSynthesized)
+                return
             heldMenu = true
             Haptics.pickUp()
             cardMenu.popup()
         }
-        onClicked: {
+        onClicked: (mouse) => {
             if (heldMenu)
                 return
+            if (mouse.button === Qt.RightButton) {
+                cardMenu.popup()
+                return
+            }
             if (card.modelData.exists === false) {
                 Toasts.warning(qsTr("That project file is missing."))
                 return
@@ -99,13 +139,10 @@ Rectangle {
         }
     }
 
-    // Long-press was the only way to reach this, which is a gesture
-    // with no visible equivalent — the one rule the rest of the rail
-    // already follows. The button is the equivalent; the long-press
-    // stays as an accelerator.
     IconButton {
         anchors.right: parent.right
-        anchors.top: parent.top
+        anchors.top: card.row ? undefined : parent.top
+        anchors.verticalCenter: card.row ? parent.verticalCenter : undefined
         anchors.margins: Theme.spacingXs
         buttonSize: Theme.iconButtonSize
         iconSize: Theme.iconSizeMd

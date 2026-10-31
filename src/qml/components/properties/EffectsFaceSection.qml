@@ -88,6 +88,11 @@ Column {
     Text {
         width: parent.width
         text: qsTr("Face tracking")
+        SearchAnchor {
+            searchId: "effects-face-tracking"
+            title: qsTr("Face tracking")
+            keywords: "face"
+        }
         color: Theme.c.effectsFaceSection.foregroundMuted
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs

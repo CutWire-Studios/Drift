@@ -15,6 +15,7 @@ Menu {
 
     implicitWidth: 200
     padding: Theme.spacingSm
+    popupType: Popup.Item
     // Escape closes; clicking outside dismisses.
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 

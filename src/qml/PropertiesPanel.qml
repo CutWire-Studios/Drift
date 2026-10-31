@@ -114,8 +114,23 @@ PanelFrame {
         }
     }
 
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "properties" || root.locked)
+            return
+        ShellBridge.panelRequest = null
+        const index = root.tabIndexOf(request.tab)
+        if (index >= 0)
+            root.activeTab = index
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+
     Component.onCompleted: {
         root.syncActiveTab()
+        root.applyPanelRequest()
     }
 
     // Rail order: clip identity → geometry/timing → compositing / FX.
@@ -313,23 +328,15 @@ PanelFrame {
 
         // === Desktop: vertical icon rail + tab content ================================
         // Up/Down move between tabs once the rail has focus.
-        // Flickable so short panel heights can still reach lower icons.
-        Flickable {
+        // Scrolls so short panel heights can still reach lower icons.
+        ScrollStrip {
             id: propertiesTabRail
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             width: root.railHidden ? 0 : Theme.tabRailWidth
             visible: !root.railHidden
-            contentWidth: width
-            contentHeight: propertiesTabRailColumn.height
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            interactive: contentHeight > height
-            ScrollBar.vertical: AppScrollBar {
-                policy: propertiesTabRail.contentHeight > propertiesTabRail.height
-                        ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
-            }
+            vertical: true
 
             Accessible.role: Accessible.PageTabList
 

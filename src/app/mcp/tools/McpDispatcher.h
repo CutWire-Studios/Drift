@@ -37,6 +37,9 @@ private:
     // type_mismatch unless the clip's kind is one of `kinds`; empty when it is.
     QJsonObject requireKind(const ClipRef &ref, const QStringList &kinds, const char *what) const;
     int resolveAsset(const QJsonValue &value) const;
+    // A bin folder by id, then by unique name. "" (or a missing value) is the bin root. False
+    // when nothing matches or the name is ambiguous.
+    bool resolveFolder(const QJsonValue &value, QString *id) const;
     // transitionKinds() rows carry their id under "kind"; the catalog helpers key on "id".
     QVariantList transitionCatalog() const;
     QJsonObject clipFeedback(const ClipRef &ref, const QJsonObject &extra = {}) const;

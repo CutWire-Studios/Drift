@@ -14,6 +14,7 @@
 
 #include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/bin/MediaBinController.h"
 #include "app/editor/ProjectFileController.h"
 #include "ui/preview/PreviewController.h"
 #include "ui/theme/ThemeManager.h"
@@ -885,6 +886,106 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         if (!m_controller->removeAsset(index))
             return err("bad_args", QStringLiteral("Remove refused"));
         return ok({{QStringLiteral("removed"), index}});
+    }
+
+    if (tool == QLatin1String("list_folders")) {
+        const BinFolderListModel *folders = m_controller->bin()->folderModel();
+        AssetLibrary *lib = m_controller->assetLibrary();
+        QHash<QString, int> counts;
+        for (int i = 0; lib && i < lib->count(); ++i)
+            ++counts[lib->assetAt(i).value(QStringLiteral("folderId")).toString()];
+        QJsonArray out;
+        for (int i = 0; i < folders->count(); ++i) {
+            const QVariantMap f = folders->folderAt(i);
+            const QString id = f.value(QStringLiteral("id")).toString();
+            out.append(QJsonObject{{QStringLiteral("id"), id},
+                                   {QStringLiteral("name"), f.value(QStringLiteral("name")).toString()},
+                                   {QStringLiteral("parentId"), f.value(QStringLiteral("parentId")).toString()},
+                                   {QStringLiteral("count"), counts.value(id)}});
+        }
+        return ok({{QStringLiteral("folders"), out}});
+    }
+
+    if (tool == QLatin1String("create_folder")) {
+        const QString name = argString(args, QStringLiteral("name")).trimmed();
+        if (name.isEmpty())
+            return err("bad_args", QStringLiteral("name required"));
+        QString parent;
+        if (!resolveFolder(args.value(QStringLiteral("parent")), &parent))
+            return err("not_found", QStringLiteral("Unknown or ambiguous parent folder"));
+        const QString id = m_controller->bin()->createFolder(name, parent);
+        if (id.isEmpty())
+            return err("failed", QStringLiteral("Folder not created"));
+        return ok({{QStringLiteral("id"), id}});
+    }
+
+    if (tool == QLatin1String("move_asset_to_folder")) {
+        const int index = resolveAsset(args.value(QStringLiteral("asset")));
+        if (index < 0)
+            return err("not_found", QStringLiteral("Unknown asset"));
+        QString folder;
+        if (!resolveFolder(args.value(QStringLiteral("folder")), &folder))
+            return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+        const bool changed = m_controller->bin()->moveAssetToFolder(index, folder);
+        return ok({{QStringLiteral("asset"), m_controller->assetLibrary()->assetIdAt(index)},
+                   {QStringLiteral("folderId"), folder}, {QStringLiteral("changed"), changed}});
+    }
+
+    if (tool == QLatin1String("rename_folder")) {
+        QString folder;
+        if (!resolveFolder(args.value(QStringLiteral("folder")), &folder) || folder.isEmpty())
+            return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+        const QString name = argString(args, QStringLiteral("name")).trimmed();
+        if (name.isEmpty())
+            return err("bad_args", QStringLiteral("name required"));
+        const bool changed = m_controller->bin()->renameFolder(folder, name);
+        return ok({{QStringLiteral("id"), folder}, {QStringLiteral("name"), name}, {QStringLiteral("changed"), changed}});
+    }
+
+    if (tool == QLatin1String("delete_folder")) {
+        QString folder;
+        if (!resolveFolder(args.value(QStringLiteral("folder")), &folder) || folder.isEmpty())
+            return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+        MediaBinController *bin = m_controller->bin();
+        if (!jsonBool(args.value(QStringLiteral("recursive")))) {
+            if (!bin->deleteFolder(folder))
+                return err("failed", QStringLiteral("Folder not deleted"));
+            return ok({{QStringLiteral("deleted"), QJsonArray{folder}}, {QStringLiteral("removedAssets"), 0}});
+        }
+
+        // Parents before children, so deleting from the back never lifts a doomed subfolder.
+        const BinFolderListModel *folders = bin->folderModel();
+        QStringList subtree{folder};
+        for (int n = 0; n < subtree.size(); ++n) {
+            for (int i = 0; i < folders->count(); ++i) {
+                const QVariantMap f = folders->folderAt(i);
+                const QString id = f.value(QStringLiteral("id")).toString();
+                if (f.value(QStringLiteral("parentId")).toString() == subtree.at(n) && !subtree.contains(id))
+                    subtree.append(id);
+            }
+        }
+        AssetLibrary *lib = m_controller->assetLibrary();
+        QStringList assets;
+        QJsonArray inUse;
+        for (int i = 0; lib && i < lib->count(); ++i) {
+            if (!subtree.contains(lib->assetAt(i).value(QStringLiteral("folderId")).toString()))
+                continue;
+            assets.append(lib->assetIdAt(i));
+            if (m_controller->clipCountForAsset(i) > 0)
+                inUse.append(lib->assetIdAt(i));
+        }
+        if (!inUse.isEmpty())
+            return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), QStringLiteral("in_use")},
+                    {QStringLiteral("detail"), QStringLiteral("Assets under this folder have clips on the timeline")},
+                    {QStringLiteral("assets"), inUse}};
+
+        m_controller->mcp()->beginBatch();
+        const int removed = assets.isEmpty() ? 0 : m_controller->removeAssets(assets);
+        for (int i = subtree.size() - 1; i >= 0; --i)
+            bin->deleteFolder(subtree.at(i));
+        m_controller->mcp()->endBatch(QStringLiteral("Folder deleted"), true);
+        return ok({{QStringLiteral("deleted"), QJsonArray::fromStringList(subtree)},
+                   {QStringLiteral("removedAssets"), removed}});
     }
 
     if (tool == QLatin1String("replace_asset")) {
@@ -3455,6 +3556,72 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                                               threshold, minDuration, padding, declick, method);
     }
 
+    if (tool == QLatin1String("audio_measure") || tool == QLatin1String("audio_events")
+        || tool == QLatin1String("audio_sync") || tool == QLatin1String("audio_sheet")
+        || tool == QLatin1String("audio_tag") || tool == QLatin1String("audio_find")
+        || tool == QLatin1String("audio_rank") || tool == QLatin1String("audio_presence")) {
+        McpController::AudioRequest req;
+        req.start = jsonNumber(args.value(QStringLiteral("start")), 0.0);
+        req.duration = jsonNumber(args.value(QStringLiteral("duration")), 0.0);
+        req.curve = jsonBool(args.value(QStringLiteral("curve")));
+        req.limit = jsonInt(args.value(QStringLiteral("limit")), 200);
+        req.minProminence = jsonNumber(args.value(QStringLiteral("min_prominence_db")), 0.0);
+        req.toleranceMs = jsonNumber(args.value(QStringLiteral("tolerance_ms")), 40.0);
+        req.width = jsonInt(args.value(QStringLiteral("width")), 2000);
+        req.frames = jsonBool(args.value(QStringLiteral("frames")), true);
+        req.toPath = argString(args, QStringLiteral("return")) == QLatin1String("path");
+        req.tags = jsonBool(args.value(QStringLiteral("tags")), true);
+        req.term = argString(args, QStringLiteral("term"));
+        req.top = jsonInt(args.value(QStringLiteral("top")), 5);
+        req.tagLimit = jsonInt(args.value(QStringLiteral("limit")), 20);
+        req.sections = jsonBool(args.value(QStringLiteral("sections")), true);
+        if (args.contains(QStringLiteral("at"))) {
+            req.hasAt = true;
+            for (const QJsonValue &v : args.value(QStringLiteral("at")).toArray())
+                req.at.append(jsonNumber(v, 0.0));
+        }
+        if (args.contains(QStringLiteral("clip")) || args.contains(QStringLiteral("index"))
+            || (args.contains(QStringLiteral("track")) && !args.contains(QStringLiteral("asset")))) {
+            const ClipRef ref = resolveClip(args);
+            if (!ref.valid())
+                return clipRefError(args);
+            req.mode = QStringLiteral("clip");
+            req.track = ref.track;
+            req.clip = ref.clip;
+        } else if (args.contains(QStringLiteral("asset"))) {
+            const int index = resolveAsset(args.value(QStringLiteral("asset")));
+            if (index < 0)
+                return err("not_found", QStringLiteral("Unknown asset"));
+            AssetLibrary *lib = m_controller->assetLibrary();
+            req.mode = QStringLiteral("asset");
+            req.assetId = lib ? lib->assetIdAt(index) : QString();
+        }
+        if (tool == QLatin1String("audio_rank")) {
+            AssetLibrary *lib = m_controller->assetLibrary();
+            for (const QJsonValue &v : args.value(QStringLiteral("assets")).toArray()) {
+                const int index = resolveAsset(v);
+                if (index < 0)
+                    return err("not_found", QStringLiteral("Unknown asset: %1").arg(v.toVariant().toString()));
+                req.assetIds.append(lib ? lib->assetIdAt(index) : QString());
+            }
+            return m_controller->mcp()->audioRank(req);
+        }
+        McpController *mcp = m_controller->mcp();
+        if (tool == QLatin1String("audio_tag"))
+            return mcp->audioTag(req);
+        if (tool == QLatin1String("audio_find"))
+            return mcp->audioFind(req);
+        if (tool == QLatin1String("audio_presence"))
+            return mcp->audioPresence(req);
+        if (tool == QLatin1String("audio_measure"))
+            return mcp->audioMeasure(req);
+        if (tool == QLatin1String("audio_events"))
+            return mcp->audioEvents(req);
+        if (tool == QLatin1String("audio_sync"))
+            return mcp->audioSync(req);
+        return mcp->audioSheet(req);
+    }
+
     if (tool == QLatin1String("analyze_loudness")) {
         const ClipRef ref = resolveClip(args);
         if (ref.valid())
@@ -3529,21 +3696,57 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     }
 
     if (tool.startsWith(QLatin1String("market_"))) {
-        MarketClient *market = m_controller->marketClient();
+        const McpMarketContext &market = m_controller->marketplace();
         if (tool == QLatin1String("market_status"))
-            return marketStatus(market);
+            return marketStatus(market, args);
         if (tool == QLatin1String("market_search"))
             return marketSearch(market, args);
-        if (tool == QLatin1String("market_resolve"))
-            return marketResolve(market, argString(args, QStringLiteral("url")));
         if (tool == QLatin1String("market_item"))
-            return marketItem(market, argString(args, QStringLiteral("id")));
-        if (tool == QLatin1String("market_download"))
-            return marketDownload(market, args);
+            return marketItem(market, args);
+        if (tool == QLatin1String("market_resolve"))
+            return marketResolve(market, args);
+        if (tool == QLatin1String("market_preview"))
+            return marketPreview(market, args);
         if (tool == QLatin1String("market_downloads"))
-            return marketDownloads(market, jsonBool(args.value(QStringLiteral("clear"))));
+            return marketDownloads(market, args);
         if (tool == QLatin1String("market_cancel_download"))
             return marketCancelDownload(market, argString(args, QStringLiteral("id")));
+        if (tool == QLatin1String("market_retry_download"))
+            return marketRetryDownload(market, argString(args, QStringLiteral("id")));
+        if (tool == QLatin1String("market_open"))
+            return marketOpen(market, args);
+        if (tool == QLatin1String("market_install") || tool == QLatin1String("market_download")) {
+            const bool place = args.contains(QStringLiteral("place"));
+            if (place && args.value(QStringLiteral("wait")).toInt(0) <= 0)
+                return err("bad_args", QStringLiteral("place needs wait > 0 so the item is installed before it is placed"));
+            if (place && args.value(QStringLiteral("source")).toString().startsWith(QLatin1String("community.")))
+                return err("bad_args", QStringLiteral("place only applies to items that land in the media bin"));
+            QJsonObject installed = marketInstall(market, args);
+            if (!place || !installed.value(QStringLiteral("ok")).toBool())
+                return installed;
+            const QString asset = installed.value(QStringLiteral("result")).toObject().value(QStringLiteral("asset")).toString();
+            if (asset.isEmpty()) {
+                QJsonObject out = err("bad_args", QStringLiteral("place only applies to items that land in the media bin; this one did not"));
+                out.insert(QStringLiteral("job"), installed.value(QStringLiteral("job")));
+                out.insert(QStringLiteral("result"), installed.value(QStringLiteral("result")));
+                return out;
+            }
+            QJsonObject placeArgs = args.value(QStringLiteral("place")).toObject();
+            placeArgs.insert(QStringLiteral("asset"), asset);
+            const QJsonObject placed = applyOne(QStringLiteral("place_clip"), placeArgs);
+            if (!placed.value(QStringLiteral("ok")).toBool()) {
+                QJsonObject out = placed;
+                out.insert(QStringLiteral("job"), installed.value(QStringLiteral("job")));
+                out.insert(QStringLiteral("result"), installed.value(QStringLiteral("result")));
+                return out;
+            }
+            installed.insert(QStringLiteral("clip"), placed.value(QStringLiteral("id")));
+            installed.insert(QStringLiteral("placed"), placed.value(QStringLiteral("placed")));
+            installed.insert(QStringLiteral("requested"), placed.value(QStringLiteral("requested")));
+            if (placed.contains(QStringLiteral("reason")))
+                installed.insert(QStringLiteral("reason"), placed.value(QStringLiteral("reason")));
+            return installed;
+        }
     }
 
     return unknownOpError(tool);

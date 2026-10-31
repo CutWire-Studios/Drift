@@ -9,7 +9,6 @@ Platform.MenuBar {
     property ApplicationWindow appWindow
     property var header
     property var assets
-    property LazyLoader downloadsLoader
     window: menuBar.appWindow
 
     Platform.Menu {
@@ -277,8 +276,8 @@ Platform.MenuBar {
             onObjectRemoved: (index, object) => windowMenu.removeItem(object)
         }
         Platform.MenuItem {
-            text: qsTr("Edit Workspaces…")
-            onTriggered: menuBar.appWindow.openSettings("workspaces")
+            text: qsTr("Customize Layouts in Settings…")
+            onTriggered: Qt.callLater(() => menuBar.appWindow.openSettings("workspaces"))
         }
         Platform.MenuSeparator {}
         Platform.MenuItem {
@@ -301,8 +300,12 @@ Platform.MenuBar {
         }
         Platform.MenuSeparator {}
         Platform.MenuItem {
+            text: qsTr("Marketplace")
+            onTriggered: menuBar.appWindow.openMarketplace("")
+        }
+        Platform.MenuItem {
             text: qsTr("Downloads")
-            onTriggered: menuBar.downloadsLoader.ensure().show()
+            onTriggered: menuBar.appWindow.openMarketplace("downloads")
         }
         Platform.MenuItem {
             text: qsTr("Multicam")

@@ -1855,6 +1855,157 @@
                {QStringLiteral("duration"), numberProp(QStringLiteral("Range length seconds (timeline mode)"))}},
               clipRefProps())),
           true, false, true },
+        { "audio_measure", "audio", "Full loudness report",
+          "Everything a loudness meter shows over a range: integrated LUFS, loudness range (LRA, needs 6 s), "
+          "4x-oversampled true peak, sample peak, loudest momentary (0.4 s) and short-term (3 s) readings, "
+          "clipping runs, and gaps (0.1 s loudness under max(-60, integrated-20) LUFS for at least 0.25 s: "
+          "{start,end,level_lufs,kind:digital silence|near silence|drop,where?:lead-in|tail|whole file}). "
+          "curve:true adds the momentary and short-term LUFS curves (thinned to 600 points; dt says the step). "
+          "Three modes like get_waveform: clip (or track+index) measures that clip through its volume and fades "
+          "on the timeline, asset a media file in source seconds (omit duration for the whole file), neither "
+          "(with start and duration) the MIXED TIMELINE as it would export, master clipper off. Range is capped at "
+          "3600 s. BLOCKS. A missing lufs/lra/true_peak_db key means it cannot be computed (all gated out, too "
+          "short, or digital silence — then silent:true).",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("curve"), propWithDefault(boolProp(QStringLiteral("Include the momentary and short-term loudness curves")), false)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 3600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_events", "audio", "Find the hits and swells",
+          "Sound events in a range: transient hits (superflux onsets on a 96-band log-mel, refined to the attack "
+          "on 1 ms envelopes, so at is where the sound actually begins) and swells (whoosh / riser build-ups, "
+          "timed at their peak). Each event has strength 0..1, level_db (dBFS peak), prominence_db (rise of the "
+          "K-weighted level over the bed just before — the number to rank by; a hit after silence is huge), band "
+          "(full, low < 200 Hz, high > 2 kHz) and length_ms. Use it to find where a sound effect lands, what is "
+          "loud enough to be an accent, or to place a cut on a hit. Same clip / asset / timeline modes as "
+          "audio_measure; range capped at 600 s. BLOCKS. Returns {n, swells, truncated, events:[{at,kind:hit|swell,"
+          "strength,level_db,prominence_db,band,length_ms}]} in chronological order; over limit keeps the most "
+          "prominent. Dense music always has some onset nearby, so read audio_sync's chance figures before "
+          "trusting a match.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Most events to return, strongest kept"), 1, 500), 200)},
+               {QStringLiteral("min_prominence_db"), propWithDefault(numberProp(QStringLiteral("Skip events less than this many dB over their bed (6 = deliberate accents)")), 0)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_sync", "audio", "Check sound lands on the cuts",
+          "For each cut, the audio event that answers it. Cuts are the video-track clip boundaries inside the "
+          "range, or pass at:[…] for explicit times (required in asset mode, which has no timeline). status: ok = "
+          "an onset within tolerance_ms; near = within 100 ms; swell = a build-up peaking within 300 ms; peak = no "
+          "onset, only a soft level peak within 150 ms (check it); off = only a strong onset within 250 ms; "
+          "no_sound = nothing. offset_ms = sound minus picture (negative = sound early). stats carry hit rates "
+          "next to chance_* — what random cue times would score at this event density — and accent_* for strong "
+          "accents only (>= 6 dB over the bed, top 20%): on a dense mix read those, a plain hit rate means little "
+          "when chance is high. no_sound lists the cuts with no hit. Same clip / asset / timeline modes as "
+          "audio_measure; range capped at 600 s; at beyond 400 cues is trimmed (truncated:true). BLOCKS. Fix a "
+          "miss by moving the sound clip by offset_ms.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Cue times to check instead of the timeline's cuts (timeline seconds, or source seconds in asset mode)"))},
+               {QStringLiteral("tolerance_ms"), propWithDefault(numberProp(QStringLiteral("How close an onset must be to count as ok (a frame is 33 at 30 fps)"), 5, 250), 40)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_tag", "audio", "Name the sounds and sections",
+          "What a range sounds like, from the audio.clap addon (and audio.ast for speech and music). sections: the "
+          "range cut where the sound changes (3 s windows merged while neighbours stay alike, split at strong "
+          "timbre or level changes), each with a label (genre, instruments, mood, 'also:' sources from AST, ambience, "
+          "voice), the top two vocabulary tags per category (music_genre, music_mood, instruments, ambience, voice) "
+          "with z, and speech / music / silence probabilities. events: the most important hits and swells of "
+          "audio_events (limit of them; those at a cut first), each with sound (WHOOSH, RISER, HIT, KEY, UI, STEP, "
+          "FOLEY, NOTE, DRUM, VOICE), label, the top 3 sound tags with z, exposed (>= 12 dB over its bed, so the tag "
+          "is more reliable) and sounds_like (calibrated vocabulary terms with verdict strong|plausible|weak). "
+          "Tags on music mixes are guesses; trust exposed hits and z >= 2.5 sections. Same clip / asset / timeline "
+          "modes as audio_measure; range capped at 600 s. BLOCKS (about a second per tagged event and per 2 s of "
+          "section; a minute of audio takes tens of seconds on CPU). Missing addons return addon_missing.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Most events to tag, most important first"), 1, 96), 20)},
+               {QStringLiteral("sections"), propWithDefault(boolProp(QStringLiteral("Also split the range into labelled sections")), true)},
+               {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Cut or cue times: events within 100 ms of one are always tagged (timeline seconds, or source seconds in asset mode)"))},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_find", "audio", "Find a sound by name",
+          "Where in a range a described sound happens. term is one of the 322 vocabulary terms (sound, music "
+          "and ambience descriptions such as \"heavy rain\", \"a fast whoosh\", \"applause\", \"crisp hi-hats\"), or "
+          "words that all appear in one (\"whoosh\" picks the shortest such term); the reply's term is the one used. "
+          "There is no free-text search: anything else returns error unknown_term with the closest vocabulary terms in "
+          "closest. Sliding windows plus excerpts around the strongest hits are scored with the calibrated CLAP "
+          "match. Returns moments:[{start,end,z,cosine,verdict,source:window|event}] best first, non-overlapping, "
+          "in the scope's seconds (timeline seconds, or source seconds in asset mode). z >= 3 strong (right 98% of "
+          "the time on a held-out set), 2.5 plausible, 2 weak, below 2 nothing in this range sounds like the term. "
+          "Same clip / asset / timeline modes as audio_measure; range capped at 600 s. BLOCKS (up to ~90 model "
+          "runs). Needs the audio.clap addon (addon_missing otherwise).",
+          objectSchema(mergeProps(
+              {{QStringLiteral("term"), stringProp(QStringLiteral("A vocabulary term, e.g. \"heavy rain\", \"a door slam\", \"upbeat pop music\""))},
+               {QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("top"), propWithDefault(integerProp(QStringLiteral("Most moments to return"), 1, 20), 5)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps()), {QStringLiteral("term")}),
+          true, false, true },
+        { "audio_rank", "audio", "Rank media by a sound",
+          "Rank media-bin audio and video assets by how well their sound matches one vocabulary term (same terms as "
+          "audio_find; unknown_term lists the closest). Each file is embedded from up to six 10 s windows spread "
+          "over it. Returns results:[{asset,name,z,cosine,verdict,near_silent,sounds_most_like}] best first; "
+          "near-silent files (peak under -60 dBFS) rank last with verdict no match. z >= 3 strong, 2.5 plausible, "
+          "2 weak. Pick a sound effect or a clip from the bin by what it sounds like. Files without an audio track "
+          "are listed in skipped_no_audio. At most 100 assets per call. BLOCKS (roughly a second per asset). Needs "
+          "the audio.clap addon.",
+          objectSchema(
+              {{QStringLiteral("term"), stringProp(QStringLiteral("A vocabulary term, e.g. \"a deep cinematic whoosh\", \"applause\""))},
+               {QStringLiteral("assets"), arrayProp(assetRefProp(), QStringLiteral("Assets to rank; omit for every audio and video asset in the bin"))},
+               {QStringLiteral("top"), propWithDefault(integerProp(QStringLiteral("Most results to return"), 1, 100), 5)}},
+              {QStringLiteral("term")}),
+          true, false, true },
+        { "audio_presence", "audio", "Where speech and music are",
+          "Speech, music and silence along a range, from the audio.ast addon (AudioSet classifier, 5.12 s windows "
+          "every 2.56 s). Returns segments:[{start,end,kind}] with kind speech | music | speech+music | silence | "
+          "other (sound that is neither), plus speech_seconds, music_seconds and silence_seconds. Music under "
+          "speech reads as speech+music. A window counts as speech or music from probability 0.3. Use it to find "
+          "where dialogue is before ducking music, or where nothing is said. Same clip / asset / timeline modes as "
+          "audio_measure; range capped at 600 s. BLOCKS. Needs the audio.ast addon.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_sheet", "audio", "See the soundtrack",
+          "One annotated image of the sound over a range, on a shared time axis: a frame after each cut, "
+          "labelled hits and swells, a 30 Hz-16 kHz spectrogram (silence is black), the waveform, momentary and "
+          "short-term loudness with the integrated level and gaps shaded yellow, beat ticks, and a marker per cut "
+          "coloured by sync (green onset within tolerance, amber within 100 ms, blue swell, violet level peak "
+          "only, red no hit) with dashed cut lines through every lane. Use it to judge a whole mix at a glance "
+          "— where the sound dies, what clips, whether hits land on the cuts. Same clip / asset / timeline modes "
+          "as audio_measure; range capped at 600 s (zoom with start+duration). BLOCKS. Returns a summary, the "
+          "measure numbers, events, cuts, sync stats and items (as audio_measure / audio_sync) and an inline "
+          "JPEG (long edge <= 1600 px); return:\"path\" writes the full-width PNG next to the project's frame "
+          "captures and returns its path instead. Asset mode draws frames only for video files and only at the "
+          "at times. With the audio.clap / audio.ast addons installed the sheet also gets a sections lane, sound "
+          "names on the hits and a speech / music lane (tags:false skips that and its model time; the reply then "
+          "carries sections, tagged_events and presence, or tags_missing naming the addons to install). image "
+          "result cannot run inside apply unless return is path.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Cue times to mark and sync-check instead of the timeline's cuts (timeline seconds, or source seconds in asset mode)"))},
+               {QStringLiteral("frames"), propWithDefault(boolProp(QStringLiteral("Draw a frame after each cut")), true)},
+               {QStringLiteral("tags"), propWithDefault(boolProp(QStringLiteral("Add sections, sound names and speech / music when audio.clap / audio.ast are installed")), true)},
+               {QStringLiteral("width"), propWithDefault(integerProp(QStringLiteral("Sheet width in px"), 1000, 2400), 2000)},
+               {QStringLiteral("return"), propWithDefault(enumProp(QStringLiteral("image is an inline JPEG; path writes the full-size PNG to disk"),
+                                                                   {QStringLiteral("image"), QStringLiteral("path")}),
+                                                          QStringLiteral("image"))},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
         { "normalize_volume", "audio", "Match a LUFS target",
           "Measure the clip, then set its scalar volume so integrated loudness matches target_lufs. "
           "Clamped to 0..2.",
@@ -1888,62 +2039,113 @@
         { "save_multicam_combined", "multicam", "Bake a single program track",
           "Write the session as one combined program track and end it.",
           objectSchema({}) },
-        { "market_status", "market", "Check the marketplace before searching it",
-          "Whether this build has a marketplace, whether the user has accepted its terms, the "
-          "account (if connected), and the catalog: types (video, photo, audio, …) with their "
-          "providers, each provider's capabilities (search, featured, resolve), filters and quota. "
-          "consented:false means every other market op will fail consent_required — the user "
-          "accepts in the app (Assets → Market); an agent cannot accept for them.",
-          objectSchema({}), true, false, true },
-        { "market_search", "market", "Find stock video, photos or audio to import",
-          "Search one provider of one type and return up to `limit` listings as {id, title, type, "
-          "provider, dur, w, h, coins?, by?, thumb?, variants?}. Omit q for a provider's featured "
-          "listing. filters takes the ids from market_status. more:true fetches the next page of "
-          "the previous search (has_more says whether there is one; offset is where the page starts "
-          "in the accumulated results, so market_item still resolves earlier ids). Blocks until the "
-          "service answers. A resolve-only provider (no search capability) needs market_resolve instead. "
-          "thumb is a URL an agent can fetch with its own tools to look at the item.",
-          objectSchema({{QStringLiteral("q"), stringProp(QStringLiteral("Free-text query; empty = featured"))},
-                        {QStringLiteral("type"), stringProp(QStringLiteral("Type id from market_status (default: the current one)"))},
-                        {QStringLiteral("provider"), stringProp(QStringLiteral("Provider id from market_status (default: the current one)"))},
-                        {QStringLiteral("filters"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("description"), QStringLiteral("Filter id → value, using the filters market_status lists for the provider")}}},
-                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max listings to return"), 1, 30), 30)},
-                        {QStringLiteral("more"), boolProp(QStringLiteral("Fetch the next page of the last search instead of a new one"))}}),
+        { "market_status", "market", "See what the marketplace offers before searching it",
+          "Whether this build has a marketplace and what it serves: {configured, offline, revision, features, "
+          "sources:[{id, kind, label, mediaKind, searchable, canResolve, categories (with children), providers?, sorts?}]}. "
+          "Sources are stock.<type> (video, photo, audio, music, greenscreen), drift-assets, sfx and "
+          "community.<kind> (effect, transition, audio-effect, look, theme, effect-template). "
+          "source:<id> returns that one source in full. layout:true adds pages:[{id, title, sections:[{id, type, "
+          "title, source}]}] so a section can be searched by its \"page/section\" name. refresh:true re-reads the "
+          "server's manifest first (waits up to 15 s).",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id for the full detail of one source"))},
+                        {QStringLiteral("layout"), boolProp(QStringLiteral("Include the pages and sections"))},
+                        {QStringLiteral("refresh"), boolProp(QStringLiteral("Re-fetch the manifest from the server first"))}}),
+          true, false, true },
+        { "market_search", "market", "Find stock media, Drift assets, sounds or community add-ons",
+          "List one source, or run a section's own binding with section:\"page/section\" (its sort, category and "
+          "page size become defaults). Returns {source, items:[{id, title, kind, dur?, w?, h?, by?, tags, category?, "
+          "thumb, preview?, variants:n, installed}], next_cursor?, has_more, quota?, warnings?}. Omit q for the "
+          "featured listing. category, sort and period use the values market_status lists for the source; "
+          "provider \"*\" asks every provider; filters is a map of filter id to value. more:true fetches the next "
+          "page of the previous search of that source (earlier ids stay valid); cursor restarts from a returned "
+          "next_cursor. type is an alias for source:\"stock.<type>\". Blocks until the service answers. "
+          "A resolve-only source needs market_resolve. Errors rate_limited, app_too_old and quota_exceeded come back "
+          "as {ok:false, error, detail}.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id from market_status"))},
+                        {QStringLiteral("section"), stringProp(QStringLiteral("page/section from market_status({layout:true}); runs that section's binding"))},
+                        {QStringLiteral("q"), stringProp(QStringLiteral("Free-text query; empty = featured"))},
+                        {QStringLiteral("category"), stringProp(QStringLiteral("Category id from market_status"))},
+                        {QStringLiteral("sort"), stringProp(QStringLiteral("Sort id from market_status"))},
+                        {QStringLiteral("period"), stringProp(QStringLiteral("Trending window, for sources that have one"))},
+                        {QStringLiteral("provider"), stringProp(QStringLiteral("Provider id; * searches all of them"))},
+                        {QStringLiteral("filters"), QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("description"), QStringLiteral("Filter id -> value, using the filters market_status lists for the source")}}},
+                        {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Items per page"), 1, 50), 24)},
+                        {QStringLiteral("cursor"), stringProp(QStringLiteral("next_cursor from an earlier result"))},
+                        {QStringLiteral("more"), boolProp(QStringLiteral("Fetch the next page of the previous search instead of a new one"))},
+                        {QStringLiteral("type"), stringProp(QStringLiteral("Alias for source:\"stock.<type>\""))}}),
           true, false, false },
-        { "market_resolve", "market", "Turn a pasted page URL into a downloadable listing",
-          "For providers that resolve links (YouTube-style) rather than search. Returns {item} "
-          "with variants; pass its id to market_download. Can take a while — it blocks up to 90 s.",
-          objectSchema({{QStringLiteral("url"), stringProp(QStringLiteral("Page URL the user pasted"))}},
+        { "market_item", "market", "Read one listing in full",
+          "One item fetched from the service: description, license, variants:[{id, label, w, h}], thumb, preview, "
+          "web_url, min_app_version, installed, install_state, extra. Use it to pick a variant for market_install.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search"))}},
+                       {QStringLiteral("source"), QStringLiteral("id")}),
+          true, false, true },
+        { "market_resolve", "market", "Turn a pasted page URL into a listing",
+          "For sources that resolve links (YouTube-style) rather than search. Returns {item} with variants; pass its "
+          "source and id to market_install. Can take a while: blocks for wait seconds (default 90).",
+          objectSchema({{QStringLiteral("url"), stringProp(QStringLiteral("Page URL the user pasted"))},
+                        {QStringLiteral("wait"), propWithDefault(integerProp(QStringLiteral("Seconds to wait for the link to resolve"), 1, 300), 90)}},
                        {QStringLiteral("url")}),
           true, false, false },
-        { "market_item", "market", "Read one listing's variants and license",
-          "Full detail of an item from the last market_search or market_resolve result, including "
-          "variants:[{id, label, w, h, coins?}] for market_download and preview/license when present.",
-          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))}},
-                       {QStringLiteral("id")}),
+        { "market_preview", "market", "Look at a listing's thumbnail or preview",
+          "Fetches the item's thumbnail (what:thumb) or preview (what:preview), caches it under the app cache and "
+          "returns a downscaled JPEG as image content with meta {path, w, h, mime}. Video and audio previews return "
+          "meta {path, mime, dur} only, no image. image:false returns just the meta. Not batchable in apply: call it "
+          "directly.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Item id"))},
+                        {QStringLiteral("what"), propWithDefault(enumProp(QStringLiteral("Which image"), {QStringLiteral("thumb"), QStringLiteral("preview")}), QStringLiteral("thumb"))},
+                        {QStringLiteral("image"), propWithDefault(boolProp(QStringLiteral("Return the image itself")), true)},
+                        {QStringLiteral("max"), propWithDefault(integerProp(QStringLiteral("Longest side in pixels"), 128, 1024), 512)}},
+                       {QStringLiteral("source"), QStringLiteral("id")}),
           true, false, true },
-        { "market_download", "market", "Fetch a listing into the media bin",
-          "Start downloading an item; when it finishes the file is imported and the job carries "
-          "its asset id, ready for place_clip. SPENDS the provider's per-machine quota (see "
-          "market_status) and cannot be undone. Async: returns the job at once; pass wait:<seconds> "
-          "to block until it finishes (max 600), or poll market_downloads. With wait, a job that "
-          "ends failed or cancelled comes back {ok:false, error, detail, job}. A job for an item "
-          "that is still running fails conflict; an id not in the last search/resolve result fails "
-          "not_found.",
-          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))},
-                        {QStringLiteral("variant"), stringProp(QStringLiteral("Variant id from market_item (default: the provider's default)"))},
-                        {QStringLiteral("dir"), stringProp(QStringLiteral("Absolute folder to write the file into (default: Drift's own media area)"))},
-                        {QStringLiteral("wait"), propWithDefault(integerProp(QStringLiteral("Seconds to block for completion; 0 returns immediately"), 0, 600), 0)}},
+        { "market_install", "market", "Install a listing into the project or the app",
+          "Install an item: stock media, Drift assets and sounds land in the media bin; community items install as an "
+          "effect, theme, look or template; face props go to the face-prop library. Stock items SPEND the provider's "
+          "per-machine quota (see market_search quota). Not undoable. Without wait it returns {job} at once; with wait:<seconds> "
+          "(max 600) it blocks and returns {ok, job, result} where result is {asset} | {prop} | {effect} | {theme} | "
+          "{look} | {template}. A failed or cancelled install comes back {ok:false, error, detail, job}. variant is a "
+          "variant id from market_item; dir (stock only) is an absolute folder to save into. place:{at, track, new_track} "
+          "puts the asset on the timeline once installed (needs wait > 0 and a bin asset) and adds {clip, placed, "
+          "requested, reason?}; the placement is one undo step. An item that is still installing fails conflict.",
+          objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                        {QStringLiteral("id"), stringProp(QStringLiteral("Item id from market_search or market_resolve"))},
+                        {QStringLiteral("variant"), stringProp(QStringLiteral("Variant id from market_item (default: the source's default)"))},
+                        {QStringLiteral("dir"), stringProp(QStringLiteral("Absolute folder to save into (stock sources only; default: Drift's own media area)"))},
+                        {QStringLiteral("wait"), propWithDefault(integerProp(QStringLiteral("Seconds to block for completion; 0 returns immediately"), 0, 600), 0)},
+                        {QStringLiteral("place"), objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds (default: playhead)"))},
+                                                                {QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
+                                                                {QStringLiteral("new_track"), boolProp(QStringLiteral("Place on a new track"))}})}},
+                       {QStringLiteral("source"), QStringLiteral("id")}),
+          false, false, false },
+        { "market_downloads", "market", "Poll marketplace, add-on and update downloads",
+          "Every transfer the app runs: {active, jobs:[{id, kind, title, status, phase, progress, bytes, total, speed, "
+          "error?, error_code?, retryable, cancellable, result?}]}. kind is stock | community | drift-asset | sfx | "
+          "addon | update. status runs waiting -> queued/processing -> downloading -> importing/installing -> done, "
+          "or failed/cancelled. result carries the asset id or path once done. kind filters; clear:true forgets "
+          "finished jobs.",
+          objectSchema({{QStringLiteral("kind"), stringProp(QStringLiteral("Only jobs of this kind"))},
+                        {QStringLiteral("clear"), boolProp(QStringLiteral("Forget finished, failed and cancelled jobs"))}}),
+          true, false, true },
+        { "market_cancel_download", "market", "Stop a running download",
+          "Cancel a running job of any kind by its id from market_downloads. Finished jobs fail conflict. Not undoable.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Job id from market_downloads"))}},
+                       {QStringLiteral("id")}),
+          false, true, true },
+        { "market_retry_download", "market", "Retry a failed or cancelled download",
+          "Restart a failed or cancelled job of any kind by its id from market_downloads. Stock retries spend quota "
+          "again. Jobs that are not retryable fail conflict.",
+          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Job id from market_downloads"))}},
                        {QStringLiteral("id")}),
           false, false, false },
-        { "market_downloads", "market", "Poll marketplace downloads",
-          "Every download this session as {id, title, kind, status, phase, progress, error?, path?, "
-          "asset?}. status runs waiting → queued/processing → downloading → importing → done, or "
-          "failed/cancelled; asset is the bin id once done. clear:true forgets finished jobs.",
-          objectSchema({{QStringLiteral("clear"), boolProp(QStringLiteral("Forget finished, failed and cancelled jobs"))}}),
-          true, false, true },
-        { "market_cancel_download", "market", "Stop a marketplace download",
-          "Cancel a running download by item id. Not undoable.",
-          objectSchema({{QStringLiteral("id"), stringProp(QStringLiteral("Item id of the running download"))}},
-                       {QStringLiteral("id")}),
-          false, true, true }
+        { "market_open", "market", "Show the user a marketplace page",
+          "Ask the app window to open the Marketplace on a page (ids from market_status({layout:true})), on the "
+          "downloads tab (tab:\"downloads\"), or on one item's detail. Returns {opened:true} once requested; "
+          "a headless instance has no window to show it in.",
+          objectSchema({{QStringLiteral("page"), stringProp(QStringLiteral("Page id"))},
+                        {QStringLiteral("tab"), stringProp(QStringLiteral("\"downloads\" for the downloads tab"))},
+                        {QStringLiteral("item"), objectSchema({{QStringLiteral("source"), stringProp(QStringLiteral("Source id"))},
+                                                               {QStringLiteral("id"), stringProp(QStringLiteral("Item id"))}},
+                                                              {QStringLiteral("source"), QStringLiteral("id")})}}),
+          false, false, true }

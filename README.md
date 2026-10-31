@@ -61,12 +61,10 @@ What you see in the preview is what you export. One compositor, one look, no sur
   <a href="https://apps.microsoft.com/detail/9PHHBZ07FRSZ">
     <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="293">
   </a>
-  <a href="docs/play-testing.md">
-    <img src="docs/btn-gplay-en.png" alt="Get it on Google Play (closed testing)" height="80">
+  <a href="https://play.google.com/store/apps/details?id=org.cutwire.drift">
+    <img src="docs/btn-gplay-en.png" alt="Get it on Google Play" height="80">
   </a>
 </p>
-
-<p align="center">Google Play is closed testing — <a href="docs/play-testing.md">how to join</a>.</p>
 
 **Linux** — install from Flathub:
 

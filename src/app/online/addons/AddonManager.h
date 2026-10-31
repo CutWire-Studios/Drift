@@ -2,12 +2,15 @@
 
 #include <QHash>
 #include <QJsonObject>
+#include <QMutex>
 #include <QObject>
 #include <QUrl>
 #include <QPointer>
 #include <QVariantList>
+#include <QWaitCondition>
 
 #include <memory>
+#include <optional>
 
 class QNetworkAccessManager;
 
@@ -76,6 +79,10 @@ public:
     // Sniffs the magic, since a content:// URI from "Open with" rarely carries the file name.
     Q_INVOKABLE bool isUserPackage(const QUrl &url) const;
     Q_INVOKABLE void installUserPackage();
+    // Installs a .driftfx already on disk without asking, for packages the marketplace verified.
+    // Blocking, and independent of inspectUserPackage(), so concurrent installs cannot race on
+    // "the last inspected file". Returns an error message, empty on success.
+    QString installUserPackageFile(const QString &path);
     // --- Addons from a file (.driftpkg, .zip, or a .driftfx routed to the above) ------------
     // Reads what the file claims to be and refuses it if this build cannot use it. Returns type
     // ("driftpkg" | "zip" | "driftfx"), name, version, author, description, nativeCode and
@@ -105,11 +112,19 @@ public:
     Q_INVOKABLE QVariantList accelerationOptions() const;
     Q_INVOKABLE QString acceleration() const;
     Q_INVOKABLE void setAcceleration(const QString &variant);
+    // What stops the engine that would run AI right now from using the graphics card, when that
+    // is something the user has to install or change (ROCm for AMD), or empty.
+    Q_INVOKABLE QString accelerationProblem() const;
 
     // True once a runtime addon has been installed or removed in a session that had already
     // loaded one. The library is loaded once per process, so the change only takes effect on the
     // next launch and the dialog has to say so.
     Q_INVOKABLE bool runtimeRestartRequired() const;
+    // accelerationOptions() narrowed to what works without a restart, minus `failed`: the
+    // choices offered when an engine the user picked could not run a model.
+    Q_INVOKABLE QVariantList fallbackAccelerationOptions(const QString &failed) const;
+    // The answer to accelerationFailed: the variant to switch to, or empty to give up.
+    Q_INVOKABLE void answerAccelerationFailure(const QString &variant);
 
 signals:
     void catalogChanged();
@@ -132,6 +147,9 @@ signals:
     // The file from inspectAddonFile() is not signed by the Drift team; the UI asks before
     // calling installAddonFile(true) or discardAddonFile().
     void addonFileNeedsConfirmation();
+    // An explicitly chosen AI engine could not load a model. When `waiting`, the load is paused
+    // on its own thread until answerAccelerationFailure() and is retried with the answer.
+    void accelerationFailed(const QString &variant, const QString &error, bool waiting);
 
 private:
     struct Transfer;
@@ -144,6 +162,7 @@ private:
     void beginExtract(const QString &id, const QString &packagePath);
     void failTransfer(const QString &id, const QString &message);
     void sweepDownloadCache();
+    QString askForOtherAcceleration(const QString &failed, const QString &error);
 
     QString m_status;
     bool m_refreshing = false;
@@ -156,6 +175,10 @@ private:
     QStringList m_awaitingFreshIndex;
     QSet<QString> m_retried;
     bool m_runtimeRestartRequired = false;
+    QMutex m_askMutex;
+    QWaitCondition m_askAnswered;
+    std::optional<QString> m_askAnswer;
+    bool m_quitting = false;
     QString m_userPackagePath;
     QString m_addonFilePath;
     QString m_addonFileType; // "driftpkg" | "zip"

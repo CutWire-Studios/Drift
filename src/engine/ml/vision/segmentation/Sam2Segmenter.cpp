@@ -187,15 +187,15 @@ bool Sam2Segmenter::Impl::ensureLoaded()
     if (!loadConstants(modelDir))
         return false;
 
-    try {
-        // Shared arena: memory_attention needs one contiguous 449 MiB score matrix (28736 memory
-        // tokens x 4096 image tokens, fp32). Left alone, each of the five sessions builds its own
-        // BFC arena and between them they reserve ~3.4 GB of a 4 GB card, so that allocation fails
-        // even though the card looks nearly empty.
-        Ort::Env &ortEnv = drift::ort::env();
-        Ort::SessionOptions opts = drift::ort::defaultSessionOptions(ortEnv, "sam2", true);
-
-        const QDir dir = graphDir(modelDir);
+    // Shared arena: memory_attention needs one contiguous 449 MiB score matrix (28736 memory
+    // tokens x 4096 image tokens, fp32). Left alone, each of the five sessions builds its own
+    // BFC arena and between them they reserve ~3.4 GB of a 4 GB card, so that allocation fails
+    // even though the card looks nearly empty.
+    Ort::Env &ortEnv = drift::ort::env();
+    const QDir dir = graphDir(modelDir);
+    QString loadError;
+    const bool built = drift::ort::buildSessions(ortEnv, "sam2", true, &loadError,
+                                                 [&](Ort::SessionOptions &opts) {
         auto open = [&](const char *name) {
             return std::make_unique<Ort::Session>(
                 ortEnv, ortPath(dir.filePath(QLatin1String(name))).c_str(), opts);
@@ -205,7 +205,18 @@ bool Sam2Segmenter::Impl::ensureLoaded()
         memEncoder = open("memory_encoder.onnx");
         memAttention = open("memory_attention.onnx");
         pointerTpos = open("pointer_tpos.onnx");
+    });
+    if (!built) {
+        error = QStringLiteral("Failed to load SAM2 model: ") + loadError;
+        vision.reset();
+        decoder.reset();
+        memEncoder.reset();
+        memAttention.reset();
+        pointerTpos.reset();
+        return false;
+    }
 
+    try {
         visionIn = sessionNames(*vision, true);
         visionOut = sessionNames(*vision, false);
         decIn = sessionNames(*decoder, true);

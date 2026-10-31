@@ -6,6 +6,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "color-looks"
+        title: qsTr("Looks")
+        keywords: "lut filter preset cube"
+    }
 
     property bool shown: false
 
@@ -14,16 +19,7 @@ PanelFrame {
     readonly property bool hasTarget: !!target.hasTarget
     readonly property var params: target.params || ({})
     readonly property string currentLook: params.look || ""
-    readonly property bool lookMissing: {
-        if (currentLook === "")
-            return false
-        const list = colorState.looks
-        for (let i = 0; i < list.length; ++i) {
-            if (list[i].id === currentLook)
-                return false
-        }
-        return true
-    }
+    readonly property bool lookMissing: !!target.lookMissing
     property string query: ""
     property var live: undefined
     property string pendingId: ""
@@ -146,7 +142,14 @@ PanelFrame {
             placeholderText: qsTr("Search looks")
             onTextChanged: root.query = text
 
+            SearchAnchor {
+                searchId: "color-import-looks"
+                title: qsTr("Import looks")
+                keywords: "import cube lut look"
+                target: importLooksButton
+            }
             IconButton {
+                id: importLooksButton
                 glyph: Theme.icons.download
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
@@ -187,13 +190,13 @@ PanelFrame {
         GradeSlider {
             x: Theme.pagePadding
             width: parent.width - Theme.pagePadding * 2
-            enabled: root.hasTarget
-            opacity: root.hasTarget ? 1 : 0.5
+            enabled: root.hasTarget && root.currentLook !== ""
             label: qsTr("Look Intensity")
             from: 0
             to: 1
             defaultValue: 1
             bipolar: false
+            animated: (root.target.animatedKeys || []).indexOf("lookAmount") >= 0
             value: root.live !== undefined ? root.live : (root.params.lookAmount ?? 1)
             onBegan: root.colorState.beginEdit(qsTr("Adjust %1").arg(label))
             onMoved: v => {
@@ -250,15 +253,19 @@ PanelFrame {
                 id: thumb
                 width: card.thumbWidth
                 height: Math.round(width * 9 / 16)
-                radius: Theme.radiusMd
-                color: Theme.panelSecondaryBg
-                border.width: card.current ? 2 : 0
-                border.color: Theme.primary
+                radius: Theme.c.lookCard.radius
+                color: cardHover.hovered ? Theme.c.lookCard.backgroundHover : Theme.c.lookCard.background
+                border.width: card.current ? Theme.c.lookCard.selectedBorderWidth : 0
+                border.color: Theme.c.lookCard.selectedBorder
                 clip: true
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+                }
 
                 Image {
                     anchors.fill: parent
-                    anchors.margins: card.current ? 2 : 0
+                    anchors.margins: card.current ? Theme.c.lookCard.selectedBorderWidth : 0
                     asynchronous: true
                     cache: false
                     fillMode: Image.PreserveAspectCrop
@@ -289,12 +296,19 @@ PanelFrame {
                 width: card.thumbWidth
                 elide: Text.ElideRight
                 text: card.modelData.label
-                color: card.current ? Theme.panelForeground : Theme.mutedForeground
+                color: card.current ? Theme.c.lookCard.labelSelected : Theme.c.lookCard.label
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
             }
 
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
+            HoverHandler {
+                id: cardHover
+                cursorShape: Qt.PointingHandCursor
+            }
+            ThemedToolTip {
+                visible: cardHover.hovered
+                text: card.modelData.label
+            }
             TapHandler {
                 onTapped: root.colorState.setLook(card.modelData.id)
             }

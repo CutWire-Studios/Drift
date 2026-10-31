@@ -8,6 +8,11 @@ PanelFrame {
     // The crop overlay's gesture hint, dismissed once per session rather than per crop.
     property bool cropHintDismissed: false
 
+    HoverHandler {
+        onHoveredChanged: ShellBridge.previewHovered = hovered
+    }
+    Component.onDestruction: ShellBridge.previewHovered = false
+
     readonly property real currentSeconds: EditorState.playheadSeconds
     readonly property real durationSeconds: EditorState.durationSeconds
     // Only the desktop shell hosts this panel (phones use AndroidPreview), so 3D mode is always
@@ -65,7 +70,11 @@ PanelFrame {
                 transform: transformTool,
                 mask: maskTool,
                 crop: cropTool,
-                guideEdit: guideEditTool
+                guideEdit: guideEditTool,
+                maskDraw: maskDrawTool,
+                maskBrush: maskBrushTool,
+                maskAi: maskAiTool,
+                tracker: trackerTool
             })
             toolHost.companion: transformCompanion
 
@@ -219,6 +228,26 @@ PanelFrame {
     Component {
         id: maskTool
         MaskOverlay { }
+    }
+
+    Component {
+        id: maskDrawTool
+        MaskDrawOverlay { }
+    }
+
+    Component {
+        id: maskBrushTool
+        MaskBrushOverlay { }
+    }
+
+    Component {
+        id: maskAiTool
+        MaskAiOverlay { }
+    }
+
+    Component {
+        id: trackerTool
+        TrackerOverlay { }
     }
 
     // Built fresh each crop session, so the frame starts from the whole canvas every time.

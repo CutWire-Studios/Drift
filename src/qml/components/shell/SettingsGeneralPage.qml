@@ -21,6 +21,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Language")
+        searchId: "general-language"
         description: qsTr("Language for menus and labels. Takes effect immediately.")
         keywords: "locale translation"
         query: page.query
@@ -53,6 +54,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Reopen last project on startup")
+        searchId: "general-reopen-last-project"
         description: qsTr("Restores the last open project. Closing still asks you to save.")
         query: page.query
 
@@ -69,6 +71,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Autosave interval")
+        searchId: "general-autosave-interval"
         description: qsTr("How often unsaved work is snapshotted for crash recovery.")
         keywords: "recovery backup"
         query: page.query
@@ -106,6 +109,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Remind about essential packs")
+        searchId: "general-remind-essential-packs"
         description: qsTr("Pulse the Extras icon when the video, transitions, and audio packs are not installed.")
         query: page.query
 
@@ -117,6 +121,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Remind about pack updates")
+        searchId: "general-remind-pack-updates"
         description: qsTr("Pulse the Extras icon when updates are available for packs you already have installed.")
         query: page.query
 
@@ -133,6 +138,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Haptic feedback")
+        searchId: "general-haptic-feedback"
         description: qsTr("Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them.")
         available: Haptics.supported
         query: page.query
@@ -150,6 +156,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Cache")
+        searchId: "general-cache"
         description: qsTr("%1 used, stored in %2")
                          .arg(page.cacheSizeText(EditorState.preferences.cacheSizeBytes))
                          .arg(EditorState.preferences.cacheLocation)
@@ -172,6 +179,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Export and import")
+        searchId: "general-export-import"
         description: qsTr("Save your preferences to a JSON file, or load them from one.")
         keywords: "backup restore"
         query: page.query

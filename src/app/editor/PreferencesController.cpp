@@ -1,4 +1,5 @@
 #include "app/editor/PreferencesController.h"
+#include "app/GraphicsApiChoice.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/EngineTuning.h"
 
@@ -55,6 +56,9 @@ int normalizedFrameCacheMiB(int mib)
 }
 // QT_SCALE_FACTOR came from ui/scale rather than the user's environment.
 bool g_uiScaleFromSettings = false;
+// The OS display scale ui/scale is measured against. 1.0 leaves ui/scale relative to the OS
+// scale; Windows passes its own, which makes ui/scale the absolute size.
+double g_osDisplayScale = 1.0;
 
 QString storedUiLanguage()
 {
@@ -112,6 +116,8 @@ bool isMachineOrSecretSetting(const QString &key)
         QStringLiteral("variant"), QStringLiteral("outputDeviceId"), QStringLiteral("decodeMode"),
         QStringLiteral("hardwareDecode"), QStringLiteral("vaapiZeroCopy"), QStringLiteral("d3d11ZeroCopy"),
         QStringLiteral("mediaCodecZeroCopy"), QStringLiteral("preferredGpu"),
+        QStringLiteral("graphicsApi"), QStringLiteral("graphicsApiPending"),
+        QStringLiteral("graphicsApiRevertedFrom"),
         QStringLiteral("speedFactor"), QStringLiteral("speedCalibrated"),
         QStringLiteral("proxyPassword"),
     };
@@ -154,8 +160,8 @@ double appliedUiScaleFromEnvironment()
     bool ok = false;
     const double env = qEnvironmentVariable("QT_SCALE_FACTOR").toDouble(&ok);
     if (ok && env > 0.0)
-        return env;
-    return 1.0;
+        return env * g_osDisplayScale;
+    return g_osDisplayScale;
 }
 
 QLocale uiLocaleFromStored()
@@ -259,6 +265,7 @@ PreferencesController::PreferencesController(QObject *parent)
     m_vaapiZeroCopy = drift::vaapiZeroCopyMode() != drift::VaapiZeroCopyMode::Off;
 #endif
     m_preferredGpu = drift::gpu::preferenceId(drift::gpu::storedPreference());
+    m_uiGraphicsApi = drift::graphics::storedApi();
     m_mediaCodecZeroCopy =
         settings.value(QStringLiteral("preview/mediaCodecZeroCopy"), false).toBool();
     m_invertTimelineScroll = settings.value(QStringLiteral("timeline/invertScroll"), false).toBool();
@@ -502,6 +509,26 @@ void PreferencesController::setPreferredGpu(const QString &id)
     emit preferredGpuChanged();
     // Not conservative advice: the driver chose this process's GPU when it loaded.
     emit restartNoticeRequested(tr("The graphics card choice takes effect after you restart Drift."));
+}
+
+void PreferencesController::setUiGraphicsApi(const QString &id)
+{
+    if (m_uiGraphicsApi == id || !drift::graphics::availableApis().contains(id))
+        return;
+    m_uiGraphicsApi = id;
+    drift::graphics::storeApi(id);
+    emit uiGraphicsApiChanged();
+    emit restartNoticeRequested(tr("The interface graphics API takes effect after you restart Drift."));
+}
+
+QStringList PreferencesController::uiGraphicsApis() const
+{
+    return drift::graphics::availableApis();
+}
+
+QString PreferencesController::uiGraphicsApiRevertedFrom() const
+{
+    return drift::graphics::revertedFrom();
 }
 
 bool PreferencesController::gpuPreferenceSupported() const
@@ -909,15 +936,35 @@ double PreferencesController::storedUiScale()
     return normalizeUiScale(value);
 }
 
-void PreferencesController::applyStoredUiScale()
+void PreferencesController::autoUiScaleOnce(int shortSide, double osDisplayScale)
 {
+    QSettings settings;
+    if (settings.value(QStringLiteral("ui/autoScaleDone")).toBool())
+        return;
+    settings.setValue(QStringLiteral("ui/autoScaleDone"), true);
+    if (shortSide <= 0 || osDisplayScale <= 0.0)
+        return;
+    // The layout is designed at 1080 rows; keep that much of the UI on screen at any resolution.
+    const double scale = normalizeUiScale(shortSide / 1080.0);
+    qInfo("PreferencesController: auto interface size %.0f%% for %d rows at %.0f%% display scale",
+          scale * 100.0, shortSide, osDisplayScale * 100.0);
+    if (qFuzzyCompare(scale, 1.0))
+        settings.remove(QStringLiteral("ui/scale"));
+    else
+        settings.setValue(QStringLiteral("ui/scale"), scale);
+}
+
+void PreferencesController::applyStoredUiScale(double osDisplayScale)
+{
+    if (osDisplayScale > 0.0)
+        g_osDisplayScale = osDisplayScale;
     // A shell or .desktop Exec=QT_SCALE_FACTOR=… stays the escape hatch.
     if (qEnvironmentVariableIsSet("QT_SCALE_FACTOR"))
         return;
-    const double scale = storedUiScale();
-    if (qFuzzyCompare(scale, 1.0))
+    const double factor = storedUiScale() / g_osDisplayScale;
+    if (qFuzzyCompare(factor, 1.0))
         return;
-    qputenv("QT_SCALE_FACTOR", QByteArray::number(scale, 'g', 4));
+    qputenv("QT_SCALE_FACTOR", QByteArray::number(factor, 'g', 4));
     g_uiScaleFromSettings = true;
 }
 

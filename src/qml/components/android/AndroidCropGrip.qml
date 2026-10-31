@@ -44,6 +44,32 @@ Item {
     property real startCropW: 0
     property real startCropH: 0
 
+    // Re-derives the dragged-along dimension from `crop.aspect` (w / h in crop units), keeping the
+    // edge or corner opposite the grip fixed; an edge-only grip keeps the other axis centred.
+    function holdAspect() {
+        const a = crop.aspect
+        const dx = modelData.dx
+        const dy = modelData.dy
+        const right = startCropX + startCropW
+        const bottom = startCropY + startCropH
+        if (dx !== 0 && dy === 0) {
+            const h = crop.cropW / a
+            crop.cropY = startCropY + (startCropH - h) / 2
+            crop.cropH = h
+        } else if (dy !== 0 && dx === 0) {
+            const w = crop.cropH * a
+            crop.cropX = startCropX + (startCropW - w) / 2
+            crop.cropW = w
+        } else {
+            const w = Math.max(crop.cropW, crop.cropH * a)
+            const h = w / a
+            crop.cropW = w
+            crop.cropH = h
+            crop.cropX = dx < 0 ? right - w : startCropX
+            crop.cropY = dy < 0 ? bottom - h : startCropY
+        }
+    }
+
     MouseArea {
         id: gripArea
         anchors.fill: parent
@@ -87,9 +113,15 @@ Item {
             } else if (grip.modelData.dy > 0) {
                 crop.cropH = Math.max(16, grip.startCropH + ddy)
             }
+
+            if (crop.aspect > 0)
+                grip.holdAspect()
         }
 
-        onReleased: Haptics.drop()
+        onReleased: {
+            Haptics.drop()
+            crop.gripReleased()
+        }
         onCanceled: Haptics.drop()
     }
 }

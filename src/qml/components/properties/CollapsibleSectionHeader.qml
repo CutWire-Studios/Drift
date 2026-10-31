@@ -10,10 +10,20 @@ Item {
     property bool switchChecked: false
     property string switchTooltip: ""
     property bool showSeparator: true
+    property string searchId: ""
     signal expandToggled()
     signal switchToggled(bool checked)
     id: root
     width: parent.width
+
+    Component.onCompleted: {
+        if (root.searchId !== "")
+            ShellBridge.registerAnchor(root.searchId, root)
+    }
+    Component.onDestruction: {
+        if (root.searchId !== "")
+            ShellBridge.unregisterAnchor(root.searchId, root)
+    }
 
     ThemeSlot {
         anchors.fill: parent

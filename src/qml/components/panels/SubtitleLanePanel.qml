@@ -4,6 +4,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "subtitle-lane"
+        title: qsTr("Subtitle lane")
+        keywords: "captions cues timeline drag waveform zoom"
+    }
 
     property bool shown: false
     property bool follow: true
@@ -238,7 +243,7 @@ PanelFrame {
         }
     }
 
-    KeyframesTimeView {
+    KeyframeTimeView {
         id: timeViewObject
         viewportWidth: view.width
     }

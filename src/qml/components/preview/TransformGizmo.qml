@@ -13,6 +13,8 @@ Item {
 
     // A previewClipsAtPlayhead entry, or null for no gizmo.
     property var box: null
+    // The members when box is the pivot frame of a multi-selection (groupGizmoPivot); empty otherwise.
+    property var groupBoxes: []
     property real sx: 1
     // Touch: bigger handles and a wider hit radius.
     property bool touch: false
@@ -82,6 +84,7 @@ Item {
         }
 
         property var startPose: null
+        property var startBoxes: null
         property point press: Qt.point(0, 0)
 
         onPositionChanged: (mouse) => {
@@ -92,9 +95,13 @@ Item {
             if (gizmo.dragging === "")
                 return
             // Ctrl passes straight through the 15° steps, as it does for the 2D snaps.
-            gizmo.livePose = EditorState.preview.applyGizmoDrag(
-                        startPose, gizmo.dragging, press.x, press.y, mouse.x, mouse.y,
-                        !(mouse.modifiers & Qt.ControlModifier), gizmo.sx)
+            const snap = !(mouse.modifiers & Qt.ControlModifier)
+            gizmo.livePose = startBoxes
+                ? EditorState.preview.applyGroupGizmoDrag(
+                      startPose, startBoxes, gizmo.dragging, press.x, press.y, mouse.x, mouse.y,
+                      snap, gizmo.sx)
+                : EditorState.preview.applyGizmoDrag(
+                      startPose, gizmo.dragging, press.x, press.y, mouse.x, mouse.y, snap, gizmo.sx)
         }
         onExited: if (!pressed) gizmo.hovered = ""
         onPressed: (mouse) => {
@@ -104,6 +111,7 @@ Item {
                 return
             }
             startPose = gizmo.box
+            startBoxes = gizmo.box.kind === "group" ? gizmo.groupBoxes : null
             press = Qt.point(mouse.x, mouse.y)
             gizmo.dragging = id
             gizmo.livePose = gizmo.box
@@ -119,6 +127,7 @@ Item {
             gizmo.dragging = ""
             gizmo.livePose = null
             startPose = null
+            startBoxes = null
             gizmo.dragFinished()
         }
     }

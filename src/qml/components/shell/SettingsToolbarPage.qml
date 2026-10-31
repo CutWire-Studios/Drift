@@ -10,6 +10,7 @@ SettingsPage {
     SettingsRow {
         stacked: true
         title: qsTr("Toolbar layout")
+        searchId: "toolbar-layout"
         description: qsTr("Choose which actions appear on the toolbar above the timeline and which go in its overflow menu.")
         keywords: "buttons actions overflow menu customize"
         query: page.query

@@ -142,6 +142,9 @@ private slots:
     void shapeStyleSerialization();
     void legacyShapeStyleLoadsWithDefaults();
     void sourceLabAnnotationsRoundTrip();
+    void maskingTrackingFieldsRoundTrip();
+    void maskFramePatchesRoundTripAndLookUpByMediaTime();
+    void projectWithoutMaskPatchesLoadsEmpty();
     void assetWithoutSourceLabKeysLoadsEmpty();
     void sourceLabRebaseMath();
     void shapeCatalogPathsFitBounds();
@@ -1963,6 +1966,7 @@ void CoreTest::shapeStyleSerialization()
     stroke.dash = drift::StrokeDash::DashDot;
     stroke.dashOffset = 1.5;
     stroke.strokeAlign = drift::StrokeAlign::Center;
+    stroke.join = drift::StrokeJoin::Bevel;
     stroke.trimEnd = 0.6;
     stroke.sketchLength = 8.0;
     stroke.sketchDeviation = 2.0;
@@ -2008,6 +2012,7 @@ void CoreTest::shapeStyleSerialization()
     QCOMPARE(style.layers[1].dash, drift::StrokeDash::DashDot);
     QCOMPARE(style.layers[1].dashOffset, 1.5);
     QCOMPARE(style.layers[1].strokeAlign, drift::StrokeAlign::Center);
+    QCOMPARE(style.layers[1].join, drift::StrokeJoin::Bevel);
     QCOMPARE(style.layers[1].trimEnd, 0.6);
     QCOMPARE(style.layers[1].sketchLength, 8.0);
     QCOMPARE(style.layers[1].sketchDeviation, 2.0);
@@ -2049,7 +2054,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 17);
+    QCOMPARE(drift::Project::kCurrentVersion, 20);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2070,6 +2075,158 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
     QCOMPARE(back->markers[0].timeUs, drift::secondsToUs(2));
     QCOMPARE(back->markers[0].name, QStringLiteral("Cue"));
     QCOMPARE(back->markers[0].note, QStringLiteral("note"));
+}
+
+void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-cutout");
+    clip.type = drift::ClipType::Adjustment;
+    clip.adjustmentKind = drift::AdjustmentKind::Mask;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.mask = drift::fullFrameMediaMask(QStringLiteral("/tmp/cutout.mkv"));
+    clip.mask.mediaPatches.insert(drift::secondsToUs(1), QStringLiteral("/tmp/fix-a.png"));
+    clip.mask.mediaPatches.insert(drift::secondsToUs(2), QStringLiteral("/tmp/fix-b.png"));
+    project.tracks()[0].clips.append(clip);
+
+    const QJsonObject json = project.toJson();
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 20);
+    const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                   .value(QStringLiteral("clips")).toArray().at(0).toObject()
+                                   .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
+    QCOMPARE(patches.size(), 2);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+    const drift::Mask &mask = loaded.tracks().at(0).clips.at(0).mask;
+    QCOMPARE(mask.mediaPatches.size(), 2);
+    QCOMPARE(mask.mediaPatches.value(drift::secondsToUs(1)), QStringLiteral("/tmp/fix-a.png"));
+    QCOMPARE(mask.mediaPatches.value(drift::secondsToUs(2)), QStringLiteral("/tmp/fix-b.png"));
+    QCOMPARE(mask.mediaPath, QStringLiteral("/tmp/cutout.mkv"));
+
+    const drift::TimeUs frame = drift::frameDurationUs(30);
+    const drift::TimeUs t = drift::secondsToUs(1);
+    QCOMPARE(mask.patchAt(t, frame / 2), QStringLiteral("/tmp/fix-a.png"));
+    QCOMPARE(mask.patchAt(t + frame / 2 - 1, frame / 2), QStringLiteral("/tmp/fix-a.png"));
+    QCOMPARE(mask.patchAt(t - frame / 2, frame / 2), QStringLiteral("/tmp/fix-a.png"));
+    QVERIFY(mask.patchAt(t + frame, frame / 2).isEmpty());
+    QVERIFY(mask.patchAt(t - frame, frame / 2).isEmpty());
+    QCOMPARE(mask.patchAt(drift::secondsToUs(2) + 1, frame / 2), QStringLiteral("/tmp/fix-b.png"));
+    QCOMPARE(mask.patchKeyAt(drift::secondsToUs(3), frame / 2), drift::TimeUs(-1));
+    QVERIFY(drift::Mask{}.patchAt(0, frame).isEmpty());
+}
+
+void CoreTest::projectWithoutMaskPatchesLoadsEmpty()
+{
+    drift::Project project;
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-plain");
+    clip.type = drift::ClipType::Adjustment;
+    clip.adjustmentKind = drift::AdjustmentKind::Mask;
+    clip.mask = drift::fullFrameMediaMask(QStringLiteral("/tmp/cutout.mkv"));
+    project.tracks()[0].clips.append(clip);
+
+    QJsonObject json = project.toJson();
+    const QJsonObject maskJson = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                     .value(QStringLiteral("clips")).toArray().at(0).toObject()
+                                     .value(QStringLiteral("mask")).toObject();
+    QVERIFY(!maskJson.contains(QStringLiteral("patches")));
+
+    json[QStringLiteral("version")] = 18;
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(json, &error);
+    QVERIFY(error.isEmpty());
+    QVERIFY(loaded.tracks().at(0).clips.at(0).mask.mediaPatches.isEmpty());
+    QVERIFY(loaded.tracks().at(0).clips.at(0).mask.isMedia());
+}
+
+void CoreTest::maskingTrackingFieldsRoundTrip()
+{
+    drift::Project project;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("asset-m");
+    asset.name = QStringLiteral("matte.mp4");
+    asset.kind = drift::MediaKind::Video;
+    asset.maskRole = QStringLiteral("alpha");
+    project.addAsset(asset);
+
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-mask");
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.mask.shape = drift::MaskShape::Media;
+    clip.mask.mediaPath = QStringLiteral("/tmp/m.png");
+    clip.mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
+
+    drift::MotionTracker tracker;
+    tracker.id = QStringLiteral("t1");
+    tracker.name = QStringLiteral("Hat");
+    tracker.kind = drift::MotionTracker::Kind::Planar;
+    tracker.solve = drift::MotionTracker::Solve::Perspective;
+    tracker.referenceUs = drift::secondsToUs(1);
+    tracker.minConfidence = 0.6;
+    drift::TrackPoint point;
+    point.samples.insert(drift::secondsToUs(1), drift::TrackSample{QPointF(0.2, 0.3), 0.9f, false});
+    point.samples.insert(drift::secondsToUs(2), drift::TrackSample{QPointF(0.25, 0.35), 0.4f, true});
+    tracker.points.append(point);
+    tracker.planarRegion = {QPointF(0.1, 0.1), QPointF(0.9, 0.1), QPointF(0.9, 0.9), QPointF(0.1, 0.9)};
+    tracker.homographies.insert(drift::secondsToUs(2), std::array<double, 9>{1, 0, 0.1, 0, 1, 0.2, 0, 0, 1});
+    tracker.targets.append(drift::TrackerTarget{QStringLiteral("adj-1"), drift::TrackerTarget::Mode::FollowClip});
+    clip.motionTrackers.append(tracker);
+    project.tracks()[0].clips.append(clip);
+
+    QString error;
+    const drift::Project loaded = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY(error.isEmpty());
+
+    const drift::MediaAsset *backAsset = loaded.asset(QStringLiteral("asset-m"));
+    QVERIFY(backAsset);
+    QCOMPARE(backAsset->maskRole, QStringLiteral("alpha"));
+
+    const drift::Clip &backClip = loaded.tracks().at(0).clips.at(0);
+    QCOMPARE(backClip.mask.shape, drift::MaskShape::Media);
+    QCOMPARE(backClip.mask.mediaPath, QStringLiteral("/tmp/m.png"));
+    QCOMPARE(backClip.mask.mediaTimeBase, drift::MaskMediaTimeBase::Adjustment);
+
+    QCOMPARE(backClip.motionTrackers.size(), 1);
+    const drift::MotionTracker &backTracker = backClip.motionTrackers.at(0);
+    QCOMPARE(backTracker.id, QStringLiteral("t1"));
+    QCOMPARE(backTracker.name, QStringLiteral("Hat"));
+    QCOMPARE(backTracker.kind, drift::MotionTracker::Kind::Planar);
+    QCOMPARE(backTracker.solve, drift::MotionTracker::Solve::Perspective);
+    QCOMPARE(backTracker.referenceUs, drift::secondsToUs(1));
+    QCOMPARE(backTracker.minConfidence, 0.6);
+
+    QCOMPARE(backTracker.points.size(), 1);
+    const drift::TrackPoint &backPoint = backTracker.points.at(0);
+    QCOMPARE(backPoint.samples.size(), 2);
+    const drift::TrackSample first = backPoint.samples.value(drift::secondsToUs(1));
+    QCOMPARE(first.pos, QPointF(0.2, 0.3));
+    QVERIFY(!first.userKey);
+    const drift::TrackSample second = backPoint.samples.value(drift::secondsToUs(2));
+    QCOMPARE(second.pos, QPointF(0.25, 0.35));
+    QVERIFY(qFuzzyCompare(second.confidence, 0.4f));
+    QVERIFY(second.userKey);
+
+    QCOMPARE(backTracker.planarRegion.size(), 4);
+    QCOMPARE(backTracker.planarRegion.at(2), QPointF(0.9, 0.9));
+
+    QCOMPARE(backTracker.homographies.size(), 1);
+    const std::array<double, 9> matrix = backTracker.homographies.value(drift::secondsToUs(2));
+    QCOMPARE(matrix[2], 0.1);
+    QCOMPARE(matrix[5], 0.2);
+    QCOMPARE(matrix[8], 1.0);
+
+    QCOMPARE(backTracker.targets.size(), 1);
+    QCOMPARE(backTracker.targets.at(0).clipId, QStringLiteral("adj-1"));
+    QCOMPARE(backTracker.targets.at(0).mode, drift::TrackerTarget::Mode::FollowClip);
 }
 
 void CoreTest::assetWithoutSourceLabKeysLoadsEmpty()

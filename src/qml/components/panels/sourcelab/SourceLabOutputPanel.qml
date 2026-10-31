@@ -4,6 +4,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "sourcelab-export"
+        title: qsTr("Export trimmed clip")
+        keywords: "export clip file save render container codec quality stream copy replace bin add copy"
+    }
 
     property bool shown: false
     property string summaryMode: "replace"

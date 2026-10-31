@@ -19,6 +19,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Reset to defaults")
+        searchId: "keymap-reset-defaults"
         description: qsTr("Restores every shortcut to its original key.")
         keywords: "restore original default shortcut"
         query: page.query

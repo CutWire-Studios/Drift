@@ -14,6 +14,7 @@
 #include "engine/project/ProjectBundle.h"
 #include "app/editor/TimelineClipsModel.h"
 #include "app/bin/AssetLibrary.h"
+#include "app/mcp/tools/McpMarket.h"
 #include "app/online/CloudProviders.h"
 #include "core/project/GuideSet.h"
 
@@ -52,7 +53,6 @@ struct MediaInfo;
 
 class QTimer;
 class AddonManager;
-class MarketClient;
 class JobRegistry;
 
 namespace drift {
@@ -65,6 +65,7 @@ struct MediaEditSpec;
 #include "app/bin/AssetPreviewController.h"
 #include "app/editor/sessions/CurveEditorController.h"
 #include "app/editor/sessions/KeyframeController.h"
+#include "app/editor/sessions/MaskingController.h"
 #include "app/editor/sessions/SubtitleController.h"
 #include "app/color/ColorController.h"
 #include "app/jobs/audio/DenoiseController.h"
@@ -77,6 +78,7 @@ struct MediaEditSpec;
 #include "app/bin/MediaBinController.h"
 #include "app/bin/SourceLabController.h"
 #include "app/jobs/vision/StabilizeController.h"
+#include "app/jobs/vision/TrackingController.h"
 #include "app/jobs/audio/TtsController.h"
 #include "app/jobs/audio/VoiceLibrary.h"
 #include "app/editor/sessions/SpeedCurveController.h"
@@ -103,10 +105,13 @@ class AppController : public QObject
     friend class DenoiseController;
     friend class ColorController;
     friend class KeyframeController;
+    friend class MaskingController;
+    friend class MaskEditSession;
     friend class SubtitleController;
     friend class RestoreController;
     friend class FaceTrackingController;
     friend class StabilizeController;
+    friend class TrackingController;
     friend class MediaBinController;
     friend class SourceLabController;
     friend class TtsController;
@@ -144,6 +149,8 @@ class AppController : public QObject
     Q_PROPERTY(ColorController *color READ color CONSTANT)
     // Keyframe panel editing and clip property rows. QML: EditorState.keyframes.
     Q_PROPERTY(KeyframeController *keyframes READ keyframes CONSTANT)
+    // "Use as mask" on bin assets and timeline clips. QML: EditorState.masking.
+    Q_PROPERTY(MaskingController *masking READ masking CONSTANT)
     Q_PROPERTY(SubtitleController *subtitles READ subtitles CONSTANT)
     // Video restore and enhance (decompression, upscaling). QML: EditorState.restore.
     Q_PROPERTY(RestoreController *restore READ restore CONSTANT)
@@ -151,6 +158,7 @@ class AppController : public QObject
     Q_PROPERTY(FaceTrackingController *faces READ faces CONSTANT)
     // Clip stabilization. QML: EditorState.stabilize.
     Q_PROPERTY(StabilizeController *stabilize READ stabilize CONSTANT)
+    Q_PROPERTY(TrackingController *tracking READ tracking CONSTANT)
     // Local text-to-speech and the cloned-voice library. QML: EditorState.tts, EditorState.voices.
     Q_PROPERTY(TtsController *tts READ tts CONSTANT)
     Q_PROPERTY(VoiceLibrary *voices READ voices CONSTANT)
@@ -247,6 +255,7 @@ class AppController : public QObject
     Q_PROPERTY(bool exportByAgent READ exportByAgent NOTIFY exportInProgressChanged)
     Q_PROPERTY(double exportProgress READ exportProgress NOTIFY exportProgressChanged)
     Q_PROPERTY(bool canShareExport READ canShareExport NOTIFY canShareExportChanged)
+    Q_PROPERTY(QVariantList exportHistory READ exportHistory NOTIFY exportHistoryChanged)
     Q_PROPERTY(bool subtitleGenerating READ subtitleGenerating NOTIFY subtitleGeneratingChanged)
     Q_PROPERTY(double subtitleGenProgress READ subtitleGenProgress NOTIFY subtitleGenProgressChanged)
     Q_PROPERTY(QString subtitleGenStatus READ subtitleGenStatus NOTIFY subtitleGenStatusChanged)
@@ -350,10 +359,12 @@ public:
     DenoiseController *denoise() const { return m_denoise; }
     ColorController *color() const { return m_color; }
     KeyframeController *keyframes() const { return m_keyframes; }
+    MaskingController *masking() const { return m_masking; }
     SubtitleController *subtitles() const { return m_subtitles; }
     RestoreController *restore() const { return m_restore; }
     FaceTrackingController *faces() const { return m_faces; }
     StabilizeController *stabilize() const { return m_stabilize; }
+    TrackingController *tracking() const { return m_tracking; }
     TtsController *tts() const { return m_tts; }
     VoiceLibrary *voices() const { return m_voices; }
     McpController *mcp() const { return m_mcpController; }
@@ -447,6 +458,7 @@ public:
     void setExportRequestedByAgent(bool byAgent) { m_exportRequestedByAgent = byAgent; }
     double exportProgress() const;
     bool canShareExport() const;
+    QVariantList exportHistory() const;
     bool subtitleGenerating() const { return m_subtitleGenerating; }
     double subtitleGenProgress() const { return m_subtitleGenProgress; }
     QString subtitleGenStatus() const { return m_subtitleGenStatus; }
@@ -563,8 +575,8 @@ public:
                                        const QString &undoText);
 
     void setAddonManager(AddonManager *manager);
-    void setMarketClient(MarketClient *client) { m_marketClient = client; }
-    MarketClient *marketClient() const { return m_marketClient; }
+    void setMarketplace(const McpMarketContext &context) { m_marketplace = context; }
+    const McpMarketContext &marketplace() const { return m_marketplace; }
     AddonManager *addonManager() const { return m_addonManager; }
     // Strip chip click — folds `prop`'s curve away, or brings it back. Purely a view filter: the
     // chip stays put either way, and the animation keeps playing while it is hidden.
@@ -784,7 +796,7 @@ public:
     // Folds every committed edit between the two calls into one undo step, for controls that
     // write through plain setters (a scrubbed number field). Nothing is pushed if nothing changed.
     Q_INVOKABLE void beginEditGroup();
-    Q_INVOKABLE void endEditGroup(const QString &undoText);
+    Q_INVOKABLE bool endEditGroup(const QString &undoText);
     Q_INVOKABLE void applyCanvasCrop(double x, double y, double width, double height);
     Q_INVOKABLE bool timelineHasVisualClips() const;
     Q_INVOKABLE bool shouldConfigureProjectForAsset(int assetIndex) const;
@@ -792,7 +804,10 @@ public:
     bool projectLayoutChosen() const { return m_projectLayoutChosen; }
     Q_INVOKABLE void markProjectLayoutChosen();
     Q_INVOKABLE void selectClip(int trackIndex, int clipIndex);
-    void selectClipUnderPlayhead();
+    Q_INVOKABLE void selectClipUnderPlayhead();
+    // [track, clip] of the clip with this id, or [] when it is gone. Indices shift as clips are
+    // added and removed; ids do not.
+    Q_INVOKABLE QVariantList locateClip(const QString &clipId) const;
     Q_INVOKABLE void addToSelection(int trackIndex, int clipIndex);
     Q_INVOKABLE void setSelection(const QVariantList &pairs);
     Q_INVOKABLE void selectAllClips();
@@ -1410,6 +1425,9 @@ public:
     Q_INVOKABLE void clearWorkArea();
     Q_INVOKABLE void toggleLoopWorkArea();
     Q_INVOKABLE void freezeFrameAtPlayhead();
+    Q_INVOKABLE void previewClipRange(int trackIndex, int clipIndex);
+    Q_INVOKABLE void clearPreviewRange();
+    Q_INVOKABLE QVariantMap clipTimelineRange(int track, int clip) const;
     Q_INVOKABLE void copySelection();
     Q_INVOKABLE void cutSelection();
     Q_INVOKABLE void pasteAtPlayhead();
@@ -1553,6 +1571,10 @@ public:
     // Same publish-to-gallery step as shareLastExport, handed to a player instead of a share
     // sheet. Shares the m_sharingExport guard, so the two cannot run the copy twice at once.
     Q_INVOKABLE void playLastExport();
+    Q_INVOKABLE void removeExport(const QString &uri);
+    // shareLastExport / playLastExport for any export-history entry (uri from exportHistory).
+    Q_INVOKABLE void shareFile(const QString &uri);
+    Q_INVOKABLE void viewFile(const QString &uri);
     // Copies a file into the shared media collection (Movies/Music/Pictures under "Drift") so it
     // outlives the app's own storage. Marketplace downloads land in AppDataLocation, which is gone
     // on uninstall or a "clear data" and invisible to every file manager — for something the user
@@ -1623,6 +1645,7 @@ signals:
     void exportInProgressChanged();
     void exportProgressChanged();
     void canShareExportChanged();
+    void exportHistoryChanged();
     // `location` is a human-readable folder ("Movies/Drift"), empty when ok is false.
     void savedToGallery(const QString &displayName, bool ok, const QString &location,
                         const QString &error);
@@ -1892,6 +1915,8 @@ protected:
     // Select the clip with this id. Pinning a mask inserts a lane and normalization reorders, so
     // an index captured before the edit is stale by the time there is something to select.
     void selectClipById(const QString &clipId);
+    // An adjustment clip carrying `effectId` (empty for none), not yet placed on any track.
+    drift::Clip buildAdjustmentClip(const QString &effectId, drift::TimeUs start, drift::TimeUs durUs) const;
     // Re-establishes the two structural invariants the adjustment model rests on: no stack sits
     // on a media clip, and every lane is adjacent to and directly above its parent. Both passes
     // can insert or reorder tracks, so the selection is carried across by id. Idempotent and
@@ -1991,7 +2016,7 @@ protected:
 
     AssetLibrary *m_assetLibrary = nullptr;
     AddonManager *m_addonManager = nullptr;
-    MarketClient *m_marketClient = nullptr;
+    McpMarketContext m_marketplace;
     JobRegistry *m_jobs = nullptr;
     CloudProviders *m_cloud = nullptr;
     // These trees must outlive m_playback: the compositor thread holds a bare
@@ -2062,6 +2087,8 @@ protected:
     QFuture<void> m_exportFuture;
     QUrl m_lastExportUrl;
     QString m_lastExportName;
+    void recordExport(const QUrl &url, double durationSeconds, qint64 sizeBytes, const QString &thumbnail);
+    void openExportedFile(const QString &uri, bool share);
     // Android: the publish-to-gallery copy behind Share is on a worker, so canShareExport reports
     // false while it runs — that both hides the button (the dialog binds its visibility to it) and
     // stops a second tap from starting the copy again. Unused on desktop.
@@ -2137,10 +2164,12 @@ protected:
     DenoiseController *m_denoise = nullptr;
     ColorController *m_color = nullptr;
     KeyframeController *m_keyframes = nullptr;
+    MaskingController *m_masking = nullptr;
     SubtitleController *m_subtitles = nullptr;
     RestoreController *m_restore = nullptr;
     FaceTrackingController *m_faces = nullptr;
     StabilizeController *m_stabilize = nullptr;
+    TrackingController *m_tracking = nullptr;
     MediaBinController *m_bin = nullptr;
     SourceLabController *m_sourceLab = nullptr;
     TtsController *m_tts = nullptr;

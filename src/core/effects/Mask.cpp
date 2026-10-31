@@ -85,6 +85,24 @@ MaskMediaChannel maskMediaChannelFromString(const QString &channel)
     return MaskMediaChannel::Luma;
 }
 
+QString maskMediaTimeBaseToString(MaskMediaTimeBase base)
+{
+    switch (base) {
+    case MaskMediaTimeBase::Adjustment:
+        return QStringLiteral("adjustment");
+    case MaskMediaTimeBase::HostSource:
+        break;
+    }
+    return QStringLiteral("host");
+}
+
+MaskMediaTimeBase maskMediaTimeBaseFromString(const QString &base)
+{
+    if (base == QStringLiteral("adjustment"))
+        return MaskMediaTimeBase::Adjustment;
+    return MaskMediaTimeBase::HostSource;
+}
+
 QString maskOpToString(MaskOp op)
 {
     switch (op) {
@@ -113,6 +131,31 @@ const QStringList &maskKeyframeProperties()
                                    QStringLiteral("w"),        QStringLiteral("h"),
                                    QStringLiteral("rotation"), QStringLiteral("feather")};
     return props;
+}
+
+TimeUs Mask::patchKeyAt(TimeUs mediaUs, TimeUs tolerance) const
+{
+    if (mediaPatches.isEmpty())
+        return -1;
+    auto it = mediaPatches.lowerBound(mediaUs);
+    TimeUs best = -1;
+    TimeUs bestDistance = tolerance + 1;
+    if (it != mediaPatches.constEnd() && it.key() - mediaUs < bestDistance) {
+        best = it.key();
+        bestDistance = it.key() - mediaUs;
+    }
+    if (it != mediaPatches.constBegin()) {
+        --it;
+        if (mediaUs - it.key() < bestDistance)
+            best = it.key();
+    }
+    return best;
+}
+
+QString Mask::patchAt(TimeUs mediaUs, TimeUs tolerance) const
+{
+    const TimeUs key = patchKeyAt(mediaUs, tolerance);
+    return key < 0 ? QString() : mediaPatches.value(key);
 }
 
 bool Mask::isAnimated() const

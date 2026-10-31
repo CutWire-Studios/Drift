@@ -45,18 +45,21 @@ const PanelType kPanelTypes[] = {
     {"subtitleTiming", QT_TRANSLATE_NOOP("WorkspaceStore", "Subtitle timing")},
     {"undoHistory", QT_TRANSLATE_NOOP("WorkspaceStore", "History")},
     {"agentLog", QT_TRANSLATE_NOOP("WorkspaceStore", "Agent Log")},
+    {"agentViews", QT_TRANSLATE_NOOP("WorkspaceStore", "Agent Views")},
+    {"audioSheet", QT_TRANSLATE_NOOP("WorkspaceStore", "Audio Sheet")},
     {"recorder", QT_TRANSLATE_NOOP("WorkspaceStore", "Recorder")},
     {"denoise", QT_TRANSLATE_NOOP("WorkspaceStore", "Noise Removal")},
     {"color", QT_TRANSLATE_NOOP("WorkspaceStore", "Color")},
     {"looks", QT_TRANSLATE_NOOP("WorkspaceStore", "Looks")},
     {"scopes", QT_TRANSLATE_NOOP("WorkspaceStore", "Scopes")},
     {"keyframes", QT_TRANSLATE_NOOP("WorkspaceStore", "Keyframes")},
+    {"masking", QT_TRANSLATE_NOOP("WorkspaceStore", "Masking")},
+    {"tracking", QT_TRANSLATE_NOOP("WorkspaceStore", "Tracking")},
 };
 
 // Tab ids and labels mirror AssetsPanel.qml / PropertiesPanel.qml.
 const PanelType kAssetTabTypes[] = {
     {"assets.media", QT_TRANSLATE_NOOP("WorkspaceStore", "Media")},
-    {"assets.market", QT_TRANSLATE_NOOP("WorkspaceStore", "Market")},
     {"assets.text", QT_TRANSLATE_NOOP("WorkspaceStore", "Text")},
     {"assets.subtitles", QT_TRANSLATE_NOOP("WorkspaceStore", "Subtitles")},
     {"assets.speech", QT_TRANSLATE_NOOP("WorkspaceStore", "Speech")},
@@ -250,6 +253,28 @@ QString validateNode(const QVariantMap &node, QSet<QString> &seen)
         seen.insert(type);
     }
     return {};
+}
+
+bool containsPanel(const QVariantMap &node, const QString &type)
+{
+    for (const QVariant &child : node.value(QStringLiteral("children")).toList()) {
+        if (containsPanel(child.toMap(), type))
+            return true;
+    }
+    for (const QVariant &panel : node.value(QStringLiteral("panels")).toList()) {
+        if (panel.toMap().value(QStringLiteral("type")).toString() == type)
+            return true;
+    }
+    return false;
+}
+
+bool workspaceHasPanel(const QVariantMap &ws, const QString &type)
+{
+    for (const QVariant &window : ws.value(QStringLiteral("windows")).toList()) {
+        if (containsPanel(window.toMap().value(QStringLiteral("root")).toMap(), type))
+            return true;
+    }
+    return false;
 }
 
 QVariantMap parseJson(const QByteArray &data)
@@ -529,6 +554,21 @@ QVariantList WorkspaceStore::panelTypes() const
 QVariantMap WorkspaceStore::workspace(const QString &id) const
 {
     return effective(id);
+}
+
+QString WorkspaceStore::workspaceWithPanel(const QString &type) const
+{
+    if (workspaceHasPanel(effective(m_activeId), type))
+        return m_activeId;
+    for (const QString &id : m_presetOrder) {
+        if (workspaceHasPanel(effective(id), type))
+            return id;
+    }
+    for (const QVariant &v : m_user) {
+        if (workspaceHasPanel(v.toMap(), type))
+            return v.toMap().value(QStringLiteral("id")).toString();
+    }
+    return {};
 }
 
 QString WorkspaceStore::validate(const QVariantMap &ws) const

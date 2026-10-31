@@ -85,6 +85,13 @@
 #include "engine/audio/dsp/ClipAudioRetimer.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/audio/analysis/AudioOnsets.h"
+#include "engine/audio/analysis/AudioEvents.h"
+#include "engine/audio/analysis/AudioSync.h"
+#include "engine/audio/analysis/LoudnessMeter.h"
+#include "engine/diagnostics/sheets/AudioSheet.h"
+#include "engine/ml/audio/AstClassifier.h"
+#include "engine/ml/audio/AudioTagging.h"
+#include "engine/ml/audio/ClapTagger.h"
 #include "engine/ml/vision/detection/ObjectDetector.h"
 #include "engine/ml/vision/detection/SceneDetect.h"
 #include "engine/render3d/splats/SplatAsset.h"
@@ -150,6 +157,11 @@ class EngineTest : public QObject
 {
     Q_OBJECT
 
+public:
+    // renderToTexture only hands out texture names when the compositor shares with Qt Quick's
+    // context, as it does in the app; without this the present-ring tests get readbacks.
+    static void initMain() { QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts); }
+
 private slots:
     void initTestCase();
     void splatPlyLoads();
@@ -197,6 +209,8 @@ private slots:
     void effectPackageNewParamTypes();
     void bakeGradientInterpolatesAndHoldsEnds();
     void bakeCurveAppliesEaseAndHoldsEnds();
+    void evalCurveMatchesBakeIncludingPeriodicAndEases();
+    void parseCurvePointsSanitizes();
     void paramSamplerUnitSkipsDepthAndMaskUnits();
     void depthPipelineBindsMapInFrameOrientation();
     void depthEffectsRenderWithDepthAndPassThroughWithout();
@@ -399,12 +413,15 @@ private slots:
     void textAnimationFadesAndSlides();
     void clipBodyAnimationFadeRampsOpacity();
     void maskApplierEllipseMasksCorners();
+    void maskMediaTimeBaseIndexesHostOrAdjustment();
     void maskApplierFoldsAStackByItsOps();
     void maskShapesUseBothSizeAxes();
     void starMaskRotatesOnceNotTwice();
     void maskAdjustmentLaneMasksItsParentsClips();
     void maskLaneOpsCombineAcrossLanes();
     void soleMediaMaskCarriesTheDecontaminatedForeground();
+    void maskFramePatchReachesTheLayerAtItsFrameOnly();
+    void maskFramePatchChangesTheCompositedCoverage();
     void maskEffectReadsTheMaskAndDrawsTheClipWhole();
     void effectsApplyOnTopOfTheCutoutForeground();
     void aVideoEffectsAdjustmentKeepsItsOwnMask();
@@ -440,8 +457,16 @@ private slots:
     void audioCrossfadeUsesHandles();
     void audioCrossfadeFallsBackToDip();
     void waveformSheetDrawsWordLane();
+    void loudnessReportFindsGapsClippingAndRange();
+    void audioEventsFindBurstsNotSilence();
+    void audioSyncGradesCuts();
+    void audioSheetRendersLanes();
     void vadRangesFollowSileroRules();
     void vadModelScoresSilenceLow();
+    void audioVocabularyLooksUpTerms();
+    void audioClapMatchesReference();
+    void audioAstMatchesReference();
+    void audioTaggingFindsSectionsAndMoments();
     void ctcForcedAlignFindsPlantedPath();
     void alignerNormalizesEnglish();
     void clusterEmbeddingsCompleteLinkage();
@@ -11239,6 +11264,8 @@ void EngineTest::heavyWeightsRenderSolidGlyphs()
 void EngineTest::textClipCarriesGpuEffects()
 {
     SKIP_WITHOUT_FONTS();
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
 
     drift::Project project;
     project.setResolution(128, 128);
@@ -11271,6 +11298,8 @@ void EngineTest::textClipCarriesGpuEffects()
 void EngineTest::textAnimationFadesAndSlides()
 {
     SKIP_WITHOUT_FONTS();
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
 
     drift::Project project;
     project.setResolution(128, 128);
@@ -11334,6 +11363,39 @@ void EngineTest::clipBodyAnimationFadeRampsOpacity()
     const double mid = meanLuminance(compositor.compositeAt(drift::secondsToUs(0.5)));
     const double settled = meanLuminance(compositor.compositeAt(drift::secondsToUs(1.5)));
     QVERIFY2(early < mid && mid < settled, "clip body fade-in did not ramp up");
+}
+
+void EngineTest::maskMediaTimeBaseIndexesHostOrAdjustment()
+{
+    drift::Clip host;
+    host.timelineStart = drift::secondsToUs(10.0);
+    host.timelineDuration = drift::secondsToUs(10.0);
+    host.srcIn = drift::secondsToUs(4.0);
+    host.srcOut = drift::secondsToUs(24.0);
+    host.speed = 2.0;
+
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Media;
+    mask.mediaSrcOffsetUs = drift::secondsToUs(1.0);
+    const drift::TimeUs adjustmentStart = drift::secondsToUs(8.0);
+    const drift::TimeUs t = drift::secondsToUs(13.0);
+
+    // Host source time: 4 + 3 * 2 = 10 s, less the 1 s offset.
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, 0, t), drift::secondsToUs(9.0));
+
+    // Adjustment base ignores the host's trim and speed: (13 - 8) + 1 s.
+    mask.mediaTimeBase = drift::MaskMediaTimeBase::Adjustment;
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, 0, t), drift::secondsToUs(6.0));
+
+    // Before the adjustment starts, the clamp keeps it at 0 once the offset is spent.
+    mask.mediaSrcOffsetUs = 0;
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, adjustmentStart, 0, drift::secondsToUs(6.0)), 0);
+
+    // A split or head-trim moves the start but advances srcIn by the same amount, so the matte
+    // carries on instead of replaying: (13 - 11) + 3 s of srcIn.
+    mask.mediaSrcOffsetUs = 0;
+    QCOMPARE(FrameCompositor::maskMediaSourceTimeUs(host, mask, drift::secondsToUs(11.0), drift::secondsToUs(3.0), t),
+             drift::secondsToUs(5.0));
 }
 
 void EngineTest::maskApplierEllipseMasksCorners()
@@ -11594,6 +11656,105 @@ void EngineTest::maskLaneOpsCombineAcrossLanes()
     QVERIFY(!frame.isNull());
     QVERIFY2(qRed(frame.pixel(2, 2)) > 200, "outside the hole the full-frame mask shows through");
     QVERIFY2(qRed(frame.pixel(32, 32)) < 40, "the subtracted square is carved out");
+}
+
+namespace {
+
+// A 64x64 white image clip under a full-frame white matte, with a black patch (alpha 255) on the
+// matte's frame at `patchSecond`.
+struct PatchedCutout
+{
+    drift::Project project;
+    drift::TimeUs patchUs = 0;
+};
+
+PatchedCutout makePatchedCutout(const QTemporaryDir &dir, double patchSecond)
+{
+    PatchedCutout out;
+    const QString imagePath = dir.filePath(QStringLiteral("white.png"));
+    const QString mattePath = dir.filePath(QStringLiteral("matte.png"));
+    const QString patchPath = dir.filePath(QStringLiteral("patch.png"));
+    QImage white(64, 64, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+    white.save(imagePath);
+    white.save(mattePath);
+    QImage patch(64, 64, QImage::Format_ARGB32);
+    patch.fill(QColor(0, 0, 0, 255));
+    patch.save(patchPath);
+
+    out.project.setResolution(64, 64);
+    out.project.tracks().clear();
+    out.project.tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.type = drift::ClipType::Image;
+    clip.path = imagePath;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    out.project.tracks()[0].clips.append(clip);
+
+    drift::Mask matte = drift::fullFrameMediaMask(mattePath);
+    out.patchUs = FrameCompositor::maskMediaSourceTimeUs(clip, matte, 0, 0, drift::secondsToUs(patchSecond));
+    matte.mediaPatches.insert(out.patchUs, patchPath);
+    drift::setLinkedMask(out.project, 0, 0, matte);
+    return out;
+}
+
+} // namespace
+
+// A brush fix belongs to one frame of the matte: the layer built for that frame carries it, the
+// frame after does not, and the rest of the stack is unaffected.
+void EngineTest::maskFramePatchReachesTheLayerAtItsFrameOnly()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    PatchedCutout cutout = makePatchedCutout(dir, 1.0);
+    const drift::TimeUs frame = drift::frameDurationUs(cutout.project.fps());
+
+    FrameCompositor compositor;
+    compositor.setProject(&cutout.project);
+
+    GpuScene at;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), FrameCompositor::RenderOptions{}, &at));
+    QCOMPARE(at.items.size(), 1);
+    const GpuLayer &patched = at.items.constFirst().layer;
+    QCOMPARE(patched.maskPatch.size(), 1);
+    QVERIFY(!patched.maskPatch.constFirst().isNull());
+    QVERIFY(!patched.maskMedia.constFirst().isNull());
+    QCOMPARE(qRed(patched.maskPatch.constFirst().pixel(10, 10)), 0);
+
+    GpuScene next;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0) + frame, FrameCompositor::RenderOptions{}, &next));
+    QCOMPARE(next.items.size(), 1);
+    QVERIFY(next.items.constFirst().layer.maskPatch.constFirst().isNull());
+
+    GpuScene before;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0) - frame, FrameCompositor::RenderOptions{}, &before));
+    QVERIFY(before.items.constFirst().layer.maskPatch.constFirst().isNull());
+}
+
+// The patch is mixed over the decoded matte: black here punches the picture out on its frame only.
+void EngineTest::maskFramePatchChangesTheCompositedCoverage()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    PatchedCutout cutout = makePatchedCutout(dir, 1.0);
+    const drift::TimeUs frame = drift::frameDurationUs(cutout.project.fps());
+
+    FrameCompositor compositor;
+    compositor.setProject(&cutout.project);
+
+    const QImage patched = compositor.compositeAt(drift::secondsToUs(1.0));
+    const QImage plain = compositor.compositeAt(drift::secondsToUs(1.0) + frame);
+    QVERIFY(!patched.isNull());
+    QVERIFY(!plain.isNull());
+    QVERIFY2(plain.pixelColor(32, 32).alpha() > 200 && plain.pixelColor(32, 32).red() > 200,
+             "the matte alone shows the picture");
+    QVERIFY2(patched.pixelColor(32, 32).alpha() < 40 || patched.pixelColor(32, 32).red() < 40,
+             "the black patch cuts the picture out on its own frame");
 }
 
 // The decontaminated foreground replaces the layer's colour, which only makes sense while one
@@ -16256,6 +16417,192 @@ void EngineTest::vadRangesFollowSileroRules()
     QCOMPARE(drift::vadSpeechRanges(probs, total, params).size(), 2);
 }
 
+namespace {
+
+// The C++ CLAP and AST paths are checked against earshot's PyTorch outputs (refdata from
+// drift-addons/recipes/validate-audio-models.py). Needs the staged addons, a runtime and the
+// reference files: DRIFT_AUDIO_CLAP_MODEL_DIR, DRIFT_AUDIO_AST_MODEL_DIR, DRIFT_AUDIO_REFDATA_DIR,
+// and DRIFT_ONNXRUNTIME_DIR for the runtime.
+std::vector<float> readRefFloats(const QString &dir, const QString &name)
+{
+    QFile f(QDir(dir).filePath(name));
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    const QByteArray raw = f.readAll();
+    std::vector<float> out(static_cast<size_t>(raw.size()) / sizeof(float));
+    memcpy(out.data(), raw.constData(), out.size() * sizeof(float));
+    return out;
+}
+
+QJsonObject readRefIndex(const QString &dir)
+{
+    QFile f(QDir(dir).filePath(QStringLiteral("index.json")));
+    return f.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(f.readAll()).object() : QJsonObject();
+}
+
+} // namespace
+
+void EngineTest::audioVocabularyLooksUpTerms()
+{
+    if (!drift::ClapTagger::modelPresent())
+        QSKIP("Audio tagging addon not found (set DRIFT_AUDIO_CLAP_MODEL_DIR)");
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    QVERIFY(clap.loadVocabulary());
+    QCOMPARE(clap.vocabularyTerms().size(), 322);
+    const int rain = clap.termIndex(QStringLiteral("  Heavy RAIN "));
+    QVERIFY(rain >= 0);
+    QCOMPARE(clap.vocabularyTerms().at(rain), QStringLiteral("heavy rain"));
+    QCOMPARE(clap.termIndex(QStringLiteral("a fast whoosh")), clap.termIndex(QStringLiteral("fast whoosh")));
+    QCOMPARE(clap.termIndex(QStringLiteral("a recording of a tuba")), -1);
+    const QStringList near = clap.closestTerms(QStringLiteral("hevy rain storm"), 3);
+    QCOMPARE(near.size(), 3);
+    QVERIFY2(near.first().contains(QStringLiteral("rain")), qPrintable(near.join(QLatin1Char('|'))));
+    QCOMPARE(drift::clapVerdict(3.0f), QStringLiteral("strong"));
+    QCOMPARE(drift::clapVerdict(2.7f), QStringLiteral("plausible"));
+    QCOMPARE(drift::clapVerdict(2.0f), QStringLiteral("weak"));
+    QCOMPARE(drift::clapVerdict(1.9f), QStringLiteral("no match"));
+}
+
+void EngineTest::audioClapMatchesReference()
+{
+    const QString refDir = qEnvironmentVariable("DRIFT_AUDIO_REFDATA_DIR");
+    if (refDir.isEmpty() || !drift::ClapTagger::modelPresent())
+        QSKIP("Set DRIFT_AUDIO_REFDATA_DIR and DRIFT_AUDIO_CLAP_MODEL_DIR to run");
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    if (!clap.available())
+        QSKIP(qPrintable(QStringLiteral("CLAP unavailable: %1").arg(clap.lastError())));
+    const QJsonObject cases = readRefIndex(refDir).value(QStringLiteral("cases")).toObject();
+    QVERIFY(!cases.isEmpty());
+    for (auto it = cases.begin(); it != cases.end(); ++it) {
+        const QString name = it.key();
+        const QJsonObject ref = it.value().toObject();
+        const std::vector<float> pcm = readRefFloats(refDir, name + QStringLiteral(".wav48k.f32"));
+        const std::vector<float> want = readRefFloats(refDir, name + QStringLiteral(".clap_embedding.f32"));
+        QVERIFY2(!pcm.empty() && want.size() == 512, qPrintable(name));
+
+        drift::ClapEmbedding got{};
+        QVERIFY2(clap.embedClip(pcm.data(), static_cast<qint64>(pcm.size()), &got), qPrintable(clap.lastError()));
+        double cosine = 0.0;
+        for (int i = 0; i < 512; ++i)
+            cosine += double(got[static_cast<size_t>(i)]) * want[static_cast<size_t>(i)];
+        qInfo("CLAP %s: embedding cosine %.6f", qPrintable(name), cosine);
+        QVERIFY2(cosine > 0.999, qPrintable(QStringLiteral("%1: %2").arg(name).arg(cosine)));
+
+        // Event tags: the same three phrases in the same order.
+        const QJsonArray wantTags = ref.value(QStringLiteral("earshot")).toObject().value(QStringLiteral("event_tags_top3")).toArray();
+        const QList<drift::ClapTag> tags = clap.eventTags(got, 3);
+        QCOMPARE(tags.size(), 3);
+        for (int k = 0; k < 3; ++k) {
+            QCOMPARE(tags.at(k).text, wantTags.at(k).toObject().value(QStringLiteral("phrase")).toString());
+            QCOMPARE(tags.at(k).kind, wantTags.at(k).toObject().value(QStringLiteral("kind")).toString());
+            QVERIFY(qAbs(double(tags.at(k).z) - wantTags.at(k).toObject().value(QStringLiteral("z")).toDouble()) < 0.1);
+        }
+
+        // Calibrated vocabulary: the best term, its category and z.
+        const QJsonArray wantTerms = ref.value(QStringLiteral("earshot")).toObject().value(QStringLiteral("vocab_top8_calibrated")).toArray();
+        const QList<drift::ClapTag> terms = clap.topTerms(got, 8);
+        QCOMPARE(terms.first().text, wantTerms.first().toObject().value(QStringLiteral("term")).toString());
+        QCOMPARE(terms.first().category, wantTerms.first().toObject().value(QStringLiteral("category")).toString());
+        QVERIFY(qAbs(double(terms.first().z) - wantTerms.first().toObject().value(QStringLiteral("z")).toDouble()) < 0.1);
+        int shared = 0;
+        for (const QJsonValue &w : wantTerms) {
+            for (const drift::ClapTag &t : terms)
+                shared += t.text == w.toObject().value(QStringLiteral("term")).toString() ? 1 : 0;
+        }
+        QVERIFY2(shared >= 7, qPrintable(QStringLiteral("%1: top-8 terms share %2").arg(name).arg(shared)));
+    }
+}
+
+void EngineTest::audioAstMatchesReference()
+{
+    const QString refDir = qEnvironmentVariable("DRIFT_AUDIO_REFDATA_DIR");
+    if (refDir.isEmpty() || !drift::AstClassifier::modelPresent())
+        QSKIP("Set DRIFT_AUDIO_REFDATA_DIR and DRIFT_AUDIO_AST_MODEL_DIR to run");
+    drift::AstClassifier &ast = drift::AstClassifier::instance();
+    if (!ast.available())
+        QSKIP(qPrintable(QStringLiteral("AST unavailable: %1").arg(ast.lastError())));
+    const QJsonObject cases = readRefIndex(refDir).value(QStringLiteral("cases")).toObject();
+    QVERIFY(!cases.isEmpty());
+    for (auto it = cases.begin(); it != cases.end(); ++it) {
+        const QString name = it.key();
+        const std::vector<float> pcm16 = readRefFloats(refDir, name + QStringLiteral(".wav16k.f32"));
+        const std::vector<float> pcm48 = readRefFloats(refDir, name + QStringLiteral(".wav48k.f32"));
+        const std::vector<float> want = readRefFloats(refDir, name + QStringLiteral(".ast_probs.f32"));
+        QVERIFY2(!pcm16.empty() && want.size() == 527, qPrintable(name));
+        const QJsonArray top = it.value().toObject().value(QStringLiteral("earshot")).toObject().value(QStringLiteral("ast_top10")).toArray();
+
+        // The graph on earshot's own 16 kHz input (soxr HQ), and on our 48 -> 16 kHz resample of the 48 kHz
+        // one, which differs from soxr by a little at the band edge.
+        const std::vector<float> resampled = drift::AstClassifier::resample48kTo16k(pcm48.data(), static_cast<qint64>(pcm48.size()));
+        for (const std::vector<float> *input : {&pcm16, &resampled}) {
+            const std::vector<float> got = ast.probabilitiesOfClip(input->data(), static_cast<qint64>(input->size()));
+            QCOMPARE(got.size(), size_t(527));
+            float worst = 0.0f;
+            for (size_t i = 0; i < 527; ++i)
+                worst = std::max(worst, std::abs(got[i] - want[i]));
+            qInfo("AST %s (%s): max |dp| %.5f", qPrintable(name), input == &pcm16 ? "wav16k" : "resampled", double(worst));
+            QVERIFY2(worst < (input == &pcm16 ? 0.01f : 0.02f), qPrintable(QStringLiteral("%1: %2").arg(name).arg(double(worst))));
+            const drift::AstSummary summary = ast.summarise(got, 5, 0.0f);
+            for (int k = 0; k < 3; ++k)
+                QCOMPARE(summary.top.at(k).label, top.at(k).toObject().value(QStringLiteral("label")).toString());
+        }
+    }
+}
+
+void EngineTest::audioTaggingFindsSectionsAndMoments()
+{
+    const QString refDir = qEnvironmentVariable("DRIFT_AUDIO_REFDATA_DIR");
+    if (refDir.isEmpty() || !drift::ClapTagger::modelPresent() || !drift::AstClassifier::modelPresent())
+        QSKIP("Set DRIFT_AUDIO_REFDATA_DIR, DRIFT_AUDIO_CLAP_MODEL_DIR and DRIFT_AUDIO_AST_MODEL_DIR to run");
+    if (!drift::ClapTagger::instance().available() || !drift::AstClassifier::instance().available())
+        QSKIP("Audio models unavailable");
+
+    // 12 s of the film window, a break of near silence, then the burst excerpt repeated: two sections.
+    std::vector<float> film = readRefFloats(refDir, QStringLiteral("film_window_0_10s.wav48k.f32"));
+    const std::vector<float> burst = readRefFloats(refDir, QStringLiteral("bursts_event_0p5s.wav48k.f32"));
+    QVERIFY(!film.empty() && !burst.empty());
+    film.insert(film.end(), 48000 * 2, 0.0f);
+    for (int i = 0; i < 12; ++i)
+        film.insert(film.end(), burst.begin(), burst.end());
+
+    drift::AudioTagOptions options;
+    options.maxTagged = 6;
+    const drift::AudioEventsResult events = drift::AudioEvents::analyze(film.data(), static_cast<qint64>(film.size()), 48000, 0.0);
+    const drift::AudioTags tags = drift::tagAudio(film.data(), static_cast<qint64>(film.size()), 0.0, events.events, options);
+    QVERIFY(tags.clap);
+    QVERIFY(tags.ast);
+    QVERIFY(!tags.sections.isEmpty());
+    QCOMPARE(tags.sections.first().start, 0.0);
+    QVERIFY(qAbs(tags.sections.last().end - double(film.size()) / 48000.0) < 0.02);
+    for (int i = 1; i < tags.sections.size(); ++i)
+        QVERIFY(qAbs(tags.sections.at(i).start - tags.sections.at(i - 1).end) < 1e-6);
+    for (const drift::ClapSection &s : tags.sections) {
+        QVERIFY(!s.label.isEmpty());
+        qInfo("section %.2f-%.2f: %s", s.start, s.end, qPrintable(s.label));
+    }
+    QVERIFY(!tags.events.isEmpty());
+    QVERIFY(tags.events.size() <= 6);
+    for (const drift::TaggedEvent &e : tags.events) {
+        QVERIFY(!e.label.isEmpty());
+        qInfo("event %.2f: %s (%s)", events.events.at(e.index).seconds, qPrintable(e.label), qPrintable(e.kind));
+    }
+
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    const int hat = clap.termIndex(QStringLiteral("crisp hi-hats"));
+    QVERIFY(hat >= 0);
+    const drift::MomentIndex index = drift::indexMoments(clap, film.data(), static_cast<qint64>(film.size()), 0.0, events.events);
+    QVERIFY(index.valid());
+    const QList<drift::AudioMoment> moments = drift::findMoments(clap, index, hat, 3);
+    QVERIFY(!moments.isEmpty());
+    // The hi-hat-like bursts are in the last third; they must win over the synth music.
+    QVERIFY2(moments.first().start > 11.9, qPrintable(QString::number(moments.first().start)));
+    QVERIFY(moments.first().z > 2.0f);
+    for (int i = 1; i < moments.size(); ++i) {
+        QVERIFY(moments.at(i).z <= moments.at(i - 1).z);
+        QVERIFY(moments.at(i).start >= moments.at(i - 1).end - 1e-3 || moments.at(i).end <= moments.at(i - 1).start + 1e-3);
+    }
+}
+
 void EngineTest::vadModelScoresSilenceLow()
 {
     const QString dir = QString::fromUtf8(DRIFT_TEST_VAD_MODEL_DIR);
@@ -16444,6 +16791,182 @@ void EngineTest::audioCrossfadeFallsBackToDip()
     const auto bound = static_cast<float>(before * 2.0 * std::sin(M_PI * 440.0 / 48000));
     QVERIFY2(atCut < before * 0.05f, qPrintable(QStringLiteral("%1 at the cut").arg(atCut)));
     QVERIFY2(worst < bound * 1.5f, qPrintable(QStringLiteral("step %1 vs %2").arg(worst).arg(bound)));
+}
+
+void EngineTest::loudnessReportFindsGapsClippingAndRange()
+{
+    constexpr int kRate = 48000;
+    constexpr int kSeconds = 12;
+    QVector<float> pcm(kRate * kSeconds * 2, 0.0f);
+    for (int i = 0; i < kRate * kSeconds; ++i) {
+        const double t = double(i) / kRate;
+        const bool silent = t >= 5.0 && t < 6.5;
+        const double gain = t < 6.5 ? 0.1 : 0.4;
+        const float v = silent ? 0.0f : float(gain * std::sin(2.0 * M_PI * 997.0 * t));
+        pcm[i * 2] = v;
+        pcm[i * 2 + 1] = v;
+    }
+    for (int i = 0; i < 40; ++i) {
+        pcm[(kRate * 2 + i) * 2] = 1.0f;
+        pcm[(kRate * 2 + i) * 2 + 1] = 1.0f;
+    }
+
+    const drift::LoudnessReport r = drift::analyzeLoudness(
+        qint64(kRate) * kSeconds, kRate, [&](float *out, qint64 offset, int maxFrames) {
+            const int n = int(qMin<qint64>(maxFrames, qint64(kRate) * kSeconds - offset));
+            std::copy_n(pcm.constData() + offset * 2, n * 2, out);
+            return n;
+        });
+    QVERIFY(r.ok);
+    QVERIFY(r.hasIntegrated);
+    QVERIFY(r.hasLra);
+    QVERIFY2(r.lraLu > 6.0, qPrintable(QString::number(r.lraLu)));
+    QVERIFY(r.hasTruePeak);
+    QVERIFY(r.truePeakDb >= r.samplePeakDb - 0.01);
+    QCOMPARE(r.clippingRuns.size(), 1);
+    QVERIFY(qAbs(r.clippingRuns.first().start - 2.0) < 0.001);
+    QCOMPARE(r.clippedSamples, qint64(40));
+    QCOMPARE(r.gaps.size(), 1);
+    QVERIFY2(qAbs(r.gaps.first().start - 5.0) < 0.15 && qAbs(r.gaps.first().end - 6.5) < 0.15,
+             qPrintable(QStringLiteral("%1-%2").arg(r.gaps.first().start).arg(r.gaps.first().end)));
+    QCOMPARE(r.gaps.first().kind, QStringLiteral("digital silence"));
+    QVERIFY(!r.momentary.lufs.isEmpty());
+    QVERIFY(!r.shortTerm.lufs.isEmpty());
+
+    const drift::LoudnessReport none = drift::analyzeLoudness(
+        qint64(kRate) * 2, kRate, [&](float *out, qint64, int maxFrames) {
+            std::fill_n(out, maxFrames * 2, 0.0f);
+            return maxFrames;
+        });
+    QVERIFY(none.ok);
+    QVERIFY(!none.hasIntegrated);
+    QVERIFY(!none.hasTruePeak);
+}
+
+void EngineTest::audioEventsFindBurstsNotSilence()
+{
+    constexpr int kRate = 48000;
+    QVector<float> mono(kRate * 6, 0.0f);
+    std::mt19937 rng(77);
+    std::uniform_real_distribution<float> noise(-1.0f, 1.0f);
+    const double starts[] = {1.0, 2.5, 4.2};
+    for (double s : starts) {
+        const int at = int(s * kRate);
+        for (int i = 0; i < kRate / 5; ++i)
+            mono[at + i] = 0.5f * noise(rng) * std::exp(-i / (kRate * 0.03f));
+    }
+
+    const drift::AudioEventsResult r = drift::AudioEvents::analyze(mono.constData(), mono.size(), kRate, 10.0);
+    QCOMPARE(r.events.size(), 3);
+    for (int k = 0; k < 3; ++k) {
+        QVERIFY2(qAbs(r.events.at(k).seconds - (10.0 + starts[k])) < 0.01,
+                 qPrintable(QString::number(r.events.at(k).seconds)));
+        QCOMPARE(r.events.at(k).kind, drift::AudioEvent::Kind::Hit);
+        QVERIFY(r.events.at(k).levelDbfs > -20.0);
+    }
+
+    const QVector<float> silence(kRate * 3, 0.0f);
+    QVERIFY(drift::AudioEvents::analyze(silence.constData(), silence.size(), kRate, 0.0).events.isEmpty());
+    QVERIFY(drift::AudioEvents::analyze(silence.constData(), silence.size(), 44100, 0.0).events.isEmpty());
+
+    QVector<float> lead(kRate * 2, 0.0f);
+    for (int i = 0; i < kRate / 10; ++i)
+        lead[i] = 0.5f * noise(rng);
+    drift::AudioEventsOptions options;
+    options.leadIn = true;
+    const drift::AudioEventsResult withLead = drift::AudioEvents::analyze(lead.constData(), lead.size(), kRate, 0.0, options);
+    QVERIFY(!withLead.events.isEmpty());
+    QVERIFY(withLead.events.first().seconds < 0.01);
+}
+
+void EngineTest::audioSyncGradesCuts()
+{
+    using Status = drift::AudioSyncItem::Status;
+    QList<drift::AudioEvent> events;
+    for (double t : {1.0, 3.0, 5.2}) {
+        drift::AudioEvent e;
+        e.seconds = t;
+        e.prominenceDb = 20.0;
+        events.append(e);
+    }
+    drift::AudioEvent swell;
+    swell.seconds = 8.1;
+    swell.kind = drift::AudioEvent::Kind::Swell;
+    swell.prominenceDb = 10.0;
+    events.append(swell);
+
+    const drift::AudioSyncResult r = drift::matchSync({1.01, 3.07, 5.0, 7.85, 12.0}, events);
+    QCOMPARE(r.items.size(), 5);
+    QCOMPARE(r.items.at(0).status, Status::Ok);
+    QVERIFY(qAbs(r.items.at(0).offsetMs + 10.0) < 0.5);
+    QCOMPARE(r.items.at(1).status, Status::Near);
+    QCOMPARE(r.items.at(2).status, Status::Off);
+    QCOMPARE(r.items.at(3).status, Status::Swell);
+    QCOMPARE(r.items.at(4).status, Status::NoSound);
+    QCOMPARE(drift::syncStatusName(Status::NoSound), QStringLiteral("no_sound"));
+    QCOMPARE(r.stats.n, 5);
+    QVERIFY(qAbs(r.stats.hitWithinTolerance - 0.2) < 1e-9);
+    QVERIFY(r.stats.hasChance);
+    QVERIFY(r.stats.chanceTolerance > 0.0 && r.stats.chanceTolerance < 0.5);
+    QCOMPARE(r.stats.noSound.size(), 2);
+
+    QVERIFY(drift::matchSync({1.0}, {}).items.first().status == Status::NoSound);
+}
+
+void EngineTest::audioSheetRendersLanes()
+{
+    using namespace drift::audiosheet;
+
+    constexpr int kRate = 48000;
+    QVector<float> mono(kRate * 4);
+    for (int i = 0; i < mono.size(); ++i)
+        mono[i] = 0.3f * std::sin(2.0 * M_PI * 440.0 * i / kRate);
+    const Spectrogram spec = logSpectrogram(mono.constData(), mono.size(), kRate, 100);
+    QCOMPARE(spec.rows, 240);
+    QVERIFY(spec.columns >= 100);
+    int best = 0;
+    for (int r = 1; r < spec.rows; ++r) {
+        if (spec.at(50, r) > spec.at(50, best))
+            best = r;
+    }
+    QVERIFY2(qAbs(spec.centreHz.at(best) - 440.0) < 40.0, qPrintable(QString::number(spec.centreHz.at(best))));
+
+    EventLabel a;
+    a.seconds = 1.0;
+    a.text = QStringLiteral("HIT");
+    EventLabel b = a;
+    b.seconds = 1.01;
+    const QList<PlacedLabel> placed = placeLabels({a, b}, {60, 60}, 0.0, 4.0, 1000.0, 4);
+    QCOMPARE(placed.size(), 2);
+    QVERIFY(placed.at(0).row != placed.at(1).row);
+    QCOMPARE(tickStep(4.0), 0.25);
+    QCOMPARE(tickStep(1000.0), 60.0);
+
+    Input in;
+    in.title = QStringLiteral("test");
+    in.durationSeconds = 4.0;
+    in.mono = mono.constData();
+    in.monoFrames = mono.size();
+    in.sampleRate = kRate;
+    in.cuts = {2.0};
+    drift::AudioEvent e;
+    e.seconds = 2.0;
+    e.prominenceDb = 12.0;
+    in.events = {e};
+    Options opt;
+    opt.width = 5000;
+    const QImage bare = render(in, opt);
+    QCOMPARE(bare.width(), kMaxWidth);
+    opt.width = 1500;
+    const QImage narrow = render(in, opt);
+    QCOMPARE(narrow.width(), 1500);
+
+    QImage frame(160, 90, QImage::Format_RGB32);
+    frame.fill(Qt::red);
+    in.frames = {{0.0, frame}, {2.15, frame}};
+    in.sections = {{0.0, 2.0, QStringLiteral("intro")}};
+    const QImage full = render(in, opt);
+    QVERIFY(full.height() > narrow.height());
 }
 
 void EngineTest::waveformSheetDrawsWordLane()
@@ -16867,6 +17390,51 @@ void EngineTest::bakeCurveAppliesEaseAndHoldsEnds()
     QCOMPARE(texelChannel(ends, 255, 0), 255);
 
     QVERIFY(drift::bakeCurve(QStringLiteral("[]")).isEmpty());
+}
+
+void EngineTest::evalCurveMatchesBakeIncludingPeriodicAndEases()
+{
+    const struct
+    {
+        QString json;
+        bool periodic;
+    } cases[] = {
+        {QStringLiteral(R"([{"x":0,"y":0,"ease":"spline"},{"x":0.3,"y":0.7,"ease":"spline"},{"x":1,"y":1,"ease":"spline"}])"), false},
+        {QStringLiteral(R"([{"x":0,"y":0,"ease":"hold"},{"x":0.5,"y":0.8,"ease":"smooth"},{"x":1,"y":0.2,"ease":"linear"}])"), false},
+        {QStringLiteral(R"([{"x":0,"y":0.5,"ease":"spline"},{"x":0.25,"y":0.9,"ease":"spline"},{"x":0.8,"y":0.1,"ease":"spline"},{"x":1,"y":0.5,"ease":"spline"}])"), true},
+        {QStringLiteral(R"([{"x":0,"y":0.3,"ease":"linear"},{"x":0.6,"y":0.9,"ease":"in"},{"x":1,"y":0.6,"ease":"spline"}])"), true},
+    };
+    for (const auto &c : cases) {
+        const QByteArray baked = drift::bakeCurve(c.json, c.periodic);
+        const std::vector<drift::CurvePoint> pts = drift::parseCurvePoints(c.json, c.periodic);
+        for (int i = 0; i < 256; ++i) {
+            const double y = drift::evalCurve(pts, i / 255.0, c.periodic) * 255.0;
+            QVERIFY2(std::abs(texelChannel(baked, i, 0) - y) <= 1.0, qPrintable(QStringLiteral("%1 texel %2").arg(c.json).arg(i)));
+        }
+    }
+}
+
+void EngineTest::parseCurvePointsSanitizes()
+{
+    QCOMPARE(drift::parseCurvePoints(QStringLiteral("nope"), false).size(), size_t(2));
+    QCOMPARE(drift::parseCurvePoints(QStringLiteral("[]"), true).front().y, 0.5);
+
+    const auto dup = drift::parseCurvePoints(
+        QStringLiteral(R"([{"x":0,"y":0},{"x":0.5,"y":0.2},{"x":0.5,"y":0.9},{"x":1,"y":1},{"x":"a","y":1},{"x":2,"y":-1}])"), false);
+    QCOMPARE(dup.size(), size_t(3));
+    QCOMPARE(dup[1].x, 0.5);
+    QCOMPARE(dup.back().x, 1.0);
+    QCOMPARE(dup.back().y, 0.0);
+
+    QString many = QStringLiteral("[");
+    for (int i = 0; i < 40; ++i)
+        many += QStringLiteral("%1{\"x\":%2,\"y\":0.5}").arg(i ? "," : "").arg(i / 39.0);
+    many += QLatin1Char(']');
+    const auto capped = drift::parseCurvePoints(many, false);
+    QCOMPARE(capped.size(), size_t(drift::kMaxCurvePoints));
+    QCOMPARE(capped.back().x, 1.0);
+    for (size_t i = 1; i < capped.size(); ++i)
+        QVERIFY(capped[i].x - capped[i - 1].x >= drift::kMinCurveGap - 1e-12);
 }
 
 void EngineTest::paramSamplerUnitSkipsDepthAndMaskUnits()

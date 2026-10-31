@@ -238,6 +238,8 @@ QList<MediaEntry> collectMedia(const Project &project, bool embedSource)
             // Masks live on adjustment clips, which this flat walk already covers.
             append(clip.mask.mediaPath, MediaRole::Matte, true);
             append(clip.mask.mediaFgrPath, MediaRole::Matte, true);
+            for (const QString &patch : clip.mask.mediaPatches)
+                append(patch, MediaRole::Matte, true);
             append(clip.faceTrackPath, MediaRole::FaceTrack, true);
             append(clip.depthPath, MediaRole::Depth, true);
             for (const VectorSlotValue &slot : clip.vector.slotValues) {

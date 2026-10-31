@@ -15,14 +15,14 @@
             "sizes": [0.7, 0.3],
             "children": [
               { "panels": [ { "type": "preview" } ], "active": 0 },
-              { "panels": [ { "type": "timeline" } ], "active": 0 }
+              { "panels": [ { "type": "timeline" }, { "type": "audioSheet" } ], "active": 0 }
             ]
           },
           {
             "split": "v",
             "sizes": [0.65, 0.35],
             "children": [
-              { "panels": [ { "type": "agentLog" } ], "active": 0 },
+              { "panels": [ { "type": "agentLog" }, { "type": "agentViews" } ], "active": 0 },
               { "panels": [ { "type": "undoHistory" } ], "active": 0 }
             ]
           }

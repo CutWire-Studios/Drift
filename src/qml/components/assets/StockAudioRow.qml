@@ -13,8 +13,8 @@ Rectangle {
     readonly property bool isPlaying: previewPlayer.itemId === modelData.id
                                       && previewPlayer.playbackState === MediaPlayer.PlayingState
     readonly property var job: {
-        void Market.downloadsRevision
-        return Market.downloadInfo(modelData.id)
+        void Downloads.revision
+        return StockInstaller.downloadInfo(modelData.source + "/" + modelData.id)
     }
     width: ListView.view ? ListView.view.width : 0
     height: Theme.touchUi ? Theme.androidMinTouchTarget + Theme.spacingLg : Theme.controlHeight + Theme.spacingLg
@@ -29,7 +29,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         glyph: root.isPlaying ? Theme.icons.pause : Theme.icons.play
-        enabled: !!root.modelData.preview_url
+        enabled: !!root.modelData.previewUrl
         tooltip: root.isPlaying ? qsTr("Pause") : qsTr("Play preview")
         onClicked: {
             if (root.isPlaying) {
@@ -38,7 +38,7 @@ Rectangle {
             }
             if (previewPlayer.itemId !== root.modelData.id) {
                 previewPlayer.itemId = root.modelData.id
-                previewPlayer.source = root.modelData.preview_url
+                previewPlayer.source = root.modelData.previewUrl
             }
             previewPlayer.play()
         }
@@ -62,7 +62,7 @@ Rectangle {
         Text {
             width: parent.width
             visible: text.length > 0
-            text: root.modelData.creator ? (root.modelData.creator.name || "") : ""
+            text: root.modelData.subtitle || ""
             color: Theme.c.stockAudioRow.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -97,7 +97,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             visible: !ring.visible
             text: {
-                const n = Math.round(Number(root.modelData.duration_ms || 0) / 1000)
+                const n = Math.round(Number(root.modelData.durationMs || 0) / 1000)
                 return n > 0 ? Math.floor(n / 60) + ":" + (n % 60 < 10 ? "0" : "") + (n % 60) : ""
             }
             color: Theme.c.stockAudioRow.foregroundMuted

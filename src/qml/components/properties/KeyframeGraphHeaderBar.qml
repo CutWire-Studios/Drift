@@ -27,6 +27,19 @@ Row {
         onClicked: host.toggleExpanded()
     }
 
+    IconButton {
+        anchors.verticalCenter: parent.verticalCenter
+        visible: host.curveEditing
+        glyph: Theme.icons.spline
+        variant: "text"
+        buttonSize: 20
+        iconSize: 14
+        active: host.showHandles
+        tooltip: host.showHandles ? qsTr("Hide Bezier handles")
+                                  : qsTr("Show Bezier handles. Without them, drag a curve to bend it")
+        onClicked: host.showHandles = !host.showHandles
+    }
+
     // Beat grid / tempo.
     IconButton {
         anchors.verticalCenter: parent.verticalCenter

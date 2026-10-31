@@ -5,24 +5,32 @@ CollapsibleSection {
     id: root
     property var inspector
     width: parent.width
-    title: qsTr("Font")
+    title: inspector.mode === "settings" ? qsTr("Alignment") : qsTr("Font")
     collapsible: false
     visible: inspector.hasTextStyle
 
     Text {
+        visible: inspector.mode !== "settings"
         text: qsTr("Font")
+        SearchAnchor {
+            searchId: "text-font"
+            title: qsTr("Font")
+            keywords: "typeface"
+        }
         color: Theme.c.textInspectorFontSection.foregroundMuted
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
     }
 
     FontPicker {
+        visible: inspector.mode !== "settings"
         width: parent.width
         family: inspector.textStyle.fontFamily
         onFamilyPicked: family => inspector.setTextStyleKey("fontFamily", family)
     }
 
     Row {
+        visible: inspector.mode !== "settings"
         width: parent.width
         spacing: 8
 
@@ -57,6 +65,7 @@ CollapsibleSection {
     }
 
     Row {
+        visible: inspector.mode !== "settings"
         width: parent.width
         spacing: 8
 
@@ -65,6 +74,11 @@ CollapsibleSection {
             spacing: 4
             Text {
                 text: qsTr("Colour")
+                SearchAnchor {
+                    searchId: "text-style"
+                    title: qsTr("Text style")
+                    keywords: "color outline shadow"
+                }
                 color: Theme.c.textInspectorFontSection.foregroundMuted
                 font.pixelSize: Theme.fontSizeXs
                 font.family: Theme.fontFamily
@@ -109,20 +123,54 @@ CollapsibleSection {
                 font.pixelSize: Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
-            ThemedToggleButton {
-                width: 60
-                text: qsTr("Italic")
-                checked: inspector.textStyle.italic
-                enabled: inspector.familyHasItalic
-                tooltip: inspector.familyHasItalic
-                         ? qsTr("Italicise the text")
-                         : qsTr("%1 has no italic face").arg(inspector.textStyle.fontFamily)
-                onClicked: inspector.setTextStyleKey("italic", !inspector.textStyle.italic)
+            Row {
+                spacing: 4
+                ThemedToggleButton {
+                    width: 60
+                    text: qsTr("Italic")
+                    checked: inspector.textStyle.italic
+                    enabled: inspector.familyHasItalic
+                    tooltip: inspector.familyHasItalic
+                             ? qsTr("Italicise the text")
+                             : qsTr("%1 has no italic face").arg(inspector.textStyle.fontFamily)
+                    onClicked: inspector.setTextStyleKey("italic", !inspector.textStyle.italic)
+                }
+                ThemedToggleButton {
+                    width: 60
+                    text: qsTr("Strike")
+                    checked: inspector.textStyle.strikethroughEnabled
+                    tooltip: qsTr("Draw a line through the text")
+                    onClicked: inspector.setTextStyleKey("strikethroughEnabled", !inspector.textStyle.strikethroughEnabled)
+                }
             }
         }
     }
 
     Row {
+        visible: inspector.mode === ""
+        width: parent.width
+        spacing: 8
+
+        Column {
+            width: (parent.width - parent.spacing) / 2
+            spacing: 4
+            Text {
+                text: qsTr("Case")
+                color: Theme.c.textInspectorFontSection.foregroundMuted
+                font.pixelSize: Theme.fontSizeXs
+                font.family: Theme.fontFamily
+            }
+            ThemedComboBox {
+                width: parent.width
+                model: inspector.caseLabels
+                currentIndex: Math.max(0, inspector.caseOptions.indexOf(inspector.textStyle.textCase))
+                onActivated: inspector.setTextStyleKey("textCase", inspector.caseOptions[currentIndex])
+            }
+        }
+    }
+
+    Row {
+        visible: inspector.mode !== "style"
         width: parent.width
         spacing: Theme.spacingMd
 

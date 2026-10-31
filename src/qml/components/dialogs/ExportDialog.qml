@@ -290,6 +290,12 @@ ThemedDialog {
         open()
     }
 
+    function openAudioOnly() {
+        openDialog()
+        exportMode = "audio"
+        syncComboIndices()
+    }
+
     function syncComboIndices() {
         if (frameRateCombo)
             frameRateCombo.currentIndex = Math.max(0, frameRateCombo.indexOfValue(frameRateId))

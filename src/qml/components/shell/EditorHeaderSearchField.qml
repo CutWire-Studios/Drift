@@ -3,7 +3,9 @@ import QtQuick.Controls.Basic
 import Drift
 import QtQuick.Window
 
-// --- Centre: global search -------------------------------------------
+// --- Centre: workspace switcher + global search -------------------------
+// One bar, two targets: the left segment switches workspaces, the rest is the search field.
+// An empty search lists the workspaces too, so switching works from the keyboard.
 Rectangle {
     id: searchBox
     signal exportRequested()
@@ -27,10 +29,119 @@ Rectangle {
                                           : Theme.c.editorHeaderSearchField.borderWidth
     border.color: Theme.c.editorHeaderSearchField.border
 
+    readonly property string activeWorkspaceName: {
+        const list = Workspaces.workspaces
+        for (let i = 0; i < list.length; ++i) {
+            if (list[i].id === Workspaces.activeId)
+                return list[i].name
+        }
+        return ""
+    }
+
+    Item {
+        id: workspaceSegment
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: workspaceRow.implicitWidth + Theme.spacingXl * 2
+
+        Accessible.role: Accessible.Button
+        Accessible.name: qsTr("Workspace: %1").arg(searchBox.activeWorkspaceName)
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 2
+            radius: Math.max(0, searchBox.radius - 2)
+            color: Theme.c.editorHeaderSearchField.workspaceBackgroundHover
+            visible: workspaceArea.containsMouse || workspaceMenu.opened
+        }
+
+        Row {
+            id: workspaceRow
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingXl
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Theme.spacingSm
+
+            Text {
+                text: qsTr("Workspace:")
+                color: Theme.c.editorHeaderSearchField.workspacePrefix
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                text: searchBox.activeWorkspaceName
+                color: Theme.c.editorHeaderSearchField.workspaceForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+                font.weight: Font.Medium
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            IconGlyph {
+                glyph: Theme.icons.chevronsUpDown
+                iconSize: Theme.iconSizeSm
+                iconColor: Theme.c.editorHeaderSearchField.icon
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+
+        ThemedToolTip {
+            visible: workspaceArea.containsMouse && !workspaceMenu.opened
+            text: qsTr("Switch workspace")
+        }
+
+        MouseArea {
+            id: workspaceArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: workspaceMenu.popup(0, searchBox.height + Theme.spacingMd)
+        }
+
+        ThemedContextMenu {
+            id: workspaceMenu
+            implicitWidth: 248
+
+            Instantiator {
+                model: Workspaces.workspaces
+
+                ThemedMenuItem {
+                    required property var modelData
+                    text: modelData.name
+                    icon.name: modelData.id === Workspaces.activeId ? Theme.icons.check : ""
+                    onTriggered: Workspaces.activeId = modelData.id
+                }
+
+                onObjectAdded: (index, object) => workspaceMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => workspaceMenu.removeItem(object)
+            }
+
+            ThemedMenuSeparator { }
+
+            ThemedMenuItem {
+                text: qsTr("Customize layouts in Settings…")
+                icon.name: Theme.icons.sliders
+                onTriggered: Qt.callLater(() => ShellBridge.main.openSettings("workspaces"))
+            }
+        }
+    }
+
+    Rectangle {
+        id: segmentDivider
+        anchors.left: workspaceSegment.right
+        anchors.verticalCenter: parent.verticalCenter
+        width: 1
+        height: parent.height - Theme.spacingMd * 2
+        color: Theme.c.editorHeaderSearchField.divider
+    }
+
     IconGlyph {
         id: searchLens
-        anchors.left: parent.left
-        anchors.leftMargin: Theme.spacingXl
+        anchors.left: segmentDivider.right
+        anchors.leftMargin: Theme.spacingLg
         anchors.verticalCenter: parent.verticalCenter
         glyph: Theme.icons.search
         iconSize: Theme.iconSizeMd
@@ -61,7 +172,7 @@ Rectangle {
         selectionColor: Theme.c.editorHeaderSearchField.selection
 
         onTextEdited: searchPopup.search(text)
-        onActiveFocusChanged: if (activeFocus && text.trim().length > 0) searchPopup.search(text)
+        onActiveFocusChanged: if (activeFocus) searchPopup.search(text)
 
         // The popup never takes focus, so the field drives it.
         Keys.onUpPressed: (event) => { searchPopup.moveHighlight(-1); event.accepted = true }
@@ -76,13 +187,19 @@ Rectangle {
         y: searchBox.height + Theme.spacingMd
         x: (searchBox.width - width) / 2
         width: Math.max(searchBox.width, 480)
-        headerCommands: [
-            { label: qsTr("Export video"), keywords: "render save mp4", run: () => searchBox.exportRequested() },
-            { label: qsTr("Downloads"), keywords: "download link", run: () => searchBox.downloadsRequested() },
-            { label: qsTr("Language…"), keywords: "translate locale", run: () => searchBox.languageRequested() },
-            { label: qsTr("Video size and layout"), keywords: "canvas resolution aspect ratio", run: () => searchBox.videoSizeRequested() },
-            { label: qsTr("Switch to mobile layout…"), keywords: "phone shell", run: () => ShellBridge.main.switchShell("mobile") },
-        ]
         onFinished: searchBox.searchFinished()
+    }
+
+    Connections {
+        target: ShellBridge
+        function onDialogRequested(name, params) {
+            switch (name) {
+            case "export": searchBox.exportRequested(); break
+            case "downloads": searchBox.downloadsRequested(); break
+            case "language": searchBox.languageRequested(); break
+            case "videoSize": searchBox.videoSizeRequested(); break
+            case "mobileShell": ShellBridge.main.switchShell("mobile"); break
+            }
+        }
     }
 }

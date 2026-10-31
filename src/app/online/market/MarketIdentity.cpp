@@ -196,23 +196,4 @@ QString distributionId()
     return QStringLiteral(DRIFT_DISTRIBUTION);
 }
 
-bool isAuthCallbackUrl(const QUrl &url)
-{
-    if (!url.isValid())
-        return false;
-    const QString scheme = url.scheme().toLower();
-    const QString host = url.host().toLower();
-    QString path = url.path();
-    while (path.endsWith(QLatin1Char('/')) && path.size() > 1)
-        path.chop(1);
-
-    if (scheme == QLatin1String("cutwire"))
-        return host == QLatin1String("market") && path == QLatin1String("/auth/callback");
-
-    if (scheme == QLatin1String("https") && host == QLatin1String("market.cutwire.org"))
-        return path == QLatin1String("/app/auth/callback");
-
-    return false;
-}
-
 } // namespace drift::market

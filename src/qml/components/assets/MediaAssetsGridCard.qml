@@ -22,6 +22,7 @@ Column {
     required property string thumbnailPath
     required property string filmstripPath
     required property int assetIndex
+    required property string maskRole
 
     required property var host
     required property real cardSize
@@ -105,6 +106,7 @@ Column {
         duration: root.duration
         thumbnailPath: root.thumbnailPath
         assetIndex: root.assetIndex
+        maskRole: root.maskRole
         liveThumbnailPath: root.liveThumbnailPath
         thumbnailRevision: root.thumbnailRevision
         cardSize: root.cardSize
@@ -117,5 +119,6 @@ Column {
         assetName: root.name
         proxyState: root.isFolder ? "" : root.host.proxyStateOf(root.assetId)
         editFriendly: !root.isFolder && root.host.editFriendlyOf(root.assetId)
+        maskRole: root.maskRole
     }
 }

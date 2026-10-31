@@ -588,6 +588,32 @@ int McpDispatcher::resolveAsset(const QJsonValue &value) const
     return -1;
 }
 
+bool McpDispatcher::resolveFolder(const QJsonValue &value, QString *id) const
+{
+    const QString key = value.toString().trimmed();
+    if (key.isEmpty()) {
+        *id = QString();
+        return true;
+    }
+    const BinFolderListModel *folders = m_controller->bin()->folderModel();
+    if (folders->indexOfId(key) >= 0) {
+        *id = key;
+        return true;
+    }
+    QString match;
+    for (int i = 0; i < folders->count(); ++i) {
+        if (folders->folderAt(i).value(QStringLiteral("name")).toString().compare(key, Qt::CaseInsensitive) != 0)
+            continue;
+        if (!match.isEmpty())
+            return false;
+        match = folders->idAt(i);
+    }
+    if (match.isEmpty())
+        return false;
+    *id = match;
+    return true;
+}
+
 QJsonObject McpDispatcher::clipFeedback(const ClipRef &ref, const QJsonObject &extra) const
 {
     if (!ref.valid())
@@ -658,6 +684,14 @@ bool McpDispatcher::isUndoable(const QString &tool) const
     return !undoExemptOps().contains(tool);
 }
 
+namespace {
+
+// Ops whose image:true reply is raw image content, which a batch has no slot for.
+const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLiteral("market_preview"),
+                                     QStringLiteral("audio_sheet")};
+
+} // namespace
+
 QJsonObject McpDispatcher::apply(const QJsonObject &args)
 {
     const QJsonArray ops = args.value(QStringLiteral("ops")).toArray();
@@ -682,10 +716,13 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         const QJsonObject op = ops.at(i).toObject();
         const QString tool = op.value(QStringLiteral("tool")).toString();
         const QJsonObject opArgs = op.value(QStringLiteral("args")).toObject();
+        const bool rawImage = kRawResultOps.contains(tool)
+                              && (tool == QLatin1String("audio_sheet")
+                                      ? opArgs.value(QStringLiteral("return")).toString() != QLatin1String("path")
+                                      : jsonBool(opArgs.value(QStringLiteral("image")), tool == QLatin1String("market_preview")));
         const QJsonObject one =
-            tool == QLatin1String("get_waveform") && jsonBool(opArgs.value(QStringLiteral("image")))
-                ? err("bad_args", QStringLiteral("image:true cannot be batched — call get_waveform directly"))
-                : applyOne(tool, opArgs);
+            rawImage ? err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool))
+                     : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
             m_controller->mcp()->endBatch(batchLabel(i),
                                       hadUndoable && i > 0);
@@ -992,7 +1029,12 @@ QJsonObject McpDispatcher::opImportMedia(const QJsonObject &args)
         else if (lib->indexOfPath(path) >= 0)
             existing.append(path);
     }
+    QString folder = m_controller->bin()->currentFolderId();
+    if (args.contains(QStringLiteral("folder")) && !resolveFolder(args.value(QStringLiteral("folder")), &folder))
+        return err("not_found", QStringLiteral("Unknown or ambiguous folder"));
+    lib->setImportFolderId(folder);
     const QStringList ids = lib->importLocalPaths(paths);
+    lib->setImportFolderId(m_controller->bin()->currentFolderId());
     if (ids.isEmpty() && !missing.isEmpty())
         return err("import_failed", QStringLiteral("No readable files"));
     // Rows already in the bin whose file changed in place are re-probed by the import.
@@ -1054,6 +1096,7 @@ QJsonObject McpDispatcher::opListAssets() const
                 {QStringLiteral("dur"), a.value(QStringLiteral("durationSeconds")).toDouble()},
                 {QStringLiteral("w"), a.value(QStringLiteral("width")).toInt()},
                 {QStringLiteral("h"), a.value(QStringLiteral("height")).toInt()},
+                {QStringLiteral("folderId"), a.value(QStringLiteral("folderId")).toString()},
             });
         }
     }

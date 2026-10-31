@@ -114,7 +114,14 @@ Item {
             width: parent.width
             spacing: Theme.spacingSm
 
-            ThemedLabel { text: qsTr("Pages") }
+            ThemedLabel {
+                text: qsTr("Pages")
+                SearchAnchor {
+                    searchId: "pdf-page"
+                    title: qsTr("PDF page")
+                    keywords: "scroll"
+                }
+            }
 
             ThemedLabel {
                 width: parent.width

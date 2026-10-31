@@ -290,6 +290,7 @@ public:
         }
 
         drawUnderline(canvas);
+        drawStrikethrough(canvas);
         drawCaret(canvas);
 
         if (m_frame.block.wipeProgress >= 0.0) {
@@ -358,6 +359,8 @@ private:
             m_matrices.append(m);
         }
         m_strokeWidthPx = widestStroke(m_style) * m_scale;
+        if (const TextShadingLayer *stroke = firstTextLayerOfKind(m_style.layers, TextLayerKind::Stroke, true))
+            m_strokeJoin = stroke->join;
     }
 
     // The front-most enabled fill: the one the legacy accent colour overrides.
@@ -541,7 +544,7 @@ private:
             // over it, which is what the legacy outline did; Inside clips the same stroke to the
             // glyph instead.
             paint.setStrokeWidth(float(layer.strokeAlign != StrokeAlign::Center ? width * 2.0 : width));
-            paint.setStrokeJoin(SkPaint::kRound_Join);
+            applyStrokeJoin(paint, layer.join);
             paint.setStrokeCap(SkPaint::kRound_Cap);
             paint.setPathEffect(strokePathEffectFor(layer, width, m_scale));
             if (layer.strokeAlign == StrokeAlign::Inside) {
@@ -574,7 +577,7 @@ private:
             if (m_strokeWidthPx > 0.0) {
                 paint.setStyle(SkPaint::kStroke_Style);
                 paint.setStrokeWidth(float(m_strokeWidthPx * 2.0));
-                paint.setStrokeJoin(SkPaint::kRound_Join);
+                applyStrokeJoin(paint, m_strokeJoin);
                 canvas.drawPath(piece.glyphs, paint);
             }
             break;
@@ -631,6 +634,34 @@ private:
             canvas.drawRoundRect(toSkRect(rule), r, r, fill);
     }
 
+    // Through the middle of the x-height, in the fill colour; a bent block has no straight line to
+    // rule, so it is skipped the same way the underline is.
+    void drawStrikethrough(SkCanvas &canvas) const
+    {
+        if (m_bend.active || !m_style.strikethroughEnabled)
+            return;
+        const double thickness = qMax(1.0, m_style.pixelSize * 0.06 * m_scale);
+        QHash<int, QRectF> perLine;
+        for (int i = 0; i < m_pieces.size(); ++i) {
+            if (!visible(i))
+                continue;
+            const Piece &piece = m_pieces.at(i);
+            const textanim::FragmentProps &p = props(i);
+            const double y = piece.baselineY + p.dy - m_style.pixelSize * 0.28 * m_scale;
+            const QRectF rule(piece.cellRect.left() + p.dx, y - thickness * 0.5, piece.cellRect.width(), thickness);
+            const auto it = perLine.find(piece.line);
+            if (it == perLine.end())
+                perLine.insert(piece.line, rule);
+            else
+                *it = it->united(rule);
+        }
+        SkPaint fill;
+        fill.setAntiAlias(true);
+        fill.setColor(toSkColor(textFillColor(m_style, false)));
+        for (const QRectF &rule : std::as_const(perLine))
+            canvas.drawRect(toSkRect(rule), fill);
+    }
+
     void drawCaret(SkCanvas &canvas) const
     {
         const textanim::CaretState &caret = m_frame.caret;
@@ -680,6 +711,7 @@ private:
     QList<Piece> m_pieces;
     QList<SkMatrix> m_matrices;
     double m_strokeWidthPx = 0.0;
+    StrokeJoin m_strokeJoin = StrokeJoin::Round;
 };
 
 // Selection, preedit underline and caret over a laid-out block; see TextEditPaintRequest.

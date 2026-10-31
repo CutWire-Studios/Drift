@@ -102,6 +102,10 @@ struct LaneMask
 {
     Mask mask;
     QString adjustmentId;
+    // Where the carrying adjustment starts, for a media mask on MaskMediaTimeBase::Adjustment.
+    TimeUs adjustmentStartUs = 0;
+    // The adjustment's srcIn: how far into its span a split or head-trim has moved it.
+    TimeUs adjustmentSrcInUs = 0;
 };
 
 // Every Mask-kind lane adjustment on `trackIndex` covering `timelineUs`, in stack order — lane

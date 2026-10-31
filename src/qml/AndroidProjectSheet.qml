@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Window
 import Drift
 // What the editor's project title opens: everything that acts on the project as a whole.
@@ -124,33 +125,41 @@ AndroidBottomSheet {
 
     readonly property var visibleOptions: options.filter(o => o.shown !== false)
 
-    Column {
-        id: optionColumn
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        topPadding: Theme.spacingLg
-        bottomPadding: Theme.spacingLg
+    Flickable {
+        id: scroll
+        anchors.fill: parent
+        clip: true
+        contentWidth: width
+        contentHeight: optionColumn.implicitHeight
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
 
-        Repeater {
-            model: root.visibleOptions
+        Column {
+            id: optionColumn
+            width: scroll.width
+            topPadding: Theme.spacingLg
+            bottomPadding: Theme.spacingLg
 
-            delegate: SheetActionRow {
-                required property var modelData
-                width: optionColumn.width
-                label: modelData.label
-                detail: modelData.detail
-                glyph: modelData.icon
-                sideInset: root.safeLeft
-                sideInsetRight: root.safeRight
-                marked: (modelData.id === "save" && EditorState.projectFile.hasUnsavedChanges)
-                        || (modelData.id === "extras" && ShellBridge.main?.addonAttentionNeeded)
-                        || modelData.id === "update"
+            Repeater {
+                model: root.visibleOptions
 
-                onClicked: {
-                    Haptics.select()
-                    root.dismiss()
-                    root.picked(modelData.id)
+                delegate: SheetActionRow {
+                    required property var modelData
+                    width: optionColumn.width
+                    label: modelData.label
+                    detail: modelData.detail
+                    glyph: modelData.icon
+                    sideInset: root.safeLeft
+                    sideInsetRight: root.safeRight
+                    marked: (modelData.id === "save" && EditorState.projectFile.hasUnsavedChanges)
+                            || (modelData.id === "extras" && ShellBridge.main?.addonAttentionNeeded)
+                            || modelData.id === "update"
+
+                    onClicked: {
+                        Haptics.select()
+                        root.dismiss()
+                        root.picked(modelData.id)
+                    }
                 }
             }
         }

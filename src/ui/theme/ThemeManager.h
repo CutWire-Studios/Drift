@@ -62,6 +62,9 @@ public:
     // registerSingleton(); a ThemeManager constructed anywhere else stays private.
     static ThemeManager *shared();
     static void registerSingleton();
+    // One component block of the built-in "dark" or "light" theme, resolved, without building
+    // a ThemeManager. For UI shown before the theme system is up (the startup splash).
+    static QVariantMap builtinComponent(const QString &variant, const QString &component);
 
     QQmlPropertyMap *palette() const { return m_palette; }
     QQmlPropertyMap *semantic() const { return m_semantic; }

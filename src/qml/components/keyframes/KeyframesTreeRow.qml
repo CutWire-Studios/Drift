@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import Drift
-import "KeyframesModel.js" as Model
 
 Item {
     id: root
@@ -14,22 +13,40 @@ Item {
     required property bool curvesMode
     required property bool curveShown
     required property bool focused
+    required property var rowsModel
+    required property int rowIndex
 
     readonly property real rowHeight: Theme.controlHeightSm + Theme.spacingMd
     readonly property bool isGroup: row.type === "group"
-    readonly property color accent: Theme.keyframeCurveColor(isGroup ? "" : row.keyProp)
+    readonly property bool empty: row.type === undefined
+    readonly property color accent: Theme.keyframeCurveColor(isGroup || empty ? "" : row.keyProp)
+    readonly property real halfFrame: {
+        void EditorState.tracksRevision
+        return 0.5 / Math.max(1, EditorState.projectFile.projectFps())
+    }
     readonly property bool hasKeys: !isGroup && !!row.keys && row.keys.length > 0
-    readonly property var keysHere: isGroup ? [] : Model.refsForRowAt(row, displayPlayhead)
-    readonly property bool keyHere: keysHere.length > 0
-    readonly property bool hasPrev: hasKeys && Model.prevKeyTime([row], displayPlayhead) !== null
-    readonly property bool hasNext: hasKeys && Model.nextKeyTime([row], displayPlayhead) !== null
+    readonly property bool keyHere: {
+        void row
+        return !isGroup && rowsModel.refsAt(rowIndex, displayPlayhead, halfFrame).length > 0
+    }
+    readonly property bool hasPrev: {
+        void row
+        return hasKeys && rowsModel.prevKeyTime([rowIndex], playhead) >= 0
+    }
+    readonly property bool hasNext: {
+        void row
+        return hasKeys && rowsModel.nextKeyTime([rowIndex], playhead) >= 0
+    }
+
+    readonly property alias hovered: hover.hovered
 
     signal focusRequested()
+    signal keysSelectRequested(bool additive)
     signal groupToggled()
     signal curveShownToggled(bool shown)
 
     function toggleKeyHere() {
-        if (!isGroup && Model.refsForRowAt(row, playhead).length > 0)
+        if (!isGroup && rowsModel.refsAt(rowIndex, playhead, halfFrame).length > 0)
             EditorState.keyframes.removeKeysAt(track, clip, row.tracks, playhead)
         else
             EditorState.keyframes.addKeysAt(track, clip, row.tracks, playhead)
@@ -44,6 +61,7 @@ Item {
     }
 
     height: rowHeight
+    visible: !empty
 
     Rectangle {
         anchors.fill: parent
@@ -63,7 +81,24 @@ Item {
     HoverHandler { id: hover }
 
     TapHandler {
-        onTapped: root.isGroup ? root.groupToggled() : root.focusRequested()
+        acceptedModifiers: Qt.NoModifier
+        onTapped: {
+            if (root.isGroup) {
+                root.groupToggled()
+            } else {
+                root.focusRequested()
+                root.keysSelectRequested(false)
+            }
+        }
+    }
+
+    TapHandler {
+        acceptedModifiers: Qt.ShiftModifier
+        enabled: !root.isGroup
+        onTapped: {
+            root.focusRequested()
+            root.keysSelectRequested(true)
+        }
     }
 
     Row {
@@ -99,7 +134,7 @@ Item {
         Text {
             id: countText
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.isGroup && !root.row.collapsed && root.row.count > 0
+            visible: root.isGroup && root.row.count > 0
             text: root.isGroup ? String(root.row.count) : ""
             color: Theme.c.keyframesTreeRow.foregroundMuted
             font.family: Theme.monoFontFamily
@@ -114,26 +149,27 @@ Item {
         anchors.rightMargin: Theme.spacingMd
         spacing: Theme.spacingSm
 
-        KeyframeDiamond {
+        IconButton {
             anchors.verticalCenter: parent.verticalCenter
+            buttonSize: 20
+            iconSize: 14
+            glyph: Theme.icons.clock
+            active: !root.empty && !!root.row.animated && !!root.row.enabled
             enabled: root.hasKeys
-            accentColor: root.accent
-            animated: !root.isGroup && root.row.animated
-            keysEnabled: root.isGroup || root.row.enabled
             tooltip: !root.hasKeys
-                     ? qsTr("%1 has no keyframes yet").arg(root.isGroup ? "" : root.row.label)
+                     ? qsTr("%1 has no keyframes yet").arg(root.row.label ?? "")
                      : (root.row.enabled
-                        ? qsTr("Turn off %1's keyframes — they are kept, but stop animating").arg(root.row.label)
-                        : qsTr("Turn %1's keyframes back on").arg(root.row.label))
-            onToggled: root.toggleAnimation()
+                        ? qsTr("Stop animating %1 (keys are kept)").arg(root.row.label)
+                        : qsTr("Animate %1").arg(root.row.label))
+            onClicked: root.toggleAnimation()
         }
 
         Text {
             id: label
             anchors.verticalCenter: parent.verticalCenter
             width: Math.max(24, parent.width - scrubber.width - nav.width - curveCheck.width
-                                - Theme.iconSizeSm - parent.spacing * 4)
-            text: root.isGroup ? "" : root.row.label
+                                - 20 - parent.spacing * 4)
+            text: root.isGroup ? "" : (root.row.label ?? "")
             elide: Text.ElideRight
             color: root.hasKeys && root.row.enabled ? Theme.c.keyframesTreeRow.foreground
                                                     : Theme.c.keyframesTreeRow.foregroundMuted
@@ -150,7 +186,7 @@ Item {
             track: root.track
             clip: root.clip
             playhead: root.displayPlayhead
-            onActiveFocusChanged: if (activeFocus) root.focusRequested()
+            onEditingChanged: if (editing) root.focusRequested()
         }
 
         Row {
@@ -166,7 +202,7 @@ Item {
                 enabled: root.hasPrev
                 onClicked: {
                     root.focusRequested()
-                    EditorState.playheadSeconds = Model.prevKeyTime([root.row], root.playhead)
+                    EditorState.playheadSeconds = root.rowsModel.prevKeyTime([root.rowIndex], root.playhead)
                 }
             }
 
@@ -191,7 +227,7 @@ Item {
                 enabled: root.hasNext
                 onClicked: {
                     root.focusRequested()
-                    EditorState.playheadSeconds = Model.nextKeyTime([root.row], root.playhead)
+                    EditorState.playheadSeconds = root.rowsModel.nextKeyTime([root.rowIndex], root.playhead)
                 }
             }
         }

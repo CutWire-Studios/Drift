@@ -77,6 +77,14 @@ Item {
             }
         }
 
+        ThemedButton {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: !!ShellBridge.main && !!ShellBridge.main.openMarketplace
+            text: qsTr("Browse the Marketplace")
+            glyph: Theme.icons.store
+            onClicked: ShellBridge.main.openMarketplace("")
+        }
+
         Rectangle {
             width: parent.width
             height: formatColumn.height + Theme.spacingXl * 2

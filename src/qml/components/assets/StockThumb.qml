@@ -13,15 +13,15 @@ Rectangle {
 
     signal openRequested()
 
+    readonly property string jobId: item.source + "/" + item.id
     readonly property var job: {
-        void Market.downloadsRevision
-        return Market.downloadInfo(item.id)
+        void Downloads.revision
+        return StockInstaller.downloadInfo(jobId)
     }
     readonly property bool busy: job.status === "waiting" || job.status === "queued"
                                  || job.status === "processing" || job.status === "downloading"
                                  || job.status === "importing"
-    readonly property int price: Number(item.price_coins || 0)
-    readonly property string kind: item.media_kind || item.type || ""
+    readonly property string kind: item.mediaKind || ""
     readonly property bool isVideo: kind === "video" || kind === "greenscreen"
 
     radius: Theme.c.stockThumb.radius
@@ -51,7 +51,7 @@ Rectangle {
     Image {
         id: thumb
         anchors.fill: parent
-        source: root.item.thumb_url || ""
+        source: root.item.thumbUrl || ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
@@ -64,7 +64,7 @@ Rectangle {
     // One player at a time: only the hovered tile creates one.
     Loader {
         anchors.fill: parent
-        active: root.isVideo && hover.hovered && !root.busy && !!root.item.preview_url && !root.compact
+        active: root.isVideo && hover.hovered && !root.busy && !!root.item.previewUrl && !root.compact
         sourceComponent: Item {
             VideoOutput {
                 id: out
@@ -72,30 +72,11 @@ Rectangle {
                 fillMode: VideoOutput.PreserveAspectCrop
             }
             MediaPlayer {
-                source: root.item.preview_url
+                source: root.item.previewUrl
                 videoOutput: out
                 loops: MediaPlayer.Infinite
                 Component.onCompleted: play()
             }
-        }
-    }
-
-    Rectangle {
-        visible: root.price > 0
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.margins: Theme.spacingSm
-        color: Theme.c.stockThumb.badgeBackground
-        radius: Theme.c.stockThumb.badgeRadius
-        width: coinLabel.implicitWidth + Theme.spacingLg
-        height: coinLabel.implicitHeight + Theme.spacingSm
-        Text {
-            id: coinLabel
-            anchors.centerIn: parent
-            text: String(root.price)
-            color: Theme.c.stockThumb.foregroundOnMedia
-            font.pixelSize: Theme.fontSizeXs
-            font.family: Theme.fontFamily
         }
     }
 
@@ -111,7 +92,7 @@ Rectangle {
         Text {
             id: durLabel
             anchors.centerIn: parent
-            text: root.formatDuration(root.item.duration_ms)
+            text: root.formatDuration(root.item.durationMs)
             color: Theme.c.stockThumb.foregroundOnMedia
             font.pixelSize: Theme.fontSizeXs
             font.family: Theme.fontFamily
@@ -153,7 +134,7 @@ Rectangle {
             iconSize: Theme.iconSizeMd
             glyph: Theme.icons.x
             tooltip: qsTr("Cancel download")
-            onClicked: Market.cancelDownload(root.item.id)
+            onClicked: Downloads.cancel(root.jobId)
         }
         HoverHandler {
             id: busyHover
@@ -167,7 +148,7 @@ Rectangle {
         }
         TapHandler {
             enabled: !root.compact
-            onTapped: Market.cancelDownload(root.item.id)
+            onTapped: Downloads.cancel(root.jobId)
         }
     }
 
@@ -189,7 +170,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: root.job.retryable === true
                 text: qsTr("Retry")
-                onClicked: Market.retryDownload(root.item.id)
+                onClicked: Downloads.retry(root.jobId)
             }
         }
         // Retry is the one thing to press on a failed tile.

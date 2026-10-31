@@ -48,6 +48,7 @@ SettingsPage {
     SettingsRow {
         stacked: true
         title: qsTr("Color theme")
+        searchId: "appearance-color-theme"
         description: qsTr("Light and Dark follow your system. Other themes can be installed or imported.")
         keywords: "dark light color"
         query: page.query
@@ -87,6 +88,7 @@ SettingsPage {
     SettingsRow {
         stacked: true
         title: qsTr("Translucent windows")
+        searchId: "appearance-translucent-windows"
         description: qsTr("Lets the desktop show through panels when a theme asks for it. Takes effect after restart.")
         keywords: "transparent backdrop blur"
         query: page.query
@@ -117,9 +119,12 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Interface size")
+        searchId: "appearance-interface-size"
         description: EditorState.preferences.uiScaleNeedsRestart
                      ? qsTr("Restart Drift to apply this size.")
-                     : qsTr("Makes buttons, text, and icons larger, on top of your display settings.")
+                     : Qt.platform.os === "windows"
+                       ? qsTr("100% fits a 1080p screen, whatever your Windows display scale is.")
+                       : qsTr("Makes buttons, text, and icons larger, on top of your display settings.")
         keywords: "scale zoom dpi"
         query: page.query
 
@@ -128,7 +133,7 @@ SettingsPage {
             textRole: "label"
             valueRole: "id"
             model: [
-                { id: 1.0,  label: qsTr("100% (system)") },
+                { id: 1.0,  label: Qt.platform.os === "windows" ? "100%" : qsTr("100% (system)") },
                 { id: 1.25, label: "125%" },
                 { id: 1.5,  label: "150%" },
                 { id: 1.75, label: "175%" },
@@ -151,6 +156,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Layout")
+        searchId: "appearance-layout"
         description: EditorState.preferences.interfaceShellNeedsRestart
                      ? qsTr("Restart Drift to switch layouts.")
                      : qsTr("Desktop suits a mouse and keyboard. Mobile is the touch layout made for phones.")
@@ -201,6 +207,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Workspace orientation")
+        searchId: "appearance-workspace-orientation"
         description: qsTr("Landscape or portrait workspace. Auto follows the shape of the canvas.")
         keywords: "landscape portrait rotate layout"
         query: page.query

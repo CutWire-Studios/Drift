@@ -8,6 +8,7 @@ Row {
     property string proxyState: ""
     property bool editFriendly: false
     property string assetName: ""
+    property string maskRole: ""
 
     width: parent ? parent.width : 0
     spacing: Theme.spacingSm
@@ -24,6 +25,14 @@ Row {
         fontSize: Theme.fontSizeTiny
     }
     MediaPill {
+        id: cardMaskPill
+        anchors.verticalCenter: parent.verticalCenter
+        text: qsTr("Mask")
+        tooltip: qsTr("Drops on the timeline as a mask, not a clip")
+        visible: root.maskRole.length > 0
+        fontSize: Theme.fontSizeTiny
+    }
+    MediaPill {
         id: cardEditFriendlyPill
         anchors.verticalCenter: parent.verticalCenter
         text: qsTr("Edit-friendly")
@@ -37,7 +46,8 @@ Row {
         width: Math.max(0, parent.width
                            - (cardProxyPill.visible ? cardProxyPill.width + parent.spacing : 0)
                            - (cardEditFriendlyPill.visible
-                              ? cardEditFriendlyPill.width + parent.spacing : 0))
+                              ? cardEditFriendlyPill.width + parent.spacing : 0)
+                           - (cardMaskPill.visible ? cardMaskPill.width + parent.spacing : 0))
         text: root.assetName
         color: Theme.c.mediaAssetsGridNameRow.foregroundMuted
         font.family: Theme.fontFamily

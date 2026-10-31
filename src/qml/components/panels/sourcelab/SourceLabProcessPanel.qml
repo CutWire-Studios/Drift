@@ -4,6 +4,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "sourcelab-denoise-stabilize"
+        title: qsTr("Denoise and stabilize source")
+        keywords: "denoise noise hiss clean stabilize shake steady"
+    }
 
     property bool shown: false
 

@@ -382,6 +382,7 @@ Item {
                     path: "",
                     thumbnailPath: "",
                     filmstripPath: "",
+                    maskRole: "",
                     depth: depth,
                     expanded: open,
                     expandable: hasChildren
@@ -406,6 +407,7 @@ Item {
                     path: asset.path,
                     thumbnailPath: asset.thumbnailPath,
                     filmstripPath: asset.filmstripPath,
+                    maskRole: asset.maskRole,
                     depth: depth,
                     expanded: false,
                     expandable: false
@@ -449,6 +451,7 @@ Item {
                 path: "",
                 thumbnailPath: "",
                 filmstripPath: "",
+                maskRole: "",
                 depth: 0,
                 expanded: false,
                 expandable: false
@@ -475,6 +478,7 @@ Item {
                 path: asset.path,
                 thumbnailPath: asset.thumbnailPath,
                 filmstripPath: asset.filmstripPath,
+                maskRole: asset.maskRole,
                 depth: 0,
                 expanded: false,
                 expandable: false

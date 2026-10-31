@@ -6,6 +6,11 @@ import "../subtitles/SubtitleTime.js" as SubtitleTime
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "subtitle-timing"
+        title: qsTr("Subtitle timing")
+        keywords: "captions tools shift offset sync frame rate speed gaps durations"
+    }
 
     property bool shown: true
     property int scope: 0
@@ -397,6 +402,11 @@ PanelFrame {
 
             Section {
                 title: qsTr("Shift")
+                SearchAnchor {
+                    searchId: "subtitle-shift-times"
+                    title: qsTr("Shift times")
+                    keywords: "captions offset delay early late move"
+                }
 
                 Flow {
                     width: parent.width
@@ -471,6 +481,11 @@ PanelFrame {
 
             Section {
                 title: qsTr("Two-point sync")
+                SearchAnchor {
+                    searchId: "subtitle-two-point-sync"
+                    title: qsTr("Two-point sync")
+                    keywords: "captions resync stretch scale align drift"
+                }
 
                 Repeater {
                     model: 2
@@ -560,6 +575,11 @@ PanelFrame {
 
             Section {
                 title: qsTr("Frame rate / speed")
+                SearchAnchor {
+                    searchId: "subtitle-frame-rate"
+                    title: qsTr("Frame rate conversion")
+                    keywords: "captions fps 23.976 24 25 29.97 30 speed"
+                }
 
                 Flow {
                     width: parent.width
@@ -663,7 +683,14 @@ PanelFrame {
             Section {
                 title: qsTr("Gaps and durations")
 
-                SubHead { text: qsTr("Bridge small gaps") }
+                SubHead {
+                    text: qsTr("Bridge small gaps")
+                    SearchAnchor {
+                        searchId: "subtitle-bridge-gaps"
+                        title: qsTr("Bridge gaps")
+                        keywords: "captions minimum gap lead in out duration overlap"
+                    }
+                }
 
                 Flow {
                     width: parent.width

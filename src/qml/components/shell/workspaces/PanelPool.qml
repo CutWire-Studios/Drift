@@ -20,6 +20,8 @@ Item {
     property var looksPanel: null
     property var scopesPanel: null
     property var keyframesPanel: null
+    property var maskingPanel: null
+    property var trackingPanel: null
     property var subtitlesPanel: null
     property var subtitleLanePanel: null
     property var subtitleTextPanel: null
@@ -52,6 +54,10 @@ Item {
 
     readonly property bool keyframesShown: root._shownOf("keyframes")
 
+    readonly property bool maskingShown: root._shownOf("masking")
+
+    readonly property bool trackingShown: root._shownOf("tracking")
+
     readonly property bool subtitlesShown: root._shownOf("subtitles")
 
     readonly property bool subtitleLaneShown: root._shownOf("subtitleLane")
@@ -79,6 +85,8 @@ Item {
         "looks": looksC,
         "scopes": scopesC,
         "keyframes": keyframesC,
+        "masking": maskingC,
+        "tracking": trackingC,
         "undoHistory": historyC,
         "sourceViewer": sourceViewerC,
         "sourceLab.bin": sourceLabBinC,
@@ -87,7 +95,9 @@ Item {
         "sourceLab.ranges": sourceLabRangesC,
         "sourceLab.process": sourceLabProcessC,
         "sourceLab.output": sourceLabOutputC,
-        "agentLog": agentLogC
+        "agentLog": agentLogC,
+        "agentViews": agentViewsC,
+        "audioSheet": audioSheetC
     })
 
     Component { id: assetsC; LazyPanel { panel: AssetsPanel {} } }
@@ -105,6 +115,8 @@ Item {
     Component { id: looksC; LazyPanel { panel: LooksPanel {} } }
     Component { id: scopesC; LazyPanel { panel: ScopesPanel {} } }
     Component { id: keyframesC; LazyPanel { panel: KeyframesPanel {} } }
+    Component { id: maskingC; LazyPanel { panel: MaskingPanel {} } }
+    Component { id: trackingC; LazyPanel { panel: TrackingPanel {} } }
     Component { id: historyC; LazyPanel { panel: HistoryPanel {} } }
     Component { id: sourceViewerC; LazyPanel { panel: SourceViewerPanel {} } }
     Component { id: sourceLabBinC; LazyPanel { panel: SourceLabBinPanel {} } }
@@ -114,6 +126,8 @@ Item {
     Component { id: sourceLabProcessC; LazyPanel { panel: SourceLabProcessPanel {} } }
     Component { id: sourceLabOutputC; LazyPanel { panel: SourceLabOutputPanel {} } }
     Component { id: agentLogC; LazyPanel { panel: AgentLogPanel {} } }
+    Component { id: agentViewsC; LazyPanel { panel: AgentViewsPanel {} } }
+    Component { id: audioSheetC; LazyPanel { panel: AudioSheetPanel {} } }
     Component { id: placeholderC; WorkspacePlaceholderPanel {} }
 
     // Stays in the pool like any panel, but the panel inside only exists while shown (plus a
@@ -177,6 +191,18 @@ Item {
             interval: 5000
             onTriggered: lazy.refresh()
         }
+    }
+
+    function inLayout(type) {
+        return !!root._created[type] && root._created[type].parent !== root
+    }
+
+    // Brings a panel's tab to the front when it sits behind another one.
+    function reveal(type) {
+        if (!root.inLayout(type))
+            return false
+        root._created[type].parent?.parent?.activate?.(type)
+        return true
     }
 
     function label(type) {
@@ -259,6 +285,12 @@ Item {
             break
         case "keyframes":
             root.keyframesPanel = Qt.binding(() => w.item)
+            break
+        case "masking":
+            root.maskingPanel = Qt.binding(() => w.item)
+            break
+        case "tracking":
+            root.trackingPanel = Qt.binding(() => w.item)
             break
         case "subtitles":
             root.subtitlesPanel = Qt.binding(() => w.item)

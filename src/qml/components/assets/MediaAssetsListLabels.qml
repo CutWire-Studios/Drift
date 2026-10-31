@@ -11,6 +11,7 @@ Column {
     property string duration: ""
     property string proxyState: ""
     property bool editFriendly: false
+    property string maskRole: ""
 
     anchors.verticalCenter: parent.verticalCenter
 
@@ -32,6 +33,13 @@ Column {
             waiting: root.proxyState === "queued" || root.proxyState === "building"
         }
         MediaPill {
+            id: rowMaskPill
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Mask")
+            tooltip: qsTr("Drops on the timeline as a mask, not a clip")
+            visible: root.maskRole.length > 0
+        }
+        MediaPill {
             id: rowEditFriendlyPill
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Edit-friendly")
@@ -49,7 +57,8 @@ Column {
             width: Math.max(0, parent.width
                                - (rowProxyPill.visible ? rowProxyPill.width + parent.spacing : 0)
                                - (rowEditFriendlyPill.visible
-                                  ? rowEditFriendlyPill.width + parent.spacing : 0))
+                                  ? rowEditFriendlyPill.width + parent.spacing : 0)
+                               - (rowMaskPill.visible ? rowMaskPill.width + parent.spacing : 0))
         }
     }
     Text {

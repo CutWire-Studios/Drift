@@ -11,6 +11,7 @@ ApplicationWindow {
     readonly property var previewPanel: workspace.pool.previewPanel
     readonly property var propertiesPanel: workspace.pool.propertiesPanel
     readonly property var timelinePanel: workspace.pool.timelinePanel
+    readonly property var panelPool: workspace.pool
     property alias androidMediaPreviewLoader: mediaPreviewHost.loader
 
     // Qt creates some chrome itself — most visibly the Undo/Cut/Copy/Paste menu on every
@@ -110,7 +111,6 @@ ApplicationWindow {
                 appWindow: window
                 header: editorHeader
                 assets: assetsPanel
-                downloadsLoader: downloadsWindowLoader
             }
         }
     }
@@ -304,7 +304,7 @@ ApplicationWindow {
         }
         const tools = [segmentationWindowLoader, denoiseWindowLoader, restoreWindowLoader,
                        multicamWindowLoader, speedCurveWindowLoader, fadeCurveWindowLoader,
-                       downloadsWindowLoader]
+                       marketplaceWindowLoader]
         for (var t = 0; t < tools.length; ++t) {
             if (tools[t].shown) {
                 tools[t].item.close()
@@ -312,7 +312,7 @@ ApplicationWindow {
             }
         }
         const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, debugInfoDialogLoader.item,
-                        settingsDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
+                        settingsDialogLoader.item, imageViewerDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
                         addonManagerDialogLoader.item, missingAddonsDialogLoader.item, addonStartupDialog,
                         projectSetupDialogLoader.item, layoutChooserDialogLoader.item,
                         languageChooserDialogLoader.item, recoveryDialogLoader.item,
@@ -505,13 +505,27 @@ ApplicationWindow {
         }
     }
 
+    LazyLoader {
+        id: accelerationFailedDialogLoader
+        sourceComponent: Component {
+            AccelerationFailedDialog { }
+        }
+    }
+
+    Connections {
+        target: Addons
+        function onAccelerationFailed(variant, error, waiting) {
+            accelerationFailedDialogLoader.ensure().openFor(variant, error, waiting)
+        }
+    }
+
     Connections {
         target: Updates
         function onInstallReady() {
             window.openUpdateDialog()
         }
         function onDownloadStarted() {
-            downloadsWindowLoader.ensure().show()
+            window.openMarketplace("downloads")
         }
         function onQuitRequested() {
             window.close()
@@ -554,6 +568,13 @@ ApplicationWindow {
         keepLoaded: true
         sourceComponent: Component {
             DebugInfoDialog { }
+        }
+    }
+
+    LazyLoader {
+        id: imageViewerDialogLoader
+        sourceComponent: Component {
+            ImageViewerDialog { }
         }
     }
 
@@ -627,25 +648,35 @@ ApplicationWindow {
         }
     }
 
+    // Kept loaded so the last page, its search and its scroll are still there on reopening.
     LazyLoader {
-        id: downloadsWindowLoader
+        id: marketplaceWindowLoader
+        keepLoaded: true
         sourceComponent: Component {
-            DownloadsWindow { }
+            MarketplaceWindow { }
         }
     }
 
-    // Shows the downloads window the first time a download starts, then stays out of the way:
+    // Shows the Downloads tab the first time a download starts, then stays out of the way:
     // reopening on every later job would yank focus mid-edit for something the header
     // badge already reports.
-    property bool downloadsWindowShownOnce: false
+    property bool downloadsAutoOpened: false
 
     Connections {
-        target: Market
-        function onDownloadStarted(itemId) {
-            if (window.downloadsWindowShownOnce)
+        target: Downloads
+        function onJobStarted(id) {
+            if (window.downloadsAutoOpened)
                 return
-            window.downloadsWindowShownOnce = true
-            downloadsWindowLoader.ensure().show()
+            window.downloadsAutoOpened = true
+            window.openMarketplace("downloads")
+        }
+    }
+
+    // MCP market_open, and anything else that asks the app to show a page or a listing.
+    Connections {
+        target: Marketplace
+        function onOpenRequested(page, tab, source, itemId) {
+            window.openMarketplace(tab.length > 0 ? tab : page, source, itemId)
         }
     }
 
@@ -778,6 +809,27 @@ ApplicationWindow {
     // not bound to one clip, so it survives any edit and only closes when the document does.
     function openMulticam() {
         multicamWindowLoader.ensure().openSession()
+    }
+
+    // A page id or "downloads", plus a listing to show. Empty arguments reopen the last page.
+    function openMarketplace(pageOrTab, source, itemId) {
+        marketplaceWindowLoader.ensure().open(pageOrTab || "", source || "", itemId || "")
+    }
+
+    // Panels that no workspace has room for. One window per type, kept for the session.
+    property var floatingPanels: ({})
+    function openFloatingPanel(type) {
+        if (type === "preview")
+            return
+        if (!window.floatingPanels[type])
+            window.floatingPanels[type] = floatingPanelC.createObject(window.contentItem,
+                                                                      { type: type, pool: workspace.pool })
+        window.floatingPanels[type].openPanel()
+    }
+
+    Component {
+        id: floatingPanelC
+        FloatingPanelWindow {}
     }
 
     // Opened from the header's Settings menu. Every preference lives here now; the
@@ -943,6 +995,10 @@ ApplicationWindow {
         debugInfoDialogLoader.ensure().open()
     }
 
+    function openImageViewer(entryId) {
+        imageViewerDialogLoader.ensure().show(entryId)
+    }
+
     // Global search opens assets tabs and labels them; the panel itself is out of the header's reach.
     function showAssetsTab(tabId) {
         if (window.previewFullscreen)
@@ -1040,8 +1096,8 @@ ApplicationWindow {
         const urls = intent.urls || []
         if (intent.kind === "view") {
             const url = urls.length > 0 ? String(urls[0]) : ""
-            if (url === "" || Market.handleIncomingUrl(url))
-                return url !== ""
+            if (url === "")
+                return false
             if (Addons.isUserPackage(url)) {
                 window.importUserPackage(url)
                 return false
@@ -1306,13 +1362,7 @@ ApplicationWindow {
     }
 
     Connections {
-        target: Market
-        function onAuthFinished(ok, message) {
-            if (ok)
-                Toasts.success(message)
-            else
-                Toasts.error(message)
-        }
+        target: StockInstaller
         function onDownloadImported(itemId, name) {
             Toasts.success(name.length > 0
                            ? qsTr("Imported “%1”.").arg(name)
@@ -1333,6 +1383,10 @@ ApplicationWindow {
     // first press returns to Select; only then does Escape clear the selection.
     function dispatchAction(id) {
         if (ShellBridge.keyframesActionHandler && ShellBridge.keyframesActionHandler.handleAction(id))
+            return
+        if (ShellBridge.maskingActionHandler && ShellBridge.maskingActionHandler.handleAction(id))
+            return
+        if (ShellBridge.trackingActionHandler && ShellBridge.trackingActionHandler.handleAction(id))
             return
         if (ShellBridge.subtitleActionHandler && ShellBridge.subtitleActionHandler.handleAction(id))
             return
@@ -1470,7 +1524,7 @@ ApplicationWindow {
 
         EditorWorkspace {
             id: workspace
-            onDownloadsRequested: downloadsWindowLoader.ensure().show()
+            onDownloadsRequested: window.openMarketplace("downloads")
         }
     }
 

@@ -48,9 +48,12 @@ public:
 
     Q_INVOKABLE void resetGroup(const QString &group);
     Q_INVOKABLE void resetGroups(const QStringList &groups);
+    Q_INVOKABLE void resetHslBand(const QString &band, const QString &label);
     Q_INVOKABLE void resetAll();
     Q_INVOKABLE void setLook(const QString &id);
     Q_INVOKABLE void importLooks(const QList<QUrl> &urls);
+    // Imports one .cube without a message and returns the new look id, empty on failure.
+    QString importLookFile(const QString &path, QString *error = nullptr);
     Q_INVOKABLE int clipsUsingLook(const QString &id) const;
     Q_INVOKABLE void removeLook(const QString &id);
     Q_INVOKABLE void renameLook(const QString &id, const QString &name);

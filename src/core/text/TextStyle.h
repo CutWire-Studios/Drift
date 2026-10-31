@@ -18,6 +18,7 @@ namespace drift {
 
 enum class TextAlign { Left, Center, Right };
 enum class TextVAlign { Top, Middle, Bottom };
+enum class TextCase { None, Upper, Lower, Title, Sentence };
 
 // Which words a style pack accents. The positional rules are time-independent, so the layout
 // stays cacheable for the whole cue; Karaoke follows the word being spoken and re-lays-out as
@@ -30,6 +31,12 @@ TextAlign textAlignFromString(const QString &align);
 
 QString textVAlignToString(TextVAlign valign);
 TextVAlign textVAlignFromString(const QString &valign);
+
+QString textCaseToString(TextCase textCase);
+TextCase textCaseFromString(const QString &textCase);
+// Same length as the input (one QChar in, one out), so caret and selection offsets into the
+// source text stay valid for the transformed text.
+QString applyTextCase(const QString &text, TextCase textCase);
 
 QString wordAccentRuleToString(WordAccentRule rule);
 WordAccentRule wordAccentRuleFromString(const QString &rule);
@@ -87,6 +94,7 @@ struct TextStyle
     bool wordWrap = true;
     double lineHeight = 1.2; // multiple of the font's natural line spacing
     double letterSpacing = 0.0; // px at pixelSize
+    TextCase textCase = TextCase::None; // display transform; the clip's text stays as typed
 
     bool boxEnabled = false; // filled background behind the whole block
     QColor boxColor = QColor(0, 0, 0, 128);
@@ -99,6 +107,9 @@ struct TextStyle
     QColor underlineColor = QColor(230, 40, 40);
     double underlineWidth = 6.0;
     double underlineOffset = 4.0; // below the baseline
+
+    // Rule through the middle of each line, in the text's own fill colour.
+    bool strikethroughEnabled = false;
 
     WordAccent accent;
 

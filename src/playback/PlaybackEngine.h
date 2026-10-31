@@ -78,6 +78,17 @@ public:
     void setLoopWorkArea(bool enabled) { m_loopWorkArea = enabled; }
     bool loopWorkArea() const { return m_loopWorkArea; }
 
+    // Loops playback inside [startUs, endUs) and beats the work-area loop while set.
+    void setPreviewRange(drift::TimeUs startUs, drift::TimeUs endUs)
+    {
+        m_previewRangeStartUs = startUs;
+        m_previewRangeEndUs = endUs;
+    }
+    void clearPreviewRange() { m_previewRangeStartUs = m_previewRangeEndUs = 0; }
+    bool hasPreviewRange() const { return m_previewRangeEndUs > m_previewRangeStartUs; }
+    drift::TimeUs previewRangeStartUs() const { return m_previewRangeStartUs; }
+    drift::TimeUs previewRangeEndUs() const { return m_previewRangeEndUs; }
+
     void setVoiceoverRecording(bool rec) { m_voiceoverRecording = rec; }
     bool isVoiceoverRecording() const { return m_voiceoverRecording; }
 
@@ -150,6 +161,8 @@ public:
     // The preview's current render scale (canvas px per project px), for layouts that must match it.
     double previewRenderScale() const { return playbackRenderOptions().previewScale; }
     void setTextEditDecor(const FrameCompositor::RenderOptions::TextEditDecor &decor, bool refresh = true);
+    // The preview's mask view of one clip; an Off mode clears it.
+    void setMaskView(const FrameCompositor::RenderOptions::MaskView &view);
     // The preview's 3D mode and its free viewpoint; inactive renders the camera's picture.
     void setEditorView(const FrameCompositor::RenderOptions::EditorView &view);
     // The panel's size in device px, as the preview last reported it.
@@ -269,6 +282,7 @@ private:
     std::atomic<quint64> m_audioStreamGeneration{1};
     FrameCompositor::RenderOptions::TextEditDecor m_textEditDecor;
     FrameCompositor::RenderOptions::EditorView m_editorView;
+    FrameCompositor::RenderOptions::MaskView m_maskView;
     int m_previewRenderWidth = 0;
     int m_previewRenderHeight = 0;
     // Display cadence. The refresh rate comes from the window's screen and is 0 until one
@@ -288,6 +302,8 @@ private:
     // samples in — not necessarily the project's rate, since the device has the final say.
     int m_sampleRate = 48000;
     bool m_loopWorkArea = false;
+    drift::TimeUs m_previewRangeStartUs = 0;
+    drift::TimeUs m_previewRangeEndUs = 0;
     bool m_voiceoverRecording = false;
     // processedUSecs() is cumulative from QAudioSink::start(), not from the last clock reset.
     // This is where the current stream's first sample sits in the sink's output, captured on the

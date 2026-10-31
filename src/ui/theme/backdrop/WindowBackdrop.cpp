@@ -70,7 +70,7 @@ bool readTranslucentSetting()
 
 } // namespace
 
-#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS) && !(defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID))
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACOS)
 namespace drift::backdrop {
 void applyNative(QWindow *, const QString &, bool) {}
 }

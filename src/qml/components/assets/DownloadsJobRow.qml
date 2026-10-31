@@ -124,7 +124,7 @@ Rectangle {
             tooltip: qsTr("Try again")
             onClicked: root.modelData.kind === "update"
                        ? Updates.retryDownload()
-                       : Market.retryDownload(root.modelData.itemId)
+                       : Downloads.retry(root.modelData.itemId)
         }
 
         IconButton {
@@ -135,7 +135,7 @@ Rectangle {
             enabled: root.modelData.status !== "preparing"
             onClicked: root.modelData.kind === "update"
                        ? Updates.cancelDownload()
-                       : Market.cancelDownload(root.modelData.itemId)
+                       : Downloads.cancel(root.modelData.itemId)
         }
     }
 }

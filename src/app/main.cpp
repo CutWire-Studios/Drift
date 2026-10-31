@@ -5,6 +5,8 @@
 #include "engine/gpu/device/GpuPreference.h"
 #include "engine/decode/hw/HwAccel.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
+#include "engine/gpu/GlRuntime.h"
+#include "engine/render2d/skia/SkiaRuntime.h"
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
 #include "app/HeadlessApp.h"
 #include "app/mcp/transport/McpStdio.h"
@@ -16,12 +18,25 @@
 #include "app/platform/FileDialogs.h"
 #include "app/platform/Haptics.h"
 #include "app/platform/PointerDevices.h"
+#include "app/platform/PrimaryDisplay.h"
+#include "app/GraphicsApiChoice.h"
+#include "app/StartupSplash.h"
 #include "app/editor/LayoutStore.h"
 #include "app/editor/WorkspaceStore.h"
-#include "app/online/market/MarketClient.h"
+#include "app/editor/SearchIndex.h"
+#include "app/online/downloads/DownloadBridges.h"
+#include "app/online/downloads/DownloadCenter.h"
+#include "app/online/marketplace/CommunityInstaller.h"
+#include "app/online/marketplace/MarketInstallRouter.h"
+#include "app/online/marketplace/MarketItemLoader.h"
+#include "app/online/marketplace/MarketSourceBrowser.h"
+#include "app/online/marketplace/MarketServices.h"
+#include "app/online/marketplace/MarketplaceManifest.h"
 #include "app/online/assets/DriftAssetStore.h"
 #include "app/online/assets/SfxLibrary.h"
 #include "app/online/updates/UpdateChecker.h"
+#include "engine/face/props/FacePropCatalog.h"
+#include "engine/packages/effects/EffectTemplateCatalog.h"
 #include "engine/decode/hw/VaapiZeroCopy.h"
 #include "ui/imageproviders/clippreview/ClipPreviewImageProvider.h"
 #include "ui/imageproviders/color/ColorImageProvider.h"
@@ -31,11 +46,24 @@
 #include "ui/imageproviders/ShapePreviewImageProvider.h"
 #include "ui/imageproviders/TextStylePreviewImageProvider.h"
 #include "playback/stats/PerfLog.h"
+#include "ui/color/ColorWheelPad.h"
+#include "ui/color/CurvePlot.h"
+#include "ui/keyframes/KeyframeCurvesItem.h"
+#include "ui/keyframes/KeyframeLanesItem.h"
+#include "ui/preview/BrushStrokeItem.h"
+#include "ui/preview/ToolCursor.h"
+#include "ui/preview/ConfidenceStripItem.h"
+#include "ui/preview/TrackerOverlayItem.h"
 #include "ui/preview/PreviewItem.h"
 #include "ui/theme/ThemeManager.h"
 #include "ui/theme/backdrop/WindowBackdrop.h"
 #include "ui/timeline/TimelineTrackItem.h"
 #include "ui/timeline/TimelineViewState.h"
+#include "app/editor/sessions/KeyframeCurvesModel.h"
+#include "app/editor/sessions/KeyframeRowsModel.h"
+#include "app/editor/sessions/KeyframeSelection.h"
+#include "app/editor/sessions/PolylineDraft.h"
+#include "app/editor/sessions/KeyframeTimeView.h"
 
 // QApplication (not QGuiApplication) is required so QFileDialog can use the
 // native platform file picker, which routes through xdg-desktop-portal.
@@ -50,6 +78,7 @@
 #include <QOffscreenSurface>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QProcess>
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
 #include <QQmlApplicationEngine>
@@ -60,9 +89,11 @@
 #include <QQuickWindow>
 #include <QSurfaceFormat>
 #include <QtQml/qqml.h>
+#include <QDir>
 #include <QFile>
 #include <QUrl>
 
+#include <algorithm>
 #include <condition_variable>
 #include <QElapsedTimer>
 #include <QTimer>
@@ -186,10 +217,9 @@ public:
 class FileOpenFilter : public QObject
 {
 public:
-    explicit FileOpenFilter(AppController *controller, MarketClient *market, QObject *parent = nullptr)
+    explicit FileOpenFilter(AppController *controller, QObject *parent = nullptr)
         : QObject(parent)
         , m_controller(controller)
-        , m_market(market)
     {
     }
 
@@ -198,8 +228,6 @@ protected:
     {
         if (event->type() == QEvent::FileOpen) {
             const auto *open = static_cast<QFileOpenEvent *>(event);
-            if (m_market && m_market->handleIncomingUrl(open->url()))
-                return true;
             m_controller->projectFile()->queueExternalProject(open->url());
             return true;
         }
@@ -208,7 +236,6 @@ protected:
 
 private:
     AppController *m_controller = nullptr;
-    MarketClient *m_market = nullptr;
 };
 
 #ifdef Q_OS_ANDROID
@@ -548,8 +575,8 @@ int main(int argc, char *argv[])
     // OpenGL reads the alpha plane from the surface format. RHI backends
     // (Vulkan, D3D, Metal) ignore QSurfaceFormat and look at
     // QQuickWindow::setDefaultAlphaBuffer instead; set both so a transparent
-    // window color survives whichever graphics API is selected. The app asks
-    // for OpenGL below, so the format is the path that actually runs.
+    // window color survives whichever graphics API is selected. Qt Quick runs
+    // on OpenGL unless Settings picked another API (GraphicsApiChoice.h).
     if (translucentWindows)
         format.setAlphaBufferSize(8);
     QSurfaceFormat::setDefaultFormat(format);
@@ -557,11 +584,6 @@ int main(int argc, char *argv[])
     if (translucentWindows)
         QQuickWindow::setDefaultAlphaBuffer(true);
     WindowBackdrop::noteProcessTranslucency(translucentWindows);
-
-    // Keep Qt Quick on OpenGL and create its global share context before the
-    // application, enabling zero-copy texture handoff from the compositor.
-    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
 #ifdef Q_OS_WIN
     // Before allowing desktop OpenGL, Qt looks the GPU up in a blacklist keyed on
@@ -585,7 +607,21 @@ int main(int argc, char *argv[])
     // must be in the environment before QApplication is constructed.
     QCoreApplication::setApplicationName("CutWire Drift");
     QCoreApplication::setOrganizationName("CutWire Drift");
+    // Reads QSettings, so after the names. Qt Quick stays on OpenGL with a global share context
+    // unless the user picked another API in Settings; see GraphicsApiChoice.h.
+    [[maybe_unused]] const bool graphicsApiGuarded = drift::graphics::applyAtStartup(argc, argv);
+#ifdef Q_OS_WIN
+    // Windows defaults 1080p screens to 125%, which leaves the editor too little room. Interface
+    // size is measured from 96 DPI here instead, picked from the screen on first run.
+    double osDisplayScale = 0.0;
+    if (const auto display = drift::display::primaryDisplay()) {
+        osDisplayScale = display->scale;
+        PreferencesController::autoUiScaleOnce(std::min(display->width, display->height), display->scale);
+    }
+    PreferencesController::applyStoredUiScale(osDisplayScale);
+#else
     PreferencesController::applyStoredUiScale();
+#endif
     // Qt's xcb plugin defaults to GLX, so eglGetCurrentDisplay() is null and
     // zero-copy sticky-disables. Only force EGL when the user opted in — default
     // X11 behaviour stays byte-identical. An explicit QT_XCB_GL_INTEGRATION still wins.
@@ -648,6 +684,39 @@ int main(int argc, char *argv[])
     // Protocol strings under src/app/mcp/ are excluded from the catalog; they stay English.
     PreferencesController::installUiTranslators();
 
+    // --preview=Name[,Name...], repeatable: open those QML components, one per window, instead of
+    // the editor. The `=` keeps the names from being taken for a startup project path.
+    // --preview-shot=<dir> saves each as <dir>/<Name>.png and exits; see docs/qml-previews.md.
+    QStringList previewNames;
+    QString previewShotDir;
+#ifdef DRIFT_QML_PREVIEWS
+    {
+        const QStringList args = app.arguments();
+        for (const QString &arg : args) {
+            if (arg.startsWith(QLatin1String("--preview=")))
+                previewNames += arg.mid(10).split(QLatin1Char(','), Qt::SkipEmptyParts);
+            else if (arg.startsWith(QLatin1String("--preview-shot=")))
+                previewShotDir = QDir(arg.mid(15)).absolutePath();
+        }
+    }
+#endif
+
+    StartupSplash *splash = nullptr;
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    if (previewNames.isEmpty()) {
+        splash = new StartupSplash;
+        splash->show();
+        splash->step(StartupSplash::tr("Starting…"), 0.02);
+        // Once, to map the window. Nothing has queued work for the event loop yet; later steps only
+        // repaint.
+        QCoreApplication::processEvents();
+    }
+#endif
+    const auto step = [splash](const QString &status, double progress) {
+        if (splash)
+            splash->step(status, progress);
+    };
+
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     // The whole UI is a Qt Quick scene graph on OpenGL, so with no OpenGL at all
     // there is no window to put an error in — the app would just appear not to
@@ -656,11 +725,13 @@ int main(int argc, char *argv[])
     // particular version, so it fires only when a context cannot be created at
     // all. A driver that is merely too old still starts, and the preview explains
     // itself in the panel instead.
+    step(StartupSplash::tr("Checking the graphics driver…"), 0.04);
     warnIfNoOpenGl();
 #endif
 
     // Registering the bundled fonts needs a QGuiApplication, and must happen before the compositor
     // thread starts touching QFontDatabase.
+    step(StartupSplash::tr("Loading fonts…"), 0.08);
     reloadFontCatalog();
     reloadUserFonts();
     reloadEmojiCatalog();
@@ -695,35 +766,58 @@ int main(int argc, char *argv[])
     qmlRegisterType<PreviewItem>("Drift", 1, 0, "PreviewItem");
     qmlRegisterType<TimelineViewState>("Drift", 1, 0, "TimelineViewState");
     qmlRegisterType<TimelineTrackItem>("Drift", 1, 0, "TimelineTrackClips");
+    qmlRegisterType<KeyframeSelection>("Drift", 1, 0, "KeyframeSelection");
+    qmlRegisterType<KeyframeTimeView>("Drift", 1, 0, "KeyframeTimeView");
+    qmlRegisterType<KeyframeRowsModel>("Drift", 1, 0, "KeyframeRowsModel");
+    qmlRegisterType<KeyframeCurvesModel>("Drift", 1, 0, "KeyframeCurvesModel");
+    qmlRegisterType<BrushStrokeItem>("Drift", 1, 0, "BrushStrokeItem");
+    qmlRegisterType<ToolCursor>("Drift", 1, 0, "ToolCursor");
+    qmlRegisterType<PolylineDraft>("Drift", 1, 0, "PolylineDraft");
+    qmlRegisterType<ColorWheelPad>("Drift", 1, 0, "ColorWheelPad");
+    qmlRegisterType<CurvePlot>("Drift", 1, 0, "CurvePlot");
+    qmlRegisterType<KeyframeLanesItem>("Drift", 1, 0, "KeyframeLanesItem");
+    qmlRegisterType<KeyframeCurvesItem>("Drift", 1, 0, "KeyframeCurvesItem");
+    qmlRegisterType<TrackerOverlayItem>("Drift", 1, 0, "TrackerOverlayItem");
+    qmlRegisterType<ConfidenceStripItem>("Drift", 1, 0, "ConfidenceStripItem");
     TimelineTrackItem::installAccessibility();
 
+    step(StartupSplash::tr("Starting the playback and audio engines…"), 0.12);
     static AssetLibrary assetLibrary;
     static EditorState editorState(&assetLibrary);
+    step(StartupSplash::tr("Loading add-ons and themes…"), 0.36);
     static FileDialogs fileDialogs;
     static AddonManager addonManager;
-    static MarketClient marketClient;
     static UpdateChecker updateChecker;
     static LayoutStore layoutStore;
     static WorkspaceStore workspaceStore;
+    static SearchIndex searchIndex;
     static drift::Haptics haptics;
     static drift::PointerDevices pointerDevices;
     editorState.setAddonManager(&addonManager);
-    marketClient.setAssetLibrary(&assetLibrary);
-    editorState.setMarketClient(&marketClient);
-    static DriftAssetStore driftAssets(&marketClient, &assetLibrary, &editorState);
-    static SfxLibrary sfxLibrary(&marketClient, &assetLibrary);
+    static MarketServices market(assetLibrary, editorState, addonManager);
+    editorState.setMarketplace(market.context());
+    DownloadCenter *downloads = DownloadCenter::instance();
+    bridgeUpdates(downloads, &updateChecker);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AssetLibrary", &assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.bin()->folderModel());
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AppController", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);
-    qmlRegisterSingletonInstance("Drift", 1, 0, "Market", &marketClient);
-    qmlRegisterSingletonInstance("Drift", 1, 0, "DriftAssets", &driftAssets);
-    qmlRegisterSingletonInstance("Drift", 1, 0, "Sfx", &sfxLibrary);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "StockInstaller", &market.stock);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "CommunityInstaller", &market.community);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "MarketInstall", &market.router);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "DriftAssets", &market.driftAssets);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Sfx", &market.sfx);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Marketplace", &market.manifest);
+    qmlRegisterType<MarketSourceBrowser>("Drift", 1, 0, "MarketSourceBrowser");
+    qmlRegisterType<MarketItemLoader>("Drift", 1, 0, "MarketItemLoader");
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Downloads", downloads);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Updates", &updateChecker);
     qmlRegisterSingletonInstance("Drift", 1, 0, "LayoutMemory", &layoutStore);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Workspaces", &workspaceStore);
+    searchIndex.setSources(&editorState, &workspaceStore, &addonManager, ThemeManager::shared());
+    qmlRegisterSingletonInstance("Drift", 1, 0, "SearchIndex", &searchIndex);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Haptics", &haptics);
     qmlRegisterSingletonInstance("Drift", 1, 0, "PointerDevices", &pointerDevices);
     // QML_ELEMENT on ThemeManager is recorded in qml_register_types_Drift(), and
@@ -740,7 +834,7 @@ int main(int argc, char *argv[])
     if (const QString themeOverride = qEnvironmentVariable("DRIFT_THEME"); !themeOverride.isEmpty())
         ThemeManager::shared()->applySessionOverride(themeOverride);
 
-    app.installEventFilter(new FileOpenFilter(&editorState, &marketClient, &app));
+    app.installEventFilter(new FileOpenFilter(&editorState, &app));
     {
         // Hoisted deliberately: QCoreApplication::arguments() rebuilds and returns a QStringList
         // BY VALUE on every call, so `const QString &arg = app.arguments().at(i)` bound a
@@ -752,8 +846,6 @@ int main(int argc, char *argv[])
         for (int i = 1; i < args.size(); ++i) {
             const QString &arg = args.at(i);
             const QUrl url(arg);
-            if (!url.scheme().isEmpty() && marketClient.handleIncomingUrl(url))
-                continue;
             forwarded.append(arg);
         }
         editorState.projectFile()->queueExternalProject(ProjectFileController::startupProjectUrlFromArguments(forwarded));
@@ -808,8 +900,36 @@ int main(int argc, char *argv[])
         QJniEnvironment().checkAndClearExceptions();
     }
 #endif
+#ifdef DRIFT_QML_PREVIEWS
+    if (!previewNames.isEmpty()) {
+        // No start screen to hand the queued startup project to, so load it directly.
+        const QUrl project = ProjectFileController::startupProjectUrlFromArguments(app.arguments());
+        if (project.isValid())
+            editorState.projectFile()->loadProject(project);
+        if (!previewShotDir.isEmpty() && !QDir().mkpath(previewShotDir)) {
+            qCritical("--preview-shot: cannot create %s", qUtf8Printable(previewShotDir));
+            return 1;
+        }
+        for (const QString &name : std::as_const(previewNames)) {
+            engine.setInitialProperties({{QStringLiteral("componentName"), name},
+                                         {QStringLiteral("shotDir"), previewShotDir}});
+            engine.loadFromModule("Drift", "PreviewHost");
+        }
+        // In shot mode each window closes itself once saved, and the last close ends the loop.
+        const int code = app.exec();
+        if (previewShotDir.isEmpty() || code != 0)
+            return code;
+        const QList<QObject *> hosts = engine.rootObjects();
+        const bool allSaved = std::all_of(hosts.cbegin(), hosts.cend(), [](QObject *host) {
+            return host->property("shotOk").toBool();
+        });
+        return allSaved ? 0 : 1;
+    }
+#endif
     engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
+    step(StartupSplash::tr("Building the interface…"), 0.5);
     engine.loadFromModule("Drift", "Shell");
+    step(StartupSplash::tr("Opening the editor…"), 1.0);
     drift::perf::install();
     if (drift::perf::enabled()) {
         // Frame pacing: the interval between swaps is the frame time the user sees. Windows are
@@ -852,10 +972,43 @@ int main(int argc, char *argv[])
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     // Shell.qml is not a window itself; the shell window it builds is its host.
+    QQuickWindow *shellWindow = nullptr;
     if (!engine.rootObjects().isEmpty()) {
         auto *host = engine.rootObjects().constFirst()->property("host").value<QObject *>();
-        if (auto *window = qobject_cast<QQuickWindow *>(host))
-            new FirstFrameWatchdog(window);
+        shellWindow = qobject_cast<QQuickWindow *>(host);
+        if (shellWindow)
+            new FirstFrameWatchdog(shellWindow);
+    }
+    splash->finishOn(shellWindow);
+    if (shellWindow && graphicsApiGuarded) {
+        QObject::connect(shellWindow, &QQuickWindow::frameSwapped, &app, [] {
+            drift::graphics::markStarted();
+        }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
+        // Connected, Qt Quick reports a backend that will not come up here instead of aborting.
+        // Go back to OpenGL and start again rather than leave a blank window.
+        QObject::connect(shellWindow, &QQuickWindow::sceneGraphError, &app,
+                         [](QQuickWindow::SceneGraphError, const QString &message) {
+            qCritical("Qt Quick could not start on the chosen graphics API: %s", qUtf8Printable(message));
+            drift::graphics::revertAfterFailure();
+            QProcess::startDetached(QCoreApplication::applicationFilePath(),
+                                    QCoreApplication::arguments().mid(1));
+            QCoreApplication::exit(1);
+        }, Qt::QueuedConnection);
+    }
+    if (shellWindow) {
+        // The compositor's GL context and Skia otherwise come up on the first preview frame,
+        // blocking the GUI thread as a project opens. Bring them up off the GUI thread once the
+        // window is on screen, so the start screen is not held back and the first open is quick.
+        QObject::connect(shellWindow, &QQuickWindow::frameSwapped, &app, [] {
+            std::thread([] {
+                drift::gl::GlRuntime &rt = drift::gl::runtime();
+#ifdef DRIFT_WITH_SKIA
+                rt.exec([&rt] { drift::skia::SkiaRuntime::acquire(rt); });
+#else
+                rt.available();
+#endif
+            }).detach();
+        }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
     }
 #endif
 

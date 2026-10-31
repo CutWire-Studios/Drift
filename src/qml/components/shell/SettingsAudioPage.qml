@@ -14,6 +14,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Audio output")
+        searchId: "audio-output"
         description: qsTr("Where playback is heard. “System default” follows whatever your computer is set to, including when that changes.")
         keywords: "speakers headphones playback sound device"
         query: page.query
@@ -36,6 +37,7 @@ SettingsPage {
 
     SettingsRow {
         title: qsTr("Microphone input")
+        searchId: "audio-microphone-input"
         description: qsTr("Audio device used for recording voiceovers onto audio tracks.")
         keywords: "recording voiceover mic input"
         query: page.query

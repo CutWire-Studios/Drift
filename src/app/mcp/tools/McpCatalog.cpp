@@ -135,6 +135,8 @@ QJsonObject maskSchema()
         {QStringLiteral("mediaChannel"), enumProp(QStringLiteral("matte/media only: which channel is the coverage"),
                                                   {QStringLiteral("luma"), QStringLiteral("alpha")})},
         {QStringLiteral("mediaLoop"), boolProp(QStringLiteral("matte/media only: loop a matte shorter than the clip"))},
+        {QStringLiteral("mediaTimeBase"), enumProp(QStringLiteral("matte/media only: index frames by the masked clip's source time (host) or from the mask's own start (adjustment)"),
+                                                   {QStringLiteral("host"), QStringLiteral("adjustment")})},
     });
     s.insert(QStringLiteral("description"),
              QStringLiteral("The whole mask; every omitted key reverts to its default and omitting shape turns the mask off"));
@@ -258,6 +260,8 @@ QJsonObject textLayerSchema(const QString &description)
                                                  {QStringLiteral("center"), QStringLiteral("outside"), QStringLiteral("inside")})},
         {QStringLiteral("dash"), enumProp(QStringLiteral("Stroke dash pattern"),
                                           {QStringLiteral("solid"), QStringLiteral("dash"), QStringLiteral("dot"), QStringLiteral("dashdot")})},
+        {QStringLiteral("join"), enumProp(QStringLiteral("Stroke corner join (default round)"),
+                                          {QStringLiteral("miter"), QStringLiteral("round"), QStringLiteral("bevel")})},
         {QStringLiteral("dashOffset"), numberProp(QStringLiteral("Dash phase in stroke widths (keyframe for marching ants)"))},
         {QStringLiteral("sketchLength"), numberProp(QStringLiteral("Hand-drawn jitter segment length in px; 0 = off"))},
         {QStringLiteral("sketchDeviation"), numberProp(QStringLiteral("Hand-drawn jitter amount in px"))},
@@ -352,6 +356,9 @@ QJsonObject textStyleSchema()
                                              QStringLiteral("bottom")})},
         {QStringLiteral("lineHeight"), numberProp(QStringLiteral("Line height multiplier"), 0.5, 4.0)},
         {QStringLiteral("letterSpacing"), numberProp(QStringLiteral("Letter spacing"))},
+        {QStringLiteral("textCase"), enumProp(QStringLiteral("Display case transform; the clip's text is unchanged"),
+                                             {QStringLiteral("none"), QStringLiteral("upper"), QStringLiteral("lower"),
+                                              QStringLiteral("title"), QStringLiteral("sentence")})},
         {QStringLiteral("wordWrap"), boolProp(QStringLiteral("Wrap long lines"))},
         {QStringLiteral("outlineEnabled"), boolProp(QStringLiteral("Legacy: the stroke layer on/off"))},
         {QStringLiteral("outlineWidth"), numberProp(QStringLiteral("Legacy: stroke width in px at pixelSize"))},
@@ -374,6 +381,7 @@ QJsonObject textStyleSchema()
         {QStringLiteral("underlineColor"), stringProp(QStringLiteral("Underline colour"))},
         {QStringLiteral("underlineWidth"), numberProp(QStringLiteral("Underline thickness in px"))},
         {QStringLiteral("underlineOffset"), numberProp(QStringLiteral("Underline distance below the baseline in px"))},
+        {QStringLiteral("strikethroughEnabled"), boolProp(QStringLiteral("Strikethrough rule through each line"))},
         {QStringLiteral("wordHighlight"), textHighlightSchema(QStringLiteral("Filled pill behind every word"))},
         {QStringLiteral("accent"),
          objectSchema({{QStringLiteral("rule"), enumProp(QStringLiteral("Which words get the accent"),
@@ -510,10 +518,12 @@ const QList<Op> &ops()
           "new files is not undoable.",
           objectSchema({{QStringLiteral("paths"),
                          arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
-                                   QStringLiteral("Absolute file paths from your own filesystem search"))}},
+                                   QStringLiteral("Absolute file paths from your own filesystem search"))},
+                        {QStringLiteral("folder"), stringProp(QStringLiteral("Bin folder id (or unique name) new files land in; \"\" for the bin root. Default: the folder the user is viewing. Paths already in the bin stay where they are"))}},
                        {QStringLiteral("paths")}) },
         { "list_assets", "media", "See what is in the bin",
-          "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h}]}. There is no "
+          "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId}]}; "
+          "folderId \"\" is the bin root (see list_folders). There is no "
           "recording timestamp — \"in the order I shot them\" cannot be recovered from this list; "
           "sort by name or by the order they were imported.",
           objectSchema({}), true, false, true },
@@ -522,6 +532,35 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
                         {QStringLiteral("name"), stringProp(QStringLiteral("New display name"))}},
                        {QStringLiteral("asset"), QStringLiteral("name")}) },
+        { "list_folders", "media", "See the bin's folder tree",
+          "List media-bin folders. Returns {folders:[{id, name, parentId, count}]}; parentId \"\" is "
+          "the bin root and count is the number of assets directly inside.",
+          objectSchema({}), true, false, true },
+        { "create_folder", "media", "Make a bin folder",
+          "Create a media-bin folder. Names need not be unique. Returns {id}.",
+          objectSchema({{QStringLiteral("name"), stringProp(QStringLiteral("Folder name"))},
+                        {QStringLiteral("parent"), stringProp(QStringLiteral("Parent folder id (or unique name); omit or \"\" for the bin root"))}},
+                       {QStringLiteral("name")}) },
+        { "move_asset_to_folder", "media", "File an asset into a bin folder",
+          "Move a bin asset into a folder. Clips on the timeline are unaffected. Returns {asset, "
+          "folderId, changed}.",
+          objectSchema({{QStringLiteral("asset"), assetRefProp()},
+                        {QStringLiteral("folder"), stringProp(QStringLiteral("Folder id (or unique name); \"\" for the bin root"))}},
+                       {QStringLiteral("asset"), QStringLiteral("folder")}) },
+        { "rename_folder", "media", "Rename a bin folder",
+          "Rename a media-bin folder. Returns {id, name, changed}.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Folder id (or unique name)"))},
+                        {QStringLiteral("name"), stringProp(QStringLiteral("New name"))}},
+                       {QStringLiteral("folder"), QStringLiteral("name")}) },
+        { "delete_folder", "media", "Remove a bin folder",
+          "Delete a media-bin folder. By default its assets and subfolders move up to its parent, "
+          "as in the app. recursive:true instead removes every subfolder and every asset under it "
+          "from the bin; it fails in_use (changing nothing) if any of those assets has clips on the "
+          "timeline. One undo step. Returns {deleted:[folder ids], removedAssets}.",
+          objectSchema({{QStringLiteral("folder"), stringProp(QStringLiteral("Folder id (or unique name)"))},
+                        {QStringLiteral("recursive"), boolProp(QStringLiteral("Also remove subfolders and their assets (default false)"))}},
+                       {QStringLiteral("folder")}),
+          false, true },
 
         { "add_track", "timeline", "Need a new lane",
           "Prepend a track. New track becomes index 0, so every existing track index shifts down by "
@@ -1120,6 +1159,12 @@ QJsonArray endpointList()
     return endpoints;
 }
 
+// market_download was renamed market_install; the old name still works but is not listed.
+QString canonicalOp(const QString &name)
+{
+    return name == QLatin1String("market_download") ? QStringLiteral("market_install") : name;
+}
+
 const QHash<QString, int> &opIndex()
 {
     static const QHash<QString, int> k = [] {
@@ -1134,7 +1179,7 @@ const QHash<QString, int> &opIndex()
 
 const Op *findOp(const QString &name)
 {
-    const int i = opIndex().value(name, -1);
+    const int i = opIndex().value(canonicalOp(name), -1);
     return i < 0 ? nullptr : &ops().at(i);
 }
 
@@ -1181,7 +1226,9 @@ QStringList undoExemptOps()
 {
     static const QStringList k = {
         QStringLiteral("import_media"),        QStringLiteral("import_media_bytes"),
-        QStringLiteral("market_download"),     QStringLiteral("market_cancel_download"),
+        QStringLiteral("market_install"),      QStringLiteral("market_download"),
+        QStringLiteral("market_cancel_download"), QStringLiteral("market_retry_download"),
+        QStringLiteral("market_open"),
         QStringLiteral("seek"),                QStringLiteral("play"),
         QStringLiteral("open_composite"),      QStringLiteral("flatten_composite"),
         QStringLiteral("pause"),               QStringLiteral("undo"),
@@ -1264,7 +1311,8 @@ QString agentGuideText()
         "  not_found, type_mismatch (also: wrong clip kind for the op), unknown_op, unknown_toolbox,\n"
         "  wrong_endpoint, wrong_toolbox, apply_failed, import_failed, import_timeout, export_busy,\n"
         "  export_failed, export_timeout, capture_failed, conflict, unsupported (no vector renderer\n"
-        "  in this build), market_unavailable, consent_required, market_error, download_failed,\n"
+        "  in this build), market_unavailable, market_error, rate_limited, app_too_old, quota_exceeded,\n"
+        "  install_timeout, download_failed,\n"
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
@@ -1291,7 +1339,8 @@ QString agentGuideText()
         "- generate_subtitles-> jobs.subtitleGen.{active,progress,status}\n"
         "- detect_scenes     -> jobs.sceneDetect.{active,progress,status}\n"
         "- set_clip_reverse  -> jobs.reverseRender.{active,progress,status}\n"
-        "- market_download   -> jobs.market.active (count), or market_downloads for per-job status\n"
+        "- market_install    -> jobs.downloads.{active,byKind} (every download, addons and updates included),\n"
+        "  or market_downloads for per-job status\n"
         "- transcribe, diarize, tts_generate, sfx_generate, add_voice, voiceover_from_subtitles return {job_id}: poll get_job({id});\n"
         "  inspect({detail:true}).jobs.list shows recent ones, finished included.\n"
         "jobs.* keys exist only while a job runs. Segmentation, denoise, and face detection report\n"
@@ -1313,6 +1362,16 @@ QString agentGuideText()
         "   bookmark_beats writes it into the project as markers that survive re-analysis.\n"
         "The analysis is transient: any edit that changes the mix drops it, and\n"
         "inspect({detail:true}).beats.stale says whether what you have still describes the audio.\n"
+        "\n"
+        "Listening to the mix (audio toolbox):\n"
+        "1. audio_sheet({start, duration}) draws frames, hits, spectrogram, waveform, loudness and sync on one image.\n"
+        "2. audio_measure gives LUFS, LRA, true peak, clipping and gaps; audio_events lists the hits and swells.\n"
+        "3. audio_sync checks whether a sound lands on each cut and says by how many ms it misses; read its chance\n"
+        "   figures before trusting a hit rate on dense music.\n"
+        "4. With the audio.clap / audio.ast addons: audio_tag names the sections and the hits (z >= 2.5 is\n"
+        "   believable, music mixes are guesses), audio_find locates a sound from the fixed vocabulary (an\n"
+        "   unknown term lists the closest), audio_rank orders bin assets by it, audio_presence marks speech and\n"
+        "   music. audio_sheet draws their sections and sound names when the addons are there.\n"
         "\n"
         "Custom effects (effects toolbox):\n"
         "1. effect_authoring_guide({kind}) for the manifest grammar and parameter types.\n"
@@ -1342,8 +1401,11 @@ QString agentGuideText()
         "Finding media: import_media takes absolute paths only. Drift will not list folders. When\n"
         "the user gives a partial name, glob or search the host with YOUR own tools (find, ls,\n"
         "whatever the client exposes), then pass those absolute paths to import_media and confirm\n"
-        "missing:[] is empty. Stock footage comes from the market toolbox (market_status first —\n"
-        "the user must have accepted the terms in the app).\n"
+        "missing:[] is empty. Stock footage, Drift assets (3D models, Lottie, face props), sound effects and\n"
+        "community add-ons (effects, looks, themes, templates) come from the market toolbox: market_status\n"
+        "lists the sources, market_search finds items, market_preview shows one, and market_install({wait,\n"
+        "place}) installs it and can drop it on the timeline in one call. market_downloads lists every\n"
+        "transfer including add-on and update downloads.\n"
         "\n"
         "Titles and captions (text toolbox):\n"
         "1. list_text_presets, then add_text({text, preset}) or apply_text_preset on an existing\n"
@@ -1388,10 +1450,10 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
         {"segmentation", "SAM-style cutout and mask output."},
         {"ai", "Denoise, face detection, auto-reframe, model add-ons (list/install), acceleration."},
-        {"audio", "Waveforms, silence, loudness, ducking, beat detection, beat-synced cuts, clip volume."},
+        {"audio", "Waveforms, silence, loudness (LUFS, LRA, true peak, gaps), sound events and cut sync, the audio sheet image, sound tags, sound search and speech/music detection (audio.clap / audio.ast addons), ducking, beat detection, beat-synced cuts, clip volume."},
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
-        {"market", "Stock media from the Cutwire marketplace: search or resolve a link, download into the bin. Needs the user's one-time consent in the app; downloads spend a per-machine quota."},
+        {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},
         {"transcript", "Transcript-first editing: transcribe once, read phrases/words with times, cut by words or by source ranges, assemble takes, label speakers."},
         {"voice", "Voices: ElevenLabs / Fish Audio text-to-speech and ElevenLabs sound effects (billable, need the user's API key), plus local Chatterbox TTS with a cloneable voice library and subtitle voiceovers (free, needs the tts-model addon)."},
     };
@@ -1508,7 +1570,7 @@ QJsonArray homepageTools()
                        "{x,y,w,h,rotation,opacity} is always present (values at the playhead) and "
                        "animated lists the keyframed properties. verbose=true returns every field. "
                        "clip=<uuid> returns just that clip (detail on); track=<n> just that track. "
-                       "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|market} only while "
+                       "Async jobs appear under jobs {package|subtitleGen|reverseRender|sceneDetect|downloads} only while "
                        "active, and jobs.list holds get_job's records; beats only once analysed. since=<revision> returns {unchanged:true, revision}."),
         objectSchema({{QStringLiteral("clips"), boolProp(QStringLiteral("Include per-clip rows under tracks[].items"))},
                       {QStringLiteral("detail"),
@@ -1629,7 +1691,7 @@ bool isHomepageTool(const QString &name)
 
 bool isKnownOp(const QString &name)
 {
-    return opIndex().contains(name);
+    return opIndex().contains(canonicalOp(name));
 }
 
 bool isReadOnlyOp(const QString &name)

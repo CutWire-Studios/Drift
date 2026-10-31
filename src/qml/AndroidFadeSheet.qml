@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import Drift
 // The phone's home for a clip's edge fades. On the desktop they are dots on the clip; on touch
 // those dots sat a finger's width from the trim handles and one kept being grabbed for the other,
@@ -52,68 +53,79 @@ AndroidBottomSheet {
                                        inClamped, outClamped)
     }
 
-    Column {
+    Flickable {
+        id: scroll
         anchors.fill: parent
-        anchors.leftMargin: Theme.pagePadding + root.safeLeft
-        anchors.rightMargin: Theme.pagePadding + root.safeRight
-        anchors.topMargin: Theme.spacingLg
-        spacing: Theme.spacingXl
-
-        Repeater {
-            model: [
-                { which: "in", label: qsTr("Fade in") },
-                { which: "out", label: qsTr("Fade out") }
-            ]
-
-            delegate: AndroidFadeSliderRow {
-                id: fadeRow
-                readonly property bool isIn: modelData.which === "in"
-                width: parent.width
-                current: isIn ? root.fadeIn : root.fadeOut
-                maxFade: root.maxFade
-                formatSeconds: function(v) { return root.formatSeconds(v) }
-                onPreviewBegan: EditorState.beginPreviewDrag(fadeRow.isIn ? qsTr("Fade in") : qsTr("Fade out"))
-                onPreviewEnded: EditorState.commitPreviewDrag()
-                onMoved: (value) => {
-                    if (fadeRow.isIn)
-                        root.setFades(value, root.fadeOut)
-                    else
-                        root.setFades(root.fadeIn, value)
-                }
-            }
-        }
+        clip: true
+        contentWidth: width
+        contentHeight: fadeColumn.implicitHeight
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
 
         Column {
-            width: parent.width
-            spacing: Theme.spacingSm
+            id: fadeColumn
+            x: Theme.pagePadding + root.safeLeft
+            width: scroll.width - x - Theme.pagePadding - root.safeRight
+            topPadding: Theme.spacingLg
+            bottomPadding: Theme.spacingLg
+            spacing: Theme.spacingXl
 
-            ThemedLabel {
-                text: qsTr("Curve")
-                size: "sm"
+            Repeater {
+                model: [
+                    { which: "in", label: qsTr("Fade in") },
+                    { which: "out", label: qsTr("Fade out") }
+                ]
+
+                delegate: AndroidFadeSliderRow {
+                    id: fadeRow
+                    readonly property bool isIn: modelData.which === "in"
+                    width: parent.width
+                    current: isIn ? root.fadeIn : root.fadeOut
+                    maxFade: root.maxFade
+                    formatSeconds: function(v) { return root.formatSeconds(v) }
+                    onPreviewBegan: EditorState.beginPreviewDrag(fadeRow.isIn ? qsTr("Fade in") : qsTr("Fade out"))
+                    onPreviewEnded: EditorState.commitPreviewDrag()
+                    onMoved: (value) => {
+                        if (fadeRow.isIn)
+                            root.setFades(value, root.fadeOut)
+                        else
+                            root.setFades(root.fadeIn, value)
+                    }
+                }
             }
 
-            Flow {
+            Column {
                 width: parent.width
                 spacing: Theme.spacingSm
 
-                Repeater {
-                    model: root.curveIds.length
+                ThemedLabel {
+                    text: qsTr("Curve")
+                    size: "sm"
+                }
 
-                    delegate: ThemedChip {
-                        required property int index
-                        readonly property string curveId: root.curveIds[index]
-                        text: root.curveLabels[index]
-                        selected: (root.clipData.fadeCurve || "smooth") === curveId
-                                  || (curveId === "custom" && root.clipData.fadeCurve === "bezier")
-                        onClicked: {
-                            Haptics.select()
-                            if (curveId === "custom") {
-                                root.hostWindow.openFadeCurve(EditorState.selectedTrack,
-                                                              EditorState.selectedClip)
-                                return
+                Flow {
+                    width: parent.width
+                    spacing: Theme.spacingSm
+
+                    Repeater {
+                        model: root.curveIds.length
+
+                        delegate: ThemedChip {
+                            required property int index
+                            readonly property string curveId: root.curveIds[index]
+                            text: root.curveLabels[index]
+                            selected: (root.clipData.fadeCurve || "smooth") === curveId
+                                      || (curveId === "custom" && root.clipData.fadeCurve === "bezier")
+                            onClicked: {
+                                Haptics.select()
+                                if (curveId === "custom") {
+                                    root.hostWindow.openFadeCurve(EditorState.selectedTrack,
+                                                                  EditorState.selectedClip)
+                                    return
+                                }
+                                EditorState.setClipFadeCurve(EditorState.selectedTrack,
+                                                             EditorState.selectedClip, curveId)
                             }
-                            EditorState.setClipFadeCurve(EditorState.selectedTrack,
-                                                         EditorState.selectedClip, curveId)
                         }
                     }
                 }

@@ -977,6 +977,8 @@ QVariant AssetLibrary::data(const QModelIndex &index, int role) const
     case FavoriteRangeCountRole:
         return static_cast<int>(std::count_if(asset->ranges.cbegin(), asset->ranges.cend(),
                                               [](const drift::SourceRange &r) { return r.rating > 0; }));
+    case MaskRoleRole:
+        return asset->maskRole;
     default:
         return {};
     }
@@ -997,6 +999,7 @@ QHash<int, QByteArray> AssetLibrary::roleNames() const
         {RatingRole, "rating"},
         {RangeCountRole, "rangeCount"},
         {FavoriteRangeCountRole, "favoriteRangeCount"},
+        {MaskRoleRole, "maskRole"},
     };
 }
 
@@ -1845,6 +1848,7 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("folderId"), asset->folderId},
         {QStringLiteral("sequenceId"), asset->sequenceId},
         {QStringLiteral("rating"), asset->rating},
+        {QStringLiteral("maskRole"), asset->maskRole},
         {QStringLiteral("rangeCount"), static_cast<int>(asset->ranges.size())},
         {QStringLiteral("favoriteRangeCount"),
          static_cast<int>(std::count_if(asset->ranges.cbegin(), asset->ranges.cend(),
@@ -1973,6 +1977,18 @@ bool AssetLibrary::setAssetName(int index, const QString &name)
 
     asset->name = trimmed;
     emitAssetRowChanged(index, {NameRole});
+    snapshotAssets();
+    return true;
+}
+
+bool AssetLibrary::setAssetMaskRole(int index, const QString &role)
+{
+    drift::MediaAsset *asset = assetAtIndex(index);
+    if (!asset || asset->maskRole == role)
+        return false;
+
+    asset->maskRole = role;
+    emitAssetRowChanged(index, {MaskRoleRole});
     snapshotAssets();
     return true;
 }

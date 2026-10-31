@@ -5,6 +5,11 @@ import Drift
 
 PanelFrame {
     id: root
+    SearchAnchor {
+        searchId: "subtitle-text-editor"
+        title: qsTr("Subtitle text editor")
+        keywords: "captions srt vtt paste edit import export source"
+    }
 
     property bool shown: true
     property string format: "srt"

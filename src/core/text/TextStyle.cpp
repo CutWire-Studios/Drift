@@ -54,6 +54,79 @@ TextVAlign textVAlignFromString(const QString &valign)
     return TextVAlign::Middle;
 }
 
+QString textCaseToString(TextCase textCase)
+{
+    switch (textCase) {
+    case TextCase::None:
+        return QStringLiteral("none");
+    case TextCase::Upper:
+        return QStringLiteral("upper");
+    case TextCase::Lower:
+        return QStringLiteral("lower");
+    case TextCase::Title:
+        return QStringLiteral("title");
+    case TextCase::Sentence:
+        return QStringLiteral("sentence");
+    }
+    return QStringLiteral("none");
+}
+
+TextCase textCaseFromString(const QString &textCase)
+{
+    if (textCase == QStringLiteral("upper"))
+        return TextCase::Upper;
+    if (textCase == QStringLiteral("lower"))
+        return TextCase::Lower;
+    if (textCase == QStringLiteral("title"))
+        return TextCase::Title;
+    if (textCase == QStringLiteral("sentence"))
+        return TextCase::Sentence;
+    return TextCase::None;
+}
+
+QString applyTextCase(const QString &text, TextCase textCase)
+{
+    QString out = text;
+    switch (textCase) {
+    case TextCase::None:
+        break;
+    case TextCase::Upper:
+        for (int i = 0; i < out.size(); ++i)
+            out[i] = out.at(i).toUpper();
+        break;
+    case TextCase::Lower:
+        for (int i = 0; i < out.size(); ++i)
+            out[i] = out.at(i).toLower();
+        break;
+    case TextCase::Title: {
+        static const QString joiners = QStringLiteral("-/([\"'");
+        bool wordStart = true;
+        for (int i = 0; i < out.size(); ++i) {
+            const QChar c = out.at(i);
+            if (wordStart && c.isLetter())
+                out[i] = c.toUpper();
+            wordStart = c.isSpace() || joiners.contains(c);
+        }
+        break;
+    }
+    case TextCase::Sentence: {
+        bool sentenceStart = true;
+        for (int i = 0; i < out.size(); ++i) {
+            const QChar c = out.at(i);
+            if (c.isLetter()) {
+                out[i] = sentenceStart ? c.toUpper() : c.toLower();
+                sentenceStart = false;
+            } else if (c == u'.' || c == u'!' || c == u'?') {
+                // "3.5" keeps its decimal point; only a terminator followed by space starts a sentence.
+                sentenceStart = i + 1 >= out.size() || out.at(i + 1).isSpace();
+            }
+        }
+        break;
+    }
+    }
+    return out;
+}
+
 QString wordAccentRuleToString(WordAccentRule rule)
 {
     switch (rule) {
@@ -985,6 +1058,7 @@ QJsonObject textStyleToJson(const TextStyle &s)
         {QStringLiteral("wordWrap"), s.wordWrap},
         {QStringLiteral("lineHeight"), s.lineHeight},
         {QStringLiteral("letterSpacing"), s.letterSpacing},
+        {QStringLiteral("textCase"), textCaseToString(s.textCase)},
         {QStringLiteral("boxEnabled"), s.boxEnabled},
         {QStringLiteral("boxColor"), s.boxColor.name(QColor::HexArgb)},
         {QStringLiteral("boxPadding"), s.boxPadding},
@@ -994,6 +1068,7 @@ QJsonObject textStyleToJson(const TextStyle &s)
         {QStringLiteral("underlineColor"), s.underlineColor.name(QColor::HexArgb)},
         {QStringLiteral("underlineWidth"), s.underlineWidth},
         {QStringLiteral("underlineOffset"), s.underlineOffset},
+        {QStringLiteral("strikethroughEnabled"), s.strikethroughEnabled},
         {QStringLiteral("accent"), wordAccentToJson(s.accent)},
         {QStringLiteral("animation"), textAnimationSetToJson(s.animation)},
     };
@@ -1090,6 +1165,7 @@ TextStyle textStyleFromJson(const QJsonObject &o)
     s.wordWrap = o.value(QStringLiteral("wordWrap")).toBool(s.wordWrap);
     s.lineHeight = o.value(QStringLiteral("lineHeight")).toDouble(s.lineHeight);
     s.letterSpacing = o.value(QStringLiteral("letterSpacing")).toDouble(s.letterSpacing);
+    s.textCase = textCaseFromString(o.value(QStringLiteral("textCase")).toString());
     s.boxEnabled = o.value(QStringLiteral("boxEnabled")).toBool(s.boxEnabled);
     s.boxColor = QColor(o.value(QStringLiteral("boxColor")).toString(s.boxColor.name(QColor::HexArgb)));
     s.boxPadding = o.value(QStringLiteral("boxPadding")).toDouble(s.boxPadding);
@@ -1100,7 +1176,8 @@ TextStyle textStyleFromJson(const QJsonObject &o)
     s.underlineColor = QColor(o.value(QStringLiteral("underlineColor")).toString(s.underlineColor.name(QColor::HexArgb)));
     s.underlineWidth = o.value(QStringLiteral("underlineWidth")).toDouble(s.underlineWidth);
     s.underlineOffset = o.value(QStringLiteral("underlineOffset")).toDouble(s.underlineOffset);
-    s.accent = wordAccentFromJson(o.value(QStringLiteral("accent")).toObject());
+    s.strikethroughEnabled = o.value(QStringLiteral("strikethroughEnabled")).toBool(s.strikethroughEnabled);
+    s.accent =wordAccentFromJson(o.value(QStringLiteral("accent")).toObject());
 
     if (o.contains(QStringLiteral("layers"))) {
         s.layers.clear();

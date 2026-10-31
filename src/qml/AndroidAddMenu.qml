@@ -103,30 +103,38 @@ AndroidBottomSheet {
         }
     ]
 
-    Column {
-        id: optionColumn
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        topPadding: Theme.spacingLg
-        bottomPadding: Theme.spacingLg
+    Flickable {
+        id: scroll
+        anchors.fill: parent
+        clip: true
+        contentWidth: width
+        contentHeight: optionColumn.implicitHeight
+        boundsBehavior: Flickable.StopAtBounds
+        ScrollBar.vertical: AppScrollBar { }
 
-        Repeater {
-            model: root.options
+        Column {
+            id: optionColumn
+            width: scroll.width
+            topPadding: Theme.spacingLg
+            bottomPadding: Theme.spacingLg
 
-            delegate: SheetActionRow {
-                required property var modelData
-                width: optionColumn.width
-                label: modelData.label
-                detail: modelData.detail
-                glyph: modelData.icon
-                sideInset: root.safeLeft
-                sideInsetRight: root.safeRight
+            Repeater {
+                model: root.options
 
-                onClicked: {
-                    Haptics.select()
-                    root.dismiss()
-                    root.picked(modelData.id)
+                delegate: SheetActionRow {
+                    required property var modelData
+                    width: optionColumn.width
+                    label: modelData.label
+                    detail: modelData.detail
+                    glyph: modelData.icon
+                    sideInset: root.safeLeft
+                    sideInsetRight: root.safeRight
+
+                    onClicked: {
+                        Haptics.select()
+                        root.dismiss()
+                        root.picked(modelData.id)
+                    }
                 }
             }
         }

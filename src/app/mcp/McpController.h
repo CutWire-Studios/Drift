@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/mcp/AgentImageLog.h"
 #include "core/project/Project.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
 
@@ -10,9 +11,11 @@
 #include <QList>
 #include <QObject>
 #include <QPair>
+#include <QImage>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
+#include <QVariantMap>
 
 #include <functional>
 #include <memory>
@@ -43,6 +46,11 @@ class McpController : public QObject
     // access always starts from an explicit, un-opted-in state rather than quietly
     // carrying an old intent to auto-start past the point the user turned access off.
     Q_PROPERTY(QVariantList toolLog READ toolLog NOTIFY toolLogChanged)
+    Q_PROPERTY(AgentImageLog *imageLog READ imageLog CONSTANT)
+    Q_PROPERTY(bool audioSheetBusy READ audioSheetBusy NOTIFY audioSheetChanged)
+    Q_PROPERTY(QVariantMap audioSheetResult READ audioSheetResult NOTIFY audioSheetChanged)
+    Q_PROPERTY(bool audioSearchBusy READ audioSearchBusy NOTIFY audioSearchChanged)
+    Q_PROPERTY(QVariantMap audioSearchResult READ audioSearchResult NOTIFY audioSearchChanged)
     Q_PROPERTY(bool startOnLaunch READ startOnLaunch WRITE setStartOnLaunch NOTIFY startOnLaunchChanged)
 
 public:
@@ -78,6 +86,7 @@ public:
     QString agentGuide() const;
     QVariantList toolLog() const { return m_toolLog; }
     Q_INVOKABLE void clearToolLog();
+    AgentImageLog *imageLog() const { return m_imageLog; }
 
     // Helpers (GUI thread). Used by src/app/mcp, not QML.
     QPair<int, int> locateClip(const QString &id) const;
@@ -239,6 +248,55 @@ public:
                                    double targetLufs);
     QJsonObject analyzeLoudness(int trackIndex, int clipIndex, double startSeconds,
                                    double durSeconds) const;
+    // Audio analysis for agents (audio_measure / audio_events / audio_sync / audio_sheet, and with the
+    // audio.clap / audio.ast addons audio_tag / audio_find / audio_rank / audio_presence). All
+    // block. Times are timeline seconds, or source seconds in asset mode.
+    struct AudioRequest {
+        QString mode = QStringLiteral("timeline"); // timeline, clip or asset
+        int track = -1;
+        int clip = -1;
+        QString assetId;
+        double start = 0.0;
+        double duration = 0.0;
+        bool curve = false;           // measure: include the loudness curves
+        int limit = 200;              // events: most prominent kept
+        double minProminence = 0.0;   // events: dB over the bed
+        QList<double> at;             // sync / sheet: explicit cue times instead of the timeline's cuts
+        bool hasAt = false;
+        double toleranceMs = 40.0;    // sync
+        int width = 2000;             // sheet
+        bool frames = true;           // sheet: a frame after each cut
+        bool toPath = false;          // sheet
+        bool tags = true;             // sheet: sections, sound labels and speech / music, when the addons are there
+        QString term;                 // find / rank: a vocabulary term
+        QStringList assetIds;         // rank: the assets to rank, or the whole bin
+        int top = 5;                  // find / rank: results kept
+        int tagLimit = 20;            // tag: events that get a sound tag
+        bool sections = true;         // tag
+    };
+    QJsonObject audioMeasure(const AudioRequest &request) const;
+    QJsonObject audioEvents(const AudioRequest &request) const;
+    QJsonObject audioSync(const AudioRequest &request) const;
+    QJsonObject audioSheet(const AudioRequest &request);
+    QJsonObject audioTag(const AudioRequest &request);
+    QJsonObject audioFind(const AudioRequest &request);
+    QJsonObject audioRank(const AudioRequest &request);
+    QJsonObject audioPresence(const AudioRequest &request);
+    // The Audio Sheet panel's vocabulary search over the same scopes: options are mode, track,
+    // clip, start, duration and term. The result lands in audioSearchResult: ok, term, moments
+    // [{start, end, z, verdict}] in the scope's own seconds, or ok:false with error, and closest
+    // when the term is not in the vocabulary.
+    Q_INVOKABLE void searchAudioSheet(const QVariantMap &options);
+    // The 322 terms audio_find understands; empty until the audio.clap addon is installed.
+    Q_INVOKABLE QStringList audioVocabulary() const;
+    bool audioSearchBusy() const { return m_audioSearchBusy; }
+    QVariantMap audioSearchResult() const { return m_audioSearchResult; }
+    // The Audio Sheet panel: the same render as audio_sheet, off the GUI thread. options are mode,
+    // track, clip, start, duration, width, frames. The result lands in audioSheetResult: the
+    // sheet's summary fields plus path, w and h of the full-size PNG, or ok:false and detail.
+    Q_INVOKABLE void generateAudioSheet(const QVariantMap &options);
+    bool audioSheetBusy() const { return m_audioSheetBusy; }
+    QVariantMap audioSheetResult() const { return m_audioSheetResult; }
     QJsonObject normalizeVolume(int trackIndex, int clipIndex, double targetLufs);
     QJsonObject duckUnder(int musicTrack, int musicClip, int overTrack,
                              const QStringList &overClips, double amount, double attack,
@@ -256,8 +314,19 @@ signals:
     void startOnLaunchChanged();
     void toolLogChanged();
     void toolCallStarted(const QString &tool);
+    void audioSheetChanged();
+    void audioSearchChanged();
 
 private:
+    struct ResolvedAudio;
+    struct AudioSheetJob;
+    struct AudioSearchIndex;
+    // Everything audio_sheet needs from the project, snapshotted on the GUI thread.
+    QJsonObject prepareAudioSheet(const AudioRequest &request, std::shared_ptr<AudioSheetJob> *out);
+    // Pure on the job, so it can run on any thread. The meta has no image fields.
+    static QJsonObject renderAudioSheet(const AudioSheetJob &job, QImage *sheet);
+    // An error object, or {} with `out` filled.
+    QJsonObject resolveAudio(const AudioRequest &request, double maxSeconds, ResolvedAudio *out) const;
     void rebuildClipIndexIfNeeded() const;
     // An error object when `provider` can't be used yet (no key, no consent); empty when it can.
     QJsonObject cloudUnavailable(const QString &provider) const;
@@ -274,6 +343,16 @@ private:
     std::unique_ptr<drift::mcp::McpServer> m_mcp;
 #endif
     QVariantList m_toolLog;
+    AgentImageLog *m_imageLog = nullptr;
+    bool m_audioSheetBusy = false;
+    QVariantMap m_audioSheetResult;
+    QString m_audioSheetPath;
+    int m_audioSheetSeq = 0;
+    bool m_audioSearchBusy = false;
+    QVariantMap m_audioSearchResult;
+    // The embedded candidate moments of the last searched scope, so a second term costs no model run.
+    std::shared_ptr<AudioSearchIndex> m_audioSearchIndex;
+    QString m_audioSearchKey;
     bool m_mcpStartOnLaunch = false;
     bool m_undoSuspended = false;
     int m_batchDepth = 0;

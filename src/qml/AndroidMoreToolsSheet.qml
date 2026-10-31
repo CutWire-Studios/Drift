@@ -363,7 +363,8 @@ AndroidBottomSheet {
             EditorState.selectTransformChildren(track, clipIndex)
             break
         case "transformCovers":
-            root.panel.openClipProperties()
+            if (ShellBridge.main.editorPage)
+                ShellBridge.main.editorPage.openTool("transform")
             break
         case "unlink":
             EditorState.unlinkSelectedClips()

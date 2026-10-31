@@ -76,6 +76,10 @@ uniform float u_opacity;
 uniform float u_hasMask;
 uniform float u_maskInvert;
 uniform float u_layerPremul;
+// Preview mask view. u_tint (rgb, strength) mixes a colour into the layer; u_matteView swaps the
+// layer for its mask coverage as grayscale. Both are set on every draw: the program is shared.
+uniform vec4 u_tint;
+uniform float u_matteView;
 // Depth occlusion: 1 where this layer shows, falling to 0 where the occluder's depth, laid out on
 // the canvas by kDepthPlaceFragShader, is nearer than the distance the layer was placed at.
 uniform sampler2D u_occ;
@@ -102,9 +106,17 @@ uniform float u_depthWrite;
 void main() {
     vec4 c = texture(u_layer, v_texCoord);
     float s = u_opacity;
+    float k = 1.0;
     if (u_hasMask > 0.5) {
         float m = texture(u_mask, v_texCoord).r;
-        s *= mix(m, 1.0 - m, u_maskInvert);
+        k = mix(m, 1.0 - m, u_maskInvert);
+        s *= k;
+    }
+    if (u_matteView > 0.5) {
+        c = vec4(k, k, k, 1.0);
+        s = 1.0;
+    } else {
+        c.rgb = mix(c.rgb, u_tint.rgb * (u_layerPremul > 0.5 ? c.a : 1.0), u_tint.a);
     }
     s *= occlusion();
     float a = c.a * s;
@@ -611,7 +623,7 @@ QMatrix4x4 layerViewProjection(const GpuLayer &layer, const QSize &canvas)
     if (layer.hasParent && layer.parent.isAffine())
         view = view * drift::worldParentFromAffine(layer.parent,
                                                    layer.layoutCanvas.isEmpty() ? canvasF : layer.layoutCanvas);
-    return view;
+    return view * layer.liftWorld;
 }
 
 void bindTrackInputs(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer, int effectIndex,
@@ -876,12 +888,21 @@ int soleMediaIndex(const GpuLayer &layer)
         const bool plainMedia = mask.shape == drift::MaskShape::Media && mask.feather <= 0.0
                                 && fullFrame && mask.mediaFit == drift::MaskMediaFit::Stretch
                                 && mask.mediaChannel == drift::MaskMediaChannel::Luma
-                                && i < layer.maskMedia.size() && !layer.maskMedia.at(i).isNull();
+                                && i < layer.maskMedia.size() && !layer.maskMedia.at(i).isNull()
+                                && (i >= layer.maskPatch.size() || layer.maskPatch.at(i).isNull());
         if (!plainMedia || found >= 0)
             return -1;
         found = i;
     }
     return found;
+}
+
+// Whether the preview's mask view has a mask to show on this layer. A chain that consumes the
+// masks does not cut the layer with them, so there is nothing cut away to display.
+bool showsMaskView(const GpuLayer &layer)
+{
+    return layer.maskView != MaskViewMode::Off && !chainConsumesMasks(layer)
+           && !drift::masksAreInert(layer.masks);
 }
 
 // Defined below; the mask compose pass reuses it to place media, and it in turn calls the compose
@@ -894,16 +915,25 @@ struct OcclusionDraw
     bool cutout = false;
 };
 
+// The extra draws the preview's mask view makes of one layer. Removed redraws it through the
+// inverted mask, tinted: exactly the part the mask cuts away. Matte draws the coverage itself.
+enum class ViewPass { None, Removed, Matte };
+
 // How a Normal or Add layer meets the canvas. Erase scales the canvas by one minus the layer's
 // coverage and Add sums onto it; the two together replace the canvas by the layer's coverage.
 enum class CanvasWrite { Over, Erase, Add };
 
 // `layerDepth`, when set, is the layer's own packed depth (a model clip's), written in place of
 // the quad's when the layer takes part in depth occlusion.
+//
+// `sharedMask`, when given, holds the composed coverage across calls: an empty one is filled by the
+// first draw and reused by the next, so the caller owns it and must release it. The mask view's
+// second pass uses this to avoid folding and blurring the same mask twice.
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
                        const GlTarget &layerTarget, const GpuLayer &layer, drift::BlendMode blend,
                        const QSize &canvasSize, const OcclusionDraw *occlusion = nullptr,
-                       CanvasWrite write = CanvasWrite::Over, GLuint layerDepth = 0);
+                       CanvasWrite write = CanvasWrite::Over, GLuint layerDepth = 0,
+                       ViewPass viewPass = ViewPass::None, GlTarget *sharedMask = nullptr);
 
 // Where a media mask's pixels land inside the coverage target. The mask's rect is normalized to
 // the clip frame; the fit mode then decides what happens when the media's aspect differs from it.
@@ -1025,6 +1055,17 @@ GlTarget composeMaskTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
             placed.rect = maskMediaRect(mask, media.size(), size);
             drawLayerOnCanvas(rt, gl, coverage, src, placed, drift::BlendMode::Normal, size);
             release(src);
+
+            // A brush fix of this frame goes over the placed coverage: gray where it was painted,
+            // weighted by its alpha, which is mix(coverage, gray, alpha) under a normal blend.
+            if (i < layer.maskPatch.size() && !layer.maskPatch.at(i).isNull()) {
+                const QImage &patch = layer.maskPatch.at(i);
+                GlTarget patchSrc = promoteImageToTargetCached(rt, gl, patch, patch.size());
+                if (patchSrc.isValid()) {
+                    drawLayerOnCanvas(rt, gl, coverage, patchSrc, placed, drift::BlendMode::Normal, size);
+                    release(patchSrc);
+                }
+            }
         } else {
             // Feather and invert are applied below, so they are deliberately excluded from the
             // rasterized (and therefore cached) shape.
@@ -1162,7 +1203,7 @@ GlTarget depthCanvasTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
                        const GlTarget &layerTarget, const GpuLayer &layer, drift::BlendMode blend,
                        const QSize &canvasSize, const OcclusionDraw *occlusion, CanvasWrite write,
-                       GLuint layerDepth)
+                       GLuint layerDepth, ViewPass viewPass, GlTarget *sharedMask)
 {
     if (!layerTarget.isValid() || layer.rect.width() < 0.5 || layer.rect.height() < 0.5)
         return;
@@ -1185,8 +1226,10 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         maskInvert = layer.masks.at(sole).invert ? 1.f : 0.f;
     } else if (!consumed && !drift::masksAreInert(layer.masks)) {
         // Feather, placement and the combine ops all live in the fold, which bakes invert in too.
-        maskTarget = composeMaskTarget(rt, gl, layer, layerTarget.size());
-        maskTex = maskTarget.isValid() ? maskTarget.texture() : 0;
+        GlTarget &composed = sharedMask ? *sharedMask : maskTarget;
+        if (!composed.isValid())
+            composed = composeMaskTarget(rt, gl, layer, layerTarget.size());
+        maskTex = composed.isValid() ? composed.texture() : 0;
     }
     const QMatrix4x4 model = modelMatrixFor(layer, canvasSize);
 
@@ -1201,6 +1244,12 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
                 rt.releaseTarget(std::move(mask));
         }
     } maskGuard{rt, maskTarget};
+
+    // Nothing is cut away without a coverage map, so there is nothing to show.
+    if (viewPass == ViewPass::Removed && !maskTex)
+        return;
+    if (viewPass == ViewPass::Removed)
+        maskInvert = 1.f - maskInvert;
 
     // Only worth it when the quad is actually smaller than the texture; at ~1:1 the
     // single bilinear tap is already exact and the copy would be pure cost.
@@ -1298,6 +1347,10 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
         program->setUniformValue("u_layer", 0);
         program->setUniformValue("u_mask", 1);
         program->setUniformValue("u_layerPremul", layerPremul);
+        program->setUniformValue("u_tint", viewPass == ViewPass::Removed ? QVector4D(layer.maskViewTint.redF(), layer.maskViewTint.greenF(),
+                                                                                  layer.maskViewTint.blueF(), layer.maskViewTint.alphaF())
+                                                                         : QVector4D());
+        program->setUniformValue("u_matteView", viewPass == ViewPass::Matte ? 1.f : 0.f);
         // Set either way: the program is cached and reused, so a 1 left over from the last
         // depth-writing layer would make the next one discard its soft edges.
         program->setUniformValue("u_depthWrite", depthWrite ? 1.f : 0.f);
@@ -1660,8 +1713,21 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
             rt.releaseTarget(std::move(entry.second));
     });
 
+    // The matte view replaces the whole frame with one layer's coverage, so everything else is skipped.
+    int matteItem = -1;
+    for (int i = 0; i < scene.items.size(); ++i) {
+        const GpuItem &candidate = scene.items.at(i);
+        if (!candidate.isTransition && !candidate.isAdjustment && candidate.layer.maskView == MaskViewMode::Matte
+            && showsMaskView(candidate.layer)) {
+            matteItem = i;
+            break;
+        }
+    }
+
     for (int itemIndex = 0; itemIndex < scene.items.size(); ++itemIndex) {
         const GpuItem &item = scene.items.at(itemIndex);
+        if (matteItem >= 0 && itemIndex != matteItem)
+            continue;
         if (item.isAdjustment) {
             if (item.layer.effects.isEmpty() || item.layer.opacity <= 0.001)
                 continue;
@@ -1764,9 +1830,28 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
                 occlusion = {it->second.texture(), item.layer.occludeDepth,
                              item.layer.occludeSoftness, item.layer.occludeCutout};
             }
+            if (itemIndex == matteItem) {
+                canvas.fbo->bind();
+                gl->glClearColor(0.f, 0.f, 0.f, 1.f);
+                gl->glClear(GL_COLOR_BUFFER_BIT);
+                canvas.fbo->release();
+                drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, drift::BlendMode::Normal, canvasSize,
+                                  nullptr, CanvasWrite::Over, 0u, ViewPass::Matte);
+                rt.releaseTarget(std::move(layerTarget));
+                continue;
+            }
+            const bool overlay = showsMaskView(item.layer) && item.layer.maskView == MaskViewMode::Overlay;
+            GlTarget overlayMask;
             drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, item.blend, canvasSize,
                               occlusion.texture ? &occlusion : nullptr, CanvasWrite::Over,
-                              modelDepth.isValid() ? modelDepth.texture() : 0u);
+                              modelDepth.isValid() ? modelDepth.texture() : 0u, ViewPass::None,
+                              overlay ? &overlayMask : nullptr);
+            if (overlay) {
+                drawLayerOnCanvas(rt, gl, canvas, layerTarget, item.layer, drift::BlendMode::Normal, canvasSize,
+                                  nullptr, CanvasWrite::Over, 0u, ViewPass::Removed, &overlayMask);
+                if (overlayMask.isValid())
+                    rt.releaseTarget(std::move(overlayMask));
+            }
             rt.releaseTarget(std::move(layerTarget));
             if (item.layer.emitDepthCanvas)
                 depthCanvases[itemIndex] = depthCanvasTarget(rt, gl, item.layer, canvasSize);
@@ -1946,10 +2031,9 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
 
     GlRuntime &rt = runtime();
 
-#ifdef Q_OS_ANDROID
     // Handing over a texture *name* only works while both contexts are in one share
-    // group; a driver that refuses sharing would leave the preview black rather than
-    // merely slow, so fall back to a readback in that case.
+    // group. Without one — Qt Quick on another graphics API, or an Android driver that
+    // refused sharing — the preview would be black rather than merely slow, so read back.
     if (!rt.sharesWithGuiContext()) {
         rt.exec([&] {
             GlTarget canvas = rt.acquireTarget(scene.canvasSize.width(), scene.canvasSize.height());
@@ -1969,7 +2053,6 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
         });
         return out;
     }
-#endif
 
     rt.exec([&] {
         GlTarget &canvas = rt.acquirePresentTarget(scene.canvasSize.width(), scene.canvasSize.height());

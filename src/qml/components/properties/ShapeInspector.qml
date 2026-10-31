@@ -104,7 +104,14 @@ Item {
             width: parent.width
             spacing: Theme.spacingXs
 
-            ThemedLabel { text: qsTr("Shape") }
+            ThemedLabel {
+                text: qsTr("Shape")
+                SearchAnchor {
+                    searchId: "shape-style"
+                    title: qsTr("Shape style")
+                    keywords: "fill stroke"
+                }
+            }
 
             ThemedLabel {
                 width: parent.width

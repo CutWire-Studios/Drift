@@ -6,6 +6,8 @@
 
 #include <onnxruntime_cxx_api.h>
 
+#include <functional>
+
 // Loading ONNX Runtime, which Drift does not link.
 //
 // The runtime is an addon like any other bulky optional thing: the app ships headers only and
@@ -29,7 +31,7 @@ inline constexpr char kPluginEpKind[] = "onnxruntime-ep";
 
 struct RuntimeInfo
 {
-    QString variant; // "cpu", "cuda", …
+    QString variant; // "cpu", "cuda", "migraphx", …
     QString version; // ONNX Runtime version, when the directory says
     QString dir;     // root holding lib/
 };
@@ -71,12 +73,12 @@ QList<PluginEp> registeredPluginEps();
 QString activeVariant();
 QString activeVersion();
 
-// Selection tokens that could work here and now: "cpu", plus "cuda" when the loaded core carries
-// the provider, plus one per registered plugin EP. Drives the picker in the Addon Manager.
+// Selection tokens that could work here and now: "cpu", plus "cuda" / "migraphx" when an installed
+// core carries the provider, plus one per registered plugin EP. Drives the picker in the Addon Manager.
 QStringList selectableVariants();
 
 // The user's choice, from the "ort/variant" setting: "auto" (the default), "cpu", "cuda",
-// "webgpu", … DRIFT_ORT_EP overrides it, since it exists to investigate exactly this.
+// "migraphx", "webgpu", … DRIFT_ORT_EP overrides it, since it exists to investigate exactly this.
 QString preferredVariant();
 void setPreferredVariant(const QString &variant);
 
@@ -85,8 +87,33 @@ void setPreferredVariant(const QString &variant);
 // an automatic one falls back.
 bool variantExplicit();
 
+// Why a provider whose libraries live outside the addon cannot work here, in words a user can act
+// on, or empty when nothing is known to be wrong. Only "migraphx" has such libraries: the AMD core
+// ships without ROCm, which the user installs. Checks files only, so it is safe to ask from the UI.
+QString providerSetupProblem(const QString &variant);
+
+// providerSetupProblem(), and then whatever loading the provider's outside libraries ahead of it
+// needs, so the provider finds them wherever they were found. Call before appending the provider.
+QString prepareProvider(const QString &variant);
+
 // The EP name to hand ONNX Runtime for a plugin-EP variant token, or empty when the variant is
 // not a plugin EP registered on this env. Requires the runtime to be loaded.
 QString pluginEpNameForVariant(const QString &variant);
+
+// Automatic mode stops trying a provider once it has failed, for the rest of the process. A null
+// tag means the provider itself could not be set up (missing CUDA libraries, no device), so every
+// model skips it; with a tag only that model does, since one graph lacking a kernel says nothing
+// about the others.
+void markAutoProviderFailed(const char *tag, const QString &variant);
+bool autoProviderFailed(const char *tag, const QString &variant);
+
+// Asks whoever installed a handler (the GUI) which provider to use instead of an explicitly
+// chosen one that cannot build a model. Runs on the loading thread and may block until the user
+// answers. Returns the variant to retry with, already saved as the preference, or empty to give
+// up. Without a handler, or under DRIFT_ORT_EP, it always gives up.
+using ProviderFailureHandler =
+    std::function<QString(const QString &failedVariant, const QString &error)>;
+void setProviderFailureHandler(ProviderFailureHandler handler);
+QString askForOtherProvider(const QString &failedVariant, const QString &error);
 
 } // namespace drift::ort

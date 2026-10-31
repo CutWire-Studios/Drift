@@ -1,0 +1,1547 @@
+{
+  "entries": [
+    {
+      "id": "agent-views",
+      "target": "panel:agentViews#agent-views",
+      "context": "AgentViewsPanel",
+      "source": "Agent Views",
+      "keywords": "agent images gallery frames audio sheet captures ai screenshots",
+      "needs": []
+    },
+    {
+      "id": "audio-sheet",
+      "target": "panel:audioSheet#audio-sheet",
+      "context": "AudioSheetPanel",
+      "source": "Audio Sheet",
+      "keywords": "audio sheet loudness lufs spectrogram events sync analysis report png export sections sound tags find search speech music",
+      "needs": []
+    },
+    {
+      "id": "color-grade",
+      "target": "panel:color#color-grade",
+      "context": "ColorPanel",
+      "source": "Color grade",
+      "keywords": "grade color workspace open",
+      "needs": []
+    },
+    {
+      "id": "color-compare",
+      "target": "panel:color#color-compare",
+      "context": "ColorPanel",
+      "source": "Compare",
+      "keywords": "before after bypass original",
+      "needs": []
+    },
+    {
+      "id": "color-apply-all",
+      "target": "panel:color#color-apply-all",
+      "context": "ColorPanel",
+      "source": "Apply to all clips",
+      "keywords": "grade timeline all clips copy",
+      "needs": []
+    },
+    {
+      "id": "color-exposure",
+      "target": "panel:color#tab=0/color-exposure",
+      "context": "ColorPanel",
+      "source": "Exposure",
+      "keywords": "light brightness",
+      "needs": []
+    },
+    {
+      "id": "color-contrast",
+      "target": "panel:color#tab=0/color-contrast",
+      "context": "ColorPanel",
+      "source": "Contrast",
+      "keywords": "light",
+      "needs": []
+    },
+    {
+      "id": "color-highlights",
+      "target": "panel:color#tab=0/color-highlights",
+      "context": "ColorPanel",
+      "source": "Highlights",
+      "keywords": "light bright",
+      "needs": []
+    },
+    {
+      "id": "color-shadows",
+      "target": "panel:color#tab=0/color-shadows",
+      "context": "ColorPanel",
+      "source": "Shadows",
+      "keywords": "light dark",
+      "needs": []
+    },
+    {
+      "id": "color-whites",
+      "target": "panel:color#tab=0/color-whites",
+      "context": "ColorPanel",
+      "source": "Whites",
+      "keywords": "light",
+      "needs": []
+    },
+    {
+      "id": "color-blacks",
+      "target": "panel:color#tab=0/color-blacks",
+      "context": "ColorPanel",
+      "source": "Blacks",
+      "keywords": "light",
+      "needs": []
+    },
+    {
+      "id": "color-temperature",
+      "target": "panel:color#tab=0/color-temperature",
+      "context": "ColorPanel",
+      "source": "Temperature",
+      "keywords": "white balance warm cool kelvin",
+      "needs": []
+    },
+    {
+      "id": "color-tint",
+      "target": "panel:color#tab=0/color-tint",
+      "context": "ColorPanel",
+      "source": "Tint",
+      "keywords": "white balance green magenta",
+      "needs": []
+    },
+    {
+      "id": "color-saturation",
+      "target": "panel:color#tab=0/color-saturation",
+      "context": "ColorPanel",
+      "source": "Saturation",
+      "keywords": "color intensity",
+      "needs": []
+    },
+    {
+      "id": "color-vibrance",
+      "target": "panel:color#tab=0/color-vibrance",
+      "context": "ColorPanel",
+      "source": "Vibrance",
+      "keywords": "color saturation",
+      "needs": []
+    },
+    {
+      "id": "color-wheels",
+      "target": "panel:color#tab=1/color-wheels",
+      "context": "ColorPanel",
+      "source": "Color wheels",
+      "keywords": "lift gamma gain shadows midtones highlights",
+      "needs": []
+    },
+    {
+      "id": "color-curves",
+      "target": "panel:color#tab=2/color-curves",
+      "context": "ColorPanel",
+      "source": "Curves",
+      "keywords": "rgb curve",
+      "needs": []
+    },
+    {
+      "id": "color-hue-curves",
+      "target": "panel:color#tab=2/color-hue-curves",
+      "context": "ColorPanel",
+      "source": "Hue curves",
+      "keywords": "hue vs hue saturation luminance curve",
+      "needs": []
+    },
+    {
+      "id": "color-hsl",
+      "target": "panel:color#tab=3/color-hsl",
+      "context": "ColorPanel",
+      "source": "HSL",
+      "keywords": "hsl hue saturation luminance color band red orange yellow green aqua blue purple magenta",
+      "needs": []
+    },
+    {
+      "id": "color-film-grain",
+      "target": "panel:color#tab=4/color-film-grain",
+      "context": "ColorPanel",
+      "source": "Film Grain",
+      "keywords": "grain noise film",
+      "needs": []
+    },
+    {
+      "id": "color-glow",
+      "target": "panel:color#tab=4/color-glow",
+      "context": "ColorPanel",
+      "source": "Glow",
+      "keywords": "bloom glow halation",
+      "needs": []
+    },
+    {
+      "id": "color-vignette",
+      "target": "panel:color#tab=4/color-vignette",
+      "context": "ColorPanel",
+      "source": "Vignette",
+      "keywords": "dark corners edges",
+      "needs": []
+    },
+    {
+      "id": "color-chromatic-aberration",
+      "target": "panel:color#tab=4/color-chromatic-aberration",
+      "context": "ColorPanel",
+      "source": "Chromatic Aberration",
+      "keywords": "color fringe lens",
+      "needs": []
+    },
+    {
+      "id": "keyframes-editor",
+      "target": "panel:keyframes#keyframes-editor",
+      "context": "KeyframesPanel",
+      "source": "Keyframe editor",
+      "keywords": "keyframes animation curves graph editor dope sheet",
+      "needs": []
+    },
+    {
+      "id": "color-looks",
+      "target": "panel:looks#color-looks",
+      "context": "LooksPanel",
+      "source": "Looks",
+      "keywords": "lut filter preset cube",
+      "needs": []
+    },
+    {
+      "id": "color-import-looks",
+      "target": "panel:looks#color-import-looks",
+      "context": "LooksPanel",
+      "source": "Import looks",
+      "keywords": "import cube lut look",
+      "needs": []
+    },
+    {
+      "id": "masking-tracking",
+      "target": "panel:masking#masking-tracking",
+      "context": "MaskingPanel",
+      "source": "Masking & Tracking",
+      "keywords": "mask matte rotoscope roto brush polygon tracking tracker motion track planar object follow",
+      "needs": []
+    },
+    {
+      "id": "color-scopes",
+      "target": "panel:scopes#color-scopes",
+      "context": "ScopesPanel",
+      "source": "Scopes",
+      "keywords": "histogram waveform vectorscope parade",
+      "needs": []
+    },
+    {
+      "id": "subtitle-lane",
+      "target": "panel:subtitleLane#subtitle-lane",
+      "context": "SubtitleLanePanel",
+      "source": "Subtitle lane",
+      "keywords": "captions cues timeline drag waveform zoom",
+      "needs": []
+    },
+    {
+      "id": "subtitle-text-editor",
+      "target": "panel:subtitleText#subtitle-text-editor",
+      "context": "SubtitleTextPanel",
+      "source": "Subtitle text editor",
+      "keywords": "captions srt vtt paste edit import export source",
+      "needs": []
+    },
+    {
+      "id": "subtitle-timing",
+      "target": "panel:subtitleTiming#subtitle-timing",
+      "context": "SubtitleTimingPanel",
+      "source": "Subtitle timing",
+      "keywords": "captions tools shift offset sync frame rate speed gaps durations",
+      "needs": []
+    },
+    {
+      "id": "subtitle-shift-times",
+      "target": "panel:subtitleTiming#subtitle-shift-times",
+      "context": "SubtitleTimingPanel",
+      "source": "Shift times",
+      "keywords": "captions offset delay early late move",
+      "needs": []
+    },
+    {
+      "id": "subtitle-two-point-sync",
+      "target": "panel:subtitleTiming#subtitle-two-point-sync",
+      "context": "SubtitleTimingPanel",
+      "source": "Two-point sync",
+      "keywords": "captions resync stretch scale align drift",
+      "needs": []
+    },
+    {
+      "id": "subtitle-frame-rate",
+      "target": "panel:subtitleTiming#subtitle-frame-rate",
+      "context": "SubtitleTimingPanel",
+      "source": "Frame rate conversion",
+      "keywords": "captions fps 23.976 24 25 29.97 30 speed",
+      "needs": []
+    },
+    {
+      "id": "subtitle-bridge-gaps",
+      "target": "panel:subtitleTiming#subtitle-bridge-gaps",
+      "context": "SubtitleTimingPanel",
+      "source": "Bridge gaps",
+      "keywords": "captions minimum gap lead in out duration overlap",
+      "needs": []
+    },
+    {
+      "id": "sourcelab-crop",
+      "target": "panel:sourceLab.process#sourcelab-crop",
+      "context": "SourceLabCropSection",
+      "source": "Crop / reframe source",
+      "keywords": "crop reframe reframing aspect ratio 9:16 portrait presets",
+      "needs": []
+    },
+    {
+      "id": "sourcelab-upscale",
+      "target": "panel:sourceLab.process#sourcelab-upscale",
+      "context": "SourceLabEnhanceSection",
+      "source": "Upscale source clip",
+      "keywords": "upscale enhance restore resolution sharpen a/b compare",
+      "needs": []
+    },
+    {
+      "id": "sourcelab-export",
+      "target": "panel:sourceLab.output#sourcelab-export",
+      "context": "SourceLabOutputPanel",
+      "source": "Export trimmed clip",
+      "keywords": "export clip file save render container codec quality stream copy replace bin add copy",
+      "needs": []
+    },
+    {
+      "id": "sourcelab-denoise-stabilize",
+      "target": "panel:sourceLab.process#sourcelab-denoise-stabilize",
+      "context": "SourceLabProcessPanel",
+      "source": "Denoise and stabilize source",
+      "keywords": "denoise noise hiss clean stabilize shake steady",
+      "needs": []
+    },
+    {
+      "id": "sourcelab-speed",
+      "target": "panel:sourceLab.process#sourcelab-speed",
+      "context": "SourceLabSpeedSection",
+      "source": "Speed and loudness",
+      "keywords": "speed slow fast motion gain volume loudness normalize",
+      "needs": []
+    },
+    {
+      "id": "sourcelab-trim",
+      "target": "panel:sourceLab.trim#sourcelab-trim",
+      "context": "SourceLabTrimPanel",
+      "source": "Trim source clip",
+      "keywords": "trim cut in out start end ranges subclip split scene detection favorite reject marker",
+      "needs": []
+    },
+    {
+      "id": "sourcelab-viewer",
+      "target": "panel:sourceLab.viewer#sourcelab-viewer",
+      "context": "SourceLabViewerPanel",
+      "source": "Source Lab",
+      "keywords": "source lab workspace cut trim crop reframe ranges subclip favorite reject marker speed denoise stabilize upscale enhance export clip normalize loudness",
+      "needs": []
+    },
+    {
+      "id": "animation-in",
+      "target": "panel:properties.animation#animation-in",
+      "context": "AnimationInspector",
+      "source": "In animation",
+      "keywords": "intro enter fade slide pop zoom bounce",
+      "needs": [
+        "animatable"
+      ]
+    },
+    {
+      "id": "animation-out",
+      "target": "panel:properties.animation#animation-out",
+      "context": "AnimationInspector",
+      "source": "Out animation",
+      "keywords": "outro exit fade slide pop zoom",
+      "needs": [
+        "animatable"
+      ]
+    },
+    {
+      "id": "animation-custom-curve",
+      "target": "panel:properties.animation#animation-custom-curve",
+      "context": "AnimationInspector",
+      "source": "Custom curve",
+      "keywords": "easing",
+      "needs": [
+        "animatable"
+      ]
+    },
+    {
+      "id": "audiofx-settings",
+      "target": "panel:properties.audioEffects#audiofx-settings",
+      "context": "AudioEffectsInspector",
+      "source": "Audio effect settings",
+      "keywords": "parameters",
+      "needs": [
+        "adj:audioEffects"
+      ]
+    },
+    {
+      "id": "audio-volume",
+      "target": "panel:properties.audio#audio-volume",
+      "context": "AudioInspector",
+      "source": "Volume",
+      "keywords": "loud gain level mute",
+      "needs": [
+        "audible"
+      ]
+    },
+    {
+      "id": "audio-pan",
+      "target": "panel:properties.audio#audio-pan",
+      "context": "AudioInspector",
+      "source": "Pan",
+      "keywords": "balance left right stereo",
+      "needs": [
+        "audible"
+      ]
+    },
+    {
+      "id": "audio-track",
+      "target": "panel:properties.audio#audio-track",
+      "context": "AudioInspector",
+      "source": "Audio track",
+      "keywords": "extract stream",
+      "needs": [
+        "audible"
+      ]
+    },
+    {
+      "id": "audio-remove-noise",
+      "target": "panel:properties.audio#audio-remove-noise",
+      "context": "AudioInspector",
+      "source": "Remove noise…",
+      "keywords": "denoise hiss background clean",
+      "needs": [
+        "audible"
+      ]
+    },
+    {
+      "id": "audio-auto-subtitles",
+      "target": "panel:properties.audio#audio-auto-subtitles",
+      "context": "AudioInspector",
+      "source": "Auto subtitles",
+      "keywords": "captions transcribe speech whisper",
+      "needs": [
+        "audible"
+      ]
+    },
+    {
+      "id": "blending-blend-mode",
+      "target": "panel:properties.blending#blending-blend-mode",
+      "context": "BlendingInspector",
+      "source": "Blend mode",
+      "keywords": "multiply screen overlay add",
+      "needs": [
+        "blendable"
+      ]
+    },
+    {
+      "id": "camera-position",
+      "target": "panel:properties.camera#camera-position",
+      "context": "CameraInspector",
+      "source": "Camera position",
+      "keywords": "3d",
+      "needs": [
+        "adj:camera"
+      ]
+    },
+    {
+      "id": "effects-face-tracking",
+      "target": "panel:properties.effects#effects-face-tracking",
+      "context": "EffectsFaceSection",
+      "source": "Face tracking",
+      "keywords": "face",
+      "needs": [
+        "adj:videoEffects"
+      ]
+    },
+    {
+      "id": "effects-settings",
+      "target": "panel:properties.effects#effects-settings",
+      "context": "EffectsInspector",
+      "source": "Effect settings",
+      "keywords": "parameters",
+      "needs": [
+        "adj:videoEffects"
+      ]
+    },
+    {
+      "id": "effects-save-preset",
+      "target": "panel:properties.effects#effects-save-preset",
+      "context": "EffectsStackActions",
+      "source": "Save as preset…",
+      "keywords": "stack",
+      "needs": [
+        "adj:videoEffects"
+      ]
+    },
+    {
+      "id": "general-clip-name",
+      "target": "panel:properties.general#general-clip-name",
+      "context": "GeneralInspector",
+      "source": "Clip name",
+      "keywords": "rename",
+      "needs": []
+    },
+    {
+      "id": "general-crop",
+      "target": "panel:properties.general#general-crop",
+      "context": "GeneralInspector",
+      "source": "Crop",
+      "keywords": "cut frame",
+      "needs": []
+    },
+    {
+      "id": "general-duration",
+      "target": "panel:properties.general#general-duration",
+      "context": "GeneralInspector",
+      "source": "Duration",
+      "keywords": "length",
+      "needs": []
+    },
+    {
+      "id": "general-trim",
+      "target": "panel:properties.general#general-trim",
+      "context": "GeneralInspector",
+      "source": "Trim",
+      "keywords": "in out start end",
+      "needs": []
+    },
+    {
+      "id": "masks-combine",
+      "target": "panel:properties.masks#masks-combine",
+      "context": "MasksInspector",
+      "source": "Combine",
+      "keywords": "add subtract intersect",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
+      "id": "masks-feather",
+      "target": "panel:properties.masks#masks-feather",
+      "context": "MasksInspector",
+      "source": "Feather",
+      "keywords": "soft edge blur",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
+      "id": "masks-invert",
+      "target": "panel:properties.masks#masks-invert",
+      "context": "MasksInspector",
+      "source": "Invert",
+      "keywords": "reverse",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
+      "id": "model3d-model",
+      "target": "panel:properties.model3d#model3d-model",
+      "context": "Model3DInspector",
+      "source": "3D model",
+      "keywords": "mesh",
+      "needs": [
+        "model3d"
+      ]
+    },
+    {
+      "id": "pdf-page",
+      "target": "panel:properties.pdf#pdf-page",
+      "context": "PdfInspector",
+      "source": "PDF page",
+      "keywords": "scroll",
+      "needs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": "shape-style",
+      "target": "panel:properties.shape#shape-style",
+      "context": "ShapeInspector",
+      "source": "Shape style",
+      "keywords": "fill stroke",
+      "needs": [
+        "shape"
+      ]
+    },
+    {
+      "id": "speed-playback",
+      "target": "panel:properties.speed#speed-playback",
+      "context": "SpeedFadeInspector",
+      "source": "Playback speed",
+      "keywords": "fast slow motion",
+      "needs": [
+        "retimable"
+      ]
+    },
+    {
+      "id": "speed-custom",
+      "target": "panel:properties.speed#speed-custom",
+      "context": "SpeedFadeInspector",
+      "source": "Custom speed…",
+      "keywords": "ramp curve",
+      "needs": [
+        "retimable"
+      ]
+    },
+    {
+      "id": "speed-reverse",
+      "target": "panel:properties.speed#speed-reverse",
+      "context": "SpeedFadeInspector",
+      "source": "Reverse",
+      "keywords": "backwards rewind",
+      "needs": [
+        "retimable"
+      ]
+    },
+    {
+      "id": "stabilize-stabilize",
+      "target": "panel:properties.stabilize#stabilize-stabilize",
+      "context": "StabilizeInspector",
+      "source": "Stabilize",
+      "keywords": "shake shaky steady",
+      "needs": [
+        "stabilizable"
+      ]
+    },
+    {
+      "id": "stabilize-smoothing",
+      "target": "panel:properties.stabilize#stabilize-smoothing",
+      "context": "StabilizeInspector",
+      "source": "Smoothing",
+      "keywords": "shake steady",
+      "needs": [
+        "stabilizable"
+      ]
+    },
+    {
+      "id": "stabilize-tripod",
+      "target": "panel:properties.stabilize#stabilize-tripod",
+      "context": "StabilizeInspector",
+      "source": "Tripod mode",
+      "keywords": "lock still",
+      "needs": [
+        "stabilizable"
+      ]
+    },
+    {
+      "id": "text-font",
+      "target": "panel:properties.text#text-font",
+      "context": "TextInspectorFontSection",
+      "source": "Font",
+      "keywords": "typeface",
+      "needs": [
+        "textStyled"
+      ]
+    },
+    {
+      "id": "text-style",
+      "target": "panel:properties.text#text-style",
+      "context": "TextInspectorFontSection",
+      "source": "Text style",
+      "keywords": "color outline shadow",
+      "needs": [
+        "textStyled"
+      ]
+    },
+    {
+      "id": "transform-position",
+      "target": "panel:properties.transform#transform-position",
+      "context": "TransformInspector",
+      "source": "Position",
+      "keywords": "move x y",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "transform-scale",
+      "target": "panel:properties.transform#transform-scale",
+      "context": "TransformInspector",
+      "source": "Scale",
+      "keywords": "size zoom resize",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "transform-opacity",
+      "target": "panel:properties.transform#transform-opacity",
+      "context": "TransformInspector",
+      "source": "Opacity",
+      "keywords": "transparency alpha fade",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "transform-rotation",
+      "target": "panel:properties.transform#transform-rotation",
+      "context": "TransformInspector",
+      "source": "Rotation",
+      "keywords": "angle rotate 90",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "transform-fix-orientation",
+      "target": "panel:properties.transform#transform-fix-orientation",
+      "context": "TransformInspector",
+      "source": "Fix orientation",
+      "keywords": "rotate sideways",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "transform-flip",
+      "target": "panel:properties.transform#transform-flip",
+      "context": "TransformInspector",
+      "source": "Flip",
+      "keywords": "mirror horizontal vertical",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "transform-reset-size",
+      "target": "panel:properties.transform#transform-reset-size",
+      "context": "TransformInspector",
+      "source": "Reset position & size",
+      "keywords": "fit",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "transition-duration",
+      "target": "panel:properties.transition#transition-duration",
+      "context": "TransitionInspector",
+      "source": "Transition duration",
+      "keywords": "length",
+      "needs": [
+        "transitionable"
+      ]
+    },
+    {
+      "id": "transition-curve",
+      "target": "panel:properties.transition#transition-curve",
+      "context": "TransitionInspector",
+      "source": "Transition curve",
+      "keywords": "easing",
+      "needs": [
+        "transitionable"
+      ]
+    },
+    {
+      "id": "about-version",
+      "target": "settings:about#about-version",
+      "context": "SettingsAboutPage",
+      "source": "Drift",
+      "keywords": "",
+      "needs": []
+    },
+    {
+      "id": "about-check-updates-on-startup",
+      "target": "settings:about#about-check-updates-on-startup",
+      "context": "SettingsAboutPage",
+      "source": "Check for updates on startup",
+      "keywords": "update version release newer",
+      "needs": [],
+      "descriptionSource": "Once a day, check whether a newer Drift has been released."
+    },
+    {
+      "id": "about-check-for-updates",
+      "target": "settings:about#about-check-for-updates",
+      "context": "SettingsAboutPage",
+      "source": "Check for updates",
+      "keywords": "update version release newer download",
+      "needs": []
+    },
+    {
+      "id": "about-drift",
+      "target": "settings:about#about-drift",
+      "context": "SettingsAboutPage",
+      "source": "About Drift",
+      "keywords": "license credits version",
+      "needs": [],
+      "descriptionSource": "Open-source video editor by CutWire Studios."
+    },
+    {
+      "id": "about-debug-info",
+      "target": "settings:about#about-debug-info",
+      "context": "SettingsAboutPage",
+      "source": "Debug info",
+      "keywords": "diagnostics bug report system codec gpu",
+      "needs": [],
+      "descriptionSource": "System, playback and codec details for bug reports."
+    },
+    {
+      "id": "ai-acceleration",
+      "target": "settings:ai#ai-acceleration",
+      "context": "SettingsAiPage",
+      "source": "How AI runs",
+      "keywords": "acceleration gpu cuda webgpu amd rocm migraphx cpu onnx engine graphics",
+      "needs": []
+    },
+    {
+      "id": "ai-scene-detection-sensitivity",
+      "target": "settings:ai#ai-scene-detection-sensitivity",
+      "context": "SettingsAiPage",
+      "source": "Scene detection sensitivity",
+      "keywords": "shot cut detect",
+      "needs": [],
+      "descriptionSource": "Higher finds more cuts. When a clip is flat or heavily graded, Drift still falls back to an adaptive threshold."
+    },
+    {
+      "id": "ai-agent-access",
+      "target": "settings:ai#ai-agent-access",
+      "context": "SettingsAiPage",
+      "source": "Agent access",
+      "keywords": "mcp claude cursor agent server",
+      "needs": [],
+      "descriptionSource": "Let Cursor or Claude edit this project for you. Only programs on this device can connect."
+    },
+    {
+      "id": "ai-agent-access-on-launch",
+      "target": "settings:ai#ai-agent-access-on-launch",
+      "context": "SettingsAiPage",
+      "source": "Start agent access on launch",
+      "keywords": "mcp startup autostart agent",
+      "needs": [],
+      "descriptionSource": "Turn agent access on automatically the next time you open Drift. Turning access off resets this."
+    },
+    {
+      "id": "ai-cloud-services",
+      "target": "settings:ai#ai-cloud-services",
+      "context": "SettingsAiPage",
+      "source": "Use cloud services",
+      "keywords": "api key elevenlabs fish online",
+      "needs": [],
+      "descriptionSource": "Connect your own ElevenLabs or Fish Audio account for transcription, voiceover and sound effects."
+    },
+    {
+      "id": "ai-cloud-providers",
+      "target": "settings:ai#ai-cloud-providers",
+      "context": "SettingsAiPage",
+      "source": "Cloud providers",
+      "keywords": "api key elevenlabs openai deepgram transcription voice",
+      "needs": []
+    },
+    {
+      "id": "appearance-color-theme",
+      "target": "settings:appearance#appearance-color-theme",
+      "context": "SettingsAppearancePage",
+      "source": "Color theme",
+      "keywords": "dark light color",
+      "needs": [],
+      "descriptionSource": "Light and Dark follow your system. Other themes can be installed or imported."
+    },
+    {
+      "id": "appearance-translucent-windows",
+      "target": "settings:appearance#appearance-translucent-windows",
+      "context": "SettingsAppearancePage",
+      "source": "Translucent windows",
+      "keywords": "transparent backdrop blur",
+      "needs": [],
+      "descriptionSource": "Lets the desktop show through panels when a theme asks for it. Takes effect after restart."
+    },
+    {
+      "id": "appearance-interface-size",
+      "target": "settings:appearance#appearance-interface-size",
+      "context": "SettingsAppearancePage",
+      "source": "Interface size",
+      "keywords": "scale zoom dpi",
+      "needs": []
+    },
+    {
+      "id": "appearance-layout",
+      "target": "settings:appearance#appearance-layout",
+      "context": "SettingsAppearancePage",
+      "source": "Layout",
+      "keywords": "desktop mobile shell phone tablet",
+      "needs": []
+    },
+    {
+      "id": "appearance-workspace-orientation",
+      "target": "settings:appearance#appearance-workspace-orientation",
+      "context": "SettingsAppearancePage",
+      "source": "Workspace orientation",
+      "keywords": "landscape portrait rotate layout",
+      "needs": [],
+      "descriptionSource": "Landscape or portrait workspace. Auto follows the shape of the canvas."
+    },
+    {
+      "id": "audio-output",
+      "target": "settings:audio#audio-output",
+      "context": "SettingsAudioPage",
+      "source": "Audio output",
+      "keywords": "speakers headphones playback sound device",
+      "needs": [],
+      "descriptionSource": "Where playback is heard. “System default” follows whatever your computer is set to, including when that changes."
+    },
+    {
+      "id": "audio-microphone-input",
+      "target": "settings:audio#audio-microphone-input",
+      "context": "SettingsAudioPage",
+      "source": "Microphone input",
+      "keywords": "recording voiceover mic input",
+      "needs": [],
+      "descriptionSource": "Audio device used for recording voiceovers onto audio tracks."
+    },
+    {
+      "id": "general-language",
+      "target": "settings:general#general-language",
+      "context": "SettingsGeneralPage",
+      "source": "Language",
+      "keywords": "locale translation",
+      "needs": [],
+      "descriptionSource": "Language for menus and labels. Takes effect immediately."
+    },
+    {
+      "id": "general-reopen-last-project",
+      "target": "settings:general#general-reopen-last-project",
+      "context": "SettingsGeneralPage",
+      "source": "Reopen last project on startup",
+      "keywords": "",
+      "needs": [],
+      "descriptionSource": "Restores the last open project. Closing still asks you to save."
+    },
+    {
+      "id": "general-autosave-interval",
+      "target": "settings:general#general-autosave-interval",
+      "context": "SettingsGeneralPage",
+      "source": "Autosave interval",
+      "keywords": "recovery backup",
+      "needs": [],
+      "descriptionSource": "How often unsaved work is snapshotted for crash recovery."
+    },
+    {
+      "id": "general-remind-essential-packs",
+      "target": "settings:general#general-remind-essential-packs",
+      "context": "SettingsGeneralPage",
+      "source": "Remind about essential packs",
+      "keywords": "",
+      "needs": [],
+      "descriptionSource": "Pulse the Extras icon when the video, transitions, and audio packs are not installed."
+    },
+    {
+      "id": "general-remind-pack-updates",
+      "target": "settings:general#general-remind-pack-updates",
+      "context": "SettingsGeneralPage",
+      "source": "Remind about pack updates",
+      "keywords": "",
+      "needs": [],
+      "descriptionSource": "Pulse the Extras icon when updates are available for packs you already have installed."
+    },
+    {
+      "id": "general-haptic-feedback",
+      "target": "settings:general#general-haptic-feedback",
+      "context": "SettingsGeneralPage",
+      "source": "Haptic feedback",
+      "keywords": "",
+      "needs": [],
+      "descriptionSource": "Vibrate on taps, snaps, and edits. Uses this device’s own haptic effects when it has them."
+    },
+    {
+      "id": "general-cache",
+      "target": "settings:general#general-cache",
+      "context": "SettingsGeneralPage",
+      "source": "Cache",
+      "keywords": "disk space thumbnails proxies",
+      "needs": [],
+      "descriptionSource": "%1 used, stored in %2"
+    },
+    {
+      "id": "general-export-import",
+      "target": "settings:general#general-export-import",
+      "context": "SettingsGeneralPage",
+      "source": "Export and import",
+      "keywords": "backup restore",
+      "needs": [],
+      "descriptionSource": "Save your preferences to a JSON file, or load them from one."
+    },
+    {
+      "id": "keymap-reset-defaults",
+      "target": "settings:keymap#keymap-reset-defaults",
+      "context": "SettingsKeymapPage",
+      "source": "Reset to defaults",
+      "keywords": "restore original default shortcut",
+      "needs": [],
+      "descriptionSource": "Restores every shortcut to its original key."
+    },
+    {
+      "id": "network-proxy",
+      "target": "settings:network#network-proxy",
+      "context": "SettingsNetworkPage",
+      "source": "Proxy",
+      "keywords": "proxy http socks5 internet firewall network",
+      "needs": [],
+      "descriptionSource": "How Drift reaches the internet for downloads, updates, and online services. Applies immediately."
+    },
+    {
+      "id": "network-proxy-server",
+      "target": "settings:network#network-proxy-server",
+      "context": "SettingsNetworkPage",
+      "source": "Proxy server",
+      "keywords": "proxy host port username password login",
+      "needs": [],
+      "descriptionSource": "Host and port of the proxy. The username and password are optional."
+    },
+    {
+      "id": "performance-advanced-users",
+      "target": "settings:performance#performance-advanced-users",
+      "context": "SettingsPerformancePage",
+      "source": "For advanced users",
+      "keywords": "performance advanced tuning power user memory cache",
+      "needs": [],
+      "descriptionSource": "These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately."
+    },
+    {
+      "id": "performance-graphics-api",
+      "target": "settings:performance#performance-graphics-api",
+      "context": "SettingsPerformancePage",
+      "source": "Interface graphics API",
+      "keywords": "renderer rhi opengl direct3d d3d11 d3d12 vulkan metal gpu backend slow ui",
+      "needs": []
+    },
+    {
+      "id": "performance-drop-late-frames",
+      "target": "settings:performance#performance-drop-late-frames",
+      "context": "SettingsPerformancePage",
+      "source": "Drop late frames",
+      "keywords": "stale lag late drop skip frames stutter slow motion cut",
+      "needs": [],
+      "descriptionSource": "Skip preview frames that finish this far behind the playhead, instead of showing them late. Can reduce slow-motion at clip cuts on slow machines. Off never drops a frame for being late."
+    },
+    {
+      "id": "performance-read-ahead",
+      "target": "settings:performance#performance-read-ahead",
+      "context": "SettingsPerformancePage",
+      "source": "Read-ahead",
+      "keywords": "buffer prefetch decode ahead playback",
+      "needs": [],
+      "descriptionSource": "How much video each clip decodes ahead of the playhead during playback. More absorbs slow-to-decode footage but competes with the frames on screen. Default 2000 ms."
+    },
+    {
+      "id": "performance-continuous-read-ahead",
+      "target": "settings:performance#performance-continuous-read-ahead",
+      "context": "SettingsPerformancePage",
+      "source": "Continuous read-ahead",
+      "keywords": "prefetch buffer decode ahead",
+      "needs": [],
+      "descriptionSource": "Keep decoding until the whole read-ahead window is full. Off decodes one frame ahead per displayed frame, which leaves more decoder time for the clip on screen but buffers less."
+    },
+    {
+      "id": "performance-decoded-frame-cache",
+      "target": "settings:performance#performance-decoded-frame-cache",
+      "context": "SettingsPerformancePage",
+      "source": "Decoded frame cache",
+      "keywords": "ram memory preview frames buffer",
+      "needs": [],
+      "descriptionSource": "Memory shared by all clips for decoded preview frames. Automatic uses an eighth of system memory (a sixteenth on Android), at least 128 MiB."
+    },
+    {
+      "id": "performance-cpu-frame-history",
+      "target": "settings:performance#performance-cpu-frame-history",
+      "context": "SettingsPerformancePage",
+      "source": "CPU frame history per clip",
+      "keywords": "ram memory history reader image",
+      "needs": [],
+      "descriptionSource": "Limit the decoded images each clip keeps in memory for scrubbing and effects. Unlimited keeps up to 16 frames per clip, which is large for 4K footage."
+    },
+    {
+      "id": "performance-render-target-pool-count",
+      "target": "settings:performance#performance-render-target-pool-count",
+      "context": "SettingsPerformancePage",
+      "source": "Render target pool: count",
+      "keywords": "gpu vram framebuffer texture pool",
+      "needs": [],
+      "descriptionSource": "Idle GPU render targets kept for reuse. Fewer saves video memory; more avoids reallocating while effects and transitions play."
+    },
+    {
+      "id": "performance-render-target-pool-size",
+      "target": "settings:performance#performance-render-target-pool-size",
+      "context": "SettingsPerformancePage",
+      "source": "Render target pool: size",
+      "keywords": "gpu vram framebuffer texture pool bytes",
+      "needs": [],
+      "descriptionSource": "Cap on the video memory held by idle render targets, in addition to the count."
+    },
+    {
+      "id": "performance-image-upload-cache-count",
+      "target": "settings:performance#performance-image-upload-cache-count",
+      "context": "SettingsPerformancePage",
+      "source": "Image upload cache: count",
+      "keywords": "gpu vram texture upload images",
+      "needs": [],
+      "descriptionSource": "Stills and converted frames kept on the GPU so they are not uploaded again every frame."
+    },
+    {
+      "id": "performance-image-upload-cache-size",
+      "target": "settings:performance#performance-image-upload-cache-size",
+      "context": "SettingsPerformancePage",
+      "source": "Image upload cache: size",
+      "keywords": "gpu vram texture upload images bytes",
+      "needs": [],
+      "descriptionSource": "Cap on the video memory used by the image upload cache, in addition to the count. 48 uploads of 4K frames take about 1.5 GiB."
+    },
+    {
+      "id": "performance-hardware-encoder-exports",
+      "target": "settings:performance#performance-hardware-encoder-exports",
+      "context": "SettingsPerformancePage",
+      "source": "Prefer hardware encoder for new exports",
+      "keywords": "nvenc qsv amf vaapi videotoolbox mediacodec gpu encode h264 x264",
+      "needs": [],
+      "descriptionSource": "Start new exports on a GPU H.264 encoder when one is available. Faster, but quality per bitrate is usually lower than the default software encoder."
+    },
+    {
+      "id": "preview-show-guides",
+      "target": "settings:preview#preview-show-guides",
+      "context": "SettingsPreviewPage",
+      "source": "Show guides",
+      "keywords": "alignment grid lines",
+      "needs": [],
+      "descriptionSource": "Alignment guides drawn over the preview."
+    },
+    {
+      "id": "preview-guide-sets",
+      "target": "settings:preview#preview-guide-sets",
+      "context": "SettingsPreviewPage",
+      "source": "Guide sets",
+      "keywords": "alignment grid lines",
+      "needs": [],
+      "descriptionSource": "Choose which guide sets are drawn over the preview."
+    },
+    {
+      "id": "preview-background",
+      "target": "settings:preview#preview-background",
+      "context": "SettingsPreviewPage",
+      "source": "Background",
+      "keywords": "solid color blur transparent fill",
+      "needs": [],
+      "descriptionSource": "Fill behind clips that don’t cover the whole screen."
+    },
+    {
+      "id": "preview-background-colour",
+      "target": "settings:preview#preview-background-colour",
+      "context": "SettingsPreviewPage",
+      "source": "Background colour",
+      "keywords": "fill color",
+      "needs": [],
+      "descriptionSource": "Colour of the solid background."
+    },
+    {
+      "id": "preview-blur-strength",
+      "target": "settings:preview#preview-blur-strength",
+      "context": "SettingsPreviewPage",
+      "source": "Blur strength",
+      "keywords": "fill blur",
+      "needs": [],
+      "descriptionSource": "How much the background is blurred behind clips."
+    },
+    {
+      "id": "preview-quality",
+      "target": "settings:preview#preview-quality",
+      "context": "SettingsPreviewPage",
+      "source": "Preview quality",
+      "keywords": "resolution eco lower smoother",
+      "needs": [],
+      "descriptionSource": "Lower is smoother while editing. Full matches an export exactly; Auto renders only the pixels on screen."
+    },
+    {
+      "id": "preview-decoding",
+      "target": "settings:preview#preview-decoding",
+      "context": "SettingsPreviewPage",
+      "source": "Decoding",
+      "keywords": "decoder hardware software gpu stutter",
+      "needs": [],
+      "descriptionSource": "How video is decoded for preview. Software is smoother for most clips but uses more CPU. Hardware suits high-quality 4K."
+    },
+    {
+      "id": "preview-faster-vaapi",
+      "target": "settings:preview#preview-faster-vaapi",
+      "context": "SettingsPreviewPage",
+      "source": "Faster preview (experimental)",
+      "keywords": "zero copy vaapi gpu hardware",
+      "needs": [],
+      "descriptionSource": "Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart."
+    },
+    {
+      "id": "preview-faster-mediacodec",
+      "target": "settings:preview#preview-faster-mediacodec",
+      "context": "SettingsPreviewPage",
+      "source": "Faster preview (experimental)",
+      "keywords": "zero copy mediacodec gpu hardware",
+      "needs": [],
+      "descriptionSource": "Can make playback smoother by keeping video on the graphics card. Turn it off if the picture looks wrong. Takes effect after restart."
+    },
+    {
+      "id": "preview-graphics-card",
+      "target": "settings:preview#preview-graphics-card",
+      "context": "SettingsPreviewPage",
+      "source": "Graphics card",
+      "keywords": "gpu integrated discrete nvidia power battery",
+      "needs": [],
+      "descriptionSource": "Which graphics card Drift runs on. High performance keeps video decoded on an NVIDIA card on that card; power saving uses less battery. Takes effect after restart."
+    },
+    {
+      "id": "preview-graphics-card-system-settings",
+      "target": "settings:preview#preview-graphics-card-system-settings",
+      "context": "SettingsPreviewPage",
+      "source": "Graphics card",
+      "keywords": "gpu windows display nvidia",
+      "needs": [],
+      "descriptionSource": "Choose which graphics card Drift runs on in Windows Settings, under Display > Graphics. Takes effect after restart."
+    },
+    {
+      "id": "preview-use-proxies",
+      "target": "settings:preview#preview-use-proxies",
+      "context": "SettingsPreviewPage",
+      "source": "Use proxies for preview",
+      "keywords": "proxy low resolution optimized",
+      "needs": [],
+      "descriptionSource": "Play clips from their low-resolution proxies where one exists. Export always uses the original media."
+    },
+    {
+      "id": "preview-proxy-resolution",
+      "target": "settings:preview#preview-proxy-resolution",
+      "context": "SettingsPreviewPage",
+      "source": "Proxy resolution",
+      "keywords": "proxy size 720p 1080p",
+      "needs": [],
+      "descriptionSource": "Size of new proxies. Proxies made at another size are not used until you create them again."
+    },
+    {
+      "id": "preview-proxy-name-patterns",
+      "target": "settings:preview#preview-proxy-name-patterns",
+      "context": "SettingsPreviewPage",
+      "source": "Proxy name patterns",
+      "keywords": "proxy naming file name regex",
+      "needs": [],
+      "descriptionSource": "Linking a proxy teaches Drift its name pattern. Proxies next to your media that match a pattern below link automatically."
+    },
+    {
+      "id": "timeline-mouse-wheel-scrolls",
+      "target": "settings:timeline#timeline-mouse-wheel-scrolls",
+      "context": "SettingsTimelinePage",
+      "source": "Mouse wheel scrolls",
+      "keywords": "scroll wheel pan horizontal vertical invert direction mouse",
+      "needs": [],
+      "descriptionSource": "What the mouse wheel moves on the timeline. Hold Shift for the other direction; middle-click drag also pans."
+    },
+    {
+      "id": "timeline-auto-crossfade",
+      "target": "settings:timeline#timeline-auto-crossfade",
+      "context": "SettingsTimelinePage",
+      "source": "Auto-crossfade overlapping clips",
+      "keywords": "transition dissolve overlap",
+      "needs": [],
+      "descriptionSource": "When a move creates an overlap with a neighbouring clip on the same track, add a crossfade across it."
+    },
+    {
+      "id": "timeline-auto-select-clip",
+      "target": "settings:timeline#timeline-auto-select-clip",
+      "context": "SettingsTimelinePage",
+      "source": "Auto-select clip under playhead",
+      "keywords": "locate follow select",
+      "needs": [],
+      "descriptionSource": "Select the clip under the playhead as the playhead moves."
+    },
+    {
+      "id": "timeline-auto-keyframes",
+      "target": "settings:timeline#timeline-auto-keyframes",
+      "context": "SettingsTimelinePage",
+      "source": "Auto keyframes",
+      "keywords": "keyframe animate record",
+      "needs": [],
+      "descriptionSource": "Dragging a slider also creates keyframes."
+    },
+    {
+      "id": "timeline-loop-work-area",
+      "target": "settings:timeline#timeline-loop-work-area",
+      "context": "SettingsTimelinePage",
+      "source": "Loop work area",
+      "keywords": "repeat in out",
+      "needs": [],
+      "descriptionSource": "Playback repeats between the work area in and out points."
+    },
+    {
+      "id": "timeline-still-image-duration",
+      "target": "settings:timeline#timeline-still-image-duration",
+      "context": "SettingsTimelinePage",
+      "source": "Still image duration",
+      "keywords": "image photo picture length",
+      "needs": [],
+      "descriptionSource": "Length of images and stills when added to the timeline."
+    },
+    {
+      "id": "timeline-transition-length",
+      "target": "settings:timeline#timeline-transition-length",
+      "context": "SettingsTimelinePage",
+      "source": "Transition length",
+      "keywords": "crossfade duration seconds",
+      "needs": [],
+      "descriptionSource": "Length of new transitions dropped between clips."
+    },
+    {
+      "id": "timeline-show-overview",
+      "target": "settings:timeline#timeline-show-overview",
+      "context": "SettingsTimelinePage",
+      "source": "Show timeline overview",
+      "keywords": "minimap navigator",
+      "needs": [],
+      "descriptionSource": "A minimap of the whole project. Click or drag it to jump the view."
+    },
+    {
+      "id": "timeline-show-audio-mixer",
+      "target": "settings:timeline#timeline-show-audio-mixer",
+      "context": "SettingsTimelinePage",
+      "source": "Show audio mixer",
+      "keywords": "volume levels strip",
+      "needs": [],
+      "descriptionSource": "Show the audio mixer strip beside the timeline."
+    },
+    {
+      "id": "toolbar-layout",
+      "target": "settings:toolbar#toolbar-layout",
+      "context": "SettingsToolbarPage",
+      "source": "Toolbar layout",
+      "keywords": "buttons actions overflow menu customize",
+      "needs": [],
+      "descriptionSource": "Choose which actions appear on the toolbar above the timeline and which go in its overflow menu."
+    },
+    {
+      "id": "workspaces-layout-designer",
+      "target": "settings:workspaces#workspaces-layout-designer",
+      "context": "SettingsWorkspacesPage",
+      "source": "Layout designer",
+      "keywords": "workspace layout panel window monitor screen dock preset split tab",
+      "needs": [],
+      "descriptionSource": "Built-in presets keep a copy of the original, so Reset brings them back."
+    }
+  ],
+  "settingsPages": [
+    {
+      "id": "general",
+      "context": "SettingsPane",
+      "source": "General",
+      "keywords": "language locale startup autosave recovery cache backup"
+    },
+    {
+      "id": "appearance",
+      "context": "SettingsPane",
+      "source": "Appearance",
+      "keywords": "theme dark light color workspace layout translucency"
+    },
+    {
+      "id": "workspaces",
+      "context": "SettingsPane",
+      "source": "Workspaces",
+      "keywords": "workspace layout panel window monitor screen dock preset"
+    },
+    {
+      "id": "timeline",
+      "context": "SettingsPane",
+      "source": "Timeline",
+      "keywords": "scroll wheel horizontal vertical crossfade transition overview minimap"
+    },
+    {
+      "id": "toolbar",
+      "context": "SettingsPane",
+      "source": "Timeline toolbar",
+      "keywords": "toolbar buttons customize"
+    },
+    {
+      "id": "keymap",
+      "context": "SettingsPane",
+      "source": "Keyboard shortcuts",
+      "keywords": "keymap keys hotkeys bindings"
+    },
+    {
+      "id": "preview",
+      "context": "SettingsPane",
+      "source": "Preview",
+      "keywords": "quality resolution decode proxies guides background graphics gpu"
+    },
+    {
+      "id": "performance",
+      "context": "SettingsPane",
+      "source": "Performance",
+      "keywords": "advanced tuning cache memory ram vram read-ahead buffer drop frames hardware encoder export pool"
+    },
+    {
+      "id": "audio",
+      "context": "SettingsPane",
+      "source": "Audio",
+      "keywords": "sound speakers microphone output input"
+    },
+    {
+      "id": "ai",
+      "context": "SettingsPane",
+      "source": "AI & Cloud",
+      "keywords": "agent mcp claude cursor api key elevenlabs voice scene detection"
+    },
+    {
+      "id": "network",
+      "context": "SettingsPane",
+      "source": "Network",
+      "keywords": "proxy http socks internet firewall"
+    },
+    {
+      "id": "about",
+      "context": "SettingsPane",
+      "source": "About",
+      "keywords": "version updates debug info diagnostics"
+    }
+  ],
+  "propertiesTabs": [
+    {
+      "id": "general",
+      "context": "PropertiesPanel",
+      "source": "General",
+      "needs": []
+    },
+    {
+      "id": "text",
+      "context": "PropertiesPanel",
+      "source": "Text",
+      "needs": [
+        "textStyled"
+      ]
+    },
+    {
+      "id": "shape",
+      "context": "PropertiesPanel",
+      "source": "Shape",
+      "needs": [
+        "shape"
+      ]
+    },
+    {
+      "id": "vector",
+      "context": "PropertiesPanel",
+      "source": "Motion",
+      "needs": [
+        "vector"
+      ]
+    },
+    {
+      "id": "model3d",
+      "context": "PropertiesPanel",
+      "source": "3D Model",
+      "needs": [
+        "model3d"
+      ]
+    },
+    {
+      "id": "pdf",
+      "context": "PropertiesPanel",
+      "source": "PDF",
+      "needs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": "subtitles",
+      "context": "PropertiesPanel",
+      "source": "Subtitles",
+      "needs": [
+        "subtitle"
+      ]
+    },
+    {
+      "id": "transform",
+      "context": "PropertiesPanel",
+      "source": "Transform",
+      "needs": [
+        "transformable"
+      ]
+    },
+    {
+      "id": "camera",
+      "context": "PropertiesPanel",
+      "source": "Camera",
+      "needs": [
+        "adj:camera"
+      ]
+    },
+    {
+      "id": "stabilize",
+      "context": "PropertiesPanel",
+      "source": "Stabilization",
+      "needs": [
+        "stabilizable"
+      ]
+    },
+    {
+      "id": "animation",
+      "context": "PropertiesPanel",
+      "source": "Animation",
+      "needs": [
+        "animatable"
+      ]
+    },
+    {
+      "id": "audio",
+      "context": "PropertiesPanel",
+      "source": "Audio",
+      "needs": [
+        "audible"
+      ]
+    },
+    {
+      "id": "speed",
+      "context": "PropertiesPanel",
+      "source": "Speed",
+      "needs": [
+        "retimable"
+      ]
+    },
+    {
+      "id": "blending",
+      "context": "PropertiesPanel",
+      "source": "Blending",
+      "needs": [
+        "blendable"
+      ]
+    },
+    {
+      "id": "masks",
+      "context": "PropertiesPanel",
+      "source": "Masks",
+      "needs": [
+        "maskable"
+      ]
+    },
+    {
+      "id": "effects",
+      "context": "PropertiesPanel",
+      "source": "Effects",
+      "needs": [
+        "adj:videoEffects"
+      ]
+    },
+    {
+      "id": "audioEffects",
+      "context": "PropertiesPanel",
+      "source": "Audio FX",
+      "needs": [
+        "adj:audioEffects"
+      ]
+    },
+    {
+      "id": "transition",
+      "context": "PropertiesPanel",
+      "source": "Transition",
+      "needs": [
+        "transitionable"
+      ]
+    }
+  ]
+}

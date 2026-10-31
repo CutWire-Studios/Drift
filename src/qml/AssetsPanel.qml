@@ -42,7 +42,22 @@ PanelFrame {
         }
     }
 
-    Component.onCompleted: AssetLibrary.ensureAllMedia()
+    function applyPanelRequest() {
+        const request = ShellBridge.panelRequest
+        if (!request || request.panel !== "assets" || root.locked)
+            return
+        ShellBridge.panelRequest = null
+        root.showTab(request.tab)
+    }
+    Connections {
+        target: ShellBridge
+        function onPanelRequestChanged() { root.applyPanelRequest() }
+    }
+
+    Component.onCompleted: {
+        AssetLibrary.ensureAllMedia()
+        root.applyPanelRequest()
+    }
 
     // Imports and reports the outcome. `importUrls` skips anything it cannot
     // probe, so a bad file used to just never appear with no explanation at all.
@@ -726,7 +741,7 @@ PanelFrame {
         if (tabId === "text" || tabId === "subtitles" || tabId === "speech" || tabId === "stickers" || tabId === "shapes"
                 || tabId === "effects" || tabId === "templates" || tabId === "adjustment"
                 || tabId === "sounds" || tabId === "transitions" || tabId === "masks"
-                || tabId === "scenes" || tabId === "market")
+                || tabId === "scenes")
             return false
         const kinds = kindsForTab(tabId)
         return kinds.length === 0 || kinds.indexOf(kind) >= 0
@@ -736,7 +751,6 @@ PanelFrame {
     // evaluated. Labels are translated via tabLabels below.
     property var tabLabels: ({
         "media": qsTr("Media"),
-        "market": qsTr("Market"),
         "text": qsTr("Text"),
         "subtitles": qsTr("Subtitles"),
         "speech": qsTr("Speech"),
@@ -755,8 +769,7 @@ PanelFrame {
     // tabId "sounds" is kept for favorites persistence (settings key).
     ListModel {
         id: tabsModel
-        ListElement { tabId: "media"; icon: 0; separatorAfter: false }
-        ListElement { tabId: "market"; icon: 12; separatorAfter: true }
+        ListElement { tabId: "media"; icon: 0; separatorAfter: true }
         ListElement { tabId: "text"; icon: 1; separatorAfter: false }
         ListElement { tabId: "subtitles"; icon: 2; separatorAfter: false }
         ListElement { tabId: "speech"; icon: 13; separatorAfter: false }
@@ -1131,32 +1144,6 @@ PanelFrame {
                         onExpandedFolderIdsChanged: root.rememberTab("media", "expandedFolderIds", expandedFolderIds)
                         onSelectedAssetIdsChanged: root.rememberTab("media", "selectedAssetIds", selectedAssetIds)
                         onSelectionAnchorIdChanged: root.rememberTab("media", "selectionAnchorId", selectionAnchorId)
-                    }
-                }
-            }
-
-            Loader {
-                active: root.currentTabId === "market"
-                visible: active
-                width: parent.width
-                height: parent.height - assetsHeader.height
-                opacity: root.tabOpacity
-                sourceComponent: Component {
-                    MarketTab {
-                        // Filter values are not restored: the filter fields and dropdowns
-                        // don't read them back, so restored filters would be invisible.
-                        Component.onCompleted: {
-                            const saved = root.tabState["market"] || {}
-                            if (saved.search)
-                                searchText = saved.search
-                            if (saved.submittedQuery)
-                                submittedQuery = saved.submittedQuery
-                            if (saved.section)
-                                section = saved.section
-                        }
-                        onSearchTextChanged: root.rememberTab("market", "search", searchText)
-                        onSubmittedQueryChanged: root.rememberTab("market", "submittedQuery", submittedQuery)
-                        onSectionChanged: root.rememberTab("market", "section", section)
                     }
                 }
             }

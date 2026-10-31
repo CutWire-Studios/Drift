@@ -41,7 +41,7 @@ QJsonObject maskToJson(const Mask &m)
         pathKeys.append(QJsonArray{qint64(it.key()), shape});
     }
 
-    return QJsonObject{
+    QJsonObject object{
         {QStringLiteral("shape"), maskShapeToString(m.shape)},
         {QStringLiteral("op"), maskOpToString(m.op)},
         {QStringLiteral("enabled"), m.enabled},
@@ -60,9 +60,17 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("mediaFit"), maskMediaFitToString(m.mediaFit)},
         {QStringLiteral("mediaChannel"), maskMediaChannelToString(m.mediaChannel)},
         {QStringLiteral("mediaLoop"), m.mediaLoop},
+        {QStringLiteral("mediaTimeBase"), maskMediaTimeBaseToString(m.mediaTimeBase)},
         {QStringLiteral("keyframes"), maskKeyframesJson},
         {QStringLiteral("pathKeys"), pathKeys},
     };
+    if (!m.mediaPatches.isEmpty()) {
+        QJsonArray patches;
+        for (auto it = m.mediaPatches.constBegin(); it != m.mediaPatches.constEnd(); ++it)
+            patches.append(QJsonObject{{QStringLiteral("t"), qint64(it.key())}, {QStringLiteral("path"), it.value()}});
+        object.insert(QStringLiteral("patches"), patches);
+    }
+    return object;
 }
 
 Mask maskFromJson(const QJsonObject &o)
@@ -94,6 +102,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.mediaFit = maskMediaFitFromString(o.value(QStringLiteral("mediaFit")).toString());
     m.mediaChannel = maskMediaChannelFromString(o.value(QStringLiteral("mediaChannel")).toString());
     m.mediaLoop = o.value(QStringLiteral("mediaLoop")).toBool(m.mediaLoop);
+    m.mediaTimeBase = maskMediaTimeBaseFromString(o.value(QStringLiteral("mediaTimeBase")).toString());
     const QJsonArray points = o.value(QStringLiteral("points")).toArray();
     for (const QJsonValue &value : points) {
         const QJsonArray pair = value.toArray();
@@ -116,6 +125,13 @@ Mask maskFromJson(const QJsonObject &o)
                 shape.append(QPointF(pair.at(0).toDouble(), pair.at(1).toDouble()));
         }
         m.pathKeys.insert(TimeUs(entry.at(0).toInteger()), shape);
+    }
+
+    for (const QJsonValue &value : o.value(QStringLiteral("patches")).toArray()) {
+        const QJsonObject patch = value.toObject();
+        const QString path = patch.value(QStringLiteral("path")).toString();
+        if (!path.isEmpty())
+            m.mediaPatches.insert(TimeUs(patch.value(QStringLiteral("t")).toInteger()), path);
     }
 
     // A pre-v5 "matte" had no geometry: every consumer bailed out before reading the rect and
@@ -317,6 +333,12 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(clip.sourceFrame));
     if (clip.sourceFrameAngle != 0.0)
         json.insert(QStringLiteral("sourceFrameAngle"), clip.sourceFrameAngle);
+    if (!clip.motionTrackers.isEmpty()) {
+        QJsonArray trackers;
+        for (const MotionTracker &tracker : clip.motionTrackers)
+            trackers.append(toJson(tracker));
+        json.insert(QStringLiteral("motionTrackers"), trackers);
+    }
     if (clip.layer3d)
         json.insert(QStringLiteral("layer3d"), true);
     if (clip.depthOcclude)
@@ -406,6 +428,8 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.faceTrackSrcOffsetUs =
         TimeUs(object.value(QStringLiteral("faceTrackSrcOffsetUs")).toInteger(0));
     clip.depthPath = object.value(QStringLiteral("depthPath")).toString();
+    for (const QJsonValue &value : object.value(QStringLiteral("motionTrackers")).toArray())
+        clip.motionTrackers.append(motionTrackerFromJson(value.toObject()));
     clip.legacyStabilizePath = object.value(QStringLiteral("stabilizePath")).toString();
     clip.stabilizeMode =
         stabilizeModeFromString(object.value(QStringLiteral("stabilizeMode")).toString());
@@ -551,6 +575,8 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("sourceFrame"), drift::sourceFrameToJson(asset.sourceFrame));
     if (asset.rating != 0)
         object.insert(QStringLiteral("rating"), asset.rating);
+    if (!asset.maskRole.isEmpty())
+        object.insert(QStringLiteral("maskRole"), asset.maskRole);
     if (!asset.ranges.isEmpty()) {
         QJsonArray ranges;
         for (const drift::SourceRange &range : asset.ranges)
@@ -596,6 +622,7 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
     asset.sourceModifiedMs =
         static_cast<qint64>(object.value(QStringLiteral("sourceModifiedMs")).toDouble());
     asset.rating = qBound(-1, object.value(QStringLiteral("rating")).toInt(), 1);
+    asset.maskRole = object.value(QStringLiteral("maskRole")).toString();
     for (const QJsonValue &value : object.value(QStringLiteral("ranges")).toArray())
         asset.ranges.append(drift::sourceRangeFromJson(value.toObject()));
     for (const QJsonValue &value : object.value(QStringLiteral("markers")).toArray())
@@ -776,6 +803,7 @@ void detachClip(Clip &clip)
     clip.speedCurve.detachSharedData();
     clip.mask.points.detach();
     clip.mask.pathKeys.detach();
+    clip.mask.mediaPatches.detach();
     for (auto it = clip.mask.pathKeys.begin(); it != clip.mask.pathKeys.end(); ++it)
         it.value().detach();
     clip.mask.keyframes.detach();
@@ -1217,6 +1245,11 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // build would drop the lights and fall back to its default key light.
     // Version 16 added function-eased keyframe segments (elastic/bounce). Nothing to migrate; the
     // bump is a gate, as for versions 6 and 9. An older build would play them as straight lines.
+    // Version 18 added motion trackers, the mask media time base and asset mask roles. Nothing to
+    // migrate; the bump is a gate, as for versions 6 and 9. An older build would drop the
+    // trackers and play a track-spanning matte by the masked clip's source time.
+    // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
+    // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 
     project.m_bookmarks.clear();
     const QJsonArray bookmarksArray = object.value(QStringLiteral("bookmarks")).toArray();
