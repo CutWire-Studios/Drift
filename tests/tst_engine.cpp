@@ -11221,6 +11221,8 @@ void EngineTest::heavyWeightsRenderSolidGlyphs()
 void EngineTest::textClipCarriesGpuEffects()
 {
     SKIP_WITHOUT_FONTS();
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
 
     drift::Project project;
     project.setResolution(128, 128);
@@ -11253,6 +11255,8 @@ void EngineTest::textClipCarriesGpuEffects()
 void EngineTest::textAnimationFadesAndSlides()
 {
     SKIP_WITHOUT_FONTS();
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
 
     drift::Project project;
     project.setResolution(128, 128);

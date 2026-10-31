@@ -168,6 +168,9 @@ private:
 void TestMarketplace::initTestCase()
 {
     QStandardPaths::setTestModeEnabled(true);
+    // Without an organisation name QSettings is an AccessError on Windows (registry backend).
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftMarketTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMarketTest"));
     QVERIFY(m_server.start());
     qputenv("DRIFT_MARKET_API_URL", m_server.base().toUtf8());
     m_transport = new MarketTransport(this);

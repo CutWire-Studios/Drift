@@ -13298,7 +13298,7 @@ void EditorStateTest::trackingTranslationDrivesMaskKeys()
 
     state.tracking()->setTarget(0, 0, id, maskId, QStringLiteral("mask"));
     const drift::Mask &mask = fx.clipById(maskId)->mask;
-    const auto &x = mask.keyframes.value(QStringLiteral("x")).keyframes();
+    const auto x = mask.keyframes.value(QStringLiteral("x")).keyframes();
     QCOMPARE(x.size(), 2);
     QCOMPARE(x.firstKey(), drift::TimeUs(0));
     QCOMPARE(x.lastKey(), 29 * fx.frame);
@@ -13407,7 +13407,7 @@ void EditorStateTest::trackingDrivesStandaloneAdjustmentMaskInCanvasSpace()
 
     state.tracking()->setTarget(0, 0, id, QStringLiteral("adjustment"), QStringLiteral("mask"));
     const drift::Mask &mask = fx.clipById(QStringLiteral("adjustment"))->mask;
-    const auto &x = mask.keyframes.value(QStringLiteral("x")).keyframes();
+    const auto x = mask.keyframes.value(QStringLiteral("x")).keyframes();
     QCOMPARE(x.size(), 2);
     QVERIFY(qAbs(x.first().value - 0.3) < 1e-6);
     // 0.29 of the host's width, which is half the canvas.
@@ -13441,7 +13441,7 @@ void EditorStateTest::trackingCorrectionDropsStaleSamplesAndReappliesTargets()
     QVERIFY(samples.contains(9 * fx.frame));
 
     const drift::Mask &mask = fx.clipById(maskId)->mask;
-    const auto &x = mask.keyframes.value(QStringLiteral("x")).keyframes();
+    const auto x = mask.keyframes.value(QStringLiteral("x")).keyframes();
     QVERIFY(x.contains(10 * fx.frame));
     QVERIFY(qAbs(x.value(10 * fx.frame).value - 0.9) < 1e-6);
 }
