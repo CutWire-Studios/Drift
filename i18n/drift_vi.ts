@@ -6677,7 +6677,7 @@
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy bỏ</translation>
     </message>
 </context>
 <context>
@@ -6738,15 +6738,15 @@
     </message>
     <message>
         <source>Hue vs Hue: shift one color toward another</source>
-        <translation type="unfinished"></translation>
+        <translation>Sắc màu với Sắc màu: dịch chuyển một màu về phía màu khác</translation>
     </message>
     <message>
         <source>Hue vs Saturation: make one color more or less vivid</source>
-        <translation type="unfinished"></translation>
+        <translation>Sắc màu với Độ bão hòa: làm cho một màu trở nên rực rỡ hơn hoặc kém rực rỡ hơn</translation>
     </message>
     <message>
         <source>Hue vs Luminance: brighten or darken one color</source>
-        <translation type="unfinished"></translation>
+        <translation>Sắc màu với Độ sáng: làm sáng hoặc làm tối một màu</translation>
     </message>
     <message>
         <source>Reset channel</source>
@@ -6754,15 +6754,15 @@
     </message>
     <message>
         <source>Hue %1° → %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Sắc màu %1° → %2</translation>
     </message>
     <message>
         <source>In %1 → Out %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Vào %1 → Ra %2</translation>
     </message>
     <message>
         <source>Click to add a point. Drag to move it. Double-click or drag it off to remove.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhấp để thêm điểm. Kéo thả để di chuyển. Nhấp đúp hoặc kéo ra ngoài để xóa.</translation>
     </message>
 </context>
 <context>
@@ -7280,11 +7280,11 @@
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cài đặt</translation>
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy</translation>
     </message>
 </context>
 <context>
@@ -7412,7 +7412,7 @@
     </message>
     <message>
         <source>Cancelled</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã hủy</translation>
     </message>
     <message>
         <source>Could not add that face prop.</source>
@@ -7420,7 +7420,7 @@
     </message>
     <message>
         <source>Added to face props</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã thêm vào đạo cụ khuôn mặt</translation>
     </message>
     <message>
         <source>Importing…</source>
@@ -7736,13 +7736,13 @@
     <name>EditorHeaderDownloadsButton</name>
     <message numerus="yes">
         <source>Marketplace — %n download(s) running</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Chợ — %n lượt tải xuống đang chạy</numerusform>
         </translation>
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>Chợ</translation>
     </message>
 </context>
 <context>
@@ -7820,7 +7820,7 @@
     </message>
     <message>
         <source>Workspace:</source>
-        <translation type="unfinished"></translation>
+        <translation>Không gian làm việc:</translation>
     </message>
     <message>
         <source>Switch workspace</source>
@@ -7828,7 +7828,7 @@
     </message>
     <message>
         <source>Customize layouts in Settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Tùy chỉnh bố cục trong Cài đặt…</translation>
     </message>
     <message>
         <source>Search  %1</source>
@@ -9269,7 +9269,7 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>Làm thẳng</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -9395,7 +9395,7 @@
     <name>GradeSlider</name>
     <message>
         <source>Double-click to reset. Hold Shift while dragging for fine control.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhấp đúp để đặt lại. Giữ Shift khi kéo để tinh chỉnh.</translation>
     </message>
     <message>
         <source>Animated. Editing sets keyframes (needs Auto keyframes on).</source>
@@ -9770,7 +9770,7 @@
     <name>ImageViewer</name>
     <message>
         <source>Save image</source>
-        <translation type="unfinished"></translation>
+        <translation>Lưu hình ảnh</translation>
     </message>
     <message>
         <source>PNG image (*.png)</source>
@@ -9782,19 +9782,19 @@
     </message>
     <message>
         <source>Image saved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã lưu hình ảnh.</translation>
     </message>
     <message>
         <source>Couldn’t save that image.</source>
-        <translation type="unfinished"></translation>
+        <translation>Không thể lưu hình ảnh đó.</translation>
     </message>
     <message>
         <source>Go to</source>
-        <translation type="unfinished"></translation>
+        <translation>Đi đến</translation>
     </message>
     <message>
         <source>Move the playhead to where this image starts</source>
-        <translation type="unfinished"></translation>
+        <translation>Di chuyển đầu phát đến vị trí bắt đầu hình ảnh này</translation>
     </message>
     <message>
         <source>Fit</source>
@@ -9802,15 +9802,15 @@
     </message>
     <message>
         <source>Actual size</source>
-        <translation type="unfinished"></translation>
+        <translation>Kích thước thực tế</translation>
     </message>
     <message>
         <source>Open file location</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở vị trí tệp</translation>
     </message>
     <message>
         <source>Copy path</source>
-        <translation type="unfinished"></translation>
+        <translation>Sao chép đường dẫn</translation>
     </message>
     <message>
         <source>Copied to clipboard</source>
@@ -9825,7 +9825,7 @@
     <name>ImageViewerDialog</name>
     <message>
         <source>Agent image</source>
-        <translation type="unfinished"></translation>
+        <translation>Trợ lý hình ảnh</translation>
     </message>
     <message>
         <source>Close</source>
@@ -9959,7 +9959,7 @@
     </message>
     <message>
         <source>Nudge keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>Dịch chuyển nhẹ keyframe</translation>
     </message>
     <message>
         <source>Move keyframes</source>
@@ -10119,11 +10119,11 @@
     </message>
     <message>
         <source>Hide Bezier handles</source>
-        <translation type="unfinished"></translation>
+        <translation>Ẩn tay cầm Bezier</translation>
     </message>
     <message>
         <source>Show Bezier handles. Without them, drag a curve to bend it</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiển thị tay cầm Bezier. Không có chúng, hãy kéo đường cong để uốn</translation>
     </message>
     <message>
         <source>Analyzing…</source>
@@ -10239,8 +10239,8 @@
     </message>
     <message numerus="yes">
         <source>%n key(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n khóa</numerusform>
         </translation>
     </message>
 </context>
@@ -10256,7 +10256,7 @@
     </message>
     <message>
         <source>Press K to add a keyframe at the playhead, or double-click a lane to add one there</source>
-        <translation type="unfinished"></translation>
+        <translation>Nhấn K để thêm keyframe tại đầu phát, hoặc nhấp đúp vào một làn để thêm tại đó</translation>
     </message>
     <message>
         <source>Select a clip to edit its keyframes</source>
@@ -10326,11 +10326,11 @@
     </message>
     <message>
         <source>Handles</source>
-        <translation type="unfinished"></translation>
+        <translation>Tay cầm</translation>
     </message>
     <message>
         <source>Show bezier handles on the focused curve. Without them, drag a curve to bend it</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiện tay cầm Bezier trên đường cong đang chọn. Không có tay cầm, kéo đường cong để uốn</translation>
     </message>
     <message>
         <source>Fit the clip in view</source>
@@ -10357,11 +10357,11 @@
     </message>
     <message>
         <source>Stop animating %1 (keys are kept)</source>
-        <translation type="unfinished"></translation>
+        <translation>Dừng hoạt ảnh %1 (giữ các khóa)</translation>
     </message>
     <message>
         <source>Animate %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Hoạt ảnh %1</translation>
     </message>
     <message>
         <source>Previous keyframe</source>
@@ -10920,7 +10920,7 @@
     </message>
     <message>
         <source>Customize Layouts in Settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Tùy chỉnh Bố cục trong Cài đặt…</translation>
     </message>
     <message>
         <source>Landscape Workspace</source>
@@ -10936,7 +10936,7 @@
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>Chợ</translation>
     </message>
     <message>
         <source>Downloads</source>
@@ -10996,7 +10996,7 @@
     </message>
     <message>
         <source>Downloads from the Marketplace show up here while they run.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tải xuống từ Chợ sẽ hiển thị ở đây khi chúng đang chạy.</translation>
     </message>
 </context>
 <context>
@@ -11011,11 +11011,11 @@
     </message>
     <message>
         <source>Trending</source>
-        <translation type="unfinished"></translation>
+        <translation>Xu hướng</translation>
     </message>
     <message>
         <source>Popular</source>
-        <translation type="unfinished"></translation>
+        <translation>Phổ biến</translation>
     </message>
     <message>
         <source>Search</source>
@@ -11023,7 +11023,7 @@
     </message>
     <message>
         <source>Couldn’t load this</source>
-        <translation type="unfinished"></translation>
+        <translation>Không tải được cái này</translation>
     </message>
     <message>
         <source>Try again</source>
@@ -11035,7 +11035,7 @@
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Không có gì ở đây</translation>
     </message>
 </context>
 <context>
@@ -11053,11 +11053,11 @@
     <name>MarketItemDetail</name>
     <message>
         <source>This needs a newer version of Drift. Update the app to install it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Điều này cần một phiên bản Drift mới hơn. Cập nhật ứng dụng để cài đặt.</translation>
     </message>
     <message>
         <source>The install didn’t finish.</source>
-        <translation type="unfinished"></translation>
+        <translation>Việc cài đặt không hoàn thành.</translation>
     </message>
     <message>
         <source>Effect</source>
@@ -11069,7 +11069,7 @@
     </message>
     <message>
         <source>Audio effect</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiệu ứng âm thanh</translation>
     </message>
     <message>
         <source>Theme</source>
@@ -11081,7 +11081,7 @@
     </message>
     <message>
         <source>Effect template</source>
-        <translation type="unfinished"></translation>
+        <translation>Mẫu hiệu ứng</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -11089,11 +11089,11 @@
     </message>
     <message>
         <source>3D object</source>
-        <translation type="unfinished"></translation>
+        <translation>Đối tượng 3D</translation>
     </message>
     <message>
         <source>Face prop</source>
-        <translation type="unfinished"></translation>
+        <translation>Đạo cụ khuôn mặt</translation>
     </message>
     <message>
         <source>Video</source>
@@ -11101,7 +11101,7 @@
     </message>
     <message>
         <source>Photo</source>
-        <translation type="unfinished"></translation>
+        <translation>Hình ảnh</translation>
     </message>
     <message>
         <source>Audio</source>
@@ -11109,7 +11109,7 @@
     </message>
     <message>
         <source>Music</source>
-        <translation type="unfinished"></translation>
+        <translation>Âm thanh</translation>
     </message>
     <message>
         <source>Save downloads to</source>
@@ -11133,7 +11133,7 @@
     </message>
     <message>
         <source>Reinstall</source>
-        <translation type="unfinished"></translation>
+        <translation>Cài đặt lại</translation>
     </message>
     <message>
         <source>Update</source>
@@ -11165,7 +11165,7 @@
     </message>
     <message>
         <source>Licence</source>
-        <translation type="unfinished"></translation>
+        <translation>Giấy phép</translation>
     </message>
     <message>
         <source>Size</source>
@@ -11177,11 +11177,11 @@
     </message>
     <message>
         <source>An update is available</source>
-        <translation type="unfinished"></translation>
+        <translation>Một bản cập nhật đang có sẵn</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>Đã cài đặt</translation>
     </message>
     <message>
         <source>Add to timeline</source>
@@ -11189,7 +11189,7 @@
     </message>
     <message>
         <source>Open on cutwire.studio</source>
-        <translation type="unfinished"></translation>
+        <translation>Mở trong cutwire.studio</translation>
     </message>
     <message>
         <source>Saves to %1</source>
@@ -11208,7 +11208,7 @@
     <name>MarketItemLoader</name>
     <message>
         <source>That item was not found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Không tìm thấy mục đó.</translation>
     </message>
 </context>
 <context>
@@ -11264,18 +11264,18 @@
     <name>MarketStockBrowserSection</name>
     <message>
         <source>%1 didn’t respond.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 không phản hồi.</translation>
     </message>
     <message numerus="yes">
         <source>%n download(s) left today</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n lượt tải xuống còn lại hôm nay</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n download(s) left</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n lượt tải xuống còn lại</numerusform>
         </translation>
     </message>
     <message>
@@ -11288,7 +11288,7 @@
     </message>
     <message>
         <source>All sources</source>
-        <translation type="unfinished"></translation>
+        <translation>Tất cả nguồn</translation>
     </message>
     <message>
         <source>%1 (%2 left)</source>
@@ -11360,7 +11360,7 @@
     </message>
     <message>
         <source>You’re offline. Showing what was saved last time.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bạn đã bị ngắt kết nối. Đang hiển thị những gì đã được lưu lần trước.</translation>
     </message>
     <message>
         <source>Retry</source>
@@ -11368,7 +11368,7 @@
     </message>
     <message>
         <source>Loading the Marketplace…</source>
-        <translation type="unfinished"></translation>
+        <translation>Đang tải Chợ…</translation>
     </message>
     <message>
         <source>Marketplace unavailable</source>
@@ -11376,7 +11376,7 @@
     </message>
     <message>
         <source>There is nothing to show right now.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hiện tại không có gì để hiển thị cả.</translation>
     </message>
     <message>
         <source>Open link</source>
@@ -11388,14 +11388,14 @@
     </message>
     <message>
         <source>This opens %1 in your browser. It is not on cutwire.studio.</source>
-        <translation type="unfinished"></translation>
+        <translation>Điều này sẽ mở %1 trên trình duyệt của bạn. Nó không có trên cutwire.studio.</translation>
     </message>
 </context>
 <context>
     <name>MarketplaceWindow</name>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>Chợ</translation>
     </message>
 </context>
 <context>
@@ -11422,26 +11422,26 @@
     </message>
     <message>
         <source>Add points to refine · then press “Cut out through whole clip” in the Masking panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Thêm điểm để tinh chỉnh · rồi nhấn “Tách xuyên suốt toàn bộ clip” trong bảng Mặt nạ</translation>
     </message>
     <message>
         <source>Install a cutout model in the Masking panel first</source>
-        <translation type="unfinished"></translation>
+        <translation>Cài đặt mô hình tách nền trong bảng Mặt nạ trước</translation>
     </message>
     <message>
         <source>People are found automatically · press “Cut out people” in the Masking panel</source>
-        <translation type="unfinished"></translation>
+        <translation>Tự động nhận diện người · nhấn “Tách người” trong bảng Mặt nạ</translation>
     </message>
 </context>
 <context>
     <name>MaskBrushOverlay</name>
     <message>
         <source>%1 %</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 %</translation>
     </message>
     <message>
         <source>Paint to add · Right-drag or %1 to erase · [ ] or Shift-drag to resize · Ctrl+scroll to zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>Vẽ để thêm · Kéo chuột phải hoặc %1 để tẩy · Phím [ ] hoặc kéo giữ Shift để thay đổi kích thước · Ctrl+lăn chuột để thu phóng</translation>
     </message>
     <message>
         <source>Move the playhead over the selected clip</source>
@@ -11472,11 +11472,11 @@
     </message>
     <message>
         <source>Drawing replaces this layer&apos;s mask</source>
-        <translation type="unfinished"></translation>
+        <translation>Vẽ sẽ thay thế mặt nạ của lớp này</translation>
     </message>
     <message>
         <source>Drag to draw · Shift for square/circle · Alt from centre</source>
-        <translation type="unfinished"></translation>
+        <translation>Kéo để vẽ · Giữ Shift để tạo hình vuông/tròn · Giữ Alt để vẽ từ tâm</translation>
     </message>
 </context>
 <context>
@@ -11490,11 +11490,11 @@
     <name>MaskOverlay</name>
     <message>
         <source>Drag points to reshape · Tap ○ on an edge to add a point · Hold a point to delete</source>
-        <translation type="unfinished"></translation>
+        <translation>Kéo điểm để chỉnh hình · Chạm ○ trên cạnh để thêm điểm · Giữ điểm để xóa</translation>
     </message>
     <message>
         <source>Drag points to reshape · Click ○ on an edge to add a point · Right-click a point to delete</source>
-        <translation type="unfinished"></translation>
+        <translation>Kéo điểm để chỉnh hình · Nhấp ○ trên cạnh để thêm điểm · Nhấp chuột phải vào điểm để xóa</translation>
     </message>
 </context>
 <context>
