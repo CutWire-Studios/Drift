@@ -58,6 +58,8 @@ const AddonPlace kAddonPlaces[] = {
     {"face-props", "panel:properties.effects#effects-face-tracking"},
     {"depth-model", "panel:assets.effects"},
     {"restore-model", "panel:assets.media"},
+    {"audio-tag-model", "panel:audioSheet"},
+    {"audio-class-model", "panel:audioSheet"},
 };
 
 QVariant prop(QObject *obj, const char *name)

@@ -89,6 +89,9 @@
 #include "engine/audio/analysis/AudioSync.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
 #include "engine/diagnostics/sheets/AudioSheet.h"
+#include "engine/ml/audio/AstClassifier.h"
+#include "engine/ml/audio/AudioTagging.h"
+#include "engine/ml/audio/ClapTagger.h"
 #include "engine/ml/vision/detection/ObjectDetector.h"
 #include "engine/ml/vision/detection/SceneDetect.h"
 #include "engine/render3d/splats/SplatAsset.h"
@@ -457,6 +460,10 @@ private slots:
     void audioSheetRendersLanes();
     void vadRangesFollowSileroRules();
     void vadModelScoresSilenceLow();
+    void audioVocabularyLooksUpTerms();
+    void audioClapMatchesReference();
+    void audioAstMatchesReference();
+    void audioTaggingFindsSectionsAndMoments();
     void ctcForcedAlignFindsPlantedPath();
     void alignerNormalizesEnglish();
     void clusterEmbeddingsCompleteLinkage();
@@ -16361,6 +16368,192 @@ void EngineTest::vadRangesFollowSileroRules()
 
     params.minSilenceMs = 30;
     QCOMPARE(drift::vadSpeechRanges(probs, total, params).size(), 2);
+}
+
+namespace {
+
+// The C++ CLAP and AST paths are checked against earshot's PyTorch outputs (refdata from
+// drift-addons/recipes/validate-audio-models.py). Needs the staged addons, a runtime and the
+// reference files: DRIFT_AUDIO_CLAP_MODEL_DIR, DRIFT_AUDIO_AST_MODEL_DIR, DRIFT_AUDIO_REFDATA_DIR,
+// and DRIFT_ONNXRUNTIME_DIR for the runtime.
+std::vector<float> readRefFloats(const QString &dir, const QString &name)
+{
+    QFile f(QDir(dir).filePath(name));
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    const QByteArray raw = f.readAll();
+    std::vector<float> out(static_cast<size_t>(raw.size()) / sizeof(float));
+    memcpy(out.data(), raw.constData(), out.size() * sizeof(float));
+    return out;
+}
+
+QJsonObject readRefIndex(const QString &dir)
+{
+    QFile f(QDir(dir).filePath(QStringLiteral("index.json")));
+    return f.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(f.readAll()).object() : QJsonObject();
+}
+
+} // namespace
+
+void EngineTest::audioVocabularyLooksUpTerms()
+{
+    if (!drift::ClapTagger::modelPresent())
+        QSKIP("Audio tagging addon not found (set DRIFT_AUDIO_CLAP_MODEL_DIR)");
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    QVERIFY(clap.loadVocabulary());
+    QCOMPARE(clap.vocabularyTerms().size(), 322);
+    const int rain = clap.termIndex(QStringLiteral("  Heavy RAIN "));
+    QVERIFY(rain >= 0);
+    QCOMPARE(clap.vocabularyTerms().at(rain), QStringLiteral("heavy rain"));
+    QCOMPARE(clap.termIndex(QStringLiteral("a fast whoosh")), clap.termIndex(QStringLiteral("fast whoosh")));
+    QCOMPARE(clap.termIndex(QStringLiteral("a recording of a tuba")), -1);
+    const QStringList near = clap.closestTerms(QStringLiteral("hevy rain storm"), 3);
+    QCOMPARE(near.size(), 3);
+    QVERIFY2(near.first().contains(QStringLiteral("rain")), qPrintable(near.join(QLatin1Char('|'))));
+    QCOMPARE(drift::clapVerdict(3.0f), QStringLiteral("strong"));
+    QCOMPARE(drift::clapVerdict(2.7f), QStringLiteral("plausible"));
+    QCOMPARE(drift::clapVerdict(2.0f), QStringLiteral("weak"));
+    QCOMPARE(drift::clapVerdict(1.9f), QStringLiteral("no match"));
+}
+
+void EngineTest::audioClapMatchesReference()
+{
+    const QString refDir = qEnvironmentVariable("DRIFT_AUDIO_REFDATA_DIR");
+    if (refDir.isEmpty() || !drift::ClapTagger::modelPresent())
+        QSKIP("Set DRIFT_AUDIO_REFDATA_DIR and DRIFT_AUDIO_CLAP_MODEL_DIR to run");
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    if (!clap.available())
+        QSKIP(qPrintable(QStringLiteral("CLAP unavailable: %1").arg(clap.lastError())));
+    const QJsonObject cases = readRefIndex(refDir).value(QStringLiteral("cases")).toObject();
+    QVERIFY(!cases.isEmpty());
+    for (auto it = cases.begin(); it != cases.end(); ++it) {
+        const QString name = it.key();
+        const QJsonObject ref = it.value().toObject();
+        const std::vector<float> pcm = readRefFloats(refDir, name + QStringLiteral(".wav48k.f32"));
+        const std::vector<float> want = readRefFloats(refDir, name + QStringLiteral(".clap_embedding.f32"));
+        QVERIFY2(!pcm.empty() && want.size() == 512, qPrintable(name));
+
+        drift::ClapEmbedding got{};
+        QVERIFY2(clap.embedClip(pcm.data(), static_cast<qint64>(pcm.size()), &got), qPrintable(clap.lastError()));
+        double cosine = 0.0;
+        for (int i = 0; i < 512; ++i)
+            cosine += double(got[static_cast<size_t>(i)]) * want[static_cast<size_t>(i)];
+        qInfo("CLAP %s: embedding cosine %.6f", qPrintable(name), cosine);
+        QVERIFY2(cosine > 0.999, qPrintable(QStringLiteral("%1: %2").arg(name).arg(cosine)));
+
+        // Event tags: the same three phrases in the same order.
+        const QJsonArray wantTags = ref.value(QStringLiteral("earshot")).toObject().value(QStringLiteral("event_tags_top3")).toArray();
+        const QList<drift::ClapTag> tags = clap.eventTags(got, 3);
+        QCOMPARE(tags.size(), 3);
+        for (int k = 0; k < 3; ++k) {
+            QCOMPARE(tags.at(k).text, wantTags.at(k).toObject().value(QStringLiteral("phrase")).toString());
+            QCOMPARE(tags.at(k).kind, wantTags.at(k).toObject().value(QStringLiteral("kind")).toString());
+            QVERIFY(qAbs(double(tags.at(k).z) - wantTags.at(k).toObject().value(QStringLiteral("z")).toDouble()) < 0.1);
+        }
+
+        // Calibrated vocabulary: the best term, its category and z.
+        const QJsonArray wantTerms = ref.value(QStringLiteral("earshot")).toObject().value(QStringLiteral("vocab_top8_calibrated")).toArray();
+        const QList<drift::ClapTag> terms = clap.topTerms(got, 8);
+        QCOMPARE(terms.first().text, wantTerms.first().toObject().value(QStringLiteral("term")).toString());
+        QCOMPARE(terms.first().category, wantTerms.first().toObject().value(QStringLiteral("category")).toString());
+        QVERIFY(qAbs(double(terms.first().z) - wantTerms.first().toObject().value(QStringLiteral("z")).toDouble()) < 0.1);
+        int shared = 0;
+        for (const QJsonValue &w : wantTerms) {
+            for (const drift::ClapTag &t : terms)
+                shared += t.text == w.toObject().value(QStringLiteral("term")).toString() ? 1 : 0;
+        }
+        QVERIFY2(shared >= 7, qPrintable(QStringLiteral("%1: top-8 terms share %2").arg(name).arg(shared)));
+    }
+}
+
+void EngineTest::audioAstMatchesReference()
+{
+    const QString refDir = qEnvironmentVariable("DRIFT_AUDIO_REFDATA_DIR");
+    if (refDir.isEmpty() || !drift::AstClassifier::modelPresent())
+        QSKIP("Set DRIFT_AUDIO_REFDATA_DIR and DRIFT_AUDIO_AST_MODEL_DIR to run");
+    drift::AstClassifier &ast = drift::AstClassifier::instance();
+    if (!ast.available())
+        QSKIP(qPrintable(QStringLiteral("AST unavailable: %1").arg(ast.lastError())));
+    const QJsonObject cases = readRefIndex(refDir).value(QStringLiteral("cases")).toObject();
+    QVERIFY(!cases.isEmpty());
+    for (auto it = cases.begin(); it != cases.end(); ++it) {
+        const QString name = it.key();
+        const std::vector<float> pcm16 = readRefFloats(refDir, name + QStringLiteral(".wav16k.f32"));
+        const std::vector<float> pcm48 = readRefFloats(refDir, name + QStringLiteral(".wav48k.f32"));
+        const std::vector<float> want = readRefFloats(refDir, name + QStringLiteral(".ast_probs.f32"));
+        QVERIFY2(!pcm16.empty() && want.size() == 527, qPrintable(name));
+        const QJsonArray top = it.value().toObject().value(QStringLiteral("earshot")).toObject().value(QStringLiteral("ast_top10")).toArray();
+
+        // The graph on earshot's own 16 kHz input (soxr HQ), and on our 48 -> 16 kHz resample of the 48 kHz
+        // one, which differs from soxr by a little at the band edge.
+        const std::vector<float> resampled = drift::AstClassifier::resample48kTo16k(pcm48.data(), static_cast<qint64>(pcm48.size()));
+        for (const std::vector<float> *input : {&pcm16, &resampled}) {
+            const std::vector<float> got = ast.probabilitiesOfClip(input->data(), static_cast<qint64>(input->size()));
+            QCOMPARE(got.size(), size_t(527));
+            float worst = 0.0f;
+            for (size_t i = 0; i < 527; ++i)
+                worst = std::max(worst, std::abs(got[i] - want[i]));
+            qInfo("AST %s (%s): max |dp| %.5f", qPrintable(name), input == &pcm16 ? "wav16k" : "resampled", double(worst));
+            QVERIFY2(worst < (input == &pcm16 ? 0.01f : 0.02f), qPrintable(QStringLiteral("%1: %2").arg(name).arg(double(worst))));
+            const drift::AstSummary summary = ast.summarise(got, 5, 0.0f);
+            for (int k = 0; k < 3; ++k)
+                QCOMPARE(summary.top.at(k).label, top.at(k).toObject().value(QStringLiteral("label")).toString());
+        }
+    }
+}
+
+void EngineTest::audioTaggingFindsSectionsAndMoments()
+{
+    const QString refDir = qEnvironmentVariable("DRIFT_AUDIO_REFDATA_DIR");
+    if (refDir.isEmpty() || !drift::ClapTagger::modelPresent() || !drift::AstClassifier::modelPresent())
+        QSKIP("Set DRIFT_AUDIO_REFDATA_DIR, DRIFT_AUDIO_CLAP_MODEL_DIR and DRIFT_AUDIO_AST_MODEL_DIR to run");
+    if (!drift::ClapTagger::instance().available() || !drift::AstClassifier::instance().available())
+        QSKIP("Audio models unavailable");
+
+    // 12 s of the film window, a break of near silence, then the burst excerpt repeated: two sections.
+    std::vector<float> film = readRefFloats(refDir, QStringLiteral("film_window_0_10s.wav48k.f32"));
+    const std::vector<float> burst = readRefFloats(refDir, QStringLiteral("bursts_event_0p5s.wav48k.f32"));
+    QVERIFY(!film.empty() && !burst.empty());
+    film.insert(film.end(), 48000 * 2, 0.0f);
+    for (int i = 0; i < 12; ++i)
+        film.insert(film.end(), burst.begin(), burst.end());
+
+    drift::AudioTagOptions options;
+    options.maxTagged = 6;
+    const drift::AudioEventsResult events = drift::AudioEvents::analyze(film.data(), static_cast<qint64>(film.size()), 48000, 0.0);
+    const drift::AudioTags tags = drift::tagAudio(film.data(), static_cast<qint64>(film.size()), 0.0, events.events, options);
+    QVERIFY(tags.clap);
+    QVERIFY(tags.ast);
+    QVERIFY(!tags.sections.isEmpty());
+    QCOMPARE(tags.sections.first().start, 0.0);
+    QVERIFY(qAbs(tags.sections.last().end - double(film.size()) / 48000.0) < 0.02);
+    for (int i = 1; i < tags.sections.size(); ++i)
+        QVERIFY(qAbs(tags.sections.at(i).start - tags.sections.at(i - 1).end) < 1e-6);
+    for (const drift::ClapSection &s : tags.sections) {
+        QVERIFY(!s.label.isEmpty());
+        qInfo("section %.2f-%.2f: %s", s.start, s.end, qPrintable(s.label));
+    }
+    QVERIFY(!tags.events.isEmpty());
+    QVERIFY(tags.events.size() <= 6);
+    for (const drift::TaggedEvent &e : tags.events) {
+        QVERIFY(!e.label.isEmpty());
+        qInfo("event %.2f: %s (%s)", events.events.at(e.index).seconds, qPrintable(e.label), qPrintable(e.kind));
+    }
+
+    drift::ClapTagger &clap = drift::ClapTagger::instance();
+    const int hat = clap.termIndex(QStringLiteral("crisp hi-hats"));
+    QVERIFY(hat >= 0);
+    const drift::MomentIndex index = drift::indexMoments(clap, film.data(), static_cast<qint64>(film.size()), 0.0, events.events);
+    QVERIFY(index.valid());
+    const QList<drift::AudioMoment> moments = drift::findMoments(clap, index, hat, 3);
+    QVERIFY(!moments.isEmpty());
+    // The hi-hat-like bursts are in the last third; they must win over the synth music.
+    QVERIFY2(moments.first().start > 11.9, qPrintable(QString::number(moments.first().start)));
+    QVERIFY(moments.first().z > 2.0f);
+    for (int i = 1; i < moments.size(); ++i) {
+        QVERIFY(moments.at(i).z <= moments.at(i - 1).z);
+        QVERIFY(moments.at(i).start >= moments.at(i - 1).end - 1e-3 || moments.at(i).end <= moments.at(i - 1).start + 1e-3);
+    }
 }
 
 void EngineTest::vadModelScoresSilenceLow()

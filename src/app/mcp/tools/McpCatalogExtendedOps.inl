@@ -1881,6 +1881,73 @@
                {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
               clipRefProps())),
           true, false, true },
+        { "audio_tag", "audio", "Name the sounds and sections",
+          "What a range sounds like, from the audio.clap addon (and audio.ast for speech and music). sections: the "
+          "range cut where the sound changes (3 s windows merged while neighbours stay alike, split at strong "
+          "timbre or level changes), each with a label (genre, instruments, mood, 'also:' sources from AST, ambience, "
+          "voice), the top two vocabulary tags per category (music_genre, music_mood, instruments, ambience, voice) "
+          "with z, and speech / music / silence probabilities. events: the most important hits and swells of "
+          "audio_events (limit of them; those at a cut first), each with sound (WHOOSH, RISER, HIT, KEY, UI, STEP, "
+          "FOLEY, NOTE, DRUM, VOICE), label, the top 3 sound tags with z, exposed (>= 12 dB over its bed, so the tag "
+          "is more reliable) and sounds_like (calibrated vocabulary terms with verdict strong|plausible|weak). "
+          "Tags on music mixes are guesses; trust exposed hits and z >= 2.5 sections. Same clip / asset / timeline "
+          "modes as audio_measure; range capped at 600 s. BLOCKS (about a second per tagged event and per 2 s of "
+          "section; a minute of audio takes tens of seconds on CPU). Missing addons return addon_missing.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Most events to tag, most important first"), 1, 96), 20)},
+               {QStringLiteral("sections"), propWithDefault(boolProp(QStringLiteral("Also split the range into labelled sections")), true)},
+               {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Cut or cue times: events within 100 ms of one are always tagged (timeline seconds, or source seconds in asset mode)"))},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_find", "audio", "Find a sound by name",
+          "Where in a range a described sound happens. term is one of the 322 vocabulary terms (sound, music "
+          "and ambience descriptions such as \"heavy rain\", \"a fast whoosh\", \"applause\", \"crisp hi-hats\"), or "
+          "words that all appear in one (\"whoosh\" picks the shortest such term); the reply's term is the one used. "
+          "There is no free-text search: anything else returns error unknown_term with the closest vocabulary terms in "
+          "closest. Sliding windows plus excerpts around the strongest hits are scored with the calibrated CLAP "
+          "match. Returns moments:[{start,end,z,cosine,verdict,source:window|event}] best first, non-overlapping, "
+          "in the scope's seconds (timeline seconds, or source seconds in asset mode). z >= 3 strong (right 98% of "
+          "the time on a held-out set), 2.5 plausible, 2 weak, below 2 nothing in this range sounds like the term. "
+          "Same clip / asset / timeline modes as audio_measure; range capped at 600 s. BLOCKS (up to ~90 model "
+          "runs). Needs the audio.clap addon (addon_missing otherwise).",
+          objectSchema(mergeProps(
+              {{QStringLiteral("term"), stringProp(QStringLiteral("A vocabulary term, e.g. \"heavy rain\", \"a door slam\", \"upbeat pop music\""))},
+               {QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("top"), propWithDefault(integerProp(QStringLiteral("Most moments to return"), 1, 20), 5)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps()), {QStringLiteral("term")}),
+          true, false, true },
+        { "audio_rank", "audio", "Rank media by a sound",
+          "Rank media-bin audio and video assets by how well their sound matches one vocabulary term (same terms as "
+          "audio_find; unknown_term lists the closest). Each file is embedded from up to six 10 s windows spread "
+          "over it. Returns results:[{asset,name,z,cosine,verdict,near_silent,sounds_most_like}] best first; "
+          "near-silent files (peak under -60 dBFS) rank last with verdict no match. z >= 3 strong, 2.5 plausible, "
+          "2 weak. Pick a sound effect or a clip from the bin by what it sounds like. Files without an audio track "
+          "are listed in skipped_no_audio. At most 100 assets per call. BLOCKS (roughly a second per asset). Needs "
+          "the audio.clap addon.",
+          objectSchema(
+              {{QStringLiteral("term"), stringProp(QStringLiteral("A vocabulary term, e.g. \"a deep cinematic whoosh\", \"applause\""))},
+               {QStringLiteral("assets"), arrayProp(assetRefProp(), QStringLiteral("Assets to rank; omit for every audio and video asset in the bin"))},
+               {QStringLiteral("top"), propWithDefault(integerProp(QStringLiteral("Most results to return"), 1, 100), 5)}},
+              {QStringLiteral("term")}),
+          true, false, true },
+        { "audio_presence", "audio", "Where speech and music are",
+          "Speech, music and silence along a range, from the audio.ast addon (AudioSet classifier, 5.12 s windows "
+          "every 2.56 s). Returns segments:[{start,end,kind}] with kind speech | music | speech+music | silence | "
+          "other (sound that is neither), plus speech_seconds, music_seconds and silence_seconds. Music under "
+          "speech reads as speech+music. A window counts as speech or music from probability 0.3. Use it to find "
+          "where dialogue is before ducking music, or where nothing is said. Same clip / asset / timeline modes as "
+          "audio_measure; range capped at 600 s. BLOCKS. Needs the audio.ast addon.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
         { "audio_sheet", "audio", "See the soundtrack",
           "One annotated image of the sound over a range, on a shared time axis: a frame after each cut, "
           "labelled hits and swells, a 30 Hz-16 kHz spectrogram (silence is black), the waveform, momentary and "
@@ -1892,11 +1959,15 @@
           "measure numbers, events, cuts, sync stats and items (as audio_measure / audio_sync) and an inline "
           "JPEG (long edge <= 1600 px); return:\"path\" writes the full-width PNG next to the project's frame "
           "captures and returns its path instead. Asset mode draws frames only for video files and only at the "
-          "at times. image result cannot run inside apply unless return is path.",
+          "at times. With the audio.clap / audio.ast addons installed the sheet also gets a sections lane, sound "
+          "names on the hits and a speech / music lane (tags:false skips that and its model time; the reply then "
+          "carries sections, tagged_events and presence, or tags_missing naming the addons to install). image "
+          "result cannot run inside apply unless return is path.",
           objectSchema(mergeProps(
               {{QStringLiteral("asset"), assetRefProp()},
                {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Cue times to mark and sync-check instead of the timeline's cuts (timeline seconds, or source seconds in asset mode)"))},
                {QStringLiteral("frames"), propWithDefault(boolProp(QStringLiteral("Draw a frame after each cut")), true)},
+               {QStringLiteral("tags"), propWithDefault(boolProp(QStringLiteral("Add sections, sound names and speech / music when audio.clap / audio.ast are installed")), true)},
                {QStringLiteral("width"), propWithDefault(integerProp(QStringLiteral("Sheet width in px"), 1000, 2400), 2000)},
                {QStringLiteral("return"), propWithDefault(enumProp(QStringLiteral("image is an inline JPEG; path writes the full-size PNG to disk"),
                                                                    {QStringLiteral("image"), QStringLiteral("path")}),

@@ -49,6 +49,8 @@ class McpController : public QObject
     Q_PROPERTY(AgentImageLog *imageLog READ imageLog CONSTANT)
     Q_PROPERTY(bool audioSheetBusy READ audioSheetBusy NOTIFY audioSheetChanged)
     Q_PROPERTY(QVariantMap audioSheetResult READ audioSheetResult NOTIFY audioSheetChanged)
+    Q_PROPERTY(bool audioSearchBusy READ audioSearchBusy NOTIFY audioSearchChanged)
+    Q_PROPERTY(QVariantMap audioSearchResult READ audioSearchResult NOTIFY audioSearchChanged)
     Q_PROPERTY(bool startOnLaunch READ startOnLaunch WRITE setStartOnLaunch NOTIFY startOnLaunchChanged)
 
 public:
@@ -243,7 +245,8 @@ public:
                                    double targetLufs);
     QJsonObject analyzeLoudness(int trackIndex, int clipIndex, double startSeconds,
                                    double durSeconds) const;
-    // Audio analysis for agents (audio_measure / audio_events / audio_sync / audio_sheet). All
+    // Audio analysis for agents (audio_measure / audio_events / audio_sync / audio_sheet, and with the
+    // audio.clap / audio.ast addons audio_tag / audio_find / audio_rank / audio_presence). All
     // block. Times are timeline seconds, or source seconds in asset mode.
     struct AudioRequest {
         QString mode = QStringLiteral("timeline"); // timeline, clip or asset
@@ -261,11 +264,30 @@ public:
         int width = 2000;             // sheet
         bool frames = true;           // sheet: a frame after each cut
         bool toPath = false;          // sheet
+        bool tags = true;             // sheet: sections, sound labels and speech / music, when the addons are there
+        QString term;                 // find / rank: a vocabulary term
+        QStringList assetIds;         // rank: the assets to rank, or the whole bin
+        int top = 5;                  // find / rank: results kept
+        int tagLimit = 20;            // tag: events that get a sound tag
+        bool sections = true;         // tag
     };
     QJsonObject audioMeasure(const AudioRequest &request) const;
     QJsonObject audioEvents(const AudioRequest &request) const;
     QJsonObject audioSync(const AudioRequest &request) const;
     QJsonObject audioSheet(const AudioRequest &request);
+    QJsonObject audioTag(const AudioRequest &request);
+    QJsonObject audioFind(const AudioRequest &request);
+    QJsonObject audioRank(const AudioRequest &request);
+    QJsonObject audioPresence(const AudioRequest &request);
+    // The Audio Sheet panel's vocabulary search over the same scopes: options are mode, track,
+    // clip, start, duration and term. The result lands in audioSearchResult: ok, term, moments
+    // [{start, end, z, verdict}] in the scope's own seconds, or ok:false with error, and closest
+    // when the term is not in the vocabulary.
+    Q_INVOKABLE void searchAudioSheet(const QVariantMap &options);
+    // The 322 terms audio_find understands; empty until the audio.clap addon is installed.
+    Q_INVOKABLE QStringList audioVocabulary() const;
+    bool audioSearchBusy() const { return m_audioSearchBusy; }
+    QVariantMap audioSearchResult() const { return m_audioSearchResult; }
     // The Audio Sheet panel: the same render as audio_sheet, off the GUI thread. options are mode,
     // track, clip, start, duration, width, frames. The result lands in audioSheetResult: the
     // sheet's summary fields plus path, w and h of the full-size PNG, or ok:false and detail.
@@ -290,10 +312,12 @@ signals:
     void toolLogChanged();
     void toolCallStarted(const QString &tool);
     void audioSheetChanged();
+    void audioSearchChanged();
 
 private:
     struct ResolvedAudio;
     struct AudioSheetJob;
+    struct AudioSearchIndex;
     // Everything audio_sheet needs from the project, snapshotted on the GUI thread.
     QJsonObject prepareAudioSheet(const AudioRequest &request, std::shared_ptr<AudioSheetJob> *out);
     // Pure on the job, so it can run on any thread. The meta has no image fields.
@@ -321,6 +345,11 @@ private:
     QVariantMap m_audioSheetResult;
     QString m_audioSheetPath;
     int m_audioSheetSeq = 0;
+    bool m_audioSearchBusy = false;
+    QVariantMap m_audioSearchResult;
+    // The embedded candidate moments of the last searched scope, so a second term costs no model run.
+    std::shared_ptr<AudioSearchIndex> m_audioSearchIndex;
+    QString m_audioSearchKey;
     bool m_mcpStartOnLaunch = false;
     bool m_undoSuspended = false;
     int m_batchDepth = 0;

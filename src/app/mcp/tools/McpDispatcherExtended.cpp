@@ -3515,7 +3515,9 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     }
 
     if (tool == QLatin1String("audio_measure") || tool == QLatin1String("audio_events")
-        || tool == QLatin1String("audio_sync") || tool == QLatin1String("audio_sheet")) {
+        || tool == QLatin1String("audio_sync") || tool == QLatin1String("audio_sheet")
+        || tool == QLatin1String("audio_tag") || tool == QLatin1String("audio_find")
+        || tool == QLatin1String("audio_rank") || tool == QLatin1String("audio_presence")) {
         McpController::AudioRequest req;
         req.start = jsonNumber(args.value(QStringLiteral("start")), 0.0);
         req.duration = jsonNumber(args.value(QStringLiteral("duration")), 0.0);
@@ -3526,6 +3528,11 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         req.width = jsonInt(args.value(QStringLiteral("width")), 2000);
         req.frames = jsonBool(args.value(QStringLiteral("frames")), true);
         req.toPath = argString(args, QStringLiteral("return")) == QLatin1String("path");
+        req.tags = jsonBool(args.value(QStringLiteral("tags")), true);
+        req.term = argString(args, QStringLiteral("term"));
+        req.top = jsonInt(args.value(QStringLiteral("top")), 5);
+        req.tagLimit = jsonInt(args.value(QStringLiteral("limit")), 20);
+        req.sections = jsonBool(args.value(QStringLiteral("sections")), true);
         if (args.contains(QStringLiteral("at"))) {
             req.hasAt = true;
             for (const QJsonValue &v : args.value(QStringLiteral("at")).toArray())
@@ -3547,7 +3554,23 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             req.mode = QStringLiteral("asset");
             req.assetId = lib ? lib->assetIdAt(index) : QString();
         }
+        if (tool == QLatin1String("audio_rank")) {
+            AssetLibrary *lib = m_controller->assetLibrary();
+            for (const QJsonValue &v : args.value(QStringLiteral("assets")).toArray()) {
+                const int index = resolveAsset(v);
+                if (index < 0)
+                    return err("not_found", QStringLiteral("Unknown asset: %1").arg(v.toVariant().toString()));
+                req.assetIds.append(lib ? lib->assetIdAt(index) : QString());
+            }
+            return m_controller->mcp()->audioRank(req);
+        }
         McpController *mcp = m_controller->mcp();
+        if (tool == QLatin1String("audio_tag"))
+            return mcp->audioTag(req);
+        if (tool == QLatin1String("audio_find"))
+            return mcp->audioFind(req);
+        if (tool == QLatin1String("audio_presence"))
+            return mcp->audioPresence(req);
         if (tool == QLatin1String("audio_measure"))
             return mcp->audioMeasure(req);
         if (tool == QLatin1String("audio_events"))

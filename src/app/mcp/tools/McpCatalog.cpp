@@ -1368,6 +1368,10 @@ QString agentGuideText()
         "2. audio_measure gives LUFS, LRA, true peak, clipping and gaps; audio_events lists the hits and swells.\n"
         "3. audio_sync checks whether a sound lands on each cut and says by how many ms it misses; read its chance\n"
         "   figures before trusting a hit rate on dense music.\n"
+        "4. With the audio.clap / audio.ast addons: audio_tag names the sections and the hits (z >= 2.5 is\n"
+        "   believable, music mixes are guesses), audio_find locates a sound from the fixed vocabulary (an\n"
+        "   unknown term lists the closest), audio_rank orders bin assets by it, audio_presence marks speech and\n"
+        "   music. audio_sheet draws their sections and sound names when the addons are there.\n"
         "\n"
         "Custom effects (effects toolbox):\n"
         "1. effect_authoring_guide({kind}) for the manifest grammar and parameter types.\n"
@@ -1446,7 +1450,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
         {"segmentation", "SAM-style cutout and mask output."},
         {"ai", "Denoise, face detection, auto-reframe, model add-ons (list/install), acceleration."},
-        {"audio", "Waveforms, silence, loudness (LUFS, LRA, true peak, gaps), sound events and cut sync, the audio sheet image, ducking, beat detection, beat-synced cuts, clip volume."},
+        {"audio", "Waveforms, silence, loudness (LUFS, LRA, true peak, gaps), sound events and cut sync, the audio sheet image, sound tags, sound search and speech/music detection (audio.clap / audio.ast addons), ducking, beat detection, beat-synced cuts, clip volume."},
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
         {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},

@@ -1023,7 +1023,13 @@
       "good": "$semantic.constructive",
       "warn": "$semantic.warning",
       "bad": "$semantic.destructive",
-      "error": "$semantic.destructive"
+      "error": "$semantic.destructive",
+      "listBackground": "$semantic.panel.muted",
+      "listBorder": "$semantic.panel.border",
+      "rowHover": "$semantic.popoverHover",
+      "rowTime": "$semantic.mutedForeground",
+      "speech": "$semantic.primary",
+      "music": "$semantic.accentOnPanel"
     },
     "emptyState": {
       "radius": "$metrics.radius.md",

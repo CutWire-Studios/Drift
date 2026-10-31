@@ -62,6 +62,7 @@ qt_add_executable(tst_editorstate
     ../src/ui/imageproviders/multicam/MulticamImageProvider.cpp
     ../src/app/editor/AppController.cpp
     ../src/app/mcp/McpController.cpp
+    ../src/app/mcp/AgentImageLog.cpp
     ../src/app/editor/PreferencesController.cpp
     ../src/app/GraphicsApiChoice.cpp
     ../src/app/editor/ProjectFileController.cpp
@@ -312,6 +313,7 @@ qt_add_executable(tst_mcp
     ../src/ui/imageproviders/multicam/MulticamImageStore.cpp
     ../src/app/editor/AppController.cpp
     ../src/app/mcp/McpController.cpp
+    ../src/app/mcp/AgentImageLog.cpp
     ../src/app/editor/PreferencesController.cpp
     ../src/app/GraphicsApiChoice.cpp
     ../src/app/editor/ProjectFileController.cpp

@@ -595,6 +595,25 @@
     </message>
 </context>
 <context>
+    <name>AgentViewsPanel</name>
+    <message>
+        <source>Agent Views</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 – %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No images yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Images the AI requests, such as frames, audio sheets and captures, appear here during this session.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AndroidAddMenu</name>
     <message>
         <source>Add to timeline</source>
@@ -5839,6 +5858,197 @@
     </message>
 </context>
 <context>
+    <name>AudioSheetPanel</name>
+    <message>
+        <source>Audio Sheet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Work area</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Whole timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1000 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1600 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>2000 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>2400 px</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a sound Drift knows. Closest: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Integrated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 LUFS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loudness range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 LU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>True peak</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 dBTP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clipping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cuts in sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ok, %2 off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width of the sheet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sound tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generating…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate</source>
+        <translation type="unfinished">生成</translation>
+    </message>
+    <message>
+        <source>Export PNG…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name the sounds, split the audio into sections and find a sound by description with the audio tagging add-ons.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Naming sounds needs the AI engine and the audio tagging add-ons.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get add-ons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sounds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech %1  ·  Music %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add speech &amp; music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find a sound, e.g. heavy rain or a fast whoosh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  z %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Searching…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type one of the %1 sounds Drift knows, or pick a suggestion.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Analysing audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to show: turn on Sound tags and generate again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Generate a sheet to name its sections and sounds.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t build the sheet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No sheet yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick what to analyse and press Generate to see loudness, spectrogram and sound events laid out against your cuts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 – %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BinBreadcrumb</name>
     <message>
         <source>Media</source>
@@ -9541,6 +9751,72 @@
     <message>
         <source>Import as sequence</source>
         <translation>シーケンスとしてインポート</translation>
+    </message>
+</context>
+<context>
+    <name>ImageViewer</name>
+    <message>
+        <source>Save image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG image (*.png)</source>
+        <translation type="unfinished">PNG 画像 (*.png)</translation>
+    </message>
+    <message>
+        <source>JPEG image (*.jpg *.jpeg)</source>
+        <translation type="unfinished">JPEG 画像 (*.jpg *.jpeg)</translation>
+    </message>
+    <message>
+        <source>Image saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn’t save that image.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the playhead to where this image starts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <translation type="unfinished">フィット</translation>
+    </message>
+    <message>
+        <source>Actual size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open file location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied to clipboard</source>
+        <translation type="unfinished">クリップボードにコピーしました</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished">名前を付けて保存…</translation>
+    </message>
+</context>
+<context>
+    <name>ImageViewerDialog</name>
+    <message>
+        <source>Agent image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">閉じる</translation>
     </message>
 </context>
 <context>
@@ -24585,6 +24861,14 @@ If playback stutters, try another.</source>
     <message>
         <source>Agent Log</source>
         <translation>エージェントログ</translation>
+    </message>
+    <message>
+        <source>Agent Views</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio Sheet</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Recorder</source>

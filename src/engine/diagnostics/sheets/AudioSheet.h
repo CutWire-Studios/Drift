@@ -83,6 +83,10 @@ inline constexpr int kMaxWidth = 2400;
 
 QImage render(const Input &in, const Options &opt);
 
+// The labels render() derives from `in.events` when `in.labels` is empty: HIT/SWELL with a level,
+// one per event in order.
+QList<EventLabel> defaultEventLabels(const Input &in);
+
 // Log-frequency magnitude spectrogram in dB: n_fft 4096, hop = frames / columns, `rows`
 // triangular bands geometrically spaced between minHz and maxHz. db is [column][row], row 0 lowest.
 struct Spectrogram

@@ -818,6 +818,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | audioSheetPanel | warn | $semantic.warning | $semantic.warning |
 | audioSheetPanel | bad | $semantic.destructive | $semantic.destructive |
 | audioSheetPanel | error | $semantic.destructive | $semantic.destructive |
+| audioSheetPanel | listBackground | $semantic.panel.muted | $semantic.panel.muted |
+| audioSheetPanel | listBorder | $semantic.panel.border | $semantic.panel.border |
+| audioSheetPanel | rowHover | $semantic.popoverHover | $semantic.popoverHover |
+| audioSheetPanel | rowTime | $semantic.mutedForeground | $semantic.mutedForeground |
+| audioSheetPanel | speech | $semantic.primary | $semantic.primary |
+| audioSheetPanel | music | $semantic.accentOnPanel | $semantic.accentOnPanel |
 | emptyState | radius | $metrics.radius.md | $metrics.radius.md |
 | emptyState | background | $semantic.panel.accent | $semantic.panel.accent |
 | emptyState | icon | $semantic.mutedForeground | $semantic.mutedForeground |

@@ -239,6 +239,32 @@ QList<PlacedLabel> placeLabels(const QList<EventLabel> &labels, const QList<int>
     return out;
 }
 
+QList<EventLabel> defaultEventLabels(const Input &in)
+{
+    QList<EventLabel> labels;
+    QList<double> cueTimes;
+    for (const AudioSyncItem &it : in.sync.items) {
+        if (it.answered)
+            cueTimes.append(it.eventSeconds);
+    }
+    for (const AudioEvent &e : in.events) {
+        EventLabel el;
+        el.seconds = e.seconds;
+        el.kind = e.kind == AudioEvent::Kind::Swell ? QStringLiteral("SWELL") : QStringLiteral("HIT");
+        el.text = e.kind == AudioEvent::Kind::Swell
+                      ? QStringLiteral("SWELL")
+                      : QStringLiteral("HIT %1").arg(int(std::lround(e.levelDbfs)));
+        el.weak = e.prominenceDb < 6.0;
+        bool answers = false;
+        for (double c : cueTimes)
+            answers = answers || std::abs(c - e.seconds) < 1e-6;
+        el.priority = answers ? 0 : 1;
+        el.rank = e.prominenceDb;
+        labels.append(el);
+    }
+    return labels;
+}
+
 QImage render(const Input &in, const Options &opt)
 {
     const int width = std::clamp(opt.width, kMinWidth, kMaxWidth);
@@ -460,29 +486,7 @@ QImage render(const Input &in, const Options &opt)
 
     // Event labels.
     QList<PlacedLabel> placed;
-    QList<EventLabel> labels = in.labels;
-    if (labels.isEmpty()) {
-        QList<double> cueTimes;
-        for (const AudioSyncItem &it : in.sync.items) {
-            if (it.answered)
-                cueTimes.append(it.eventSeconds);
-        }
-        for (const AudioEvent &e : in.events) {
-            EventLabel el;
-            el.seconds = e.seconds;
-            el.kind = e.kind == AudioEvent::Kind::Swell ? QStringLiteral("SWELL") : QStringLiteral("HIT");
-            el.text = e.kind == AudioEvent::Kind::Swell
-                          ? QStringLiteral("SWELL")
-                          : QStringLiteral("HIT %1").arg(int(std::lround(e.levelDbfs)));
-            el.weak = e.prominenceDb < 6.0;
-            bool answers = false;
-            for (double c : cueTimes)
-                answers = answers || std::abs(c - e.seconds) < 1e-6;
-            el.priority = answers ? 0 : 1;
-            el.rank = e.prominenceDb;
-            labels.append(el);
-        }
-    }
+    const QList<EventLabel> labels = in.labels.isEmpty() ? defaultEventLabels(in) : in.labels;
     {
         const Lane &l = lanes[QStringLiteral("labels")];
         const double lf = fs * 0.85;

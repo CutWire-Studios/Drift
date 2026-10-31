@@ -194,11 +194,13 @@ Item {
                    || kind === "object-model" || kind === "vad-model"
                    || kind === "align-model" || kind === "diarize-model"
                    || kind === "depth-model" || kind === "restore-model"
-                   || kind === "tts-model") {
+                   || kind === "tts-model" || kind === "audio-tag-model"
+                   || kind === "audio-class-model") {
             root.kindFilter = "whisper-model"
             root.kindFilterKinds = ["whisper-model", "denoise-model", "sam2-model", "face-model",
                                     "object-model", "vad-model", "align-model", "diarize-model",
-                                    "depth-model", "restore-model", "tts-model"]
+                                    "depth-model", "restore-model", "tts-model",
+                                    "audio-tag-model", "audio-class-model"]
         } else if (kind === "effects" || kind === "effect-templates") {
             root.kindFilter = "effects"
             root.kindFilterKinds = ["effects"]
@@ -262,7 +264,8 @@ Item {
                 { id: "whisper-model", label: qsTr("AI tools"),
                   kinds: ["whisper-model", "denoise-model", "sam2-model", "face-model",
                           "object-model", "vad-model", "align-model", "diarize-model",
-                          "depth-model", "restore-model", "tts-model"] },
+                          "depth-model", "restore-model", "tts-model",
+                          "audio-tag-model", "audio-class-model"] },
                 { id: "onnxruntime", label: qsTr("AI engine"),
                   kinds: ["onnxruntime", "onnxruntime-ep"] },
                 { id: "custom", label: qsTr("Custom"), kinds: [] }

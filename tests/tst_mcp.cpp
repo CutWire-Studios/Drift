@@ -39,6 +39,8 @@
 #include "app/mcp/transport/McpStdio.h"
 #include "engine/addons/AddonPackage.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
+#include "engine/ml/audio/AstClassifier.h"
+#include "engine/ml/audio/ClapTagger.h"
 #include "engine/ml/vision/depth/DepthSidecar.h"
 #include "engine/packages/effects/EffectCatalog.h"
 #include "engine/gpu/GlRuntime.h"
@@ -74,6 +76,8 @@ private slots:
     void sceneOpsRequireAnalysisFirst();
     void sceneWorkflowEndToEnd();
     void aiCapabilitiesReportsMissingModels();
+    void audioTagToolsNeedTheirAddons();
+    void audioTagToolsAnalyseImportedAudio();
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
@@ -3189,6 +3193,99 @@ void McpTest::sceneWorkflowEndToEnd()
     QVERIFY(state.undoAvailable());
     state.undo();
     QCOMPARE(project.tracks().at(0).clips.size(), 1);
+}
+
+void McpTest::audioTagToolsNeedTheirAddons()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject args{{QStringLiteral("term"), QStringLiteral("zzqx not a sound")},
+                           {QStringLiteral("start"), 0.0},
+                           {QStringLiteral("duration"), 5.0}};
+
+    const QJsonObject find = dispatcher.applyOne(QStringLiteral("audio_find"), args);
+    QVERIFY(!find.value(QStringLiteral("ok")).toBool());
+    if (!drift::ClapTagger::modelPresent()) {
+        // Missing add-on: the same shape as detect_silence method:vad, with the install call.
+        QCOMPARE(find.value(QStringLiteral("error")).toString(), QStringLiteral("addon_missing"));
+        QVERIFY(find.value(QStringLiteral("detail")).toString().contains(QStringLiteral("install_addon({id:\"audio.clap\"})")));
+        QCOMPARE(dispatcher.applyOne(QStringLiteral("audio_rank"), args).value(QStringLiteral("error")).toString(),
+                 QStringLiteral("addon_missing"));
+        QCOMPARE(dispatcher.applyOne(QStringLiteral("audio_tag"), args).value(QStringLiteral("error")).toString(),
+                 QStringLiteral("addon_missing"));
+        return;
+    }
+    if (find.value(QStringLiteral("error")).toString() == QLatin1String("addon_missing"))
+        QSKIP("Audio tagging model present but unusable here (no ONNX Runtime)");
+    QCOMPARE(find.value(QStringLiteral("error")).toString(), QStringLiteral("unknown_term"));
+    QVERIFY(!find.value(QStringLiteral("closest")).toArray().isEmpty());
+}
+
+void McpTest::audioTagToolsAnalyseImportedAudio()
+{
+    const QString refDir = qEnvironmentVariable("DRIFT_AUDIO_REFDATA_DIR");
+    if (refDir.isEmpty() || ffmpegPath().isEmpty() || !drift::ClapTagger::modelPresent()
+        || !drift::AstClassifier::modelPresent()) {
+        QSKIP("Set DRIFT_AUDIO_REFDATA_DIR, DRIFT_AUDIO_CLAP_MODEL_DIR and DRIFT_AUDIO_AST_MODEL_DIR (and have ffmpeg) to run");
+    }
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("film.wav"));
+    QVERIFY(runFfmpeg({QStringLiteral("-f"), QStringLiteral("f32le"), QStringLiteral("-ar"), QStringLiteral("48000"),
+                       QStringLiteral("-ac"), QStringLiteral("1"), QStringLiteral("-i"),
+                       QDir(refDir).filePath(QStringLiteral("film_window_0_10s.wav48k.f32")),
+                       QStringLiteral("-c:a"), QStringLiteral("pcm_s16le"), source}));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(!importAndPlace(dispatcher, source, 0.0).isEmpty());
+    const QJsonObject range{{QStringLiteral("start"), 0.0}, {QStringLiteral("duration"), 10.0}};
+    auto call = [&](const char *tool, QJsonObject args) {
+        for (auto it = range.begin(); it != range.end(); ++it)
+            args.insert(it.key(), it.value());
+        const QJsonObject r = dispatcher.applyOne(QString::fromLatin1(tool), args);
+        if (!r.value(QStringLiteral("ok")).toBool())
+            qWarning("%s: %s", tool, qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+        return r;
+    };
+    if (call("audio_presence", {}).value(QStringLiteral("error")).toString() == QLatin1String("addon_missing"))
+        QSKIP("Audio models present but unusable here (no ONNX Runtime)");
+
+    const QJsonObject presence = call("audio_presence", {});
+    QVERIFY(presence.value(QStringLiteral("ok")).toBool());
+    QVERIFY(presence.value(QStringLiteral("music_seconds")).toDouble() > 5.0);
+    QVERIFY(!presence.value(QStringLiteral("segments")).toArray().isEmpty());
+
+    const QJsonObject tag = call("audio_tag", {});
+    QVERIFY(tag.value(QStringLiteral("ok")).toBool());
+    QVERIFY(!tag.value(QStringLiteral("sections")).toArray().isEmpty());
+    QVERIFY(!tag.value(QStringLiteral("events")).toArray().isEmpty());
+    QVERIFY(tag.value(QStringLiteral("models")).toObject().value(QStringLiteral("ast")).toBool());
+
+    const QJsonObject find = call("audio_find", {{QStringLiteral("term"), QStringLiteral("a warm analog synth pad")}});
+    QVERIFY(find.value(QStringLiteral("ok")).toBool());
+    const QJsonArray moments = find.value(QStringLiteral("moments")).toArray();
+    QVERIFY(!moments.isEmpty());
+    QVERIFY(moments.first().toObject().value(QStringLiteral("z")).toDouble() > 1.5);
+
+    const QJsonObject unknown = call("audio_find", {{QStringLiteral("term"), QStringLiteral("warm analog synth")}});
+    QCOMPARE(unknown.value(QStringLiteral("error")).toString(), QStringLiteral("unknown_term"));
+    QVERIFY(unknown.value(QStringLiteral("closest")).toArray().contains(QStringLiteral("a warm analog synth pad")));
+
+    const QJsonObject rank = dispatcher.applyOne(QStringLiteral("audio_rank"), {{QStringLiteral("term"), QStringLiteral("a warm analog synth pad")}});
+    QVERIFY2(rank.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(rank).toJson(QJsonDocument::Compact)));
+    QCOMPARE(rank.value(QStringLiteral("results")).toArray().size(), 1);
+
+    const QJsonObject sheet = call("audio_sheet", {{QStringLiteral("return"), QStringLiteral("path")}, {QStringLiteral("frames"), false}});
+    QVERIFY2(sheet.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(sheet).toJson(QJsonDocument::Compact)));
+    QVERIFY(!sheet.value(QStringLiteral("sections")).toArray().isEmpty());
+    QVERIFY(sheet.value(QStringLiteral("presence")).toObject().value(QStringLiteral("music_seconds")).toDouble() > 5.0);
+    QVERIFY(QFileInfo::exists(sheet.value(QStringLiteral("path")).toString()));
+    const QJsonObject untagged = call("audio_sheet", {{QStringLiteral("return"), QStringLiteral("path")}, {QStringLiteral("frames"), false}, {QStringLiteral("tags"), false}});
+    QVERIFY(untagged.value(QStringLiteral("ok")).toBool());
+    QVERIFY(!untagged.contains(QStringLiteral("sections")));
 }
 
 void McpTest::aiCapabilitiesReportsMissingModels()

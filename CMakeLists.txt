@@ -906,6 +906,12 @@ add_library(driftengine STATIC
     src/engine/face/props/FacePropImport.cpp
     src/engine/ml/speech/DeepFilterDenoiser.h
     src/engine/ml/speech/DeepFilterDenoiser.cpp
+    src/engine/ml/audio/AstClassifier.h
+    src/engine/ml/audio/AstClassifier.cpp
+    src/engine/ml/audio/AudioTagging.h
+    src/engine/ml/audio/AudioTagging.cpp
+    src/engine/ml/audio/ClapTagger.h
+    src/engine/ml/audio/ClapTagger.cpp
     src/engine/ml/speech/DenoiseAudio.h
     src/engine/ml/speech/DenoiseAudio.cpp
     src/engine/encode/writers/MatteWriter.h

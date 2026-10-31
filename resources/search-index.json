@@ -13,7 +13,7 @@
       "target": "panel:audioSheet#audio-sheet",
       "context": "AudioSheetPanel",
       "source": "Audio Sheet",
-      "keywords": "audio sheet loudness lufs spectrogram events sync analysis report png export",
+      "keywords": "audio sheet loudness lufs spectrogram events sync analysis report png export sections sound tags find search speech music",
       "needs": []
     },
     {
