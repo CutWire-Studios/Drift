@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>추가 기능</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>닫기</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation type="unfinished">이 팩을 제거하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished">제거</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">“%1”과(와) 다운로드된 데이터가 삭제됩니다. 나중에 다시 설치할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">추가 기능 설치</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift 추가 기능 (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">공식 인증되지 않은 추가 기능을 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">무시하고 설치</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” (%2 제작)</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1은(는) Drift 팀에서 서명하지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">컴퓨터에서 실행되는 코드가 포함되어 있습니다.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">“%1”을(를) 대체합니다.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">이 전환 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">이 오디오 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">이 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">설치</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1은(는) Drift 팀이 아닌 사용자가 제작했으며 검증되지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">“%1”을(를) 설치할 수 없습니다: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">“%1” 설치됨</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">닫기</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">모두</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation type="unfinished">효과</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation type="unfinished">전환</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation type="unfinished">오디오 효과</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation type="unfinished">룩</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation type="unfinished">글꼴</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation type="unfinished">스티커</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation type="unfinished">AI 도구</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation type="unfinished">AI 엔진</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished">사용자 지정</translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation type="unfinished">파일에서 설치…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation type="unfinished">추가 기능 폴더 열기</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">여기에 추가 기능 폴더를 넣은 다음 부가 기능을 다시 여세요.</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation type="unfinished">추가 기능 확인 중…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation type="unfinished">AI 작동 방식</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">자동 모드는 설치된 항목 중 가장 빠른 옵션을 선택하며, 그래픽 카드가 사용할 수 없는 경우 이 컴퓨터에서 처리합니다.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished">아래에서 AI 엔진을 설치하면 자동 자막, 피사체 분리, 재미있는 얼굴 효과 및 노이즈 제거를 사용할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">변경 사항을 적용하려면 Drift를 다시 시작하세요.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">다운로드 스토어에 연결할 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">이 카테고리에는 항목이 없습니다</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation type="unfinished">연결 상태를 확인한 후 다시 시도하세요.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation type="unfinished">위에서 다른 카테고리를 선택하세요.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation type="unfinished">다시 시도</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>기술 정보</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>Drift %1 이상 버전 필요</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>비공식</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>파일에서 설치됨</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>%1 다운로드</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>항목 %1개</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>취소</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>업데이트</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>다시 시도</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>설치</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>제거</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>이 팩의 다운로드 데이터 삭제</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>추가 팩</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>팩 업데이트 사용 가능</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>추천 팩</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>효과, 전환 및 오디오에 필요한 기본 팩을 설치하세요. 설치하지 않아도 Drift를 계속 사용할 수 있지만, 설치하면 개선 사항이 적용된 업데이트를 받을 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>필수 추가 기능에 대해 다시 알리지 않음</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>이미 설치된 팩에 업데이트가 있습니다.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>향후 추가 기능 업데이트에 대해 다시 알리지 않음</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>숨기기</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>나중에</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>설치 중…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>설치 및 업데이트</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>업데이트</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>모두 업데이트</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>설치</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>모두 설치</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1234,6 +915,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">추가 기능</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1559,10 +1247,6 @@
     <message>
         <source>Settings</source>
         <translation type="unfinished">설정</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation type="unfinished">추가 기능</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7275,6 +6959,10 @@
         <translation type="unfinished">설치 중…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">대기 중…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation type="unfinished">다운로드 중…</translation>
     </message>
@@ -8793,6 +8481,403 @@
     <message>
         <source>Share</source>
         <translation>공유</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">선택</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">대기 중…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">설치 중…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">파일에서 설치됨</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">뒤로</translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">비공식</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">업데이트</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">설치</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">제거</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">이 팩의 다운로드 데이터 삭제</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">Drift %1 이상 버전 필요</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1(%2)</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">정보</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">이미지</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI 작동 방식</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">자동 모드는 설치된 항목 중 가장 빠른 옵션을 선택하며, 그래픽 카드가 사용할 수 없는 경우 이 컴퓨터에서 처리합니다.</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">변경 사항을 적용하려면 Drift를 다시 시작하세요.</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">기술 정보</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">지우기</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">설치</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">업데이트</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">사용자 지정</translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">추가 기능 설치</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Drift 추가 기능 (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">“%1”을(를) 설치할 수 없습니다: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” 설치됨</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">이 팩을 제거하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">제거</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">“%1”과(와) 다운로드된 데이터가 삭제됩니다. 나중에 다시 설치할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">공식 인증되지 않은 추가 기능을 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">무시하고 설치</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” (%2 제작)</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1은(는) Drift 팀에서 서명하지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">컴퓨터에서 실행되는 코드가 포함되어 있습니다.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">“%1”을(를) 대체합니다.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">이 전환 효과를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">이 오디오 효과를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">이 효과를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">설치</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1은(는) Drift 팀이 아닌 사용자가 제작했으며 검증되지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">추가 기능 폴더 열기</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">여기에 추가 기능 폴더를 넣은 다음 부가 기능을 다시 여세요.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1(%2)</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">모두 선택</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">추가 기능 확인 중…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">다운로드 스토어에 연결할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">연결 상태를 확인한 후 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">다시 시도</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">추가 기능</translation>
     </message>
 </context>
 <context>

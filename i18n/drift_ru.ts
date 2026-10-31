@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>Дополнения</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>Закрыть</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation type="unfinished">Удалить этот пакет?</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished">Удалить</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">«%1» и загруженные данные будут удалены. Вы сможете установить пакет снова позже.</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">Установить расширение</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Расширения Drift (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">Установить неофициальное расширение?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">Установить в любом случае</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">«%1» от %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">«%1»</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 не подписан командой Drift. Устанавливайте только те файлы, которым вы доверяете.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">Содержит код, который выполняется на вашем компьютере.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">Это заменит «%1».</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">Установить этот переход?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">Установить этот звуковой эффект?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">Установить этот эффект?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">Установить</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 был создан пользователем, а не командой Drift, и его никто не проверял. Устанавливайте только те файлы, которым вы доверяете.</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">Не удалось установить «%1»: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">Установлено «%1»</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">Закрыть</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">Все</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation type="unfinished">Эффекты</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation type="unfinished">Переходы</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation type="unfinished">Аудиоэффекты</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation type="unfinished">Стили</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation type="unfinished">Шрифты</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation type="unfinished">Стикеры</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation type="unfinished">Инструменты ИИ</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation type="unfinished">Движок ИИ</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation type="unfinished">Установить из файла…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation type="unfinished">Открыть папку дополнений</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">Поместите папки дополнений сюда, затем снова откройте «Дополнительно»</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation type="unfinished">Проверка дополнений…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation type="unfinished">Как работает ИИ</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">Автоматический режим выбирает самый быстрый из установленных вариантов и использует этот компьютер, если видеокарта не подходит.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished">Установите движок ИИ ниже, чтобы создавать субтитры автоматически, вырезать объекты, применять забавные эффекты для лица и удалять шум.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">Перезапустите Drift, чтобы изменения вступили в силу.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">Не удалось подключиться к магазину загрузок</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">В этой категории ничего нет</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation type="unfinished">Проверьте подключение и повторите попытку.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation type="unfinished">Выберите другую категорию выше.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation type="unfinished">Повторить</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>Технические подробности</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>Требуется Drift %1 или новее</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>Неофициальное</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>Установлено из файла</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>Загрузка %1</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>Элементов: %1</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Отмена</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>Обновить</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>Повторить</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>Установить</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>Удалить</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>Удалить загруженные данные этого пакета</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>Пакеты дополнений</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>Доступны обновления пакетов</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>Рекомендуемые пакеты</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>Установите основные пакеты эффектов, переходов и аудио. Вы можете пользоваться Drift и без них, но установка позволит получать улучшения.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>Не напоминать об основных дополнениях</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>Для установленных пакетов доступны обновления.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>Не напоминать о будущих обновлениях дополнений</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Скрыть</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>Позже</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>Установка…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>Установить и обновить</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>Обновить</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>Обновить всё</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>Установить</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>Установить всё</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1236,6 +917,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Дополнения</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1561,10 +1249,6 @@
     <message>
         <source>Settings</source>
         <translation type="unfinished">Настройки</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation type="unfinished">Дополнения</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7327,6 +7011,10 @@
         <translation type="unfinished">Установка…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">Ожидание…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation type="unfinished">Загрузка…</translation>
     </message>
@@ -8857,6 +8545,405 @@
     <message>
         <source>Share</source>
         <translation>Поделиться</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">Выбрать</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">Ожидание…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Установка…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Загрузка…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">Установлено из файла</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">Неофициальное</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Отмена</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">Обновить</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Повторить</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Установить</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Удалить</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">Удалить загруженные данные этого пакета</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">Требуется Drift %1 или новее</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">О программе</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">Изображения</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">Как работает ИИ</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">Автоматический режим выбирает самый быстрый из установленных вариантов и использует этот компьютер, если видеокарта не подходит.</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">Перезапустите Drift, чтобы изменения вступили в силу.</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">Технические подробности</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">Очистить</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Установить</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">Обновления</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">Установить расширение</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Расширения Drift (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">Не удалось установить «%1»: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">Установлено «%1»</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">Удалить этот пакет?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Удалить</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">«%1» и загруженные данные будут удалены. Вы сможете установить пакет снова позже.</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">Установить неофициальное расширение?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">Установить в любом случае</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">«%1» от %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">«%1»</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 не подписан командой Drift. Устанавливайте только те файлы, которым вы доверяете.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">Содержит код, который выполняется на вашем компьютере.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">Это заменит «%1».</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">Установить этот переход?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">Установить этот звуковой эффект?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">Установить этот эффект?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Установить</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 был создан пользователем, а не командой Drift, и его никто не проверял. Устанавливайте только те файлы, которым вы доверяете.</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">Установить из файла…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">Открыть папку дополнений</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">Поместите папки дополнений сюда, затем снова откройте «Дополнительно»</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">Выбрать все</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">Проверка дополнений…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">Не удалось подключиться к магазину загрузок</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">Проверьте подключение и повторите попытку.</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Повторить</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Дополнения</translation>
     </message>
 </context>
 <context>

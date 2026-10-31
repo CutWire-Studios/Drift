@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>附加項</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>關閉</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation type="unfinished">要移除這個包嗎？</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished">移除</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">“%1” 和它下載的數據將被刪除。你可以稍後再重新安裝。</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">安裝附加包</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift 附加包 (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">安裝非官方附加包？</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">仍要安裝</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1”（作者：%2）</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 未由 Drift 團隊簽名。請只安裝你信任的檔案。</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">其中包含會在你的電腦上運行的代碼。</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">它將替換“%1”。</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">安裝此轉場？</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">安裝此音效？</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">安裝此效果？</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">安裝</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 由用戶製作，並非來自 Drift 團隊，且未經任何檢查。請只安裝你信任的檔案。</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">無法安裝“%1”：%2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">已安裝“%1”</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">關閉</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation type="unfinished">效果</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation type="unfinished">轉場</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation type="unfinished">音效</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation type="unfinished">字體</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation type="unfinished">AI 工具</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation type="unfinished">AI 引擎</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished">自訂</translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation type="unfinished">從檔案安裝…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation type="unfinished">開啟附加包資料夾</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">將附加包資料夾放到這裡，然後重新開啟“擴展”</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation type="unfinished">正在檢查附加項中…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation type="unfinished">AI 如何運行</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">如果你的顯卡不起作用，就會在這台電腦自動以最快選項安裝。</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished">在下面安裝 AI 引擎以解鎖自動字幕、智能摳圖、有趣的面部效果和降噪功能。</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">重啟 Drift 以生效。</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">無法抓取下載商店</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">此類別中沒有內容</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation type="unfinished">請檢查您的連接並重試。</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation type="unfinished">在此選擇另一類別。</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation type="unfinished">重試</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>技術細節</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>需要 Drift %1 或更新版本</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>非官方</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>從檔案安裝</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>%1 次下載</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>%1 項</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>取消</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>更新</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>重試</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>安裝</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>移除</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>刪除這個包的下載數據</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>附加包</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>有可用的軟體包更新</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>推薦包</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>安裝效果、過渡和音頻的必備包。即使沒有它們，你也可以繼續使用 Drift —— 安裝後可以在有改進時解鎖更新。</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>別提醒我重要的插件</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>你已經安裝的包有可用更新。</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>別提醒我以後的插件更新</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>隱藏</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>請稍後</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>正在安裝中…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>安裝並更新</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>更新</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>更新全部</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>安裝</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>安裝全部</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1234,6 +915,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">附加項</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1559,10 +1247,6 @@
     <message>
         <source>Settings</source>
         <translation type="unfinished">設置</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation type="unfinished">附加項</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7275,6 +6959,10 @@
         <translation type="unfinished">正在安裝中…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">等待中…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation type="unfinished">正在下載…</translation>
     </message>
@@ -8793,6 +8481,403 @@
     <message>
         <source>Share</source>
         <translation>分享</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">選擇</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">等待中…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">正在安裝中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">正在下載…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">從檔案安裝</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">非官方</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">更新</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">重試</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">移除</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">刪除這個包的下載數據</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">需要 Drift %1 或更新版本</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">關於</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">圖像</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI 如何運行</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">如果你的顯卡不起作用，就會在這台電腦自動以最快選項安裝。</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">重啟 Drift 以生效。</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">技術細節</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">清除</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">更新</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">自訂</translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">安裝附加包</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Drift 附加包 (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">無法安裝“%1”：%2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">已安裝“%1”</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">要移除這個包嗎？</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">移除</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">“%1” 和它下載的數據將被刪除。你可以稍後再重新安裝。</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">安裝非官方附加包？</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">仍要安裝</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1”（作者：%2）</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 未由 Drift 團隊簽名。請只安裝你信任的檔案。</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">其中包含會在你的電腦上運行的代碼。</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">它將替換“%1”。</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">安裝此轉場？</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">安裝此音效？</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">安裝此效果？</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 由用戶製作，並非來自 Drift 團隊，且未經任何檢查。請只安裝你信任的檔案。</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">從檔案安裝…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">開啟附加包資料夾</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">將附加包資料夾放到這裡，然後重新開啟“擴展”</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">全選</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">正在檢查附加項中…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">無法抓取下載商店</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">請檢查您的連接並重試。</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">重試</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">附加項</translation>
     </message>
 </context>
 <context>

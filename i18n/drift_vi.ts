@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>Bổ trợ</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>Đóng</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation type="unfinished">Xóa gói này?</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished">Xóa</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">“%1” và dữ liệu đã tải xuống của nó sẽ bị xóa. Bạn có thể cài đặt lại sau.</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">Cài đặt Addon</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift addons (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">Cài đặt một addon không chính thức?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">Vẫn cài đặt</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” bởi %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 không được nhóm Drift ký duyệt. Chỉ cài đặt các tệp mà bạn tin tưởng.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">Nó chứa mã chạy trên máy tính của bạn.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">Nó sẽ thay thế “%1”.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">Cài đặt hiệu ứng chuyển cảnh này?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">Cài đặt hiệu ứng âm thanh này?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">Cài đặt hiệu ứng này?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">Cài đặt</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 được tạo bởi người dùng chứ không phải nhóm Drift và chưa có gì kiểm tra nó. Chỉ cài đặt các tệp mà bạn tin tưởng.</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">Không thể cài đặt “%1”: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">Đã cài đặt “%1”</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">Đóng</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">Tất cả</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation type="unfinished">Hiệu ứng</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation type="unfinished">Chuyển cảnh</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation type="unfinished">Giao diện màu</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation type="unfinished">Phông chữ</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation type="unfinished">Nhãn dán</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation type="unfinished">Công cụ AI</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation type="unfinished">Trình xử lý AI</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished">Tùy chỉnh</translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation type="unfinished">Cài đặt từ tệp…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation type="unfinished">Mở thư mục addon</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">Đặt các thư mục addon vào đây, sau đó mở lại Bổ trợ</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation type="unfinished">Đang kiểm tra các gói bổ trợ…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation type="unfinished">AI hoạt động như thế nào</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">Tự động chọn tùy chọn nhanh nhất bạn đã cài đặt và sử dụng máy tính này nếu card đồ họa không thể trợ giúp.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished">Cài đặt Trình xử lý AI bên dưới để mở khóa phụ đề tự động, tách chủ thể, hiệu ứng khuôn mặt hài hước và khử tiếng ồn.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">Khởi động lại Drift để điều này có hiệu lực.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">Không thể truy cập cửa hàng tải xuống</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">Không có gì trong danh mục này</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation type="unfinished">Hãy kiểm tra kết nối của bạn và thử lại.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation type="unfinished">Chọn một danh mục khác ở trên.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation type="unfinished">Thử lại</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>Chi tiết kỹ thuật</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>Yêu cầu Drift %1 hoặc mới hơn</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>Không chính thức</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>Đã cài đặt từ tệp</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>%1 tải xuống</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>%1 mục</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Hủy bỏ</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>Cập nhật</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>Thử lại</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>Cài đặt</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>Xóa</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>Xóa dữ liệu đã tải xuống của gói này</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>Gói bổ sung</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>Cập nhật gói có sẵn</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>Gói được đề xuất</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>Cài đặt các gói cần thiết cho hiệu ứng, hiệu ứng chuyển cảnh và âm thanh. Bạn có thể tiếp tục sử dụng Drift mà không cần đến chúng — việc cài đặt sẽ mở khóa các bản cập nhật khi chúng được cải thiện.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>Đừng nhắc tôi về những tiện ích bổ sung cần thiết</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>Các bản cập nhật có sẵn cho các gói bạn đã cài đặt.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>Đừng nhắc tôi về các bản cập nhật addon trong tương lai</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Ẩn</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>Để sau</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>Đang cài đặt…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>Cài đặt &amp; cập nhật</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>Cập nhật</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>Cập nhật tất cả</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>Cài đặt</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>Cài đặt tất cả</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1234,6 +915,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Bổ trợ</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1559,10 +1247,6 @@
     <message>
         <source>Settings</source>
         <translation type="unfinished">Cài đặt</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation type="unfinished">Bổ trợ</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7275,6 +6959,10 @@
         <translation type="unfinished">Đang cài đặt…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">Đang chờ…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation type="unfinished">Đang tải xuống…</translation>
     </message>
@@ -8793,6 +8481,403 @@
     <message>
         <source>Share</source>
         <translation>Chia sẻ</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">Chọn</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">Đang chờ…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Đang cài đặt…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Đang tải xuống…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">Đã cài đặt từ tệp</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Quay lại</translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">Không chính thức</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">Cập nhật</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Thử lại</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Cài đặt</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Xóa</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">Xóa dữ liệu đã tải xuống của gói này</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">Yêu cầu Drift %1 hoặc mới hơn</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">Giới thiệu</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">Hình ảnh</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI hoạt động như thế nào</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">Tự động chọn tùy chọn nhanh nhất bạn đã cài đặt và sử dụng máy tính này nếu card đồ họa không thể trợ giúp.</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">Khởi động lại Drift để điều này có hiệu lực.</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">Chi tiết kỹ thuật</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">Xóa</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Cài đặt</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">Cập nhật</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">Cài đặt Addon</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Drift addons (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">Không thể cài đặt “%1”: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">Đã cài đặt “%1”</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">Xóa gói này?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Xóa</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">“%1” và dữ liệu đã tải xuống của nó sẽ bị xóa. Bạn có thể cài đặt lại sau.</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">Cài đặt một addon không chính thức?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">Vẫn cài đặt</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” bởi %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 không được nhóm Drift ký duyệt. Chỉ cài đặt các tệp mà bạn tin tưởng.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">Nó chứa mã chạy trên máy tính của bạn.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">Nó sẽ thay thế “%1”.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">Cài đặt hiệu ứng chuyển cảnh này?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">Cài đặt hiệu ứng âm thanh này?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">Cài đặt hiệu ứng này?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Cài đặt</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 được tạo bởi người dùng chứ không phải nhóm Drift và chưa có gì kiểm tra nó. Chỉ cài đặt các tệp mà bạn tin tưởng.</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">Cài đặt từ tệp…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">Mở thư mục addon</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">Đặt các thư mục addon vào đây, sau đó mở lại Bổ trợ</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">Chọn tất cả</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">Đang kiểm tra các gói bổ trợ…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">Không thể truy cập cửa hàng tải xuống</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">Hãy kiểm tra kết nối của bạn và thử lại.</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Thử lại</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Bổ trợ</translation>
     </message>
 </context>
 <context>

@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>අමතර අංග</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>වසන්න</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation type="unfinished">මෙම පැකේජය ඉවත් කරන්නද?</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished">ඉවත් කරන්න</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">“%1” සහ එහි බාගත් දත්ත මකාදැමෙනු ඇත. ඔබට පසුව එය නැවත ස්ථාපනය කළ හැක.</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">ඇඩෝනය ස්ථාපනය කරන්න</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift ඇඩෝන (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">නිල නොවන ඇඩෝනයක් ස්ථාපනය කරන්නද?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">කෙසේ හෝ ස්ථාපනය කරන්න</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” - %2 විසින්</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 Drift කණ්ඩායම විසින් අත්සන් කර නොමැත. ඔබ විශ්වාස කරන ගොනු පමණක් ස්ථාපනය කරන්න.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">එහි ඔබේ පරිගණකයේ ධාවනය වන කේත අඩංගු වේ.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">එය “%1” ප්‍රතිස්ථාපනය කරනු ඇත.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">මෙම සංක්‍රාන්තිය ස්ථාපනය කරන්නද?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">මෙම ශ්‍රව්‍ය ප්‍රයෝගය ස්ථාපනය කරන්නද?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">මෙම ප්‍රයෝගය ස්ථාපනය කරන්නද?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">ස්ථාපනය කරන්න</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 සාදන ලද්දේ පරිශීලකයෙකු විසිනි, Drift කණ්ඩායම විසින් නොවන අතර කිසිවක් එය පරීක්ෂා කර නොමැත. ඔබ විශ්වාස කරන ගොනු පමණක් ස්ථාපනය කරන්න.</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">“%1” ස්ථාපනය කිරීමට නොහැකි විය: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">“%1” ස්ථාපනය කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">වසන්න</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">සියල්ල</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation type="unfinished">ප්‍රයෝග</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation type="unfinished">සංක්‍රාන්ති</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation type="unfinished">ශ්‍රව්‍ය ප්‍රයෝග</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation type="unfinished">පෙනුම (Looks)</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation type="unfinished">අකුරු විලාස</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation type="unfinished">ස්ටිකර්</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation type="unfinished">AI මෙවලම්</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation type="unfinished">AI එන්ජිම</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished">අභිරුචි</translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation type="unfinished">ගොනුවෙන් ස්ථාපනය කරන්න…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation type="unfinished">ඇඩෝන ෆෝල්ඩරය විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">ඇඩෝන ෆෝල්ඩර මෙහි තබන්න, ඉන්පසු අමතර (Extras) නැවත විවෘත කරන්න</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation type="unfinished">අමතර අංග පරීක්ෂා කරමින්…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation type="unfinished">AI ක්‍රියා කරන ආකාරය</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">ස්වයංක්‍රීය මඟින් ස්ථාපිත වේගවත්ම විකල්පය තෝරාගන්නා අතර, ග්‍රැෆික් කාඩ්පත භාවිත කළ නොහැකි නම් මෙම පරිගණකය භාවිත කරයි.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished">ස්වයංක්‍රීය උපසිරැසි, විෂය වෙන් කිරීම, විනෝදජනක මුහුණු ප්‍රයෝග සහ ඝෝෂා ඉවත් කිරීම ලබාගැනීමට පහතින් AI එන්ජිමක් ස්ථාපනය කරන්න.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">මෙය බලපැවැත්වීමට Drift නැවත අරඹන්න.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">බාගැනීම් ගබඩාව වෙත සම්බන්ධ විය නොහැක</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">මෙම ප්‍රවර්ගයේ කිසිවක් නැත</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation type="unfinished">ඔබේ අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation type="unfinished">ඉහතින් වෙනත් ප්‍රවර්ගයක් තෝරන්න.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>තාක්ෂණික විස්තර</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>Drift %1 හෝ ඊට නව අනුවාදයක් අවශ්‍ය වේ</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>නිල නොවන</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>ගොනුවෙන් ස්ථාපනය කරන ලදී</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>%1 බාගැනීම</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>%1 අංග</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>අවලංගු කරන්න</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>යාවත්කාලීන කරන්න</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>නැවත උත්සාහ කරන්න</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>ස්ථාපනය කරන්න</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>ඉවත් කරන්න</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>මෙම පැකේජයේ බාගත් දත්ත මකන්න</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>අමතර පැකේජ</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>පැකේජ යාවත්කාලීන පවතී</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>නිර්දේශිත පැකේජ</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>ප්‍රයෝග, සංක්‍රාන්ති සහ ශ්‍රව්‍ය සඳහා අත්‍යවශ්‍ය පැකේජ ස්ථාපනය කරන්න. ඒවා නොමැතිව ද ඔබට Drift භාවිත කළ හැක — ස්ථාපනය කිරීමෙන් වැඩිදියුණු වන විට යාවත්කාලීන ලබාගත හැක.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>අත්‍යවශ්‍ය ඇඩෝන ගැන මට නැවත මතක් නොකරන්න</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>ඔබ දැනටමත් ස්ථාපනය කර ඇති පැකේජ සඳහා යාවත්කාලීන තිබේ.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>ඉදිරි ඇඩෝන යාවත්කාලීන ගැන මට නැවත මතක් නොකරන්න</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>සඟවන්න</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>පසුව</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>ස්ථාපනය කරමින්…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>ස්ථාපනය සහ යාවත්කාලීන කරන්න</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>යාවත්කාලීන කරන්න</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>සියල්ල යාවත්කාලීන කරන්න</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>ස්ථාපනය කරන්න</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>සියල්ල ස්ථාපනය කරන්න</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1235,6 +916,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">අමතර අංග</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1560,10 +1248,6 @@
     <message>
         <source>Settings</source>
         <translation type="unfinished">සැකසීම්</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation type="unfinished">අමතර අංග</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7301,6 +6985,10 @@
         <translation type="unfinished">ස්ථාපනය කරමින්…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">රැඳී සිටිමින්…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation type="unfinished">බාගත වෙමින්…</translation>
     </message>
@@ -8825,6 +8513,404 @@
     <message>
         <source>Share</source>
         <translation>බෙදාගන්න</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">තෝරන්න</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">රැඳී සිටිමින්…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ස්ථාපනය කරමින්…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">බාගත වෙමින්…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">ගොනුවෙන් ස්ථාපනය කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ආපසු</translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">නිල නොවන</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">අවලංගු කරන්න</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">යාවත්කාලීන කරන්න</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ස්ථාපනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">මෙම පැකේජයේ බාගත් දත්ත මකන්න</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">Drift %1 හෝ ඊට නව අනුවාදයක් අවශ්‍ය වේ</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">පිළිබඳව</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">පින්තූර</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI ක්‍රියා කරන ආකාරය</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">ස්වයංක්‍රීය මඟින් ස්ථාපිත වේගවත්ම විකල්පය තෝරාගන්නා අතර, ග්‍රැෆික් කාඩ්පත භාවිත කළ නොහැකි නම් මෙම පරිගණකය භාවිත කරයි.</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">මෙය බලපැවැත්වීමට Drift නැවත අරඹන්න.</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">තාක්ෂණික විස්තර</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">හිස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ස්ථාපනය කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">යාවත්කාලීන</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">ඇඩෝනය ස්ථාපනය කරන්න</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Drift ඇඩෝන (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">“%1” ස්ථාපනය කිරීමට නොහැකි විය: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” ස්ථාපනය කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">මෙම පැකේජය ඉවත් කරන්නද?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">“%1” සහ එහි බාගත් දත්ත මකාදැමෙනු ඇත. ඔබට පසුව එය නැවත ස්ථාපනය කළ හැක.</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">නිල නොවන ඇඩෝනයක් ස්ථාපනය කරන්නද?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">කෙසේ හෝ ස්ථාපනය කරන්න</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” - %2 විසින්</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 Drift කණ්ඩායම විසින් අත්සන් කර නොමැත. ඔබ විශ්වාස කරන ගොනු පමණක් ස්ථාපනය කරන්න.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">එහි ඔබේ පරිගණකයේ ධාවනය වන කේත අඩංගු වේ.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">එය “%1” ප්‍රතිස්ථාපනය කරනු ඇත.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">මෙම සංක්‍රාන්තිය ස්ථාපනය කරන්නද?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">මෙම ශ්‍රව්‍ය ප්‍රයෝගය ස්ථාපනය කරන්නද?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">මෙම ප්‍රයෝගය ස්ථාපනය කරන්නද?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ස්ථාපනය කරන්න</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 සාදන ලද්දේ පරිශීලකයෙකු විසිනි, Drift කණ්ඩායම විසින් නොවන අතර කිසිවක් එය පරීක්ෂා කර නොමැත. ඔබ විශ්වාස කරන ගොනු පමණක් ස්ථාපනය කරන්න.</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">ගොනුවෙන් ස්ථාපනය කරන්න…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">ඇඩෝන ෆෝල්ඩරය විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">ඇඩෝන ෆෝල්ඩර මෙහි තබන්න, ඉන්පසු අමතර (Extras) නැවත විවෘත කරන්න</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">සියල්ල තෝරන්න</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">අමතර අංග පරීක්ෂා කරමින්…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">බාගැනීම් ගබඩාව වෙත සම්බන්ධ විය නොහැක</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">ඔබේ අන්තර්ජාල සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">නැවත උත්සාහ කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">අමතර අංග</translation>
     </message>
 </context>
 <context>

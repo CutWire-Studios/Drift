@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>拡張機能</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>閉じる</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation>このパックを削除しますか?</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>削除</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation>「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation>アドオンをインストール</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation>Drift アドオン (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation>非公式のアドオンをインストールしますか？</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation>それでもインストール</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation>「%1」(%2 作)</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation>「%1」</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation>%1 は Drift チームによる署名がありません。信頼できるファイルのみインストールしてください。</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation>お使いのコンピューター上で実行されるコードが含まれています。</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation>「%1」を置き換えます。</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation>このトランジションをインストールしますか?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation>このオーディオエフェクトをインストールしますか？</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation>このエフェクトをインストールしますか?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>インストール</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation>%1 は Drift チームではなく、ユーザーによって作成されたものです。内容は確認されていません。信頼できるファイルのみインストールしてください。</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation>「%1」をインストールできませんでした : %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation>「%1」をインストールしました</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>閉じる</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>すべて</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation>エフェクト</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation>トランジション</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation>オーディオ FX</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation>ルック</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation>フォント</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation>スタンプ</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation>AI ツール</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation>AI エンジン</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>カスタム</translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation>ファイルからインストール…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation>アドオンフォルダーを開く</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation>ここにアドオンフォルダーを配置し、「エクストラ」を開き直してください</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation>拡張機能を確認中…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation>AI の実行方法</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation>自動では、インストールされている中で最速のオプションを選択し、グラフィックスカードが使用できない場合はこのコンピューターを使用します。</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation>以下の AI エンジンをインストールして、自動字幕、被写体切り抜き、おもしろ顔エフェクト、ノイズ除去を有効にしましょう。</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation>この変更を有効にするには、Drift を再起動してください。</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation>ダウンロードストアに接続できません</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation>このカテゴリには何もありません</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation>接続を確認して、もう一度試してください。</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation>上記の別のカテゴリを選択してください。</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>再試行</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>技術詳細</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>Drift %1 以降が必要です</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>非公式</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>ファイルからインストール済み</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>%1 ダウンロード</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>%1 項目</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>キャンセル</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>アップデート</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>再試行</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>インストール</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>削除</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>このパックのダウンロードデータを削除</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>拡張パック</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>パックのアップデートが利用可能</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>推奨パック</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>エフェクト、トランジション、オーディオに必須のパックをインストールします。これらがなくても Drift は使用できますが、インストールすると改善時のアップデートが利用可能になります。</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>必須アドオンの通知を表示しない</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>インストール済みのパックにアップデートが利用可能です。</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>今後アドオンアップデートの通知を表示しない</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>非表示</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>後で</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>インストール中…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>インストール / アップデート</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>アップデート</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>すべてアップデート</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>インストール</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>すべてインストール</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1234,6 +915,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">拡張機能</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1559,10 +1247,6 @@
     <message>
         <source>Settings</source>
         <translation>設定</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation>拡張機能</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7275,6 +6959,10 @@
         <translation>インストール中…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">待機中…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation>ダウンロード中…</translation>
     </message>
@@ -8793,6 +8481,403 @@
     <message>
         <source>Share</source>
         <translation>共有</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">選択</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">待機中…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">インストール中…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ダウンロード中…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">ファイルからインストール済み</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished">インストール済み</translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">戻る</translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">非公式</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">キャンセル</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">アップデート</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">再試行</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">インストール</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished">インストール済み</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">削除</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">このパックのダウンロードデータを削除</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">Drift %1 以降が必要です</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">Drift について</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">画像</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI の実行方法</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">自動では、インストールされている中で最速のオプションを選択し、グラフィックスカードが使用できない場合はこのコンピューターを使用します。</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">この変更を有効にするには、Drift を再起動してください。</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">技術詳細</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">クリア</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">インストール</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished">インストール済み</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">アップデート</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">カスタム</translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">アドオンをインストール</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Drift アドオン (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">「%1」をインストールできませんでした : %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">「%1」をインストールしました</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">このパックを削除しますか?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">削除</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">非公式のアドオンをインストールしますか？</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">それでもインストール</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">「%1」(%2 作)</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">「%1」</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 は Drift チームによる署名がありません。信頼できるファイルのみインストールしてください。</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">お使いのコンピューター上で実行されるコードが含まれています。</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">「%1」を置き換えます。</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">このトランジションをインストールしますか?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">このオーディオエフェクトをインストールしますか？</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">このエフェクトをインストールしますか?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">インストール</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 は Drift チームではなく、ユーザーによって作成されたものです。内容は確認されていません。信頼できるファイルのみインストールしてください。</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">ファイルからインストール…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">アドオンフォルダーを開く</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">ここにアドオンフォルダーを配置し、「エクストラ」を開き直してください</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">すべて選択</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">拡張機能を確認中…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">ダウンロードストアに接続できません</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished">まだ何もありません</translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">接続を確認して、もう一度試してください。</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">再試行</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">拡張機能</translation>
     </message>
 </context>
 <context>

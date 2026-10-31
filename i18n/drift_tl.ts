@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>Dagdag</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>Isara</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation type="unfinished">Gusto mo tanggalin ang dagdag?</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished">Tanggal</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">Matatanggal ang “%1” at ang na-download nitong data. Maaari mo itong i-install muli mamaya.</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">I-install ang Addon</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Mga addon ng Drift (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">Mag-install ng hindi opisyal na addon?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">I-install pa rin</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” ni %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">Ang %1 ay hindi nilagdaan ng koponan ng Drift. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">Naglalaman ito ng code na tatakbo sa iyong kompyuter.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">Papalitan nito ang “%1”.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">I-install ang transisyong ito?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">I-install ang epektong audio na ito?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">I-install ang epektong ito?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">I-install</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">Ang %1 ay ginawa ng isang user, hindi ng koponan ng Drift, at walang sumuri dito. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">Hindi ma-install ang “%1”: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">Na-install ang “%1”</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">Isara</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">Lahat</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation type="unfinished">Epekto</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation type="unfinished">Pagbabagong-kalagayan</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation type="unfinished">Epektong audyo</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation type="unfinished">Mga Look</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation type="unfinished">Mga Font</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation type="unfinished">Mga Sticker</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation type="unfinished">Mga tool ng AI</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation type="unfinished">Engine ng AI</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished">Pinasadya</translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation type="unfinished">I-install mula sa file…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation type="unfinished">Buksan ang folder ng mga addon</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">Ilagay dito ang mga folder ng addon, pagkatapos ay muling buksan ang Dagdag</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation type="unfinished">Naghahanap ng mga dagdag…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation type="unfinished">Paano gumagana ang AI</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">Pinipili ng Awtomatiko ang pinakamabilis na opsyon na naka-install sa iyo, at ginagamit ang kompyuter na ito kung hindi makakatulong ang sistemang grapiko.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished">Mag-install ng AI Engine sa ibaba para magamit ang mga awtomatikong caption, subject cutout, mga nakakatawang epekto sa mukha, at pag-alis ng ingay.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">I-restart ang Drift para magkabisa ito.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">Hindi maabot ang tindahan ng pag-download</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">Walang laman sa kategoryang ito</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation type="unfinished">Suriin ang iyong koneksyon at subukan muli.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation type="unfinished">Pumili ng ibang kategorya sa itaas.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation type="unfinished">Subukan muli</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>Mga teknikal na detalye</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>Kinakailangan ang Drift %1 o mas bago</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>Hindi Opisyal</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>Naka-install mula sa file</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>%1 na pag-download</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>%1 na aytem</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Kanselahin</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>I-update</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>Subukan muli</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>I-install</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>Tanggal</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>Burahin ang na-download na data ng paketeng ito</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>Mga dagdag na pakete</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>May magagamit na mga update para sa pakete</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>Mga inirerekomendang pakete</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>I-install ang mga mahahalagang pakete para sa mga epekto, pagbabagong-kalagayan, at audyo. Maaari mo pa ring gamitin ang Drift nang wala ang mga ito — nagbibigay-daan ang pag-i-install sa mga update kapag gumanda ang mga ito.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>Huwag akong paalalahanan tungkol sa mga mahahalagang dagdag</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>May magagamit na mga update para sa mga paketeng naka-install na sa iyo.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>Huwag akong paalalahanan tungkol sa mga update ng dagdag sa hinaharap</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>Itago</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>Mamaya</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>Nag-i-install…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>I-install at i-update</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>I-update</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>I-update lahat</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>I-install</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>I-install lahat</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1235,6 +916,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Dagdag</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1560,10 +1248,6 @@
     <message>
         <source>Settings</source>
         <translation type="unfinished">Mga Setting</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation type="unfinished">Dagdag</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7301,6 +6985,10 @@
         <translation type="unfinished">Nag-i-install…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">Naghihintay…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation type="unfinished">Nagda-download…</translation>
     </message>
@@ -8825,6 +8513,404 @@
     <message>
         <source>Share</source>
         <translation>Ibahagi</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">Piliin</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">Naghihintay…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Nag-i-install…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">Nagda-download…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">Naka-install mula sa file</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Bumalik</translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">Hindi Opisyal</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Kanselahin</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">I-update</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Subukan muli</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">I-install</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Tanggal</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">Burahin ang na-download na data ng paketeng ito</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">Kinakailangan ang Drift %1 o mas bago</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">Tungkol sa</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">Mga Imahe</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">Paano gumagana ang AI</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">Pinipili ng Awtomatiko ang pinakamabilis na opsyon na naka-install sa iyo, at ginagamit ang kompyuter na ito kung hindi makakatulong ang sistemang grapiko.</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">I-restart ang Drift para magkabisa ito.</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">Mga teknikal na detalye</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">I-clear</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">I-install</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">Mga Update</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Pinasadya</translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">I-install ang Addon</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Mga addon ng Drift (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">Hindi ma-install ang “%1”: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">Na-install ang “%1”</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">Gusto mo tanggalin ang dagdag?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Tanggal</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">Matatanggal ang “%1” at ang na-download nitong data. Maaari mo itong i-install muli mamaya.</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">Mag-install ng hindi opisyal na addon?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">I-install pa rin</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” ni %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">Ang %1 ay hindi nilagdaan ng koponan ng Drift. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">Naglalaman ito ng code na tatakbo sa iyong kompyuter.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">Papalitan nito ang “%1”.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">I-install ang transisyong ito?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">I-install ang epektong audio na ito?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">I-install ang epektong ito?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">I-install</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">Ang %1 ay ginawa ng isang user, hindi ng koponan ng Drift, at walang sumuri dito. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">I-install mula sa file…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">Buksan ang folder ng mga addon</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">Ilagay dito ang mga folder ng addon, pagkatapos ay muling buksan ang Dagdag</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">Piliin lahat</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">Naghahanap ng mga dagdag…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">Hindi maabot ang tindahan ng pag-download</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">Suriin ang iyong koneksyon at subukan muli.</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Subukan muli</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">Dagdag</translation>
     </message>
 </context>
 <context>

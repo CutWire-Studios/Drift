@@ -99,325 +99,6 @@
     </message>
 </context>
 <context>
-    <name>AddonManagerDialog</name>
-    <message>
-        <source>Extras</source>
-        <translation>অতিরিক্ত প্যাক</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>বন্ধ করুন</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerPanel</name>
-    <message>
-        <source>Remove this pack?</source>
-        <translation type="unfinished">এই প্যাকটি সরাবেন?</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation type="unfinished">সরান</translation>
-    </message>
-    <message>
-        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">“%1” এবং এর ডাউনলোড করা ডেটা মুছে ফেলা হবে। আপনি এটি পরে আবার ইনস্টল করতে পারেন.</translation>
-    </message>
-    <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">অ্যাডঅন ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift অ্যাডঅন (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">একটি অনানুষ্ঠানিক অ্যাডন ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">তবুও ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” — নির্মাতা: %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 Drift টিম দ্বারা স্বাক্ষরিত নয়। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">এতে কোড রয়েছে যা আপনার কম্পিউটারে চলে.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">এটি “%1”-কে প্রতিস্থাপন করবে.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">এই ট্রানজিশনটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">এই অডিও ইফেক্টটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">এই ইফেক্টটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 একজন ব্যবহারকারী দ্বারা তৈরি করা হয়েছে, Drift দল নয়, এবং কিছুই এটি পরীক্ষা করেনি। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">“%1” ইনস্টল করা যায়নি: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">“%1” ইনস্টল করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">বন্ধ করুন</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">সব</translation>
-    </message>
-    <message>
-        <source>Effects</source>
-        <translation type="unfinished">ইফেক্ট</translation>
-    </message>
-    <message>
-        <source>Transitions</source>
-        <translation type="unfinished">ট্রানজিশন</translation>
-    </message>
-    <message>
-        <source>Audio FX</source>
-        <translation type="unfinished">অডিও ইফেক্ট</translation>
-    </message>
-    <message>
-        <source>Looks</source>
-        <translation type="unfinished">লুকস</translation>
-    </message>
-    <message>
-        <source>Fonts</source>
-        <translation type="unfinished">ফন্ট</translation>
-    </message>
-    <message>
-        <source>Stickers</source>
-        <translation type="unfinished">স্টিকার</translation>
-    </message>
-    <message>
-        <source>AI tools</source>
-        <translation type="unfinished">AI টুল</translation>
-    </message>
-    <message>
-        <source>AI engine</source>
-        <translation type="unfinished">AI ইঞ্জিন</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished">কাস্টম</translation>
-    </message>
-    <message>
-        <source>Install from file…</source>
-        <translation type="unfinished">ফাইল থেকে ইনস্টল করুন…</translation>
-    </message>
-    <message>
-        <source>Open addons folder</source>
-        <translation type="unfinished">অ্যাডঅন ফোল্ডার খুলুন</translation>
-    </message>
-    <message>
-        <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">এখানে অ্যাডঅন ফোল্ডার রাখুন, তারপর এক্সট্রা পুনরায় খুলুন</translation>
-    </message>
-    <message>
-        <source>Checking for extras…</source>
-        <translation type="unfinished">অতিরিক্ত প্যাক খোঁজা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>How AI runs</source>
-        <translation type="unfinished">AI কীভাবে চলে</translation>
-    </message>
-    <message>
-        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">স্বয়ংক্রিয়ভাবে আপনার ইনস্টল করা দ্রুততম বিকল্পটি বেছে নেয় এবং গ্রাফিক্স কার্ড সাহায্য করতে না পারলে এই কম্পিউটারটি ব্যবহার করে.</translation>
-    </message>
-    <message>
-        <source>Install an AI Engine below to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished">স্বয়ংক্রিয় ক্যাপশন, বিষয় কাটআউট, মজার মুখের ইফেক্ট, এবং শব্দ অপসারণ আনলক করতে নীচে একটি AI ইঞ্জিন ইনস্টল করুন.</translation>
-    </message>
-    <message>
-        <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">এটি কার্যকর করার জন্য Drift পুনরায় চালু করুন.</translation>
-    </message>
-    <message>
-        <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">ডাউনলোড স্টোরে পৌঁছানো যাচ্ছে না</translation>
-    </message>
-    <message>
-        <source>Nothing in this category</source>
-        <translation type="unfinished">এই বিভাগে কিছু নেই</translation>
-    </message>
-    <message>
-        <source>Check your connection and try again.</source>
-        <translation type="unfinished">আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
-    </message>
-    <message>
-        <source>Pick another category above.</source>
-        <translation type="unfinished">উপরে অন্য একটি বিভাগ বেছে নিন.</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation type="unfinished">আবার চেষ্টা করুন</translation>
-    </message>
-</context>
-<context>
-    <name>AddonManagerRow</name>
-    <message>
-        <source>Technical details</source>
-        <translation>প্রযুক্তিগত বিবরণ</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>Requires Drift %1 or newer</source>
-        <translation>Drift %1 বা পরবর্তী সংস্করণ প্রয়োজন</translation>
-    </message>
-    <message>
-        <source>Unofficial</source>
-        <translation>অনানুষ্ঠানিক</translation>
-    </message>
-    <message>
-        <source>Installed from file</source>
-        <translation>ফাইল থেকে ইনস্টল করা হয়েছে</translation>
-    </message>
-    <message>
-        <source>%1 download</source>
-        <translation>%1 ডাউনলোড</translation>
-    </message>
-    <message>
-        <source>%1 items</source>
-        <translation>%1টি আইটেম</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>বাতিল করুন</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>আপডেট</translation>
-    </message>
-    <message>
-        <source>Retry</source>
-        <translation>আবার চেষ্টা করুন</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>Remove</source>
-        <translation>সরান</translation>
-    </message>
-    <message>
-        <source>Delete this pack&apos;s downloaded data</source>
-        <translation>এই প্যাকের ডাউনলোড করা ডেটা মুছুন</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupDialog</name>
-    <message>
-        <source>Extra packs</source>
-        <translation>অতিরিক্ত প্যাক</translation>
-    </message>
-    <message>
-        <source>Pack updates available</source>
-        <translation>প্যাকের আপডেট পাওয়া গেছে</translation>
-    </message>
-    <message>
-        <source>Recommended packs</source>
-        <translation>প্রস্তাবিত প্যাক</translation>
-    </message>
-    <message>
-        <source>Install the essential packs for effects, transitions, and audio. You can keep using Drift without them — installing unlocks updates when they improve.</source>
-        <translation>ইফেক্ট, ট্রানজিশন এবং অডিওর জন্য প্রয়োজনীয় প্যাক ইনস্টল করুন। আপনি তাদের ছাড়াই Drift ব্যবহার চালিয়ে যেতে পারেন — আপডেটগুলি যখন উন্নতি হয় তখন ইনস্টল করা আনলক করে.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of essential addons</source>
-        <translation>আমাকে প্রয়োজনীয় অ্যাডঅনগুলির কথা মনে করিয়ে দেবেন না</translation>
-    </message>
-    <message>
-        <source>Updates are available for packs you already have installed.</source>
-        <translation>আপনি ইতিমধ্যে ইনস্টল করা প্যাকগুলির জন্য আপডেটগুলি উপলব্ধ.</translation>
-    </message>
-    <message>
-        <source>Don&apos;t remind me of future addon updates</source>
-        <translation>আমাকে ভবিষ্যতের অ্যাডঅন আপডেটের কথা মনে করিয়ে দেবেন না</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>লুকান</translation>
-    </message>
-    <message>
-        <source>Later</source>
-        <translation>পরে</translation>
-    </message>
-    <message>
-        <source>Installing…</source>
-        <translation>ইনস্টল করা হচ্ছে…</translation>
-    </message>
-    <message>
-        <source>Install &amp; update</source>
-        <translation>ইনস্টল ও আপডেট করুন</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>আপডেট</translation>
-    </message>
-    <message>
-        <source>Update all</source>
-        <translation>সব আপডেট করুন</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>Install all</source>
-        <translation>সব ইনস্টল করুন</translation>
-    </message>
-</context>
-<context>
-    <name>AddonStartupPackRow</name>
-    <message>
-        <source>%1… %2%</source>
-        <translation>%1… %2%</translation>
-    </message>
-    <message>
-        <source>%1 → %2</source>
-        <translation>%1 → %2</translation>
-    </message>
-</context>
-<context>
     <name>AgentAccessControls</name>
     <message>
         <source>Allow for this session</source>
@@ -1235,6 +916,13 @@
     </message>
 </context>
 <context>
+    <name>AndroidExtrasPage</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">অতিরিক্ত প্যাক</translation>
+    </message>
+</context>
+<context>
     <name>AndroidFadeSheet</name>
     <message>
         <source>Fade</source>
@@ -1560,10 +1248,6 @@
     <message>
         <source>Settings</source>
         <translation type="unfinished">সেটিংস</translation>
-    </message>
-    <message>
-        <source>Extras</source>
-        <translation type="unfinished">অতিরিক্ত প্যাক</translation>
     </message>
     <message>
         <source>Captions created.</source>
@@ -7301,6 +6985,10 @@
         <translation type="unfinished">ইনস্টল করা হচ্ছে…</translation>
     </message>
     <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">অপেক্ষা করা হচ্ছে…</translation>
+    </message>
+    <message>
         <source>Downloading…</source>
         <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
     </message>
@@ -8825,6 +8513,404 @@
     <message>
         <source>Share</source>
         <translation>শেয়ার করুন</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasCard</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished">নির্বাচন করুন</translation>
+    </message>
+    <message>
+        <source>Waiting…</source>
+        <translation type="unfinished">অপেক্ষা করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>%1 %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">ইনস্টল করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Downloading…</source>
+        <translation type="unfinished">ডাউনলোড করা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>Failed · open to retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs Drift %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed from file</source>
+        <translation type="unfinished">ফাইল থেকে ইনস্টল করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update · %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasDetail</name>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ফিরে যান</translation>
+    </message>
+    <message>
+        <source>Unofficial</source>
+        <translation type="unfinished">অনানুষ্ঠানিক</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation type="unfinished">%1 → %2</translation>
+    </message>
+    <message>
+        <source>Needs a newer Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation type="unfinished">আপডেট</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">সরান</translation>
+    </message>
+    <message>
+        <source>Delete this pack&apos;s downloaded data</source>
+        <translation type="unfinished">এই প্যাকের ডাউনলোড করা ডেটা মুছুন</translation>
+    </message>
+    <message>
+        <source>Waiting for other downloads to finish…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1… %2%</source>
+        <translation type="unfinished">%1… %2%</translation>
+    </message>
+    <message>
+        <source>Requires Drift %1 or newer</source>
+        <translation type="unfinished">Drift %1 বা পরবর্তী সংস্করণ প্রয়োজন</translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished">সম্পর্কে</translation>
+    </message>
+    <message>
+        <source>Images</source>
+        <translation type="unfinished">ছবি</translation>
+    </message>
+    <message>
+        <source>What it&apos;s for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How to use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlocks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How AI runs</source>
+        <translation type="unfinished">AI কীভাবে চলে</translation>
+    </message>
+    <message>
+        <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
+        <translation type="unfinished">স্বয়ংক্রিয়ভাবে আপনার ইনস্টল করা দ্রুততম বিকল্পটি বেছে নেয় এবং গ্রাফিক্স কার্ড সাহায্য করতে না পারলে এই কম্পিউটারটি ব্যবহার করে.</translation>
+    </message>
+    <message>
+        <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Drift for this to take effect.</source>
+        <translation type="unfinished">এটি কার্যকর করার জন্য Drift পুনরায় চালু করুন.</translation>
+    </message>
+    <message>
+        <source>Needs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Will be installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Works well with</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Technical details</source>
+        <translation type="unfinished">প্রযুক্তিগত বিবরণ</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasInstallBar</name>
+    <message numerus="yes">
+        <source>Install %n extra(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1 of %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also installs: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 needs %2, which isn&apos;t available for this device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">মুছুন</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ইনস্টল করুন</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasStore</name>
+    <message>
+        <source>Discover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation type="unfinished">আপডেট</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">কাস্টম</translation>
+    </message>
+    <message>
+        <source>Results for “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add-ons that make Drift do more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything you have downloaded.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newer versions of what you have installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Packs you installed from a file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">অ্যাডঅন ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished">Drift অ্যাডঅন (*.driftpkg *.driftfx *.zip)</translation>
+    </message>
+    <message>
+        <source>Could not install “%1”: %2</source>
+        <translation type="unfinished">“%1” ইনস্টল করা যায়নি: %2</translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” ইনস্টল করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Remove this pack?</source>
+        <translation type="unfinished">এই প্যাকটি সরাবেন?</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">সরান</translation>
+    </message>
+    <message>
+        <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
+        <translation type="unfinished">“%1” এবং এর ডাউনলোড করা ডেটা মুছে ফেলা হবে। আপনি এটি পরে আবার ইনস্টল করতে পারেন.</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">একটি অনানুষ্ঠানিক অ্যাডন ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">তবুও ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” — নির্মাতা: %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 Drift টিম দ্বারা স্বাক্ষরিত নয়। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">এতে কোড রয়েছে যা আপনার কম্পিউটারে চলে.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">এটি “%1”-কে প্রতিস্থাপন করবে.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">এই ট্রানজিশনটি ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">এই অডিও ইফেক্টটি ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">এই ইফেক্টটি ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 একজন ব্যবহারকারী দ্বারা তৈরি করা হয়েছে, Drift দল নয়, এবং কিছুই এটি পরীক্ষা করেনি। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>Search extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">ফাইল থেকে ইনস্টল করুন…</translation>
+    </message>
+    <message>
+        <source>Open addons folder</source>
+        <translation type="unfinished">অ্যাডঅন ফোল্ডার খুলুন</translation>
+    </message>
+    <message>
+        <source>Put addon folders here, then reopen Extras</source>
+        <translation type="unfinished">এখানে অ্যাডঅন ফোল্ডার রাখুন, তারপর এক্সট্রা পুনরায় খুলুন</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished">%1 (%2)</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished">সব নির্বাচন করুন</translation>
+    </message>
+    <message>
+        <source>Checking for extras…</source>
+        <translation type="unfinished">অতিরিক্ত প্যাক খোঁজা হচ্ছে…</translation>
+    </message>
+    <message>
+        <source>All extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can&apos;t reach the download store</source>
+        <translation type="unfinished">ডাউনলোড স্টোরে পৌঁছানো যাচ্ছে না</translation>
+    </message>
+    <message>
+        <source>No extras yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check your connection and try again.</source>
+        <translation type="unfinished">আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন.</translation>
+    </message>
+    <message>
+        <source>Try a different word.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick another section.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">আবার চেষ্টা করুন</translation>
+    </message>
+</context>
+<context>
+    <name>ExtrasWindow</name>
+    <message>
+        <source>Extras</source>
+        <translation type="unfinished">অতিরিক্ত প্যাক</translation>
     </message>
 </context>
 <context>
