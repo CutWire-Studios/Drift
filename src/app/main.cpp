@@ -89,6 +89,7 @@
 #include <QQuickWindow>
 #include <QSurfaceFormat>
 #include <QtQml/qqml.h>
+#include <QDir>
 #include <QFile>
 #include <QUrl>
 
@@ -685,13 +686,17 @@ int main(int argc, char *argv[])
 
     // --preview=Name[,Name...], repeatable: open those QML components, one per window, instead of
     // the editor. The `=` keeps the names from being taken for a startup project path.
+    // --preview-shot=<dir> saves each as <dir>/<Name>.png and exits; see docs/qml-previews.md.
     QStringList previewNames;
+    QString previewShotDir;
 #ifdef DRIFT_QML_PREVIEWS
     {
         const QStringList args = app.arguments();
         for (const QString &arg : args) {
             if (arg.startsWith(QLatin1String("--preview=")))
                 previewNames += arg.mid(10).split(QLatin1Char(','), Qt::SkipEmptyParts);
+            else if (arg.startsWith(QLatin1String("--preview-shot=")))
+                previewShotDir = QDir(arg.mid(15)).absolutePath();
         }
     }
 #endif
@@ -901,11 +906,24 @@ int main(int argc, char *argv[])
         const QUrl project = ProjectFileController::startupProjectUrlFromArguments(app.arguments());
         if (project.isValid())
             editorState.projectFile()->loadProject(project);
+        if (!previewShotDir.isEmpty() && !QDir().mkpath(previewShotDir)) {
+            qCritical("--preview-shot: cannot create %s", qUtf8Printable(previewShotDir));
+            return 1;
+        }
         for (const QString &name : std::as_const(previewNames)) {
-            engine.setInitialProperties({{QStringLiteral("componentName"), name}});
+            engine.setInitialProperties({{QStringLiteral("componentName"), name},
+                                         {QStringLiteral("shotDir"), previewShotDir}});
             engine.loadFromModule("Drift", "PreviewHost");
         }
-        return app.exec();
+        // In shot mode each window closes itself once saved, and the last close ends the loop.
+        const int code = app.exec();
+        if (previewShotDir.isEmpty() || code != 0)
+            return code;
+        const QList<QObject *> hosts = engine.rootObjects();
+        const bool allSaved = std::all_of(hosts.cbegin(), hosts.cend(), [](QObject *host) {
+            return host->property("shotOk").toBool();
+        });
+        return allSaved ? 0 : 1;
     }
 #endif
     engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
