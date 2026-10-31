@@ -999,7 +999,7 @@ int main(int argc, char *argv[])
         step(StartupSplash::tr("Opening setup…"), 1.0);
         hookWindow(windowOf(setupRoot), true, false);
         QObject::connect(editorState.preferences(), &PreferencesController::quickSetupCompleted, &app,
-                         [&editorState, loadShell, setupRoot] {
+                         [loadShell, setupRoot] {
             PreferencesController *prefs = editorState.preferences();
             if (prefs->uiScaleNeedsRestart() && prefs->canRestart()) {
                 prefs->restartApp();
