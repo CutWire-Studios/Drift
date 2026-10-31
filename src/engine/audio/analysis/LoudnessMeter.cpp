@@ -28,39 +28,39 @@ struct Biquad
     }
 };
 
-// K-weighting analogue: RLB high-pass at 38 Hz plus a high shelf of +4 dB at 1682 Hz.
-Biquad makeHighPass(double freqHz, double sampleRate)
+// BS.1770 K-weighting: the standard's high shelf and RLB high-pass, re-derived for the actual
+// sample rate. At 48 kHz these reproduce the coefficients tabulated in the standard; the textbook
+// RBJ shelf and a Q 0.707 high-pass read about 0.7 dB hot on typical material.
+Biquad makeKShelf(double sampleRate)
 {
+    constexpr double f0 = 1681.974450955533;
+    constexpr double gainDb = 3.999843853973347;
+    constexpr double q = 0.7071752369554196;
+    const double k = std::tan(M_PI * f0 / sampleRate);
+    const double vh = std::pow(10.0, gainDb / 20.0);
+    const double vb = std::pow(vh, 0.4996667741545416);
+    const double a0 = 1.0 + k / q + k * k;
     Biquad f;
-    const double freq = qBound(1.0, freqHz, sampleRate * 0.45);
-    const double w0 = 2.0 * M_PI * freq / sampleRate;
-    const double cosw = std::cos(w0);
-    const double alpha = std::sin(w0) / (2.0 * 0.70710678);
-    const double a0 = 1.0 + alpha;
-    f.b0 = ((1.0 + cosw) / 2.0) / a0;
-    f.b1 = -(1.0 + cosw) / a0;
-    f.b2 = f.b0;
-    f.a1 = (-2.0 * cosw) / a0;
-    f.a2 = (1.0 - alpha) / a0;
+    f.b0 = (vh + vb * k / q + k * k) / a0;
+    f.b1 = 2.0 * (k * k - vh) / a0;
+    f.b2 = (vh - vb * k / q + k * k) / a0;
+    f.a1 = 2.0 * (k * k - 1.0) / a0;
+    f.a2 = (1.0 - k / q + k * k) / a0;
     return f;
 }
 
-Biquad makeHighShelf(double freqHz, double gainDb, double sampleRate)
+Biquad makeKHighPass(double sampleRate)
 {
+    constexpr double f0 = 38.13547087602444;
+    constexpr double q = 0.5003270373238773;
+    const double k = std::tan(M_PI * f0 / sampleRate);
+    const double a0 = 1.0 + k / q + k * k;
     Biquad f;
-    const double freq = qBound(1.0, freqHz, sampleRate * 0.45);
-    const double A = std::pow(10.0, gainDb / 40.0);
-    const double w0 = 2.0 * M_PI * freq / sampleRate;
-    const double cosw = std::cos(w0);
-    const double sinw = std::sin(w0);
-    const double alpha = sinw / 2.0 * std::sqrt((A + 1.0 / A) * (1.0 / 0.70710678 - 1.0) + 2.0);
-    const double twoSqrtA = 2.0 * std::sqrt(A) * alpha;
-    const double a0 = (A + 1.0) - (A - 1.0) * cosw + twoSqrtA;
-    f.b0 = (A * ((A + 1.0) + (A - 1.0) * cosw + twoSqrtA)) / a0;
-    f.b1 = (-2.0 * A * ((A - 1.0) + (A + 1.0) * cosw)) / a0;
-    f.b2 = (A * ((A + 1.0) + (A - 1.0) * cosw - twoSqrtA)) / a0;
-    f.a1 = (2.0 * ((A - 1.0) - (A + 1.0) * cosw)) / a0;
-    f.a2 = ((A + 1.0) - (A - 1.0) * cosw - twoSqrtA) / a0;
+    f.b0 = 1.0;
+    f.b1 = -2.0;
+    f.b2 = 1.0;
+    f.a1 = 2.0 * (k * k - 1.0) / a0;
+    f.a2 = (1.0 - k / q + k * k) / a0;
     return f;
 }
 
@@ -142,10 +142,10 @@ LoudnessResult measureLoudness(qint64 totalFrames, int sampleRate,
 
     result.durationSeconds = double(totalFrames) / double(sampleRate);
 
-    Biquad hpL = makeHighPass(38.0, sampleRate);
-    Biquad hpR = makeHighPass(38.0, sampleRate);
-    Biquad shL = makeHighShelf(1682.0, 4.0, sampleRate);
-    Biquad shR = makeHighShelf(1682.0, 4.0, sampleRate);
+    Biquad hpL = makeKHighPass(sampleRate);
+    Biquad hpR = makeKHighPass(sampleRate);
+    Biquad shL = makeKShelf(sampleRate);
+    Biquad shR = makeKShelf(sampleRate);
 
     // BS.1770 sums the per-channel mean squares with weight 1.0 for L and R; averaging them
     // instead is a flat -3.01 dB error on every reading, so the blocks below add, not mean.
@@ -281,8 +281,8 @@ LoudnessReport analyzeLoudness(qint64 totalFrames, int sampleRate,
     // Everything below is built from 50 ms segments of summed K-weighted power, per channel
     // summed as BS.1770 does: 0.1 s, 0.4 s and 3 s windows are 2, 8 and 60 of them.
     const int seg = qMax(1, sampleRate / 20);
-    Biquad hp[2] = {makeHighPass(38.0, sampleRate), makeHighPass(38.0, sampleRate)};
-    Biquad sh[2] = {makeHighShelf(1682.0, 4.0, sampleRate), makeHighShelf(1682.0, 4.0, sampleRate)};
+    Biquad hp[2] = {makeKHighPass(sampleRate), makeKHighPass(sampleRate)};
+    Biquad sh[2] = {makeKShelf(sampleRate), makeKShelf(sampleRate)};
     TruePeakFollower peak[2];
 
     std::vector<double> segPower;
