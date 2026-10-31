@@ -19166,7 +19166,7 @@ Se a reprodução engasgar, experimente outro.</translation>
     <name>SourceLabViewerPanel</name>
     <message>
         <source>Source Lab</source>
-        <translation type="unfinished">Source Lab</translation>
+        <translation>Laboratório Fonte</translation>
     </message>
     <message>
         <source>Source Lab Viewer</source>
