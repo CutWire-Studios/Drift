@@ -20985,6 +20985,26 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
 <context>
     <name>TextInspector</name>
     <message>
+        <source>As typed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Aa</source>
         <translation>Aa</translation>
     </message>
@@ -21378,6 +21398,18 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>%1 has no italic face</source>
         <translation>Walang italic face ang %1</translation>
+    </message>
+    <message>
+        <source>Strike</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a line through the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Case</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Align left</source>

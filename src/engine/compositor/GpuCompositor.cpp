@@ -571,7 +571,7 @@ QMatrix4x4 layerViewProjection(const GpuLayer &layer, const QSize &canvas)
     if (layer.hasParent && layer.parent.isAffine())
         view = view * drift::worldParentFromAffine(layer.parent,
                                                    layer.layoutCanvas.isEmpty() ? canvasF : layer.layoutCanvas);
-    return view;
+    return view * layer.liftWorld;
 }
 
 void bindTrackInputs(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer, int effectIndex,

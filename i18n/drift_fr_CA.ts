@@ -20989,6 +20989,26 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
 <context>
     <name>TextInspector</name>
     <message>
+        <source>As typed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Aa</source>
         <translation>Aa</translation>
     </message>
@@ -21382,6 +21402,18 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>%1 has no italic face</source>
         <translation>%1 n&apos;a pas de forme italique</translation>
+    </message>
+    <message>
+        <source>Strike</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a line through the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Case</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Align left</source>

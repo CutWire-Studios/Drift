@@ -111,6 +111,10 @@ struct GpuLayer
     // The canvas the layer's rect is laid out on, when the frame being rendered is not it (the 3D
     // view renders the panel's frame around the project's): world space is centred on this one.
     QSizeF layoutCanvas;
+    // A model lifted out of a composite clip: its world placement inside the nested timeline,
+    // carried into the outer world through the composite's pose. Applied after `parent`; the
+    // identity for every layer that was not lifted.
+    QMatrix4x4 liftWorld;
     // Drawn already in place (a model clip renders itself through the viewpoint into a
     // canvas-sized target): the layer covers the canvas and is not placed a second time.
     bool screenSpace = false;

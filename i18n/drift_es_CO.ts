@@ -20996,6 +20996,26 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Aa</translation>
     </message>
     <message>
+        <source>As typed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>UPPERCASE</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>lowercase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Title Case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sentence case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>None</source>
         <translation>Ninguno</translation>
     </message>
@@ -21377,6 +21397,18 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>%1 has no italic face</source>
         <translation>%1 no tiene variante en cursiva</translation>
+    </message>
+    <message>
+        <source>Strike</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw a line through the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Case</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Align left</source>

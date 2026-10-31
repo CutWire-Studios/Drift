@@ -49,6 +49,7 @@
 #include <cmath>
 #include <QtMath>
 
+#include <type_traits>
 #include <unordered_map>
 
 namespace {
@@ -1603,6 +1604,88 @@ void appendTextEditDecor(GpuScene &scene, const GpuItem &textItem, const drift::
 #endif
 }
 
+// A composite's models leave its flat picture and join this scene right after it, placed through
+// the composite's pose. They are then seen by this scene's camera (or the 3D view) in depth and
+// occlude against the clips around them, instead of being baked flat into one card. Everything
+// else in the composite stays on that card.
+//
+// A model stays baked when something laid out on the composite's card would have to follow it:
+// masks on the composite, a tilted transform layer over either, a nested adjustment above it, or
+// a depth occluder indexed into the nested scene.
+void liftNestedModels(GpuScene &scene, int compositeIndex, const QSizeF &canvas)
+{
+    GpuItem &composite = scene.items[compositeIndex];
+    const GpuLayer &host = composite.layer;
+    if (!host.nested || !host.masks.isEmpty() || (host.hasParent && !host.parent.isAffine()))
+        return;
+
+    // Nested world (canvas px about the centre) -> the composite's unit quad -> outer world. Depth
+    // scales with the card, so a shrunken composite keeps its models' proportions.
+    const double zScale = std::sqrt(std::abs(host.rect.width() * host.rect.height())
+                                    / (canvas.width() * canvas.height()));
+    QMatrix4x4 toQuad;
+    toQuad.scale(float(2.0 / canvas.width()), float(2.0 / canvas.height()), float(zScale));
+    const QMatrix4x4 hostWorld =
+        drift::clipQuadToWorld(host.rect, host.rotation, host.flipH, host.flipV, host.pose3d, canvas) * toQuad;
+
+    const auto rekeyed = [](const auto &inputs, int base) {
+        std::remove_cvref_t<decltype(inputs)> out;
+        for (auto it = inputs.cbegin(); it != inputs.cend(); ++it) {
+            const qsizetype slash = it.key().indexOf(QLatin1Char('/'));
+            out.insert(QStringLiteral("%1/%2").arg(it.key().left(slash).toInt() + base).arg(it.key().mid(slash + 1)),
+                       it.value());
+        }
+        return out;
+    };
+
+    auto nested = std::make_shared<GpuScene>(*host.nested);
+    QList<GpuItem> lifted;
+    bool underAdjustment = false;
+    // Top-down, so an adjustment is seen before the layers it grades.
+    for (qsizetype i = nested->items.size() - 1; i >= 0; --i) {
+        const GpuItem &candidate = nested->items.at(i);
+        if (candidate.isAdjustment) {
+            underAdjustment = true;
+            continue;
+        }
+        const GpuLayer &source = candidate.layer;
+        if (candidate.isTransition || underAdjustment || !source.model3d || source.occluderItem >= 0
+            || (source.hasParent && !source.parent.isAffine())) {
+            continue;
+        }
+        GpuItem item = nested->items.takeAt(i);
+        for (GpuItem &remaining : nested->items) {
+            if (remaining.layer.occluderItem > i)
+                --remaining.layer.occluderItem;
+        }
+        GpuLayer &layer = item.layer;
+        const QMatrix4x4 nestedParent =
+            layer.hasParent ? drift::worldParentFromAffine(layer.parent, canvas) : QMatrix4x4();
+        layer.liftWorld = hostWorld * nestedParent * layer.liftWorld;
+        layer.parent = host.parent;
+        layer.hasParent = host.hasParent;
+        layer.viewProj = host.viewProj;
+        layer.viewActive = host.viewActive;
+        layer.layoutCanvas = host.layoutCanvas;
+        layer.opacity *= host.opacity;
+        if (item.blend == drift::BlendMode::Normal)
+            item.blend = composite.blend;
+        layer.depthOcclude = layer.depthOcclude && item.blend == drift::BlendMode::Normal;
+        // The composite's own chain grades its models too, after theirs, the way a lane's does.
+        const int base = int(layer.effects.size());
+        layer.effects.append(host.effects);
+        layer.trackInputs.insert(rekeyed(host.trackInputs, base));
+        layer.audioInputs.insert(rekeyed(host.audioInputs, base));
+        if (!layer.globalAudio)
+            layer.globalAudio = host.globalAudio;
+        lifted.prepend(std::move(item));
+    }
+    if (lifted.isEmpty())
+        return;
+    composite.layer.nested = std::move(nested);
+    scene.items.append(lifted);
+}
+
 // `nested` builds a composite's timeline: its layer sits on the parent's canvas, so the project
 // background belongs to the outermost scene alone.
 GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, int width, int height,
@@ -1967,6 +2050,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 item.layer.maskViewTint = options.maskViewTint;
             }
             scene.items.append(item);
+            liftNestedModels(scene, int(scene.items.size()) - 1, QSizeF(width, height));
             if (editingText)
                 appendTextEditDecor(scene, item, clip, options.textEdit, timelineUs, projectWidth, projectHeight,
                                     renderScale);
