@@ -67,6 +67,10 @@ public:
     // Essential packs (effects / transitions / audio) that exist on the store but are not in
     // installed.json. Empty when the index has not been loaded or every essential is present.
     Q_INVOKABLE QVariantList missingEssentialAddons() const;
+    // First-run Quick Setup list, in display order: {id, name, description, sizeBytes, state,
+    // error, installed, required}. Ids missing from the loaded catalog still appear, with the
+    // installed state read from the registry. state/error are the catalog() values.
+    Q_INVOKABLE QVariantList quickSetupAddons() const;
     // Installed packs with a newer version on the store.
     Q_INVOKABLE QVariantList updatableAddons() const;
 

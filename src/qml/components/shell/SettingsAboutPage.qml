@@ -60,6 +60,21 @@ SettingsPage {
     }
 
     SettingsRow {
+        title: qsTr("Quick Setup")
+        searchId: "about-quick-setup"
+        description: qsTr("Walk through language, theme, interface size and add-ons again.")
+        keywords: "setup first run welcome wizard onboarding language theme scale addons"
+        available: EditorState.preferences.canRestart
+        query: page.query
+
+        ThemedButton {
+            variant: "secondary"
+            text: qsTr("Run again")
+            onClicked: ShellBridge.main.rerunQuickSetup()
+        }
+    }
+
+    SettingsRow {
         title: qsTr("About Drift")
         searchId: "about-drift"
         description: qsTr("Open-source video editor by CutWire Studios.")

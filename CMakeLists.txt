@@ -1516,6 +1516,7 @@ qt_add_qml_module(drift
         ${DRIFT_BACKDROP_PLATFORM_SOURCES}
     QML_FILES
         src/qml/Shell.qml
+        src/qml/QuickSetup.qml
         src/qml/LayoutPresets.qml
         src/qml/MediaImport.qml
         src/qml/Main.qml
@@ -2331,6 +2332,17 @@ qt_add_qml_module(drift
         src/qml/components/shell/SettingsPreviewPage.qml
         src/qml/components/shell/SettingsRow.qml
         src/qml/components/shell/SearchAnchor.qml
+        src/qml/components/quicksetup/QuickSetupStepIndicator.qml
+        src/qml/components/quicksetup/QuickSetupCard.qml
+        src/qml/components/quicksetup/QuickSetupPage.qml
+        src/qml/components/quicksetup/QuickSetupWelcomePage.qml
+        src/qml/components/quicksetup/QuickSetupThemePage.qml
+        src/qml/components/quicksetup/QuickSetupScalePage.qml
+        src/qml/components/quicksetup/QuickSetupAddonsPage.qml
+        src/qml/components/quicksetup/QuickSetupAddonRow.qml
+        src/qml/components/quicksetup/QuickSetupTipsPage.qml
+        src/qml/components/quicksetup/QuickSetupCommunityPage.qml
+        src/qml/components/quicksetup/QuickSetupMockEditor.qml
         src/qml/components/shell/SettingsThemeEntry.qml
         src/qml/components/shell/SettingsThemeList.qml
         src/qml/components/shell/SettingsTimelinePage.qml

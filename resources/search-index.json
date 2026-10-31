@@ -764,6 +764,15 @@
       "needs": []
     },
     {
+      "id": "about-quick-setup",
+      "target": "settings:about#about-quick-setup",
+      "context": "SettingsAboutPage",
+      "source": "Quick Setup",
+      "keywords": "setup first run welcome wizard onboarding language theme scale addons",
+      "needs": [],
+      "descriptionSource": "Walk through language, theme, interface size and add-ons again."
+    },
+    {
       "id": "about-drift",
       "target": "settings:about#about-drift",
       "context": "SettingsAboutPage",

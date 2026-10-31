@@ -55,6 +55,19 @@ const QStringList kEssentialAddonIds = {
     QStringLiteral("audioeffects.core"),
 };
 
+// First-run Quick Setup list: the essentials plus the content packs it offers on top.
+const QStringList kQuickSetupRequiredIds = {
+    QStringLiteral("effects.core"),
+    QStringLiteral("transitions.core"),
+    QStringLiteral("audioeffects.core"),
+    QStringLiteral("effects.trending"),
+    QStringLiteral("fonts.essentials"),
+    QStringLiteral("looks.essentials"),
+};
+const QStringList kQuickSetupOptionalIds = {
+    QStringLiteral("stickers.harmonyos"),
+};
+
 QString cachedIndexPath()
 {
     return QDir(addonsDir()).filePath(QStringLiteral("index.json"));
@@ -301,6 +314,44 @@ QVariantList AddonManager::missingEssentialAddons() const
         }
     }
     return rows;
+}
+
+QVariantList AddonManager::quickSetupAddons() const
+{
+    const QVariantList rows = catalog();
+    QVariantList entries;
+    const auto append = [&](const QString &id, bool required) {
+        QVariantMap entry{
+            {QStringLiteral("id"), id},
+            {QStringLiteral("name"), id},
+            {QStringLiteral("description"), QString()},
+            {QStringLiteral("sizeBytes"), 0.0},
+            {QStringLiteral("state"), installedAddon(id) ? QStringLiteral("installed") : QStringLiteral("available")},
+            {QStringLiteral("error"), QString()},
+            {QStringLiteral("installed"), installedAddon(id) != nullptr},
+            {QStringLiteral("required"), required},
+        };
+        for (const QVariant &row : rows) {
+            const QVariantMap map = row.toMap();
+            if (map.value(QStringLiteral("id")).toString() != id)
+                continue;
+            const QString state = map.value(QStringLiteral("state")).toString();
+            entry[QStringLiteral("name")] = map.value(QStringLiteral("name"));
+            entry[QStringLiteral("description")] = map.value(QStringLiteral("description"));
+            entry[QStringLiteral("sizeBytes")] = map.value(QStringLiteral("downloadSize"));
+            entry[QStringLiteral("state")] = state;
+            entry[QStringLiteral("error")] = map.value(QStringLiteral("error"));
+            entry[QStringLiteral("installed")] = state == QLatin1String("installed")
+                                                 || state == QLatin1String("update-available");
+            break;
+        }
+        entries.append(entry);
+    };
+    for (const QString &id : kQuickSetupRequiredIds)
+        append(id, true);
+    for (const QString &id : kQuickSetupOptionalIds)
+        append(id, false);
+    return entries;
 }
 
 QVariantList AddonManager::updatableAddons() const

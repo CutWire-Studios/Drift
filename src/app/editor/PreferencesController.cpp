@@ -1068,6 +1068,36 @@ bool PreferencesController::canRestart() const
 #endif
 }
 
+bool PreferencesController::quickSetupNeeded()
+{
+#ifdef Q_OS_WASM
+    return false;
+#else
+    return !QSettings().value(QStringLiteral("setup/quickSetupDone"), false).toBool();
+#endif
+}
+
+void PreferencesController::completeQuickSetup()
+{
+    QSettings settings;
+    settings.setValue(QStringLiteral("setup/quickSetupDone"), true);
+    settings.sync();
+    if (m_needsUiLanguagePrompt) {
+        markUiLanguageChosen();
+        m_needsUiLanguagePrompt = false;
+        emit uiLanguageChanged();
+    }
+    emit quickSetupCompleted();
+}
+
+void PreferencesController::rerunQuickSetup()
+{
+    QSettings settings;
+    settings.setValue(QStringLiteral("setup/quickSetupDone"), false);
+    settings.sync();
+    restartApp();
+}
+
 QString PreferencesController::exportSettings(const QUrl &url)
 {
     QSettings settings;

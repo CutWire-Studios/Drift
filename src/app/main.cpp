@@ -930,10 +930,93 @@ int main(int argc, char *argv[])
         return allSaved ? 0 : 1;
     }
 #endif
-    engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
-    step(StartupSplash::tr("Building the interface…"), 0.5);
-    engine.loadFromModule("Drift", "Shell");
-    step(StartupSplash::tr("Opening the editor…"), 1.0);
+    const bool showSetup = PreferencesController::quickSetupNeeded();
+    // Shell.qml is not a window itself; the shell window it builds is its host. QuickSetup.qml is
+    // a window, so it has no host.
+    const auto windowOf = [](QObject *root) -> QQuickWindow * {
+        if (!root)
+            return nullptr;
+        if (auto *host = qobject_cast<QQuickWindow *>(root->property("host").value<QObject *>()))
+            return host;
+        return qobject_cast<QQuickWindow *>(root);
+    };
+    // Per-window startup hooks. `first` is the window the splash waits on; `editor` is the shell
+    // window, the only one worth warming the compositor for.
+    [[maybe_unused]] const auto hookWindow = [&app, splash, graphicsApiGuarded](QQuickWindow *window, bool first,
+                                                                              bool editor) {
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+        if (window)
+            new FirstFrameWatchdog(window);
+        if (first)
+            splash->finishOn(window);
+        if (window && graphicsApiGuarded) {
+            if (first) {
+                QObject::connect(window, &QQuickWindow::frameSwapped, &app, [] {
+                    drift::graphics::markStarted();
+                }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
+            }
+            // Connected, Qt Quick reports a backend that will not come up here instead of aborting.
+            // Go back to OpenGL and start again rather than leave a blank window.
+            QObject::connect(window, &QQuickWindow::sceneGraphError, &app,
+                             [](QQuickWindow::SceneGraphError, const QString &message) {
+                qCritical("Qt Quick could not start on the chosen graphics API: %s", qUtf8Printable(message));
+                drift::graphics::revertAfterFailure();
+                QProcess::startDetached(QCoreApplication::applicationFilePath(),
+                                        QCoreApplication::arguments().mid(1));
+                QCoreApplication::exit(1);
+            }, Qt::QueuedConnection);
+        }
+        if (window && editor) {
+            // The compositor's GL context and Skia otherwise come up on the first preview frame,
+            // blocking the GUI thread as a project opens. Bring them up off the GUI thread once the
+            // window is on screen, so the start screen is not held back and the first open is quick.
+            QObject::connect(window, &QQuickWindow::frameSwapped, &app, [] {
+                std::thread([] {
+                    drift::gl::GlRuntime &rt = drift::gl::runtime();
+#ifdef DRIFT_WITH_SKIA
+                    rt.exec([&rt] { drift::skia::SkiaRuntime::acquire(rt); });
+#else
+                    rt.available();
+#endif
+                }).detach();
+            }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
+        }
+#else
+        Q_UNUSED(window) Q_UNUSED(first) Q_UNUSED(editor)
+#endif
+    };
+    const auto loadShell = [&engine, resolvedShell, windowOf, hookWindow](bool first) {
+        engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
+        engine.loadFromModule("Drift", "Shell");
+        hookWindow(windowOf(engine.rootObjects().constLast()), first, true);
+    };
+
+    if (showSetup) {
+        step(StartupSplash::tr("Building the interface…"), 0.5);
+        engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
+        engine.loadFromModule("Drift", "QuickSetup");
+        QObject *setupRoot = engine.rootObjects().isEmpty() ? nullptr : engine.rootObjects().constFirst();
+        step(StartupSplash::tr("Opening setup…"), 1.0);
+        hookWindow(windowOf(setupRoot), true, false);
+        QObject::connect(editorState.preferences(), &PreferencesController::quickSetupCompleted, &app,
+                         [&editorState, loadShell, setupRoot] {
+            PreferencesController *prefs = editorState.preferences();
+            if (prefs->uiScaleNeedsRestart() && prefs->canRestart()) {
+                prefs->restartApp();
+                QCoreApplication::quit();
+                return;
+            }
+            loadShell(false);
+            if (auto *setupWindow = qobject_cast<QQuickWindow *>(setupRoot)) {
+                setupWindow->close();
+                setupWindow->deleteLater();
+            }
+        }, Qt::QueuedConnection);
+    } else {
+        step(StartupSplash::tr("Building the interface…"), 0.5);
+        loadShell(true);
+        step(StartupSplash::tr("Opening the editor…"), 1.0);
+    }
     drift::perf::install();
     if (drift::perf::enabled()) {
         // Frame pacing: the interval between swaps is the frame time the user sees. Windows are
@@ -973,48 +1056,6 @@ int main(int argc, char *argv[])
         });
         hookTimer->start(1000);
     }
-
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
-    // Shell.qml is not a window itself; the shell window it builds is its host.
-    QQuickWindow *shellWindow = nullptr;
-    if (!engine.rootObjects().isEmpty()) {
-        auto *host = engine.rootObjects().constFirst()->property("host").value<QObject *>();
-        shellWindow = qobject_cast<QQuickWindow *>(host);
-        if (shellWindow)
-            new FirstFrameWatchdog(shellWindow);
-    }
-    splash->finishOn(shellWindow);
-    if (shellWindow && graphicsApiGuarded) {
-        QObject::connect(shellWindow, &QQuickWindow::frameSwapped, &app, [] {
-            drift::graphics::markStarted();
-        }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
-        // Connected, Qt Quick reports a backend that will not come up here instead of aborting.
-        // Go back to OpenGL and start again rather than leave a blank window.
-        QObject::connect(shellWindow, &QQuickWindow::sceneGraphError, &app,
-                         [](QQuickWindow::SceneGraphError, const QString &message) {
-            qCritical("Qt Quick could not start on the chosen graphics API: %s", qUtf8Printable(message));
-            drift::graphics::revertAfterFailure();
-            QProcess::startDetached(QCoreApplication::applicationFilePath(),
-                                    QCoreApplication::arguments().mid(1));
-            QCoreApplication::exit(1);
-        }, Qt::QueuedConnection);
-    }
-    if (shellWindow) {
-        // The compositor's GL context and Skia otherwise come up on the first preview frame,
-        // blocking the GUI thread as a project opens. Bring them up off the GUI thread once the
-        // window is on screen, so the start screen is not held back and the first open is quick.
-        QObject::connect(shellWindow, &QQuickWindow::frameSwapped, &app, [] {
-            std::thread([] {
-                drift::gl::GlRuntime &rt = drift::gl::runtime();
-#ifdef DRIFT_WITH_SKIA
-                rt.exec([&rt] { drift::skia::SkiaRuntime::acquire(rt); });
-#else
-                rt.available();
-#endif
-            }).detach();
-        }, static_cast<Qt::ConnectionType>(Qt::QueuedConnection | Qt::SingleShotConnection));
-    }
-#endif
 
     return app.exec();
 }

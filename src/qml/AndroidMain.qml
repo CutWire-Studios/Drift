@@ -909,6 +909,20 @@ ApplicationWindow {
         })
     }
 
+    function rerunQuickSetup() {
+        if (Qt.platform.os === "android") {
+            EditorState.projectFile.flushRecoverySnapshot()
+            EditorState.preferences.rerunQuickSetup()
+            return
+        }
+        window.confirmIfDirty(function () {
+            EditorState.projectFile.discardUnsavedChanges()
+            EditorState.preferences.rerunQuickSetup()
+            window.forceClose = true
+            window.close()
+        })
+    }
+
     function openMarketplace(pageOrTab, source, itemId) {
         if (window.subPageKind !== "marketplace") {
             window.closeSubPage()

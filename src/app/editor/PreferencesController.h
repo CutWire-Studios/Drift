@@ -266,6 +266,11 @@ public:
     // Recorded by app/main.cpp once the shell for this run is decided.
     static void setAppliedShell(const QString &shell);
     bool canRestart() const;
+    // False once the first-run Quick Setup has been completed (and always on wasm, which skips it).
+    static bool quickSetupNeeded();
+    Q_INVOKABLE void completeQuickSetup();
+    // Clears the done flag and relaunches into setup; the caller handles unsaved work first.
+    Q_INVOKABLE void rerunQuickSetup();
     // Android relaunches the activity right away; flush recovery first. Elsewhere this only
     // arms a relaunch for aboutToQuit, so the caller still closes the window and the
     // unsaved-changes prompt gets its say.
@@ -301,6 +306,7 @@ signals:
     void transitionDurationSecondsChanged();
     void cacheSizeChanged();
     void uiLanguageChanged();
+    void quickSetupCompleted();
     void uiScaleChanged();
     void interfaceShellChanged();
     void performanceChanged();

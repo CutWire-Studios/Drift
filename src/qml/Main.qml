@@ -867,6 +867,20 @@ ApplicationWindow {
         })
     }
 
+    function rerunQuickSetup() {
+        if (Qt.platform.os === "android") {
+            EditorState.projectFile.flushRecoverySnapshot()
+            EditorState.preferences.rerunQuickSetup()
+            return
+        }
+        editorHeader.confirmIfDirty(function () {
+            EditorState.projectFile.discardUnsavedChanges()
+            EditorState.preferences.rerunQuickSetup()
+            window.forceClose = true
+            window.close()
+        })
+    }
+
     // ── Project lifecycle: New / Open / Open recent / Close ─────────────────────
     // The single gate for every entry point that starts, opens, or discards a
     // project — Ctrl+N/Ctrl+O, the header's Projects menu, the start screen's own

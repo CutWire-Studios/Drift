@@ -15337,6 +15337,316 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
 </context>
 <context>
+    <name>QuickSetup</name>
+    <message>
+        <source>Drift setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Bumalik</translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation type="unfinished">Susunod</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupAddonRow</name>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing…</source>
+        <translation type="unfinished">Nag-i-install…</translation>
+    </message>
+    <message>
+        <source>%1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished">Nabigo</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation type="unfinished">Nasa pila</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupAddonsPage</name>
+    <message>
+        <source>Install the essentials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs a newer version of Drift.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not available in the download store.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The download failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Optional</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished">Subukan muli</translation>
+    </message>
+    <message>
+        <source>Skip for now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue without the essentials?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation type="unfinished">Magpatuloy</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Kanselahin</translation>
+    </message>
+    <message>
+        <source>You can find more effects, models and stickers later in Extras.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupCommunityPage</name>
+    <message>
+        <source>You&apos;re all set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Need help or have an idea? We&apos;d love to hear from you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join our Discord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy email address</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupMockEditor</name>
+    <message>
+        <source>Drift</source>
+        <translation type="unfinished">Drift</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation type="unfinished">I-export</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupScalePage</name>
+    <message>
+        <source>Interface size</source>
+        <translation type="unfinished">Laki ng interface</translation>
+    </message>
+    <message>
+        <source>Make buttons, text and icons larger or smaller.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recommended</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drift will restart when you finish setup to apply this size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupStepIndicator</name>
+    <message>
+        <source>Step %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupThemePage</name>
+    <message>
+        <source>Pick a look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose how Drift looks. You can change this any time in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Match system</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follows light and dark</source>
+        <translation type="unfinished">Sinusundan ang maliwanag at madilim</translation>
+    </message>
+    <message>
+        <source>Dark and light</source>
+        <translation type="unfinished">Madilim at maliwanag</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished">Madilim</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipsPage</name>
+    <message>
+        <source>Search anything</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press %1 to search actions, workspaces, add-ons, themes and settings from anywhere, then jump straight to the result.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the search field in the header to find actions, workspaces, add-ons, themes and settings, then jump straight to the result.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch workspaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header, or press %1 to %2 to jump to one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header to switch.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get more from Extras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use your fingers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pinch the timeline to zoom it, and pinch the preview to zoom and pan the picture. Long-press a clip and choose Select multiple to pick several clips at once.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play/Pause</source>
+        <translation type="unfinished">I-play/I-pause</translation>
+    </message>
+    <message>
+        <source>Split at current time</source>
+        <translation type="unfinished">Hatiin sa kasalukuyang oras</translation>
+    </message>
+    <message>
+        <source>Delete selection</source>
+        <translation type="unfinished">Tanggalin ang napili</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">I-undo</translation>
+    </message>
+    <message>
+        <source>Edit from the keyboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A few shortcuts cover most of an edit. See and change every shortcut in Settings, under Keyboard shortcuts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI tools on your device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles, people cutout and scene finding run locally. Install their add-ons from Extras, under AI tools.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A few tips before you start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick pointers to the parts of Drift people tend to miss.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous tip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next tip</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupWelcomePage</name>
+    <message>
+        <source>Welcome to Drift</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let&apos;s get you set up. First, pick your language.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>RecentProjectsPopup</name>
     <message>
         <source>All changes saved</source>
@@ -16286,6 +16596,18 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Help</source>
         <translation>Tulong</translation>
+    </message>
+    <message>
+        <source>Quick Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Walk through language, theme, interface size and add-ons again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run again</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>About Drift</source>
@@ -19916,6 +20238,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>Building the interface…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opening setup…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
