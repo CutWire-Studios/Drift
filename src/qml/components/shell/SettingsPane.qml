@@ -40,11 +40,35 @@ Item {
     readonly property var visiblePages: pages.filter(
         (page) => !(mobile && mobileHiddenPages.includes(page.id)))
 
-    readonly property bool searchHasMatches: generalPage.hasMatches || appearancePage.hasMatches
-        || (!mobile && (workspacesPage.hasMatches || toolbarPage.hasMatches || keymapPage.hasMatches))
-        || timelinePage.hasMatches
-        || previewPage.hasMatches || performancePage.hasMatches || audioPage.hasMatches || aiPage.hasMatches
-        || networkPage.hasMatches || aboutPage.hasMatches
+    readonly property bool searchHasMatches: {
+        for (const slot of [generalSlot, appearanceSlot, workspacesSlot, timelineSlot, toolbarSlot, keymapSlot,
+                            previewSlot, performanceSlot, audioSlot, aiSlot, networkSlot, aboutSlot]) {
+            if (slot.hasMatches)
+                return true
+        }
+        return false
+    }
+
+    // A page exists only while it is the open one, or while a search needs every page's rows to
+    // test against the query. Building all twelve up front dominated the dialog's open time.
+    component PageSlot: Loader {
+        id: slot
+
+        required property string pageId
+        property bool allowed: true
+
+        readonly property bool hasMatches: item !== null && item.hasMatches
+        readonly property bool shown: item !== null && (root.query.length > 0 ? item.hasMatches : true)
+
+        width: parent.width
+        // implicitHeight, not height: the Loader writes its own height back onto the item, so a
+        // page collapsed to 0 during a search would stay 0.
+        height: shown ? item.implicitHeight : 0
+        // Clipped rather than hidden: a hidden page would hide its rows too, and the rows' own
+        // visibility is what hasMatches reads.
+        clip: !shown
+        active: allowed && (root.query.length > 0 || root.currentPage === pageId)
+    }
 
     onCurrentPageChanged: flick.contentY = 0
 
@@ -167,76 +191,79 @@ Item {
             topPadding: Theme.spacingXl
             bottomPadding: Theme.spacing3xl
 
-            SettingsGeneralPage {
-                id: generalPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: generalSlot
+                pageId: "general"
+                sourceComponent: SettingsGeneralPage { query: root.query }
             }
 
-            SettingsAppearancePage {
-                id: appearancePage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: appearanceSlot
+                pageId: "appearance"
+                sourceComponent: SettingsAppearancePage { query: root.query }
             }
 
-            SettingsWorkspacesPage {
-                id: workspacesPage
-                query: root.query
-                visible: !root.mobile && (root.query.length > 0 ? hasMatches : pageId === root.currentPage)
+            PageSlot {
+                id: workspacesSlot
+                pageId: "workspaces"
+                allowed: !root.mobile
+                sourceComponent: SettingsWorkspacesPage { query: root.query }
             }
 
-            SettingsTimelinePage {
-                id: timelinePage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: timelineSlot
+                pageId: "timeline"
+                sourceComponent: SettingsTimelinePage { query: root.query }
             }
 
-            SettingsToolbarPage {
-                id: toolbarPage
-                query: root.query
-                visible: !root.mobile && (root.query.length > 0 ? hasMatches : pageId === root.currentPage)
+            PageSlot {
+                id: toolbarSlot
+                pageId: "toolbar"
+                allowed: !root.mobile
+                sourceComponent: SettingsToolbarPage { query: root.query }
             }
 
-            SettingsKeymapPage {
-                id: keymapPage
-                query: root.query
-                visible: !root.mobile && (root.query.length > 0 ? hasMatches : pageId === root.currentPage)
+            PageSlot {
+                id: keymapSlot
+                pageId: "keymap"
+                allowed: !root.mobile
+                sourceComponent: SettingsKeymapPage { query: root.query }
             }
 
-            SettingsPreviewPage {
-                id: previewPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: previewSlot
+                pageId: "preview"
+                sourceComponent: SettingsPreviewPage { query: root.query }
             }
 
-            SettingsPerformancePage {
-                id: performancePage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: performanceSlot
+                pageId: "performance"
+                sourceComponent: SettingsPerformancePage { query: root.query }
             }
 
-            SettingsAudioPage {
-                id: audioPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: audioSlot
+                pageId: "audio"
+                sourceComponent: SettingsAudioPage { query: root.query }
             }
 
-            SettingsAiPage {
-                id: aiPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: aiSlot
+                pageId: "ai"
+                sourceComponent: SettingsAiPage { query: root.query }
             }
 
-            SettingsNetworkPage {
-                id: networkPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: networkSlot
+                pageId: "network"
+                sourceComponent: SettingsNetworkPage { query: root.query }
             }
 
-            SettingsAboutPage {
-                id: aboutPage
-                query: root.query
-                visible: root.query.length > 0 ? hasMatches : pageId === root.currentPage
+            PageSlot {
+                id: aboutSlot
+                pageId: "about"
+                sourceComponent: SettingsAboutPage { query: root.query }
             }
 
             EmptyState {
