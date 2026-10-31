@@ -45,6 +45,8 @@ const PanelType kPanelTypes[] = {
     {"subtitleTiming", QT_TRANSLATE_NOOP("WorkspaceStore", "Subtitle timing")},
     {"undoHistory", QT_TRANSLATE_NOOP("WorkspaceStore", "History")},
     {"agentLog", QT_TRANSLATE_NOOP("WorkspaceStore", "Agent Log")},
+    {"agentViews", QT_TRANSLATE_NOOP("WorkspaceStore", "Agent Views")},
+    {"audioSheet", QT_TRANSLATE_NOOP("WorkspaceStore", "Audio Sheet")},
     {"recorder", QT_TRANSLATE_NOOP("WorkspaceStore", "Recorder")},
     {"denoise", QT_TRANSLATE_NOOP("WorkspaceStore", "Noise Removal")},
     {"color", QT_TRANSLATE_NOOP("WorkspaceStore", "Color")},

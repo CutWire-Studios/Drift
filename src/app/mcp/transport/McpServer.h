@@ -52,6 +52,7 @@ signals:
     void errorChanged();
     void toolCallStarted(int id, const QString &tool, const QString &summary);
     void toolCallFinished(int id, bool ok, const QString &error, qint64 ms);
+    void toolCallResult(int id, const QString &tool, const QJsonObject &args, const QJsonObject &result);
 
 private:
     QString makeToken() const;

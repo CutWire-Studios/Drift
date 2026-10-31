@@ -312,7 +312,7 @@ ApplicationWindow {
             }
         }
         const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, debugInfoDialogLoader.item,
-                        settingsDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
+                        settingsDialogLoader.item, imageViewerDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
                         addonManagerDialogLoader.item, missingAddonsDialogLoader.item, addonStartupDialog,
                         projectSetupDialogLoader.item, layoutChooserDialogLoader.item,
                         languageChooserDialogLoader.item, recoveryDialogLoader.item,
@@ -568,6 +568,13 @@ ApplicationWindow {
         keepLoaded: true
         sourceComponent: Component {
             DebugInfoDialog { }
+        }
+    }
+
+    LazyLoader {
+        id: imageViewerDialogLoader
+        sourceComponent: Component {
+            ImageViewerDialog { }
         }
     }
 
@@ -986,6 +993,10 @@ ApplicationWindow {
 
     function openDebugInfo() {
         debugInfoDialogLoader.ensure().open()
+    }
+
+    function openImageViewer(entryId) {
+        imageViewerDialogLoader.ensure().show(entryId)
     }
 
     // Global search opens assets tabs and labels them; the panel itself is out of the header's reach.

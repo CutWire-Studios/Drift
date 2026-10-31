@@ -1,6 +1,22 @@
 {
   "entries": [
     {
+      "id": "agent-views",
+      "target": "panel:agentViews#agent-views",
+      "context": "AgentViewsPanel",
+      "source": "Agent Views",
+      "keywords": "agent images gallery frames audio sheet captures ai screenshots",
+      "needs": []
+    },
+    {
+      "id": "audio-sheet",
+      "target": "panel:audioSheet#audio-sheet",
+      "context": "AudioSheetPanel",
+      "source": "Audio Sheet",
+      "keywords": "audio sheet loudness lufs spectrogram events sync analysis report png export",
+      "needs": []
+    },
+    {
       "id": "color-grade",
       "target": "panel:color#color-grade",
       "context": "ColorPanel",

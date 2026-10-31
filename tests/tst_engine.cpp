@@ -85,6 +85,10 @@
 #include "engine/audio/dsp/ClipAudioRetimer.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/audio/analysis/AudioOnsets.h"
+#include "engine/audio/analysis/AudioEvents.h"
+#include "engine/audio/analysis/AudioSync.h"
+#include "engine/audio/analysis/LoudnessMeter.h"
+#include "engine/diagnostics/sheets/AudioSheet.h"
 #include "engine/ml/vision/detection/ObjectDetector.h"
 #include "engine/ml/vision/detection/SceneDetect.h"
 #include "engine/render3d/splats/SplatAsset.h"
@@ -447,6 +451,10 @@ private slots:
     void audioCrossfadeUsesHandles();
     void audioCrossfadeFallsBackToDip();
     void waveformSheetDrawsWordLane();
+    void loudnessReportFindsGapsClippingAndRange();
+    void audioEventsFindBurstsNotSilence();
+    void audioSyncGradesCuts();
+    void audioSheetRendersLanes();
     void vadRangesFollowSileroRules();
     void vadModelScoresSilenceLow();
     void ctcForcedAlignFindsPlantedPath();
@@ -16543,6 +16551,182 @@ void EngineTest::audioCrossfadeFallsBackToDip()
     const auto bound = static_cast<float>(before * 2.0 * std::sin(M_PI * 440.0 / 48000));
     QVERIFY2(atCut < before * 0.05f, qPrintable(QStringLiteral("%1 at the cut").arg(atCut)));
     QVERIFY2(worst < bound * 1.5f, qPrintable(QStringLiteral("step %1 vs %2").arg(worst).arg(bound)));
+}
+
+void EngineTest::loudnessReportFindsGapsClippingAndRange()
+{
+    constexpr int kRate = 48000;
+    constexpr int kSeconds = 12;
+    QVector<float> pcm(kRate * kSeconds * 2, 0.0f);
+    for (int i = 0; i < kRate * kSeconds; ++i) {
+        const double t = double(i) / kRate;
+        const bool silent = t >= 5.0 && t < 6.5;
+        const double gain = t < 6.5 ? 0.1 : 0.4;
+        const float v = silent ? 0.0f : float(gain * std::sin(2.0 * M_PI * 997.0 * t));
+        pcm[i * 2] = v;
+        pcm[i * 2 + 1] = v;
+    }
+    for (int i = 0; i < 40; ++i) {
+        pcm[(kRate * 2 + i) * 2] = 1.0f;
+        pcm[(kRate * 2 + i) * 2 + 1] = 1.0f;
+    }
+
+    const drift::LoudnessReport r = drift::analyzeLoudness(
+        qint64(kRate) * kSeconds, kRate, [&](float *out, qint64 offset, int maxFrames) {
+            const int n = int(qMin<qint64>(maxFrames, qint64(kRate) * kSeconds - offset));
+            std::copy_n(pcm.constData() + offset * 2, n * 2, out);
+            return n;
+        });
+    QVERIFY(r.ok);
+    QVERIFY(r.hasIntegrated);
+    QVERIFY(r.hasLra);
+    QVERIFY2(r.lraLu > 6.0, qPrintable(QString::number(r.lraLu)));
+    QVERIFY(r.hasTruePeak);
+    QVERIFY(r.truePeakDb >= r.samplePeakDb - 0.01);
+    QCOMPARE(r.clippingRuns.size(), 1);
+    QVERIFY(qAbs(r.clippingRuns.first().start - 2.0) < 0.001);
+    QCOMPARE(r.clippedSamples, qint64(40));
+    QCOMPARE(r.gaps.size(), 1);
+    QVERIFY2(qAbs(r.gaps.first().start - 5.0) < 0.15 && qAbs(r.gaps.first().end - 6.5) < 0.15,
+             qPrintable(QStringLiteral("%1-%2").arg(r.gaps.first().start).arg(r.gaps.first().end)));
+    QCOMPARE(r.gaps.first().kind, QStringLiteral("digital silence"));
+    QVERIFY(!r.momentary.lufs.isEmpty());
+    QVERIFY(!r.shortTerm.lufs.isEmpty());
+
+    const drift::LoudnessReport none = drift::analyzeLoudness(
+        qint64(kRate) * 2, kRate, [&](float *out, qint64, int maxFrames) {
+            std::fill_n(out, maxFrames * 2, 0.0f);
+            return maxFrames;
+        });
+    QVERIFY(none.ok);
+    QVERIFY(!none.hasIntegrated);
+    QVERIFY(!none.hasTruePeak);
+}
+
+void EngineTest::audioEventsFindBurstsNotSilence()
+{
+    constexpr int kRate = 48000;
+    QVector<float> mono(kRate * 6, 0.0f);
+    std::mt19937 rng(77);
+    std::uniform_real_distribution<float> noise(-1.0f, 1.0f);
+    const double starts[] = {1.0, 2.5, 4.2};
+    for (double s : starts) {
+        const int at = int(s * kRate);
+        for (int i = 0; i < kRate / 5; ++i)
+            mono[at + i] = 0.5f * noise(rng) * std::exp(-i / (kRate * 0.03f));
+    }
+
+    const drift::AudioEventsResult r = drift::AudioEvents::analyze(mono.constData(), mono.size(), kRate, 10.0);
+    QCOMPARE(r.events.size(), 3);
+    for (int k = 0; k < 3; ++k) {
+        QVERIFY2(qAbs(r.events.at(k).seconds - (10.0 + starts[k])) < 0.01,
+                 qPrintable(QString::number(r.events.at(k).seconds)));
+        QCOMPARE(r.events.at(k).kind, drift::AudioEvent::Kind::Hit);
+        QVERIFY(r.events.at(k).levelDbfs > -20.0);
+    }
+
+    const QVector<float> silence(kRate * 3, 0.0f);
+    QVERIFY(drift::AudioEvents::analyze(silence.constData(), silence.size(), kRate, 0.0).events.isEmpty());
+    QVERIFY(drift::AudioEvents::analyze(silence.constData(), silence.size(), 44100, 0.0).events.isEmpty());
+
+    QVector<float> lead(kRate * 2, 0.0f);
+    for (int i = 0; i < kRate / 10; ++i)
+        lead[i] = 0.5f * noise(rng);
+    drift::AudioEventsOptions options;
+    options.leadIn = true;
+    const drift::AudioEventsResult withLead = drift::AudioEvents::analyze(lead.constData(), lead.size(), kRate, 0.0, options);
+    QVERIFY(!withLead.events.isEmpty());
+    QVERIFY(withLead.events.first().seconds < 0.01);
+}
+
+void EngineTest::audioSyncGradesCuts()
+{
+    using Status = drift::AudioSyncItem::Status;
+    QList<drift::AudioEvent> events;
+    for (double t : {1.0, 3.0, 5.2}) {
+        drift::AudioEvent e;
+        e.seconds = t;
+        e.prominenceDb = 20.0;
+        events.append(e);
+    }
+    drift::AudioEvent swell;
+    swell.seconds = 8.1;
+    swell.kind = drift::AudioEvent::Kind::Swell;
+    swell.prominenceDb = 10.0;
+    events.append(swell);
+
+    const drift::AudioSyncResult r = drift::matchSync({1.01, 3.07, 5.0, 7.85, 12.0}, events);
+    QCOMPARE(r.items.size(), 5);
+    QCOMPARE(r.items.at(0).status, Status::Ok);
+    QVERIFY(qAbs(r.items.at(0).offsetMs + 10.0) < 0.5);
+    QCOMPARE(r.items.at(1).status, Status::Near);
+    QCOMPARE(r.items.at(2).status, Status::Off);
+    QCOMPARE(r.items.at(3).status, Status::Swell);
+    QCOMPARE(r.items.at(4).status, Status::NoSound);
+    QCOMPARE(drift::syncStatusName(Status::NoSound), QStringLiteral("no_sound"));
+    QCOMPARE(r.stats.n, 5);
+    QVERIFY(qAbs(r.stats.hitWithinTolerance - 0.2) < 1e-9);
+    QVERIFY(r.stats.hasChance);
+    QVERIFY(r.stats.chanceTolerance > 0.0 && r.stats.chanceTolerance < 0.5);
+    QCOMPARE(r.stats.noSound.size(), 2);
+
+    QVERIFY(drift::matchSync({1.0}, {}).items.first().status == Status::NoSound);
+}
+
+void EngineTest::audioSheetRendersLanes()
+{
+    using namespace drift::audiosheet;
+
+    constexpr int kRate = 48000;
+    QVector<float> mono(kRate * 4);
+    for (int i = 0; i < mono.size(); ++i)
+        mono[i] = 0.3f * std::sin(2.0 * M_PI * 440.0 * i / kRate);
+    const Spectrogram spec = logSpectrogram(mono.constData(), mono.size(), kRate, 100);
+    QCOMPARE(spec.rows, 240);
+    QVERIFY(spec.columns >= 100);
+    int best = 0;
+    for (int r = 1; r < spec.rows; ++r) {
+        if (spec.at(50, r) > spec.at(50, best))
+            best = r;
+    }
+    QVERIFY2(qAbs(spec.centreHz.at(best) - 440.0) < 40.0, qPrintable(QString::number(spec.centreHz.at(best))));
+
+    EventLabel a;
+    a.seconds = 1.0;
+    a.text = QStringLiteral("HIT");
+    EventLabel b = a;
+    b.seconds = 1.01;
+    const QList<PlacedLabel> placed = placeLabels({a, b}, {60, 60}, 0.0, 4.0, 1000.0, 4);
+    QCOMPARE(placed.size(), 2);
+    QVERIFY(placed.at(0).row != placed.at(1).row);
+    QCOMPARE(tickStep(4.0), 0.25);
+    QCOMPARE(tickStep(1000.0), 60.0);
+
+    Input in;
+    in.title = QStringLiteral("test");
+    in.durationSeconds = 4.0;
+    in.mono = mono.constData();
+    in.monoFrames = mono.size();
+    in.sampleRate = kRate;
+    in.cuts = {2.0};
+    drift::AudioEvent e;
+    e.seconds = 2.0;
+    e.prominenceDb = 12.0;
+    in.events = {e};
+    Options opt;
+    opt.width = 5000;
+    const QImage bare = render(in, opt);
+    QCOMPARE(bare.width(), kMaxWidth);
+    opt.width = 1500;
+    const QImage narrow = render(in, opt);
+    QCOMPARE(narrow.width(), 1500);
+
+    QImage frame(160, 90, QImage::Format_RGB32);
+    frame.fill(Qt::red);
+    in.frames = {{0.0, frame}, {2.15, frame}};
+    in.sections = {{0.0, 2.0, QStringLiteral("intro")}};
+    const QImage full = render(in, opt);
+    QVERIFY(full.height() > narrow.height());
 }
 
 void EngineTest::waveformSheetDrawsWordLane()

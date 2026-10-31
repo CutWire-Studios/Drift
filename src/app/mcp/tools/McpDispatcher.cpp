@@ -687,7 +687,8 @@ bool McpDispatcher::isUndoable(const QString &tool) const
 namespace {
 
 // Ops whose image:true reply is raw image content, which a batch has no slot for.
-const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLiteral("market_preview")};
+const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLiteral("market_preview"),
+                                     QStringLiteral("audio_sheet")};
 
 } // namespace
 
@@ -716,7 +717,9 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         const QString tool = op.value(QStringLiteral("tool")).toString();
         const QJsonObject opArgs = op.value(QStringLiteral("args")).toObject();
         const bool rawImage = kRawResultOps.contains(tool)
-                              && jsonBool(opArgs.value(QStringLiteral("image")), tool == QLatin1String("market_preview"));
+                              && (tool == QLatin1String("audio_sheet")
+                                      ? opArgs.value(QStringLiteral("return")).toString() != QLatin1String("path")
+                                      : jsonBool(opArgs.value(QStringLiteral("image")), tool == QLatin1String("market_preview")));
         const QJsonObject one =
             rawImage ? err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool))
                      : applyOne(tool, opArgs);

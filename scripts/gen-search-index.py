@@ -39,6 +39,8 @@ FILE_TARGETS = {
     "ColorPanel.qml": "panel:color",
     "LooksPanel.qml": "panel:looks",
     "ScopesPanel.qml": "panel:scopes",
+    "AgentViewsPanel.qml": "panel:agentViews",
+    "AudioSheetPanel.qml": "panel:audioSheet",
     "KeyframesPanel.qml": "panel:keyframes",
     "MaskingPanel.qml": "panel:masking",
     "TrackingPanel.qml": "panel:tracking",

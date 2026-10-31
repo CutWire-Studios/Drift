@@ -998,6 +998,31 @@
       "track": "$semantic.panel.muted",
       "progress": "$semantic.primary"
     },
+    "imageViewer": {
+      "canvas": "$semantic.panel.muted",
+      "border": "$semantic.panel.border",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
+    "agentViews": {
+      "tileBackground": "$semantic.panel.muted",
+      "tileBorder": "$semantic.panel.border",
+      "tileHover": "$semantic.popoverHover",
+      "tileRadius": "$metrics.radius.md",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
+    "audioSheetPanel": {
+      "statBackground": "$semantic.panel.muted",
+      "statBorder": "$semantic.panel.border",
+      "statRadius": "$metrics.radius.md",
+      "label": "$semantic.mutedForeground",
+      "value": "$semantic.panel.foreground",
+      "good": "$semantic.constructive",
+      "warn": "$semantic.warning",
+      "bad": "$semantic.destructive",
+      "error": "$semantic.destructive"
+    },
     "emptyState": {
       "radius": "$metrics.radius.md",
       "background": "$semantic.panel.accent",

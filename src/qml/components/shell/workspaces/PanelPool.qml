@@ -95,7 +95,9 @@ Item {
         "sourceLab.ranges": sourceLabRangesC,
         "sourceLab.process": sourceLabProcessC,
         "sourceLab.output": sourceLabOutputC,
-        "agentLog": agentLogC
+        "agentLog": agentLogC,
+        "agentViews": agentViewsC,
+        "audioSheet": audioSheetC
     })
 
     Component { id: assetsC; LazyPanel { panel: AssetsPanel {} } }
@@ -124,6 +126,8 @@ Item {
     Component { id: sourceLabProcessC; LazyPanel { panel: SourceLabProcessPanel {} } }
     Component { id: sourceLabOutputC; LazyPanel { panel: SourceLabOutputPanel {} } }
     Component { id: agentLogC; LazyPanel { panel: AgentLogPanel {} } }
+    Component { id: agentViewsC; LazyPanel { panel: AgentViewsPanel {} } }
+    Component { id: audioSheetC; LazyPanel { panel: AudioSheetPanel {} } }
     Component { id: placeholderC; WorkspacePlaceholderPanel {} }
 
     // Stays in the pool like any panel, but the panel inside only exists while shown (plus a

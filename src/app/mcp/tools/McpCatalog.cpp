@@ -1363,6 +1363,12 @@ QString agentGuideText()
         "The analysis is transient: any edit that changes the mix drops it, and\n"
         "inspect({detail:true}).beats.stale says whether what you have still describes the audio.\n"
         "\n"
+        "Listening to the mix (audio toolbox):\n"
+        "1. audio_sheet({start, duration}) draws frames, hits, spectrogram, waveform, loudness and sync on one image.\n"
+        "2. audio_measure gives LUFS, LRA, true peak, clipping and gaps; audio_events lists the hits and swells.\n"
+        "3. audio_sync checks whether a sound lands on each cut and says by how many ms it misses; read its chance\n"
+        "   figures before trusting a hit rate on dense music.\n"
+        "\n"
         "Custom effects (effects toolbox):\n"
         "1. effect_authoring_guide({kind}) for the manifest grammar and parameter types.\n"
         "2. get_effect_source on a bundled effect to fork it, or write one from scratch.\n"
@@ -1440,7 +1446,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
         {"subtitles", "Subtitle clips, import/export, Whisper generation."},
         {"segmentation", "SAM-style cutout and mask output."},
         {"ai", "Denoise, face detection, auto-reframe, model add-ons (list/install), acceleration."},
-        {"audio", "Waveforms, silence, loudness, ducking, beat detection, beat-synced cuts, clip volume."},
+        {"audio", "Waveforms, silence, loudness (LUFS, LRA, true peak, gaps), sound events and cut sync, the audio sheet image, ducking, beat detection, beat-synced cuts, clip volume."},
         {"scene", "Detect shots, read what is in them, and cut or assemble against them."},
         {"multicam", "Multi-camera session: set up angles, switch at the playhead, save separate or combined."},
         {"market", "The Cutwire marketplace: stock media, Drift assets, sound effects and community add-ons. Browse sources, preview, install (optionally onto the timeline), and manage Downloads. Stock installs spend a per-machine quota."},

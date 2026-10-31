@@ -1825,6 +1825,86 @@
                {QStringLiteral("duration"), numberProp(QStringLiteral("Range length seconds (timeline mode)"))}},
               clipRefProps())),
           true, false, true },
+        { "audio_measure", "audio", "Full loudness report",
+          "Everything a loudness meter shows over a range: integrated LUFS, loudness range (LRA, needs 6 s), "
+          "4x-oversampled true peak, sample peak, loudest momentary (0.4 s) and short-term (3 s) readings, "
+          "clipping runs, and gaps (0.1 s loudness under max(-60, integrated-20) LUFS for at least 0.25 s: "
+          "{start,end,level_lufs,kind:digital silence|near silence|drop,where?:lead-in|tail|whole file}). "
+          "curve:true adds the momentary and short-term LUFS curves (thinned to 600 points; dt says the step). "
+          "Three modes like get_waveform: clip (or track+index) measures that clip through its volume and fades "
+          "on the timeline, asset a media file in source seconds (omit duration for the whole file), neither "
+          "(with start and duration) the MIXED TIMELINE as it would export, master clipper off. Range is capped at "
+          "3600 s. BLOCKS. A missing lufs/lra/true_peak_db key means it cannot be computed (all gated out, too "
+          "short, or digital silence — then silent:true).",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("curve"), propWithDefault(boolProp(QStringLiteral("Include the momentary and short-term loudness curves")), false)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 3600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_events", "audio", "Find the hits and swells",
+          "Sound events in a range: transient hits (superflux onsets on a 96-band log-mel, refined to the attack "
+          "on 1 ms envelopes, so at is where the sound actually begins) and swells (whoosh / riser build-ups, "
+          "timed at their peak). Each event has strength 0..1, level_db (dBFS peak), prominence_db (rise of the "
+          "K-weighted level over the bed just before — the number to rank by; a hit after silence is huge), band "
+          "(full, low < 200 Hz, high > 2 kHz) and length_ms. Use it to find where a sound effect lands, what is "
+          "loud enough to be an accent, or to place a cut on a hit. Same clip / asset / timeline modes as "
+          "audio_measure; range capped at 600 s. BLOCKS. Returns {n, swells, truncated, events:[{at,kind:hit|swell,"
+          "strength,level_db,prominence_db,band,length_ms}]} in chronological order; over limit keeps the most "
+          "prominent. Dense music always has some onset nearby, so read audio_sync's chance figures before "
+          "trusting a match.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Most events to return, strongest kept"), 1, 500), 200)},
+               {QStringLiteral("min_prominence_db"), propWithDefault(numberProp(QStringLiteral("Skip events less than this many dB over their bed (6 = deliberate accents)")), 0)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_sync", "audio", "Check sound lands on the cuts",
+          "For each cut, the audio event that answers it. Cuts are the video-track clip boundaries inside the "
+          "range, or pass at:[…] for explicit times (required in asset mode, which has no timeline). status: ok = "
+          "an onset within tolerance_ms; near = within 100 ms; swell = a build-up peaking within 300 ms; peak = no "
+          "onset, only a soft level peak within 150 ms (check it); off = only a strong onset within 250 ms; "
+          "no_sound = nothing. offset_ms = sound minus picture (negative = sound early). stats carry hit rates "
+          "next to chance_* — what random cue times would score at this event density — and accent_* for strong "
+          "accents only (>= 6 dB over the bed, top 20%): on a dense mix read those, a plain hit rate means little "
+          "when chance is high. no_sound lists the cuts with no hit. Same clip / asset / timeline modes as "
+          "audio_measure; range capped at 600 s; at beyond 400 cues is trimmed (truncated:true). BLOCKS. Fix a "
+          "miss by moving the sound clip by offset_ms.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Cue times to check instead of the timeline's cuts (timeline seconds, or source seconds in asset mode)"))},
+               {QStringLiteral("tolerance_ms"), propWithDefault(numberProp(QStringLiteral("How close an onset must be to count as ok (a frame is 33 at 30 fps)"), 5, 250), 40)},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
+        { "audio_sheet", "audio", "See the soundtrack",
+          "One annotated image of the sound over a range, on a shared time axis: a frame after each cut, "
+          "labelled hits and swells, a 30 Hz-16 kHz spectrogram (silence is black), the waveform, momentary and "
+          "short-term loudness with the integrated level and gaps shaded yellow, beat ticks, and a marker per cut "
+          "coloured by sync (green onset within tolerance, amber within 100 ms, blue swell, violet level peak "
+          "only, red no hit) with dashed cut lines through every lane. Use it to judge a whole mix at a glance "
+          "— where the sound dies, what clips, whether hits land on the cuts. Same clip / asset / timeline modes "
+          "as audio_measure; range capped at 600 s (zoom with start+duration). BLOCKS. Returns a summary, the "
+          "measure numbers, events, cuts, sync stats and items (as audio_measure / audio_sync) and an inline "
+          "JPEG (long edge <= 1600 px); return:\"path\" writes the full-width PNG next to the project's frame "
+          "captures and returns its path instead. Asset mode draws frames only for video files and only at the "
+          "at times. image result cannot run inside apply unless return is path.",
+          objectSchema(mergeProps(
+              {{QStringLiteral("asset"), assetRefProp()},
+               {QStringLiteral("at"), arrayProp(numberProp(QStringLiteral("Seconds")), QStringLiteral("Cue times to mark and sync-check instead of the timeline's cuts (timeline seconds, or source seconds in asset mode)"))},
+               {QStringLiteral("frames"), propWithDefault(boolProp(QStringLiteral("Draw a frame after each cut")), true)},
+               {QStringLiteral("width"), propWithDefault(integerProp(QStringLiteral("Sheet width in px"), 1000, 2400), 2000)},
+               {QStringLiteral("return"), propWithDefault(enumProp(QStringLiteral("image is an inline JPEG; path writes the full-size PNG to disk"),
+                                                                   {QStringLiteral("image"), QStringLiteral("path")}),
+                                                          QStringLiteral("image"))},
+               {QStringLiteral("start"), numberProp(QStringLiteral("Range start in seconds. Timeline seconds in timeline mode, source seconds in asset mode. Ignored in clip mode."))},
+               {QStringLiteral("duration"), numberProp(QStringLiteral("Range length in seconds, max 600. Required for timeline mode; in asset mode omit it for the whole file."))}},
+              clipRefProps())),
+          true, false, true },
         { "normalize_volume", "audio", "Match a LUFS target",
           "Measure the clip, then set its scalar volume so integrated loudness matches target_lufs. "
           "Clamped to 0..2.",

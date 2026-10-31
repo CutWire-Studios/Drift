@@ -738,6 +738,11 @@ add_library(driftengine STATIC
     src/engine/media/waveforms/WaveformBlockCache.cpp
     src/engine/audio/analysis/AudioOnsets.h
     src/engine/audio/analysis/AudioOnsets.cpp
+    src/engine/audio/analysis/AudioEvents.h
+    src/engine/audio/analysis/AudioEvents.cpp
+    src/engine/audio/analysis/AudioSync.h
+    src/engine/audio/analysis/AudioSync.cpp
+    src/engine/audio/analysis/RealFft.h
     src/engine/audio/analysis/AudioFrameAnalysis.h
     src/engine/audio/analysis/AudioFrameAnalysis.cpp
     src/engine/ml/vision/detection/SceneDetect.h
@@ -746,6 +751,8 @@ add_library(driftengine STATIC
     src/engine/diagnostics/sheets/FrameSheet.cpp
     src/engine/diagnostics/sheets/WaveformSheet.h
     src/engine/diagnostics/sheets/WaveformSheet.cpp
+    src/engine/diagnostics/sheets/AudioSheet.h
+    src/engine/diagnostics/sheets/AudioSheet.cpp
     src/engine/ml/vision/detection/ObjectDetector.h
     src/engine/ml/vision/detection/ObjectDetector.cpp
     src/engine/encode/export/Exporter.h
@@ -1068,6 +1075,8 @@ qt_add_executable(drift
     src/app/online/updates/UpdateAsset.cpp
     src/app/editor/AppController.h
     src/app/editor/AppController.cpp
+    src/app/mcp/AgentImageLog.h
+    src/app/mcp/AgentImageLog.cpp
     src/app/mcp/McpController.h
     src/app/mcp/McpController.cpp
     src/app/editor/PreferencesController.h
@@ -1838,6 +1847,10 @@ qt_add_qml_module(drift
         src/qml/components/panels/sourcelab/SourceLabProgressCard.qml
         src/qml/components/panels/sourcelab/SourceLabExportOptions.qml
         src/qml/components/panels/AgentLogPanel.qml
+        src/qml/components/panels/AgentViewsPanel.qml
+        src/qml/components/panels/AudioSheetPanel.qml
+        src/qml/components/ImageViewer.qml
+        src/qml/components/dialogs/ImageViewerDialog.qml
         src/qml/components/timeline/TimelineClipItem.qml
         src/qml/components/timeline/PlayheadInterpolator.qml
         src/qml/components/timeline/TimelineTrackArea.qml
