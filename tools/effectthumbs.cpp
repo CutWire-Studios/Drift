@@ -220,9 +220,6 @@ QMap<QString, QVariant> dramaticDefaults(const EffectPresetEntry &def)
     else if (def.meta.id == QLatin1String("stylize.pixelate")) {
         params.insert(QStringLiteral("width"), 24.0);
         params.insert(QStringLiteral("height"), 24.0);
-    } else if (def.meta.id == QLatin1String("time_echo")) {
-        params.insert(QStringLiteral("frames"), 4);
-        params.insert(QStringLiteral("decay"), 0.65);
     } else if (def.meta.id == QLatin1String("key.chroma")) {
         params.insert(QStringLiteral("u_keyHue"), 120.0);
         params.insert(QStringLiteral("u_tolerance"), 0.55);
@@ -507,25 +504,6 @@ QImage faceSwapPreview(const EffectPresetEntry &def, const Face &target, const F
     return out;
 }
 
-QImage applyTimeEchoPreview(const QImage &base, const QMap<QString, QVariant> &params)
-{
-    QList<QImage> frames;
-    frames.reserve(5);
-    frames.append(base);
-    for (int i = 1; i <= 4; ++i) {
-        QImage shifted(base.size(), QImage::Format_RGBA8888);
-        shifted.fill(Qt::transparent);
-        QPainter p(&shifted);
-        p.drawImage(QPoint(i * 4, 0), base);
-        p.end();
-        frames.append(shifted);
-    }
-    const double decay = params.value(QStringLiteral("decay"), 0.65).toDouble();
-    const int blendMode = 0;
-    QImage gpu = GpuEffectExecutor::instance().blendTimeEcho(frames, decay, blendMode);
-    return gpu.isNull() ? base : gpu;
-}
-
 // Studio portraits often sit on black/near-black; chroma key needs a keyed colour. Swap dark
 // backdrop pixels for green so the key pass produces a transparent cutout of the subject.
 QImage withGreenScreenBackdrop(const QImage &src)
@@ -691,8 +669,6 @@ int main(int argc, char *argv[])
         } else if (def.isFaceSwap) {
             result = faceSwapPreview(def, faceFor(basePhoto), faceFor(chooser.faceSwapSource),
                                      chooser.faceSwapSource, err);
-        } else if (def.meta.id == QLatin1String("time_echo")) {
-            result = applyTimeEchoPreview(base, params);
         } else if (def.meta.id == QLatin1String("key.chroma")) {
             drift::Effect effect;
             effect.catalogId = def.meta.id;

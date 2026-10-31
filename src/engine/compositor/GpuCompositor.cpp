@@ -688,8 +688,6 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
             effect.catalogId.isEmpty() ? nullptr : effectDefForId(effect.catalogId);
         if (!def)
             continue;
-        if (def->meta.id == QStringLiteral("time_echo"))
-            continue; // history is assembled before the scene is built
 
         if (def->isModel3d) {
             QMap<QString, QVariant> params = resolvedEffectParameters(effect, *def);

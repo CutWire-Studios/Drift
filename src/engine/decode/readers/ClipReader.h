@@ -334,7 +334,7 @@ private:
     bool m_hasPeek = false;
 
     // Recently returned frames, most-recent first, keyed by source PTS. Backward
-    // scrubbing and time_echo's history samples hit this instead of re-seeking.
+    // scrubbing hits this instead of re-seeking.
     struct CachedFrame
     {
         drift::TimeUs ptsUs = 0;

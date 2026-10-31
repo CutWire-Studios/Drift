@@ -1978,8 +1978,7 @@ bool ClipReader::readVideoFrameAt(drift::TimeUs sourceUs, QImage &out, int maxWi
     // A surface-mode decoder physically cannot serve this: MEDIACODEC frames are opaque gralloc
     // handles and there is no av_hwframe_transfer_data for them, so there is no route back to a
     // QImage. Reopen surfaceless, permanently for this reader. Readers are per stream id, so only
-    // a clip that needs both APIs pays for it — in practice time_echo, whose CPU layer fallback
-    // shares the timeline clip's reader.
+    // a clip that needs both APIs pays for it.
     if (m_mcSurfaceMode) {
         m_mcSurfaceDisabled = true;
         teardownVideoDecoder();

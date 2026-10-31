@@ -179,10 +179,6 @@ QImage EffectProcessor::applyEffects(const QImage &input, const QList<drift::Eff
         const EffectPresetEntry *def =
             effect.catalogId.isEmpty() ? nullptr : effectDefForId(effect.catalogId);
 
-        // Multi-frame trail is assembled in FrameCompositor before this call.
-        if (def && def->meta.id == QStringLiteral("time_echo"))
-            continue;
-
         // Both compositor-only face backends ride the GPU chain as a modelDef step; applyChain
         // picks the renderer apart again.
         if (def && (def->isModel3d || def->isFaceSwap)) {

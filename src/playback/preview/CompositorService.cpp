@@ -261,7 +261,6 @@ bool CompositorService::isRedundantRequest(drift::TimeUs time,
 {
     return time == lastTime
            && options.previewScale == last.previewScale
-           && options.maxTimeEchoHistoryFrames == last.maxTimeEchoHistoryFrames
            && options.readAheadUs == last.readAheadUs
            && options.textEdit == last.textEdit
            && options.maskView == last.maskView

@@ -856,7 +856,7 @@ void PlaybackEngine::refreshFrame()
     // Edits / seeks take a fresh project snapshot; the play loop reuses one.
     m_compositor.invalidateSnapshot();
     // Use the same RenderOptions as the play loop so paused/scrubbed frames
-    // match what playback shows (preview scale + temporal-effect history).
+    // match what playback shows (preview scale).
     m_compositor.requestComposite(m_playheadUs, playbackRenderOptions());
 }
 
@@ -1003,11 +1003,6 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     }
     options.previewScale = qBound(kMinPreviewScale, fit * qualityFraction, 1.0);
 
-    // During playback, cap temporal history so time_echo cannot multiply decode
-    // work unboundedly. Paused and scrubbed frames keep the full history: those
-    // are exactly the cases where fidelity is the point.
-    options.maxTimeEchoHistoryFrames = m_playing ? 12 : -1;
-
     // Buffer decoded frames ahead of the playhead only while playback is actually
     // running: paused frames have no deadline to miss, and read-ahead during
     // editing is thrown away by the next edit.
@@ -1039,8 +1034,6 @@ FrameCompositor::RenderOptions PlaybackEngine::playbackRenderOptions() const
     // the ones after it are passing through.
     if (m_scrubbing && !m_playing && m_scrubSeeks >= 2) {
         options.approximateSeek = true;
-        // Same cap as playback: full time_echo history multiplies decode work per frame.
-        options.maxTimeEchoHistoryFrames = 12;
     }
     return options;
 }

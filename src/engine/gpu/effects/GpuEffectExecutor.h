@@ -51,10 +51,6 @@ public:
     QImage apply(const EffectPresetEntry &def, const QImage &input,
                  const QMap<QString, QVariant> &parameters, drift::TimeUs timeUs);
 
-    // GPU blend for time_echo history (newest-first). Falls back to empty on GL failure
-    // so callers can use a CPU path.
-    QImage blendTimeEcho(const QList<QImage> &framesNewestFirst, double decay, int blendMode);
-
     bool isAvailable();
 
 private:

@@ -75,7 +75,6 @@
 #include "engine/gpu/device/GpuDevice.h"
 #include "engine/decode/hw/HwAccel.h"
 #include "engine/ml/runtime/OrtRuntime.h"
-#include "engine/compositor/effects/CompositorFrameHistory.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/audio/dsp/AudioEffectFactory.h"
 #include "engine/audio/dsp/graph/AudioGraph.h"
@@ -384,11 +383,6 @@ private slots:
     void digitalGlitchDeterministicForFixedTimeAndSeed();
     void filmBurnZeroIntensityUnchanged();
     void filmBurnAddsWarmLeakContribution();
-    void timeEchoBlendDeterministic();
-    void timeEchoBlendIncludesHistoryContribution();
-    void timeEchoDeterministicAtFixedTimelineTime();
-    void timeEchoBlendsPriorVideoFrames();
-    void timeEchoOnALaneBlendsPriorVideoFrames();
     void blurredBackgroundCarriesLaneEffects();
     void shockwavePulseZeroStrengthPassthrough();
     void shockwavePulseChangesPixelsNearWavefront();
@@ -8634,7 +8628,6 @@ void EngineTest::compositorPreviewScaleRendersLowerResolution()
 
     FrameCompositor::RenderOptions options;
     options.previewScale = 0.5;
-    options.maxTimeEchoHistoryFrames = 1;
     const QImage frame = compositor.compositeAt(0, options);
     QCOMPARE(frame.size(), QSize(96, 54));
 
@@ -9062,7 +9055,7 @@ void EngineTest::effectPresetStableIds()
         QStringLiteral("shockwave_pulse"), QStringLiteral("sketch_pencil"),
         QStringLiteral("spin_blur"),       QStringLiteral("star_filter"),
         QStringLiteral("strobe_flash"),    QStringLiteral("super8_film"),
-        QStringLiteral("time_echo"),       QStringLiteral("vhs_crt"),
+        QStringLiteral("vhs_crt"),
         QStringLiteral("wave_warp"),       QStringLiteral("zoom_pulse"),
         QStringLiteral("chromatic_aberration"), QStringLiteral("film_grain"),
     };
@@ -9256,7 +9249,6 @@ void EngineTest::effectPresetCatalogIncludesStylizePresets()
     requirePreset("stylize.bloom", "Bloom", "dreamy", true);
     requirePreset("bloom_glow", "Bloom / Glow", "dreamy", true);
     requirePreset("edge_neon", "Edge Glow / Neon", "dreamy", true);
-    requirePreset("time_echo", "Time Echo / Trail", "dreamy", true);
     requirePreset("stylize.ripple", "Ripple", "glitch", true);
     requirePreset("ripple_water", "Ripple / Water", "glitch", true);
     requirePreset("shockwave_pulse", "Shockwave / Pulse", "glitch", true);
@@ -10221,143 +10213,6 @@ void EngineTest::filmBurnAddsWarmLeakContribution()
     QCOMPARE(buildFilterGraphForEffect({.catalogId = QStringLiteral("film_burn")}), QString());
 }
 
-void EngineTest::timeEchoBlendDeterministic()
-{
-    auto makeFrame = [](const QColor &color, int rectX) {
-        QImage image(32, 32, QImage::Format_RGBA8888);
-        image.fill(Qt::transparent);
-        QPainter painter(&image);
-        painter.fillRect(rectX, 10, 10, 10, color);
-        return image;
-    };
-
-    const QList<QImage> samples = {makeFrame(Qt::red, 18), makeFrame(Qt::blue, 4)};
-    const QImage first =
-        CompositorFrameHistory::applyTimeEcho(samples, 0.55, CompositorFrameHistory::EchoBlendMode::Normal);
-    const QImage second =
-        CompositorFrameHistory::applyTimeEcho(samples, 0.55, CompositorFrameHistory::EchoBlendMode::Normal);
-    QCOMPARE(first, second);
-    QVERIFY(first != samples.first());
-    QVERIFY(qBlue(first.pixel(8, 14)) > 0);
-    QVERIFY(qRed(first.pixel(22, 14)) > 200);
-}
-
-void EngineTest::timeEchoBlendIncludesHistoryContribution()
-{
-    auto makeFrame = [](const QColor &color, int rectX) {
-        QImage image(32, 32, QImage::Format_RGBA8888);
-        image.fill(Qt::transparent);
-        QPainter painter(&image);
-        painter.fillRect(rectX, 10, 10, 10, color);
-        return image;
-    };
-
-    const QList<QImage> samples = {makeFrame(Qt::red, 18), makeFrame(Qt::blue, 4)};
-    const QImage normal =
-        CompositorFrameHistory::applyTimeEcho(samples, 0.5, CompositorFrameHistory::EchoBlendMode::Normal);
-    const QImage currentOnly =
-        CompositorFrameHistory::applyTimeEcho({samples.first()}, 0.5, CompositorFrameHistory::EchoBlendMode::Normal);
-    QVERIFY(normal != currentOnly);
-    QVERIFY(qBlue(normal.pixel(8, 14)) > qBlue(currentOnly.pixel(8, 14)));
-}
-
-static drift::Effect makeTimeEchoEffect(const QString &blendMode = QStringLiteral("add"))
-{
-    drift::Effect effect;
-    effect.catalogId = QStringLiteral("time_echo");
-    effect.parameters.insert(QStringLiteral("frames"), 4);
-    effect.parameters.insert(QStringLiteral("decay"), 0.55);
-    effect.parameters.insert(QStringLiteral("blendMode"), blendMode);
-    return effect;
-}
-
-void EngineTest::timeEchoDeterministicAtFixedTimelineTime()
-{
-    if (!GpuCompositor::isAvailable())
-        QSKIP("No GPU compositor available");
-
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-    const QString path = makeColorSegmentsVideo(dir);
-    if (path.isEmpty())
-        QSKIP("ffmpeg not available to generate a test clip");
-
-    drift::Project project;
-    project.setResolution(64, 64);
-    project.setFps(25);
-    project.tracks().clear();
-    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
-
-    drift::Clip clip;
-    clip.id = QStringLiteral("video");
-    clip.type = drift::ClipType::Video;
-    clip.path = path;
-    clip.timelineStart = 0;
-    clip.timelineDuration = drift::secondsToUs(3.0);
-    clip.effects.append(makeTimeEchoEffect());
-    project.tracks()[0].clips.append(clip);
-
-    FrameCompositor compositor;
-    compositor.setProject(&project);
-
-    constexpr drift::TimeUs timeUs = drift::secondsToUs(2.1);
-    const QImage first = compositor.compositeAt(timeUs);
-    const QImage second = compositor.compositeAt(timeUs);
-    QCOMPARE(first, second);
-    QVERIFY(!first.isNull());
-}
-
-// Effects live on lane adjustments now, and the trail used to be looked for on the clip alone —
-// so a time_echo added the ordinary way did nothing at all.
-void EngineTest::timeEchoOnALaneBlendsPriorVideoFrames()
-{
-    if (!GpuCompositor::isAvailable())
-        QSKIP("No GPU compositor available");
-
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-    const QString path = makeColorSegmentsVideo(dir);
-    if (path.isEmpty())
-        QSKIP("ffmpeg not available to generate a test clip");
-
-    drift::Project project;
-    project.setResolution(64, 64);
-    project.setFps(25);
-    project.tracks().clear();
-    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
-    drift::Clip clip;
-    clip.id = QStringLiteral("video");
-    clip.type = drift::ClipType::Video;
-    clip.path = path;
-    clip.timelineDuration = drift::secondsToUs(3.0);
-    project.tracks()[0].clips.append(clip);
-    project.ensureTrackIds();
-
-    FrameCompositor compositor;
-    compositor.setProject(&project);
-    constexpr drift::TimeUs timeUs = drift::secondsToUs(2.1);
-    const QImage withoutEcho = compositor.compositeAt(timeUs);
-
-    const int lane = drift::ensureAdjustmentLane(project, 0, drift::AdjustmentKind::VideoEffects, 0,
-                                                 clip.timelineDuration);
-    QVERIFY(lane >= 0);
-    drift::Clip adjustment;
-    adjustment.id = QStringLiteral("echo");
-    adjustment.type = drift::ClipType::Adjustment;
-    adjustment.linkedClipId = clip.id;
-    adjustment.timelineDuration = clip.timelineDuration;
-    adjustment.effects.append(makeTimeEchoEffect(QStringLiteral("add")));
-    project.tracks()[lane].clips.append(adjustment);
-    compositor.setProject(&project);
-
-    GpuScene scene;
-    QVERIFY(compositor.buildSceneAt(timeUs, FrameCompositor::RenderOptions{}, &scene));
-    QCOMPARE(scene.items.size(), 1);
-    for (const drift::Effect &effect : scene.items.constFirst().layer.effects)
-        QVERIFY(effect.catalogId != QStringLiteral("time_echo"));
-    QVERIFY(compositor.compositeAt(timeUs) != withoutEcho);
-}
-
 // The blurred fill is built from the bottom clip as it looks; its lane grade used to be lost, so
 // the fill showed the ungraded footage around a graded picture.
 void EngineTest::blurredBackgroundCarriesLaneEffects()
@@ -10412,52 +10267,6 @@ void EngineTest::blurredBackgroundCarriesLaneEffects()
     QVERIFY2(qGray(graded.blurSource.pixel(16, 16)) > qGray(plain.blurSource.pixel(16, 16)) + 20,
              qPrintable(QStringLiteral("%1 vs %2").arg(qGray(graded.blurSource.pixel(16, 16)))
                             .arg(qGray(plain.blurSource.pixel(16, 16)))));
-}
-
-void EngineTest::timeEchoBlendsPriorVideoFrames()
-{
-    if (!GpuCompositor::isAvailable())
-        QSKIP("No GPU compositor available");
-
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-    const QString path = makeColorSegmentsVideo(dir);
-    if (path.isEmpty())
-        QSKIP("ffmpeg not available to generate a test clip");
-
-    drift::Project project;
-    project.setResolution(64, 64);
-    project.setFps(25);
-    project.tracks().clear();
-    project.tracks().append(drift::Track{.type = drift::TrackType::Video});
-
-    drift::Clip clip;
-    clip.id = QStringLiteral("video");
-    clip.type = drift::ClipType::Video;
-    clip.path = path;
-    clip.timelineStart = 0;
-    clip.timelineDuration = drift::secondsToUs(3.0);
-    project.tracks()[0].clips.append(clip);
-
-    FrameCompositor compositor;
-    compositor.setProject(&project);
-
-    constexpr drift::TimeUs timeUs = drift::secondsToUs(2.1);
-    const QImage withoutEcho = compositor.compositeAt(timeUs);
-
-    clip.effects.append(makeTimeEchoEffect(QStringLiteral("add")));
-    project.tracks()[0].clips.clear();
-    project.tracks()[0].clips.append(clip);
-    compositor.setProject(&project);
-
-    const QImage withEcho = compositor.compositeAt(timeUs);
-    QVERIFY(withEcho != withoutEcho);
-
-    const EffectPresetEntry *def = effectDefForId(QStringLiteral("time_echo"));
-    QVERIFY(def);
-    QVERIFY(def->isGpu);
-    QCOMPARE(def->fixedParams.value(QStringLiteral("blendMode")).toString(), QStringLiteral("normal"));
-    QCOMPARE(buildFilterGraphForEffect({.catalogId = QStringLiteral("time_echo")}), QString());
 }
 
 static drift::Effect makeShockwavePulseEffect()

@@ -237,10 +237,6 @@ A transition with `"requires": "mask"` reads the **outgoing** clip's masks, laid
 where that clip is drawn, and that side is drawn whole for the transition. Neither is applied on the
 CPU compositor, where the package runs with `u_hasClipMask = 0` and the clip is still cut out.
 
-## Special case: time_echo
-
-History frames are still decoded in `FrameCompositor`; blending runs on the GPU via `GpuEffectExecutor::blendTimeEcho` (CPU fallback if GL is unavailable).
-
 ## 3D face mesh (`backend: "model3d"`)
 
 Not a fragment pipeline — there is no `.frag`. `face_mesh_3d` declares parameters only; the engine

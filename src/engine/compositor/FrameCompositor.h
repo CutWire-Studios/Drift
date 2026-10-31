@@ -23,7 +23,6 @@ public:
     struct RenderOptions
     {
         double previewScale = 1.0;
-        int maxTimeEchoHistoryFrames = -1;
         // How far ahead of this frame the decoders keep buffering, in source
         // time. Only realtime playback sets it; a paused preview would just be
         // decoding frames an edit is about to invalidate.
