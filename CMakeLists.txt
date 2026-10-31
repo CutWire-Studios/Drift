@@ -2397,9 +2397,12 @@ if(DRIFT_QML_PREVIEWS AND NOT ANDROID AND NOT EMSCRIPTEN)
         RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" src/qml/*_Preview.qml)
     qt_target_qml_sources(drift QML_FILES
         src/qml/PreviewHost.qml
+        src/qml/PreviewMockData.qml
         ${DRIFT_QML_PREVIEW_FIXTURES}
     )
     target_compile_definitions(drift PRIVATE DRIFT_QML_PREVIEWS)
+    target_compile_definitions(drift PRIVATE
+        "DRIFT_PREVIEW_MEDIA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/tests/data/preview-media\"")
 endif()
 
 target_link_libraries(drift PRIVATE

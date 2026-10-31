@@ -82,6 +82,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQmlNetworkAccessManagerFactory>
 #include <QStandardPaths>
 #include <QStringList>
@@ -910,6 +911,9 @@ int main(int argc, char *argv[])
             qCritical("--preview-shot: cannot create %s", qUtf8Printable(previewShotDir));
             return 1;
         }
+        // Mock media for fixtures (PreviewMockData.qml); a dev checkout path, debug builds only.
+        engine.rootContext()->setContextProperty(QStringLiteral("PreviewMediaDir"),
+                                                 QStringLiteral(DRIFT_PREVIEW_MEDIA_DIR));
         for (const QString &name : std::as_const(previewNames)) {
             engine.setInitialProperties({{QStringLiteral("componentName"), name},
                                          {QStringLiteral("shotDir"), previewShotDir}});

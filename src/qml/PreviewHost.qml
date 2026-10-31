@@ -29,6 +29,11 @@ Window {
         return null
     }
 
+    // A fixture whose component is a ToolWindow exposes it as `toolWindow`; otherwise the item itself.
+    function toolWindowOf(item) {
+        return item && item.toolWindow !== undefined ? item.toolWindow : item
+    }
+
     width: 800
     height: 600
     visible: true
@@ -46,15 +51,37 @@ Window {
 
         property bool fired: false
 
+        // A fixture with async setup (imports, probes) sets previewReady to false until it is done.
+        property int waited: 0
+
         interval: 250
+        repeat: true
         onTriggered: {
+            const pending = loader.item && loader.item.previewReady === false
+            if (pending && waited < 60) {
+                waited += 1
+                return
+            }
+            stop()
             fired = true
             const path = root.shotDir + "/" + root.componentName + ".png"
-            stage.grabToImage(result => {
+            // A ToolWindow keeps its content in a Window of its own, so grab that window's content.
+            const tool = root.toolWindowOf(loader.item)
+            const toolWindow = tool && tool._host ? tool : null
+            // A Popup (dialog) draws in the overlay, outside the stage. Its background's parent is the
+            // popup item, sized to the dialog, so grabbing that takes the dialog alone.
+            const popup = !toolWindow && tool && tool.open !== undefined && tool.background ? tool : null
+            const target = toolWindow ? toolWindow._host.contentItem
+                                      : popup ? popup.background.parent : stage
+            target.grabToImage(result => {
                 const saved = result.saveToFile(path)
                 if (!saved)
                     console.error("preview " + root.componentName + ": could not write " + path)
                 root.shotOk = saved && root.errorText.length === 0
+                if (toolWindow)
+                    toolWindow.close()
+                if (popup)
+                    popup.close()
                 root.close()
             })
         }
@@ -64,7 +91,10 @@ Window {
     Item {
         id: stage
 
-        anchors.fill: parent
+        // Sized to the content, not the window: a tiling WM may not give the window its requested
+        // size, and the shot must still show the whole component.
+        width: loader.item && loader.item.implicitWidth > 0 ? loader.item.implicitWidth : root.width
+        height: loader.item && loader.item.implicitHeight > 0 ? loader.item.implicitHeight : root.height
 
         Rectangle {
             anchors.fill: parent
@@ -83,6 +113,12 @@ Window {
                                      .arg(root.componentName)
             }
             onLoaded: {
+                // ToolWindow is hidden until shown; a preview is meant to be seen.
+                const tool = root.toolWindowOf(item)
+                if (tool && typeof tool.show === "function")
+                    tool.show()
+                else if (tool && typeof tool.open === "function")
+                    tool.open()
                 if (item && item.implicitWidth > 0 && item.implicitHeight > 0) {
                     root.width = item.implicitWidth
                     root.height = item.implicitHeight
