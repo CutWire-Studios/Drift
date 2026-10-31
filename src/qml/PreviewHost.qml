@@ -37,7 +37,7 @@ Window {
     width: 800
     height: 600
     visible: true
-    title: qsTr("%1 — preview").arg(root.componentName)
+    title: "%1 — preview".arg(root.componentName)
     color: Theme.c.previewHost.background
 
     onFrameSwapped: {
@@ -109,7 +109,7 @@ Window {
             onStatusChanged: {
                 // Required properties left unset fail here, after the component itself compiled.
                 if (status === Loader.Error || (status === Loader.Ready && !item))
-                    root.errorText = qsTr("%1 cannot be created on its own (see the log). Add %1_Preview.qml next to it to supply what it needs.")
+                    root.errorText = ("%1 cannot be created on its own (see the log). Add %1_Preview.qml next to it to supply what it needs.")
                                      .arg(root.componentName)
             }
             onLoaded: {

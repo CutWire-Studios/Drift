@@ -350,10 +350,9 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    qDebug() << "CATSIZE" << QJsonDocument(compact).toJson(QJsonDocument::Compact).size() << QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}})).toJson(QJsonDocument::Compact).size();
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 22200);
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 22800);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 11100);
+                .toJson(QJsonDocument::Compact).size() < 11400);
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -2290,7 +2289,7 @@ void McpTest::audioToolboxReturnsSchemas()
     const QJsonObject payload = drift::mcp::toolboxPayload(QStringLiteral("audio"));
     QVERIFY(payload.value(QStringLiteral("ok")).toBool());
     const QJsonArray tools = payload.value(QStringLiteral("tools")).toArray();
-    QCOMPARE(tools.size(), 14);
+    QCOMPARE(tools.size(), 22);
 
     QStringList names;
     for (const QJsonValue &v : tools) {
@@ -2309,6 +2308,14 @@ void McpTest::audioToolboxReturnsSchemas()
     QVERIFY(names.contains(QStringLiteral("normalize_volume")));
     QVERIFY(names.contains(QStringLiteral("duck_under")));
     QVERIFY(names.contains(QStringLiteral("clear_beat_analysis")));
+    QVERIFY(names.contains(QStringLiteral("audio_measure")));
+    QVERIFY(names.contains(QStringLiteral("audio_events")));
+    QVERIFY(names.contains(QStringLiteral("audio_sync")));
+    QVERIFY(names.contains(QStringLiteral("audio_sheet")));
+    QVERIFY(names.contains(QStringLiteral("audio_tag")));
+    QVERIFY(names.contains(QStringLiteral("audio_find")));
+    QVERIFY(names.contains(QStringLiteral("audio_rank")));
+    QVERIFY(names.contains(QStringLiteral("audio_presence")));
 
     // detect_beats is on /mcp/audio, not the homepage.
     QCOMPARE(drift::mcp::toolboxForOp(QStringLiteral("detect_beats")), QStringLiteral("audio"));

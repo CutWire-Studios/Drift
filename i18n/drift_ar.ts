@@ -14351,17 +14351,6 @@
     </message>
 </context>
 <context>
-    <name>PreviewHost</name>
-    <message>
-        <source>%1 — preview</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 cannot be created on its own (see the log). Add %1_Preview.qml next to it to supply what it needs.</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>PreviewModeSwitch</name>
     <message>
         <source>Camera Output</source>
