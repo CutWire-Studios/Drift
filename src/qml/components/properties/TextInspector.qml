@@ -69,7 +69,10 @@ Item {
                                              400: "Regular", 500: "Medium", 600: "SemiBold",
                                              700: "Bold", 800: "ExtraBold", 900: "Black"
                                          })
-    readonly property var accentRules: ["none", "firstWord", "lastWord", "everyOther", "everyNth",
+    readonly property var caseOptions: ["none", "upper", "lower", "title", "sentence"]
+    readonly property var caseLabels: [qsTr("As typed"), qsTr("UPPERCASE"), qsTr("lowercase"),
+                                       qsTr("Title Case"), qsTr("Sentence case")]
+    readonly property var accentRules:["none", "firstWord", "lastWord", "everyOther", "everyNth",
                                         "longestWord", "randomStable", "karaoke"]
     readonly property var accentRuleLabels: ["No accent", "First word", "Last word", "Every other word",
                                              "Every Nth word", "Longest word", "Random words",

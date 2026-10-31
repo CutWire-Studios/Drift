@@ -2112,6 +2112,7 @@ QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStar
         {QStringLiteral("wordWrap"), s.wordWrap},
         {QStringLiteral("lineHeight"), s.lineHeight},
         {QStringLiteral("letterSpacing"), s.letterSpacing},
+        {QStringLiteral("textCase"), drift::textCaseToString(s.textCase)},
         {QStringLiteral("boxEnabled"), s.boxEnabled},
         {QStringLiteral("boxColor"), s.boxColor.name(QColor::HexArgb)},
         {QStringLiteral("boxPadding"), s.boxPadding},
@@ -2121,6 +2122,7 @@ QVariantMap textStyleToMap(const drift::TextStyle &s, drift::TimeUs timelineStar
         {QStringLiteral("underlineColor"), s.underlineColor.name(QColor::HexArgb)},
         {QStringLiteral("underlineWidth"), s.underlineWidth},
         {QStringLiteral("underlineOffset"), s.underlineOffset},
+        {QStringLiteral("strikethroughEnabled"), s.strikethroughEnabled},
         {QStringLiteral("accent"), wordAccentToMap(s.accent)},
         {QStringLiteral("animation"), textAnimationSetToMap(s.animation)},
     };
@@ -12368,6 +12370,8 @@ void AppController::applyTextStylePatch(drift::TextStyle &s, const QVariantMap &
         s.lineHeight = qBound(0.5, m.value(QStringLiteral("lineHeight")).toDouble(), 4.0);
     if (m.contains(QStringLiteral("letterSpacing")))
         s.letterSpacing = m.value(QStringLiteral("letterSpacing")).toDouble();
+    if (m.contains(QStringLiteral("textCase")))
+        s.textCase = drift::textCaseFromString(m.value(QStringLiteral("textCase")).toString());
     if (m.contains(QStringLiteral("boxEnabled")))
         s.boxEnabled = m.value(QStringLiteral("boxEnabled")).toBool();
     if (m.contains(QStringLiteral("boxColor")))
@@ -12384,6 +12388,8 @@ void AppController::applyTextStylePatch(drift::TextStyle &s, const QVariantMap &
         s.underlineWidth = qMax(0.0, m.value(QStringLiteral("underlineWidth")).toDouble());
     if (m.contains(QStringLiteral("underlineOffset")))
         s.underlineOffset = m.value(QStringLiteral("underlineOffset")).toDouble();
+    if (m.contains(QStringLiteral("strikethroughEnabled")))
+        s.strikethroughEnabled = m.value(QStringLiteral("strikethroughEnabled")).toBool();
     applyTextHighlightPatch(&s.wordHighlight, m.value(QStringLiteral("wordHighlight")).toMap());
     applyWordAccentPatch(&s.accent, m.value(QStringLiteral("accent")).toMap());
 

@@ -290,6 +290,7 @@ public:
         }
 
         drawUnderline(canvas);
+        drawStrikethrough(canvas);
         drawCaret(canvas);
 
         if (m_frame.block.wipeProgress >= 0.0) {
@@ -631,6 +632,34 @@ private:
         const float r = float(m_style.underlineWidth * m_scale * 0.5);
         for (const QRectF &rule : std::as_const(perLine))
             canvas.drawRoundRect(toSkRect(rule), r, r, fill);
+    }
+
+    // Through the middle of the x-height, in the fill colour; a bent block has no straight line to
+    // rule, so it is skipped the same way the underline is.
+    void drawStrikethrough(SkCanvas &canvas) const
+    {
+        if (m_bend.active || !m_style.strikethroughEnabled)
+            return;
+        const double thickness = qMax(1.0, m_style.pixelSize * 0.06 * m_scale);
+        QHash<int, QRectF> perLine;
+        for (int i = 0; i < m_pieces.size(); ++i) {
+            if (!visible(i))
+                continue;
+            const Piece &piece = m_pieces.at(i);
+            const textanim::FragmentProps &p = props(i);
+            const double y = piece.baselineY + p.dy - m_style.pixelSize * 0.28 * m_scale;
+            const QRectF rule(piece.cellRect.left() + p.dx, y - thickness * 0.5, piece.cellRect.width(), thickness);
+            const auto it = perLine.find(piece.line);
+            if (it == perLine.end())
+                perLine.insert(piece.line, rule);
+            else
+                *it = it->united(rule);
+        }
+        SkPaint fill;
+        fill.setAntiAlias(true);
+        fill.setColor(toSkColor(textFillColor(m_style, false)));
+        for (const QRectF &rule : std::as_const(perLine))
+            canvas.drawRect(toSkRect(rule), fill);
     }
 
     void drawCaret(SkCanvas &canvas) const

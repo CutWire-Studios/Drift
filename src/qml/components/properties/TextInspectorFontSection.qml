@@ -123,15 +123,48 @@ CollapsibleSection {
                 font.pixelSize: Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
-            ThemedToggleButton {
-                width: 60
-                text: qsTr("Italic")
-                checked: inspector.textStyle.italic
-                enabled: inspector.familyHasItalic
-                tooltip: inspector.familyHasItalic
-                         ? qsTr("Italicise the text")
-                         : qsTr("%1 has no italic face").arg(inspector.textStyle.fontFamily)
-                onClicked: inspector.setTextStyleKey("italic", !inspector.textStyle.italic)
+            Row {
+                spacing: 4
+                ThemedToggleButton {
+                    width: 60
+                    text: qsTr("Italic")
+                    checked: inspector.textStyle.italic
+                    enabled: inspector.familyHasItalic
+                    tooltip: inspector.familyHasItalic
+                             ? qsTr("Italicise the text")
+                             : qsTr("%1 has no italic face").arg(inspector.textStyle.fontFamily)
+                    onClicked: inspector.setTextStyleKey("italic", !inspector.textStyle.italic)
+                }
+                ThemedToggleButton {
+                    width: 60
+                    text: qsTr("Strike")
+                    checked: inspector.textStyle.strikethroughEnabled
+                    tooltip: qsTr("Draw a line through the text")
+                    onClicked: inspector.setTextStyleKey("strikethroughEnabled", !inspector.textStyle.strikethroughEnabled)
+                }
+            }
+        }
+    }
+
+    Row {
+        visible: inspector.mode === ""
+        width: parent.width
+        spacing: 8
+
+        Column {
+            width: (parent.width - parent.spacing) / 2
+            spacing: 4
+            Text {
+                text: qsTr("Case")
+                color: Theme.c.textInspectorFontSection.foregroundMuted
+                font.pixelSize: Theme.fontSizeXs
+                font.family: Theme.fontFamily
+            }
+            ThemedComboBox {
+                width: parent.width
+                model: inspector.caseLabels
+                currentIndex: Math.max(0, inspector.caseOptions.indexOf(inspector.textStyle.textCase))
+                onActivated: inspector.setTextStyleKey("textCase", inspector.caseOptions[currentIndex])
             }
         }
     }

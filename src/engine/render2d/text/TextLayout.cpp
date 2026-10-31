@@ -48,9 +48,9 @@ quint64 styleHash(const drift::TextStyle &s)
     const drift::WordAccent &a = s.accent;
     return qHashMulti(0, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, drift::textLayersHash(s.layers),
                       s.pathBend, static_cast<int>(s.align), static_cast<int>(s.valign), s.wordWrap,
-                      s.lineHeight, s.letterSpacing, s.boxEnabled, s.boxColor.rgba(), s.boxPadding,
-                      s.boxRadius, highlightHash(s.wordHighlight), s.underlineEnabled,
-                      s.underlineColor.rgba(), s.underlineWidth, s.underlineOffset,
+                      s.lineHeight, s.letterSpacing, static_cast<int>(s.textCase), s.boxEnabled,
+                      s.boxColor.rgba(), s.boxPadding, s.boxRadius, highlightHash(s.wordHighlight), s.underlineEnabled,
+                      s.underlineColor.rgba(), s.underlineWidth, s.underlineOffset, s.strikethroughEnabled,
                       qHashMulti(0, static_cast<int>(a.rule), a.n, a.phase, a.colorEnabled,
                                  a.color.rgba(), a.sizeScale, a.outlineEnabled, a.outlineWidth,
                                  a.outlineColor.rgba(), highlightHash(a.highlight)));
@@ -63,6 +63,7 @@ quint64 layoutKey(const QString &text, const drift::TextStyle &s, double wrapWid
     const drift::WordAccent &a = s.accent;
     return qHashMulti(0, text, s.fontFamily, s.pixelSize, s.fontWeight, s.italic, static_cast<int>(s.align),
                       static_cast<int>(s.valign), s.wordWrap, s.lineHeight, s.letterSpacing,
+                      static_cast<int>(s.textCase),
                       static_cast<int>(a.rule), a.n, a.phase, a.sizeScale, qRound(wrapWidth * 4.0),
                       qRound(blockHeight * 4.0), qRound(renderScale * 1000.0), activeWordIndex,
                       static_cast<int>(split));
@@ -293,7 +294,7 @@ QRectF toQRect(const SkRect &r)
 TextLayoutResult layoutStyledText(const QString &text, const drift::TextStyle &style, double renderScale,
                                   double wrapWidth, double blockHeight, int activeWordIndex, WordSplit split)
 {
-    const QString &source = text;
+    const QString source = drift::applyTextCase(text, style.textCase);
 
     // No early-out for text without words: the inline editor still needs the paragraph to place a
     // caret in empty or whitespace-only text. Such a set has no pieces, so nothing paints.
