@@ -683,14 +683,29 @@ int main(int argc, char *argv[])
     // Protocol strings under src/app/mcp/ are excluded from the catalog; they stay English.
     PreferencesController::installUiTranslators();
 
+    // --preview=Name[,Name...], repeatable: open those QML components, one per window, instead of
+    // the editor. The `=` keeps the names from being taken for a startup project path.
+    QStringList previewNames;
+#ifdef DRIFT_QML_PREVIEWS
+    {
+        const QStringList args = app.arguments();
+        for (const QString &arg : args) {
+            if (arg.startsWith(QLatin1String("--preview=")))
+                previewNames += arg.mid(10).split(QLatin1Char(','), Qt::SkipEmptyParts);
+        }
+    }
+#endif
+
     StartupSplash *splash = nullptr;
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
-    splash = new StartupSplash;
-    splash->show();
-    splash->step(StartupSplash::tr("Starting…"), 0.02);
-    // Once, to map the window. Nothing has queued work for the event loop yet; later steps only
-    // repaint.
-    QCoreApplication::processEvents();
+    if (previewNames.isEmpty()) {
+        splash = new StartupSplash;
+        splash->show();
+        splash->step(StartupSplash::tr("Starting…"), 0.02);
+        // Once, to map the window. Nothing has queued work for the event loop yet; later steps only
+        // repaint.
+        QCoreApplication::processEvents();
+    }
 #endif
     const auto step = [splash](const QString &status, double progress) {
         if (splash)
@@ -878,6 +893,19 @@ int main(int argc, char *argv[])
                                            "(Landroid/content/Context;)V",
                                            QNativeInterface::QAndroidApplication::context().object());
         QJniEnvironment().checkAndClearExceptions();
+    }
+#endif
+#ifdef DRIFT_QML_PREVIEWS
+    if (!previewNames.isEmpty()) {
+        // No start screen to hand the queued startup project to, so load it directly.
+        const QUrl project = ProjectFileController::startupProjectUrlFromArguments(app.arguments());
+        if (project.isValid())
+            editorState.projectFile()->loadProject(project);
+        for (const QString &name : std::as_const(previewNames)) {
+            engine.setInitialProperties({{QStringLiteral("componentName"), name}});
+            engine.loadFromModule("Drift", "PreviewHost");
+        }
+        return app.exec();
     }
 #endif
     engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});

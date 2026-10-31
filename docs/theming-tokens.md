@@ -2052,6 +2052,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | mediaPreviewWindow | stripBorder | $semantic.panel.border | $semantic.panel.border |
 | mediaPreviewWindow | stripBorderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | mediaPreviewWindow | stripRadius | $metrics.radius.sm | $metrics.radius.sm |
+| previewHost | background | $semantic.surface.app | $semantic.surface.app |
+| previewHost | error | $semantic.destructive | $semantic.destructive |
 | multicamAngleBadge | background | $semantic.scrimStrong | $semantic.scrimStrong |
 | multicamAngleBadge | backgroundActive | $semantic.primary | $semantic.primary |
 | multicamAngleBadge | foreground | $semantic.onMedia | $semantic.onMedia |

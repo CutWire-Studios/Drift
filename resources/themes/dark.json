@@ -2889,6 +2889,10 @@
       "stripBorderWidth": "$metrics.borderWidth",
       "stripRadius": "$metrics.radius.sm"
     },
+    "previewHost": {
+      "background": "$semantic.surface.app",
+      "error": "$semantic.destructive"
+    },
     "multicamAngleBadge": {
       "background": "$semantic.scrimStrong",
       "backgroundActive": "$semantic.primary",

@@ -30,6 +30,15 @@ else()
 endif()
 option(DRIFT_AUTO_UPDATE_TRANSLATIONS "Run lupdate as part of the default build" ${_drift_auto_ts})
 
+# drift --preview=Name opens one QML component per window. Fixtures are <Name>_Preview.qml next to
+# the component they wrap; neither they nor the host ship in release builds.
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(_drift_qml_previews ON)
+else()
+    set(_drift_qml_previews OFF)
+endif()
+option(DRIFT_QML_PREVIEWS "Build the --preview component windows and *_Preview.qml fixtures" ${_drift_qml_previews})
+
 # Fonts, stickers and the Whisper model used to be fetched or extracted here and shipped inside
 # the build tree — roughly 800 MB of assets every user paid for whether or not they used them.
 # They are now addons: signed .driftpkg archives downloaded at runtime into <AppDataLocation>/
@@ -2382,6 +2391,16 @@ qt_add_qml_module(drift
         resources/fonts/InterUI-Italic.ttf
         ${DRIFT_LUCIDE_ICONS}
 )
+
+if(DRIFT_QML_PREVIEWS AND NOT ANDROID AND NOT EMSCRIPTEN)
+    file(GLOB_RECURSE DRIFT_QML_PREVIEW_FIXTURES CONFIGURE_DEPENDS
+        RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" src/qml/*_Preview.qml)
+    qt_target_qml_sources(drift QML_FILES
+        src/qml/PreviewHost.qml
+        ${DRIFT_QML_PREVIEW_FIXTURES}
+    )
+    target_compile_definitions(drift PRIVATE DRIFT_QML_PREVIEWS)
+endif()
 
 target_link_libraries(drift PRIVATE
     Qt6::Quick
