@@ -962,6 +962,14 @@
         <translation>Prędkość</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">Edytowanie %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">Dotknij klipu, aby go edytować</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>Duplikuj</translation>
     </message>
@@ -970,19 +978,20 @@
         <translation>Więcej</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">Główna</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>Dopasuj</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">Kompozycja</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>Przesuń głowicę odtwarzania nad klip, aby go podzielić</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>Dotknij klipu, aby go edytować</translation>
     </message>
 </context>
 <context>
@@ -15592,6 +15601,85 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Dark</source>
         <translation type="unfinished">Ciemny</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Kolor</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">Klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Napisy</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efekty</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Przejścia</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Style</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Czcionki</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Naklejki</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Narzędzia AI</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">Automatyczne napisy</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">Znajdź sceny</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">Zaznacz wiele</translation>
     </message>
 </context>
 <context>

@@ -960,6 +960,14 @@
         <translation>속도</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">%1 편집 중</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">클립을 눌러 편집하세요</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>복제</translation>
     </message>
@@ -968,19 +976,20 @@
         <translation>더 보기</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">메인</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>맞춤</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">컴포지트</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>클립 위로 재생 헤드를 이동하여 분할하세요</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>클립을 눌러 편집하세요</translation>
     </message>
 </context>
 <context>
@@ -15455,6 +15464,85 @@ If playback stutters, try another.</source>
     <message>
         <source>Dark</source>
         <translation type="unfinished">어두운</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">색상</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">키프레임</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">자막</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">룩</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">글꼴</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">스티커</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI 도구</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">자동 자막</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">장면 찾기</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">여러 항목 선택</translation>
     </message>
 </context>
 <context>

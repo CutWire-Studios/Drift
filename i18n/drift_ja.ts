@@ -960,6 +960,14 @@
         <translation>速度</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">%1 を編集中</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">クリップをタップして編集</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>複製</translation>
     </message>
@@ -968,19 +976,20 @@
         <translation>その他</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">メイン</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>フィット</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">コンポジット</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>クリップを分割するには、再生ヘッドをクリップ上に移動してください</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>クリップをタップして編集</translation>
     </message>
 </context>
 <context>
@@ -15462,6 +15471,85 @@ If playback stutters, try another.</source>
     <message>
         <source>Dark</source>
         <translation type="unfinished">ダーク</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">カラー</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">キーフレーム</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">字幕</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">ルック</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">フォント</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">スタンプ</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI ツール</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">自動字幕</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">シーンを検索</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">複数選択</translation>
     </message>
 </context>
 <context>

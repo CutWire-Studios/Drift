@@ -961,6 +961,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation type="unfinished"></translation>
     </message>
@@ -969,18 +977,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move the playhead over the clip to split it</source>
+        <source>Composite</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
     <message>
-        <source>Tap a clip to edit</source>
+        <source>Move the playhead over the clip to split it</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -15519,6 +15528,85 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

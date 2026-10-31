@@ -100,12 +100,31 @@ Item {
                 { id: "more", label: qsTr("More"), icon: Theme.icons.ellipsis }
             ]
         }
+        // Desktop leaves a composite through the toolbar's sequence switcher, which a phone
+        // does not have.
+        if (root.inComposite) {
+            return [
+                { id: "exitComposite", label: qsTr("Main"), icon: Theme.icons.chevronLeft },
+                { id: "fit", label: qsTr("Fit"), icon: Theme.icons.zoomFit },
+                { id: "more", label: qsTr("More"), icon: Theme.icons.ellipsis }
+            ]
+        }
         // Honest rather than a row of greyed buttons — and the same height either way, so
         // the timeline below never shifts when the selection changes.
         return [
             { id: "fit", label: qsTr("Fit"), icon: Theme.icons.zoomFit },
             { id: "more", label: qsTr("More"), icon: Theme.icons.ellipsis }
         ]
+    }
+
+    readonly property bool inComposite: EditorState.activeSequenceId !== ""
+    readonly property string compositeName: {
+        const tabs = EditorState.sequenceTabs
+        for (var i = 0; i < tabs.length; i++) {
+            if (tabs[i].id === EditorState.activeSequenceId)
+                return tabs[i].name
+        }
+        return qsTr("Composite")
     }
 
     readonly property bool showHint: !root.hasSelection && !root.hasTransition
@@ -168,6 +187,9 @@ Item {
             EditorState.removeTransition(EditorState.selectedTransitionTrack,
                                          EditorState.selectedTransitionData.id)
             break
+        case "exitComposite":
+            EditorState.openSequence("")
+            break
         case "fit":
             if (root.panel)
                 root.panel.fitZoom()
@@ -203,6 +225,8 @@ Item {
             anchors.rightMargin: Theme.spacingLg
             anchors.verticalCenter: parent.verticalCenter
             visible: root.showHint
+            text: root.inComposite ? qsTr("Editing %1").arg(root.compositeName)
+                                   : qsTr("Tap a clip to edit")
         }
 
         Row {

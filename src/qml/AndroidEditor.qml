@@ -288,6 +288,10 @@ Item {
             toolPage.cancel()
             return true
         }
+        if (EditorState.activeSequenceId !== "") {
+            EditorState.openSequence("")
+            return true
+        }
         return false
     }
 

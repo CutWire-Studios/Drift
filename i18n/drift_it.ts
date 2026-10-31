@@ -961,6 +961,14 @@
         <translation>Velocità</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">Modifica di %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">Tocca una clip per modificarla</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>Duplica</translation>
     </message>
@@ -969,19 +977,20 @@
         <translation>Altro</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">Principale</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>Adatta</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">Composito</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>Sposta la testina di riproduzione sulla clip per dividerla</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>Tocca una clip per modificarla</translation>
     </message>
 </context>
 <context>
@@ -15526,6 +15535,85 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Dark</source>
         <translation type="unfinished">Scuro</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Colore</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">Fotogrammi chiave</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Sottotitoli</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Effetti</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Transizioni</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Stili</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Caratteri</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Adesivi</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Strumenti IA</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">Sottotitoli automatici</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">Trova scene</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">Selezione multipla</translation>
     </message>
 </context>
 <context>

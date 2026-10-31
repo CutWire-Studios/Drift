@@ -960,6 +960,14 @@
         <translation>速度</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">正在編輯 %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">點按片段進行編輯</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>複製副本</translation>
     </message>
@@ -968,19 +976,20 @@
         <translation>更多</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">主</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>適應</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">合成</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>將播放頭移到片段上以進行分割</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>點按片段進行編輯</translation>
     </message>
 </context>
 <context>
@@ -15462,6 +15471,85 @@ If playback stutters, try another.</source>
     <message>
         <source>Dark</source>
         <translation type="unfinished">深色</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">顏色</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">關鍵格</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">效果</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">轉場</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">字體</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI 工具</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">自動字幕</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">查找場景</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">多選</translation>
     </message>
 </context>
 <context>

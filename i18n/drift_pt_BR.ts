@@ -961,6 +961,14 @@
         <translation>Velocidade</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">Editando %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">Toque em um clipe para editar</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>Duplicar</translation>
     </message>
@@ -969,19 +977,20 @@
         <translation>Mais</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">Principal</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>Ajustar</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">Composição</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>Mova o cursor de reprodução sobre o clipe para dividi-lo</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>Toque em um clipe para editar</translation>
     </message>
 </context>
 <context>
@@ -15526,6 +15535,85 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Dark</source>
         <translation type="unfinished">Escuro</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Cor</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">Quadros-chave</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Legendas</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Efeitos</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Transições</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Visuais</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Fontes</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Adesivos</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Ferramentas de IA</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">Legendas automáticas</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">Encontrar cenas</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">Selecionar vários</translation>
     </message>
 </context>
 <context>

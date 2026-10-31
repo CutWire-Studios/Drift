@@ -961,6 +961,14 @@
         <translation>Bilis</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">Inie-edit ang %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">I-tap ang isang clip para baguhin</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>Doblehin</translation>
     </message>
@@ -969,19 +977,20 @@
         <translation>Higit pa</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">Pangunahin</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>Iakma</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">Composite</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>Igalaw ang playhead sa ibabaw ng clip para hatiin ito</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>I-tap ang isang clip para baguhin</translation>
     </message>
 </context>
 <context>
@@ -15527,6 +15536,85 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Dark</source>
         <translation type="unfinished">Madilim</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Kulay</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">Mga Keyframe</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Mga Subtitle</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Pagbabagong-kalagayan</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Mga Look</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Mga Font</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Mga Sticker</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Mga tool ng AI</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">Awtomatikong mga subtitle</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">Maghanap ng mga eksena</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">Pumili ng marami</translation>
     </message>
 </context>
 <context>

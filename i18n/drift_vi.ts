@@ -960,6 +960,14 @@
         <translation>Tốc độ</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">Đang chỉnh sửa %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">Nhấn vào một clip để chỉnh sửa</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>Nhân bản</translation>
     </message>
@@ -968,19 +976,20 @@
         <translation>Thêm</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">Chính</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>Vừa</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">Tổ hợp</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>Di chuyển đầu phát qua clip để cắt nó</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>Nhấn vào một clip để chỉnh sửa</translation>
     </message>
 </context>
 <context>
@@ -15462,6 +15471,85 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Dark</source>
         <translation type="unfinished">Tối</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Màu</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">Keyframe</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Phụ đề</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Chuyển cảnh</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Giao diện màu</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Phông chữ</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Nhãn dán</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Công cụ AI</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">Phụ đề tự động</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">Tìm phân cảnh</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">Chọn nhiều</translation>
     </message>
 </context>
 <context>

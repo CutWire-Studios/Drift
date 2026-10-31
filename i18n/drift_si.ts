@@ -961,6 +961,14 @@
         <translation>වේගය</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">%1 සංස්කරණය කරමින්</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">සංස්කරණය කිරීමට ක්ලිපයක් තට්ටු කරන්න</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>අනුපිටපත් කරන්න</translation>
     </message>
@@ -969,19 +977,20 @@
         <translation>තවත්</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">ප්‍රධාන</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>සරිලන (Fit)</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">සංයුක්තය (Composite)</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>ක්ලිපය වෙන් කිරීමට ප්ලේහෙඩ් එක එය මතට ගෙන යන්න</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>සංස්කරණය කිරීමට ක්ලිපයක් තට්ටු කරන්න</translation>
     </message>
 </context>
 <context>
@@ -15526,6 +15535,85 @@ If playback stutters, try another.</source>
     <message>
         <source>Dark</source>
         <translation type="unfinished">අඳුරු</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">වර්ණ</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">කීෆ්‍රේම</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">උපසිරැසි</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ප්‍රයෝග</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">සංක්‍රාන්ති</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">පෙනුම (Looks)</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">අකුරු විලාස</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">ස්ටිකර්</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI මෙවලම්</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">ස්වයංක්‍රීය උපසිරැසි</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">දර්ශන සොයන්න</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">බහුවිධ තෝරන්න</translation>
     </message>
 </context>
 <context>

@@ -962,6 +962,14 @@
         <translation>Vitesse</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">Modification de %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">Appuyez sur un clip pour le modifier</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>Dupliquer</translation>
     </message>
@@ -970,19 +978,20 @@
         <translation>Plus</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">Principale</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>Ajuster</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">Composite</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>Déplacez la tête de lecture sur le clip pour le scinder</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>Appuyez sur un clip pour le modifier</translation>
     </message>
 </context>
 <context>
@@ -15529,6 +15538,85 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Dark</source>
         <translation type="unfinished">Sombre</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">Couleur</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">Images clés</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">Sous-titres</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Effets</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Transitions</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">Styles visuels</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">Polices</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">Autocollants</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">Outils IA</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">Sous-titres automatiques</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">Rechercher des scènes</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">Sélection multiple</translation>
     </message>
 </context>
 <context>

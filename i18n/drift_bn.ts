@@ -961,6 +961,14 @@
         <translation>গতি</translation>
     </message>
     <message>
+        <source>Editing %1</source>
+        <translation type="unfinished">সম্পাদনা %1</translation>
+    </message>
+    <message>
+        <source>Tap a clip to edit</source>
+        <translation type="unfinished">সম্পাদনা করতে একটি ক্লিপে ট্যাপ করুন</translation>
+    </message>
+    <message>
         <source>Duplicate</source>
         <translation>অনুলিপি তৈরি করুন</translation>
     </message>
@@ -969,19 +977,20 @@
         <translation>আরও</translation>
     </message>
     <message>
+        <source>Main</source>
+        <translation type="unfinished">মূল</translation>
+    </message>
+    <message>
         <source>Fit</source>
         <translation>মানানসই করুন</translation>
     </message>
     <message>
+        <source>Composite</source>
+        <translation type="unfinished">কম্পোজিট</translation>
+    </message>
+    <message>
         <source>Move the playhead over the clip to split it</source>
         <translation>প্লেহেডটিকে বিভক্ত করতে ক্লিপের উপরে সরান</translation>
-    </message>
-</context>
-<context>
-    <name>AndroidClipToolbarHint</name>
-    <message>
-        <source>Tap a clip to edit</source>
-        <translation>সম্পাদনা করতে একটি ক্লিপে ট্যাপ করুন</translation>
     </message>
 </context>
 <context>
@@ -15526,6 +15535,85 @@ If playback stutters, try another.</source>
     <message>
         <source>Dark</source>
         <translation type="unfinished">ডার্ক</translation>
+    </message>
+</context>
+<context>
+    <name>QuickSetupTipArt</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation type="unfinished">রঙ</translation>
+    </message>
+    <message>
+        <source>Keyframes</source>
+        <translation type="unfinished">কীফ্রেম</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">সাবটাইটেল</translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ইফেক্ট</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">ট্রানজিশন</translation>
+    </message>
+    <message>
+        <source>Looks</source>
+        <translation type="unfinished">লুকস</translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished">ফন্ট</translation>
+    </message>
+    <message>
+        <source>Stickers</source>
+        <translation type="unfinished">স্টিকার</translation>
+    </message>
+    <message>
+        <source>AI tools</source>
+        <translation type="unfinished">AI টুল</translation>
+    </message>
+    <message>
+        <source>color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color grade effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Appearance settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto subtitles</source>
+        <translation type="unfinished">স্বয়ংক্রিয় সাবটাইটেল</translation>
+    </message>
+    <message>
+        <source>People cutout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find scenes</source>
+        <translation type="unfinished">দৃশ্য খুঁজুন</translation>
+    </message>
+    <message>
+        <source>Hello and welcome back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select multiple</source>
+        <translation type="unfinished">একাধিক নির্বাচন করুন</translation>
     </message>
 </context>
 <context>
