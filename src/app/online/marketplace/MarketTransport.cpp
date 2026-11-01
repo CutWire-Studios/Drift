@@ -120,8 +120,11 @@ QNetworkRequest MarketTransport::buildRequest(const QUrl &url, const QByteArray 
     if (json) {
         request.setRawHeader("Accept", "application/json");
         request.setTransferTimeout(kApiTimeoutMs);
-        if (method == "POST")
+        if (method == "POST") {
             request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+            // The server's CSRF check rejects any non-GET without Authorization unless this is set.
+            request.setRawHeader("X-Requested-With", "drift");
+        }
     } else {
         request.setTransferTimeout(kFileTimeoutMs);
         request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
