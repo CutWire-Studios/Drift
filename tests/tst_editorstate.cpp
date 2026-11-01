@@ -375,6 +375,8 @@ private slots:
     void maskingStackListsPinnedMasks();
     void maskingStandaloneAdjustmentHasOneMask();
     void maskingPolygonMaskIsCreated();
+    void clipShapeReplacesItsMaskAndOriginalRemovesOnlyIt();
+    void clipReframeKeepsTheBoxAndOneUndoStep();
     void maskingPathKeysAnimateShape();
     void maskingInsertPointUpdatesPathKeys();
     void maskEditSessionMovesVertexOnStaticMask();
@@ -11561,6 +11563,98 @@ void EditorStateTest::maskingPolygonMaskIsCreated()
     QCOMPARE(mask.shape, drift::MaskShape::Freeform);
     QCOMPARE(mask.points.size(), 3);
     QCOMPARE(mask.points.at(2), QPointF(0.5, 0.8));
+}
+
+// The Shape picker owns one mask per clip: a new shape replaces it, and Original removes only it.
+void EditorStateTest::clipShapeReplacesItsMaskAndOriginalRemovesOnlyIt()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.masking()->addPolygonMask(0, 0, QVariantList{maskVertex(0.2, 0.2), maskVertex(0.8, 0.2),
+                                                       maskVertex(0.5, 0.8)});
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("original"));
+
+    const auto shapeMasks = [&state]() {
+        QList<drift::Mask> found;
+        for (const drift::ClipRef &ref : drift::linkedMaskAdjustments(*state.project(), 0, 0)) {
+            const drift::Mask &mask = state.project()->tracks().at(ref.trackIndex).clips.at(ref.clipIndex).mask;
+            if (!mask.cropShape.isEmpty())
+                found.append(mask);
+        }
+        return found;
+    };
+
+    state.masking()->setClipShape(0, 0, QStringLiteral("hexagon"));
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("hexagon"));
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 2);
+    QCOMPARE(shapeMasks().size(), 1);
+    QCOMPARE(shapeMasks().constFirst().points.size(), 6);
+    QCOMPARE(shapeMasks().constFirst().op, drift::MaskOp::Intersect);
+
+    for (const drift::ClipRef &ref : drift::linkedMaskAdjustments(*state.project(), 0, 0)) {
+        const drift::Clip &adjustment = state.project()->tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+        QCOMPARE(adjustment.timelineStart, state.project()->tracks().at(0).clips.at(0).timelineStart);
+        QCOMPARE(adjustment.timelineDuration, state.project()->tracks().at(0).clips.at(0).timelineDuration);
+        QVERIFY(!state.project()->tracks().at(ref.trackIndex).hidden);
+    }
+
+    // The shape mask renders last even though the other mask sits on a later lane.
+    const QList<drift::LaneMask> ordered = drift::laneMasksAt(*state.project(), 0, 0, QStringLiteral("clip-0"));
+    QCOMPARE(ordered.size(), 2);
+    QVERIFY(ordered.constLast().mask.cropShape == QStringLiteral("hexagon"));
+
+    state.masking()->setClipShape(0, 0, QStringLiteral("circle"));
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 2);
+    QCOMPARE(shapeMasks().size(), 1);
+    QCOMPARE(shapeMasks().constFirst().shape, drift::MaskShape::Ellipse);
+    // 16:9 canvas: the circle takes the shorter side, so it is narrower than the frame.
+    QVERIFY(qFuzzyCompare(shapeMasks().constFirst().w * 1920.0, shapeMasks().constFirst().h * 1080.0));
+    QVERIFY(shapeMasks().constFirst().w < 1.0);
+
+    state.masking()->setClipShape(0, 0, QStringLiteral("original"));
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("original"));
+    const QList<drift::ClipRef> left = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(left.size(), 1);
+    QCOMPARE(state.project()->tracks().at(left.constFirst().trackIndex).clips.at(left.constFirst().clipIndex).mask.shape,
+             drift::MaskShape::Freeform);
+
+    state.undo();
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("circle"));
+}
+
+// Reframing moves the source window at a fixed aspect, so the clip's box and shape do not change.
+void EditorStateTest::clipReframeKeepsTheBoxAndOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->setClipShape(0, 0, QStringLiteral("star"));
+
+    state.masking()->setReframe(0, 0, 2.0, 0.5, 0.5);
+    QRectF frame = state.project()->tracks().at(0).clips.at(0).sourceFrame;
+    QVERIFY(qFuzzyCompare(frame.width(), 0.5));
+    QVERIFY(qFuzzyCompare(frame.height(), 0.5));
+    QVERIFY(qFuzzyCompare(state.masking()->reframe(0, 0).value(QStringLiteral("zoom")).toDouble(), 2.0));
+
+    const int undoBefore = state.undoIndex();
+    state.masking()->previewReframe(0, 0, 3.0, 0.5, 0.5);
+    state.masking()->previewReframe(0, 0, 4.0, 1.0, 0.0);
+    state.commitPreviewDrag();
+    QCOMPARE(state.undoIndex(), undoBefore + 1);
+    frame = state.project()->tracks().at(0).clips.at(0).sourceFrame;
+    QVERIFY(qFuzzyCompare(frame.width(), 0.25));
+    QVERIFY(qFuzzyIsNull(frame.x()));
+    QVERIFY(qFuzzyCompare(frame.y(), 0.75));
+
+    state.masking()->centerReframe(0, 0);
+    frame = state.project()->tracks().at(0).clips.at(0).sourceFrame;
+    QVERIFY(qFuzzyCompare(frame.x(), 0.375));
+
+    state.masking()->showWholeVideo(0, 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("star"));
 }
 
 // Shape animation on a polygon: keys are stored relative to the adjustment's start, and every

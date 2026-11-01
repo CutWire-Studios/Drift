@@ -1,9 +1,13 @@
 #include "core/edit/TimelineOps.h"
 
+#include "core/edit/MaskSpace.h"
+
 #include <QUuid>
+#include <QtMath>
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <optional>
 
 namespace drift {
@@ -252,7 +256,7 @@ int adjustmentLaneParentIndex(const Project &project, int laneIndex)
 }
 
 int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind, TimeUs startUs,
-                         TimeUs durationUs)
+                         TimeUs durationUs, bool visibleOnly)
 {
     if (parentIndex < 0 || parentIndex >= project.tracks().size())
         return -1;
@@ -266,6 +270,8 @@ int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind,
 
     for (const int laneIndex : adjustmentLaneIndexes(project, parentIndex)) {
         const Track &lane = project.tracks().at(laneIndex);
+        if (visibleOnly && lane.hidden)
+            continue;
         if (!lane.clips.isEmpty() && lane.clips.first().adjustmentKind != kind)
             continue;
         bool collides = false;
@@ -361,6 +367,8 @@ QList<LaneMask> laneMasksAt(const Project &project, int trackIndex, TimeUs timel
                 adjustment.id, adjustment.timelineStart, adjustment.srcIn});
         }
     }
+    std::stable_partition(result.begin(), result.end(),
+                          [](const LaneMask &m) { return m.mask.cropShape.isEmpty(); });
     return result;
 }
 
@@ -416,6 +424,121 @@ void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &
     appendToMaskLane(project, trackIndex,
                      makeMaskAdjustment(mask, source.id, source.timelineStart,
                                         source.timelineDuration));
+}
+
+QStringList clipShapeIds()
+{
+    return {QStringLiteral("original"), QStringLiteral("circle"),   QStringLiteral("ellipse"),
+            QStringLiteral("triangle"), QStringLiteral("square"),   QStringLiteral("diamond"),
+            QStringLiteral("pentagon"), QStringLiteral("hexagon"),  QStringLiteral("octagon"),
+            QStringLiteral("star"),     QStringLiteral("heart")};
+}
+
+Mask clipShapeMask(const QString &id, double hostW, double hostH)
+{
+    Mask mask;
+    mask.op = MaskOp::Intersect;
+    mask.cropShape = id;
+    hostW = qMax(1.0, hostW);
+    hostH = qMax(1.0, hostH);
+    const double side = qMin(hostW, hostH);
+    const double w = side / hostW;
+    const double h = side / hostH;
+
+    const auto polygon = [&](int sides, double rotationDeg) {
+        mask.shape = MaskShape::Freeform;
+        const double start = qDegreesToRadians(rotationDeg - 90.0);
+        for (int i = 0; i < sides; ++i) {
+            const double a = start + i * 2.0 * M_PI / sides;
+            mask.points.append(QPointF(0.5 + 0.5 * w * std::cos(a), 0.5 + 0.5 * h * std::sin(a)));
+        }
+    };
+
+    if (id == QLatin1String("ellipse")) {
+        mask.shape = MaskShape::Ellipse;
+        mask.w = mask.h = 1.0;
+    } else if (id == QLatin1String("circle")) {
+        mask.shape = MaskShape::Ellipse;
+        mask.w = w;
+        mask.h = h;
+    } else if (id == QLatin1String("square")) {
+        mask.shape = MaskShape::Rectangle;
+        mask.w = w;
+        mask.h = h;
+    } else if (id == QLatin1String("heart")) {
+        mask.shape = MaskShape::Heart;
+        mask.w = w;
+        mask.h = h;
+    } else if (id == QLatin1String("triangle")) {
+        polygon(3, 0.0);
+    } else if (id == QLatin1String("diamond")) {
+        polygon(4, 0.0);
+    } else if (id == QLatin1String("pentagon")) {
+        polygon(5, 0.0);
+    } else if (id == QLatin1String("hexagon")) {
+        polygon(6, 0.0);
+    } else if (id == QLatin1String("octagon")) {
+        polygon(8, 22.5);
+    } else if (id == QLatin1String("star")) {
+        mask.shape = MaskShape::Freeform;
+        for (int i = 0; i < 10; ++i) {
+            const double a = qDegreesToRadians(-90.0 + i * 36.0);
+            const double r = i % 2 == 0 ? 1.0 : 0.4;
+            mask.points.append(QPointF(0.5 + 0.5 * w * r * std::cos(a), 0.5 + 0.5 * h * r * std::sin(a)));
+        }
+    }
+    return mask;
+}
+
+QString linkedClipShape(const Project &project, int trackIndex, int clipIndex)
+{
+    for (const ClipRef &ref : linkedMaskAdjustments(project, trackIndex, clipIndex)) {
+        const QString &id = project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).mask.cropShape;
+        if (!id.isEmpty())
+            return id;
+    }
+    return QStringLiteral("original");
+}
+
+void setLinkedClipShape(Project &project, int trackIndex, int clipIndex, const QString &id)
+{
+    if (trackIndex < 0 || trackIndex >= project.tracks().size())
+        return;
+    if (clipIndex < 0 || clipIndex >= project.tracks().at(trackIndex).clips.size())
+        return;
+
+    project.ensureTrackIds();
+    const Clip host = project.tracks().at(trackIndex).clips.at(clipIndex);
+    const QString hostTrackId = project.tracks().at(trackIndex).id;
+
+    QStringList emptiedLaneIds;
+    const QList<ClipRef> existing = linkedMaskAdjustments(project, trackIndex, clipIndex);
+    for (int i = existing.size() - 1; i >= 0; --i) {
+        const ClipRef &ref = existing.at(i);
+        if (project.tracks().at(ref.trackIndex).clips.at(ref.clipIndex).mask.cropShape.isEmpty())
+            continue;
+        project.tracks()[ref.trackIndex].clips.removeAt(ref.clipIndex);
+        if (project.tracks().at(ref.trackIndex).clips.isEmpty())
+            emptiedLaneIds.append(project.tracks().at(ref.trackIndex).id);
+    }
+    for (const QString &laneId : std::as_const(emptiedLaneIds)) {
+        const int laneIndex = project.trackIndexById(laneId);
+        if (laneIndex >= 0)
+            project.tracks().removeAt(laneIndex);
+    }
+
+    const HostFrame frame = hostFrameAt(project, host, host.timelineStart);
+    const Mask mask = clipShapeMask(id, frame.w, frame.h);
+    if (!mask.contributes())
+        return;
+
+    const int hostIndex = project.trackIndexById(hostTrackId);
+    const int laneIndex = ensureAdjustmentLane(project, hostIndex, AdjustmentKind::Mask, host.timelineStart,
+                                               host.timelineDuration, true);
+    if (laneIndex < 0)
+        return;
+    project.tracks()[laneIndex].clips.append(
+        makeMaskAdjustment(mask, host.id, host.timelineStart, host.timelineDuration));
 }
 
 void moveLinkedAdjustmentsToHostTrack(Project &project, const QString &hostClipId)

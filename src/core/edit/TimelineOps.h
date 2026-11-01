@@ -92,8 +92,10 @@ int adjustmentLaneParentIndex(const Project &project, int laneIndex);
 //
 // A lane holds one kind: a row mixing video and audio adjustments would have no unambiguous
 // colour or inspector. An empty lane takes anything. INSERTS TRACKS.
+//
+// `visibleOnly` skips hidden lanes, so the returned one is never a lane the user has hidden.
 int ensureAdjustmentLane(Project &project, int parentIndex, AdjustmentKind kind, TimeUs startUs,
-                         TimeUs durationUs);
+                         TimeUs durationUs, bool visibleOnly = false);
 
 // A mask paired with the id of the adjustment clip carrying it. The compositor needs the id: the
 // reader pool keys its cursor by stream id, so a mask's media must not decode under the host
@@ -130,6 +132,22 @@ void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &
 // means. Returns the new adjustment's position, or a null ClipRef when the mask would not
 // contribute. INSERTS TRACKS.
 ClipRef addLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask);
+
+// The Shape picker's choices, "original" first. Ids are what Mask::cropShape stores.
+QStringList clipShapeIds();
+
+// The mask for picker shape `id` on a host whose frame is hostW x hostH px: circle, square and
+// the regular polygons are centred and sized from the shorter side, ellipse fills the frame.
+// Intersect, so it cuts whatever the other masks left. Shape None for "original" or an unknown id.
+Mask clipShapeMask(const QString &id, double hostW, double hostH);
+
+// The picker shape pinned to clips[clipIndex] ("original" when none). Reads Mask::cropShape.
+QString linkedClipShape(const Project &project, int trackIndex, int clipIndex);
+
+// Replaces the clip's picker mask with shape `id` (one per clip), sized from its frame at the
+// clip's start; "original" removes only that mask. The new mask spans the whole clip on a visible
+// mask lane. INSERTS TRACKS.
+void setLinkedClipShape(Project &project, int trackIndex, int clipIndex, const QString &id);
 
 // Re-home every lane adjustment (mask or effect) pinned to `hostClipId` onto the lanes of the track
 // the host clip now sits on, dropping lanes it empties. A host moved to another track leaves its

@@ -738,6 +738,11 @@ Item {
                 }
             }
 
+            ShapeCropSection {
+                visible: root.clipKind === "video" || root.clipKind === "image"
+                width: parent.width
+            }
+
             SearchAnchor {
                 searchId: "transform-reset-size"
                 title: qsTr("Reset position & size")

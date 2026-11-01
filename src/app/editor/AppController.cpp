@@ -5403,6 +5403,40 @@ bool AppController::setAssetRotation(int assetIndex, int degrees)
     return true;
 }
 
+void AppController::writeClipSourceFrame(int t, int c, const QRectF &frame, double turn)
+{
+    const QRectF previousFrame = m_project.tracks().at(t).clips.at(c).sourceFrame;
+    auto &clip = m_project.tracks()[t].clips[c];
+    clip.sourceFrame = frame;
+    clip.sourceFrameAngle = turn;
+    if (const auto *asset = m_project.asset(clip.assetId)) {
+        // Displayed orientation: the file's own tag plus this clip's correction, as decoded.
+        int sw = asset->width, sh = asset->height;
+        if (qAbs(asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
+            std::swap(sw, sh);
+        if (sw > 0 && sh > 0) {
+            const auto fittedSize = [&](const QRectF &r) {
+                QSizeF size(sw * r.width(), sh * r.height());
+                size.scale(QSizeF(m_project.width(), m_project.height()), Qt::KeepAspectRatio);
+                return size;
+            };
+            const QSizeF previous = fittedSize(previousFrame), next = fittedSize(frame);
+            const auto scaleTrack = [](drift::KeyframeTrack<double> &track, double ratio) {
+                const auto keys = track.keyframes();
+                for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
+                    auto key = it.value();
+                    key.value *= ratio;
+                    key.inDy *= ratio;
+                    key.outDy *= ratio;
+                    track.setKeyframe(it.key(), key);
+                }
+            };
+            scaleTrack(clip.transformW, next.width() / previous.width());
+            scaleTrack(clip.transformH, next.height() / previous.height());
+        }
+    }
+}
+
 bool AppController::setClipSourceFrame(const QString &clipId, double x, double y, double w, double h,
                                        double angle)
 {
@@ -5416,37 +5450,8 @@ bool AppController::setClipSourceFrame(const QString &clipId, double x, double y
             const double turn = std::isnan(angle) ? old.sourceFrameAngle : drift::normalizedSourceAngle(angle);
             if (old.sourceFrame == frame && old.sourceFrameAngle == turn)
                 return true;
-            const QRectF previousFrame = old.sourceFrame;
             const drift::Project before = m_project.detachedCopy();
-            auto &clip = m_project.tracks()[t].clips[c];
-            clip.sourceFrame = frame;
-            clip.sourceFrameAngle = turn;
-            if (const auto *asset = m_project.asset(clip.assetId)) {
-                // Displayed orientation: the file's own tag plus this clip's correction, as decoded.
-                int sw = asset->width, sh = asset->height;
-                if (qAbs(asset->rotationDegrees + clip.rotationCorrection) % 180 == 90)
-                    std::swap(sw, sh);
-                if (sw > 0 && sh > 0) {
-                    const auto fittedSize = [&](const QRectF &r) {
-                        QSizeF size(sw * r.width(), sh * r.height());
-                        size.scale(QSizeF(m_project.width(), m_project.height()), Qt::KeepAspectRatio);
-                        return size;
-                    };
-                    const QSizeF previous = fittedSize(previousFrame), next = fittedSize(frame);
-                    const auto scaleTrack = [](drift::KeyframeTrack<double> &track, double ratio) {
-                        const auto keys = track.keyframes();
-                        for (auto it = keys.cbegin(); it != keys.cend(); ++it) {
-                            auto key = it.value();
-                            key.value *= ratio;
-                            key.inDy *= ratio;
-                            key.outDy *= ratio;
-                            track.setKeyframe(it.key(), key);
-                        }
-                    };
-                    scaleTrack(clip.transformW, next.width() / previous.width());
-                    scaleTrack(clip.transformH, next.height() / previous.height());
-                }
-            }
+            writeClipSourceFrame(t, c, frame, turn);
             pushProjectEdit(before, tr("Crop clip"));
             finishEdit(tr("Crop saved"));
             return true;

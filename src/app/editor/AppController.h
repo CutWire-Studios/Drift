@@ -2248,6 +2248,7 @@ protected:
     // Set while commitPreviewDrag finishes a drag that left the selection on the same clip:
     // finishEdit then skips selectionChanged.
     bool m_quietSelection = false;
+    void writeClipSourceFrame(int t, int c, const QRectF &frame, double turn);
     void emitPreviewFrame();
     void emitPreviewEdit(int trackIndex, int clipIndex, const QStringList &keys);
     void beginImplicitPreviewDrag(const QString &undoText);
