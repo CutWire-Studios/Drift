@@ -168,46 +168,64 @@ Item {
         spacing: Theme.spacingSm
         topPadding: Theme.spacingLg
 
-        ScrollStrip {
+        Item {
             width: parent.width
-            height: tabRow.height
-            padding: root.sidePadding
+            height: Math.max(tabRow.height, browseOnline.implicitHeight)
 
-            Row {
-                id: tabRow
-                spacing: Theme.spacing2xl
+            ScrollStrip {
+                anchors.left: parent.left
+                anchors.right: browseOnline.left
+                anchors.verticalCenter: parent.verticalCenter
+                height: tabRow.height
+                padding: root.sidePadding
 
-                Repeater {
-                    model: root.tabs
-                    delegate: Row {
-                        id: tabEntry
-                        required property var modelData
-                        spacing: Theme.spacingSm
+                Row {
+                    id: tabRow
+                    spacing: Theme.spacing2xl
 
-                        MarketSectionTab {
-                            modelData: tabEntry.modelData
-                            section: root.activePage
-                            onSectionSelected: (id) => root.selectPage(id)
-                        }
-                        Rectangle {
-                            visible: tabEntry.modelData.id === "downloads" && Downloads.activeCount > 0
-                            y: Theme.spacingSm
-                            width: Math.max(Theme.spacingXl, countText.implicitWidth + Theme.spacingSm)
-                            height: Theme.spacingXl
-                            radius: Theme.c.marketplace.badgeRadius
-                            color: Theme.c.marketplace.badge
+                    Repeater {
+                        model: root.tabs
+                        delegate: Row {
+                            id: tabEntry
+                            required property var modelData
+                            spacing: Theme.spacingSm
 
-                            Text {
-                                id: countText
-                                anchors.centerIn: parent
-                                text: String(Downloads.activeCount)
-                                color: Theme.c.marketplace.badgeForeground
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSizeXs
+                            MarketSectionTab {
+                                modelData: tabEntry.modelData
+                                section: root.activePage
+                                onSectionSelected: (id) => root.selectPage(id)
+                            }
+                            Rectangle {
+                                visible: tabEntry.modelData.id === "downloads" && Downloads.activeCount > 0
+                                y: Theme.spacingSm
+                                width: Math.max(Theme.spacingXl, countText.implicitWidth + Theme.spacingSm)
+                                height: Theme.spacingXl
+                                radius: Theme.c.marketplace.badgeRadius
+                                color: Theme.c.marketplace.badge
+
+                                Text {
+                                    id: countText
+                                    anchors.centerIn: parent
+                                    text: String(Downloads.activeCount)
+                                    color: Theme.c.marketplace.badgeForeground
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeXs
+                                }
                             }
                         }
                     }
                 }
+            }
+
+            ThemedButton {
+                id: browseOnline
+                anchors.right: parent.right
+                anchors.rightMargin: root.sidePadding
+                anchors.verticalCenter: parent.verticalCenter
+                variant: "ghost"
+                glyph: Theme.icons.externalLink
+                text: qsTr("Browse more online")
+                onClicked: Qt.openUrlExternally("https://cutwire.studio")
             }
         }
 
