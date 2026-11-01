@@ -779,6 +779,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     m_sceneDetect = new SceneDetectController(this, this);
     m_depth = new DepthController(this, this);
     m_denoise = new DenoiseController(this, this);
+    m_audioAlign = new AudioAlignController(this, this);
     m_color = new ColorController(this, this);
     m_keyframes = new KeyframeController(this, this);
     m_masking = new MaskingController(this, this);

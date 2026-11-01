@@ -11,7 +11,11 @@ ThemedContextMenu {
     property bool canPasteEffects: false
     property bool canPasteAttributes: false
     property bool canMergeTrackSubtitles: false
+    property bool canRemoveSilence: false
+    property bool canSyncByAudio: false
     onAboutToShow: {
+        canRemoveSilence = EditorState.audioAlign.canRemoveSilence(owner.trackIndex, owner.clipIndex)
+        canSyncByAudio = EditorState.audioAlign.canSyncByAudio()
         canPasteEffects = EditorState.clipboardHasEffects()
         canPasteAttributes = EditorState.canPasteAttributes()
         canMergeTrackSubtitles = owner.trackType === "subtitle"
@@ -123,6 +127,26 @@ ThemedContextMenu {
                  && EditorState.canSeparateAudioClip(owner.trackIndex, owner.clipIndex)
                  && EditorState.clipAudioStreamCount(owner.trackIndex, owner.clipIndex) > 1
         onTriggered: EditorState.separateAllAudioTracks(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Remove silence")
+        icon.name: Theme.icons.audioLines
+        visible: clipContextMenu.canRemoveSilence
+        enabled: !EditorState.audioAlign.running
+        onTriggered: EditorState.audioAlign.removeSilence(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Sync by audio")
+        icon.name: Theme.icons.audioLines
+        visible: clipContextMenu.canSyncByAudio
+        enabled: !EditorState.audioAlign.running
+        onTriggered: EditorState.audioAlign.syncByAudio()
+    }
+    ThemedMenuItem {
+        text: qsTr("Cancel audio analysis")
+        icon.name: Theme.icons.x
+        visible: EditorState.audioAlign.running
+        onTriggered: EditorState.audioAlign.cancel()
     }
     ThemedMenuItem {
         readonly property string blocker: EditorState.masking.convertClipToMaskBlocker(owner.trackIndex, owner.clipIndex)

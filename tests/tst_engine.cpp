@@ -86,6 +86,7 @@
 #include "engine/audio/analysis/AudioOnsets.h"
 #include "engine/audio/analysis/AudioEvents.h"
 #include "engine/audio/analysis/AudioSync.h"
+#include "engine/audio/analysis/AudioAlign.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
 #include "engine/diagnostics/sheets/AudioSheet.h"
 #include "engine/ml/audio/AstClassifier.h"
@@ -454,6 +455,8 @@ private slots:
     void loudnessReportFindsGapsClippingAndRange();
     void audioEventsFindBurstsNotSilence();
     void audioSyncGradesCuts();
+    void silenceSegmentsSyntheticSignal();
+    void audioOffsetRecoversShift();
     void audioSheetRendersLanes();
     void vadRangesFollowSileroRules();
     void vadModelScoresSilenceLow();
@@ -16722,6 +16725,66 @@ void EngineTest::audioSyncGradesCuts()
     QCOMPARE(r.stats.noSound.size(), 2);
 
     QVERIFY(drift::matchSync({1.0}, {}).items.first().status == Status::NoSound);
+}
+
+void EngineTest::silenceSegmentsSyntheticSignal()
+{
+    constexpr int kRate = 8000;
+    // 1 s tone, 2 s quiet, 1 s tone, 0.3 s quiet (too short to cut), 1 s tone, 1 s quiet.
+    std::vector<float> x;
+    auto tone = [&](double seconds) {
+        for (int i = 0; i < int(seconds * kRate); ++i)
+            x.push_back(0.3f * std::sin(0.3f * float(i)));
+    };
+    auto quiet = [&](double seconds) { x.insert(x.end(), size_t(seconds * kRate), 0.001f); };
+    tone(1.0);
+    quiet(2.0);
+    tone(1.0);
+    quiet(0.3);
+    tone(1.0);
+    quiet(1.0);
+
+    const QList<drift::SilenceSpan> spans = drift::findSilence(x.data(), qint64(x.size()), kRate);
+    QCOMPARE(spans.size(), 2);
+    QVERIFY(qAbs(spans.at(0).start - 1.08) < 0.02);
+    QVERIFY(qAbs(spans.at(0).end - 2.92) < 0.02);
+    QVERIFY(qAbs(spans.at(1).start - 5.38) < 0.02);
+    QVERIFY(qAbs(spans.at(1).end - 6.3) < 0.02);
+
+    const std::vector<float> silent(size_t(3 * kRate), 0.0f);
+    QCOMPARE(drift::findSilence(silent.data(), qint64(silent.size()), kRate).size(), 1);
+}
+
+void EngineTest::audioOffsetRecoversShift()
+{
+    constexpr int kRate = 8000;
+    std::mt19937 rng(7);
+    std::normal_distribution<float> noise(0.0f, 0.2f);
+    std::vector<float> anchor(size_t(12 * kRate));
+    for (float &v : anchor)
+        v = noise(rng);
+
+    // other[n] = anchor[n + 3.25 s] plus a little independent noise.
+    const int shift = int(3.25 * kRate);
+    std::vector<float> other(size_t(6 * kRate));
+    for (size_t n = 0; n < other.size(); ++n)
+        other[n] = anchor[n + size_t(shift)] + 0.05f * noise(rng);
+
+    drift::AudioOffsetParams params;
+    params.maxLagSeconds = 8.0;
+    drift::AudioOffsetResult r = drift::findAudioOffset(anchor, other, kRate, params);
+    QCOMPARE(r.status, drift::AudioOffsetResult::Status::Ok);
+    QVERIFY(qAbs(r.lagSeconds - 3.25) < 0.001);
+
+    std::vector<float> unrelated(other.size());
+    for (float &v : unrelated)
+        v = noise(rng);
+    QCOMPARE(drift::findAudioOffset(anchor, unrelated, kRate, params).status,
+             drift::AudioOffsetResult::Status::Ambiguous);
+
+    const std::vector<float> silent(other.size(), 0.0f);
+    QCOMPARE(drift::findAudioOffset(anchor, silent, kRate, params).status,
+             drift::AudioOffsetResult::Status::Silent);
 }
 
 void EngineTest::audioSheetRendersLanes()

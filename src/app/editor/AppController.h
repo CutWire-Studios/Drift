@@ -70,6 +70,7 @@ struct MediaEditSpec;
 #include "app/editor/sessions/SubtitleController.h"
 #include "app/color/ColorController.h"
 #include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/mcp/McpController.h"
@@ -104,6 +105,7 @@ class AppController : public QObject
     friend class SceneDetectController;
     friend class DepthController;
     friend class DenoiseController;
+    friend class AudioAlignController;
     friend class ColorController;
     friend class KeyframeController;
     friend class MaskingController;
@@ -146,6 +148,8 @@ class AppController : public QObject
     Q_PROPERTY(DepthController *depth READ depth CONSTANT)
     // Noise removal for a clip's audio. QML: EditorState.denoise.
     Q_PROPERTY(DenoiseController *denoise READ denoise CONSTANT)
+    // Silence removal and audio sync. QML: EditorState.audioAlign.
+    Q_PROPERTY(AudioAlignController *audioAlign READ audioAlign CONSTANT)
     // Colour grade, finishing effects and looks. QML: EditorState.color.
     Q_PROPERTY(ColorController *color READ color CONSTANT)
     // Keyframe panel editing and clip property rows. QML: EditorState.keyframes.
@@ -359,6 +363,7 @@ public:
     SceneDetectController *scenes() const { return m_sceneDetect; }
     DepthController *depth() const { return m_depth; }
     DenoiseController *denoise() const { return m_denoise; }
+    AudioAlignController *audioAlign() const { return m_audioAlign; }
     ColorController *color() const { return m_color; }
     KeyframeController *keyframes() const { return m_keyframes; }
     MaskingController *masking() const { return m_masking; }
@@ -2183,6 +2188,7 @@ protected:
     SceneDetectController *m_sceneDetect = nullptr;
     DepthController *m_depth = nullptr;
     DenoiseController *m_denoise = nullptr;
+    AudioAlignController *m_audioAlign = nullptr;
     ColorController *m_color = nullptr;
     KeyframeController *m_keyframes = nullptr;
     MaskingController *m_masking = nullptr;
