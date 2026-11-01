@@ -6797,6 +6797,16 @@ double AppController::sourceTimeForClip(const QVariantMap &clip) const
     return inPoint + offset;
 }
 
+double AppController::sourceTimeAtPlayheadForClip(int trackIndex, int clipIndex) const
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return 0.0;
+    const drift::Clip &clip = m_project.tracks()[trackIndex].clips[clipIndex];
+    const drift::TimeUs frameUs = 1000000 / qMax(1, m_project.fps());
+    const drift::TimeUs lastUs = qMax(clip.srcIn, clip.srcOut - frameUs);
+    return drift::usToSeconds(qBound(clip.srcIn, clip.timelineToSourceUs(m_playheadUs), lastUs));
+}
+
 double AppController::sourceTimeAtPlayhead() const
 {
     return sourceTimeForClip(activeVideoClipAtPlayhead());

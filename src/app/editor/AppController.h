@@ -819,6 +819,9 @@ public:
     Q_INVOKABLE QVariantMap activeAudioClipAtPlayhead() const;
     Q_INVOKABLE double sourceTimeAtPlayhead() const;
     Q_INVOKABLE double sourceTimeForClip(const QVariantMap &clip) const;
+    // Source seconds under the playhead for a placed clip, held at the nearest edge frame when the
+    // playhead is outside it. Honours trim, speed, reverse and speed curves.
+    Q_INVOKABLE double sourceTimeAtPlayheadForClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void deleteSelectedClip();
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
