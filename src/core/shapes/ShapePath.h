@@ -20,6 +20,9 @@ QString painterPathToSvg(const QPainterPath &path);
 // Regular n-gon inscribed in `bounds`, first vertex at the top. Shared with mask rendering.
 QPainterPath regularPolygonPath(const QRectF &bounds, int sides, double rotationDeg);
 
+// Five-point star filling `bounds`, top spike up. Shared with mask rendering.
+QPainterPath maskStarPath(const QRectF &bounds);
+
 // Heart filling `bounds`. Shared with mask rendering.
 QPainterPath heartPath(const QRectF &bounds);
 

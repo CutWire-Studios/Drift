@@ -33,7 +33,7 @@ QPainterPath maskPath(const Mask &mask, int canvasWidth, int canvasHeight)
         // Rotation is deliberately not passed through: maskAlphaMap rotates every parametric
         // shape about its centre below, and baking it in here as well turned a star twice as far
         // as the slider said.
-        return drift::regularPolygonPath(bounds, 5, 0.0);
+        return drift::maskStarPath(bounds);
     case drift::MaskShape::Heart:
         return drift::heartPath(bounds);
     case drift::MaskShape::Bars: {
