@@ -311,7 +311,7 @@ ApplicationWindow {
                 return
             }
         }
-        const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, debugInfoDialogLoader.item,
+        const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, helpDialogLoader.item, debugInfoDialogLoader.item,
                         settingsDialogLoader.item, imageViewerDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
                         missingAddonsDialogLoader.item,
                         projectSetupDialogLoader.item, layoutChooserDialogLoader.item,
@@ -555,6 +555,13 @@ ApplicationWindow {
         id: aboutDialogLoader
         sourceComponent: Component {
             AboutDialog { }
+        }
+    }
+
+    LazyLoader {
+        id: helpDialogLoader
+        sourceComponent: Component {
+            HelpDialog { }
         }
     }
 
@@ -983,6 +990,10 @@ ApplicationWindow {
     // Opened from the header badge, which only exists while there is something to show.
     function openAboutDialog() {
         aboutDialogLoader.ensure().open()
+    }
+
+    function openHelpDialog() {
+        helpDialogLoader.ensure().open()
     }
 
     function checkForUpdates() {
@@ -1562,7 +1573,7 @@ ApplicationWindow {
                 onNewProjectRequested: window.requestNewProject()
                 onOpenProjectRequested: window.requestOpenProjectDialog()
                 onOpenRecentRequested: (path) => window.requestOpenRecentProject(path)
-                onMobileLayoutRequested: window.switchShell("mobile")
+                onHelpRequested: window.openHelpDialog()
                 onMoreSettingsRequested: window.openSettings()
                 onDebugInfoRequested: window.openDebugInfo()
                 onAgentAccessRequested: editorHeader.openAgentAccess()

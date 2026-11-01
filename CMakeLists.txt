@@ -2052,6 +2052,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/AccelerationFailedDialog.qml
         src/qml/components/dialogs/MissingAddonsDialog.qml
         src/qml/components/dialogs/AboutDialog.qml
+        src/qml/components/dialogs/HelpDialog.qml
         src/qml/components/dialogs/UpdateDialog.qml
         src/qml/components/dialogs/DebugInfoDialog.qml
         src/qml/components/dialogs/ThemeTrustDialog.qml
