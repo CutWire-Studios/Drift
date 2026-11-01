@@ -52,40 +52,40 @@
   <url type="homepage">https://cutwire.org/drift</url>
   <url type="bugtracker">https://github.com/CutWire-Studios/Drift/issues</url>
   <url type="vcs-browser">https://github.com/CutWire-Studios/Drift</url>
-  <!-- Screenshot URLs are pinned to the release tag: Flathub rejects branch-based git URLs
+  <!-- Screenshot URLs are pinned to a commit: Flathub rejects branch-based git URLs
        because their contents change under the published listing. -->
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/main-window.png</image>
-      <caption>The editor with the preview, timeline and panels</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/main-window.png</image>
+      <caption>The editor with the media bin, preview, inspector and timeline</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/effects-panel.png</image>
-      <caption>Browsing effects to drop onto a clip</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/color-workspace.png</image>
+      <caption>Grading in the Color workspace with looks and scopes</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/transitions-panel.png</image>
-      <caption>Choosing a transition between two clips</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/keyframes.png</image>
+      <caption>Shaping motion in the keyframe curve editor</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/text-styles.png</image>
-      <caption>Styling a title with presets and colors</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/masking-tracking.png</image>
+      <caption>Masking and tracking part of a shot</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/stickers-panel.png</image>
-      <caption>Adding stickers and emoji to a shot</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/subtitles.png</image>
+      <caption>Editing styled captions generated from speech</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/subtitle-editor.png</image>
-      <caption>Editing captions generated from speech</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/audio.png</image>
+      <caption>Mixing music with audio effects and meters</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/subject-cutout.png</image>
-      <caption>Cutting a subject out of the frame</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/3d-model.png</image>
+      <caption>Lighting a 3D model on the timeline</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/v0.1.1/docs/screenshots/addon-manager.png</image>
-      <caption>Installing optional fonts, stickers and models</caption>
+      <image>https://raw.githubusercontent.com/CutWire-Studios/Drift/02a7e56c4c665ecce55239553cae91230086b8f1/docs/screenshots/text-styles.png</image>
+      <caption>Styling a title with built-in text packs</caption>
     </screenshot>
   </screenshots>
   <releases>
