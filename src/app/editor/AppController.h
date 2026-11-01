@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/edit/commands/ProjectCommands.h"
 #include "core/effects/EffectStackStore.h"
 #include "core/project/Project.h"
 #include "core/text/animation/TextAnimationPreset.h"
@@ -338,6 +339,7 @@ public:
     struct ParsedProject {
         drift::Project project;
         QJsonObject root;
+        std::optional<drift::StoredHistory> history;
     };
     static std::optional<ParsedProject> parseProjectJson(const QByteArray &data, QString *error);
     static std::optional<ParsedProject> parseProjectJson(const QJsonObject &root, QString *error);
@@ -2011,6 +2013,9 @@ protected:
     void rememberExportChoice(const QString &outputPath, const QVariantMap &settings);
     QJsonObject sessionJson() const;
     QString historyHashAt(int stackIndex) const;
+    // Every file a project state reachable by undo/redo points at, so cleanup does not take
+    // media the history still needs.
+    QSet<QString> historyMediaPaths() const;
     int historyIndexForHash(const QString &prefix) const;
     QByteArray historyJsonAt(int stackIndex) const;
     static QString historySnapshotDir();
@@ -2038,6 +2043,7 @@ protected:
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;
+    mutable QHash<QString, QStringList> m_historyMediaCache;
     // tracks() serialises every clip in the project into nested QVariantMaps, and used to do it
     // once per binding that read it. Cached between edits; notifyTracksChanged() drops it.
     mutable QVariantList m_tracksCache;
@@ -2310,6 +2316,4 @@ protected:
     static QString newFreezeFramePath(const QString &projectId);
 
     void setProjectLayoutChosen(bool chosen);
-
-    static constexpr int kMaxUndoSteps = 50;
 };

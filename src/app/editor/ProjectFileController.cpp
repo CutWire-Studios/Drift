@@ -189,6 +189,7 @@ void ProjectFileController::sweepExtractionDirs()
     collectJsonStrings(recovery, &liveFiles);
     for (const drift::MediaAsset &asset : m_app->m_project.assets())
         liveFiles.insert(asset.path);
+    liveFiles.unite(m_app->historyMediaPaths());
 #ifdef Q_OS_ANDROID
     const QString recoveryId = recovery.value(QStringLiteral("id")).toString();
     if (!recoveryId.isEmpty())
@@ -255,9 +256,8 @@ void ProjectFileController::sweepExtractionDirs()
 #endif
 }
 // Brush strokes write a new matte PNG each time, and undo keeps the earlier ones reachable, so the
-// cache only grows during a session. The undo stack is in memory and starts empty on every open
-// and new project, so a matte written this session that neither the document, a saved project's
-// manifest nor the recovery snapshot names is unreachable. Only this session's mattes are
+// cache only grows during a session. A matte written this session that neither the document, an
+// undo state, a saved project's manifest nor the recovery snapshot names is unreachable. Only this session's mattes are
 // candidates: older projects that dropped off the recent list may still name earlier files.
 void ProjectFileController::sweepBrushMattes()
 {
@@ -270,6 +270,8 @@ void ProjectFileController::sweepBrushMattes()
         live.insert(QFileInfo(media.originalPath).absoluteFilePath());
     for (const drift::MediaAsset &asset : m_app->m_project.assets())
         live.insert(QFileInfo(asset.path).absoluteFilePath());
+    for (const QString &path : m_app->historyMediaPaths())
+        live.insert(QFileInfo(path).absoluteFilePath());
 
     for (const QVariant &entry : recentProjects()) {
         QString error;
@@ -483,6 +485,22 @@ drift::bundle::WriteRequest ProjectFileController::buildWriteRequest(bool embedS
     request.modifiedAt = m_app->m_project.modifiedAt();
     request.addons = drift::bundle::collectAddons(m_app->m_project);
     request.media = drift::bundle::collectMedia(m_app->m_project, embedSource);
+
+    // Derived media (mattes, stabilized renders) that only an older undo state points at still
+    // has to travel with the project, or undoing back to it on another machine finds nothing.
+    QSet<QString> listed;
+    for (const drift::bundle::MediaEntry &entry : std::as_const(request.media))
+        listed.insert(entry.resourceOf + QLatin1Char('\n') + entry.originalPath);
+    const QHash<QString, const drift::Project *> states = drift::historyStates(m_app->m_undoStack);
+    for (const drift::Project *state : states) {
+        for (const drift::bundle::MediaEntry &entry : drift::bundle::collectMedia(*state, embedSource)) {
+            const QString key = entry.resourceOf + QLatin1Char('\n') + entry.originalPath;
+            if (listed.contains(key))
+                continue;
+            listed.insert(key);
+            request.media.append(entry);
+        }
+    }
 
     // Without this a plain Save of a project that arrived as a package would drop its media back
     // to references into the extraction dir, which the startup sweep is free to delete.
@@ -1478,7 +1496,13 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
     // Tiles are keyed on the old paths, and a source that was missing is blacklisted until
     // this runs — without it a relinked clip's filmstrip never comes back.
     m_app->m_filmstripTiles.clear();
+    remapPaths(m_app->m_project, remap);
+}
 
+void ProjectFileController::remapPaths(drift::Project &project, const QHash<QString, QString> &remap)
+{
+    if (remap.isEmpty())
+        return;
     const auto repoint = [&remap](QString &path) {
         const auto it = remap.constFind(path);
         if (it == remap.constEnd())
@@ -1487,7 +1511,7 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
         return true;
     };
 
-    for (drift::MediaAsset &asset : m_app->m_project.assets()) {
+    for (drift::MediaAsset &asset : project.assets()) {
         if (repoint(asset.path)) {
             asset.thumbnailPath.clear();
             asset.filmstripPath.clear();
@@ -1497,7 +1521,7 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
 
     // A relinked copy has a new path and mtime, which the fingerprint reads as a different file.
     // The size still has to agree: the transcript is only carried over for the same bytes.
-    QHash<QString, drift::TranscriptPtr> transcripts = m_app->m_project.transcripts();
+    QHash<QString, drift::TranscriptPtr> transcripts = project.transcripts();
     for (auto it = transcripts.begin(); it != transcripts.end(); ++it) {
         if (!it.value())
             continue;
@@ -1511,9 +1535,9 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
         updated->source = moved;
         it.value() = std::move(updated);
     }
-    m_app->m_project.setTranscripts(transcripts);
+    project.setTranscripts(transcripts);
 
-    m_app->m_project.forEachTrackList([&](QList<drift::Track> &tracks) {
+    project.forEachTrackList([&](QList<drift::Track> &tracks) {
         for (drift::Track &track : tracks) {
             for (drift::Clip &clip : track.clips) {
                 // Masks live on adjustment clips, which this flat walk already covers.

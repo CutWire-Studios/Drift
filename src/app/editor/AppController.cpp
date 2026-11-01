@@ -858,8 +858,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
                 &PreferencesController::addProxyNamePattern);
     }
 
-    m_undoStack.setUndoLimit(kMaxUndoSteps);
-
     m_mcpController = new McpController(this, this);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoStackChanged);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoHistoryChanged);
@@ -21837,6 +21835,10 @@ QByteArray AppController::serializeProjectJson() const
 QJsonObject AppController::sessionJson() const
 {
     QJsonObject root;
+    if (QJsonObject history = drift::historyToJson(m_undoStack); !history.isEmpty()) {
+        history.insert(QStringLiteral("media"), QJsonArray::fromStringList(historyMediaPaths().values()));
+        root.insert(QStringLiteral("undoHistory"), history);
+    }
     root.insert(QStringLiteral("playheadUs"), static_cast<double>(m_playheadUs));
     root.insert(QStringLiteral("snapEnabled"), m_snapEnabled);
     root.insert(QStringLiteral("rippleEnabled"), m_rippleEnabled);
@@ -21932,7 +21934,11 @@ std::optional<AppController::ParsedProject> AppController::parseProjectJson(cons
             *error = parseError;
         return std::nullopt;
     }
-    return ParsedProject{std::move(project), root};
+    ParsedProject parsed{std::move(project), root, std::nullopt};
+    // A history that fails to decode is dropped; the project itself still opens.
+    if (root.contains(QStringLiteral("undoHistory")))
+        parsed.history = drift::historyFromJson(root.value(QStringLiteral("undoHistory")).toObject());
+    return parsed;
 }
 
 void AppController::applyParsedProject(ParsedProject parsed)
@@ -21946,36 +21952,48 @@ void AppController::applyParsedProject(ParsedProject parsed)
     // like ":/qt/qml/Drift/resources/stickers/grinning.png" that no longer resolve. Repoint them
     // at the installed pack; a sticker with no installed pack keeps its old path and simply fails
     // to load, which is the same outcome as a missing media file.
-    for (drift::MediaAsset &asset : m_project.assets()) {
-        const QString migrated = resolveLegacyStickerPath(asset.path);
-        if (!migrated.isEmpty())
-            asset.path = migrated;
-    }
-
+    //
     // Media that travelled inside the bundle now lives in this machine's extraction directory, so
     // the saved absolute paths have to be repointed before anything probes them. Same class of
     // fix-up as the two migrations around it.
-    m_projectFile->remapProjectPaths(m_projectFile->pendingPathRemap());
-    m_projectFile->pendingPathRemap().clear();
-
+    //
     // Emoji clips point at a raster in this machine's app data cache, which a project opened
     // elsewhere will not have. The glyph sequence is what was saved, so re-derive the path — the
     // render is cached, and without the font addon it comes back empty and the clip fails to load
     // like any other missing file.
-    m_project.forEachTrackList([&](QList<drift::Track> &tracks) {
-        for (drift::Track &track : tracks) {
-            for (drift::Clip &clip : track.clips) {
-                if (clip.emoji.isEmpty())
-                    continue;
-                const QString path = emojiImagePath(clip.emoji);
-                if (path.isEmpty())
-                    continue;
-                clip.path = path;
-                clip.thumbnailPath = path;
-                clip.filmstripPath = path;
-            }
+    //
+    // Undo history states are full projects and get the same treatment, once per distinct state.
+    const QHash<QString, QString> pathRemap = m_projectFile->pendingPathRemap();
+    m_projectFile->pendingPathRemap().clear();
+    const auto migrate = [&pathRemap](drift::Project &project) {
+        for (drift::MediaAsset &asset : project.assets()) {
+            const QString migrated = resolveLegacyStickerPath(asset.path);
+            if (!migrated.isEmpty())
+                asset.path = migrated;
         }
-    });
+        ProjectFileController::remapPaths(project, pathRemap);
+        project.forEachTrackList([&](QList<drift::Track> &tracks) {
+            for (drift::Track &track : tracks) {
+                for (drift::Clip &clip : track.clips) {
+                    if (clip.emoji.isEmpty())
+                        continue;
+                    const QString path = emojiImagePath(clip.emoji);
+                    if (path.isEmpty())
+                        continue;
+                    clip.path = path;
+                    clip.thumbnailPath = path;
+                    clip.filmstripPath = path;
+                }
+            }
+        });
+    };
+    if (!pathRemap.isEmpty())
+        m_filmstripTiles.clear();
+    migrate(m_project);
+    if (parsed.history) {
+        for (drift::Project &state : parsed.history->states)
+            migrate(state);
+    }
 
     m_stabilize->migrateLegacyClips();
 
@@ -22036,7 +22054,24 @@ void AppController::applyParsedProject(ParsedProject parsed)
     m_faces->ingestSwapSourcesInProject();
     m_playback.setProject(&m_project);
     m_undoStack.clear();
+    m_historyMediaCache.clear();
+    if (parsed.history) {
+        const drift::Project loaded = m_project;
+        {
+            const QSignalBlocker blocker(&m_undoStack);
+            for (const drift::HistoryStep &step : std::as_const(parsed.history->steps)) {
+                auto *command = new drift::ProjectSnapshotCommand(
+                    &m_project, parsed.history->states.at(step.before),
+                    parsed.history->states.at(step.after), step.text);
+                command->adoptApplied();
+                m_undoStack.push(command);
+            }
+            m_undoStack.setIndex(parsed.history->index);
+        }
+        m_project = loaded;
+    }
     emit undoHistoryChanged();
+    emit undoStackChanged();
     clearSelection();
     m_projectFile->setDirty(false);
     m_projectFile->sweepBrushMattes();
@@ -22780,6 +22815,27 @@ int AppController::historyIndexForHash(const QString &prefix) const
     if (exact >= 0)
         return exact;
     return matches == 1 ? found : -1;
+}
+
+QSet<QString> AppController::historyMediaPaths() const
+{
+    QSet<QString> paths;
+    const QHash<QString, const drift::Project *> states = drift::historyStates(m_undoStack);
+    for (auto it = states.constBegin(); it != states.constEnd(); ++it) {
+        auto cached = m_historyMediaCache.find(it.key());
+        if (cached == m_historyMediaCache.end()) {
+            QStringList list;
+            for (const drift::MediaAsset &asset : it.value()->assets())
+                list.append(asset.path);
+            for (const drift::bundle::MediaEntry &entry : drift::bundle::collectMedia(*it.value(), false))
+                list.append(entry.originalPath);
+            list.removeDuplicates();
+            cached = m_historyMediaCache.insert(it.key(), list);
+        }
+        for (const QString &path : std::as_const(cached.value()))
+            paths.insert(path);
+    }
+    return paths;
 }
 
 QString AppController::historySnapshotDir()

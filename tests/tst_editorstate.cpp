@@ -166,6 +166,7 @@ private slots:
     void undoTrackMute();
     void packagedProjectCarriesDerivedArtifacts();
     void undoBookmarkAdd();
+    void undoHistorySurvivesSaveAndLoad();
     void bookmarkNavigationAndToggle();
     void editPointNavigationWalksEveryClipEdge();
     void arrowKeysJogAndJumpThePlayhead();
@@ -1601,6 +1602,49 @@ void EditorStateTest::undoBookmarkAdd()
     QVERIFY(state.undoAvailable());
     state.undo();
     QCOMPARE(state.bookmarks().size(), 0);
+}
+
+void EditorStateTest::undoHistorySurvivesSaveAndLoad()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    for (int i = 0; i < 60; ++i)
+        state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
+    QCOMPARE(state.bookmarks().size(), 60);
+    state.undo();
+    state.undo();
+    QCOMPARE(state.bookmarks().size(), 58);
+    const QByteArray saved = state.serializeProjectJson();
+
+    AppController reopened(&library);
+    QString error;
+    QVERIFY2(reopened.applyProjectJson(saved, &error), qPrintable(error));
+    QCOMPARE(reopened.bookmarks().size(), 58);
+    QCOMPARE(reopened.m_undoStack.count(), 60);
+    QCOMPARE(reopened.undoIndex(), 58);
+    QVERIFY(reopened.undoAvailable());
+    QVERIFY(reopened.redoAvailable());
+    QVERIFY(!reopened.m_projectFile->hasUnsavedChanges());
+
+    reopened.redo();
+    reopened.redo();
+    QCOMPARE(reopened.bookmarks().size(), 60);
+    reopened.undo();
+    reopened.undo();
+    reopened.undo();
+    QCOMPARE(reopened.bookmarks().size(), 57);
+
+    reopened.addBookmark(100.0, QStringLiteral("New"));
+    QVERIFY(!reopened.redoAvailable());
+    QCOMPARE(reopened.m_undoStack.count(), 58);
+
+    AppController legacy(&library);
+    QJsonObject root = QJsonDocument::fromJson(saved).object();
+    root.remove(QStringLiteral("undoHistory"));
+    QVERIFY(legacy.applyProjectJson(QJsonDocument(root).toJson(), &error));
+    QCOMPARE(legacy.bookmarks().size(), 58);
+    QVERIFY(!legacy.undoAvailable());
+    QVERIFY(!legacy.redoAvailable());
 }
 
 void EditorStateTest::bookmarkNavigationAndToggle()
@@ -13796,6 +13840,11 @@ void EditorStateTest::maskingSweepDropsUnreferencedBrushMattes()
     QImage(4, 4, QImage::Format_Grayscale8).save(foreign, "PNG");
     const auto removeForeign = qScopeGuard([&] { QFile::remove(foreign); });
 
+    // The earlier matte is still what undo restores, so history keeps it alive.
+    state.projectFile()->sweepBrushMattes();
+    QVERIFY(QFileInfo::exists(stale));
+
+    state.m_undoStack.clear();
     state.projectFile()->sweepBrushMattes();
     QVERIFY(!QFileInfo::exists(stale));
     QVERIFY(QFileInfo::exists(current));

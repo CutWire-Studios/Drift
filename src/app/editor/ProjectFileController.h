@@ -23,6 +23,8 @@ class AppController;
 // Project-file lifecycle and project setup: save, load, packaging, collect-media,
 // autosave and the startup queue. Reached from QML as EditorState.projectFile.
 // Document ↔ JSON conversion stays on AppController; this class calls it through m_app.
+namespace drift { class Project; }
+
 class ProjectFileController : public QObject
 {
     Q_OBJECT
@@ -169,6 +171,7 @@ public:
     QSet<QString> &embeddedSources() { return m_embeddedSources; }
     const QSet<QString> &embeddedSources() const { return m_embeddedSources; }
     void remapProjectPaths(const QHash<QString, QString> &remap);
+    static void remapPaths(drift::Project &project, const QHash<QString, QString> &remap);
     void rehydrateMissingSources();
     void reportMissingCatalogEntries();
     void sweepExtractionDirs();
