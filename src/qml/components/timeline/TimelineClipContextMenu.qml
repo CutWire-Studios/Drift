@@ -255,6 +255,13 @@ ThemedContextMenu {
         }
     }
     ThemedMenuItem {
+        text: qsTr("Blur area…")
+        icon.name: Theme.icons.eyeOff
+        visible: owner.trackType === "video" && !owner.isTransformClip
+        onTriggered: EditorState.addEffect(owner.trackIndex, owner.clipIndex,
+                                           "builtin.effects.privacy_blur")
+    }
+    ThemedMenuItem {
         text: qsTr("Edit keyframes…")
         icon.name: Theme.icons.diamondPlus
         onTriggered: {
