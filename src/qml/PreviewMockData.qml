@@ -32,11 +32,19 @@ QtObject {
         const talkingSeconds = AssetLibrary.assetAt(talking).durationSeconds
         if (!(talkingSeconds > 0))
             return
-        // The project's Video 1 track sits below the text track; the second clip follows the first.
-        EditorState.addClipFromAssetAt(talking, 1, 0)
-        EditorState.addClipFromAssetAt(broll, 1, talkingSeconds)
+        // The default project's track layout varies, so use the first track that takes video.
+        let track = -1
+        for (let i = 0; i < EditorState.trackCount && track < 0; ++i) {
+            if (EditorState.trackAcceptsAsset(i, talking))
+                track = i
+        }
+        if (track < 0)
+            return
+        // The second clip follows the first.
+        EditorState.addClipFromAssetAt(talking, track, 0)
+        EditorState.addClipFromAssetAt(broll, track, talkingSeconds)
         // Fixtures that edit the selected clip show the first clip.
-        EditorState.selectClip(1, 0)
+        EditorState.selectClip(track, 0)
         EditorState.sourceLab.load(AssetLibrary.assetIdAt(talking))
         if (root.subtitles)
             EditorState.importSubtitleFile("file://" + PreviewMediaDir + "/captions.srt", 0)
