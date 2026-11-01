@@ -89,6 +89,74 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.9.0" date="2026-11-01">
+      <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.0</url>
+      <description>
+        <p>Drift 0.9 lets you shape the editor around the job: workspaces with your own
+        layouts, themes, a colour grading workspace and a much better keyframe editor.</p>
+        <ul>
+          <li>Workspaces: design your own layouts, open panels in extra windows and switch
+          between preset views for editing, colour, keyframes, subtitles, masking and tracking,
+          and Source Lab</li>
+          <li>Themes: dark and light plus the translucent Graphite and Frost themes, window
+          backdrops, and importing your own themes</li>
+          <li>Colour grading: a Color workspace with a Color Grade effect, colour wheels, curves,
+          hue curves and per-colour HSL, looks with .cube LUT import, and histogram, waveform and
+          vectorscope readings</li>
+          <li>Keyframe editor: a Keyframes workspace with a property tree, lanes and a curve
+          editor; multi-key selection, copy and paste, stretching and scaling keys; per-segment
+          easing presets including elastic and bounce, saved easings and optional bezier
+          handles</li>
+          <li>Source Lab replaces Cut / Trim: a frame-accurate source viewer with JKL and
+          timecode entry, favourite and reject ranges, markers and scene splits, plus crop,
+          speed, loudness, denoise, stabilize and upscale, with replace in bin, add as copy or
+          export to a file</li>
+          <li>Masking and Tracking workspace: brush and polygon masks, point and planar
+          tracking, AI object masks, Blur this area, per-frame brush fixes on AI cutouts and
+          locking a tracked object to the screen</li>
+          <li>Subtitles workspace with a cue grid, lane, text and timing panels and VTT
+          support</li>
+          <li>Quick Setup on first run: language, theme, interface size, essential addons and
+          tips</li>
+          <li>Extras store and marketplace in their own windows, with an install queue,
+          automatic dependencies and every download tracked in one place</li>
+          <li>Search everything with Ctrl+K, including panels, settings and controls</li>
+          <li>A redesigned settings dialog with search, a network proxy, an interface graphics
+          API choice and import and export of preferences</li>
+          <li>Select several clips in the preview and transform them together, in 2D and
+          3D</li>
+          <li>Timeline: sub-clips from a source's in/out range, automatic crossfades on
+          overlaps, trim to playhead buttons, auto-select under the playhead, alignment guides
+          and waveforms scaled by clip volume</li>
+          <li>Inspector: drag numeric fields to scrub them, pick the scale origin from an
+          anchor grid, and straighten crops</li>
+          <li>Effects: audio spectrum and waveform visualizers, text case
+          and strikethrough, and miter, round and bevel stroke joins</li>
+          <li>AMD GPUs can run AI features through MIGraphX, and Drift offers another engine
+          when the chosen one fails</li>
+          <li>Faster playback: background decoding pauses during playback, a 1/8 preview
+          quality, and panels that load only when shown</li>
+          <li>New builds for Intel macOS, Windows on ARM and Linux on ARM</li>
+          <li>Android: a redesigned phone interface with a tabbed home and full-page tools,
+          touch mask editing, and headphones used for playback</li>
+          <li>MCP: themes, crop and rotation, media bin folders, the marketplace, audio analysis
+          and running several Drift instances at once</li>
+          <li>Fixes: changing a clip's speed keeps its source range, playback stays in sync
+          after the audio device changes, large blurs stay smooth, edited media is kept on
+          save, and Android imports files with unusual names</li>
+          <li>Translations: Chinese (Simplified) and Portuguese (Portugal) completed; Japanese,
+          Polish, Russian, Spanish (Colombia), Tagalog and Vietnamese updated</li>
+        </ul>
+        <p>Thanks to @jmn8718 for straightening crops, multiple instances, the MCP crop tools,
+        faster playback and start screen access to settings; to @jgafarias for timeline
+        alignment guides, separated embedded audio and export and preview
+        fixes; to @thilakshan2003 for keeping the source range on speed changes; to @wklxd for
+        Chinese (Simplified); to @Ricardo-Simoes for Portuguese (Portugal); to @coolvitto for
+        Japanese; to Paweł Korobajło for Polish; to Nguyễn Lam for Vietnamese; to Dmitry for
+        Russian; to Kamitazic for Spanish (Colombia); and to @TSFBCE24RhythmHeaveners for
+        Tagalog.</p>
+      </description>
+    </release>
     <release version="0.8.0" date="2026-10-13">
       <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.8.0</url>
       <description>
