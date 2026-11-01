@@ -38,12 +38,10 @@ Drift হলো CutWire Studios-এর একটি ডেস্কটপ ভি
   <a href="https://apps.microsoft.com/detail/9PHHBZ07FRSZ">
     <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Microsoft Store থেকে সংগ্রহ করুন" width="293">
   </a>
-  <a href="../docs/play-testing.md">
-    <img src="../docs/btn-gplay-en.png" alt="Google Play থেকে সংগ্রহ করুন (ক্লোজড টেস্টিং)" height="80">
+  <a href="https://play.google.com/store/apps/details?id=org.cutwire.drift">
+    <img src="../docs/btn-gplay-en.png" alt="Google Play থেকে সংগ্রহ করুন" height="80">
   </a>
 </p>
-
-<p align="center">গুগল প্লে স্টোরে ক্লোজড টেস্টিং চলছে — <a href="../docs/play-testing.md">কীভাবে যোগ দেবেন</a>।</p>
 
 **Linux** — Flathub থেকে ইনস্টল করুন:
 
@@ -70,9 +68,9 @@ brew install --cask cutwire-studios/tap/drift
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Microsoft Store](https://apps.microsoft.com/detail/9PHHBZ07FRSZ) · [ইনস্টলার (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [পোর্টেবল জিপ (.zip)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [ডিস্ক ইমেজ (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| Android | [Google Play (ক্লোজড টেস্ট)](../docs/play-testing.md) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
-ফোনে [Google Play ক্লোজড টেস্টিং-এ](../docs/play-testing.md) যোগ দিন, অথবা সর্বশেষ রিলিজ থেকে `Drift-*-arm64-v8a.apk` ফাইলটি ডাউনলোড করে ইনস্টল করুন (অথবা `adb install Drift-*-arm64-v8a.apk` ব্যবহার করুন)। এমুলেটরের জন্য `x86_64` ব্যবহার করুন।
+ফোনে [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) থেকে ইনস্টল করুন, অথবা সর্বশেষ রিলিজ থেকে `Drift-*-arm64-v8a.apk` ফাইলটি ডাউনলোড করে ইনস্টল করুন (অথবা `adb install Drift-*-arm64-v8a.apk` ব্যবহার করুন)। এমুলেটরের জন্য `x86_64` ব্যবহার করুন।
 
 পূর্ববর্তী সংস্করণ ও পূর্ণ চেঞ্জলগ দেখতে [সব রিলিজ](https://github.com/CutWire-Studios/Drift/releases) তালিকাটি দেখুন।
 

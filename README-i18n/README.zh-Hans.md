@@ -38,12 +38,10 @@ Drift 是由 CutWire Studios 打造的桌面端视频剪辑器。导入素材，
   <a href="https://apps.microsoft.com/detail/9PHHBZ07FRSZ">
     <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="从微软商店获取" width="293">
   </a>
-  <a href="../docs/play-testing.md">
-    <img src="../docs/btn-gplay-en.png" alt="在 Google Play 获取（内测中）" height="80">
+  <a href="https://play.google.com/store/apps/details?id=org.cutwire.drift">
+    <img src="../docs/btn-gplay-en.png" alt="在 Google Play 获取" height="80">
   </a>
 </p>
-
-<p align="center">Google Play 处于封闭测试阶段 — <a href="../docs/play-testing.md">查看如何参与</a>。</p>
 
 **Linux** — 通过 Flathub 安装：
 
@@ -69,9 +67,9 @@ brew install --cask cutwire-studios/tap/drift
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Microsoft Store](https://apps.microsoft.com/detail/9PHHBZ07FRSZ) · [安装程序 (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [绿色便携版 (.zip)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [磁盘映像 (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| Android | [Google Play (内测版)](../docs/play-testing.md) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
-在手机上，可加入 [Google Play 封闭测试](../docs/play-testing.md)，或直接下载最新版本的 `Drift-*-arm64-v8a.apk` 并安装（亦可使用 `adb install Drift-*-arm64-v8a.apk`）。模拟器请使用 `x86_64` 构建版本。
+在手机上，可从 [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) 安装，或直接下载最新版本的 `Drift-*-arm64-v8a.apk` 并安装（亦可使用 `adb install Drift-*-arm64-v8a.apk`）。模拟器请使用 `x86_64` 构建版本。
 
 查看[历史版本一览](https://github.com/CutWire-Studios/Drift/releases)以获取过往发布和完整更新日志。
 

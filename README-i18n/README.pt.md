@@ -39,12 +39,10 @@ O que você vê na pré-visualização é exatamente o que é exportado. Um úni
   <a href="https://apps.microsoft.com/detail/9PHHBZ07FRSZ">
     <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Baixe na Microsoft Store" width="293">
   </a>
-  <a href="../docs/play-testing.md">
-    <img src="../docs/btn-gplay-en.png" alt="Baixe no Google Play (teste fechado)" height="80">
+  <a href="https://play.google.com/store/apps/details?id=org.cutwire.drift">
+    <img src="../docs/btn-gplay-en.png" alt="Baixe no Google Play" height="80">
   </a>
 </p>
-
-<p align="center">O Google Play está em teste fechado — <a href="../docs/play-testing.md">veja como participar</a>.</p>
 
 **Linux** — instale pelo Flathub:
 
@@ -71,9 +69,9 @@ Ou baixe um executável pré-compilado para o seu sistema diretamente na página
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Microsoft Store](https://apps.microsoft.com/detail/9PHHBZ07FRSZ) · [Instalador (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [Arquivo portátil (.zip)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [Imagem de disco (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| Android | [Google Play (teste fechado)](../docs/play-testing.md) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
-Em smartphones, participe do [teste fechado no Google Play](../docs/play-testing.md), ou baixe `Drift-*-arm64-v8a.apk` da versão mais recente e instale (ou execute `adb install Drift-*-arm64-v8a.apk`). Utilize `x86_64` para emuladores.
+Em smartphones, instale pelo [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift), ou baixe `Drift-*-arm64-v8a.apk` da versão mais recente e instale (ou execute `adb install Drift-*-arm64-v8a.apk`). Utilize `x86_64` para emuladores.
 
 Veja [todas as versões](https://github.com/CutWire-Studios/Drift/releases) para acompanhar versões anteriores e notas de atualização detalhadas.
 

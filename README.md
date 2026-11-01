@@ -5,7 +5,7 @@
 <h1 align="center">Drift</h1>
 
 <p align="center">
-  <strong>The free desktop editor that makes your videos look finished — not “good enough.”</strong>
+  <strong>The free video editor that makes your videos look finished — not “good enough.”</strong>
 </p>
 
 <p align="center">
@@ -43,7 +43,7 @@
   <a href="README-i18n/README.zh-Hans.md">简体中文</a>
 </p>
 
-Drift is a desktop video editor from CutWire Studios. Drop in clips, add effects, captions, stickers,
+Drift is a video editor for Linux, Windows, macOS and Android from CutWire Studios. Drop in clips, add effects, captions, stickers,
 and music, then export a polished video — with **no subscription, no watermark, and no account**.
 
 It is built for the edits people actually make: Reels and Shorts, game clips, school projects,
@@ -91,16 +91,16 @@ Or grab a build for your platform from the
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage (x86_64, aarch64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Microsoft Store](https://apps.microsoft.com/detail/9PHHBZ07FRSZ) · [Installer (.exe, x64 / arm64)](https://github.com/CutWire-Studios/Drift/releases/latest) · [Portable zip (x64 / arm64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [Disk image (.dmg, Apple Silicon / Intel)](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| Android | [Google Play (closed testing)](docs/play-testing.md) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
-On a phone, join [closed testing on Google Play](docs/play-testing.md), or grab `Drift-*-arm64-v8a.apk` from the latest release and install it (or `adb install Drift-*-arm64-v8a.apk`). Use `x86_64` for emulators.
+On a phone, install from [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift), or grab `Drift-*-arm64-v8a.apk` from the latest release and install it (or `adb install Drift-*-arm64-v8a.apk`). Use `x86_64` for emulators.
 
 See [all releases](https://github.com/CutWire-Studios/Drift/releases) for previous versions and full changelogs.
 
 ## Screenshot
 
 <p align="center">
-  <img src="docs/screenshots/main-window.png" alt="The Drift editor: media bin on the left, 3D camera in the preview, text inspector on the right, multi-track timeline below" width="900">
+  <img src="docs/screenshots/main-window.png" alt="The Drift editor: media bin on the left, video preview in the middle, clip inspector on the right, multi-track timeline below" width="900">
 </p>
 
 ## Features
@@ -109,21 +109,36 @@ See [all releases](https://github.com/CutWire-Studios/Drift/releases) for previo
 The same editor can run with no window.
 
 **3D on the timeline.** Tilt clips in space, light them, and park a title behind the subject. Drop
-in a 3D model and it plays in the same cut.
+in a `.glb` model or a gaussian splat and it plays in the same cut. A scene camera dollies, cranes,
+and orbits on its own lane, and the preview flips to a free 3D view with gizmos when you need to
+place things.
 
 **Lottie animations.** Motion graphics and vector art stay sharp at any size. Recolour or reword
 them in place.
 
-**Advanced keyframing.** Animate position, scale, rotation, opacity, and effect parameters over
-time. Draw the curve yourself.
+**Advanced keyframing.** Animate position, scale, rotation, 3D depth, masks, lights, and any effect
+parameter. Shape the motion in a graph editor with Bezier handles, elastic and bounce easing, and
+presets you save yourself.
+
+**Color grading.** Wheels for shadows, midtones and highlights, master and per-channel curves, HSL,
+and `.cube` LUTs. Read the shot on a histogram, waveform, parade or vectorscope. Grade one clip,
+then apply it to the rest.
+
+**Masks that follow the shot.** Shape, freeform and image masks with feather and invert. Point and
+planar trackers pin a mask, a title, or a sticker to something moving, or steady the clip. Blur or
+pixelate any masked area.
 
 **150+ transitions and 40+ effects.** Every look previews on your footage. One click can drop a
 whole stack — Beat Drop, Glitch Cut, Neon Cutout. Trails of earlier frames, and grades that stick
 to one clip.
 
 **On this machine.** Click a subject and lift it off the shot. Add depth of field and lights that
-belong to the clip. Automatic captions, video upscale, and live face retouch — all on your
-computer.
+belong to the clip. Automatic captions, voices, video upscale, and live face retouch — all on your
+device. Models download once, for free, the first time you use them.
+
+**Voices that speak your script.** Type it, or hand over the subtitles, and Drift reads it back in
+21 languages on your own machine. Clone a voice from a few seconds of audio. Cloud voices are there
+if you bring your own key.
 
 **Edit the words.** Speech becomes text on the clip. Cut phrases, drop fillers, strip silence, pick
 the best takes, label speakers, and build captions from those times.
@@ -138,6 +153,14 @@ it. Nest layers, or open a composite when the stack needs its own timeline.
 under speech and comes back to its own level. Reframe a landscape take into a vertical video that
 follows the face.
 
+**Workspaces for the job.** Edit, Color, Audio, Keyframes, Masking & Tracking, Subtitles, Source
+Lab and more. Dock panels where you want them, float them onto a second screen, and save your own
+layouts.
+
+**Prep footage before it hits the cut.** Source Lab scrubs a clip frame by frame, marks the good and
+bad ranges, and splits at scene changes. Crop, reframe, normalize, denoise, stabilise, or upscale it,
+then send it to the bin or export a fast trim.
+
 **A timeline that behaves.** Multi-track filmstrips, ripple, snap, masks, freeze frame, bookmarks,
 a mixer. Split a clip and the grade stays. A crash leaves the last save intact.
 
@@ -150,8 +173,9 @@ punch the cut.
 **Stabilise, export, take the project with you.** Smooth shaky clips, upscale, play heavy files
 smoothly. MP4, GIF, audio-only, or just a range. Pack the media with the edit so paths stay whole.
 
-**Android is the same editor.** Timeline, effects, and export on the phone. Share straight from the
-app.
+**Android is the same editor.** Timeline, effects, masks, cutouts, text, 3D models, voiceover, and
+export on the phone. Share straight from the app. Tablets and Chromebooks get the full desktop
+layout.
 
 **Stock, voices, and a small install.** Search stock into the bin. Generate voiceover and sound
 effects. Fonts, stickers, and extra models download when you use them. UI in Arabic, Bengali, Spanish (Spain
@@ -161,10 +185,11 @@ Sinhala, Tagalog, Vietnamese, and Simplified Chinese.
 ## Why people pick Drift
 
 Most “free” editors want an account, a watermark, or a subscription the moment the video starts
-looking good. Drift is the opposite: **yours, on your computer, GPLv3, no login wall.**
+looking good. Drift is the opposite: **yours, on your device, GPLv3, no login wall.**
 
 It is fast enough for a 30-second social cut and deep enough for a real project — an agent on the
-timeline, 3D and Lottie, captions, effects, audio, cutouts, and multicam.
+timeline, 3D and gaussian splats, color grading, keyframe curves, tracking, captions, voices,
+effects, audio, cutouts, and multicam.
 
 ## Help us translate Drift
 

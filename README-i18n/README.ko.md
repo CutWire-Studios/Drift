@@ -38,12 +38,10 @@ Drift는 CutWire Studios에서 제작한 데스크톱용 동영상 편집기입�
   <a href="https://apps.microsoft.com/detail/9PHHBZ07FRSZ">
     <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Microsoft Store에서 다운로드" width="293">
   </a>
-  <a href="../docs/play-testing.md">
-    <img src="../docs/btn-gplay-en.png" alt="Google Play에서 다운로드 (비공개 테스트)" height="80">
+  <a href="https://play.google.com/store/apps/details?id=org.cutwire.drift">
+    <img src="../docs/btn-gplay-en.png" alt="Google Play에서 다운로드" height="80">
   </a>
 </p>
-
-<p align="center">Google Play는 현재 비공개 테스트 중입니다 — <a href="../docs/play-testing.md">참여 방법 확인</a>.</p>
 
 **Linux** — Flathub에서 설치:
 
@@ -69,9 +67,9 @@ brew install --cask cutwire-studios/tap/drift
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Microsoft Store](https://apps.microsoft.com/detail/9PHHBZ07FRSZ) · [설치 프로그램 (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [포터블 zip](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [디스크 이미지 (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| Android | [Google Play (비공개 테스트)](../docs/play-testing.md) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
-스마트폰의 경우 [Google Play 비공개 테스트](../docs/play-testing.md)에 참여하거나 최신 릴리스에서 `Drift-*-arm64-v8a.apk` 파일을 받아 설치할 수 있습니다 (또는 `adb install Drift-*-arm64-v8a.apk`). 에뮬레이터 환경에서는 `x86_64` 빌드를 사용하세요.
+스마트폰의 경우 [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift)에서 설치하거나 최신 릴리스에서 `Drift-*-arm64-v8a.apk` 파일을 받아 설치할 수 있습니다 (또는 `adb install Drift-*-arm64-v8a.apk`). 에뮬레이터 환경에서는 `x86_64` 빌드를 사용하세요.
 
 이전 버전 및 상세 변경 사항은 [전체 릴리스 목록](https://github.com/CutWire-Studios/Drift/releases)에서 확인할 수 있습니다.
 

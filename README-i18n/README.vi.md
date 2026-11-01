@@ -39,12 +39,10 @@ Những gì bạn thấy trên khung xem trước chính là những gì bạn x
   <a href="https://apps.microsoft.com/detail/9PHHBZ07FRSZ">
     <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Tải từ Microsoft Store" width="293">
   </a>
-  <a href="../docs/play-testing.md">
-    <img src="../docs/btn-gplay-en.png" alt="Tải trên Google Play (thử nghiệm đóng)" height="80">
+  <a href="https://play.google.com/store/apps/details?id=org.cutwire.drift">
+    <img src="../docs/btn-gplay-en.png" alt="Tải trên Google Play" height="80">
   </a>
 </p>
-
-<p align="center">Google Play đang trong giai đoạn thử nghiệm đóng — <a href="../docs/play-testing.md">hướng dẫn tham gia</a>.</p>
 
 **Linux** — cài đặt qua Flathub:
 
@@ -71,9 +69,9 @@ Hoặc tải bản đóng gói trực tiếp cho nền tảng của bạn từ
 | Linux | [Flathub](https://flathub.org/apps/org.cutwire.Drift) · [AppImage](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | Windows | [Microsoft Store](https://apps.microsoft.com/detail/9PHHBZ07FRSZ) · [Trình cài đặt (.exe)](https://github.com/CutWire-Studios/Drift/releases/latest) · [Bản Portable zip](https://github.com/CutWire-Studios/Drift/releases/latest) |
 | macOS | [Homebrew Tap](https://github.com/CutWire-Studios/homebrew-tap) · [Ảnh đĩa (.dmg, Apple Silicon)](https://github.com/CutWire-Studios/Drift/releases/latest) |
-| Android | [Google Play (thử nghiệm đóng)](../docs/play-testing.md) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
+| Android | [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift) · [APK (arm64-v8a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (armeabi-v7a)](https://github.com/CutWire-Studios/Drift/releases/latest) · [APK (x86_64)](https://github.com/CutWire-Studios/Drift/releases/latest) |
 
-Trên điện thoại, hãy tham gia [chương trình thử nghiệm đóng Google Play](../docs/play-testing.md), hoặc tải file `Drift-*-arm64-v8a.apk` từ bản phát hành mới nhất để cài đặt (hoặc dùng `adb install Drift-*-arm64-v8a.apk`). Dùng bản `x86_64` cho trình giả lập.
+Trên điện thoại, hãy cài đặt từ [Google Play](https://play.google.com/store/apps/details?id=org.cutwire.drift), hoặc tải file `Drift-*-arm64-v8a.apk` từ bản phát hành mới nhất để cài đặt (hoặc dùng `adb install Drift-*-arm64-v8a.apk`). Dùng bản `x86_64` cho trình giả lập.
 
 Xem [tất cả bản phát hành](https://github.com/CutWire-Studios/Drift/releases) để xem lại các phiên bản trước đó và nhật ký thay đổi đầy đủ.
 
