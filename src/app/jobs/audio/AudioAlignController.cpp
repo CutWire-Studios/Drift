@@ -58,23 +58,6 @@ bool findClip(const drift::Project &project, const QString &id, int *trackOut, i
     return false;
 }
 
-void muteAllButClip(drift::Project &snap, const QString &clipId)
-{
-    for (drift::Track &track : snap.tracks()) {
-        bool has = false;
-        for (drift::Clip &clip : track.clips) {
-            if (clip.id == clipId) {
-                has = true;
-                continue;
-            }
-            clip.volume.setKeyframe(0, 0.0);
-            clip.suppressEmbeddedAudio = true;
-        }
-        if (!has)
-            track.muted = true;
-    }
-}
-
 // Mono mix of `snap` from startUs for `frames` frames at the analysis rate. `progress` takes
 // 0-1 and returns false to stop, which leaves the result short.
 std::vector<float> mixMono(const drift::Project &snap, drift::TimeUs startUs, qint64 frames,
@@ -190,7 +173,7 @@ void AudioAlignController::removeSilence(int trackIndex, int clipIndex)
     const drift::TimeUs startUs = audible->timelineStart;
     const drift::TimeUs durationUs = audible->timelineDuration;
     drift::Project snap = m_app->m_project.detachedCopy();
-    muteAllButClip(snap, audible->id);
+    drift::muteAllButClip(snap, audible->id);
 
     if (!begin(tr("Finding silence…")))
         return;
@@ -336,9 +319,9 @@ void AudioAlignController::syncByAudio()
     const SyncUnit anchor = units.at(0);
     const SyncUnit other = units.at(1);
     drift::Project anchorSnap = m_app->m_project.detachedCopy();
-    muteAllButClip(anchorSnap, anchor.repId);
+    drift::muteAllButClip(anchorSnap, anchor.repId);
     drift::Project otherSnap = m_app->m_project.detachedCopy();
-    muteAllButClip(otherSnap, other.repId);
+    drift::muteAllButClip(otherSnap, other.repId);
 
     if (!begin(tr("Matching audio…")))
         return;

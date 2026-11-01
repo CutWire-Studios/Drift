@@ -1677,6 +1677,23 @@ void retimeLinkedSubtitles(const Project &before, Project &project, const QHash<
     }
 }
 
+void muteAllButClip(Project &snap, const QString &clipId)
+{
+    for (Track &track : snap.tracks()) {
+        bool has = false;
+        for (Clip &clip : track.clips) {
+            if (clip.id == clipId) {
+                has = true;
+                continue;
+            }
+            clip.volume.setKeyframe(0, 0.0);
+            clip.suppressEmbeddedAudio = true;
+        }
+        if (!has)
+            track.muted = true;
+    }
+}
+
 QList<ClipRef> linkedPartners(const Project &project, const Clip &clip)
 {
     QList<ClipRef> out;

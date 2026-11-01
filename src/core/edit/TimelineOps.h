@@ -312,6 +312,9 @@ QString subtitleSourceKey(const Clip &clip);
 void retimeLinkedSubtitles(const Project &before, Project &project,
                            const QHash<QString, QString> &replaced = {});
 
+// Silences every clip in `snap` except `clipId`, so mixing it yields only that clip's sound.
+void muteAllButClip(Project &snap, const QString &clipId);
+
 // All clips sharing `clip.linkId` (excluding `clip` itself).
 QList<ClipRef> linkedPartners(const Project &project, const Clip &clip);
 

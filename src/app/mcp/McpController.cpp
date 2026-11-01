@@ -2689,23 +2689,6 @@ drift::LoudnessResult blockingLoudness(McpController::LoudnessJob job)
     return *result;
 }
 
-void muteAllButClip(drift::Project &snap, const QString &clipId)
-{
-    for (drift::Track &track : snap.tracks()) {
-        bool has = false;
-        for (drift::Clip &clip : track.clips) {
-            if (clip.id == clipId) {
-                has = true;
-                continue;
-            }
-            clip.volume.setKeyframe(0, 0.0);
-            clip.suppressEmbeddedAudio = true;
-        }
-        if (!has)
-            track.muted = true;
-    }
-}
-
 // The clip whose sound a clip-scoped analysis should hear. A video whose audio was separated
 // plays nothing itself (its embedded audio is suppressed), so muting everything else left a clip
 // that read as wall-to-wall silence — and remove_silence then deleted it outright.
@@ -2813,7 +2796,7 @@ QJsonObject McpController::waveformImage(const QString &mode, int trackIndex, in
                 || clipIndex >= tracks.at(trackIndex).clips.size())
                 return err("not_found", QStringLiteral("no clip at track %1 index %2").arg(trackIndex).arg(clipIndex));
             const drift::Clip &clip = tracks.at(trackIndex).clips.at(clipIndex);
-            muteAllButClip(snap, clip.id);
+            drift::muteAllButClip(snap, clip.id);
             start = drift::usToSeconds(clip.timelineStart);
             dur = drift::usToSeconds(clip.timelineDuration);
         }
@@ -2973,7 +2956,7 @@ QJsonObject McpController::detectSilence(int trackIndex, int clipIndex, double s
         if (!m_app->isValidClipIndex(trackIndex, clipIndex))
             return err("not_found", QStringLiteral("Unknown clip"));
         const drift::Clip &clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
-        muteAllButClip(snap, audibleClipIdFor(m_app->m_project, clip));
+        drift::muteAllButClip(snap, audibleClipIdFor(m_app->m_project, clip));
         start = drift::usToSeconds(clip.timelineStart);
         dur = drift::usToSeconds(clip.timelineDuration);
         source = QStringLiteral("clip");
@@ -3136,7 +3119,7 @@ McpController::LoudnessJob McpController::clipLoudnessJob(int trackIndex, int cl
     LoudnessJob job;
     job.snap = m_app->m_project.detachedCopy();
     const drift::Clip &clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
-    muteAllButClip(job.snap, clip.id);
+    drift::muteAllButClip(job.snap, clip.id);
     job.startSeconds = drift::usToSeconds(clip.timelineStart);
     job.durSeconds = drift::usToSeconds(clip.timelineDuration);
     return job;
@@ -3627,7 +3610,7 @@ QJsonObject McpController::resolveAudio(const AudioRequest &request, double maxS
             return err("not_found", QStringLiteral("Unknown clip"));
         const drift::Clip &clip = m_app->m_project.tracks().at(request.track).clips.at(request.clip);
         out->snap = m_app->m_project.detachedCopy();
-        muteAllButClip(out->snap, audibleClipIdFor(m_app->m_project, clip));
+        drift::muteAllButClip(out->snap, audibleClipIdFor(m_app->m_project, clip));
         out->start = drift::usToSeconds(clip.timelineStart);
         out->duration = drift::usToSeconds(clip.timelineDuration);
         out->title = clip.path.isEmpty() ? QStringLiteral("Clip") : QFileInfo(clip.path).fileName();
