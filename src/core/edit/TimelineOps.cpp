@@ -418,6 +418,64 @@ void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &
                                         source.timelineDuration));
 }
 
+void moveLinkedAdjustmentsToHostTrack(Project &project, const QString &hostClipId)
+{
+    project.ensureTrackIds();
+    int hostTrack = -1;
+    int hostClip = -1;
+    for (int t = 0; t < project.tracks().size() && hostTrack < 0; ++t) {
+        const Track &track = project.tracks().at(t);
+        if (track.isAdjustment())
+            continue;
+        for (int c = 0; c < track.clips.size(); ++c) {
+            if (track.clips.at(c).id == hostClipId) {
+                hostTrack = t;
+                hostClip = c;
+                break;
+            }
+        }
+    }
+    if (hostTrack < 0)
+        return;
+
+    const Clip host = project.tracks().at(hostTrack).clips.at(hostClip);
+    const QString hostTrackId = project.tracks().at(hostTrack).id;
+
+    QList<Clip> moving;
+    QStringList touchedLaneIds;
+    for (Track &lane : project.tracks()) {
+        if (!lane.isAdjustmentLane() || lane.parentTrackId == hostTrackId)
+            continue;
+        for (int i = lane.clips.size() - 1; i >= 0; --i) {
+            if (lane.clips.at(i).linkedClipId != hostClipId
+                || lane.clips.at(i).adjustmentKind == AdjustmentKind::Transform)
+                continue;
+            Clip adjustment = lane.clips.at(i);
+            adjustment.timelineStart = host.timelineStart;
+            adjustment.timelineDuration = host.timelineDuration;
+            lane.clips.removeAt(i);
+            moving.prepend(adjustment);
+            if (!touchedLaneIds.contains(lane.id))
+                touchedLaneIds.append(lane.id);
+        }
+    }
+
+    for (const Clip &adjustment : std::as_const(moving)) {
+        const int laneIndex = ensureAdjustmentLane(project, project.trackIndexById(hostTrackId),
+                                                   adjustment.adjustmentKind,
+                                                   adjustment.timelineStart,
+                                                   adjustment.timelineDuration);
+        if (laneIndex >= 0)
+            project.tracks()[laneIndex].clips.append(adjustment);
+    }
+
+    for (const QString &laneId : std::as_const(touchedLaneIds)) {
+        const int laneIndex = project.trackIndexById(laneId);
+        if (laneIndex >= 0 && project.tracks().at(laneIndex).clips.isEmpty())
+            project.tracks().removeAt(laneIndex);
+    }
+}
+
 ClipRef addLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask)
 {
     if (trackIndex < 0 || trackIndex >= project.tracks().size())

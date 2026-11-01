@@ -131,6 +131,11 @@ void setLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &
 // contribute. INSERTS TRACKS.
 ClipRef addLinkedMask(Project &project, int trackIndex, int clipIndex, const Mask &mask);
 
+// Re-home every lane adjustment (mask or effect) pinned to `hostClipId` onto the lanes of the track
+// the host clip now sits on, dropping lanes it empties. A host moved to another track leaves its
+// pinned adjustments scoped to the old one, where they no longer apply to it. INSERTS TRACKS.
+void moveLinkedAdjustmentsToHostTrack(Project &project, const QString &hostClipId);
+
 // An unlinked Mask adjustment on one of `trackIndex`'s lanes, spanning [startUs, +durationUs).
 // Pinned to nothing, so its edges stay draggable and it masks whatever the track shows over that
 // span rather than one clip. `trackIndex` must be a track that can carry lanes. INSERTS TRACKS.

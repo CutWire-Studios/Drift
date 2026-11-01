@@ -125,6 +125,7 @@ private slots:
     void transformLayerParentsPreviewBoxes();
     void transformSpanOptionsAndValidation();
     void transformLayerEntryPoints();
+    void linkedVideoMovesWithItsAudioAndAdjustments();
     void pasteSelectsWhatItPastedWhenATrackIsAdded();
     void compositeTabEditUndoesFromMain();
     void compositeSeparateAudioAndRemoval();
@@ -1327,6 +1328,74 @@ void EditorStateTest::transformLayerEntryPoints()
     QVERIFY(state.project()->tracks().at(0).clips.size() == 1);
     state.moveClipToTrack(3, 0, 0, 1.0);
     QCOMPARE(state.project()->tracks().at(3).clips.size(), 1);
+}
+
+void EditorStateTest::linkedVideoMovesWithItsAudioAndAdjustments()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    for (const auto &spec : {std::pair{QStringLiteral("v1"), drift::TrackType::Video},
+                             std::pair{QStringLiteral("v2"), drift::TrackType::Video},
+                             std::pair{QStringLiteral("a1"), drift::TrackType::Audio}}) {
+        drift::Track track{.type = spec.second};
+        track.id = spec.first;
+        project.tracks().append(track);
+    }
+    const auto makeClip = [](const QString &id, drift::ClipType type, drift::TimeUs start) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = type;
+        clip.linkId = QStringLiteral("pair");
+        clip.timelineStart = start;
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcOut = clip.timelineDuration;
+        return clip;
+    };
+    project.tracks()[0].clips.append(makeClip(QStringLiteral("vid"), drift::ClipType::Video, 0));
+    project.tracks()[2].clips.append(makeClip(QStringLiteral("aud"), drift::ClipType::Audio, 0));
+    // A different clip already sitting where the audio is headed.
+    drift::Clip blocker = makeClip(QStringLiteral("blocker"), drift::ClipType::Audio,
+                                   drift::secondsToUs(3.0));
+    blocker.linkId.clear();
+    project.tracks()[2].clips.append(blocker);
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Ellipse;
+    drift::addLinkedMask(project, 0, 0, mask);
+
+    state.selectClip(0, 0);
+    state.moveClipToTrack(0, 0, project.trackIndexById(QStringLiteral("v2")), 2.0);
+
+    int videoTrack = -1;
+    int videoClip = -1;
+    int audioTrack = -1;
+    int audioClip = -1;
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("vid"), &videoTrack, &videoClip));
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("aud"), &audioTrack, &audioClip));
+    QCOMPARE(project.tracks().at(videoTrack).id, QStringLiteral("v2"));
+    QCOMPARE(project.tracks().at(videoTrack).clips.at(videoClip).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(project.tracks().at(videoTrack).clips.at(videoClip).linkId, QStringLiteral("pair"));
+    QCOMPARE(project.tracks().at(audioTrack).clips.at(audioClip).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(project.tracks().at(audioTrack).clips.at(audioClip).linkId, QStringLiteral("pair"));
+    // 2s..4s overlaps the blocker at 3s..5s, so the audio gets a new audio track.
+    QCOMPARE(project.tracks().at(audioTrack).type, drift::TrackType::Audio);
+    QVERIFY(project.tracks().at(audioTrack).id != QStringLiteral("a1"));
+
+    QCOMPARE(drift::linkedMaskAdjustments(project, videoTrack, videoClip).size(), 1);
+    QVERIFY(drift::linkedMaskAdjustments(project, 0, 0).isEmpty());
+    QCOMPARE(state.selectedTrack(), videoTrack);
+    QCOMPARE(state.selectedClip(), videoClip);
+
+    state.undo();
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("vid"), &videoTrack, &videoClip));
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("aud"), &audioTrack, &audioClip));
+    QCOMPARE(project.tracks().at(videoTrack).id, QStringLiteral("v1"));
+    QCOMPARE(project.tracks().at(audioTrack).id, QStringLiteral("a1"));
+    QCOMPARE(project.tracks().at(audioTrack).clips.size(), 2);
+    QCOMPARE(project.tracks().size(), 4);
+    QCOMPARE(state.selectedTrack(), videoTrack);
+    QCOMPARE(state.selectedClip(), videoClip);
 }
 
 // Pasting a clip whose kind has no track mints one at the top, pushing the tracks an earlier clip

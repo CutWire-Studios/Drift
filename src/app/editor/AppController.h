@@ -1945,6 +1945,8 @@ protected:
     QString trackIdAt(int trackIndex) const;
     QList<QPair<QString, int>> captureSelectionByTrackId() const;
     void restoreSelectionByTrackId(const QList<QPair<QString, int>> &captured);
+    void captureSelectionClipIds();
+    void restoreSelectionClipIds();
     int assetIndexForClip(const drift::Clip &clip) const;
     drift::TimeUs clipDurationForAssetIndex(int assetIndex) const;
     // The absolute orientation (0/90/180/270) a video clip's frames come out at: its file's own
@@ -2142,6 +2144,10 @@ protected:
     int m_selectedTransitionTrack = -1;
     int m_selectedTransitionLeftClip = -1;
     QList<QPair<int, int>> m_selection;
+    mutable QString m_capturedPrimaryClipId;
+    QStringList m_undoSelectionIds;
+    QString m_undoPrimaryId;
+    bool m_undoSelectionCaptured = false;
     int m_selectionRevision = 0;
     int m_timelineTrimCursorSide = 0;
     int m_timelineTrimCursorHeight = 0;

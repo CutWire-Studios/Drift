@@ -878,6 +878,7 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         // leaving it pointed at nothing.
         if (!m_bin->currentFolderId().isEmpty() && !m_project.binFolder(m_bin->currentFolderId()))
             m_bin->setCurrentFolderId(QString());
+        restoreSelectionClipIds();
         normalizeSelection();
         reconcileSequenceTabs();
         m_projectFile->setDirty(true);
@@ -7516,7 +7517,11 @@ void AppController::autoCrossfadeNewOverlaps(const drift::Project &before)
         const drift::Track &track = m_project.tracks().at(t);
         if (!trackAllowsTransitions(track.type))
             continue;
-        const drift::Track &oldTrack = before.tracks().at(t);
+        // By id: an edit that mints or reorders tracks leaves the two lists out of step by index.
+        int oldTrackIndex = before.trackIndexById(track.id);
+        if (oldTrackIndex < 0 && before.tracks().size() == m_project.tracks().size())
+            oldTrackIndex = t;
+        const drift::Track *oldTrack = oldTrackIndex >= 0 ? &before.tracks().at(oldTrackIndex) : nullptr;
         for (int left = 0; left < track.clips.size(); ++left) {
             const int right = findTransitionPartnerIndex(track, left);
             if (right < 0)
@@ -7525,8 +7530,8 @@ void AppController::autoCrossfadeNewOverlaps(const drift::Project &before)
             const drift::Clip &toClip = track.clips.at(right);
             if (!drift::clipsPhysicallyOverlap(fromClip, toClip))
                 continue;
-            const drift::Clip *oldFrom = drift::clipById(oldTrack, fromClip.id);
-            const drift::Clip *oldTo = drift::clipById(oldTrack, toClip.id);
+            const drift::Clip *oldFrom = oldTrack ? drift::clipById(*oldTrack, fromClip.id) : nullptr;
+            const drift::Clip *oldTo = oldTrack ? drift::clipById(*oldTrack, toClip.id) : nullptr;
             if (oldFrom && oldTo && drift::clipsPhysicallyOverlap(*oldFrom, *oldTo))
                 continue;
             const bool hasTransition = std::any_of(track.transitions.cbegin(), track.transitions.cend(),
@@ -8530,6 +8535,35 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     QList<QPair<int, int>> targets = m_selection.contains(requested) ? m_selection
                                                                       : QList<QPair<int, int>>{requested};
 
+    // A linked video carries its audio partner by the same delta even when only the video was
+    // grabbed. The audio keeps its own track unless that is taken (resolved below).
+    QSet<QString> movingVideoLinkIds;
+    for (const QPair<int, int> &pair : std::as_const(targets)) {
+        if (!isValidClipIndex(pair.first, pair.second))
+            continue;
+        const drift::Clip &c = m_project.tracks().at(pair.first).clips.at(pair.second);
+        if ((c.type == drift::ClipType::Video || c.type == drift::ClipType::Composite)
+            && !c.linkId.isEmpty())
+            movingVideoLinkIds.insert(c.linkId);
+    }
+    if (!movingVideoLinkIds.isEmpty()) {
+        const QList<QPair<int, int>> videoTargets = targets;
+        for (const QPair<int, int> &pair : videoTargets) {
+            if (!isValidClipIndex(pair.first, pair.second))
+                continue;
+            const drift::Clip &c = m_project.tracks().at(pair.first).clips.at(pair.second);
+            if (c.type != drift::ClipType::Video && c.type != drift::ClipType::Composite)
+                continue;
+            for (const drift::ClipRef &ref : drift::linkedPartners(m_project, c)) {
+                const QPair<int, int> partner(ref.trackIndex, ref.clipIndex);
+                if (m_project.tracks().at(partner.first).clips.at(partner.second).type
+                        == drift::ClipType::Audio
+                    && !targets.contains(partner))
+                    targets.append(partner);
+            }
+        }
+    }
+
     const drift::Project before = m_project;
     const drift::TimeUs desiredUs = drift::secondsToUs(newStart);
     const drift::TimeUs baseUs = m_project.tracks().at(trackIndex).clips.at(clipIndex).timelineStart;
@@ -8561,6 +8595,7 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
         int toTrack;
         drift::Clip clip;
         drift::TimeUs newTimelineStart;
+        bool followsVideo = false;
     };
 
     QList<ClipToMove> toMove;
@@ -8570,7 +8605,11 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
             continue;
         const drift::Clip &c = m_project.tracks().at(pair.first).clips.at(pair.second);
         int destTrack = pair.first;
-        if (pair.first == trackIndex) {
+        const bool followsVideo = c.type == drift::ClipType::Audio && !c.linkId.isEmpty()
+                                  && movingVideoLinkIds.contains(c.linkId);
+        if (followsVideo) {
+            destTrack = pair.first;
+        } else if (pair.first == trackIndex) {
             destTrack = newTrackIndex;
         } else {
             const int candidate = pair.first + trackDelta;
@@ -8585,6 +8624,7 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
         item.toTrack = destTrack;
         item.clip = c;
         item.newTimelineStart = qMax<drift::TimeUs>(0, c.timelineStart + clampedTimeDelta);
+        item.followsVideo = followsVideo;
         movedIds.insert(c.id);
         toMove.append(item);
     }
@@ -8592,6 +8632,8 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
     if (!m_allowClipOverlap) {
         drift::TimeUs maxPushRight = 0;
         for (const ClipToMove &item : toMove) {
+            if (item.followsVideo)
+                continue;
             const drift::Track &destTrack = m_project.tracks().at(item.toTrack);
             const drift::TimeUs clampedStart = drift::clampClipStartNoOverlap(destTrack, movedIds, item.newTimelineStart,
                                                                               item.clip.timelineDuration);
@@ -8605,6 +8647,40 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
             for (ClipToMove &item : toMove) {
                 item.newTimelineStart += maxPushRight;
             }
+        }
+
+        const auto slotFree = [&](int trackIdx, const ClipToMove &self) {
+            const drift::TimeUs end = self.newTimelineStart + self.clip.timelineDuration;
+            for (const drift::Clip &other : m_project.tracks().at(trackIdx).clips) {
+                if (!movedIds.contains(other.id) && self.newTimelineStart < other.timelineEnd()
+                    && other.timelineStart < end)
+                    return false;
+            }
+            for (const ClipToMove &other : toMove) {
+                if (other.clip.id != self.clip.id && other.toTrack == trackIdx
+                    && self.newTimelineStart < other.newTimelineStart + other.clip.timelineDuration
+                    && other.newTimelineStart < end)
+                    return false;
+            }
+            return true;
+        };
+        for (ClipToMove &item : toMove) {
+            if (!item.followsVideo || slotFree(item.toTrack, item))
+                continue;
+            int found = -1;
+            for (int t = 0; t < m_project.tracks().size() && found < 0; ++t) {
+                const drift::Track &candidate = m_project.tracks().at(t);
+                if (t != item.toTrack && candidate.type == drift::TrackType::Audio && !candidate.locked
+                    && slotFree(t, item))
+                    found = t;
+            }
+            if (found < 0) {
+                drift::Track audioTrack;
+                audioTrack.type = drift::TrackType::Audio;
+                m_project.tracks().append(audioTrack);
+                found = m_project.tracks().size() - 1;
+            }
+            item.toTrack = found;
         }
     }
 
@@ -8639,28 +8715,10 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
         }
     }
 
-    // Update selection and sync linked partners
-    QList<QPair<int, int>> newSelection;
-    int selectedT = -1;
-    int selectedC = -1;
-    for (const ClipToMove &item : toMove) {
-        int foundIdx = -1;
-        const drift::Track &t = m_project.tracks().at(item.toTrack);
-        for (int i = 0; i < t.clips.size(); ++i) {
-            if (t.clips.at(i).id == item.clip.id) {
-                foundIdx = i;
-                break;
-            }
-        }
-        if (foundIdx >= 0) {
-            newSelection.append(qMakePair(item.toTrack, foundIdx));
-            if (item.clip.id == leaderId) {
-                selectedT = item.toTrack;
-                selectedC = foundIdx;
-            }
-        }
+    // Selection is re-resolved by clip id after the lanes below settle: moving a pinned adjustment
+    // can insert tracks and shift every index taken here.
+    for (const ClipToMove &item : toMove)
         syncLinkedPartnersFrom(m_project, item.clip, movedIds);
-    }
     for (const ClipToMove &item : toMove) {
         if (!item.clip.linkLoose)
             continue;
@@ -8675,11 +8733,29 @@ void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackI
             movedIds.insert(partner.id);
         }
     }
+    for (const ClipToMove &item : toMove) {
+        if (item.fromTrack != item.toTrack)
+            drift::moveLinkedAdjustmentsToHostTrack(m_project, item.clip.id);
+    }
 
     if (editCreatesCompleteOverlap(before, m_project)) {
         m_project = before;
         setLastMessage(tr("A clip can't completely cover another"), QStringLiteral("warning"));
         return;
+    }
+    QList<QPair<int, int>> newSelection;
+    int selectedT = -1;
+    int selectedC = -1;
+    for (const ClipToMove &item : toMove) {
+        int t = -1;
+        int c = -1;
+        if (!findClipById(m_project, item.clip.id, &t, &c))
+            continue;
+        newSelection.append(qMakePair(t, c));
+        if (item.clip.id == leaderId) {
+            selectedT = t;
+            selectedC = c;
+        }
     }
     m_selection = newSelection;
     if (selectedT >= 0 && selectedC >= 0) {
@@ -10479,6 +10555,9 @@ QList<QPair<QString, int>> AppController::captureSelectionByTrackId() const
 {
     QList<QPair<QString, int>> captured;
     captured.reserve(m_selection.size());
+    m_capturedPrimaryClipId = isValidClipIndex(m_selectedTrack, m_selectedClip)
+        ? m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).id
+        : QString();
     for (const QPair<int, int> &pair : m_selection) {
         const QString id = trackIdAt(pair.first);
         if (!id.isEmpty())
@@ -10502,9 +10581,19 @@ void AppController::restoreSelectionByTrackId(const QList<QPair<QString, int>> &
         m_selectedTrack = -1;
         m_selectedClip = -1;
     } else {
-        m_selectedTrack = m_selection.constLast().first;
-        m_selectedClip = m_selection.constLast().second;
+        // The primary is not necessarily the last entry: a linked pair is [video, audio], and
+        // falling back to the last would hand the inspector to the audio after every edit.
+        const QPair<int, int> *primary = &m_selection.constLast();
+        for (const QPair<int, int> &pair : std::as_const(m_selection)) {
+            if (m_project.tracks().at(pair.first).clips.at(pair.second).id == m_capturedPrimaryClipId) {
+                primary = &pair;
+                break;
+            }
+        }
+        m_selectedTrack = primary->first;
+        m_selectedClip = primary->second;
     }
+    m_capturedPrimaryClipId.clear();
 }
 
 void AppController::addAdjustmentClip(double atSeconds, double durationSeconds)
@@ -21059,7 +21148,9 @@ void AppController::undo()
         m_masking->waitForBrushSaves(2000);
     if (!m_undoStack.canUndo())
         return;
+    captureSelectionClipIds();
     m_undoStack.undo();
+    m_undoSelectionCaptured = false;
     m_mcpController->bumpEditRevision();
 }
 
@@ -21086,7 +21177,9 @@ void AppController::redo()
         m_masking->waitForBrushSaves(2000);
     if (!m_undoStack.canRedo())
         return;
+    captureSelectionClipIds();
     m_undoStack.redo();
+    m_undoSelectionCaptured = false;
     m_mcpController->bumpEditRevision();
 }
 
@@ -21664,6 +21757,44 @@ bool AppController::isValidClipIndex(int trackIndex, int clipIndex) const
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return false;
     return clipIndex >= 0 && clipIndex < m_project.tracks().at(trackIndex).clips.size();
+}
+
+void AppController::captureSelectionClipIds()
+{
+    m_undoSelectionIds.clear();
+    for (const QPair<int, int> &pair : std::as_const(m_selection)) {
+        if (isValidClipIndex(pair.first, pair.second))
+            m_undoSelectionIds.append(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+    }
+    m_undoPrimaryId = isValidClipIndex(m_selectedTrack, m_selectedClip)
+        ? m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).id
+        : QString();
+    m_undoSelectionCaptured = true;
+}
+
+void AppController::restoreSelectionClipIds()
+{
+    if (!m_undoSelectionCaptured)
+        return;
+    QList<QPair<int, int>> restored;
+    for (const QString &id : std::as_const(m_undoSelectionIds)) {
+        int t = -1;
+        int c = -1;
+        if (findClipById(m_project, id, &t, &c))
+            restored.append(qMakePair(t, c));
+    }
+    if (restored.isEmpty())
+        return;
+    m_selection = restored;
+    int t = -1;
+    int c = -1;
+    if (!m_undoPrimaryId.isEmpty() && findClipById(m_project, m_undoPrimaryId, &t, &c)) {
+        m_selectedTrack = t;
+        m_selectedClip = c;
+    } else {
+        m_selectedTrack = restored.constLast().first;
+        m_selectedClip = restored.constLast().second;
+    }
 }
 
 void AppController::normalizeSelection()
