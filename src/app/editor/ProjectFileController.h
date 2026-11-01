@@ -1,11 +1,14 @@
 #pragma once
 
+#include "core/edit/commands/ProjectCommands.h"
+#include "core/project/Project.h"
 #include "engine/project/ProjectBundle.h"
 
 #include <QAtomicInt>
 #include <QFuture>
 #include <QHash>
 #include <QList>
+#include <QJsonObject>
 #include <QObject>
 #include <QSet>
 #include <QString>
@@ -23,8 +26,6 @@ class AppController;
 // Project-file lifecycle and project setup: save, load, packaging, collect-media,
 // autosave and the startup queue. Reached from QML as EditorState.projectFile.
 // Document ↔ JSON conversion stays on AppController; this class calls it through m_app.
-namespace drift { class Project; }
-
 class ProjectFileController : public QObject
 {
     Q_OBJECT
@@ -57,6 +58,7 @@ class ProjectFileController : public QObject
 
 public:
     explicit ProjectFileController(AppController *app, QObject *parent = nullptr);
+    ~ProjectFileController() override;
 
     QVariantMap background() const;
     Q_INVOKABLE void setBackground(const QVariantMap &background);
@@ -97,6 +99,10 @@ public:
     // Same container, every source asset embedded. Runs off the GUI thread — it copies the media.
     Q_INVOKABLE void packageProject(const QUrl &url);
     Q_INVOKABLE void cancelPackage();
+    bool saveInFlight() const { return m_saveInFlight; }
+    // Blocks until every Save / Save As started so far has landed and its completion has run.
+    // For callers that need the file on disk (MCP, tests); the UI never waits.
+    void waitForSave();
     // Export-only: the raw document JSON, no container and no media. Leaves the open project's
     // path, dirty flag and recents alone — the .drift stays the project of record.
     Q_INVOKABLE void saveProjectJson(const QUrl &url);
@@ -229,10 +235,28 @@ private:
     // Applies a finished load unless a newer one has started since, then releases the
     // pending flag either way the load went.
     void finishLoad(int generation, const QUrl &url, const std::shared_ptr<LoadResult> &result);
+    // Everything a save reads from the open document, taken on the GUI thread and immutable after:
+    // a detached copy of the project, the view state, and the undo states (shared, never the live
+    // commands). The worker turns it into the document, so serializing, compressing and writing
+    // all happen off the GUI thread.
+    struct SaveCapture
+    {
+        // Metadata, addons and media of the current project; `document` is filled by the worker.
+        drift::bundle::WriteRequest request;
+        std::shared_ptr<const drift::Project> project;
+        QJsonObject session;
+        drift::HistoryCapture history;
+        bool embedSource = false;
+        quint64 dirtyRevision = 0;
+        QString projectId;
+        QSet<QString> embeddedSources;
+    };
     // Shared by saveProject and packageProject. `embedSource` forces every source asset into the
     // bundle; otherwise each keeps whatever mode it had, tracked in m_embeddedSources. GUI thread
-    // only — packageProject builds the request here and hands the finished copy to its worker.
-    drift::bundle::WriteRequest buildWriteRequest(bool embedSource) const;
+    // only.
+    SaveCapture captureSave(bool embedSource) const;
+    // Worker side of captureSave: the request with its document and history media filled in.
+    static drift::bundle::WriteRequest completeRequest(const SaveCapture &capture);
     // Who the document becomes when a Save As write succeeds. A fresh id keeps the copy from
     // sharing the original's extraction and derived-media directory, both of which are keyed on it.
     struct ProjectIdentity {
@@ -242,6 +266,8 @@ private:
     // Body of saveProject / saveProjectAs. `adopt` is empty for a plain Save; when set, the copy is
     // written under that identity and the open project only takes it on once the bytes are down.
     void writeProjectBundle(const QUrl &url, const std::optional<ProjectIdentity> &adopt);
+    void runBundleSave(const QUrl &url, const std::optional<ProjectIdentity> &adopt);
+    void startNextQueuedSave();
     void adoptProjectIdentity(const std::optional<ProjectIdentity> &adopt);
     void rememberEmbeddedSources(const QList<drift::bundle::MediaEntry> &media);
     void reportMissingAddons(const QList<drift::bundle::AddonRef> &addons);
@@ -273,6 +299,20 @@ private:
     // Save state / autosave / crash recovery.
     QString m_currentProjectPath;
     bool m_dirty = false;
+    // Bumped by every setDirty(true). A save records it when it captures the document and only
+    // clears the dirty flag if it is unchanged when the write lands: an edit made during the
+    // write is not in the file.
+    quint64 m_dirtyRevision = 0;
+    // The Save / Save As write running on a worker. Further saves wait here, in order, and each
+    // captures the document when it starts.
+    struct QueuedSave
+    {
+        QUrl url;
+        std::optional<ProjectIdentity> adopt;
+    };
+    QFuture<void> m_saveWrite;
+    bool m_saveInFlight = false;
+    QList<QueuedSave> m_queuedSaves;
     QTimer *m_autosaveTimer = nullptr;
     // The recovery write running on a worker, and a counter that deleteRecoveryFile() bumps so a
     // write that finishes after the file was meant to be gone does not bring it back.

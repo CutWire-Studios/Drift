@@ -21842,6 +21842,8 @@ QByteArray AppController::serializeProjectJson() const
     const QJsonObject session = sessionJson();
     for (auto it = session.constBegin(); it != session.constEnd(); ++it)
         root.insert(it.key(), it.value());
+    if (const QJsonObject history = historyJson(drift::captureHistory(m_undoStack)); !history.isEmpty())
+        root.insert(QStringLiteral("undoHistory"), history);
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 
@@ -21850,10 +21852,6 @@ QByteArray AppController::serializeProjectJson() const
 QJsonObject AppController::sessionJson() const
 {
     QJsonObject root;
-    if (QJsonObject history = drift::historyToJson(m_undoStack); !history.isEmpty()) {
-        history.insert(QStringLiteral("media"), QJsonArray::fromStringList(historyMediaPaths().values()));
-        root.insert(QStringLiteral("undoHistory"), history);
-    }
     root.insert(QStringLiteral("playheadUs"), static_cast<double>(m_playheadUs));
     root.insert(QStringLiteral("snapEnabled"), m_snapEnabled);
     root.insert(QStringLiteral("rippleEnabled"), m_rippleEnabled);
@@ -22069,15 +22067,17 @@ void AppController::applyParsedProject(ParsedProject parsed)
     m_faces->ingestSwapSourcesInProject();
     m_playback.setProject(&m_project);
     m_undoStack.clear();
-    m_historyMediaCache.clear();
     if (parsed.history) {
         const drift::Project loaded = m_project;
+        QList<drift::HistoryStatePtr> states;
+        states.reserve(parsed.history->states.size());
+        for (drift::Project &state : parsed.history->states)
+            states.append(std::make_shared<const drift::HistoryState>(std::move(state)));
         {
             const QSignalBlocker blocker(&m_undoStack);
             for (const drift::HistoryStep &step : std::as_const(parsed.history->steps)) {
                 auto *command = new drift::ProjectSnapshotCommand(
-                    &m_project, parsed.history->states.at(step.before),
-                    parsed.history->states.at(step.after), step.text);
+                    &m_project, states.at(step.before), states.at(step.after), step.text);
                 command->adoptApplied();
                 m_undoStack.push(command);
             }
@@ -22789,6 +22789,18 @@ void AppController::copyDebugInfo()
 
 namespace {
 
+// Every file a project state points at. Thread-safe: it only reads the project it is given.
+QStringList stateMediaPaths(const drift::Project &project)
+{
+    QStringList list;
+    for (const drift::MediaAsset &asset : project.assets())
+        list.append(asset.path);
+    for (const drift::bundle::MediaEntry &entry : drift::bundle::collectMedia(project, false))
+        list.append(entry.originalPath);
+    list.removeDuplicates();
+    return list;
+}
+
 const drift::ProjectSnapshotCommand *historyCommand(const QUndoStack &stack, int commandIndex)
 {
     return dynamic_cast<const drift::ProjectSnapshotCommand *>(stack.command(commandIndex));
@@ -22835,22 +22847,35 @@ int AppController::historyIndexForHash(const QString &prefix) const
 QSet<QString> AppController::historyMediaPaths() const
 {
     QSet<QString> paths;
-    const QHash<QString, const drift::Project *> states = drift::historyStates(m_undoStack);
-    for (auto it = states.constBegin(); it != states.constEnd(); ++it) {
-        auto cached = m_historyMediaCache.find(it.key());
-        if (cached == m_historyMediaCache.end()) {
-            QStringList list;
-            for (const drift::MediaAsset &asset : it.value()->assets())
-                list.append(asset.path);
-            for (const drift::bundle::MediaEntry &entry : drift::bundle::collectMedia(*it.value(), false))
-                list.append(entry.originalPath);
-            list.removeDuplicates();
-            cached = m_historyMediaCache.insert(it.key(), list);
-        }
-        for (const QString &path : std::as_const(cached.value()))
+    const drift::HistoryCapture capture = drift::captureHistory(m_undoStack);
+    const auto add = [&paths](const drift::HistoryStatePtr &state) {
+        const QStringList list = state->mediaPaths(stateMediaPaths);
+        for (const QString &path : list)
             paths.insert(path);
+    };
+    for (const drift::HistoryCapture::Step &step : capture.steps) {
+        add(step.before);
+        add(step.after);
     }
     return paths;
+}
+
+QJsonObject AppController::historyJson(const drift::HistoryCapture &capture,
+                                       QList<drift::HistoryStatePtr> *states)
+{
+    drift::HistoryDocument document = drift::historyToJson(capture);
+    if (document.json.isEmpty())
+        return {};
+    QSet<QString> media;
+    for (const drift::HistoryStatePtr &state : std::as_const(document.states)) {
+        const QStringList list = state->mediaPaths(stateMediaPaths);
+        for (const QString &path : list)
+            media.insert(path);
+    }
+    document.json.insert(QStringLiteral("media"), QJsonArray::fromStringList(media.values()));
+    if (states)
+        *states = std::move(document.states);
+    return document.json;
 }
 
 QString AppController::historySnapshotDir()

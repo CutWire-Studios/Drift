@@ -1,13 +1,34 @@
 #include "core/edit/commands/ProjectCommands.h"
 
-#include <QCryptographicHash>
 #include <QJsonArray>
-#include <QJsonDocument>
 
 namespace drift {
 
+QString HistoryState::hash() const
+{
+    const QMutexLocker lock(&m_mutex);
+    if (m_hash.isEmpty())
+        m_hash = m_project.contentHash();
+    return m_hash;
+}
+
+QStringList HistoryState::mediaPaths(const std::function<QStringList(const Project &)> &compute) const
+{
+    const QMutexLocker lock(&m_mutex);
+    if (!m_media)
+        m_media = compute(m_project);
+    return *m_media;
+}
+
 ProjectSnapshotCommand::ProjectSnapshotCommand(Project *project, Project before, Project after,
                                                const QString &text)
+    : ProjectSnapshotCommand(project, std::make_shared<const HistoryState>(std::move(before)),
+                             std::make_shared<const HistoryState>(std::move(after)), text)
+{
+}
+
+ProjectSnapshotCommand::ProjectSnapshotCommand(Project *project, HistoryStatePtr before,
+                                               HistoryStatePtr after, const QString &text)
     : QUndoCommand(text)
     , m_project(project)
     , m_before(std::move(before))
@@ -15,23 +36,9 @@ ProjectSnapshotCommand::ProjectSnapshotCommand(Project *project, Project before,
 {
 }
 
-QString ProjectSnapshotCommand::beforeHash() const
-{
-    if (m_beforeHash.isEmpty())
-        m_beforeHash = m_before.contentHash();
-    return m_beforeHash;
-}
-
-QString ProjectSnapshotCommand::afterHash() const
-{
-    if (m_afterHash.isEmpty())
-        m_afterHash = m_after.contentHash();
-    return m_afterHash;
-}
-
 void ProjectSnapshotCommand::undo()
 {
-    restore(m_before);
+    restore(m_before->project());
 }
 
 void ProjectSnapshotCommand::redo()
@@ -40,28 +47,7 @@ void ProjectSnapshotCommand::redo()
         m_skipRedo = false;
         return;
     }
-    restore(m_after);
-}
-
-static ProjectSnapshotCommand::Packed pack(const Project &project)
-{
-    const QByteArray json = project.toCompactJson();
-    return {QString::fromLatin1(QCryptographicHash::hash(json, QCryptographicHash::Sha256).toHex()),
-            qCompress(json, 6)};
-}
-
-const ProjectSnapshotCommand::Packed &ProjectSnapshotCommand::packedBefore() const
-{
-    if (!m_packedBefore)
-        m_packedBefore = pack(m_before);
-    return *m_packedBefore;
-}
-
-const ProjectSnapshotCommand::Packed &ProjectSnapshotCommand::packedAfter() const
-{
-    if (!m_packedAfter)
-        m_packedAfter = pack(m_after);
-    return *m_packedAfter;
+    restore(m_after->project());
 }
 
 void ProjectSnapshotCommand::restore(const Project &snapshot)
@@ -91,69 +77,70 @@ const ProjectSnapshotCommand *snapshotAt(const QUndoCommand *command, bool first
 
 } // namespace
 
-QHash<QString, const Project *> historyStates(const QUndoStack &stack)
+HistoryCapture captureHistory(const QUndoStack &stack)
 {
-    QHash<QString, const Project *> states;
-    for (int i = 0; i < stack.count(); ++i) {
-        if (const auto *first = snapshotAt(stack.command(i), true))
-            states.insert(first->packedBefore().hash, &first->before());
-        if (const auto *last = snapshotAt(stack.command(i), false))
-            states.insert(last->packedAfter().hash, &last->after());
-    }
-    return states;
-}
-
-QJsonObject historyToJson(const QUndoStack &stack)
-{
-    QJsonArray blobs;
-    QHash<QString, int> blobIndex;
-    const auto blobFor = [&](const ProjectSnapshotCommand::Packed &packed) {
-        const auto it = blobIndex.constFind(packed.hash);
-        if (it != blobIndex.constEnd())
-            return it.value();
-        const int index = blobs.size();
-        blobs.append(QString::fromLatin1(packed.compressed.toBase64()));
-        blobIndex.insert(packed.hash, index);
-        return index;
-    };
-
-    QJsonArray steps;
+    HistoryCapture capture;
     for (int i = 0; i < stack.count(); ++i) {
         const auto *first = snapshotAt(stack.command(i), true);
         const auto *last = snapshotAt(stack.command(i), false);
         if (!first || !last)
             continue;
+        capture.steps.append({first->beforeState(), last->afterState(), stack.text(i)});
+    }
+    capture.index = qMin(stack.index(), static_cast<int>(capture.steps.size()));
+    return capture;
+}
+
+HistoryDocument historyToJson(const HistoryCapture &capture)
+{
+    HistoryDocument document;
+    if (capture.steps.isEmpty())
+        return document;
+
+    QJsonArray states;
+    QHash<QString, int> stateIndex;
+    const auto stateFor = [&](const HistoryStatePtr &state) {
+        const QString hash = state->hash();
+        const auto it = stateIndex.constFind(hash);
+        if (it != stateIndex.constEnd())
+            return it.value();
+        const int index = states.size();
+        states.append(state->project().toJson(false));
+        stateIndex.insert(hash, index);
+        document.states.append(state);
+        return index;
+    };
+
+    QJsonArray steps;
+    for (const HistoryCapture::Step &step : capture.steps) {
         steps.append(QJsonObject{
-            {QStringLiteral("before"), blobFor(first->packedBefore())},
-            {QStringLiteral("after"), blobFor(last->packedAfter())},
-            {QStringLiteral("text"), stack.text(i)},
+            {QStringLiteral("before"), stateFor(step.before)},
+            {QStringLiteral("after"), stateFor(step.after)},
+            {QStringLiteral("text"), step.text},
         });
     }
-    if (steps.isEmpty())
-        return {};
-    return QJsonObject{
-        {QStringLiteral("index"), qMin(stack.index(), static_cast<int>(steps.size()))},
-        {QStringLiteral("blobs"), blobs},
+    document.json = QJsonObject{
+        {QStringLiteral("index"), capture.index},
+        {QStringLiteral("states"), states},
         {QStringLiteral("steps"), steps},
     };
+    return document;
 }
 
 std::optional<StoredHistory> historyFromJson(const QJsonObject &object)
 {
-    const QJsonArray blobs = object.value(QStringLiteral("blobs")).toArray();
+    const QJsonArray stored = object.value(QStringLiteral("states")).toArray();
     const QJsonArray steps = object.value(QStringLiteral("steps")).toArray();
     if (steps.isEmpty())
         return std::nullopt;
 
     StoredHistory history;
-    history.states.reserve(blobs.size());
-    for (const QJsonValue &blob : blobs) {
-        const QByteArray json = qUncompress(QByteArray::fromBase64(blob.toString().toLatin1()));
-        const QJsonDocument document = QJsonDocument::fromJson(json);
-        if (!document.isObject())
+    history.states.reserve(stored.size());
+    for (const QJsonValue &value : stored) {
+        if (!value.isObject())
             return std::nullopt;
         QString error;
-        Project project = Project::fromJson(document.object(), &error);
+        Project project = Project::fromJson(value.toObject(), &error);
         if (!error.isEmpty())
             return std::nullopt;
         history.states.append(std::move(project));

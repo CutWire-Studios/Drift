@@ -2019,6 +2019,13 @@ protected:
     // Every file a project state reachable by undo/redo points at, so cleanup does not take
     // media the history still needs.
     QSet<QString> historyMediaPaths() const;
+public:
+    // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
+    // media they reference. Reads only the capture, so a worker can run it. `states` receives one
+    // entry per distinct state.
+    static QJsonObject historyJson(const drift::HistoryCapture &capture,
+                                   QList<drift::HistoryStatePtr> *states = nullptr);
+protected:
     int historyIndexForHash(const QString &prefix) const;
     QByteArray historyJsonAt(int stackIndex) const;
     static QString historySnapshotDir();
@@ -2046,7 +2053,6 @@ protected:
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;
-    mutable QHash<QString, QStringList> m_historyMediaCache;
     // tracks() serialises every clip in the project into nested QVariantMaps, and used to do it
     // once per binding that read it. Cached between edits; notifyTracksChanged() drops it.
     mutable QVariantList m_tracksCache;

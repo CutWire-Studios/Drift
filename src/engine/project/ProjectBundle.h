@@ -111,6 +111,18 @@ struct WriteRequest
 // Return false to abort. Aborting a write leaves any previous file at `path` untouched.
 using ProgressFn = std::function<bool(qint64 done, qint64 total)>;
 
+// Stored (compressed) size ceiling and a larger decompressed ceiling for the manifest and for any
+// text compressed with compressText; both are enforced when reading.
+inline constexpr quint64 kMaxStoredSize = 256ull * 1024 * 1024;
+inline constexpr quint64 kMaxDecompressedSize = 1024ull * 1024 * 1024;
+
+// One zstd frame with long-distance matching and a window of at most 2^27, for text with long
+// range redundancy (the manifest, the recovery snapshot). Empty on failure.
+QByteArray compressText(const QByteArray &raw, int level = 10);
+bool isCompressedText(const QByteArray &data);
+// Needs the frame to state its content size, as compressText's frames do.
+bool decompressText(const QByteArray &stored, QByteArray *out, QString *error);
+
 // Streams every embedded entry through a QSaveFile, so a cancel, a full disk or a crash cannot
 // destroy the bundle being overwritten. Entries whose originalPath resolves to the same file share
 // one blob.

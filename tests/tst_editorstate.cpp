@@ -167,6 +167,11 @@ private slots:
     void packagedProjectCarriesDerivedArtifacts();
     void undoBookmarkAdd();
     void undoHistorySurvivesSaveAndLoad();
+    void savedBundleKeepsHistoryAndShrinksIt();
+    void editDuringSaveKeepsProjectModified();
+    void overlappingSavesRunInOrder();
+    void recoveryFileIsCompressedAndRestores();
+    void legacyPlainRecoveryFileStillRestores();
     void bookmarkNavigationAndToggle();
     void editPointNavigationWalksEveryClipEdge();
     void arrowKeysJogAndJumpThePlayhead();
@@ -1647,6 +1652,196 @@ void EditorStateTest::undoHistorySurvivesSaveAndLoad()
     QCOMPARE(legacy.bookmarks().size(), 58);
     QVERIFY(!legacy.undoAvailable());
     QVERIFY(!legacy.redoAvailable());
+
+    // States are plain JSON objects, one per distinct project content.
+    const QJsonObject history = QJsonDocument::fromJson(saved).object().value(QStringLiteral("undoHistory")).toObject();
+    QVERIFY(!history.contains(QStringLiteral("blobs")));
+    QCOMPARE(history.value(QStringLiteral("states")).toArray().size(), 61);
+    QVERIFY(history.value(QStringLiteral("states")).toArray().at(0).isObject());
+    QCOMPARE(history.value(QStringLiteral("steps")).toArray().size(), 60);
+}
+
+void EditorStateTest::savedBundleKeepsHistoryAndShrinksIt()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    for (int i = 0; i < 6; ++i)
+        state.addTextClip(QStringLiteral("Title %1 with a reasonably long caption").arg(i), i * 2.0);
+    for (int i = 0; i < 50; ++i)
+        state.addBookmark(i + 1.0, QStringLiteral("Bookmark %1").arg(i));
+    state.undo();
+    state.undo();
+    const int steps = state.m_undoStack.count();
+    const int index = state.undoIndex();
+    QVERIFY(steps >= 50);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("history.drift"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    QVERIFY(state.projectFile()->saveInFlight());
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->saveInFlight());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.lastMessage(), QStringLiteral("Project saved"));
+
+    // What the first design stored: every state compressed and base64-encoded on its own.
+    qint64 perStateBytes = 0;
+    {
+        const QJsonObject history = QJsonDocument::fromJson(state.serializeProjectJson())
+                                        .object().value(QStringLiteral("undoHistory")).toObject();
+        for (const QJsonValue &value : history.value(QStringLiteral("states")).toArray()) {
+            const QByteArray json = QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact);
+            perStateBytes += qCompress(json, 6).toBase64().size();
+        }
+    }
+    const qint64 bundleBytes = QFileInfo(path).size();
+    qInfo() << "history steps" << steps << "per-state qCompress+base64 bytes" << perStateBytes
+            << "bundle bytes" << bundleBytes;
+    QVERIFY(bundleBytes < perStateBytes);
+
+    AppController reopened(&library);
+    reopened.projectFile()->loadProject(QUrl::fromLocalFile(path));
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.m_undoStack.count(), steps);
+    QCOMPARE(reopened.undoIndex(), index);
+    QVERIFY(reopened.redoAvailable());
+    reopened.redo();
+    reopened.redo();
+    QCOMPARE(reopened.bookmarks().size(), 50);
+}
+
+void EditorStateTest::editDuringSaveKeepsProjectModified()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addBookmark(1.0, QStringLiteral("Before"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("edited.drift"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    // The completion is queued behind this call, so this edit lands after the snapshot.
+    state.addBookmark(2.0, QStringLiteral("During"));
+    state.projectFile()->waitForSave();
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.projectFile()->currentProjectPath(), path);
+
+    AppController reopened(&library);
+    reopened.projectFile()->loadProject(QUrl::fromLocalFile(path));
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.bookmarks().size(), 1);
+
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+}
+
+void EditorStateTest::overlappingSavesRunInOrder()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addBookmark(1.0, QStringLiteral("One"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString first = dir.filePath(QStringLiteral("first.drift"));
+    const QString second = dir.filePath(QStringLiteral("second.drift"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(first));
+    state.addBookmark(2.0, QStringLiteral("Two"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(second));
+    state.projectFile()->waitForSave();
+
+    QVERIFY(!state.projectFile()->saveInFlight());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.projectFile()->currentProjectPath(), second);
+
+    AppController a(&library);
+    a.projectFile()->loadProject(QUrl::fromLocalFile(first));
+    QTRY_VERIFY(!a.projectFile()->projectLoadPending());
+    QCOMPARE(a.bookmarks().size(), 1);
+    AppController b(&library);
+    b.projectFile()->loadProject(QUrl::fromLocalFile(second));
+    QTRY_VERIFY(!b.projectFile()->projectLoadPending());
+    QCOMPARE(b.bookmarks().size(), 2);
+}
+
+void EditorStateTest::recoveryFileIsCompressedAndRestores()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QFile::remove(recovery);
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    {
+        AppController state(&library);
+        for (int i = 0; i < 20; ++i)
+            state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
+        state.undo();
+        QVERIFY(state.projectFile()->hasUnsavedChanges());
+        state.projectFile()->flushRecoverySnapshot();
+        QTRY_VERIFY(QFileInfo::exists(recovery));
+    }
+    QFile file(recovery);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.read(4), QByteArray("\x28\xb5\x2f\xfd", 4));
+    file.close();
+
+    AppController reopened(&library);
+    QVERIFY(reopened.projectFile()->recoveryAvailable());
+    reopened.projectFile()->restoreAutosave();
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.bookmarks().size(), 19);
+    QCOMPARE(reopened.m_undoStack.count(), 20);
+    QCOMPARE(reopened.undoIndex(), 19);
+    QVERIFY(reopened.redoAvailable());
+}
+
+void EditorStateTest::legacyPlainRecoveryFileStillRestores()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QDir().mkpath(QFileInfo(recovery).absolutePath());
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    {
+        AppController state(&library);
+        for (int i = 0; i < 5; ++i)
+            state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
+        QJsonObject root = QJsonDocument::fromJson(state.serializeProjectJson()).object();
+        root.insert(QStringLiteral("__recovery"),
+                    QJsonObject{{QStringLiteral("originalPath"), QString()},
+                                {QStringLiteral("projectName"), QStringLiteral("Legacy")},
+                                {QStringLiteral("savedAt"), QStringLiteral("2026-01-01T00:00:00")}});
+        QFile::remove(recovery);
+        QFile file(recovery);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
+    }
+
+    AppController reopened(&library);
+    QVERIFY(reopened.projectFile()->recoveryAvailable());
+    QCOMPARE(reopened.projectFile()->recoveryInfo().value(QStringLiteral("projectName")).toString(),
+             QStringLiteral("Legacy"));
+    reopened.projectFile()->restoreAutosave();
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.bookmarks().size(), 5);
+    QCOMPARE(reopened.m_undoStack.count(), 5);
 }
 
 void EditorStateTest::bookmarkNavigationAndToggle()
@@ -2926,6 +3121,8 @@ void EditorStateTest::projectPersistenceRoundTrip()
     tempFile.close();
 
     state.projectFile()->saveProject(QUrl::fromLocalFile(tempFile.fileName()));
+
+    state.projectFile()->waitForSave();
     state.projectFile()->loadProject(QUrl::fromLocalFile(tempFile.fileName()));
     QTRY_VERIFY(!state.projectFile()->projectLoadPending());
 
@@ -2952,12 +3149,16 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
     const QString copyPath = dir.filePath(QStringLiteral("wedding-short.drift"));
 
     state.projectFile()->saveProject(QUrl::fromLocalFile(originalPath));
+
+    state.projectFile()->waitForSave();
     QCOMPARE(state.projectFile()->currentProjectPath(), originalPath);
     const QString originalId = state.project()->id();
     const QByteArray originalBytes = readFile(originalPath);
     QVERIFY(!originalBytes.isEmpty());
 
     state.projectFile()->saveProjectAs(QUrl::fromLocalFile(copyPath));
+
+    state.projectFile()->waitForSave();
     QCOMPARE(state.lastMessage(), QStringLiteral("Saved a copy"));
     QVERIFY(!state.projectFile()->hasUnsavedChanges());
     // The session continues in the copy, and the copy is its own project.
@@ -2974,6 +3175,7 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
     // Editing the copy and saving must still leave the original alone.
     state.addTextClip(QStringLiteral("Only in the copy"), 5.0);
     state.projectFile()->saveProject(QUrl::fromLocalFile(copyPath));
+    state.projectFile()->waitForSave();
     QCOMPARE(readFile(originalPath), originalBytes);
 
     const auto clipCount = [&state]() {
@@ -3012,6 +3214,8 @@ void EditorStateTest::projectJsonExportImportRoundTrip()
     const QString driftPath = dir.filePath(QStringLiteral("project.drift"));
 
     state.projectFile()->saveProject(QUrl::fromLocalFile(driftPath));
+
+    state.projectFile()->waitForSave();
     QVERIFY(!state.projectFile()->hasUnsavedChanges());
     QCOMPARE(state.projectFile()->currentProjectPath(), driftPath);
 
