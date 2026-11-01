@@ -279,19 +279,19 @@
     <name>AgentViewsPanel</name>
     <message>
         <source>Agent Views</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェントビュー</translation>
     </message>
     <message>
         <source>%1 – %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2</translation>
     </message>
     <message>
         <source>No images yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>画像はまだありません。</translation>
     </message>
     <message>
         <source>Images the AI requests, such as frames, audio sheets and captures, appear here during this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>AI が要求した画像 (フレーム、オーディオシート、キャプチャなど) は、このセッション中ここに表示されます。</translation>
     </message>
 </context>
 <context>
@@ -642,11 +642,11 @@
     </message>
     <message>
         <source>Editing %1</source>
-        <translation type="unfinished">%1 を編集中</translation>
+        <translation>%1 を編集中</translation>
     </message>
     <message>
         <source>Tap a clip to edit</source>
-        <translation type="unfinished">クリップをタップして編集</translation>
+        <translation>クリップをタップして編集</translation>
     </message>
     <message>
         <source>Duplicate</source>
@@ -658,7 +658,7 @@
     </message>
     <message>
         <source>Main</source>
-        <translation type="unfinished">メイン</translation>
+        <translation>メイン</translation>
     </message>
     <message>
         <source>Fit</source>
@@ -666,7 +666,7 @@
     </message>
     <message>
         <source>Composite</source>
-        <translation type="unfinished">コンポジット</translation>
+        <translation>コンポジット</translation>
     </message>
     <message>
         <source>Move the playhead over the clip to split it</source>
@@ -5554,191 +5554,191 @@
     <name>AudioSheetPanel</name>
     <message>
         <source>Audio Sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオシート</translation>
     </message>
     <message>
         <source>Work area</source>
-        <translation type="unfinished"></translation>
+        <translation>ワークエリア</translation>
     </message>
     <message>
         <source>Selected clip</source>
-        <translation type="unfinished"></translation>
+        <translation>選択中のクリップ</translation>
     </message>
     <message>
         <source>Whole timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムライン全体</translation>
     </message>
     <message>
         <source>1000 px</source>
-        <translation type="unfinished"></translation>
+        <translation>1000 px</translation>
     </message>
     <message>
         <source>1600 px</source>
-        <translation type="unfinished"></translation>
+        <translation>1600 px</translation>
     </message>
     <message>
         <source>2000 px</source>
-        <translation type="unfinished"></translation>
+        <translation>2000 px</translation>
     </message>
     <message>
         <source>2400 px</source>
-        <translation type="unfinished"></translation>
+        <translation>2400 px</translation>
     </message>
     <message>
         <source>Not a sound Drift knows. Closest: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift が認識しないサウンドです。最も近い候補: %1</translation>
     </message>
     <message>
         <source>Integrated</source>
-        <translation type="unfinished"></translation>
+        <translation>統合ラウドネス</translation>
     </message>
     <message>
         <source>%1 LUFS</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 LUFS</translation>
     </message>
     <message>
         <source>Loudness range</source>
-        <translation type="unfinished"></translation>
+        <translation>ラウドネスレンジ</translation>
     </message>
     <message>
         <source>%1 LU</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 LU</translation>
     </message>
     <message>
         <source>True peak</source>
-        <translation type="unfinished"></translation>
+        <translation>トゥルーピーク</translation>
     </message>
     <message>
         <source>%1 dBTP</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 dBTP</translation>
     </message>
     <message>
         <source>Gaps</source>
-        <translation type="unfinished"></translation>
+        <translation>ギャップ</translation>
     </message>
     <message>
         <source>Clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>クリッピング</translation>
     </message>
     <message>
         <source>Events</source>
-        <translation type="unfinished"></translation>
+        <translation>イベント</translation>
     </message>
     <message>
         <source>Cuts in sync</source>
-        <translation type="unfinished"></translation>
+        <translation>カットの同期</translation>
     </message>
     <message>
         <source>%1 ok, %2 off</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 正常、%2 ずれ</translation>
     </message>
     <message>
         <source>Width of the sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>シートの幅</translation>
     </message>
     <message>
         <source>Frame strip</source>
-        <translation type="unfinished"></translation>
+        <translation>フレームストリップ</translation>
     </message>
     <message>
         <source>Sound tags</source>
-        <translation type="unfinished"></translation>
+        <translation>サウンドタグ</translation>
     </message>
     <message>
         <source>Generating…</source>
-        <translation type="unfinished"></translation>
+        <translation>生成中…</translation>
     </message>
     <message>
         <source>Generate</source>
-        <translation type="unfinished">生成</translation>
+        <translation>生成</translation>
     </message>
     <message>
         <source>Export PNG…</source>
-        <translation type="unfinished"></translation>
+        <translation>PNG をエクスポート…</translation>
     </message>
     <message>
         <source>Name the sounds, split the audio into sections and find a sound by description with the audio tagging add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオタグ付けアドオンを使用して、サウンドに名前を付け、オーディオをセクションに分割し、説明からサウンドを検索します。</translation>
     </message>
     <message>
         <source>Naming sounds needs the AI engine and the audio tagging add-ons.</source>
-        <translation type="unfinished"></translation>
+        <translation>サウンドの命名には AI エンジンとオーディオタグ付けアドオンが必要です。</translation>
     </message>
     <message>
         <source>Get add-ons</source>
-        <translation type="unfinished"></translation>
+        <translation>アドオンを入手</translation>
     </message>
     <message>
         <source>Sections</source>
-        <translation type="unfinished"></translation>
+        <translation>セクション</translation>
     </message>
     <message>
         <source>Sounds</source>
-        <translation type="unfinished"></translation>
+        <translation>サウンド</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation>検索</translation>
     </message>
     <message>
         <source>Speech %1  ·  Music %2</source>
-        <translation type="unfinished"></translation>
+        <translation>音声 %1  ·  音楽 %2</translation>
     </message>
     <message>
         <source>Add speech &amp; music</source>
-        <translation type="unfinished"></translation>
+        <translation>音声と音楽を追加</translation>
     </message>
     <message>
         <source>Find a sound, e.g. heavy rain or a fast whoosh</source>
-        <translation type="unfinished"></translation>
+        <translation>サウンドを検索 (例: 激しい雨、速いシューッという音)</translation>
     </message>
     <message>
         <source>hit</source>
-        <translation type="unfinished"></translation>
+        <translation>ヒット</translation>
     </message>
     <message>
         <source>window</source>
-        <translation type="unfinished"></translation>
+        <translation>ウィンドウ</translation>
     </message>
     <message>
         <source>%1  z %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1  z %2</translation>
     </message>
     <message>
         <source>Searching…</source>
-        <translation type="unfinished"></translation>
+        <translation>検索中…</translation>
     </message>
     <message>
         <source>Type one of the %1 sounds Drift knows, or pick a suggestion.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift が認識する %1 個のサウンドのいずれかを入力するか、候補を選択してください。</translation>
     </message>
     <message>
         <source>Analysing audio…</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオを分析中…</translation>
     </message>
     <message>
         <source>Nothing to show: turn on Sound tags and generate again.</source>
-        <translation type="unfinished"></translation>
+        <translation>表示するものがありません: サウンドタグをオンにして、再度生成してください。</translation>
     </message>
     <message>
         <source>Generate a sheet to name its sections and sounds.</source>
-        <translation type="unfinished"></translation>
+        <translation>シートを生成して、そのセクションとサウンドに名前を付けます。</translation>
     </message>
     <message>
         <source>Couldn’t build the sheet.</source>
-        <translation type="unfinished"></translation>
+        <translation>シートを構築できませんでした。</translation>
     </message>
     <message>
         <source>No sheet yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>シートはまだありません。</translation>
     </message>
     <message>
         <source>Pick what to analyse and press Generate to see loudness, spectrogram and sound events laid out against your cuts.</source>
-        <translation type="unfinished"></translation>
+        <translation>分析対象を選択し、生成を押すと、ラウドネス、スペクトログラム、サウンドイベントがカットに沿って表示されます。</translation>
     </message>
     <message>
         <source>%1 – %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 – %2</translation>
     </message>
 </context>
 <context>
@@ -9354,7 +9354,7 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>水平補正</translation>
     </message>
     <message>
         <source>Starts at</source>
@@ -9886,66 +9886,66 @@
     <name>ImageViewer</name>
     <message>
         <source>Save image</source>
-        <translation type="unfinished"></translation>
+        <translation>画像を保存</translation>
     </message>
     <message>
         <source>PNG image (*.png)</source>
-        <translation type="unfinished">PNG 画像 (*.png)</translation>
+        <translation>PNG 画像 (*.png)</translation>
     </message>
     <message>
         <source>JPEG image (*.jpg *.jpeg)</source>
-        <translation type="unfinished">JPEG 画像 (*.jpg *.jpeg)</translation>
+        <translation>JPEG 画像 (*.jpg *.jpeg)</translation>
     </message>
     <message>
         <source>Image saved.</source>
-        <translation type="unfinished"></translation>
+        <translation>画像を保存しました。</translation>
     </message>
     <message>
         <source>Couldn’t save that image.</source>
-        <translation type="unfinished"></translation>
+        <translation>その画像を保存できませんでした。</translation>
     </message>
     <message>
         <source>Go to</source>
-        <translation type="unfinished"></translation>
+        <translation>移動</translation>
     </message>
     <message>
         <source>Move the playhead to where this image starts</source>
-        <translation type="unfinished"></translation>
+        <translation>再生ヘッドをこの画像の開始位置に移動</translation>
     </message>
     <message>
         <source>Fit</source>
-        <translation type="unfinished">フィット</translation>
+        <translation>フィット</translation>
     </message>
     <message>
         <source>Actual size</source>
-        <translation type="unfinished"></translation>
+        <translation>実際のサイズ</translation>
     </message>
     <message>
         <source>Open file location</source>
-        <translation type="unfinished"></translation>
+        <translation>ファイルの場所を開く</translation>
     </message>
     <message>
         <source>Copy path</source>
-        <translation type="unfinished"></translation>
+        <translation>パスをコピー</translation>
     </message>
     <message>
         <source>Copied to clipboard</source>
-        <translation type="unfinished">クリップボードにコピーしました</translation>
+        <translation>クリップボードにコピーしました</translation>
     </message>
     <message>
         <source>Save as…</source>
-        <translation type="unfinished">名前を付けて保存…</translation>
+        <translation>名前を付けて保存…</translation>
     </message>
 </context>
 <context>
     <name>ImageViewerDialog</name>
     <message>
         <source>Agent image</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェント画像</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">閉じる</translation>
+        <translation>閉じる</translation>
     </message>
 </context>
 <context>
@@ -13031,11 +13031,11 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>水平補正</translation>
     </message>
     <message>
         <source>Level (0°)</source>
-        <translation type="unfinished"></translation>
+        <translation>レベル (0°)</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -15393,389 +15393,389 @@ If playback stutters, try another.</source>
     <name>QuickSetup</name>
     <message>
         <source>Drift setup</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift セットアップ</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">戻る</translation>
+        <translation>戻る</translation>
     </message>
     <message>
         <source>Finish</source>
-        <translation type="unfinished"></translation>
+        <translation>完了</translation>
     </message>
     <message>
         <source>Next</source>
-        <translation type="unfinished">次へ</translation>
+        <translation>次へ</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupAddonRow</name>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished">インストール済み</translation>
+        <translation>インストール済み</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">インストール中…</translation>
+        <translation>インストール中…</translation>
     </message>
     <message>
         <source>%1%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1%</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished">失敗</translation>
+        <translation>失敗</translation>
     </message>
     <message>
         <source>Queued</source>
-        <translation type="unfinished">待機中</translation>
+        <translation>待機中</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupAddonsPage</name>
     <message>
         <source>Install the essentials</source>
-        <translation type="unfinished"></translation>
+        <translation>必須アドオンをインストール</translation>
     </message>
     <message>
         <source>Drift&apos;s basic effects, transitions, audio effects, fonts and looks come as add-ons. Without them the editor will be missing most of what you expect, so they are installed now.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift の基本エフェクト、トランジション、オーディオエフェクト、フォント、ルックはアドオンとして提供されます。これらがないと、エディターで期待される機能の大部分が欠けるため、今インストールします。</translation>
     </message>
     <message>
         <source>Needs a newer version of Drift.</source>
-        <translation type="unfinished"></translation>
+        <translation>より新しいバージョンの Drift が必要です。</translation>
     </message>
     <message>
         <source>Not available in the download store.</source>
-        <translation type="unfinished"></translation>
+        <translation>ダウンロードストアでは利用できません。</translation>
     </message>
     <message>
         <source>The download failed.</source>
-        <translation type="unfinished"></translation>
+        <translation>ダウンロードに失敗しました。</translation>
     </message>
     <message>
         <source>%1 of %2 installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 / %2 インストール済み</translation>
     </message>
     <message>
         <source>Couldn&apos;t reach the download store. Until the essentials are installed the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>ダウンロードストアに接続できませんでした。必須アドオンがインストールされるまで、エディターでは基本エフェクト、トランジション、フォントが欠けます。後で「エクストラ」からインストールできます。</translation>
     </message>
     <message>
         <source>Some packs didn&apos;t install. Until they are, the editor will be missing basic effects, transitions and fonts. You can install them later from Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>一部のパックがインストールされませんでした。インストールされるまで、エディターでは基本エフェクト、トランジション、フォントが欠けます。後で「エクストラ」からインストールできます。</translation>
     </message>
     <message>
         <source>Optional</source>
-        <translation type="unfinished"></translation>
+        <translation>オプション</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">再試行</translation>
+        <translation>再試行</translation>
     </message>
     <message>
         <source>Skip for now</source>
-        <translation type="unfinished"></translation>
+        <translation>今はスキップ</translation>
     </message>
     <message>
         <source>Continue without the essentials?</source>
-        <translation type="unfinished"></translation>
+        <translation>必須アドオンなしで続行しますか？</translation>
     </message>
     <message>
         <source>Continue</source>
-        <translation type="unfinished">続行</translation>
+        <translation>続行</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">キャンセル</translation>
+        <translation>キャンセル</translation>
     </message>
     <message>
         <source>You can find more effects, models and stickers later in Extras.</source>
-        <translation type="unfinished"></translation>
+        <translation>その他のエフェクト、モデル、ステッカーは後で「エクストラ」で見つけることができます。</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupCommunityPage</name>
     <message>
         <source>You&apos;re all set</source>
-        <translation type="unfinished"></translation>
+        <translation>準備が整いました</translation>
     </message>
     <message>
         <source>Need help or have an idea? We&apos;d love to hear from you.</source>
-        <translation type="unfinished"></translation>
+        <translation>サポートが必要ですか、またはアイデアがありますか？ぜひお聞かせください。</translation>
     </message>
     <message>
         <source>Finish</source>
-        <translation type="unfinished"></translation>
+        <translation>完了</translation>
     </message>
     <message>
         <source>Join our Discord</source>
-        <translation type="unfinished"></translation>
+        <translation>Discord に参加</translation>
     </message>
     <message>
         <source>Copied</source>
-        <translation type="unfinished"></translation>
+        <translation>コピーしました</translation>
     </message>
     <message>
         <source>Copy email address</source>
-        <translation type="unfinished"></translation>
+        <translation>メールアドレスをコピー</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupMockEditor</name>
     <message>
         <source>Drift</source>
-        <translation type="unfinished">Drift</translation>
+        <translation>Drift</translation>
     </message>
     <message>
         <source>Export</source>
-        <translation type="unfinished">エクスポート</translation>
+        <translation>エクスポート</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupScalePage</name>
     <message>
         <source>Interface size</source>
-        <translation type="unfinished">インターフェースのサイズ</translation>
+        <translation>インターフェースのサイズ</translation>
     </message>
     <message>
         <source>Make buttons, text and icons larger or smaller.</source>
-        <translation type="unfinished"></translation>
+        <translation>ボタン、テキスト、アイコンを大きくまたは小さくします。</translation>
     </message>
     <message>
         <source>Recommended</source>
-        <translation type="unfinished"></translation>
+        <translation>推奨</translation>
     </message>
     <message>
         <source>Drift will restart when you finish setup to apply this size.</source>
-        <translation type="unfinished"></translation>
+        <translation>このサイズを適用するため、セットアップ完了時に Drift が再起動します。</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupStepIndicator</name>
     <message>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>ステップ %1 / %2</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupThemePage</name>
     <message>
         <source>Pick a look</source>
-        <translation type="unfinished"></translation>
+        <translation>外観を選択</translation>
     </message>
     <message>
         <source>Choose how Drift looks. You can change this any time in Settings.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift の外観を選択します。これは設定でいつでも変更できます。</translation>
     </message>
     <message>
         <source>Match system</source>
-        <translation type="unfinished"></translation>
+        <translation>システムに合わせる</translation>
     </message>
     <message>
         <source>Follows light and dark</source>
-        <translation type="unfinished">ライトとダークに追従</translation>
+        <translation>ライトとダークに追従</translation>
     </message>
     <message>
         <source>Dark and light</source>
-        <translation type="unfinished">ダークとライト</translation>
+        <translation>ダークとライト</translation>
     </message>
     <message>
         <source>Light</source>
-        <translation type="unfinished">ライト</translation>
+        <translation>ライト</translation>
     </message>
     <message>
         <source>Dark</source>
-        <translation type="unfinished">ダーク</translation>
+        <translation>ダーク</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupTipArt</name>
     <message>
         <source>Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>編集</translation>
     </message>
     <message>
         <source>Color</source>
-        <translation type="unfinished">カラー</translation>
+        <translation>カラー</translation>
     </message>
     <message>
         <source>Keyframes</source>
-        <translation type="unfinished">キーフレーム</translation>
+        <translation>キーフレーム</translation>
     </message>
     <message>
         <source>Subtitles</source>
-        <translation type="unfinished">字幕</translation>
+        <translation>字幕</translation>
     </message>
     <message>
         <source>Effects</source>
-        <translation type="unfinished">エフェクト</translation>
+        <translation>エフェクト</translation>
     </message>
     <message>
         <source>Transitions</source>
-        <translation type="unfinished">トランジション</translation>
+        <translation>トランジション</translation>
     </message>
     <message>
         <source>Looks</source>
-        <translation type="unfinished">ルック</translation>
+        <translation>ルック</translation>
     </message>
     <message>
         <source>Fonts</source>
-        <translation type="unfinished">フォント</translation>
+        <translation>フォント</translation>
     </message>
     <message>
         <source>Stickers</source>
-        <translation type="unfinished">スタンプ</translation>
+        <translation>スタンプ</translation>
     </message>
     <message>
         <source>AI tools</source>
-        <translation type="unfinished">AI ツール</translation>
+        <translation>AI ツール</translation>
     </message>
     <message>
         <source>color</source>
-        <translation type="unfinished"></translation>
+        <translation>カラー</translation>
     </message>
     <message>
         <source>Color workspace</source>
-        <translation type="unfinished"></translation>
+        <translation>カラーワークスペース</translation>
     </message>
     <message>
         <source>Color grade effect</source>
-        <translation type="unfinished"></translation>
+        <translation>カラーグレードエフェクト</translation>
     </message>
     <message>
         <source>Appearance settings</source>
-        <translation type="unfinished"></translation>
+        <translation>外観設定</translation>
     </message>
     <message>
         <source>Auto subtitles</source>
-        <translation type="unfinished">自動字幕</translation>
+        <translation>自動字幕</translation>
     </message>
     <message>
         <source>People cutout</source>
-        <translation type="unfinished"></translation>
+        <translation>人物切り抜き</translation>
     </message>
     <message>
         <source>Find scenes</source>
-        <translation type="unfinished">シーンを検索</translation>
+        <translation>シーンを検索</translation>
     </message>
     <message>
         <source>Hello and welcome back</source>
-        <translation type="unfinished"></translation>
+        <translation>こんにちは、おかえりなさい</translation>
     </message>
     <message>
         <source>Select multiple</source>
-        <translation type="unfinished">複数選択</translation>
+        <translation>複数選択</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupTipsPage</name>
     <message>
         <source>Search anything</source>
-        <translation type="unfinished"></translation>
+        <translation>何でも検索</translation>
     </message>
     <message>
         <source>Press %1 to search actions, workspaces, add-ons, themes and settings from anywhere, then jump straight to the result.</source>
-        <translation type="unfinished"></translation>
+        <translation>どこからでも %1 を押してアクション、ワークスペース、アドオン、テーマ、設定を検索し、結果に直接ジャンプします。</translation>
     </message>
     <message>
         <source>Use the search field in the header to find actions, workspaces, add-ons, themes and settings, then jump straight to the result.</source>
-        <translation type="unfinished"></translation>
+        <translation>ヘッダーの検索フィールドを使用して、アクション、ワークスペース、アドオン、テーマ、設定を見つけ、結果に直接ジャンプします。</translation>
     </message>
     <message>
         <source>Switch workspaces</source>
-        <translation type="unfinished"></translation>
+        <translation>ワークスペースを切り替え</translation>
     </message>
     <message>
         <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header, or press %1 to %2 to jump to one.</source>
-        <translation type="unfinished"></translation>
+        <translation>各ワークスペースは、編集、カラー、キーフレーム、字幕などの作業に合わせてパネルを配置します。ヘッダーのワークスペースメニューを開くか、%1 から %2 を押してジャンプします。</translation>
     </message>
     <message>
         <source>Each workspace arranges the panels for a job, such as Edit, Color, Keyframes or Subtitles. Open the Workspace menu in the header to switch.</source>
-        <translation type="unfinished"></translation>
+        <translation>各ワークスペースは、編集、カラー、キーフレーム、字幕などの作業に合わせてパネルを配置します。ヘッダーのワークスペースメニューを開いて切り替えます。</translation>
     </message>
     <message>
         <source>Get more from Extras</source>
-        <translation type="unfinished"></translation>
+        <translation>エクストラでさらに入手</translation>
     </message>
     <message>
         <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the top bar.</source>
-        <translation type="unfinished"></translation>
+        <translation>その他のエフェクト、トランジション、ルック、フォント、ステッカー、AI モデルは、トップバーの「エクストラ」からインストールされます。</translation>
     </message>
     <message>
         <source>More effects, transitions, looks, fonts, stickers and AI models are installed from Extras, in the header.</source>
-        <translation type="unfinished"></translation>
+        <translation>その他のエフェクト、トランジション、ルック、フォント、ステッカー、AI モデルは、ヘッダーの「エクストラ」からインストールされます。</translation>
     </message>
     <message>
         <source>Use your fingers</source>
-        <translation type="unfinished"></translation>
+        <translation>指で操作</translation>
     </message>
     <message>
         <source>Pinch the timeline to zoom it, and pinch the preview to zoom and pan the picture. Long-press a clip and choose Select multiple to pick several clips at once.</source>
-        <translation type="unfinished"></translation>
+        <translation>タイムラインをピンチしてズームし、プレビューをピンチして画像をズームおよびパンします。クリップを長押しして「複数選択」を選ぶと、複数のクリップを一度に選択できます。</translation>
     </message>
     <message>
         <source>Play/Pause</source>
-        <translation type="unfinished">再生/一時停止</translation>
+        <translation>再生/一時停止</translation>
     </message>
     <message>
         <source>Split at current time</source>
-        <translation type="unfinished">現在の時間で分割</translation>
+        <translation>現在の時間で分割</translation>
     </message>
     <message>
         <source>Delete selection</source>
-        <translation type="unfinished">選択範囲を削除</translation>
+        <translation>選択範囲を削除</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished">元に戻す</translation>
+        <translation>元に戻す</translation>
     </message>
     <message>
         <source>Edit from the keyboard</source>
-        <translation type="unfinished"></translation>
+        <translation>キーボードから編集</translation>
     </message>
     <message>
         <source>A few shortcuts cover most of an edit. See and change every shortcut in Settings, under Keyboard shortcuts.</source>
-        <translation type="unfinished"></translation>
+        <translation>いくつかのショートカットで編集の大部分をカバーできます。すべてのショートカットは設定の「キーボードショートカット」で確認および変更できます。</translation>
     </message>
     <message>
         <source>AI tools on your device</source>
-        <translation type="unfinished"></translation>
+        <translation>デバイス上の AI ツール</translation>
     </message>
     <message>
         <source>Auto subtitles, people cutout and scene finding run locally. Install their add-ons from Extras, under AI tools.</source>
-        <translation type="unfinished"></translation>
+        <translation>自動字幕、人物切り抜き、シーン検索はローカルで実行されます。これらのアドオンは「エクストラ」の「AI ツール」からインストールしてください。</translation>
     </message>
     <message>
         <source>A few tips before you start</source>
-        <translation type="unfinished"></translation>
+        <translation>開始前のいくつかのヒント</translation>
     </message>
     <message>
         <source>Quick pointers to the parts of Drift people tend to miss.</source>
-        <translation type="unfinished"></translation>
+        <translation>人々が見落としがちな Drift の部分への簡単なヒント。</translation>
     </message>
     <message>
         <source>Previous tip</source>
-        <translation type="unfinished"></translation>
+        <translation>前のヒント</translation>
     </message>
     <message>
         <source>Next tip</source>
-        <translation type="unfinished"></translation>
+        <translation>次のヒント</translation>
     </message>
 </context>
 <context>
     <name>QuickSetupWelcomePage</name>
     <message>
         <source>Welcome to Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift へようこそ</translation>
     </message>
     <message>
         <source>Let&apos;s get you set up. First, pick your language.</source>
-        <translation type="unfinished"></translation>
+        <translation>セットアップを始めましょう。まず、言語を選択してください。</translation>
     </message>
 </context>
 <context>
@@ -16730,15 +16730,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Quick Setup</source>
-        <translation type="unfinished"></translation>
+        <translation>クイックセットアップ</translation>
     </message>
     <message>
         <source>Walk through language, theme, interface size and add-ons again.</source>
-        <translation type="unfinished"></translation>
+        <translation>言語、テーマ、インターフェースサイズ、アドオンをもう一度確認します。</translation>
     </message>
     <message>
         <source>Run again</source>
-        <translation type="unfinished"></translation>
+        <translation>再度実行</translation>
     </message>
     <message>
         <source>About Drift</source>
@@ -20371,7 +20371,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Opening setup…</source>
-        <translation type="unfinished"></translation>
+        <translation>セットアップを開いています…</translation>
     </message>
     <message>
         <source>Opening the editor…</source>
@@ -21458,23 +21458,23 @@ If playback stutters, try another.</source>
     <name>TextInspector</name>
     <message>
         <source>As typed</source>
-        <translation type="unfinished"></translation>
+        <translation>入力どおり</translation>
     </message>
     <message>
         <source>UPPERCASE</source>
-        <translation type="unfinished"></translation>
+        <translation>大文字</translation>
     </message>
     <message>
         <source>lowercase</source>
-        <translation type="unfinished"></translation>
+        <translation>小文字</translation>
     </message>
     <message>
         <source>Title Case</source>
-        <translation type="unfinished"></translation>
+        <translation>タイトルケース</translation>
     </message>
     <message>
         <source>Sentence case</source>
-        <translation type="unfinished"></translation>
+        <translation>文頭大文字</translation>
     </message>
     <message>
         <source>Aa</source>
@@ -21873,15 +21873,15 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Strike</source>
-        <translation type="unfinished"></translation>
+        <translation>取り消し線</translation>
     </message>
     <message>
         <source>Draw a line through the text</source>
-        <translation type="unfinished"></translation>
+        <translation>テキストに線を引く</translation>
     </message>
     <message>
         <source>Case</source>
-        <translation type="unfinished"></translation>
+        <translation>大文字/小文字</translation>
     </message>
     <message>
         <source>Align left</source>
@@ -25442,11 +25442,11 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Agent Views</source>
-        <translation type="unfinished"></translation>
+        <translation>エージェントビュー</translation>
     </message>
     <message>
         <source>Audio Sheet</source>
-        <translation type="unfinished"></translation>
+        <translation>オーディオシート</translation>
     </message>
     <message>
         <source>Recorder</source>
