@@ -1,0 +1,59 @@
+{
+  "id": "space.reverb",
+  "displayName": "Reverb",
+  "category": "space",
+  "icon": "audio-waveform",
+  "order": 480,
+  "backend": "juce",
+  "processor": "graph",
+  "prerollMs": 4000,
+  "parameters": [
+    {
+      "identifier": "size",
+      "displayName": "Room Size",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "defaultValue": 0.5
+    },
+    {
+      "identifier": "damping",
+      "displayName": "Damping",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "defaultValue": 0.5
+    },
+    {
+      "identifier": "width",
+      "displayName": "Stereo Width",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "defaultValue": 1.0
+    },
+    {
+      "identifier": "mix",
+      "displayName": "Wet/Dry Mix",
+      "type": "float",
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "defaultValue": 0.3
+    }
+  ],
+  "graph": {
+    "version": 1,
+    "chain": [
+      {
+        "id": "reverb",
+        "type": "reverb",
+        "knobs": {
+          "size": {"param": "size"},
+          "damping": {"param": "damping"},
+          "width": {"param": "width"},
+          "mix": {"param": "mix"}
+        }
+      }
+    ]
+  }
+}

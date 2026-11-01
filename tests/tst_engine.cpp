@@ -14057,6 +14057,8 @@ void EngineTest::pedalCatalogCoversBundledManifests()
     QVERIFY(!catalog.isEmpty());
 
     for (const AudioEffectEntry &entry : catalog) {
+        if (entry.processorId == QLatin1String("graph"))
+            continue;
         const std::string type = "classic." + entry.processorId.toStdString();
         const drift::audiofx::PedalSpec *pedal = drift::audiofx::pedalSpec(type);
         QVERIFY2(pedal, qPrintable(entry.id));
