@@ -4753,8 +4753,8 @@
 <context>
     <name>AppSettingsMenu</name>
     <message>
-        <source>Switch to mobile layout…</source>
-        <translation>Przełącz na układ mobilny…</translation>
+        <source>Help…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings…</source>
@@ -9862,6 +9862,37 @@
     </message>
 </context>
 <context>
+    <name>HelpDialog</name>
+    <message>
+        <source>Help</source>
+        <translation type="unfinished">Pomoc</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Zamknij</translation>
+    </message>
+    <message>
+        <source>Open an issue on GitHub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join our Discord server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read the docs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contact us via email</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Otwórz</translation>
+    </message>
+</context>
+<context>
     <name>HistoryPanel</name>
     <message>
         <source>Start</source>
@@ -11530,6 +11561,10 @@
     <message>
         <source>Downloads</source>
         <translation type="unfinished">Pobrane</translation>
+    </message>
+    <message>
+        <source>Browse more online</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>You’re offline. Showing what was saved last time.</source>
