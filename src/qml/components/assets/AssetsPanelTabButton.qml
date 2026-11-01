@@ -10,6 +10,7 @@ Column {
     property int activeTab: 0
     property var tabLabels: ({})
     property var tabIcons: []
+    property bool showSeparator: true
 
     signal tabSelected(int index)
 
@@ -41,7 +42,7 @@ Column {
                 // Group divider — sits in the rail gap so related tabs
                 // cluster and prefs stay visually apart from content.
                 Item {
-                    visible: root.model.separatorAfter
+                    visible: root.showSeparator && root.model.separatorAfter
                     width: parent.width
                     height: visible ? Theme.spacingLg + Theme.c.assetsPanelTabButton.separatorThickness : 0
 
