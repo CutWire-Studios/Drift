@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFile>
 #include <QImage>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
@@ -29,6 +30,8 @@ private slots:
     void dedupesRepeatedPaths();
     void keepsDocumentResourceLayout();
     void compressesTextButNotMedia();
+    void longRangeMatchesSpanTheManifest();
+    void rejectsImplausibleManifestSize();
     void skipsAlreadyExtractedBlobs();
     void degradesMissingMediaToReference();
     void rejectsNewerMajorVersion();
@@ -312,6 +315,49 @@ void TestProjectBundle::compressesTextButNotMedia()
     const qint64 size = QFileInfo(path).size();
     QVERIFY(size > 4096);
     QVERIFY(size < 4096 + 8192);
+}
+
+// Repeats a few MiB apart are beyond the default level-10 window; only long-distance matching
+// with a window sized to the manifest folds them away.
+void TestProjectBundle::longRangeMatchesSpanTheManifest()
+{
+    QByteArray chunk;
+    quint32 seed = 12345;
+    for (int i = 0; i < 3 * 1024 * 1024; ++i) {
+        seed = seed * 1664525u + 1013904223u;
+        chunk.append("0123456789abcdef"[(seed >> 24) & 15]);
+    }
+    QJsonArray copies;
+    for (int i = 0; i < 4; ++i)
+        copies.append(QString::fromLatin1(chunk));
+
+    WriteRequest request = sampleRequest();
+    request.document.insert(QStringLiteral("copies"), copies);
+    const QString path = m_tmp.filePath(QStringLiteral("long-range.drift"));
+    QString error;
+    QVERIFY2(write(path, request, {}, &error), qPrintable(error));
+    QVERIFY(QFileInfo(path).size() < 3 * 1024 * 1024);
+
+    const auto info = readManifest(path, &error);
+    QVERIFY2(info.has_value(), qPrintable(error));
+    const QJsonArray back = info->document.value(QStringLiteral("copies")).toArray();
+    QCOMPARE(back.size(), 4);
+    QCOMPARE(back.at(3).toString(), QString::fromLatin1(chunk));
+}
+
+void TestProjectBundle::rejectsImplausibleManifestSize()
+{
+    const QString path = m_tmp.filePath(QStringLiteral("big-claim.drift"));
+    QString error;
+    QVERIFY2(write(path, sampleRequest(), {}, &error), qPrintable(error));
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadWrite));
+    // manifestRaw sits at offset 16; claim 4 GiB - 1, far past the decompressed ceiling.
+    QVERIFY(file.seek(16));
+    QCOMPARE(file.write(QByteArray(4, '\xff')), 4);
+    file.close();
+    QVERIFY(!readManifest(path, &error).has_value());
+    QVERIFY(error.contains(QStringLiteral("implausible")));
 }
 
 void TestProjectBundle::skipsAlreadyExtractedBlobs()

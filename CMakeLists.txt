@@ -753,6 +753,8 @@ add_library(driftengine STATIC
     src/engine/audio/analysis/AudioEvents.cpp
     src/engine/audio/analysis/AudioSync.h
     src/engine/audio/analysis/AudioSync.cpp
+    src/engine/audio/analysis/AudioAlign.h
+    src/engine/audio/analysis/AudioAlign.cpp
     src/engine/audio/analysis/RealFft.h
     src/engine/audio/analysis/AudioFrameAnalysis.h
     src/engine/audio/analysis/AudioFrameAnalysis.cpp
@@ -1148,6 +1150,8 @@ qt_add_executable(drift
     src/app/jobs/vision/DepthController.cpp
     src/app/jobs/audio/DenoiseController.h
     src/app/jobs/audio/DenoiseController.cpp
+    src/app/jobs/audio/AudioAlignController.h
+    src/app/jobs/audio/AudioAlignController.cpp
     src/app/jobs/vision/RestoreController.h
     src/app/jobs/vision/RestoreController.cpp
     src/app/jobs/vision/FaceTrackingController.h
@@ -1617,6 +1621,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/TransformInspector.qml
         src/qml/components/properties/CameraInspector.qml
         src/qml/components/properties/TransformLayerCard.qml
+        src/qml/components/properties/ShapeCropSection.qml
         src/qml/components/properties/StabilizeInspector.qml
         src/qml/components/properties/AudioInspector.qml
         src/qml/components/properties/AudioEffectsInspector.qml

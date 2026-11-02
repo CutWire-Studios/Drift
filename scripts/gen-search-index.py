@@ -59,6 +59,7 @@ FILE_TARGETS = {
     "SourceLabAudioSection.qml": "panel:sourceLab.process",
     "SourceLabStabilizeSection.qml": "panel:sourceLab.process",
     "SourceLabEnhanceSection.qml": "panel:sourceLab.process",
+    "ShapeCropSection.qml": "panel:properties.transform",
 }
 
 INSPECTOR_PREFIXES = (

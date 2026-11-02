@@ -78,11 +78,20 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
         // Remember the open project so opt-in reopen can load a clean .drift next launch.
         if (!m_isolatedSession)
             QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
+        // A save already writing is let finish; one still waiting its turn is dropped.
+        m_queuedSaves.clear();
+        m_saveWrite.waitForFinished();
         if (m_dirty)
             writeRecoveryFile(true);
         else
             m_recoveryWrite.waitForFinished();
     });
+}
+
+ProjectFileController::~ProjectFileController()
+{
+    m_queuedSaves.clear();
+    m_saveWrite.waitForFinished();
 }
 
 void ProjectFileController::setAutosaveIntervalSeconds(int seconds)
@@ -95,6 +104,23 @@ void ProjectFileController::setAutosaveIntervalSeconds(int seconds)
 }
 
 namespace {
+// The recovery file as JSON text: zstd since the history moved into it, plain JSON before. Empty
+// on any failure.
+QByteArray readRecoveryJson(const QString &path, QString *error = nullptr)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+        return {};
+    QByteArray data = file.readAll();
+    if (!drift::bundle::isCompressedText(data))
+        return data;
+    QString localError;
+    QByteArray json;
+    if (!drift::bundle::decompressText(data, &json, error ? error : &localError))
+        return {};
+    return json;
+}
+
 // Every string in a project document, without deserializing it. Used to work out what the
 // recovery snapshot still points at: collecting all strings rather than the path-shaped ones
 // deliberately errs wide, because every entry here only spares a file from being swept.
@@ -180,15 +206,11 @@ void ProjectFileController::sweepExtractionDirs()
     // project document like any other: its id names an extraction dir that appears in no manifest
     // — freeze frames are written straight into it — and its paths name derived artifacts nothing
     // else refers to.
-    QJsonObject recovery;
-    {
-        QFile file(recoveryFilePath());
-        if (file.open(QIODevice::ReadOnly))
-            recovery = QJsonDocument::fromJson(file.readAll()).object();
-    }
+    const QJsonObject recovery = QJsonDocument::fromJson(readRecoveryJson(recoveryFilePath())).object();
     collectJsonStrings(recovery, &liveFiles);
     for (const drift::MediaAsset &asset : m_app->m_project.assets())
         liveFiles.insert(asset.path);
+    liveFiles.unite(m_app->historyMediaPaths());
 #ifdef Q_OS_ANDROID
     const QString recoveryId = recovery.value(QStringLiteral("id")).toString();
     if (!recoveryId.isEmpty())
@@ -255,9 +277,8 @@ void ProjectFileController::sweepExtractionDirs()
 #endif
 }
 // Brush strokes write a new matte PNG each time, and undo keeps the earlier ones reachable, so the
-// cache only grows during a session. The undo stack is in memory and starts empty on every open
-// and new project, so a matte written this session that neither the document, a saved project's
-// manifest nor the recovery snapshot names is unreachable. Only this session's mattes are
+// cache only grows during a session. A matte written this session that neither the document, an
+// undo state, a saved project's manifest nor the recovery snapshot names is unreachable. Only this session's mattes are
 // candidates: older projects that dropped off the recent list may still name earlier files.
 void ProjectFileController::sweepBrushMattes()
 {
@@ -270,6 +291,8 @@ void ProjectFileController::sweepBrushMattes()
         live.insert(QFileInfo(media.originalPath).absoluteFilePath());
     for (const drift::MediaAsset &asset : m_app->m_project.assets())
         live.insert(QFileInfo(asset.path).absoluteFilePath());
+    for (const QString &path : m_app->historyMediaPaths())
+        live.insert(QFileInfo(path).absoluteFilePath());
 
     for (const QVariant &entry : recentProjects()) {
         QString error;
@@ -281,11 +304,8 @@ void ProjectFileController::sweepBrushMattes()
     }
 
     QSet<QString> recoveryStrings;
-    {
-        QFile file(recoveryFilePath());
-        if (file.open(QIODevice::ReadOnly))
-            collectJsonStrings(QJsonDocument::fromJson(file.readAll()).object(), &recoveryStrings);
-    }
+    collectJsonStrings(QJsonDocument::fromJson(readRecoveryJson(recoveryFilePath())).object(),
+                       &recoveryStrings);
     for (const QString &string : std::as_const(recoveryStrings))
         live.insert(QFileInfo(string).absoluteFilePath());
 
@@ -471,10 +491,10 @@ void ProjectFileController::setBackground(const QVariantMap &background)
     emit backgroundChanged();
     m_app->emitPreviewFrame();
 }
-drift::bundle::WriteRequest ProjectFileController::buildWriteRequest(bool embedSource) const
+ProjectFileController::SaveCapture ProjectFileController::captureSave(bool embedSource) const
 {
-    drift::bundle::WriteRequest request;
-    request.document = QJsonDocument::fromJson(m_app->serializeProjectJson()).object();
+    SaveCapture capture;
+    drift::bundle::WriteRequest &request = capture.request;
     request.projectId = m_app->m_project.id();
     request.title = m_app->m_project.name();
     request.author = m_app->m_project.author();
@@ -484,13 +504,58 @@ drift::bundle::WriteRequest ProjectFileController::buildWriteRequest(bool embedS
     request.addons = drift::bundle::collectAddons(m_app->m_project);
     request.media = drift::bundle::collectMedia(m_app->m_project, embedSource);
 
+    // The live project keeps changing under the user's hands, so the worker gets a copy that
+    // shares nothing with it. History states never change after they are pushed, so sharing
+    // them is safe and costs nothing.
+    capture.project = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
+    capture.session = m_app->sessionJson();
+    capture.history = drift::captureHistory(m_app->m_undoStack);
+    capture.embedSource = embedSource;
+    capture.dirtyRevision = m_dirtyRevision;
+    capture.projectId = m_app->m_project.id();
     // Without this a plain Save of a project that arrived as a package would drop its media back
     // to references into the extraction dir, which the startup sweep is free to delete.
     if (!embedSource) {
+        capture.embeddedSources = m_embeddedSources;
         for (drift::bundle::MediaEntry &entry : request.media) {
             if (m_embeddedSources.contains(entry.originalPath)
                 || m_embeddedSources.contains(entry.resourceOf))
                 entry.embedded = true;
+        }
+    }
+    return capture;
+}
+
+drift::bundle::WriteRequest ProjectFileController::completeRequest(const SaveCapture &capture)
+{
+    drift::bundle::WriteRequest request = capture.request;
+    QJsonObject root = capture.project->toJson();
+    for (auto it = capture.session.constBegin(); it != capture.session.constEnd(); ++it)
+        root.insert(it.key(), it.value());
+
+    QList<drift::HistoryStatePtr> states;
+    const QJsonObject history = AppController::historyJson(capture.history, &states);
+    if (!history.isEmpty())
+        root.insert(QStringLiteral("undoHistory"), history);
+    request.document = root;
+
+    // Derived media (mattes, stabilized renders) that only an older undo state points at still
+    // has to travel with the project, or undoing back to it on another machine finds nothing.
+    QSet<QString> listed;
+    for (const drift::bundle::MediaEntry &entry : std::as_const(request.media))
+        listed.insert(entry.resourceOf + QLatin1Char('\n') + entry.originalPath);
+    for (const drift::HistoryStatePtr &state : std::as_const(states)) {
+        for (drift::bundle::MediaEntry &entry :
+             drift::bundle::collectMedia(state->project(), capture.embedSource)) {
+            const QString key = entry.resourceOf + QLatin1Char('\n') + entry.originalPath;
+            if (listed.contains(key))
+                continue;
+            listed.insert(key);
+            if (!capture.embedSource
+                && (capture.embeddedSources.contains(entry.originalPath)
+                    || capture.embeddedSources.contains(entry.resourceOf)))
+                entry.embedded = true;
+            request.media.append(entry);
         }
     }
     return request;
@@ -549,47 +614,82 @@ void ProjectFileController::writeProjectBundle(const QUrl &url, const std::optio
         m_app->setLastMessage(tr("Already saving"), QStringLiteral("warning"));
         return;
     }
+    // One write at a time, in the order asked. Each captures the document when it starts, so a
+    // save queued behind a slow one still writes what is on screen by then.
+    if (m_saveInFlight) {
+        m_queuedSaves.append({url, adopt});
+        return;
+    }
+    runBundleSave(url, adopt);
+}
+
+void ProjectFileController::startNextQueuedSave()
+{
+    if (m_saveInFlight || m_queuedSaves.isEmpty())
+        return;
+    const QueuedSave next = m_queuedSaves.takeFirst();
+    runBundleSave(next.url, next.adopt);
+}
+
+void ProjectFileController::waitForSave()
+{
+    while (m_saveInFlight) {
+        m_saveWrite.waitForFinished();
+        // The worker queued its completion before it finished; deliver it here.
+        QCoreApplication::sendPostedEvents(this, QEvent::MetaCall);
+    }
+}
+
+void ProjectFileController::runBundleSave(const QUrl &url, const std::optional<ProjectIdentity> &adopt)
+{
+    const QString path = writeTargetPath(url);
 
     m_app->m_project.setModifiedAt(QDateTime::currentDateTimeUtc());
 
-    // Built up front on both paths: the worker the Android branch may hand this to must not be
-    // reading the project while the timeline is free to change under it.
-    drift::bundle::WriteRequest request = buildWriteRequest(/*embedSource=*/false);
+    // Captured up front: the worker must not be reading the project while the timeline is free to
+    // change under it.
+    auto capture = std::make_shared<SaveCapture>(captureSave(/*embedSource=*/false));
     // Save As writes the copy's identity into the file but leaves the open document alone until
     // the write lands, so a failed one cannot strand the session under a name and an id that
     // belong to a file that does not exist — with the original still one Ctrl+S away.
     if (adopt) {
-        request.projectId = adopt->id;
-        request.title = adopt->name;
+        capture->request.projectId = adopt->id;
+        capture->request.title = adopt->name;
     }
 
-#ifdef Q_OS_ANDROID
-    // A project that arrived as a package keeps its media inside it (see buildWriteRequest), so a
-    // plain Save of one streams every embedded source through the bundle writer and then a second
-    // time into the SAF document — gigabytes, and off the GUI thread with progress and a way out.
-    // That is packageProject's exact shape, so Save borrows it wholesale, packaging flag included.
+    // A project that arrived as a package keeps its media inside it (see captureSave), so a plain
+    // Save of one streams every embedded source through the bundle writer and then a second time
+    // into the SAF document — gigabytes, and off the GUI thread with progress and a way out.
     //
-    // Only for that case: a project whose media is referenced rather than embedded writes a JSON
-    // manifest and nothing else, and putting *every* Save behind a modal progress dialog would be
-    // a bad trade for the common one. Desktop always writes straight to the picked path.
-    const bool streamsMedia = std::any_of(request.media.cbegin(), request.media.cend(),
-                                          [](const drift::bundle::MediaEntry &entry) {
-                                              return entry.embedded
-                                                  && entry.role == drift::bundle::MediaRole::Source;
-                                          });
-    if (streamsMedia) {
+    // Only on Android, and only for that case: a project whose media is referenced rather than
+    // embedded writes a JSON manifest and nothing else, and putting *every* Save behind a modal
+    // progress dialog would be a bad trade for the common one. Elsewhere the write is still on a
+    // worker, but silent.
+    bool modal = false;
+#ifdef Q_OS_ANDROID
+    modal = std::any_of(capture->request.media.cbegin(), capture->request.media.cend(),
+                        [](const drift::bundle::MediaEntry &entry) {
+                            return entry.embedded && entry.role == drift::bundle::MediaRole::Source;
+                        });
+#endif
+    if (modal) {
         m_packageCancel = 0;
         m_packaging = true;
         m_packageProgress = 0.0;
         emit packagingChanged();
         emit packageProgressChanged();
+    }
 
-        // `adopt` is captured by value on both hops: it is a reference parameter, and the identity
-        // has to outlive this call to reach the completion that applies it.
-        (void)QtConcurrent::run([this, path, url, request, adopt]() {
-            Exporter::BackgroundHold hold(QStringLiteral("Saving project"));
-            QString error;
-            const auto progress = [this](qint64 done, qint64 total) {
+    m_saveInFlight = true;
+    // `adopt` is captured by value on both hops: it is a reference parameter, and the identity
+    // has to outlive this call to reach the completion that applies it.
+    m_saveWrite = QtConcurrent::run([this, path, url, capture, adopt, modal]() {
+        Exporter::BackgroundHold hold(QStringLiteral("Saving project"));
+        QString error;
+        const drift::bundle::WriteRequest request = completeRequest(*capture);
+        drift::bundle::ProgressFn progress;
+        if (modal) {
+            progress = [this](qint64 done, qint64 total) {
                 if (m_packageCancel.loadRelaxed())
                     return false;
                 const double fraction = total > 0 ? double(done) / double(total) : 0.0;
@@ -602,94 +702,81 @@ void ProjectFileController::writeProjectBundle(const QUrl &url, const std::optio
                     Qt::QueuedConnection);
                 return true;
             };
-            const bool written = drift::bundle::write(path, request, progress, &error);
-            bool ok = written;
-            if (ok) {
-                // Reports progress but never returns false. commitWriteTarget opens the
-                // destination WriteOnly|Truncate, so the user's existing project is gone the
-                // moment the copy starts; honouring Cancel here would leave that document
-                // truncated and then delete the staged bundle that was about to replace it.
-                // Cancel therefore only reaches the bundle writer above, which is still working
-                // against the staging file and can be abandoned safely.
-                const auto reportOnly = [&progress](qint64 done, qint64 total) {
+        }
+        const bool written = drift::bundle::write(path, request, progress, &error);
+        bool ok = written;
+        if (ok) {
+            // Reports progress but never returns false. commitWriteTarget opens the
+            // destination WriteOnly|Truncate, so the user's existing project is gone the
+            // moment the copy starts; honouring Cancel here would leave that document
+            // truncated and then delete the staged bundle that was about to replace it.
+            // Cancel therefore only reaches the bundle writer above, which is still working
+            // against the staging file and can be abandoned safely.
+            std::function<bool(qint64, qint64)> reportOnly;
+            if (progress) {
+                reportOnly = [&progress](qint64 done, qint64 total) {
                     (void)progress(done, total);
                     return true;
                 };
-                ok = commitWriteTarget(path, url, reportOnly, &error);
             }
-            // Never deletes the destination document: on the Save-in-place path this URL is
-            // the user's existing project, and a failed write is no reason to take it away.
-            if (!ok)
-                discardWriteTarget(path, url);
-            QMetaObject::invokeMethod(
-                this,
-                [this, ok, written, error, url, request, adopt]() {
+            ok = commitWriteTarget(path, url, reportOnly, &error);
+        }
+        // Never deletes the destination document: on the Save-in-place path this URL is
+        // the user's existing project, and a failed write is no reason to take it away.
+        if (!ok)
+            discardWriteTarget(path, url);
+        QMetaObject::invokeMethod(
+            this,
+            [this, ok, written, error, url, capture, media = request.media, adopt, modal]() {
+                m_saveInFlight = false;
+                if (modal) {
                     m_packaging = false;
                     emit packagingChanged();
-                    if (!ok) {
-                        // Only a failed commit says anything about the document: a bundle
-                        // writer failure is about the staging file. A commit most likely lost
-                        // its write grant across a restart, so drop the association and let
-                        // the next Save ask for a location. Not on Save As: the document that
-                        // failed is the copy, and the grant on it came from the picker moments
-                        // ago — the remembered path still names the original, which is fine.
-                        if (written && !adopt)
-                            setCurrentProjectPath(QString());
-                        m_app->setLastMessage(error, QStringLiteral("error"));
-                        emit projectSaved(false);
-                        return;
-                    }
-                    rememberEmbeddedSources(request.media);
+                }
+                if (!ok) {
+                    // Only a failed commit says anything about the document: a bundle
+                    // writer failure is about the staging file. A commit most likely lost
+                    // its write grant across a restart, so drop the association and let
+                    // the next Save ask for a location. Not on Save As: the document that
+                    // failed is the copy, and the grant on it came from the picker moments
+                    // ago — the remembered path still names the original, which is fine.
+                    if (written && !adopt && m_app->m_project.id() == capture->projectId)
+                        setCurrentProjectPath(QString());
+                    m_app->setLastMessage(error, QStringLiteral("error"));
+                    emit projectSaved(false);
+                    startNextQueuedSave();
+                    return;
+                }
+                // A load or New Project replaced the document while this was writing: the file
+                // is fine, but it says nothing about what is open now.
+                const bool sameDocument = m_app->m_project.id() == capture->projectId;
+                if (sameDocument) {
+                    rememberEmbeddedSources(media);
                     adoptProjectIdentity(adopt);
+                }
+                if (modal) {
                     m_packageProgress = 1.0;
                     emit packageProgressChanged();
-                    const QString location = projectLocation(url);
+                }
+                const QString location = projectLocation(url);
+                if (sameDocument) {
                     setCurrentProjectPath(location);
                     addRecentProject(location);
                     queueSaveThumbnail(location);
-                    setDirty(false);
-                    deleteRecoveryFile();
+                    // Clean only if nothing changed since the snapshot that was written.
+                    if (m_dirtyRevision == capture->dirtyRevision) {
+                        setDirty(false);
+                        deleteRecoveryFile();
+                    }
                     emit projectMetadataChanged();
-                    m_app->setLastMessage(adopt ? tr("Saved a copy") : tr("Project saved"),
-                                   QStringLiteral("success"));
-                    emit projectSaved(true);
-                },
-                Qt::QueuedConnection);
-        });
-        return;
-    }
-#endif
-
-    QString error;
-    if (!drift::bundle::write(path, request, {}, &error)) {
-        discardWriteTarget(path, url);
-        m_app->setLastMessage(error, QStringLiteral("error"));
-        emit projectSaved(false);
-        return;
-    }
-    if (!commitWriteTarget(path, url, {}, &error)) {
-        discardWriteTarget(path, url);
-        // Saving over the remembered document failed — most likely its write grant did not
-        // survive the restart — so drop the association and let the next Save ask for a location.
-        // A failed Save As says nothing about the original, so it keeps its path (see above).
-        if (!adopt)
-            setCurrentProjectPath(QString());
-        m_app->setLastMessage(error, QStringLiteral("error"));
-        emit projectSaved(false);
-        return;
-    }
-    rememberEmbeddedSources(request.media);
-    adoptProjectIdentity(adopt);
-
-    const QString location = projectLocation(url);
-    setCurrentProjectPath(location);
-    addRecentProject(location);
-    queueSaveThumbnail(location);
-    setDirty(false);
-    deleteRecoveryFile();
-    emit projectMetadataChanged();
-    m_app->setLastMessage(adopt ? tr("Saved a copy") : tr("Project saved"), QStringLiteral("success"));
-    emit projectSaved(true);
+                }
+                m_app->setLastMessage(adopt ? tr("Saved a copy") : tr("Project saved"),
+                                      QStringLiteral("success"));
+                emit projectSaved(true);
+                startNextQueuedSave();
+            },
+            Qt::QueuedConnection);
+    });
 }
 
 void ProjectFileController::saveProjectJson(const QUrl &url)
@@ -761,6 +848,18 @@ std::optional<AppController::ParsedProject> readProjectJsonFile(const QString &p
         return std::nullopt;
     }
     return AppController::parseProjectJson(file->readAll(), error);
+}
+
+std::optional<AppController::ParsedProject> readRecoveryFile(const QString &path, QString *error)
+{
+    const QByteArray json = readRecoveryJson(path, error);
+    if (json.isEmpty()) {
+        if (error->isEmpty())
+            *error = QCoreApplication::translate("ProjectFileController", "Couldn’t read %1")
+                         .arg(QFileInfo(path).fileName());
+        return std::nullopt;
+    }
+    return AppController::parseProjectJson(json, error);
 }
 
 } // namespace
@@ -1077,17 +1176,18 @@ void ProjectFileController::packageProject(const QUrl &url)
     emit packagingChanged();
     emit packageProgressChanged();
 
-    // The whole request is built here, on the GUI thread: the worker copies gigabytes and must not
-    // be reading the project while the timeline is free to change under it.
-    const drift::bundle::WriteRequest request = buildWriteRequest(/*embedSource=*/true);
+    // Captured here, on the GUI thread: the worker copies gigabytes and must not be reading the
+    // project while the timeline is free to change under it.
+    const auto capture = std::make_shared<SaveCapture>(captureSave(/*embedSource=*/true));
 
     // Before the job, not inside it: commitWriteTarget truncates the destination the moment it
     // opens, so afterwards every document looks disposable.
     const bool disposable = writeTargetIsDisposable(url);
 
-    (void)QtConcurrent::run([this, path, url, request, disposable]() {
+    (void)QtConcurrent::run([this, path, url, capture, disposable]() {
         Exporter::BackgroundHold hold(QStringLiteral("Saving project"));
         QString error;
+        const drift::bundle::WriteRequest request = completeRequest(*capture);
         const auto progress = [this](qint64 done, qint64 total) {
             if (m_packageCancel.loadRelaxed())
                 return false;
@@ -1117,7 +1217,7 @@ void ProjectFileController::packageProject(const QUrl &url)
             discardWriteTarget(path, url, disposable);
         QMetaObject::invokeMethod(
             this,
-            [this, ok, error, url, request]() {
+            [this, ok, error, url, media = request.media]() {
                 m_packaging = false;
                 emit packagingChanged();
                 if (!ok) {
@@ -1125,7 +1225,7 @@ void ProjectFileController::packageProject(const QUrl &url)
                     emit packageFinished(false, error);
                     return;
                 }
-                rememberEmbeddedSources(request.media);
+                rememberEmbeddedSources(media);
                 m_packageProgress = 1.0;
                 emit packageProgressChanged();
                 const QString location = projectLocation(url);
@@ -1478,7 +1578,13 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
     // Tiles are keyed on the old paths, and a source that was missing is blacklisted until
     // this runs — without it a relinked clip's filmstrip never comes back.
     m_app->m_filmstripTiles.clear();
+    remapPaths(m_app->m_project, remap);
+}
 
+void ProjectFileController::remapPaths(drift::Project &project, const QHash<QString, QString> &remap)
+{
+    if (remap.isEmpty())
+        return;
     const auto repoint = [&remap](QString &path) {
         const auto it = remap.constFind(path);
         if (it == remap.constEnd())
@@ -1487,7 +1593,7 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
         return true;
     };
 
-    for (drift::MediaAsset &asset : m_app->m_project.assets()) {
+    for (drift::MediaAsset &asset : project.assets()) {
         if (repoint(asset.path)) {
             asset.thumbnailPath.clear();
             asset.filmstripPath.clear();
@@ -1497,7 +1603,7 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
 
     // A relinked copy has a new path and mtime, which the fingerprint reads as a different file.
     // The size still has to agree: the transcript is only carried over for the same bytes.
-    QHash<QString, drift::TranscriptPtr> transcripts = m_app->m_project.transcripts();
+    QHash<QString, drift::TranscriptPtr> transcripts = project.transcripts();
     for (auto it = transcripts.begin(); it != transcripts.end(); ++it) {
         if (!it.value())
             continue;
@@ -1511,9 +1617,9 @@ void ProjectFileController::remapProjectPaths(const QHash<QString, QString> &rem
         updated->source = moved;
         it.value() = std::move(updated);
     }
-    m_app->m_project.setTranscripts(transcripts);
+    project.setTranscripts(transcripts);
 
-    m_app->m_project.forEachTrackList([&](QList<drift::Track> &tracks) {
+    project.forEachTrackList([&](QList<drift::Track> &tracks) {
         for (drift::Track &track : tracks) {
             for (drift::Clip &clip : track.clips) {
                 // Masks live on adjustment clips, which this flat walk already covers.
@@ -1805,6 +1911,8 @@ void ProjectFileController::removeRecentProject(const QString &path)
 
 void ProjectFileController::setDirty(bool dirty)
 {
+    if (dirty)
+        ++m_dirtyRevision;
     if (m_dirty == dirty)
         return;
     m_dirty = dirty;
@@ -1825,7 +1933,8 @@ void ProjectFileController::setCurrentProjectPath(const QString &path)
 QString ProjectFileController::recoveryFilePath()
 {
     const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    // Plain JSON, not a bundle: this is an internal crash snapshot written every few seconds and
+    // One zstd frame of JSON (older builds wrote plain JSON here, and it still reads), not a
+    // bundle: this is an internal crash snapshot written every few seconds and
     // never opened through the file dialog, so it must not repack the project's media.
     return dir + QStringLiteral("/recovery/autosave.json");
 }
@@ -1843,21 +1952,31 @@ namespace {
 
 // Serializes and writes a recovery file to a temp sibling of `path`. Returns the temp path, or an
 // empty string on failure. Runs on any thread: everything it reads is its own copy.
-QString writeRecoveryTemp(const drift::Project &project, QJsonObject session, const QJsonObject &meta,
+QString writeRecoveryTemp(const drift::Project &project, QJsonObject session,
+                          const drift::HistoryCapture &history, const QJsonObject &meta,
                           const QString &path)
 {
     QJsonObject root = project.toJson();
     for (auto it = session.constBegin(); it != session.constEnd(); ++it)
         root.insert(it.key(), it.value());
+    if (const QJsonObject json = AppController::historyJson(history); !json.isEmpty())
+        root.insert(QStringLiteral("undoHistory"), json);
     root.insert(QStringLiteral("__recovery"), meta);
 
+    // A low level: this runs every few seconds, and the long-range window is what shrinks a
+    // history of near-identical states, not the level.
+    const QByteArray packed =
+        drift::bundle::compressText(QJsonDocument(root).toJson(QJsonDocument::Compact), 3);
+    if (packed.isEmpty())
+        return {};
+
     // Write to a temp sibling and rename so a crash mid-write can't corrupt the recovery file
-    // itself. Compact: nothing reads this but restoreAutosave, and it takes either form.
+    // itself.
     const QString tmpPath = path + QStringLiteral(".tmp");
     QFile file(tmpPath);
     if (!file.open(QIODevice::WriteOnly))
         return {};
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
+    file.write(packed);
     file.close();
     return tmpPath;
 }
@@ -1893,7 +2012,9 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
         // Waits on the worker only: its continuation needs this thread's event loop.
         m_recoveryWrite.waitForFinished();
         ++m_recoveryGeneration;
-        promoteRecoveryTemp(writeRecoveryTemp(m_app->m_project, session, meta, path), path);
+        promoteRecoveryTemp(writeRecoveryTemp(m_app->m_project, session,
+                                              drift::captureHistory(m_app->m_undoStack), meta, path),
+                            path);
         return;
     }
 
@@ -1905,9 +2026,10 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
     std::shared_ptr<const drift::Project> snapshot = m_app->m_playback.projectSnapshot(&m_app->m_project);
     if (!snapshot)
         snapshot = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
+    const drift::HistoryCapture history = drift::captureHistory(m_app->m_undoStack);
     const quint64 generation = m_recoveryGeneration;
-    m_recoveryWrite = QtConcurrent::run([snapshot, session, meta, path] {
-        return writeRecoveryTemp(*snapshot, session, meta, path);
+    m_recoveryWrite = QtConcurrent::run([snapshot, session, history, meta, path] {
+        return writeRecoveryTemp(*snapshot, session, history, meta, path);
     });
     m_recoveryWrite.then(this, [this, generation, path](const QString &tmpPath) {
         // The file was deleted (a save, a new project) while this was being written.
@@ -1938,11 +2060,10 @@ void ProjectFileController::detectRecoveryFile()
     if (m_isolatedSession)
         return;
     const QString path = recoveryFilePath();
-    QFile file(path);
-    if (!file.exists() || !file.open(QIODevice::ReadOnly))
+    if (!QFile::exists(path))
         return;
 
-    const QJsonObject root = QJsonDocument::fromJson(file.readAll()).object();
+    const QJsonObject root = QJsonDocument::fromJson(readRecoveryJson(path)).object();
     const QJsonObject meta = root.value(QStringLiteral("__recovery")).toObject();
     m_recoveryInfo = QVariantMap{
         {QStringLiteral("originalPath"), meta.value(QStringLiteral("originalPath")).toString()},
@@ -1972,7 +2093,7 @@ void ProjectFileController::restoreAutosave()
         auto result = std::make_shared<LoadResult>();
         result->kind = LoadResult::Kind::Recovery;
         result->originalPath = originalPath;
-        result->parsed = readProjectJsonFile(path, &result->error);
+        result->parsed = readRecoveryFile(path, &result->error);
         QMetaObject::invokeMethod(
             this, [this, generation, result]() { finishLoad(generation, QUrl(), result); },
             Qt::QueuedConnection);

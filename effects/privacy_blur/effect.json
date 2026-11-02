@@ -1,0 +1,102 @@
+{
+  "id": "builtin.effects.privacy_blur",
+  "version": "1.0.0",
+  "displayName": "Privacy Blur",
+  "category": "dreamy",
+  "description": "Hides a rectangular area with a blur, a mosaic or a solid bar.",
+  "backend": "gpu",
+  "order": 165,
+  "parameters": [
+    {
+      "identifier": "mode",
+      "displayName": "Mode",
+      "type": "choice",
+      "options": ["Blur", "Mosaic", "Solid bar"],
+      "defaultValue": 0
+    },
+    {
+      "identifier": "regionX",
+      "displayName": "X",
+      "type": "float",
+      "defaultValue": 0.35,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "ui": { "control": "slider", "precision": 3 },
+      "group": "Area"
+    },
+    {
+      "identifier": "regionY",
+      "displayName": "Y",
+      "type": "float",
+      "defaultValue": 0.35,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "ui": { "control": "slider", "precision": 3 },
+      "group": "Area"
+    },
+    {
+      "identifier": "regionW",
+      "displayName": "Width",
+      "type": "float",
+      "defaultValue": 0.3,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "ui": { "control": "slider", "precision": 3 },
+      "group": "Area"
+    },
+    {
+      "identifier": "regionH",
+      "displayName": "Height",
+      "type": "float",
+      "defaultValue": 0.3,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "ui": { "control": "slider", "precision": 3 },
+      "group": "Area"
+    },
+    {
+      "identifier": "strength",
+      "displayName": "Strength",
+      "type": "float",
+      "defaultValue": 0.6,
+      "minValue": 0.0,
+      "maxValue": 1.0,
+      "ui": { "control": "slider", "precision": 2 }
+    },
+    {
+      "identifier": "barColor",
+      "displayName": "Bar colour",
+      "type": "color",
+      "defaultValue": "#000000"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [
+      { "id": "buf_horizontal", "scale": 1.0 },
+      { "id": "buf_blurred", "scale": 1.0 }
+    ],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "blur_h.frag",
+        "inputs": [{ "type": "source_texture" }],
+        "output": { "type": "buffer", "id": "buf_horizontal" }
+      },
+      {
+        "passIndex": 1,
+        "fragmentShader": "blur_v.frag",
+        "inputs": [{ "type": "buffer", "id": "buf_horizontal" }],
+        "output": { "type": "buffer", "id": "buf_blurred" }
+      },
+      {
+        "passIndex": 2,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          { "type": "source_texture" },
+          { "type": "buffer", "id": "buf_blurred" }
+        ],
+        "output": { "type": "canvas" }
+      }
+    ]
+  }
+}

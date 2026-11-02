@@ -46,6 +46,7 @@ QJsonObject maskToJson(const Mask &m)
         {QStringLiteral("op"), maskOpToString(m.op)},
         {QStringLiteral("enabled"), m.enabled},
         {QStringLiteral("name"), m.name},
+        {QStringLiteral("cropShape"), m.cropShape},
         {QStringLiteral("x"), m.x},
         {QStringLiteral("y"), m.y},
         {QStringLiteral("w"), m.w},
@@ -90,6 +91,7 @@ Mask maskFromJson(const QJsonObject &o)
     m.op = maskOpFromString(o.value(QStringLiteral("op")).toString());
     m.enabled = o.value(QStringLiteral("enabled")).toBool(m.enabled);
     m.name = o.value(QStringLiteral("name")).toString(m.name);
+    m.cropShape = o.value(QStringLiteral("cropShape")).toString();
     // Media was called "matte" before v5 and only ever backed a segmentation cutout, so the old
     // keys map straight across.
     m.mediaPath = o.value(QStringLiteral("mediaPath"))
@@ -1248,6 +1250,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 18 added motion trackers, the mask media time base and asset mask roles. Nothing to
     // migrate; the bump is a gate, as for versions 6 and 9. An older build would drop the
     // trackers and play a track-spanning matte by the masked clip's source time.
+    // Version 21 added Mask::cropShape, the clip Shape picker's mask marker. Nothing to migrate; the
+    // bump is a gate, as for versions 6 and 9. An older build would drop the marker and no longer
+    // treat the mask as the clip's shape.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

@@ -109,3 +109,26 @@ void LayoutStore::setPanelFraction(const QString &key, double fraction)
         return;
     QSettings().setValue(settingsKey(key), fraction);
 }
+
+double LayoutStore::layoutNumber(const QString &key, double fallback) const
+{
+    bool ok = false;
+    const double value = QSettings().value(settingsKey(key)).toDouble(&ok);
+    return ok && std::isfinite(value) ? value : fallback;
+}
+
+void LayoutStore::setLayoutNumber(const QString &key, double value)
+{
+    if (std::isfinite(value))
+        QSettings().setValue(settingsKey(key), value);
+}
+
+QString LayoutStore::layoutString(const QString &key, const QString &fallback) const
+{
+    return QSettings().value(settingsKey(key), fallback).toString();
+}
+
+void LayoutStore::setLayoutString(const QString &key, const QString &value)
+{
+    QSettings().setValue(settingsKey(key), value);
+}

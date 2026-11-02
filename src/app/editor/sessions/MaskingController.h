@@ -219,6 +219,27 @@ public:
     // adjustment: sets its mask shape to None via writeClipMask.
     Q_INVOKABLE void removeMask(int trackIndex, int clipIndex);
 
+    // The transform inspector's Shape picker. clipShape is one of drift::clipShapeIds() ("original" when
+    // the clip has no shape mask). setClipShape replaces the clip's shape mask (one per clip) and
+    // keeps its framing; "original" removes only that mask. Undo text tr("Set clip shape").
+    Q_INVOKABLE QString clipShape(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE void setClipShape(int trackIndex, int clipIndex, const QString &shape);
+
+    // "Content inside shape": the source window moves while the clip's on-screen box and the shape stay
+    // put. {zoom (1 = whole frame, up to 8), x, y (content position, 0..1, 0.5 centred)}.
+    Q_INVOKABLE QVariantMap reframe(int trackIndex, int clipIndex) const;
+    // Live drag: begins a preview drag if none is active; QML calls EditorState.commitPreviewDrag() on
+    // release. NaN x/y keeps the window centre (zoom changes).
+    Q_INVOKABLE void previewReframe(int trackIndex, int clipIndex, double zoom, double x, double y);
+    // One undo step tr("Reframe clip"): the same, for buttons and typed values.
+    Q_INVOKABLE void setReframe(int trackIndex, int clipIndex, double zoom, double x, double y);
+    // Moves the content by dx/dy of the window size (positive = right/down).
+    Q_INVOKABLE void nudgeReframe(int trackIndex, int clipIndex, double dx, double dy);
+    // Centres the content keeping the zoom.
+    Q_INVOKABLE void centerReframe(int trackIndex, int clipIndex);
+    // Clears the source crop but keeps the shape (re-fitted to the restored frame).
+    Q_INVOKABLE void showWholeVideo(int trackIndex, int clipIndex);
+
 signals:
     void brushSettingsChanged();
     void brushSavingChanged();
@@ -227,6 +248,9 @@ signals:
     void brushApplied(const QString &clipId);
 
 private:
+    bool isFramedClip(int trackIndex, int clipIndex) const;
+    // Writes the reframed source window onto the clip in place; false when nothing changed.
+    bool writeReframe(int trackIndex, int clipIndex, double zoom, double x, double y);
     const drift::MediaAsset *assetAt(int assetIndex) const;
     // The brush matte's pixel size for a clip: its asset's size (else the canvas), longest side <= 2048.
     QSize brushMatteSize(int trackIndex, int clipIndex) const;

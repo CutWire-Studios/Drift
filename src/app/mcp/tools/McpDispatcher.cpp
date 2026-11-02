@@ -1886,6 +1886,7 @@ QJsonObject McpDispatcher::opSaveProject(const QJsonObject &args)
         m_controller->projectFile()->saveProjectAs(QUrl::fromLocalFile(path));
     else
         m_controller->projectFile()->saveProject(QUrl::fromLocalFile(path));
+    m_controller->projectFile()->waitForSave();
     return ok({{QStringLiteral("path"), path}});
 }
 

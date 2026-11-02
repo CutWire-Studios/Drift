@@ -30,4 +30,11 @@ public:
     // dragged out on a 4K display still makes sense on a laptop screen.
     Q_INVOKABLE double panelFraction(const QString &key, double fallback) const;
     Q_INVOKABLE void setPanelFraction(const QString &key, double fraction);
+
+    // Plain per-panel values that are not proportions of a split: a rail width in icon
+    // units, the tab a panel was left on.
+    Q_INVOKABLE double layoutNumber(const QString &key, double fallback) const;
+    Q_INVOKABLE void setLayoutNumber(const QString &key, double value);
+    Q_INVOKABLE QString layoutString(const QString &key, const QString &fallback) const;
+    Q_INVOKABLE void setLayoutString(const QString &key, const QString &value);
 };

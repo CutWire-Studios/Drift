@@ -23,7 +23,6 @@ constexpr char kMagic[8] = {'D', 'R', 'I', 'F', 'T', 'P', 'R', 'J'};
 constexpr quint32 kContainerVersion = 1;
 constexpr int kHeaderSize = 52; // magic + containerVersion + 2 lengths + manifest digest
 constexpr int kDigestSize = 32;
-constexpr quint32 kMaxManifestSize = 256u * 1024 * 1024;
 constexpr qint64 kChunkSize = 1 << 20;
 // A zstd blob is decompressed in one shot, so its raw size is an allocation an untrusted file
 // controls. Anything above this is stored raw instead, and rejected on read.
@@ -164,12 +163,26 @@ AddonRef addonFromJson(const QJsonObject &object)
     return addon;
 }
 
-QByteArray compressBytes(const QByteArray &raw, int level)
+// Long-distance matching lets the encoder see across a whole history of near-identical project
+// states. The window stops at 2^27, the decoder's default ceiling, so no reader needs to opt in.
+QByteArray compressBytes(const QByteArray &raw, int level, bool longRange = false)
 {
+    ZSTD_CCtx *ctx = ZSTD_createCCtx();
+    if (!ctx)
+        return {};
+    ZSTD_CCtx_setParameter(ctx, ZSTD_c_compressionLevel, level);
+    if (longRange) {
+        int windowLog = 10;
+        while (windowLog < 27 && (qint64(1) << windowLog) < raw.size())
+            ++windowLog;
+        ZSTD_CCtx_setParameter(ctx, ZSTD_c_windowLog, windowLog);
+        ZSTD_CCtx_setParameter(ctx, ZSTD_c_enableLongDistanceMatching, 1);
+    }
     const size_t bound = ZSTD_compressBound(size_t(raw.size()));
     QByteArray out(qsizetype(bound), Qt::Uninitialized);
     const size_t written =
-        ZSTD_compress(out.data(), bound, raw.constData(), size_t(raw.size()), level);
+        ZSTD_compress2(ctx, out.data(), bound, raw.constData(), size_t(raw.size()));
+    ZSTD_freeCCtx(ctx);
     if (ZSTD_isError(written))
         return {};
     out.resize(qsizetype(written));
@@ -206,7 +219,7 @@ bool readAll(const QString &path, QFile *file, BundleInfo *info, QList<BlobRecor
 
     const quint32 storedSize = readU32(header.constData() + 12);
     const quint32 rawSize = readU32(header.constData() + 16);
-    if (storedSize == 0 || storedSize > kMaxManifestSize || rawSize > kMaxManifestSize)
+    if (storedSize == 0 || storedSize > kMaxStoredSize || rawSize > kMaxDecompressedSize)
         return fail(error, QCoreApplication::translate("ProjectBundle", "project manifest has an implausible size"));
     const QByteArray expectedDigest = header.mid(20, kDigestSize);
 
@@ -346,6 +359,28 @@ MediaRole mediaRoleFromString(const QString &role)
     if (role == QLatin1String("stabilized"))
         return MediaRole::Stabilized;
     return MediaRole::Source;
+}
+
+QByteArray compressText(const QByteArray &raw, int level)
+{
+    return compressBytes(raw, level, true);
+}
+
+bool isCompressedText(const QByteArray &data)
+{
+    return data.size() >= 4 && quint8(data[0]) == 0x28 && quint8(data[1]) == 0xB5
+        && quint8(data[2]) == 0x2F && quint8(data[3]) == 0xFD;
+}
+
+bool decompressText(const QByteArray &stored, QByteArray *out, QString *error)
+{
+    if (quint64(stored.size()) > kMaxStoredSize)
+        return fail(error, QCoreApplication::translate("ProjectBundle", "compressed block is too large"));
+    const unsigned long long rawSize = ZSTD_getFrameContentSize(stored.constData(), size_t(stored.size()));
+    if (rawSize == ZSTD_CONTENTSIZE_UNKNOWN || rawSize == ZSTD_CONTENTSIZE_ERROR
+        || rawSize > kMaxDecompressedSize)
+        return fail(error, QCoreApplication::translate("ProjectBundle", "compressed block is corrupt"));
+    return decompressBytes(stored, rawSize, out, error);
 }
 
 bool write(const QString &path, const WriteRequest &request, const ProgressFn &progress,
@@ -504,11 +539,13 @@ bool write(const QString &path, const WriteRequest &request, const ProgressFn &p
     };
 
     const QByteArray manifestJson = QJsonDocument(manifest).toJson(QJsonDocument::Compact);
-    if (manifestJson.size() > qsizetype(kMaxManifestSize))
+    if (quint64(manifestJson.size()) > kMaxDecompressedSize)
         return fail(error, QCoreApplication::translate("ProjectBundle", "project is too large to save"));
-    const QByteArray manifestStored = compressBytes(manifestJson, 10);
+    const QByteArray manifestStored = compressText(manifestJson, 10);
     if (manifestStored.isEmpty())
         return fail(error, QCoreApplication::translate("ProjectBundle", "cannot compress the project manifest"));
+    if (quint64(manifestStored.size()) > kMaxStoredSize)
+        return fail(error, QCoreApplication::translate("ProjectBundle", "project is too large to save"));
 
     QSaveFile out(path);
     // Over the documents portal the sibling temp file QSaveFile normally writes may be refused, and

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/edit/commands/ProjectCommands.h"
 #include "core/effects/EffectStackStore.h"
 #include "core/project/Project.h"
 #include "core/text/animation/TextAnimationPreset.h"
@@ -69,6 +70,7 @@ struct MediaEditSpec;
 #include "app/editor/sessions/SubtitleController.h"
 #include "app/color/ColorController.h"
 #include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/audio/AudioAlignController.h"
 #include "app/jobs/vision/DepthController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/mcp/McpController.h"
@@ -103,6 +105,7 @@ class AppController : public QObject
     friend class SceneDetectController;
     friend class DepthController;
     friend class DenoiseController;
+    friend class AudioAlignController;
     friend class ColorController;
     friend class KeyframeController;
     friend class MaskingController;
@@ -145,6 +148,8 @@ class AppController : public QObject
     Q_PROPERTY(DepthController *depth READ depth CONSTANT)
     // Noise removal for a clip's audio. QML: EditorState.denoise.
     Q_PROPERTY(DenoiseController *denoise READ denoise CONSTANT)
+    // Silence removal and audio sync. QML: EditorState.audioAlign.
+    Q_PROPERTY(AudioAlignController *audioAlign READ audioAlign CONSTANT)
     // Colour grade, finishing effects and looks. QML: EditorState.color.
     Q_PROPERTY(ColorController *color READ color CONSTANT)
     // Keyframe panel editing and clip property rows. QML: EditorState.keyframes.
@@ -338,6 +343,7 @@ public:
     struct ParsedProject {
         drift::Project project;
         QJsonObject root;
+        std::optional<drift::StoredHistory> history;
     };
     static std::optional<ParsedProject> parseProjectJson(const QByteArray &data, QString *error);
     static std::optional<ParsedProject> parseProjectJson(const QJsonObject &root, QString *error);
@@ -357,6 +363,7 @@ public:
     SceneDetectController *scenes() const { return m_sceneDetect; }
     DepthController *depth() const { return m_depth; }
     DenoiseController *denoise() const { return m_denoise; }
+    AudioAlignController *audioAlign() const { return m_audioAlign; }
     ColorController *color() const { return m_color; }
     KeyframeController *keyframes() const { return m_keyframes; }
     MaskingController *masking() const { return m_masking; }
@@ -817,6 +824,9 @@ public:
     Q_INVOKABLE QVariantMap activeAudioClipAtPlayhead() const;
     Q_INVOKABLE double sourceTimeAtPlayhead() const;
     Q_INVOKABLE double sourceTimeForClip(const QVariantMap &clip) const;
+    // Source seconds under the playhead for a placed clip, held at the nearest edge frame when the
+    // playhead is outside it. Honours trim, speed, reverse and speed curves.
+    Q_INVOKABLE double sourceTimeAtPlayheadForClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void deleteSelectedClip();
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
@@ -1945,6 +1955,8 @@ protected:
     QString trackIdAt(int trackIndex) const;
     QList<QPair<QString, int>> captureSelectionByTrackId() const;
     void restoreSelectionByTrackId(const QList<QPair<QString, int>> &captured);
+    void captureSelectionClipIds();
+    void restoreSelectionClipIds();
     int assetIndexForClip(const drift::Clip &clip) const;
     drift::TimeUs clipDurationForAssetIndex(int assetIndex) const;
     // The absolute orientation (0/90/180/270) a video clip's frames come out at: its file's own
@@ -2009,6 +2021,16 @@ protected:
     void rememberExportChoice(const QString &outputPath, const QVariantMap &settings);
     QJsonObject sessionJson() const;
     QString historyHashAt(int stackIndex) const;
+    // Every file a project state reachable by undo/redo points at, so cleanup does not take
+    // media the history still needs.
+    QSet<QString> historyMediaPaths() const;
+public:
+    // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
+    // media they reference. Reads only the capture, so a worker can run it. `states` receives one
+    // entry per distinct state.
+    static QJsonObject historyJson(const drift::HistoryCapture &capture,
+                                   QList<drift::HistoryStatePtr> *states = nullptr);
+protected:
     int historyIndexForHash(const QString &prefix) const;
     QByteArray historyJsonAt(int stackIndex) const;
     static QString historySnapshotDir();
@@ -2142,6 +2164,10 @@ protected:
     int m_selectedTransitionTrack = -1;
     int m_selectedTransitionLeftClip = -1;
     QList<QPair<int, int>> m_selection;
+    mutable QString m_capturedPrimaryClipId;
+    QStringList m_undoSelectionIds;
+    QString m_undoPrimaryId;
+    bool m_undoSelectionCaptured = false;
     int m_selectionRevision = 0;
     int m_timelineTrimCursorSide = 0;
     int m_timelineTrimCursorHeight = 0;
@@ -2162,6 +2188,7 @@ protected:
     SceneDetectController *m_sceneDetect = nullptr;
     DepthController *m_depth = nullptr;
     DenoiseController *m_denoise = nullptr;
+    AudioAlignController *m_audioAlign = nullptr;
     ColorController *m_color = nullptr;
     KeyframeController *m_keyframes = nullptr;
     MaskingController *m_masking = nullptr;
@@ -2233,6 +2260,7 @@ protected:
     // Set while commitPreviewDrag finishes a drag that left the selection on the same clip:
     // finishEdit then skips selectionChanged.
     bool m_quietSelection = false;
+    void writeClipSourceFrame(int t, int c, const QRectF &frame, double turn);
     void emitPreviewFrame();
     void emitPreviewEdit(int trackIndex, int clipIndex, const QStringList &keys);
     void beginImplicitPreviewDrag(const QString &undoText);
@@ -2304,6 +2332,4 @@ protected:
     static QString newFreezeFramePath(const QString &projectId);
 
     void setProjectLayoutChosen(bool chosen);
-
-    static constexpr int kMaxUndoSteps = 50;
 };

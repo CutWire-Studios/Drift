@@ -160,6 +160,11 @@ QPainterPath regularPolygonPath(const QRectF &bounds, int sides, double rotation
     return path;
 }
 
+QPainterPath maskStarPath(const QRectF &bounds)
+{
+    return starPath(bounds, 5, 0.4, false);
+}
+
 QPainterPath heartPath(const QRectF &bounds)
 {
     const Grid g{bounds};

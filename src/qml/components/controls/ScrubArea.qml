@@ -52,7 +52,10 @@ MouseArea {
         _steps = 0
     }
 
+    // Hover-enabled areas also get moves with no button down; those must never scrub.
     onPositionChanged: mouse => {
+        if (!pressed)
+            return
         if (!_scrubbing) {
             if (Math.abs(mouse.x - _pressX) < Application.styleHints.startDragDistance)
                 return

@@ -125,6 +125,7 @@ private slots:
     void transformLayerParentsPreviewBoxes();
     void transformSpanOptionsAndValidation();
     void transformLayerEntryPoints();
+    void linkedVideoMovesWithItsAudioAndAdjustments();
     void pasteSelectsWhatItPastedWhenATrackIsAdded();
     void compositeTabEditUndoesFromMain();
     void compositeSeparateAudioAndRemoval();
@@ -165,6 +166,12 @@ private slots:
     void undoTrackMute();
     void packagedProjectCarriesDerivedArtifacts();
     void undoBookmarkAdd();
+    void undoHistorySurvivesSaveAndLoad();
+    void savedBundleKeepsHistoryAndShrinksIt();
+    void editDuringSaveKeepsProjectModified();
+    void overlappingSavesRunInOrder();
+    void recoveryFileIsCompressedAndRestores();
+    void legacyPlainRecoveryFileStillRestores();
     void bookmarkNavigationAndToggle();
     void editPointNavigationWalksEveryClipEdge();
     void arrowKeysJogAndJumpThePlayhead();
@@ -373,6 +380,8 @@ private slots:
     void maskingStackListsPinnedMasks();
     void maskingStandaloneAdjustmentHasOneMask();
     void maskingPolygonMaskIsCreated();
+    void clipShapeReplacesItsMaskAndOriginalRemovesOnlyIt();
+    void clipReframeKeepsTheBoxAndOneUndoStep();
     void maskingPathKeysAnimateShape();
     void maskingInsertPointUpdatesPathKeys();
     void maskEditSessionMovesVertexOnStaticMask();
@@ -1329,6 +1338,74 @@ void EditorStateTest::transformLayerEntryPoints()
     QCOMPARE(state.project()->tracks().at(3).clips.size(), 1);
 }
 
+void EditorStateTest::linkedVideoMovesWithItsAudioAndAdjustments()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    project.tracks().clear();
+    for (const auto &spec : {std::pair{QStringLiteral("v1"), drift::TrackType::Video},
+                             std::pair{QStringLiteral("v2"), drift::TrackType::Video},
+                             std::pair{QStringLiteral("a1"), drift::TrackType::Audio}}) {
+        drift::Track track{.type = spec.second};
+        track.id = spec.first;
+        project.tracks().append(track);
+    }
+    const auto makeClip = [](const QString &id, drift::ClipType type, drift::TimeUs start) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = type;
+        clip.linkId = QStringLiteral("pair");
+        clip.timelineStart = start;
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcOut = clip.timelineDuration;
+        return clip;
+    };
+    project.tracks()[0].clips.append(makeClip(QStringLiteral("vid"), drift::ClipType::Video, 0));
+    project.tracks()[2].clips.append(makeClip(QStringLiteral("aud"), drift::ClipType::Audio, 0));
+    // A different clip already sitting where the audio is headed.
+    drift::Clip blocker = makeClip(QStringLiteral("blocker"), drift::ClipType::Audio,
+                                   drift::secondsToUs(3.0));
+    blocker.linkId.clear();
+    project.tracks()[2].clips.append(blocker);
+    drift::Mask mask;
+    mask.shape = drift::MaskShape::Ellipse;
+    drift::addLinkedMask(project, 0, 0, mask);
+
+    state.selectClip(0, 0);
+    state.moveClipToTrack(0, 0, project.trackIndexById(QStringLiteral("v2")), 2.0);
+
+    int videoTrack = -1;
+    int videoClip = -1;
+    int audioTrack = -1;
+    int audioClip = -1;
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("vid"), &videoTrack, &videoClip));
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("aud"), &audioTrack, &audioClip));
+    QCOMPARE(project.tracks().at(videoTrack).id, QStringLiteral("v2"));
+    QCOMPARE(project.tracks().at(videoTrack).clips.at(videoClip).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(project.tracks().at(videoTrack).clips.at(videoClip).linkId, QStringLiteral("pair"));
+    QCOMPARE(project.tracks().at(audioTrack).clips.at(audioClip).timelineStart, drift::secondsToUs(2.0));
+    QCOMPARE(project.tracks().at(audioTrack).clips.at(audioClip).linkId, QStringLiteral("pair"));
+    // 2s..4s overlaps the blocker at 3s..5s, so the audio gets a new audio track.
+    QCOMPARE(project.tracks().at(audioTrack).type, drift::TrackType::Audio);
+    QVERIFY(project.tracks().at(audioTrack).id != QStringLiteral("a1"));
+
+    QCOMPARE(drift::linkedMaskAdjustments(project, videoTrack, videoClip).size(), 1);
+    QVERIFY(drift::linkedMaskAdjustments(project, 0, 0).isEmpty());
+    QCOMPARE(state.selectedTrack(), videoTrack);
+    QCOMPARE(state.selectedClip(), videoClip);
+
+    state.undo();
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("vid"), &videoTrack, &videoClip));
+    QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("aud"), &audioTrack, &audioClip));
+    QCOMPARE(project.tracks().at(videoTrack).id, QStringLiteral("v1"));
+    QCOMPARE(project.tracks().at(audioTrack).id, QStringLiteral("a1"));
+    QCOMPARE(project.tracks().at(audioTrack).clips.size(), 2);
+    QCOMPARE(project.tracks().size(), 4);
+    QCOMPARE(state.selectedTrack(), videoTrack);
+    QCOMPARE(state.selectedClip(), videoClip);
+}
+
 // Pasting a clip whose kind has no track mints one at the top, pushing the tracks an earlier clip
 // of the same paste went to down a row; the selection used to point at the old positions.
 void EditorStateTest::pasteSelectsWhatItPastedWhenATrackIsAdded()
@@ -1532,6 +1609,239 @@ void EditorStateTest::undoBookmarkAdd()
     QVERIFY(state.undoAvailable());
     state.undo();
     QCOMPARE(state.bookmarks().size(), 0);
+}
+
+void EditorStateTest::undoHistorySurvivesSaveAndLoad()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    for (int i = 0; i < 60; ++i)
+        state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
+    QCOMPARE(state.bookmarks().size(), 60);
+    state.undo();
+    state.undo();
+    QCOMPARE(state.bookmarks().size(), 58);
+    const QByteArray saved = state.serializeProjectJson();
+
+    AppController reopened(&library);
+    QString error;
+    QVERIFY2(reopened.applyProjectJson(saved, &error), qPrintable(error));
+    QCOMPARE(reopened.bookmarks().size(), 58);
+    QCOMPARE(reopened.m_undoStack.count(), 60);
+    QCOMPARE(reopened.undoIndex(), 58);
+    QVERIFY(reopened.undoAvailable());
+    QVERIFY(reopened.redoAvailable());
+    QVERIFY(!reopened.m_projectFile->hasUnsavedChanges());
+
+    reopened.redo();
+    reopened.redo();
+    QCOMPARE(reopened.bookmarks().size(), 60);
+    reopened.undo();
+    reopened.undo();
+    reopened.undo();
+    QCOMPARE(reopened.bookmarks().size(), 57);
+
+    reopened.addBookmark(100.0, QStringLiteral("New"));
+    QVERIFY(!reopened.redoAvailable());
+    QCOMPARE(reopened.m_undoStack.count(), 58);
+
+    AppController legacy(&library);
+    QJsonObject root = QJsonDocument::fromJson(saved).object();
+    root.remove(QStringLiteral("undoHistory"));
+    QVERIFY(legacy.applyProjectJson(QJsonDocument(root).toJson(), &error));
+    QCOMPARE(legacy.bookmarks().size(), 58);
+    QVERIFY(!legacy.undoAvailable());
+    QVERIFY(!legacy.redoAvailable());
+
+    // States are plain JSON objects, one per distinct project content.
+    const QJsonObject history = QJsonDocument::fromJson(saved).object().value(QStringLiteral("undoHistory")).toObject();
+    QVERIFY(!history.contains(QStringLiteral("blobs")));
+    QCOMPARE(history.value(QStringLiteral("states")).toArray().size(), 61);
+    QVERIFY(history.value(QStringLiteral("states")).toArray().at(0).isObject());
+    QCOMPARE(history.value(QStringLiteral("steps")).toArray().size(), 60);
+}
+
+void EditorStateTest::savedBundleKeepsHistoryAndShrinksIt()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    for (int i = 0; i < 6; ++i)
+        state.addTextClip(QStringLiteral("Title %1 with a reasonably long caption").arg(i), i * 2.0);
+    for (int i = 0; i < 50; ++i)
+        state.addBookmark(i + 1.0, QStringLiteral("Bookmark %1").arg(i));
+    state.undo();
+    state.undo();
+    const int steps = state.m_undoStack.count();
+    const int index = state.undoIndex();
+    QVERIFY(steps >= 50);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("history.drift"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    QVERIFY(state.projectFile()->saveInFlight());
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->saveInFlight());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.lastMessage(), QStringLiteral("Project saved"));
+
+    // What the first design stored: every state compressed and base64-encoded on its own.
+    qint64 perStateBytes = 0;
+    {
+        const QJsonObject history = QJsonDocument::fromJson(state.serializeProjectJson())
+                                        .object().value(QStringLiteral("undoHistory")).toObject();
+        for (const QJsonValue &value : history.value(QStringLiteral("states")).toArray()) {
+            const QByteArray json = QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact);
+            perStateBytes += qCompress(json, 6).toBase64().size();
+        }
+    }
+    const qint64 bundleBytes = QFileInfo(path).size();
+    qInfo() << "history steps" << steps << "per-state qCompress+base64 bytes" << perStateBytes
+            << "bundle bytes" << bundleBytes;
+    QVERIFY(bundleBytes < perStateBytes);
+
+    AppController reopened(&library);
+    reopened.projectFile()->loadProject(QUrl::fromLocalFile(path));
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.m_undoStack.count(), steps);
+    QCOMPARE(reopened.undoIndex(), index);
+    QVERIFY(reopened.redoAvailable());
+    reopened.redo();
+    reopened.redo();
+    QCOMPARE(reopened.bookmarks().size(), 50);
+}
+
+void EditorStateTest::editDuringSaveKeepsProjectModified()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addBookmark(1.0, QStringLiteral("Before"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("edited.drift"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    // The completion is queued behind this call, so this edit lands after the snapshot.
+    state.addBookmark(2.0, QStringLiteral("During"));
+    state.projectFile()->waitForSave();
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.projectFile()->currentProjectPath(), path);
+
+    AppController reopened(&library);
+    reopened.projectFile()->loadProject(QUrl::fromLocalFile(path));
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.bookmarks().size(), 1);
+
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+}
+
+void EditorStateTest::overlappingSavesRunInOrder()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addBookmark(1.0, QStringLiteral("One"));
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString first = dir.filePath(QStringLiteral("first.drift"));
+    const QString second = dir.filePath(QStringLiteral("second.drift"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(first));
+    state.addBookmark(2.0, QStringLiteral("Two"));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(second));
+    state.projectFile()->waitForSave();
+
+    QVERIFY(!state.projectFile()->saveInFlight());
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    QCOMPARE(state.projectFile()->currentProjectPath(), second);
+
+    AppController a(&library);
+    a.projectFile()->loadProject(QUrl::fromLocalFile(first));
+    QTRY_VERIFY(!a.projectFile()->projectLoadPending());
+    QCOMPARE(a.bookmarks().size(), 1);
+    AppController b(&library);
+    b.projectFile()->loadProject(QUrl::fromLocalFile(second));
+    QTRY_VERIFY(!b.projectFile()->projectLoadPending());
+    QCOMPARE(b.bookmarks().size(), 2);
+}
+
+void EditorStateTest::recoveryFileIsCompressedAndRestores()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QFile::remove(recovery);
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    {
+        AppController state(&library);
+        for (int i = 0; i < 20; ++i)
+            state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
+        state.undo();
+        QVERIFY(state.projectFile()->hasUnsavedChanges());
+        state.projectFile()->flushRecoverySnapshot();
+        QTRY_VERIFY(QFileInfo::exists(recovery));
+    }
+    QFile file(recovery);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.read(4), QByteArray("\x28\xb5\x2f\xfd", 4));
+    file.close();
+
+    AppController reopened(&library);
+    QVERIFY(reopened.projectFile()->recoveryAvailable());
+    reopened.projectFile()->restoreAutosave();
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.bookmarks().size(), 19);
+    QCOMPARE(reopened.m_undoStack.count(), 20);
+    QCOMPARE(reopened.undoIndex(), 19);
+    QVERIFY(reopened.redoAvailable());
+}
+
+void EditorStateTest::legacyPlainRecoveryFileStillRestores()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QDir().mkpath(QFileInfo(recovery).absolutePath());
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    {
+        AppController state(&library);
+        for (int i = 0; i < 5; ++i)
+            state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
+        QJsonObject root = QJsonDocument::fromJson(state.serializeProjectJson()).object();
+        root.insert(QStringLiteral("__recovery"),
+                    QJsonObject{{QStringLiteral("originalPath"), QString()},
+                                {QStringLiteral("projectName"), QStringLiteral("Legacy")},
+                                {QStringLiteral("savedAt"), QStringLiteral("2026-01-01T00:00:00")}});
+        QFile::remove(recovery);
+        QFile file(recovery);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
+    }
+
+    AppController reopened(&library);
+    QVERIFY(reopened.projectFile()->recoveryAvailable());
+    QCOMPARE(reopened.projectFile()->recoveryInfo().value(QStringLiteral("projectName")).toString(),
+             QStringLiteral("Legacy"));
+    reopened.projectFile()->restoreAutosave();
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.bookmarks().size(), 5);
+    QCOMPARE(reopened.m_undoStack.count(), 5);
 }
 
 void EditorStateTest::bookmarkNavigationAndToggle()
@@ -2811,6 +3121,8 @@ void EditorStateTest::projectPersistenceRoundTrip()
     tempFile.close();
 
     state.projectFile()->saveProject(QUrl::fromLocalFile(tempFile.fileName()));
+
+    state.projectFile()->waitForSave();
     state.projectFile()->loadProject(QUrl::fromLocalFile(tempFile.fileName()));
     QTRY_VERIFY(!state.projectFile()->projectLoadPending());
 
@@ -2837,12 +3149,16 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
     const QString copyPath = dir.filePath(QStringLiteral("wedding-short.drift"));
 
     state.projectFile()->saveProject(QUrl::fromLocalFile(originalPath));
+
+    state.projectFile()->waitForSave();
     QCOMPARE(state.projectFile()->currentProjectPath(), originalPath);
     const QString originalId = state.project()->id();
     const QByteArray originalBytes = readFile(originalPath);
     QVERIFY(!originalBytes.isEmpty());
 
     state.projectFile()->saveProjectAs(QUrl::fromLocalFile(copyPath));
+
+    state.projectFile()->waitForSave();
     QCOMPARE(state.lastMessage(), QStringLiteral("Saved a copy"));
     QVERIFY(!state.projectFile()->hasUnsavedChanges());
     // The session continues in the copy, and the copy is its own project.
@@ -2859,6 +3175,7 @@ void EditorStateTest::saveProjectAsDuplicatesProject()
     // Editing the copy and saving must still leave the original alone.
     state.addTextClip(QStringLiteral("Only in the copy"), 5.0);
     state.projectFile()->saveProject(QUrl::fromLocalFile(copyPath));
+    state.projectFile()->waitForSave();
     QCOMPARE(readFile(originalPath), originalBytes);
 
     const auto clipCount = [&state]() {
@@ -2897,6 +3214,8 @@ void EditorStateTest::projectJsonExportImportRoundTrip()
     const QString driftPath = dir.filePath(QStringLiteral("project.drift"));
 
     state.projectFile()->saveProject(QUrl::fromLocalFile(driftPath));
+
+    state.projectFile()->waitForSave();
     QVERIFY(!state.projectFile()->hasUnsavedChanges());
     QCOMPARE(state.projectFile()->currentProjectPath(), driftPath);
 
@@ -11450,6 +11769,98 @@ void EditorStateTest::maskingPolygonMaskIsCreated()
     QCOMPARE(mask.points.at(2), QPointF(0.5, 0.8));
 }
 
+// The Shape picker owns one mask per clip: a new shape replaces it, and Original removes only it.
+void EditorStateTest::clipShapeReplacesItsMaskAndOriginalRemovesOnlyIt()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.masking()->addPolygonMask(0, 0, QVariantList{maskVertex(0.2, 0.2), maskVertex(0.8, 0.2),
+                                                       maskVertex(0.5, 0.8)});
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("original"));
+
+    const auto shapeMasks = [&state]() {
+        QList<drift::Mask> found;
+        for (const drift::ClipRef &ref : drift::linkedMaskAdjustments(*state.project(), 0, 0)) {
+            const drift::Mask &mask = state.project()->tracks().at(ref.trackIndex).clips.at(ref.clipIndex).mask;
+            if (!mask.cropShape.isEmpty())
+                found.append(mask);
+        }
+        return found;
+    };
+
+    state.masking()->setClipShape(0, 0, QStringLiteral("hexagon"));
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("hexagon"));
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 2);
+    QCOMPARE(shapeMasks().size(), 1);
+    QCOMPARE(shapeMasks().constFirst().points.size(), 6);
+    QCOMPARE(shapeMasks().constFirst().op, drift::MaskOp::Intersect);
+
+    for (const drift::ClipRef &ref : drift::linkedMaskAdjustments(*state.project(), 0, 0)) {
+        const drift::Clip &adjustment = state.project()->tracks().at(ref.trackIndex).clips.at(ref.clipIndex);
+        QCOMPARE(adjustment.timelineStart, state.project()->tracks().at(0).clips.at(0).timelineStart);
+        QCOMPARE(adjustment.timelineDuration, state.project()->tracks().at(0).clips.at(0).timelineDuration);
+        QVERIFY(!state.project()->tracks().at(ref.trackIndex).hidden);
+    }
+
+    // The shape mask renders last even though the other mask sits on a later lane.
+    const QList<drift::LaneMask> ordered = drift::laneMasksAt(*state.project(), 0, 0, QStringLiteral("clip-0"));
+    QCOMPARE(ordered.size(), 2);
+    QVERIFY(ordered.constLast().mask.cropShape == QStringLiteral("hexagon"));
+
+    state.masking()->setClipShape(0, 0, QStringLiteral("circle"));
+    QCOMPARE(drift::linkedMaskAdjustments(*state.project(), 0, 0).size(), 2);
+    QCOMPARE(shapeMasks().size(), 1);
+    QCOMPARE(shapeMasks().constFirst().shape, drift::MaskShape::Ellipse);
+    // 16:9 canvas: the circle takes the shorter side, so it is narrower than the frame.
+    QVERIFY(qFuzzyCompare(shapeMasks().constFirst().w * 1920.0, shapeMasks().constFirst().h * 1080.0));
+    QVERIFY(shapeMasks().constFirst().w < 1.0);
+
+    state.masking()->setClipShape(0, 0, QStringLiteral("original"));
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("original"));
+    const QList<drift::ClipRef> left = drift::linkedMaskAdjustments(*state.project(), 0, 0);
+    QCOMPARE(left.size(), 1);
+    QCOMPARE(state.project()->tracks().at(left.constFirst().trackIndex).clips.at(left.constFirst().clipIndex).mask.shape,
+             drift::MaskShape::Freeform);
+
+    state.undo();
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("circle"));
+}
+
+// Reframing moves the source window at a fixed aspect, so the clip's box and shape do not change.
+void EditorStateTest::clipReframeKeepsTheBoxAndOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.masking()->setClipShape(0, 0, QStringLiteral("star"));
+
+    state.masking()->setReframe(0, 0, 2.0, 0.5, 0.5);
+    QRectF frame = state.project()->tracks().at(0).clips.at(0).sourceFrame;
+    QVERIFY(qFuzzyCompare(frame.width(), 0.5));
+    QVERIFY(qFuzzyCompare(frame.height(), 0.5));
+    QVERIFY(qFuzzyCompare(state.masking()->reframe(0, 0).value(QStringLiteral("zoom")).toDouble(), 2.0));
+
+    const int undoBefore = state.undoIndex();
+    state.masking()->previewReframe(0, 0, 3.0, 0.5, 0.5);
+    state.masking()->previewReframe(0, 0, 4.0, 1.0, 0.0);
+    state.commitPreviewDrag();
+    QCOMPARE(state.undoIndex(), undoBefore + 1);
+    frame = state.project()->tracks().at(0).clips.at(0).sourceFrame;
+    QVERIFY(qFuzzyCompare(frame.width(), 0.25));
+    QVERIFY(qFuzzyIsNull(frame.x()));
+    QVERIFY(qFuzzyCompare(frame.y(), 0.75));
+
+    state.masking()->centerReframe(0, 0);
+    frame = state.project()->tracks().at(0).clips.at(0).sourceFrame;
+    QVERIFY(qFuzzyCompare(frame.x(), 0.375));
+
+    state.masking()->showWholeVideo(0, 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).sourceFrame, QRectF(0, 0, 1, 1));
+    QCOMPARE(state.masking()->clipShape(0, 0), QStringLiteral("star"));
+}
+
 // Shape animation on a polygon: keys are stored relative to the adjustment's start, and every
 // read or write takes timeline seconds.
 void EditorStateTest::maskingPathKeysAnimateShape()
@@ -13727,6 +14138,11 @@ void EditorStateTest::maskingSweepDropsUnreferencedBrushMattes()
     QImage(4, 4, QImage::Format_Grayscale8).save(foreign, "PNG");
     const auto removeForeign = qScopeGuard([&] { QFile::remove(foreign); });
 
+    // The earlier matte is still what undo restores, so history keeps it alive.
+    state.projectFile()->sweepBrushMattes();
+    QVERIFY(QFileInfo::exists(stale));
+
+    state.m_undoStack.clear();
     state.projectFile()->sweepBrushMattes();
     QVERIFY(!QFileInfo::exists(stale));
     QVERIFY(QFileInfo::exists(current));

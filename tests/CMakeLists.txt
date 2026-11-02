@@ -86,6 +86,7 @@ qt_add_executable(tst_editorstate
     ../src/app/jobs/vision/SceneDetectController.cpp
     ../src/app/jobs/vision/DepthController.cpp
     ../src/app/jobs/audio/DenoiseController.cpp
+    ../src/app/jobs/audio/AudioAlignController.cpp
     ../src/app/color/ColorController.cpp
     ../src/app/color/ScopesController.cpp
     ../src/app/color/LookThumbnailService.cpp
@@ -346,6 +347,7 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/vision/SceneDetectController.cpp
     ../src/app/jobs/vision/DepthController.cpp
     ../src/app/jobs/audio/DenoiseController.cpp
+    ../src/app/jobs/audio/AudioAlignController.cpp
     ../src/app/color/ColorController.cpp
     ../src/app/color/ScopesController.cpp
     ../src/app/color/LookThumbnailService.cpp

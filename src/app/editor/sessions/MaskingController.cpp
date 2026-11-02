@@ -1444,3 +1444,143 @@ void MaskingController::applyMaskProperty(int trackIndex, int clipIndex, const Q
         mask.mediaChannel = drift::maskMediaChannelFromString(value.toString());
     m_app->writeClipMask(trackIndex, clipIndex, mask);
 }
+
+namespace {
+
+constexpr double kMaxReframeZoom = 8.0;
+
+// The largest window with `frame`'s shape that fits the source; zoom is measured against it, so a
+// clip cropped to a 4:3 box still reads 1x at its widest 4:3 window.
+QSizeF widestWindow(const QRectF &frame)
+{
+    const double ratio = frame.width() / frame.height();
+    return ratio >= 1.0 ? QSizeF(1.0, 1.0 / ratio) : QSizeF(ratio, 1.0);
+}
+
+} // namespace
+
+bool MaskingController::isFramedClip(int trackIndex, int clipIndex) const
+{
+    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    const drift::ClipType type = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).type;
+    return type == drift::ClipType::Video || type == drift::ClipType::Image;
+}
+
+QString MaskingController::clipShape(int trackIndex, int clipIndex) const
+{
+    if (!isFramedClip(trackIndex, clipIndex))
+        return QStringLiteral("original");
+    return drift::linkedClipShape(m_app->m_project, trackIndex, clipIndex);
+}
+
+void MaskingController::setClipShape(int trackIndex, int clipIndex, const QString &shape)
+{
+    if (!isFramedClip(trackIndex, clipIndex) || !drift::clipShapeIds().contains(shape)
+        || shape == clipShape(trackIndex, clipIndex))
+        return;
+
+    const QString hostId = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+    const drift::Project before = m_app->m_project;
+    drift::setLinkedClipShape(m_app->m_project, trackIndex, clipIndex, shape);
+    m_app->pushProjectEdit(before, tr("Set clip shape"));
+    m_app->finishEdit(tr("Shape changed"));
+    m_app->selectClipById(hostId);
+}
+
+QVariantMap MaskingController::reframe(int trackIndex, int clipIndex) const
+{
+    QVariantMap out{{QStringLiteral("zoom"), 1.0}, {QStringLiteral("x"), 0.5}, {QStringLiteral("y"), 0.5}};
+    if (!isFramedClip(trackIndex, clipIndex))
+        return out;
+    const QRectF frame = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).sourceFrame;
+    const QSizeF widest = widestWindow(frame);
+    const double freeX = 1.0 - frame.width();
+    const double freeY = 1.0 - frame.height();
+    out[QStringLiteral("zoom")] = std::clamp(widest.width() / frame.width(), 1.0, kMaxReframeZoom);
+    out[QStringLiteral("x")] = freeX > 1e-6 ? 1.0 - frame.x() / freeX : 0.5;
+    out[QStringLiteral("y")] = freeY > 1e-6 ? 1.0 - frame.y() / freeY : 0.5;
+    return out;
+}
+
+bool MaskingController::writeReframe(int trackIndex, int clipIndex, double zoom, double x, double y)
+{
+    if (!isFramedClip(trackIndex, clipIndex) || !std::isfinite(zoom))
+        return false;
+    drift::Clip &clip = m_app->m_project.tracks()[trackIndex].clips[clipIndex];
+    const QRectF old = clip.sourceFrame;
+    const QSizeF widest = widestWindow(old);
+    zoom = std::clamp(zoom, 1.0, kMaxReframeZoom);
+    const double w = widest.width() / zoom;
+    const double h = widest.height() / zoom;
+
+    double left = old.center().x() - w / 2.0;
+    double top = old.center().y() - h / 2.0;
+    if (std::isfinite(x))
+        left = (1.0 - std::clamp(x, 0.0, 1.0)) * (1.0 - w);
+    if (std::isfinite(y))
+        top = (1.0 - std::clamp(y, 0.0, 1.0)) * (1.0 - h);
+
+    const QRectF frame = drift::normalizedSourceFrame(left, top, w, h);
+    if (frame == old)
+        return false;
+    clip.sourceFrame = frame;
+    return true;
+}
+
+void MaskingController::previewReframe(int trackIndex, int clipIndex, double zoom, double x, double y)
+{
+    if (!isFramedClip(trackIndex, clipIndex))
+        return;
+    if (!m_app->previewDragActive())
+        m_app->beginPreviewDrag(tr("Reframe clip"));
+    if (writeReframe(trackIndex, clipIndex, zoom, x, y))
+        m_app->emitPreviewEdit(trackIndex, clipIndex, {QStringLiteral("sourceFrame")});
+}
+
+void MaskingController::setReframe(int trackIndex, int clipIndex, double zoom, double x, double y)
+{
+    if (!isFramedClip(trackIndex, clipIndex))
+        return;
+    const drift::Project before = m_app->m_project;
+    if (!writeReframe(trackIndex, clipIndex, zoom, x, y))
+        return;
+    m_app->pushProjectEdit(before, tr("Reframe clip"));
+    m_app->finishEdit(tr("Reframed"));
+}
+
+void MaskingController::nudgeReframe(int trackIndex, int clipIndex, double dx, double dy)
+{
+    if (!isFramedClip(trackIndex, clipIndex))
+        return;
+    const QRectF frame = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).sourceFrame;
+    const QVariantMap state = reframe(trackIndex, clipIndex);
+    const double freeX = 1.0 - frame.width();
+    const double freeY = 1.0 - frame.height();
+    const double x = freeX > 1e-6 ? state.value(QStringLiteral("x")).toDouble() + dx * frame.width() / freeX : 0.5;
+    const double y = freeY > 1e-6 ? state.value(QStringLiteral("y")).toDouble() + dy * frame.height() / freeY : 0.5;
+    setReframe(trackIndex, clipIndex, state.value(QStringLiteral("zoom")).toDouble(), x, y);
+}
+
+void MaskingController::centerReframe(int trackIndex, int clipIndex)
+{
+    setReframe(trackIndex, clipIndex, reframe(trackIndex, clipIndex).value(QStringLiteral("zoom")).toDouble(), 0.5, 0.5);
+}
+
+void MaskingController::showWholeVideo(int trackIndex, int clipIndex)
+{
+    if (!isFramedClip(trackIndex, clipIndex)
+        || m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).sourceFrame == QRectF(0, 0, 1, 1))
+        return;
+
+    const QString hostId = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+    const QString shape = clipShape(trackIndex, clipIndex);
+    const drift::Project before = m_app->m_project;
+    const double turn = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).sourceFrameAngle;
+    m_app->writeClipSourceFrame(trackIndex, clipIndex, QRectF(0, 0, 1, 1), turn);
+    if (shape != QLatin1String("original"))
+        drift::setLinkedClipShape(m_app->m_project, trackIndex, clipIndex, shape);
+    m_app->pushProjectEdit(before, tr("Show whole video"));
+    m_app->finishEdit(tr("Showing whole video"));
+    m_app->selectClipById(hostId);
+}

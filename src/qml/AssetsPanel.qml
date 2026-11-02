@@ -798,7 +798,7 @@ PanelFrame {
         Theme.icons.store,
         Theme.icons.micVocal
     ]
-    property int activeTab: locked ? tabIndexOf(lockedTab) : 0
+    property int activeTab: locked ? tabIndexOf(lockedTab) : tabIndexOf(LayoutMemory.layoutString("assets/tab", "media"))
     readonly property string currentTabId: tabsModel.get(activeTab).tabId
 
     // Per-tab view state that outlives the tab being unloaded, keyed by tabId. Plain
@@ -831,7 +831,18 @@ PanelFrame {
     // double-count height and jump the layout mid-transition.
     property real tabOpacity: 1.0
 
+    // Rail width is saved in tab-cell units so it follows UI scale. The window can
+    // only clamp what is shown; the saved value is rewritten by a drag alone.
+    property real railUnits: Math.max(1, LayoutMemory.layoutNumber("assets/railUnits", 1))
+    property real railDragWidth: -1
+    readonly property real maxRailWidth: Math.max(Theme.tabRailWidth,
+        root.width - Theme.assetCardWidth * 2 - Theme.pagePadding * 2)
+    readonly property real railWidth: Math.max(Theme.tabRailWidth,
+        Math.min(maxRailWidth, railDragWidth >= 0 ? railDragWidth : railUnits * Theme.tabRailWidth))
+
     onActiveTabChanged: {
+        if (!root.locked)
+            LayoutMemory.setLayoutString("assets/tab", root.currentTabId)
         root.tabOpacity = 0
         tabFadeIn.restart()
     }
@@ -873,6 +884,7 @@ PanelFrame {
         AssetsPanelTabRail {
             id: tabRail
             sheetMode: root.railHidden
+            railWidth: root.railWidth
             activeTab: root.activeTab
             tabCount: tabsModel.count
             tabLabels: root.tabLabels
@@ -886,11 +898,32 @@ PanelFrame {
             height: parent.height
             visible: !root.railHidden
             color: Theme.c.assetsPanel.railBorder
+
+            MouseArea {
+                anchors.fill: parent
+                anchors.leftMargin: -Theme.spacingXs
+                anchors.rightMargin: -Theme.spacingXs
+                cursorShape: Qt.SplitHCursor
+                preventStealing: true
+                onPositionChanged: (mouse) => {
+                    if (!pressed)
+                        return
+                    root.railDragWidth = Math.max(Theme.tabRailWidth,
+                        Math.min(root.maxRailWidth, mapToItem(tabRail, mouse.x, 0).x))
+                }
+                onReleased: {
+                    if (root.railDragWidth < 0)
+                        return
+                    root.railUnits = root.railDragWidth / Theme.tabRailWidth
+                    root.railDragWidth = -1
+                    LayoutMemory.setLayoutNumber("assets/railUnits", root.railUnits)
+                }
+            }
         }
 
         Column {
             id: assetsContent
-            width: parent.width - (root.railHidden ? 0 : (Theme.tabRailWidth + Theme.c.assetsPanel.borderWidth))
+            width: parent.width - (root.railHidden ? 0 : (tabRail.width + Theme.c.assetsPanel.borderWidth))
             height: parent.height
 
             AssetsPanelHeader {
@@ -916,7 +949,7 @@ PanelFrame {
                 id: emojiPicker
                 // Hangs off the stickers search bar's + at the panel's right edge, and slides back
                 // rather than running off-window when the panel is dragged narrow.
-                x: Math.max(root.railHidden ? 0 : -Theme.tabRailWidth, assetsContent.width - width - Theme.pagePadding)
+                x: Math.max(root.railHidden ? 0 : -tabRail.width, assetsContent.width - width - Theme.pagePadding)
                 y: assetsHeader.height + Theme.pagePadding + Theme.controlHeight + 4
                 onExtrasRequested: ShellBridge.main.openAddonManager("stickers")
                 onAdded: root.addCompleted()

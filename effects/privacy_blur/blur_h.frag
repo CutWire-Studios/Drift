@@ -1,0 +1,42 @@
+#version 330 core
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform sampler2D u_currentTexture;
+uniform vec2 u_resolution;
+uniform float mode;
+uniform float strength;
+
+vec4 tap(vec2 uv) {
+    vec4 c = texture(u_currentTexture, uv);
+    c.rgb *= c.a;
+    return c;
+}
+
+void main() {
+    float sigma = strength * 0.04 * max(u_resolution.x, u_resolution.y);
+    if (mode > 0.5 || sigma < 0.5) {
+        fragColor = tap(v_texCoord);
+        return;
+    }
+    float reach = 3.0 * sigma;
+    float step = max(1.0, reach / 128.0);
+    float inv2s2 = 0.5 / (sigma * sigma);
+    int n = int(min(ceil(reach / (2.0 * step)), 64.0));
+    vec2 dir = vec2(1.0 / u_resolution.x, 0.0);
+
+    vec4 result = tap(v_texCoord);
+    float wsum = 1.0;
+    for (int i = 1; i <= 64; ++i) {
+        if (i > n)
+            break;
+        float a = (2.0 * float(i) - 1.0) * step;
+        float b = 2.0 * float(i) * step;
+        float wa = exp(-a * a * inv2s2);
+        float wb = exp(-b * b * inv2s2);
+        float w = wa + wb;
+        float x = (a * wa + b * wb) / w;
+        result += (tap(v_texCoord + dir * x) + tap(v_texCoord - dir * x)) * w;
+        wsum += 2.0 * w;
+    }
+    fragColor = result / wsum;
+}

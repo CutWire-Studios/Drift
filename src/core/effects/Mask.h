@@ -63,6 +63,10 @@ struct Mask
     MaskOp op = MaskOp::Add;
     bool enabled = true;
     QString name; // user label on the lane; empty means "derive from the shape"
+    // Set on the mask the Shape picker in the transform inspector owns (one per clip): the picker's
+    // shape id, e.g. "hexagon". The compositor applies such a mask after every other one so an
+    // additive mask cannot bring back the area outside the shape.
+    QString cropShape;
 
     double x = 0.5; // center, normalized
     double y = 0.5;

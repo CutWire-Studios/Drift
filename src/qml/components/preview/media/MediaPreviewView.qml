@@ -12,6 +12,10 @@ Item {
     // Off in the dock panel, where Space/I/O would collide with the editor's own shortcuts.
     property bool shortcutsEnabled: true
     property string clipId: ""
+    property int clipTrack: -1
+    property int clipIndex: -1
+    property bool clipFlipH: false
+    property bool clipFlipV: false
     property int assetIndex: -1
     property string assetId: ""
     property string kind: ""
@@ -200,7 +204,9 @@ Item {
         root.sourceHeight = clip.sourceHeight
         root.rotationDegrees = clip.sourceRotation
         root.rotationOverride = -1
-        root.effectiveRotation = clip.sourceRotation
+        root.effectiveRotation = clip.orientation
+        root.clipFlipH = !!clip.flipH
+        root.clipFlipV = !!clip.flipV
         root.durationSeconds = clip.sourceDuration
         root.filmstripPath = clip.filmstripPath || ""
         root.inSeconds = clip.inPoint
@@ -211,8 +217,45 @@ Item {
         root.cropAngle = clip.sourceFrameAngle || 0
         root.openedAngle = root.cropAngle
         root.frameResetPending = false
+        root.clipTrack = track
+        root.clipIndex = index
         EditorState.assetPreview.beginClip(track, index)
-        root.seekTo(root.inSeconds)
+        root.seekTo(EditorState.sourceTimeAtPlayheadForClip(track, index))
+    }
+
+    // Quarter turns clockwise. The crop frame lives in the turned picture, so it turns with it.
+    function rotateClip(steps) {
+        const clip = EditorState.clipAt(root.clipTrack, root.clipIndex)
+        if (!clip || clip.id !== root.clipId)
+            return
+        const next = ((root.effectiveRotation + steps * 90) % 360 + 360) % 360
+        EditorState.setClipOrientation(root.clipTrack, root.clipIndex, next)
+        root.effectiveRotation = EditorState.clipAt(root.clipTrack, root.clipIndex).orientation
+        for (let i = 0; i < (((steps % 4) + 4) % 4); i++) {
+            const x = root.cropX, y = root.cropY, w = root.cropW, h = root.cropH
+            root.cropX = 1 - y - h
+            root.cropY = x
+            root.cropW = h
+            root.cropH = w
+        }
+        root.restartClipPreview()
+    }
+
+    function flipClip(horizontal) {
+        const clip = EditorState.clipAt(root.clipTrack, root.clipIndex)
+        if (!clip || clip.id !== root.clipId)
+            return
+        EditorState.setClipFlip(root.clipTrack, root.clipIndex,
+                                horizontal ? !clip.flipH : !!clip.flipH,
+                                horizontal ? !!clip.flipV : !clip.flipV)
+        root.clipFlipH = !!EditorState.clipAt(root.clipTrack, root.clipIndex).flipH
+        root.clipFlipV = !!EditorState.clipAt(root.clipTrack, root.clipIndex).flipV
+    }
+
+    function restartClipPreview() {
+        const at = root.position
+        EditorState.assetPreview.beginClip(root.clipTrack, root.clipIndex)
+        root.seekTo(at)
     }
 
     function formatTime(seconds) {
@@ -618,14 +661,45 @@ Item {
                 onClicked: root.rotate90()
             }
 
+            Row {
+                id: clipOrientRow
+                visible: root.clipId.length > 0
+                width: visible ? implicitWidth : 0
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 6
+
+                Repeater {
+                    model: root.isVideo ? [0, 90, 180, 270] : []
+                    delegate: ThemedChip {
+                        required property int modelData
+                        text: modelData + "°"
+                        enabled: !root.saving
+                        selected: root.effectiveRotation === modelData
+                        onClicked: root.rotateClip((modelData - root.effectiveRotation) / 90)
+                    }
+                }
+                ThemedChip {
+                    text: qsTr("Flip H")
+                    enabled: !root.saving
+                    selected: root.clipFlipH
+                    onClicked: root.flipClip(true)
+                }
+                ThemedChip {
+                    text: qsTr("Flip V")
+                    enabled: !root.saving
+                    selected: root.clipFlipV
+                    onClicked: root.flipClip(false)
+                }
+            }
+
             // Keep source information and frame controls at the far end of the transport row.
             Item {
                 height: 1
                 width: Math.max(0, parent.width - playButton.width - timeLabel.width
                                 - setInButton.width - setOutButton.width - addSubclipButton.width
-                                - rotateButton.width
+                                - rotateButton.width - clipOrientRow.width
                                 - frameSizeLabel.implicitWidth - frameRatioLock.width
-                                - resetButton.implicitWidth - parent.spacing * 9)
+                                - resetButton.implicitWidth - parent.spacing * 10)
             }
 
             ThemedLabel {
