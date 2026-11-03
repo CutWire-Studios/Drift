@@ -1,4 +1,7 @@
 #include "app/HeadlessApp.h"
+#include "app/editor/PreferencesController.h"
+#include "app/editor/ProjectFileController.h"
+#include "app/mcp/McpController.h"
 
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/packages/assets/EmojiCatalog.h"
@@ -8,7 +11,6 @@
 #include "app/mcp/protocol/McpSession.h"
 #include "app/mcp/transport/McpStdioServer.h"
 #include "app/online/addons/AddonManager.h"
-#include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"
 #include "app/online/marketplace/MarketServices.h"

@@ -330,3 +330,5 @@ QString MarketTransport::parseProblem(const QByteArray &body, int httpStatus, QS
 }
 
 } // namespace drift::market
+
+#include "moc_MarketTransport.cpp"

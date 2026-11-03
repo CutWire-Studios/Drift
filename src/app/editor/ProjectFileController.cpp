@@ -1,4 +1,7 @@
 #include "app/editor/ProjectFileController.h"
+#include "app/bin/MediaBinController.h"
+#include "app/editor/PreferencesController.h"
+#include "app/editor/sessions/MaskingController.h"
 
 #include "app/editor/AppController.h"
 
@@ -2186,3 +2189,5 @@ void ProjectFileController::discardUnsavedChanges()
     setDirty(false);
     deleteRecoveryFile();
 }
+
+#include "moc_ProjectFileController.cpp"

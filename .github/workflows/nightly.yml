@@ -88,6 +88,9 @@ jobs:
 
   package:
     name: Package
+    permissions:
+      contents: write
+      actions: write
     needs: check
     if: needs.check.outputs.should_build == 'true'
     uses: ./.github/workflows/package.yml

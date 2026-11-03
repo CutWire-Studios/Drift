@@ -121,3 +121,5 @@ double TrackerListModel::patternPercent(const QString &trackerId, double timelin
     const TrackingController::FrameView frame = m_owner->frameView(m_track, m_clip, trackerId, timelineSeconds);
     return frame.points.isEmpty() ? 0.0 : frame.points.first().patternW * 100.0;
 }
+
+#include "moc_TrackerListModel.cpp"

@@ -1120,3 +1120,5 @@ void UpdateChecker::launchStagedInstall()
     Q_UNUSED(pid);
 #endif
 }
+
+#include "moc_UpdateChecker.cpp"

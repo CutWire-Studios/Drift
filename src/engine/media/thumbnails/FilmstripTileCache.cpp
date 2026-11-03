@@ -276,3 +276,5 @@ void FilmstripTileCache::applyBatch(const QString &sourcePath, int level, int ro
 
     scheduleBatch();
 }
+
+#include "moc_FilmstripTileCache.cpp"

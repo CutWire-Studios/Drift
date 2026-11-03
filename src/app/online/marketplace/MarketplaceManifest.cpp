@@ -286,3 +286,5 @@ void MarketplaceManifest::requestOpen(const QString &page, const QString &tab,
 {
     emit openRequested(page, tab, source, itemId);
 }
+
+#include "moc_MarketplaceManifest.cpp"

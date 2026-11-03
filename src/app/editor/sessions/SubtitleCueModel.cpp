@@ -63,3 +63,5 @@ void SubtitleCueModel::setCues(const QList<drift::SubtitleCue> &cues)
         emit dataChanged(index(i), index(i));
     }
 }
+
+#include "moc_SubtitleCueModel.cpp"

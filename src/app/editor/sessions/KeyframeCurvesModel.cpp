@@ -488,3 +488,5 @@ QVariantList KeyframeCurvesModel::deformSegment(const QVariantMap &a, const QVar
     KeyframeCurves::deformSegment(pa, pb, t, dSeconds, dValue);
     return {toMap(pa), toMap(pb)};
 }
+
+#include "moc_KeyframeCurvesModel.cpp"

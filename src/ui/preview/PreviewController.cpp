@@ -1,4 +1,8 @@
 #include "ui/preview/PreviewController.h"
+#include "app/bin/AssetLibrary.h"
+#include "app/editor/ProjectFileController.h"
+#include "app/editor/sessions/MaskingController.h"
+#include "app/mcp/McpController.h"
 
 #include "app/editor/sessions/MaskEditSession.h"
 #include "core/edit/TimelineOps.h"
@@ -2135,3 +2139,5 @@ bool PreviewController::resetSceneCamera(int trackIndex, int clipIndex)
     m_app.finishEdit(AppController::tr("Camera reset"));
     return true;
 }
+
+#include "moc_PreviewController.cpp"

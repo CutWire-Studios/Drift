@@ -1742,3 +1742,5 @@ void AddonManager::sweepDownloadCache()
     for (const QString &name : stale)
         QFile::remove(cache.filePath(name));
 }
+
+#include "moc_AddonManager.cpp"

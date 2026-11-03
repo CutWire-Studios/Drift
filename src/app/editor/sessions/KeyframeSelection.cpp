@@ -154,3 +154,5 @@ QStringList KeyframeSelection::props() const
     }
     return out;
 }
+
+#include "moc_KeyframeSelection.cpp"

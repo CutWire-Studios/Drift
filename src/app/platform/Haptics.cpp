@@ -232,3 +232,5 @@ void Haptics::trimStep(int outcome)
 }
 
 } // namespace drift
+
+#include "moc_Haptics.cpp"

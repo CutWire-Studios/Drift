@@ -271,3 +271,5 @@ QUrl AgentImageLog::folderUrl(const QString &path) const
 {
     return QUrl::fromLocalFile(QFileInfo(path).absolutePath());
 }
+
+#include "moc_AgentImageLog.cpp"

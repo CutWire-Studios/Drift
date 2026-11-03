@@ -2084,3 +2084,5 @@ bool ThemeManager::extractZipTheme(const QString &zipPath, const QString &destDi
     }
     return true;
 }
+
+#include "moc_ThemeManager.cpp"

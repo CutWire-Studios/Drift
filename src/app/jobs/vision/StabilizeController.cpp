@@ -1,4 +1,5 @@
 #include "app/jobs/vision/StabilizeController.h"
+#include "app/bin/AssetLibrary.h"
 
 #include "app/editor/AppController.h"
 #include "app/mcp/McpDetail.h"
@@ -742,3 +743,5 @@ void StabilizeController::setMode(int trackIndex, int clipIndex, const QString &
     emit m_app->selectedClipDataChanged();
     m_app->finishEdit(tr("Change Stabilization Mode"));
 }
+
+#include "moc_StabilizeController.cpp"

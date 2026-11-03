@@ -430,3 +430,5 @@ void AudioRecorder::cancelRecording()
 }
 
 } // namespace drift
+
+#include "moc_AudioRecorder.cpp"

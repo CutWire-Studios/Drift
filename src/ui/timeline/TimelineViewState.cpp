@@ -108,3 +108,5 @@ void TimelineViewState::setStyle(const QVariantMap &style)
     text("spanToolTip", m_style.spanToolTip);
     emit styleChanged();
 }
+
+#include "moc_TimelineViewState.cpp"

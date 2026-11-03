@@ -296,3 +296,5 @@ QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &args
 }
 
 } // namespace drift::mcp
+
+#include "moc_McpServer.cpp"

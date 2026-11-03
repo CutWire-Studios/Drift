@@ -81,3 +81,5 @@ void ScopesController::onJobFinished()
     m_pending = QImage();
     startJob(next);
 }
+
+#include "moc_ScopesController.cpp"

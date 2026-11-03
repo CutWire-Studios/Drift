@@ -591,3 +591,5 @@ QUrl FileDialogs::takeLaunchUrl()
     const QVariantList urls = intent.value(QStringLiteral("urls")).toList();
     return urls.isEmpty() ? QUrl() : urls.first().toUrl();
 }
+
+#include "moc_FileDialogs.cpp"

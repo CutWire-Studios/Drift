@@ -625,3 +625,5 @@ void SearchIndex::addStatic()
                page.value(QLatin1String("keywords")).toString());
     }
 }
+
+#include "moc_SearchIndex.cpp"

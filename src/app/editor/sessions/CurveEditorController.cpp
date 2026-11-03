@@ -463,3 +463,5 @@ void CurveEditorController::applyFade()
     endFade();
 }
 
+
+#include "moc_CurveEditorController.cpp"

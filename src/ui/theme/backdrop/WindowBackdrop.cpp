@@ -262,3 +262,5 @@ void WindowBackdrop::applyTo(QQuickWindow *window)
         return;
     drift::backdrop::applyNative(window, m_backdrop, themeVariantIsDark());
 }
+
+#include "moc_WindowBackdrop.cpp"

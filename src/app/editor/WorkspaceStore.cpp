@@ -729,3 +729,5 @@ void WorkspaceStore::setWindowGeometry(const QString &id, const QString &windowI
         return true;
     });
 }
+
+#include "moc_WorkspaceStore.cpp"

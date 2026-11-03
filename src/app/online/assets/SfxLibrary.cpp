@@ -214,3 +214,5 @@ void SfxLibrary::cancel(const QString &id)
     emit stateChanged(id);
     publishStatus(install, QStringLiteral("cancelled"), tr("Cancelled"), 0, 0, 0, {}, {}, {}, true);
 }
+
+#include "moc_SfxLibrary.cpp"

@@ -73,3 +73,5 @@ void KeyframeTimeView::fitClip()
 {
     fitRange(m_clipStart, m_clipStart + m_clipDuration);
 }
+
+#include "moc_KeyframeTimeView.cpp"

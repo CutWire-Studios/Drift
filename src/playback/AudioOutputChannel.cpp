@@ -583,3 +583,5 @@ void AudioOutputChannel::onNativeStreamError(int error)
     Q_UNUSED(error);
 #endif
 }
+
+#include "moc_AudioOutputChannel.cpp"

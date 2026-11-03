@@ -545,3 +545,5 @@ bool checkKey(const QString &key, CloudError *error)
 } // namespace fish
 
 } // namespace drift::cloud
+
+#include "moc_CloudProviders.cpp"

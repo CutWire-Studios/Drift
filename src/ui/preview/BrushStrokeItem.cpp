@@ -184,3 +184,5 @@ QSGNode *BrushStrokeItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *)
     node->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
     return node;
 }
+
+#include "moc_BrushStrokeItem.cpp"

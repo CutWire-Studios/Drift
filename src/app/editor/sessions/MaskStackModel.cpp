@@ -170,3 +170,5 @@ void MaskStackModel::toggleShapeKey(const QString &maskId)
 {
     m_owner->toggleMaskPathKeyAtPlayhead(maskId);
 }
+
+#include "moc_MaskStackModel.cpp"

@@ -120,6 +120,9 @@ modules:
     buildsystem: simple
     build-options:
       append-path: /usr/lib/sdk/llvm20/bin
+      # Only read by flatpak-builder --ccache: lets objects built against the precompiled header hit.
+      env:
+        CCACHE_SLOPPINESS: pch_defines,time_macros,include_file_mtime,include_file_ctime
     build-commands:
       - case "$FLATPAK_ARCH" in x86_64) t=linux-x64 ;; aarch64) t=linux-arm64 ;; *) echo "no Skia target for $FLATPAK_ARCH" >&2; exit 1 ;; esac;
         CC=clang CXX=clang++ JOBS=${FLATPAK_BUILDER_N_JOBS} third_party/build-skia.sh "$t"

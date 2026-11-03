@@ -188,3 +188,5 @@ void MarketSourceBrowser::start(bool append)
         emit itemsChanged();
     });
 }
+
+#include "moc_MarketSourceBrowser.cpp"

@@ -398,3 +398,5 @@ void WaveformBlockCache::applyBatch(const QString &sourcePath, int firstBlock, i
 
     scheduleBatch();
 }
+
+#include "moc_WaveformBlockCache.cpp"

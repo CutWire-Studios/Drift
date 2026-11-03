@@ -436,3 +436,5 @@ void AudioAlignController::applySync(const QString &anchorId, const QString &oth
         tr("Moved the second clip %1 s to match the first")
             .arg(drift::usToSeconds(delta), 0, 'f', 3));
 }
+
+#include "moc_AudioAlignController.cpp"

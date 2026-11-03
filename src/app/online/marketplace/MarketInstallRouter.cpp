@@ -123,3 +123,5 @@ QString MarketInstallRouter::installedPath(const QVariantMap &item, const QStrin
 {
     return installResult(item, variantId).value(QStringLiteral("path")).toString();
 }
+
+#include "moc_MarketInstallRouter.cpp"

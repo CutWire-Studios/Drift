@@ -1,4 +1,5 @@
 #include "app/online/marketplace/MarketServices.h"
+#include "app/color/ColorController.h"
 
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"

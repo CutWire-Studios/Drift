@@ -1453,3 +1453,5 @@ void SourceLabController::autoSplit(const QVariantMap &options)
             self->replaceRanges(ranges);
         });
 }
+
+#include "moc_SourceLabController.cpp"
