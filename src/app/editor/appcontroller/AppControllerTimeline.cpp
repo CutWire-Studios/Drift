@@ -10,11 +10,13 @@
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
 #include "engine/render2d/vector/VectorInspect.h"
-#ifdef DRIFT_WITH_SKIA
-#endif
 
-#ifdef Q_OS_MACOS
-#endif
+
+#include <QGuiApplication>
+#include <QCoreApplication>
+#include <QScopedValueRollback>
+#include <QSettings>
+#include <QPointer>
 
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;

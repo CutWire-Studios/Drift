@@ -1,3 +1,5 @@
+#include "app/platform/FileDialogs.h"
+#include "engine/platform/AndroidUri.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "app/editor/sessions/CurveEditorController.h"
 #include "app/jobs/vision/FaceTrackingController.h"
@@ -26,9 +28,16 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QGuiApplication>
-#ifdef Q_OS_MACOS
-#endif
 
+#include <QFileInfo>
+#include <QMimeDatabase>
+#include <QUrl>
+#include <QtConcurrent/QtConcurrentRun>
+
+#include <QCryptographicHash>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QDir>
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;

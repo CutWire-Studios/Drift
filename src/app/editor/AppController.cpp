@@ -1,4 +1,6 @@
+#include "engine/platform/AndroidUri.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "app/bin/AssetPreviewController.h"
 #include "app/editor/sessions/CurveEditorController.h"
 #include "app/editor/sessions/KeyframeController.h"
@@ -29,15 +31,26 @@
 // Engine-internal by its own header comment, and included here only for releaseCaches(): the GPU
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
-#ifdef DRIFT_WITH_SKIA
-#endif
 #include "app/jobs/JobRegistry.h"
 #include "app/online/CloudProviders.h"
 
 #include <QGuiApplication>
 #ifdef Q_OS_MACOS
+#include <sys/mount.h>
 #endif
 
+#include "app/bin/AssetLibrary.h"
+#include <QCryptographicHash>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QStorageInfo>
+#include <QByteArray>
+#include <QStandardPaths>
+#include <QUrl>
+
+#include <QSettings>
+#include <QTemporaryFile>
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;

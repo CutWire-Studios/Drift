@@ -1,4 +1,5 @@
 #include "playback/preview/ClipPreviewPlayer.h"
+#include "playback/AudioOutputChannel.h"
 
 #include "playback/preview/ClipPreviewImageStore.h"
 #include "engine/audio/AudioMixer.h"
@@ -38,12 +39,12 @@ void ClipPreviewFrameWorker::decode(const QString &path, quint64 streamId, qint6
 
 ClipPreviewPlayer::ClipPreviewPlayer(QObject *parent)
     : QObject(parent)
-    , m_audio(QStringLiteral("ClipPreviewAudio"), this)
+    , m_audio(std::make_unique<AudioOutputChannel>(QStringLiteral("ClipPreviewAudio"), this))
     , m_frameWorker(new ClipPreviewFrameWorker)
 {
-    m_audio.setFillCallback([this](float *stereo, int frames) { return fillAudio(stereo, frames); });
-    connect(&m_audio, &AudioOutputChannel::sinkRebuilt, this, &ClipPreviewPlayer::onAudioSinkRebuilt);
-    m_sampleRate = m_audio.sampleRate();
+    m_audio->setFillCallback([this](float *stereo, int frames) { return fillAudio(stereo, frames); });
+    connect(m_audio.get(), &AudioOutputChannel::sinkRebuilt, this, &ClipPreviewPlayer::onAudioSinkRebuilt);
+    m_sampleRate = m_audio->sampleRate();
 
     m_frameWorker->moveToThread(&m_frameThread);
     m_frameThread.setObjectName(QStringLiteral("ClipPreviewDecode"));
@@ -57,6 +58,11 @@ ClipPreviewPlayer::ClipPreviewPlayer(QObject *parent)
     connect(&m_frameTimer, &QTimer::timeout, this, [this] { requestFrame(positionUs()); });
 }
 
+void ClipPreviewPlayer::setAudioDeviceId(const QByteArray &id)
+{
+    m_audio->setDeviceId(id);
+}
+
 ClipPreviewPlayer::~ClipPreviewPlayer()
 {
     m_playing = false;
@@ -65,7 +71,7 @@ ClipPreviewPlayer::~ClipPreviewPlayer()
     m_clock.stop();
 
     // Blocking, so no refill can be inside fillAudio() while this object comes apart.
-    m_audio.stop();
+    m_audio->stop();
 
     m_frameThread.quit();
     m_frameThread.wait();
@@ -73,7 +79,7 @@ ClipPreviewPlayer::~ClipPreviewPlayer()
 
 void ClipPreviewPlayer::ensureAudioSink()
 {
-    m_sampleRate = m_audio.sampleRate();
+    m_sampleRate = m_audio->sampleRate();
 }
 
 // The sink was reopened, possibly at a rate other than the clip's. Its played position restarts and
@@ -82,7 +88,7 @@ void ClipPreviewPlayer::onAudioSinkRebuilt()
 {
     if (m_playing)
         m_positionUs = m_clock.currentTimeUs();
-    m_sampleRate = m_audio.sampleRate();
+    m_sampleRate = m_audio->sampleRate();
     m_clock.reset(m_positionUs, m_sampleRate);
     if (m_playing)
         m_clock.start();
@@ -92,8 +98,8 @@ void ClipPreviewPlayer::setClip(const drift::Clip &clip, int sampleRate, int fps
 {
     pause();
 
-    m_audio.setPreferredSampleRate(qMax(8000, sampleRate));
-    m_sampleRate = m_audio.sampleRate();
+    m_audio->setPreferredSampleRate(qMax(8000, sampleRate));
+    m_sampleRate = m_audio->sampleRate();
     m_fps = qMax(1, fps);
 
     {
@@ -178,7 +184,7 @@ void ClipPreviewPlayer::play()
 
     // May settle on a rate the clip was not prepared at, which comes back as sinkRebuilt and
     // re-anchors the clock — so this has to follow m_playing being set.
-    m_audio.start();
+    m_audio->start();
 
     emit playingChanged();
 
@@ -197,7 +203,7 @@ void ClipPreviewPlayer::pause()
     m_clock.pause();
     m_positionUs = m_clock.pausedAt();
 
-    m_audio.stop();
+    m_audio->stop();
 
     emit playingChanged();
     emit positionChanged();
@@ -316,7 +322,7 @@ int ClipPreviewPlayer::fillAudio(float *buffer, int sampleCount)
     if (m_shuttleRate.load() != 1.0) {
         std::memset(buffer, 0, static_cast<size_t>(sampleCount) * 2 * sizeof(float));
         m_clock.onAudioSamplesRendered(sampleCount);
-        m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(m_audio.processedUSecs()));
+        m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(m_audio->processedUSecs()));
         return sampleCount;
     }
 
@@ -352,7 +358,7 @@ int ClipPreviewPlayer::fillAudio(float *buffer, int sampleCount)
     }
 
     m_clock.onAudioSamplesRendered(sampleCount);
-    m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(m_audio.processedUSecs()));
+    m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(m_audio->processedUSecs()));
     return sampleCount;
 }
 

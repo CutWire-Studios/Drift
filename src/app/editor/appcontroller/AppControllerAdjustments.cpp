@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/effects/EffectCatalog.h"
 #include "app/editor/sessions/MaskingController.h"
 #include "app/mcp/McpController.h"
 #include "app/editor/PreferencesController.h"
@@ -9,11 +10,7 @@
 // would restore the boundary.
 #include "engine/ml/vision/detection/ObjectDetector.h"
 #include "engine/packages/assets/StickerCatalog.h"
-#ifdef DRIFT_WITH_SKIA
-#endif
 
-#ifdef Q_OS_MACOS
-#endif
 
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;

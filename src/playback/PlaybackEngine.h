@@ -1,6 +1,5 @@
 #pragma once
 
-#include "playback/AudioOutputChannel.h"
 #include "playback/preview/CompositorService.h"
 #include "playback/PlaybackClock.h"
 #include "playback/stats/PlaybackStats.h"
@@ -20,6 +19,8 @@
 #include <atomic>
 
 // Audio-master playback: mixes timeline audio and composites preview frames off the GUI thread.
+class AudioOutputChannel;
+
 class PlaybackEngine : public QObject
 {
     Q_OBJECT
@@ -169,7 +170,7 @@ public:
     QSize previewRenderSize() const { return QSize(m_previewRenderWidth, m_previewRenderHeight); }
 
     // Empty id follows the system default. Applied to the sink immediately.
-    void setAudioDeviceId(const QByteArray &id) { m_audio.setDeviceId(id); }
+    void setAudioDeviceId(const QByteArray &id);
 
     QPair<float, float> trackAudioLevels(int trackIndex) const;
     QPair<float, float> masterAudioLevels() const;
@@ -243,7 +244,7 @@ private:
     CompositorService m_compositor;
     PlaybackStats m_stats;
     AudioMixer m_mixer;
-    AudioOutputChannel m_audio;
+    std::unique_ptr<AudioOutputChannel> m_audio;
     QTimer m_compositeTimer;
     QTimer m_editRefreshTimer;
     QTimer m_scrubSettleTimer;

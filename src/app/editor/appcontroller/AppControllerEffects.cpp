@@ -1,4 +1,6 @@
+#include "engine/platform/AndroidUri.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/effects/EffectCatalog.h"
 #include "core/effects/EffectStackStore.h"
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/jobs/vision/SegmentationController.h"
@@ -11,13 +13,14 @@
 // would restore the boundary.
 #include "engine/face/props/FacePropCatalog.h"
 #include "engine/face/props/FacePropImport.h"
-#ifdef DRIFT_WITH_SKIA
-#endif
 
 #include <QClipboard>
 #include <QGuiApplication>
-#ifdef Q_OS_MACOS
-#endif
+
+#include <QDir>
+#include <QFile>
+#include <QTemporaryFile>
+#include <QByteArray>
 
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;

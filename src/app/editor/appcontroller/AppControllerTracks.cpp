@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/decode/probe/MediaProbe.h"
 #include "app/editor/sessions/MaskingController.h"
 #include "app/mcp/McpController.h"
 #include "app/jobs/vision/SegmentationController.h"
@@ -13,15 +14,15 @@
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include "engine/render2d/vector/VectorClipRenderer.h"
 #include "ui/timeline/ClipThumbnailStore.h"
-#ifdef DRIFT_WITH_SKIA
-#endif
 
 #include <QGuiApplication>
 #include <QPainter>
 #include <QPainterPath>
-#ifdef Q_OS_MACOS
-#endif
 
+#include <QSettings>
+#include <QStandardPaths>
+#include <QCryptographicHash>
+#include <QDir>
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;

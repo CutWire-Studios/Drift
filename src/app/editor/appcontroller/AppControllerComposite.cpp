@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/decode/probe/MediaProbe.h"
 #include "app/mcp/McpController.h"
 #include "app/bin/MediaBinController.h"
 
@@ -8,11 +9,7 @@
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
 #include "engine/encode/MediaEditor.h"
-#ifdef DRIFT_WITH_SKIA
-#endif
 
-#ifdef Q_OS_MACOS
-#endif
 
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;

@@ -1,16 +1,13 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/effects/EffectCatalog.h"
 
 #include "core/animation/EasingPresetStore.h"
 // Engine-internal by its own header comment, and included here only for releaseCaches(): the GPU
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
-#ifdef DRIFT_WITH_SKIA
-#endif
 
 #include <QClipboard>
 #include <QGuiApplication>
-#ifdef Q_OS_MACOS
-#endif
 
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;

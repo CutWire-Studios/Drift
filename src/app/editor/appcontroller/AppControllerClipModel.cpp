@@ -1,4 +1,7 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/effects/EffectCatalog.h"
+#include "engine/render3d/models/ModelAsset.h"
+#include "engine/packages/transitions/TransitionCatalog.h"
 #include "app/jobs/vision/StabilizeController.h"
 #include "app/editor/ProjectFileController.h"
 #include "ui/preview/PreviewController.h"
@@ -11,14 +14,11 @@
 #include "engine/color/CubeLut.h"
 #include "engine/face/tracking/FaceTrack.h"
 #include "playback/stats/PerfLog.h"
-#ifdef DRIFT_WITH_SKIA
-#endif
 
 #include <QGuiApplication>
 #include <QOpenGLContext>
-#ifdef Q_OS_MACOS
-#endif
 
+#include <QSettings>
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;

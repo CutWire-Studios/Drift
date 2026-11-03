@@ -1168,6 +1168,7 @@ target_sources(driftapp PRIVATE
     src/app/editor/AppController.cpp
     src/app/editor/appcontroller/AppControllerInternal.h
     src/app/editor/appcontroller/AppControllerClipModel.cpp
+    src/app/editor/appcontroller/AppControllerInternal.cpp
     src/app/editor/appcontroller/AppControllerTimeline.cpp
     src/app/editor/appcontroller/AppControllerSubtitleMulticam.cpp
     src/app/editor/appcontroller/AppControllerAdjustments.cpp

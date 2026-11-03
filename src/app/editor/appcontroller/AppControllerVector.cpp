@@ -1,4 +1,10 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/effects/EffectCatalog.h"
+#include "engine/render3d/models/ModelAsset.h"
+#include "engine/render2d/pdf/PdfiumRuntime.h"
+#include "engine/render3d/splats/SplatAsset.h"
+#include "engine/packages/transitions/TransitionCatalog.h"
+#include "engine/render3d/models/ModelClipRenderer.h"
 
 #include "engine/render2d/pdf/PdfClipRenderer.h"
 #include "core/shapes/ShapePath.h"
@@ -8,11 +14,7 @@
 // would restore the boundary.
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/render2d/vector/VectorInspect.h"
-#ifdef DRIFT_WITH_SKIA
-#endif
 
-#ifdef Q_OS_MACOS
-#endif
 
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;

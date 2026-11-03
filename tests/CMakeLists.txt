@@ -240,6 +240,7 @@ qt_add_executable(tst_mcp
     ../src/ui/imageproviders/multicam/MulticamImageStore.cpp
     ../src/app/editor/AppController.cpp
     ../src/app/editor/appcontroller/AppControllerClipModel.cpp
+    ../src/app/editor/appcontroller/AppControllerInternal.cpp
     ../src/app/editor/appcontroller/AppControllerTimeline.cpp
     ../src/app/editor/appcontroller/AppControllerSubtitleMulticam.cpp
     ../src/app/editor/appcontroller/AppControllerAdjustments.cpp

@@ -1,4 +1,5 @@
 #include "playback/PlaybackEngine.h"
+#include "playback/AudioOutputChannel.h"
 
 #include "playback/stats/PerfLog.h"
 #include "engine/EngineTuning.h"
@@ -192,7 +193,7 @@ QString loadSavedDecodeMode()
 
 PlaybackEngine::PlaybackEngine(QObject *parent)
     : QObject(parent)
-    , m_audio(QStringLiteral("PlaybackAudio"), this)
+    , m_audio(std::make_unique<AudioOutputChannel>(QStringLiteral("PlaybackAudio"), this))
 {
     const QString saved = QSettings().value(QStringLiteral("preview/quality")).toString().toLower();
     if (isKnownPreviewQuality(saved))
@@ -214,10 +215,10 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     m_compositor.setAdaptiveQuality(isAutoQuality());
     m_compositor.setStats(&m_stats);
 
-    m_audio.setFillCallback([this](float *stereo, int frames) { return fillAudio(stereo, frames); });
-    connect(&m_audio, &AudioOutputChannel::sinkRebuilt, this, &PlaybackEngine::onAudioSinkRebuilt);
-    connect(&m_audio, &AudioOutputChannel::errorOccurred, this, &PlaybackEngine::audioError);
-    m_sampleRate = m_audio.sampleRate();
+    m_audio->setFillCallback([this](float *stereo, int frames) { return fillAudio(stereo, frames); });
+    connect(m_audio.get(), &AudioOutputChannel::sinkRebuilt, this, &PlaybackEngine::onAudioSinkRebuilt);
+    connect(m_audio.get(), &AudioOutputChannel::errorOccurred, this, &PlaybackEngine::audioError);
+    m_sampleRate = m_audio->sampleRate();
 
     m_compositeTimer.setTimerType(Qt::PreciseTimer);
     // Zero interval, single shot: fires at the end of the current event-loop turn, so a drag
@@ -265,6 +266,11 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
 #endif
 }
 
+void PlaybackEngine::setAudioDeviceId(const QByteArray &id)
+{
+    m_audio->setDeviceId(id);
+}
+
 PlaybackEngine::~PlaybackEngine()
 {
 #ifdef Q_OS_ANDROID
@@ -282,14 +288,14 @@ PlaybackEngine::~PlaybackEngine()
 
     // Blocking, so the audio thread cannot be inside fillAudio() while the members it reads are
     // torn down under it. The channel closes the sink and joins its thread from its own destructor.
-    m_audio.stop();
+    m_audio->stop();
 }
 
 void PlaybackEngine::ensureAudioSink()
 {
     if (m_project)
-        m_audio.setPreferredSampleRate(m_project->sampleRate());
-    m_sampleRate = m_audio.sampleRate();
+        m_audio->setPreferredSampleRate(m_project->sampleRate());
+    m_sampleRate = m_audio->sampleRate();
 }
 
 // The sink was reopened, possibly at a rate other than the project's. Its played position restarts
@@ -299,7 +305,7 @@ void PlaybackEngine::onAudioSinkRebuilt()
 {
     if (m_playing)
         m_playheadUs = m_clock.currentTimeUs();
-    m_sampleRate = m_audio.sampleRate();
+    m_sampleRate = m_audio->sampleRate();
     m_mixer.resetClipAudioState();
     m_audioStreamGeneration.fetch_add(1, std::memory_order_release);
     m_clock.reset(m_playheadUs, m_sampleRate);
@@ -725,7 +731,7 @@ void PlaybackEngine::play()
 
     // Opening the device may settle on a rate the project did not ask for, which comes back as
     // sinkRebuilt and re-anchors the clock — so this has to follow m_playing being set.
-    m_audio.start();
+    m_audio->start();
 
     emit playingChanged();
 
@@ -1083,7 +1089,7 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
     const quint64 generation = m_audioStreamGeneration.load(std::memory_order_acquire);
     if (generation != m_anchoredGeneration) {
         m_anchoredGeneration = generation;
-        m_sinkPlayedUsOffset = m_audio.deliveredUSecs();
+        m_sinkPlayedUsOffset = m_audio->deliveredUSecs();
     }
 
     // Mix at the produce position (audio we are generating into the buffer),
@@ -1120,7 +1126,7 @@ int PlaybackEngine::fillAudio(float *buffer, int sampleCount)
         m_stats.noteAudioMixLoad(double(PlaybackClock::nowNs() - mixStartNs) / blockNs);
     }
     m_clock.onAudioSamplesRendered(sampleCount);
-    const qint64 playedUs = qMax(qint64(0), m_audio.processedUSecs() - m_sinkPlayedUsOffset);
+    const qint64 playedUs = qMax(qint64(0), m_audio->processedUSecs() - m_sinkPlayedUsOffset);
     m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(playedUs));
     return sampleCount;
 }

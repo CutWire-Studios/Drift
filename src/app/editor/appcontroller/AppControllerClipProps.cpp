@@ -1,4 +1,6 @@
+#include "engine/platform/AndroidUri.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "engine/packages/effects/EffectCatalog.h"
 #include "app/mcp/McpController.h"
 
 #include "core/text/TextPresetStore.h"
@@ -13,9 +15,13 @@
 #include "engine/render2d/text/SkiaTextPainter.h"
 #endif
 
-#ifdef Q_OS_MACOS
-#endif
 
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QTemporaryDir>
+
+#include <QScopedValueRollback>
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;

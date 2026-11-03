@@ -6,12 +6,10 @@
 // Engine-internal by its own header comment, and included here only for releaseCaches(): the GPU
 // caches have no other owner outside src/engine to ask. A one-line forwarder on GpuCompositor
 // would restore the boundary.
-#ifdef DRIFT_WITH_SKIA
-#endif
 
-#ifdef Q_OS_MACOS
-#endif
 
+#include <QStandardPaths>
+#include <QDir>
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;
