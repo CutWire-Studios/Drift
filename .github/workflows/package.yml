@@ -35,6 +35,7 @@ permissions:
   contents: read
 
 env:
+  CCACHE_VERSION: "4.14.2"
   # Nightly artifacts are named for the channel rather than the version, so that
   # …/releases/download/nightly/Drift-nightly-x86_64.AppImage is a permanent link and the single
   # rewritten pre-release has exactly one file per platform to clobber each night. The exact
@@ -79,6 +80,9 @@ jobs:
   flatpak:
     name: Flatpak bundle (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      actions: write
     if: inputs.platforms == 'all' || inputs.platforms == 'flatpak'
     strategy:
       # Each arch reports its own result: a failing aarch64 build should not hide x86_64's.
@@ -118,7 +122,7 @@ jobs:
               | sudo tee /etc/apt/apt-mirrors.txt
           fi
           sudo apt-get update -o Acquire::Retries=3
-          sudo apt-get install -y -o Acquire::Retries=3 flatpak flatpak-builder appstream desktop-file-utils
+          sudo apt-get install -y -o Acquire::Retries=3 flatpak flatpak-builder appstream desktop-file-utils ccache
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Lint flatpak manifest and metadata
@@ -134,6 +138,18 @@ jobs:
           path: ~/.local/share/flatpak
           key: flatpak-runtimes-${{ matrix.arch }}-${{ hashFiles('flatpak/org.cutwire.Drift.yml') }}
 
+      # flatpak-builder --ccache keeps its cache in .flatpak-builder/ccache and points the sandbox's
+      # CCACHE_DIR at it, so the action must not export CCACHE_DIR for the host. The host ccache
+      # (installed above) only trims and reports on that directory.
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-flatpak-${{ matrix.arch }}-
+          max-size: 700M
+          path: ${{ github.workspace }}/.flatpak-builder/ccache
+          manage-env: 'false'
+
       # A nightly bundle installed under org.cutwire.Drift would replace the user's Flathub
       # install, so it gets its own app id — and with it its own .desktop, icon and AppStream id,
       # which CMake renames on the nightly channel (flatpak build-export drops anything in
@@ -147,13 +163,24 @@ jobs:
       # The local manifest (not the Flathub one) — it builds the working tree, so it validates the
       # commit under test rather than whatever tag the Flathub manifest is pinned to.
       - name: Build flatpak
+        id: build
         env:
           MANIFEST: ${{ inputs.channel == 'nightly' && 'flatpak/org.cutwire.Drift.Nightly.yml' || 'flatpak/org.cutwire.Drift.yml' }}
         run: |
-          flatpak-builder --user --force-clean --install-deps-from=flathub \
+          flatpak-builder --user --force-clean --ccache --install-deps-from=flathub \
             --repo="${{ runner.temp }}/flatpak-repo" \
             "${{ runner.temp }}/flatpak-build" \
             "${MANIFEST}"
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-flatpak-${{ matrix.arch }}-
+          max-size: 700M
+          path: ${{ github.workspace }}/.flatpak-builder/ccache
+          manage-env: 'false'
 
       - name: Export bundle
         env:
@@ -526,6 +553,9 @@ jobs:
   windows:
     name: Windows installer (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      actions: write
     if: inputs.platforms == 'all' || inputs.platforms == 'windows'
     strategy:
       # Each arch reports its own result: a failing arm64 build should not hide x64's.
@@ -536,7 +566,8 @@ jobs:
             runner: windows-2022
             qt_host: windows
             qt_arch: win64_msvc2022_64
-            cmake_arch: x64
+            msvc_arch: x64
+            ccache_arch: x86_64
             ffmpeg_platform: win64
           # Disabled: vcpkg's skia[gl] is unsupported on arm64-windows.
           # - arch: arm64
@@ -545,7 +576,8 @@ jobs:
           #   # moc/rcc/qmlcachegen run natively and no desktop host Qt (autodesktop) is needed.
           #   qt_host: windows_arm64
           #   qt_arch: win64_msvc2022_arm64
-          #   cmake_arch: ARM64
+          #   msvc_arch: arm64
+          #   ccache_arch: aarch64
           #   ffmpeg_platform: winarm64
     steps:
       - uses: actions/checkout@v4
@@ -673,10 +705,38 @@ jobs:
           $extractedRoot = (Get-ChildItem .deps\ffmpeg_extracted)[0].FullName
           Copy-Item -Path "$extractedRoot\*" -Destination .deps\ffmpeg -Recurse -Force
 
+      # The official zip rather than choco: pinned, and no package-feed dependency. The arm64
+      # runner gets the native build.
+      - name: Install ccache
+        shell: pwsh
+        run: |
+          $name = "ccache-$env:CCACHE_VERSION-windows-${{ matrix.ccache_arch }}"
+          Invoke-WebRequest -Uri "https://github.com/ccache/ccache/releases/download/v$env:CCACHE_VERSION/$name.zip" -OutFile ccache.zip
+          Expand-Archive -Path ccache.zip -DestinationPath "$env:RUNNER_TEMP\ccache-bin" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\ccache-bin\$name"
+          & "$env:RUNNER_TEMP\ccache-bin\$name\ccache.exe" --version
+
+      # Ninja needs the compiler environment that the Visual Studio generator used to set up for
+      # itself. Placed after the vcpkg step, which finds Visual Studio on its own.
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.msvc_arch }}
+
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-windows-${{ matrix.arch }}-
+          max-size: 1G
+
+      # DRIFT_PCH=OFF: ccache cannot cache MSVC precompiled headers. CMP0141 + Embedded make any
+      # debug info /Z7 (in the object), which ccache needs; /Zi writes a shared PDB it cannot cache.
+      # Release itself carries no /Zi. DRIFT_LINKER does not apply to MSVC: link.exe stays.
       - name: Configure
         shell: pwsh
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A ${{ matrix.cmake_arch }} `
+          cmake -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
             -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg;${{ github.workspace }}\vcpkg\installed\${{ matrix.arch }}-windows-static-md" `
@@ -687,20 +747,34 @@ jobs:
             -DDRIFT_BUNDLE_CORE_PACKAGES_ONLY=ON `
             -DDRIFT_WITH_SKIA=ON `
             -DDRIFT_DISTRIBUTION=windows `
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache `
+            -DDRIFT_PCH=OFF `
+            -DCMAKE_POLICY_DEFAULT_CMP0141=NEW `
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded `
             ${{ env.DRIFT_CHANNEL_ARGS }}
 
       # No --target list any more: the tests have to be built here, and building everything is
       # what also gets tools/ compiled by MSVC. Until this job ran ctest, Windows was the one
       # desktop platform where nothing under tests/ was even known to compile.
       #
-      # --parallel 2, not bare --parallel: tst_editorstate compiles AppController.cpp and the
-      # whole MCP layer into one translation unit, and on a 4-core/16 GB runner four of those
-      # alongside the QML cache TUs exhausted the compiler heap (C1060). The job has a 120
-      # minute budget and was failing 15 minutes in, so the headroom is worth more than the
-      # wall-clock. Raise it only with evidence from a green run.
+      # --parallel 3, not bare --parallel (Ninja would start a job per logical CPU plus extras): the
+      # C1060 compiler-heap exhaustion that once forced 2 came from tst_editorstate compiling
+      # AppController.cpp and the MCP layer as one huge TU. That is gone (it links driftapp now),
+      # and 3 on the 4-core/16 GB runner leaves headroom for the QML cache TUs. Raise it only with
+      # evidence from a green run.
       - name: Build
+        id: build
         shell: pwsh
-        run: cmake --build build --config Release --parallel 2
+        run: cmake --build build --parallel 3
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-windows-${{ matrix.arch }}-
+          max-size: 1G
 
       # Test-only. The runner's Mesa is OpenGL 3.0, so ~110 GPU tests skip; llvmpipe provides 4.5.
       # The DLLs sit beside each test exe because opengl32.dll is in System32 and PATH cannot
@@ -726,8 +800,6 @@ jobs:
             Copy-Item $dlls.FullName $dir -Force
           }
 
-      # Visual Studio is a multi-config generator, hence -C Release.
-      #
       # .deps\ffmpeg\bin goes on PATH ahead of Qt's: Qt ships its own avcodec/avformat DLLs under
       # the same names, and the suite has to run against the FFmpeg the binaries were built
       # against, not Qt's copy. It also supplies the ffmpeg.exe that the tests which synthesize
@@ -756,7 +828,7 @@ jobs:
         run: |
           $env:PATH = "${{ github.workspace }}\.deps\ffmpeg\bin;${{ env.QT_ROOT_DIR }}\bin;$env:PATH"
           # Passing suites keep their output so the SKIP lines reach the junit report.
-          ctest --test-dir build -C Release --output-on-failure --output-log ctest.log `
+          ctest --test-dir build --output-on-failure --output-log ctest.log `
             --output-junit ctest-junit.xml --test-output-size-passed 20000000 --test-output-size-failed 20000000
 
       - name: Summarize test failures
@@ -791,7 +863,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist\bin | Out-Null
-          Copy-Item build\Release\drift.exe dist\bin -Force
+          Copy-Item build\drift.exe dist\bin -Force
           # --qmldir: Drift's own QML lives in the binary's resources, but the Qt Quick modules it
           # imports have to be deployed, and qmlimportscanner reads the sources to find them.
           # --no-opengl-sw: opengl32sw.dll is Qt's bundled Mesa llvmpipe, and it only
@@ -807,8 +879,8 @@ jobs:
           # Bundled effect/transition/template packages: a POST_BUILD step already put them beside
           # the exe, and the app resolves them relative to it.
           foreach ($dir in "effects", "transitions", "effect-templates", "audio-effects") {
-            if (Test-Path "build\Release\$dir") {
-              Copy-Item "build\Release\$dir" dist\bin -Recurse -Force
+            if (Test-Path "build\$dir") {
+              Copy-Item "build\$dir" dist\bin -Recurse -Force
             }
           }
 
@@ -831,7 +903,7 @@ jobs:
           }
           # Absolute: QPluginLoader otherwise searches libraryPaths() for this string.
           $plugin = (Resolve-Path $pluginRel).Path
-          $check = "build\Release\audiobackendcheck.exe"
+          $check = "build\audiobackendcheck.exe"
           if (-not (Test-Path $check)) {
             throw "$check was not built; cannot verify the multimedia backend plugin"
           }
@@ -1226,6 +1298,9 @@ jobs:
   arch:
     name: Arch package (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      actions: write
     if: inputs.platforms == 'all' || inputs.platforms == 'arch'
     strategy:
       # Each arch reports its own result: a failing aarch64 build should not hide x86_64's.
@@ -1296,10 +1371,27 @@ jobs:
           else
             pacman -Syu --noconfirm
           fi
-          pacman -S --needed --noconfirm python noto-fonts zstd
+          pacman -S --needed --noconfirm python noto-fonts zstd ccache
           useradd -m builder
           echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           chown -R builder:builder "${GITHUB_WORKSPACE}"
+
+      # makepkg's BUILDENV ccache puts /usr/lib/ccache/bin first on PATH, which is what lets the Skia
+      # build (gn/clang, no CMake launcher) hit the cache too. CCACHE_DIR comes from the action
+      # and survives `su builder -c`; the restored directory is root-owned, hence the chown.
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-arch-${{ matrix.arch }}-
+          max-size: 700M
+
+      - name: Enable ccache in makepkg
+        run: |
+          sed -i 's/^\(BUILDENV=.*\)!ccache/\1ccache/' /etc/makepkg.conf
+          grep '^BUILDENV' /etc/makepkg.conf
+          mkdir -p "${CCACHE_DIR}"
+          chown -R builder:builder "${CCACHE_DIR}"
 
       # The container has no gh, so these come from the release's public download URLs. The
       # unpacker needs python and zstd, both installed above. Unpacked where the tests look.
@@ -1351,6 +1443,14 @@ jobs:
           cp -r drift-addons "${SRC}../drift-addons"
           chown -R builder:builder "${SRC}" "${SRC}../drift-addons" "${GITHUB_WORKSPACE}/.ort"
           su builder -c "cd '${GITHUB_WORKSPACE}/${PKGDIR}' && _commit='${{ github.sha }}' DRIFT_ONNXRUNTIME_DIR='${GITHUB_WORKSPACE}/.ort/runtime' DRIFT_STICKERS_DIR='${GITHUB_WORKSPACE}/drift-addons/staging/stickers-harmonyos/stickers' makepkg -se --noconfirm"
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-arch-${{ matrix.arch }}-
+          max-size: 700M
 
       # A suite that QSKIPs still passes, so check() never shows what did not run. makepkg
       # extracts into src/$pkgname, which is drift or drift-nightly.

@@ -2810,7 +2810,7 @@ function(drift_stage_packages target assetdir)
     endif()
     file(RELATIVE_PATH _key "${CMAKE_BINARY_DIR}" "${_outdir}/${assetdir}")
     string(MAKE_C_IDENTIFIER "drift_stage_${_key}" _stage)
-    # Multi-config generators (the Windows job uses Visual Studio) put binaries in <dir>/<config>,
+    # Multi-config generators (Visual Studio, Xcode) put binaries in <dir>/<config>,
     # which is where the packaging step expects the staged packages as well.
     get_property(_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
     if(_multi_config)

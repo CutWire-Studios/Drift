@@ -24,8 +24,9 @@ depends=(
 # context, and Qt's offscreen platform plugin cannot provide one on a builder with no /dev/dri
 # (llvmpipe is fine, it just needs an X server to hand Qt a GL visual).
 # clang, gn and python drive third_party/build-skia.sh; Skia's GN toolchain files are written for
-# clang, so gcc is not an option there even though it builds Drift itself.
-makedepends=('cmake' 'ninja' 'git' 'pkgconf' 'qt6-tools' 'xorg-server-xvfb' 'clang' 'gn' 'python')
+# clang, so gcc is not an option there even though it builds Drift itself. lld is the linker
+# Drift itself is linked with (-DDRIFT_LINKER=lld below), which is much faster than GNU ld.
+makedepends=('cmake' 'ninja' 'git' 'pkgconf' 'qt6-tools' 'xorg-server-xvfb' 'clang' 'gn' 'python' 'lld')
 # Defaults to the tagged release; CI overrides _commit (e.g. to $GITHUB_SHA)
 # to build the exact commit that triggered the workflow instead.
 _commit="${_commit:-v$pkgver}"
@@ -64,6 +65,7 @@ build() {
         -DDRIFT_BUNDLE_CORE_PACKAGES_ONLY=ON \
         -DDRIFT_WITH_SKIA=ON \
         -DDRIFT_DISTRIBUTION=arch \
+        -DDRIFT_LINKER=lld \
         -DDRIFT_UPDATE_FEED_URL=
     cmake --build build --parallel
 }

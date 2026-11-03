@@ -26,6 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  CCACHE_VERSION: "4.14.2"
   # Same pins as package.yml; keep them in sync.
   QT_VERSION: "6.10.3"
   QT_MODULES: >-
@@ -49,13 +50,15 @@ jobs:
             runner: windows-2022
             qt_host: windows
             qt_arch: win64_msvc2022_64
-            cmake_arch: x64
+            msvc_arch: x64
+            ccache_arch: x86_64
             ffmpeg_platform: win64
           - arch: arm64
             runner: windows-11-arm
             qt_host: windows_arm64
             qt_arch: win64_msvc2022_arm64
-            cmake_arch: ARM64
+            msvc_arch: arm64
+            ccache_arch: aarch64
             ffmpeg_platform: winarm64
 
     steps:
@@ -184,11 +187,38 @@ jobs:
           $extractedRoot = (Get-ChildItem .deps\ffmpeg_extracted)[0].FullName
           Copy-Item -Path "$extractedRoot\*" -Destination .deps\ffmpeg -Recurse -Force
 
+      # The official zip rather than choco: pinned, and no package-feed dependency. The arm64
+      # runner gets the native build.
+      - name: Install ccache
+        shell: pwsh
+        run: |
+          $name = "ccache-$env:CCACHE_VERSION-windows-${{ matrix.ccache_arch }}"
+          Invoke-WebRequest -Uri "https://github.com/ccache/ccache/releases/download/v$env:CCACHE_VERSION/$name.zip" -OutFile ccache.zip
+          Expand-Archive -Path ccache.zip -DestinationPath "$env:RUNNER_TEMP\ccache-bin" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\ccache-bin\$name"
+          & "$env:RUNNER_TEMP\ccache-bin\$name\ccache.exe" --version
+
+      # Ninja needs the compiler environment that the Visual Studio generator used to set up for
+      # itself. Placed after the vcpkg step, which finds Visual Studio on its own.
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.msvc_arch }}
+
+      # Restore only: this runs on arbitrary refs, and a save would replace the cache package.yml's
+      # installer job keeps for the same prefix. See package.yml for the ccache and MSVC flags.
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-windows-${{ matrix.arch }}-
+          max-size: 1G
+
       # An empty update feed turns the in-app update check off: the Store owns updates here.
       - name: Configure
         shell: pwsh
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A ${{ matrix.cmake_arch }} `
+          cmake -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
             -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg;${{ github.workspace }}\vcpkg\installed\${{ matrix.arch }}-windows-static-md" `
@@ -199,26 +229,31 @@ jobs:
             -DDRIFT_BUNDLE_CORE_PACKAGES_ONLY=ON `
             -DDRIFT_WITH_SKIA=ON `
             -DDRIFT_DISTRIBUTION=${{ steps.meta.outputs.distribution }} `
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache `
+            -DDRIFT_PCH=OFF `
+            -DCMAKE_POLICY_DEFAULT_CMP0141=NEW `
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded `
             -DDRIFT_UPDATE_FEED_URL=
 
       # Only what ships: package.yml already builds and runs the test suite on Windows.
       - name: Build
         shell: pwsh
-        run: cmake --build build --config Release --parallel 2 --target drift audiobackendcheck
+        run: cmake --build build --parallel 3 --target drift audiobackendcheck
 
       - name: Stage runtime files
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist\bin | Out-Null
-          Copy-Item build\Release\drift.exe dist\bin -Force
+          Copy-Item build\drift.exe dist\bin -Force
           # See package.yml for --no-opengl-sw.
           & "${{ env.QT_ROOT_DIR }}\bin\windeployqt.exe" --release --no-translations `
             --no-opengl-sw --qmldir src\qml dist\bin\drift.exe
           Copy-Item vcpkg\installed\${{ matrix.arch }}-windows\bin\*.dll dist\bin -Force
           Copy-Item .deps\ffmpeg\bin\*.dll dist\bin -Force
           foreach ($dir in "effects", "transitions", "effect-templates", "audio-effects") {
-            if (Test-Path "build\Release\$dir") {
-              Copy-Item "build\Release\$dir" dist\bin -Recurse -Force
+            if (Test-Path "build\$dir") {
+              Copy-Item "build\$dir" dist\bin -Recurse -Force
             }
           }
 
@@ -247,7 +282,7 @@ jobs:
             throw "$pluginRel was not deployed; QAudioSink would have no devices at all"
           }
           $plugin = (Resolve-Path $pluginRel).Path
-          Copy-Item build\Release\audiobackendcheck.exe dist\bin -Force
+          Copy-Item build\audiobackendcheck.exe dist\bin -Force
           Push-Location dist\bin
           try {
             & .\audiobackendcheck.exe $plugin
