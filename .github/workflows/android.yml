@@ -32,6 +32,9 @@ jobs:
     name: Compile arm64-v8a
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    permissions:
+      contents: read
+      actions: write
     env:
       ABI: arm64-v8a
 
@@ -113,33 +116,35 @@ jobs:
         if: steps.deps-cache.outputs.cache-hit != 'true'
         run: rm -rf third_party/src
 
+      # Same prefix as package.yml's APK lane, so the two share one cache entry per ABI.
       - name: Restore ccache
-        uses: actions/cache/restore@v4
+        uses: ./.github/actions/ccache
         with:
-          path: ~/.cache/ccache
-          key: ccache-android-smoke-${{ env.ABI }}-${{ github.sha }}
-          restore-keys: ccache-android-smoke-${{ env.ABI }}-
+          phase: restore
+          key-prefix: ccache-android-${{ env.ABI }}-
+          max-size: 700M
 
       # Native compile only: catches Android-specific C++/Qt breakage without gradle packaging.
       # Package identity still uses the CI id so a local full build with these env vars stays
       # installable beside a release APK.
       - name: Compile (no APK)
+        id: build
         env:
           DRIFT_ANDROID_PACKAGE_NAME: org.cutwire.drift.ci
           DRIFT_ANDROID_APP_NAME: Drift CI
           SKIP_APK: '1'
           CMAKE_C_COMPILER_LAUNCHER: ccache
           CMAKE_CXX_COMPILER_LAUNCHER: ccache
-          CCACHE_MAXSIZE: 2G
         run: |
           export QT_ANDROID_ROOT="$HOME/Qt/$QT_VERSION/android_arm64_v8a"
           export QT_HOST_PATH="$HOME/Qt/$QT_VERSION/gcc_64"
           ./scripts/build.sh "$ABI" Release
-          ccache -s
 
+      # Saved even when the build failed part-way: the objects compiled so far are still valid.
       - name: Save ccache
         if: always()
-        uses: actions/cache/save@v4
+        uses: ./.github/actions/ccache
         with:
-          path: ~/.cache/ccache
-          key: ccache-android-smoke-${{ env.ABI }}-${{ github.sha }}
+          phase: save
+          key-prefix: ccache-android-${{ env.ABI }}-
+          max-size: 700M

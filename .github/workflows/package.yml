@@ -173,6 +173,9 @@ jobs:
   linux:
     name: Linux AppImage (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      actions: write
     if: inputs.platforms == 'all' || inputs.platforms == 'linux'
     strategy:
       # Each arch reports its own result: a failing aarch64 build should not hide x86_64's.
@@ -273,13 +276,13 @@ jobs:
           sudo apt-get update -o Acquire::Retries=3
           # Complex-script text tests need Noto faces.
           sudo apt-get install -y -o Acquire::Retries=3 \
-            build-essential ninja-build pkg-config git xvfb zsync fonts-noto-core \
+            build-essential ninja-build pkg-config git xvfb zsync ccache fonts-noto-core \
             libgl1-mesa-dev libegl1-mesa-dev libglib2.0-dev libdbus-1-dev \
             libzstd-dev libssl-dev libsoundtouch-dev zlib1g-dev \
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
-            clang-15 libharfbuzz-dev libexpat1-dev libpng-dev \
+            clang-15 lld libharfbuzz-dev libexpat1-dev libpng-dev \
             libwayland-dev \
             libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev \
             libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev \
@@ -329,6 +332,13 @@ jobs:
           curl -fsSL "https://github.com/${FFMPEG_REPO}/releases/download/${FFMPEG_TAG}/ffmpeg-${FFMPEG_TAG}-${{ matrix.ffmpeg_platform }}-gpl-shared.tar.xz" \
             | tar -xJf - --strip-components=1 -C "${GITHUB_WORKSPACE}/.deps/ffmpeg"
 
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-appimage-${{ matrix.arch }}-
+          max-size: 700M
+
       # DRIFT_BUNDLE_ONNXRUNTIME=OFF: a packaged build ships no runtime at all. Drift dlopens the
       # one the user installs from the Acceleration category, which is what keeps the CPU / CUDA /
       # WebGPU choice theirs instead of the packager's. Only the headers are fetched, to compile.
@@ -343,10 +353,22 @@ jobs:
             -DDRIFT_BUNDLE_CORE_PACKAGES_ONLY=ON \
             -DDRIFT_WITH_SKIA=ON \
             -DDRIFT_DISTRIBUTION=appimage \
+            -DDRIFT_LINKER=lld \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ${DRIFT_CHANNEL_ARGS}
 
       - name: Build
+        id: build
         run: cmake --build build --parallel
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-appimage-${{ matrix.arch }}-
+          max-size: 700M
 
       # The same command the README documents. Xvfb is what makes the GPU tests real here: only
       # some of them guard on GpuEffectExecutor::isAvailable() and QSKIP, the rest compare against
@@ -882,6 +904,9 @@ jobs:
   macos:
     name: macOS disk image (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      actions: write
     if: inputs.platforms == 'all' || inputs.platforms == 'macos'
     strategy:
       # Separate per-arch images, not a universal one: Homebrew bottles are single-architecture.
@@ -913,7 +938,7 @@ jobs:
         if: matrix.homebrew_qt
         run: |
           brew update
-          brew install qt ffmpeg zstd openssl@3 sound-touch ninja
+          brew install qt ffmpeg zstd openssl@3 sound-touch ninja ccache
 
       # No brew update: the runner image's formula versions are the ones that still have bottles,
       # and an update would turn every installed formula into a source build.
@@ -922,7 +947,7 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
           HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK: 1
-        run: brew install zstd openssl@3 sound-touch ninja
+        run: brew install zstd openssl@3 sound-touch ninja ccache
 
       - name: Install Qt
         if: ${{ !matrix.homebrew_qt }}
@@ -1021,6 +1046,13 @@ jobs:
           JOBS="$(sysctl -n hw.ncpu)" third_party/build-skia.sh ${{ matrix.skia_target }}
           rm -rf third_party/src
 
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-macos-${{ matrix.arch }}-
+          max-size: 700M
+
       - name: Configure
         run: |
           if [ "${{ matrix.homebrew_qt }}" = true ]; then
@@ -1036,10 +1068,21 @@ jobs:
             -DDRIFT_BUNDLE_CORE_PACKAGES_ONLY=ON \
             -DDRIFT_WITH_SKIA=ON \
             -DDRIFT_DISTRIBUTION=macos \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             ${DRIFT_CHANNEL_ARGS}
 
       - name: Build
+        id: build
         run: cmake --build build-macos --parallel
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-macos-${{ matrix.arch }}-
+          max-size: 700M
 
       # The ONNX and sticker tests skip without these two; the workspace paths are where the
       # fetch and checkout steps above put the files.
@@ -1357,6 +1400,9 @@ jobs:
   android:
     name: Android APK (${{ matrix.abi }})
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: write
     if: inputs.platforms == 'all' || inputs.platforms == 'android'
     strategy:
       # Every ABI reports its own result: one failing arch should not hide whether the
@@ -1460,11 +1506,11 @@ jobs:
         run: rm -rf third_party/src
 
       - name: Restore ccache
-        uses: actions/cache/restore@v4
+        uses: ./.github/actions/ccache
         with:
-          path: ~/.cache/ccache
-          key: ccache-android-${{ matrix.abi }}-${{ github.sha }}
-          restore-keys: ccache-android-${{ matrix.abi }}-
+          phase: restore
+          key-prefix: ccache-android-${{ matrix.abi }}-
+          max-size: 700M
 
       # versionName comes from CMake PROJECT_VERSION (same as desktop). versionCode: release
       # builds leave it unset so CMake derives major*10000+minor*100+patch; CI side-loads and
@@ -1493,6 +1539,7 @@ jobs:
           esac
 
       - name: Build release APK
+        id: build
         env:
           DRIFT_ANDROID_PACKAGE_NAME: ${{ steps.identity.outputs.package }}
           DRIFT_ANDROID_APP_NAME: ${{ steps.identity.outputs.app_name }}
@@ -1502,7 +1549,6 @@ jobs:
           DRIFT_DISTRIBUTION: android-github
           CMAKE_C_COMPILER_LAUNCHER: ccache
           CMAKE_CXX_COMPILER_LAUNCHER: ccache
-          CCACHE_MAXSIZE: 2G
         run: |
           export QT_ANDROID_ROOT="$HOME/Qt/$QT_ANDROID_VERSION/${{ matrix.qt_arch }}"
           export QT_HOST_PATH="$HOME/Qt/$QT_ANDROID_VERSION/gcc_64"
@@ -1512,14 +1558,14 @@ jobs:
             unset DRIFT_ANDROID_VERSION_CODE
           fi
           ./scripts/build.sh "$ABI" Release
-          ccache -s
 
       - name: Save ccache
         if: always()
-        uses: actions/cache/save@v4
+        uses: ./.github/actions/ccache
         with:
-          path: ~/.cache/ccache
-          key: ccache-android-${{ matrix.abi }}-${{ github.sha }}
+          phase: save
+          key-prefix: ccache-android-${{ matrix.abi }}-
+          max-size: 700M
 
       - name: Collect and sign APK
         env:

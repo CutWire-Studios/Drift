@@ -1,0 +1,95 @@
+name: ccache
+description: >-
+  Restore or save a size-capped ccache directory. Saving only happens on refs/heads/main,
+  because a cache saved on a PR or tag ref is invisible to every other ref and only eats the
+  repository's 10 GB budget. After a save, older caches with the same key prefix on main are
+  deleted so one entry per prefix lives at a time. The calling job needs
+  `permissions: actions: write` for that pruning (it is non-fatal when missing).
+
+inputs:
+  phase:
+    description: restore (before the build) or save (after the build)
+    required: true
+  key-prefix:
+    description: Cache key prefix, e.g. ccache-tests-linux-. The commit sha is appended.
+    required: true
+  max-size:
+    description: ccache size cap, e.g. 800M. Also enforced with an eviction pass before saving.
+    required: false
+    default: 800M
+  restore-prefixes:
+    description: Extra restore-key prefixes (newline separated), tried after key-prefix.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Configure ccache
+      if: inputs.phase == 'restore'
+      shell: bash
+      run: |
+        {
+          echo "CCACHE_DIR=${{ runner.temp }}/ccache"
+          echo "CCACHE_MAXSIZE=${{ inputs.max-size }}"
+          echo "CCACHE_COMPRESS=1"
+          # Lets ccache hit on objects built against the precompiled header.
+          echo "CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime"
+        } >> "$GITHUB_ENV"
+
+    - name: Restore ccache
+      if: inputs.phase == 'restore'
+      id: restore
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.temp }}/ccache
+        key: ${{ inputs.key-prefix }}${{ github.sha }}
+        restore-keys: |
+          ${{ inputs.key-prefix }}
+          ${{ inputs.restore-prefixes }}
+
+    # An exact hit means this sha already saved a cache (a re-run); saving again would fail.
+    - name: Record restore result and zero stats
+      if: inputs.phase == 'restore'
+      shell: bash
+      run: |
+        echo "DRIFT_CCACHE_EXACT_HIT=${{ steps.restore.outputs.cache-hit }}" >> "$GITHUB_ENV"
+        if command -v ccache >/dev/null 2>&1; then ccache -z || true; fi
+
+    - name: ccache statistics
+      if: inputs.phase == 'save'
+      shell: bash
+      run: if command -v ccache >/dev/null 2>&1; then ccache -s || true; fi
+
+    - name: Trim ccache
+      if: inputs.phase == 'save' && github.ref == 'refs/heads/main' && env.DRIFT_CCACHE_EXACT_HIT != 'true'
+      shell: bash
+      run: |
+        if command -v ccache >/dev/null 2>&1; then
+          ccache --evict-older-than 7d || true
+          ccache -c || true
+          du -sh "${{ runner.temp }}/ccache" || true
+        fi
+
+    - name: Save ccache
+      if: inputs.phase == 'save' && github.ref == 'refs/heads/main' && env.DRIFT_CCACHE_EXACT_HIT != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.temp }}/ccache
+        key: ${{ inputs.key-prefix }}${{ github.sha }}
+
+    - name: Prune older ccache entries
+      if: inputs.phase == 'save' && github.ref == 'refs/heads/main' && env.DRIFT_CCACHE_EXACT_HIT != 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        KEEP_KEY: ${{ inputs.key-prefix }}${{ github.sha }}
+        PREFIX: ${{ inputs.key-prefix }}
+      run: |
+        ids="$(gh cache list --repo "${{ github.repository }}" --ref refs/heads/main --key "$PREFIX" \
+          --limit 100 --json id,key --jq ".[] | select(.key != \"$KEEP_KEY\") | .id")" \
+          || { echo "::warning::could not list caches (job needs actions: write)"; exit 0; }
+        for id in $ids; do
+          gh cache delete "$id" --repo "${{ github.repository }}" \
+            || echo "::warning::could not delete cache $id"
+        done

@@ -31,7 +31,6 @@ env:
   # encoder — which would leave the exporter tests with nothing to exercise.
   FFMPEG_REPO: "CutWire-Studios/FFmpeg-Builds"
   FFMPEG_TAG: "n7.1"
-  CCACHE_MAXSIZE: "1G"
 
 jobs:
   macos-icon:
@@ -85,6 +84,9 @@ jobs:
     name: CTest
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -199,15 +201,14 @@ jobs:
           key: v2-deps-linux-${{ hashFiles('CMakeLists.txt') }}
 
       # The build tree is not cached, so every run reconfigures and recompiles from scratch —
-      # ccache is what makes that cheap. The sha in the key is what makes the cache save at
-      # all: actions/cache never re-saves on an exact-key hit, so a fixed key would freeze the
-      # cache at its first contents. restore-keys supplies the previous run's objects.
-      - name: Cache ccache
-        uses: actions/cache@v4
+      # ccache is what makes that cheap. The action saves only from main (PR-ref caches are
+      # invisible to other refs) and keeps one entry, so the 10 GB repo budget is not eaten.
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
         with:
-          path: ~/.cache/ccache
-          key: ccache-tests-${{ github.sha }}
-          restore-keys: ccache-tests-
+          phase: restore
+          key-prefix: ccache-tests-linux-
+          max-size: 1G
 
       # Same Skia build package.yml's Linux lane makes, minus SKIA_SYSTEM_ICU=0: nothing is
       # bundled here, so the distro ICU is fine and the cache key stays separate on purpose.
@@ -250,15 +251,14 @@ jobs:
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
             -DDRIFT_WITH_SKIA=ON \
+            -DDRIFT_LINKER=lld \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       # Everything, not just the test targets: this is the only workflow that sees an ordinary
       # commit, so the app link and QML compilation should be covered here too.
-      # The sloppiness lets ccache hit on objects built against the precompiled header.
       - name: Build
-        env:
-          CCACHE_SLOPPINESS: pch_defines,time_macros,include_file_mtime,include_file_ctime
+        id: build
         run: cmake --build build --parallel
 
       # Deliberately not QT_QPA_PLATFORM=offscreen: that plugin cannot create an OpenGL context
@@ -316,9 +316,14 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: ccache statistics
-        if: always()
-        run: ccache --show-stats
+      # The compile output is valid even when a test failed, so save unless the build itself broke.
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-tests-linux-
+          max-size: 1G
 
   # The macOS runner is the reason this job exists rather than trusting the Linux one. glibc's
   # allocator leaves a freed block byte-identical, so a use-after-free through a stale
@@ -333,6 +338,9 @@ jobs:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: macos-15
     timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -365,7 +373,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew update
-          brew install qt ffmpeg zstd openssl@3 sound-touch ninja
+          brew install qt ffmpeg zstd openssl@3 sound-touch ninja ccache
 
       # Runs after Install dependencies because the unpacker needs zstd from Homebrew.
       - name: Fetch test models and ONNX Runtime
@@ -412,6 +420,13 @@ jobs:
           JOBS="$(sysctl -n hw.ncpu)" third_party/build-skia.sh mac-arm64
           rm -rf third_party/src
 
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-tests-macos-
+          max-size: 1G
+
       - name: Configure
         run: |
           cmake -B build -G Ninja \
@@ -419,9 +434,12 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
-            -DDRIFT_WITH_SKIA=ON
+            -DDRIFT_WITH_SKIA=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
+        id: build
         run: cmake --build build --parallel
 
       # No xvfb and no QT_QPA_PLATFORM override: the runner has a real window server, so the
@@ -466,3 +484,11 @@ jobs:
             if [ -n "$skipped" ]; then echo "$skipped"; else echo none; fi
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-tests-macos-
+          max-size: 1G

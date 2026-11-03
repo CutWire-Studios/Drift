@@ -250,14 +250,20 @@ jobs:
       - name: Drop native dependency sources
         run: rm -rf third_party/src
 
+      # Restore only, never saved: this is a rare dispatch build, and a cache saved from a
+      # dispatch ref would sit unused in the repo's 10 GB budget. The first prefix that has an
+      # entry wins, so the other ABIs are fallbacks rather than a merge. Inline rather than the
+      # ./.github/actions/ccache action because the requested ref was checked out above and an
+      # older tag has no such action; the path must match the action's so the cache version does.
       - name: Restore ccache
         uses: actions/cache/restore@v4
         with:
-          path: ~/.cache/ccache
-          key: ccache-aab-${{ steps.meta.outputs.sha }}
+          path: ${{ runner.temp }}/ccache
+          key: ccache-aab-unused-${{ steps.meta.outputs.sha }}
           restore-keys: |
-            ccache-aab-
             ccache-android-arm64-v8a-
+            ccache-android-armeabi-v7a-
+            ccache-android-x86_64-
 
       - name: Build release AAB
         env:
@@ -269,7 +275,10 @@ jobs:
           BUILD_AAB: '1'
           CMAKE_C_COMPILER_LAUNCHER: ccache
           CMAKE_CXX_COMPILER_LAUNCHER: ccache
+          CCACHE_DIR: ${{ runner.temp }}/ccache
           CCACHE_MAXSIZE: 2G
+          CCACHE_COMPRESS: '1'
+          CCACHE_SLOPPINESS: pch_defines,time_macros,include_file_mtime,include_file_ctime
         run: |
           set -euo pipefail
           export QT_ANDROID_ROOT="$HOME/Qt/$QT_ANDROID_VERSION/$PRIMARY_QT_ARCH"
@@ -288,13 +297,6 @@ jobs:
           chmod +x "$GRADLE"
           "$GRADLE" -p "$BUILD/android-build" bundleRelease
           find "$BUILD/android-build" -name '*.aab' -print
-
-      - name: Save ccache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/ccache
-          key: ccache-aab-${{ steps.meta.outputs.sha }}
 
       # Play Console rejects an unsigned bundle. jarsigner (JAR signing) is what an AAB
       # wants — apksigner is the APK scheme used in package.yml.
