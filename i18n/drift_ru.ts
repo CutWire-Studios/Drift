@@ -5,7 +5,7 @@
     <name>AboutDialog</name>
     <message>
         <source>About Drift</source>
-        <translation>О Drigt</translation>
+        <translation>О программе Дрифт</translation>
     </message>
     <message>
         <source>Close</source>
@@ -32,11 +32,11 @@
     <name>AccelerationFailedDialog</name>
     <message>
         <source>AI engine isn&apos;t working</source>
-        <translation type="unfinished"></translation>
+        <translation>ИИ-движок не работает</translation>
     </message>
     <message>
         <source>Use this engine</source>
-        <translation type="unfinished"></translation>
+        <translation>Использовать этот движок</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -44,11 +44,11 @@
     </message>
     <message>
         <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine to continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; не удалось запустить эту функцию. Выберите другой ИИ-движок чтобы продолжить.</translation>
     </message>
     <message>
         <source>&quot;%1&quot; couldn&apos;t run this feature. Pick a different AI engine, then try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>&quot;%1&quot; не удалось запустить эту функцию. Выберите другой ИИ-движок и попробуйте снова.</translation>
     </message>
 </context>
 <context>
@@ -67,7 +67,7 @@
     </message>
     <message>
         <source>AMD graphics (faster)</source>
-        <translation type="unfinished"></translation>
+        <translation>Видеокарта AMD (быстрее)</translation>
     </message>
     <message>
         <source>Graphics card (faster)</source>
@@ -279,7 +279,7 @@
     <name>AgentViewsPanel</name>
     <message>
         <source>Agent Views</source>
-        <translation type="unfinished"></translation>
+        <translation>Панель представлений агента</translation>
     </message>
     <message>
         <source>%1 – %2</source>
@@ -287,11 +287,11 @@
     </message>
     <message>
         <source>No images yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Изображений пока нет.</translation>
     </message>
     <message>
         <source>Images the AI requests, such as frames, audio sheets and captures, appear here during this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>В этом сеансе здесь будут появляться изображения, которые запрашивает ИИ, такие как кадры, аудиограммы и снимки.</translation>
     </message>
 </context>
 <context>
@@ -393,7 +393,7 @@
     <name>AndroidAddPage</name>
     <message>
         <source>Library</source>
-        <translation type="unfinished"></translation>
+        <translation>Библиотека</translation>
     </message>
     <message>
         <source>Properties</source>
@@ -435,15 +435,15 @@
     <name>AndroidBackgroundPage</name>
     <message>
         <source>Choose background image</source>
-        <translation type="unfinished"></translation>
+        <translation>Выбрать фоновое изображение</translation>
     </message>
     <message>
         <source>Images (*.png *.jpg *.jpeg *.webp *.bmp)</source>
-        <translation type="unfinished"></translation>
+        <translation>Изображения (*.png *.jpg *.jpeg *.webp *.bmp)</translation>
     </message>
     <message>
         <source>Fill canvas</source>
-        <translation type="unfinished"></translation>
+        <translation>Заполнить кадр</translation>
     </message>
     <message>
         <source>Solid</source>
@@ -463,22 +463,22 @@
     </message>
     <message>
         <source>Choose image</source>
-        <translation type="unfinished"></translation>
+        <translation>Выбрать изображение</translation>
     </message>
     <message>
         <source>Choose another image</source>
-        <translation type="unfinished"></translation>
+        <translation>Выбрать другое изображение</translation>
     </message>
     <message>
         <source>The image is added on a new bottom track for the length of the video, scaled to fill the frame.</source>
-        <translation type="unfinished"></translation>
+        <translation>Изображение добавляется на новую видеодорожку внизу, на всю длину видео, с масштабированием на весь кадр.</translation>
     </message>
 </context>
 <context>
     <name>AndroidBottomRail</name>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>Корректировать</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -522,11 +522,11 @@
     </message>
     <message>
         <source>Text settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки текста</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>Анимация текста</translation>
     </message>
     <message>
         <source>Subtitles</source>
@@ -550,10 +550,10 @@
     </message>
     <message numerus="yes">
         <source>%n clip(s) selected</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n клип выбран</numerusform>
+            <numerusform>%n клипа выбрано</numerusform>
+            <numerusform>%n клипов выбрано</numerusform>
         </translation>
     </message>
     <message>
@@ -562,7 +562,7 @@
     </message>
     <message>
         <source>Details</source>
-        <translation type="unfinished"></translation>
+        <translation>Подробности</translation>
     </message>
     <message>
         <source>Crop</source>
@@ -597,7 +597,7 @@
     </message>
     <message>
         <source>Seek</source>
-        <translation type="unfinished"></translation>
+        <translation>Перемотка</translation>
     </message>
 </context>
 <context>
@@ -728,7 +728,7 @@
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished"></translation>
+        <translation>Поворот</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -765,7 +765,7 @@
     </message>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>Настроить</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -793,7 +793,7 @@
     </message>
     <message>
         <source>Add sticker</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить стикер</translation>
     </message>
     <message>
         <source>Shape</source>
@@ -801,7 +801,7 @@
     </message>
     <message>
         <source>Add shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить фигуру</translation>
     </message>
     <message>
         <source>Text</source>
@@ -809,7 +809,7 @@
     </message>
     <message>
         <source>Add text</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить текст</translation>
     </message>
     <message>
         <source>Text style</source>
@@ -817,11 +817,11 @@
     </message>
     <message>
         <source>Text settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки текста</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>Анимация текста</translation>
     </message>
     <message>
         <source>Animation</source>
@@ -873,7 +873,7 @@
     </message>
     <message>
         <source>Details</source>
-        <translation type="unfinished"></translation>
+        <translation>Подробности</translation>
     </message>
     <message>
         <source>Add mask</source>
@@ -970,11 +970,11 @@
     <name>AndroidFiltersPage</name>
     <message>
         <source>Applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Применено</translation>
     </message>
     <message>
         <source>Browse</source>
-        <translation type="unfinished"></translation>
+        <translation>Обзор</translation>
     </message>
 </context>
 <context>
@@ -985,7 +985,7 @@
     </message>
     <message>
         <source>Marketplace</source>
-        <translation type="unfinished"></translation>
+        <translation>Маркетплейс</translation>
     </message>
     <message>
         <source>Extras</source>
@@ -997,7 +997,7 @@
     </message>
     <message>
         <source>Home</source>
-        <translation type="unfinished"></translation>
+        <translation>Главная</translation>
     </message>
     <message>
         <source>Projects</source>
@@ -1005,7 +1005,7 @@
     </message>
     <message>
         <source>My videos</source>
-        <translation type="unfinished"></translation>
+        <translation>Мои видео</translation>
     </message>
 </context>
 <context>
@@ -1039,7 +1039,7 @@
     </message>
     <message>
         <source>Adjust</source>
-        <translation type="unfinished"></translation>
+        <translation>Регулировать</translation>
     </message>
     <message>
         <source>Sticker</source>
@@ -1055,15 +1055,15 @@
     </message>
     <message>
         <source>Trim</source>
-        <translation type="unfinished"></translation>
+        <translation>Обрезать</translation>
     </message>
     <message>
         <source>Video to audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Аудио из видео</translation>
     </message>
     <message>
         <source>Image to video</source>
-        <translation type="unfinished"></translation>
+        <translation>Изображение в видео</translation>
     </message>
     <message>
         <source>New project</source>
@@ -1141,7 +1141,7 @@
     </message>
     <message>
         <source>The marketplace didn’t recognise this link.</source>
-        <translation type="unfinished"></translation>
+        <translation>Маркетплейс не распознал эту ссылку.</translation>
     </message>
     <message>
         <source>Save downloads to</source>
@@ -1153,7 +1153,7 @@
     </message>
     <message>
         <source>Looking up the link…</source>
-        <translation type="unfinished"></translation>
+        <translation>Проверка ссылки…</translation>
     </message>
     <message>
         <source>Open in browser</source>
@@ -13145,7 +13145,7 @@
     </message>
     <message>
         <source>Straighten</source>
-        <translation type="unfinished"></translation>
+        <translation>Выровнять</translation>
     </message>
     <message>
         <source>Level (0°)</source>
