@@ -1,4 +1,5 @@
 #include "app/jobs/vision/StabilizeController.h"
+#include "app/bin/AssetLibrary.h"
 
 #include "app/editor/AppController.h"
 #include "app/mcp/McpDetail.h"

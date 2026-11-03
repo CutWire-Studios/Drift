@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/editor/sessions/KeyframeController.h"
 #include "app/editor/sessions/KeyframeRows.h"
 #include "app/editor/sessions/KeyframeTimeView.h"
 

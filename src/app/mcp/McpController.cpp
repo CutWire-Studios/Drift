@@ -1,4 +1,6 @@
 #include "app/mcp/McpController.h"
+#include "app/editor/ProjectFileController.h"
+#include "app/jobs/vision/SceneDetectController.h"
 
 #include "app/mcp/tools/McpCatalog.h"
 #ifndef Q_OS_WASM

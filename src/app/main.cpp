@@ -1,4 +1,8 @@
 #include "engine/encode/writers/AudioFileWriter.h"
+#include "app/bin/MediaBinController.h"
+#include "app/editor/PreferencesController.h"
+#include "app/editor/ProjectFileController.h"
+#include "app/mcp/McpController.h"
 #include "engine/packages/assets/EmojiCatalog.h"
 #include "engine/packages/assets/FontCatalog.h"
 #include "engine/gpu/device/GpuDevice.h"
@@ -12,7 +16,6 @@
 #include "app/mcp/transport/McpStdio.h"
 #endif
 #include "app/online/addons/AddonManager.h"
-#include "app/editor/AppController.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"
 #include "app/platform/FileDialogs.h"

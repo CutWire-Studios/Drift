@@ -1,4 +1,5 @@
 #include "app/jobs/vision/RestoreController.h"
+#include "app/bin/MediaBinController.h"
 
 #include "app/editor/AppController.h"
 #include "ui/imageproviders/segment/SegmentImageStore.h"

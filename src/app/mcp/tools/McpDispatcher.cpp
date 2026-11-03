@@ -1,4 +1,7 @@
 #include "app/mcp/tools/McpDispatcher.h"
+#include "app/editor/PreferencesController.h"
+#include "app/editor/sessions/SpeedCurveController.h"
+#include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/protocol/McpValidate.h"

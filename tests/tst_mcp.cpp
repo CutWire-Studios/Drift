@@ -1,4 +1,8 @@
 #include <QtTest>
+#include "app/jobs/vision/SceneDetectController.h"
+#include "app/editor/PreferencesController.h"
+#include "app/editor/ProjectFileController.h"
+#include "app/mcp/McpController.h"
 #include "core/project/Transcript.h"
 #include "app/online/CloudProviders.h"
 

@@ -1,4 +1,5 @@
 #include "app/editor/sessions/MaskingController.h"
+#include "app/editor/ProjectFileController.h"
 
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/AppController.h"

@@ -2,6 +2,8 @@
 
 #include "app/editor/AppController.h"
 #include "app/editor/AppControllerDetail.h"
+#include "app/bin/AssetLibrary.h"
+#include "core/text/animation/TextAnimationPreset.h"
 
 #include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "engine/packages/effects/EffectCatalog.h"
