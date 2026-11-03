@@ -239,6 +239,18 @@ qt_add_executable(tst_mcp
     ../src/playback/preview/ClipPreviewImageStore.cpp
     ../src/ui/imageproviders/multicam/MulticamImageStore.cpp
     ../src/app/editor/AppController.cpp
+    ../src/app/editor/appcontroller/AppControllerClipModel.cpp
+    ../src/app/editor/appcontroller/AppControllerTimeline.cpp
+    ../src/app/editor/appcontroller/AppControllerSubtitleMulticam.cpp
+    ../src/app/editor/appcontroller/AppControllerAdjustments.cpp
+    ../src/app/editor/appcontroller/AppControllerClipProps.cpp
+    ../src/app/editor/appcontroller/AppControllerComposite.cpp
+    ../src/app/editor/appcontroller/AppControllerVector.cpp
+    ../src/app/editor/appcontroller/AppControllerKeyframes.cpp
+    ../src/app/editor/appcontroller/AppControllerEffects.cpp
+    ../src/app/editor/appcontroller/AppControllerTracks.cpp
+    ../src/app/editor/appcontroller/AppControllerProject.cpp
+    ../src/app/editor/appcontroller/AppControllerTextLayers.cpp
     ../src/app/mcp/McpController.cpp
     ../src/app/mcp/AgentImageLog.cpp
     ../src/app/editor/PreferencesController.cpp
