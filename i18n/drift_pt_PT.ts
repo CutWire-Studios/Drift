@@ -5150,6 +5150,101 @@
     </message>
 </context>
 <context>
+    <name>AudioAlignController</name>
+    <message>
+        <source>Audio analysis already in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip with audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finding silence…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Silence removal cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip changed while it was analysed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No silence found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not remove the silence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove silence</source>
+        <translation type="unfinished">Remover silêncio</translation>
+    </message>
+    <message>
+        <source>Removed %1 s of silence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select exactly two clips with audio to sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips with changed speed or reversed playback can&apos;t be synced. Reset their speed and direction first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matching audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Correlating…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio sync cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One of the clips is silent, so there is nothing to match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clips are too short to match by audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No clear match between the clips&apos; audio. Nothing was moved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clips changed while they were analysed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clips are already in sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syncing would move the clip before the start of the timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no room to move the clip there</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync by audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moved the second clip %1 s to match the first</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AudioEffectBrowser</name>
     <message>
         <source>No audio effects</source>
@@ -8551,7 +8646,7 @@
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalado</translation>
     </message>
     <message>
         <source>Update · %1</source>
@@ -8594,7 +8689,7 @@
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalado</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -8696,7 +8791,7 @@
     </message>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 · %2</translation>
     </message>
     <message>
         <source>Installing %1 of %2 · %3</source>
@@ -8731,7 +8826,7 @@
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Instalado</translation>
     </message>
     <message>
         <source>Updates</source>
@@ -8887,7 +8982,7 @@
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ainda não há nada aqui</translation>
     </message>
     <message>
         <source>Check your connection and try again.</source>
@@ -11877,6 +11972,30 @@
         <source>Mask</source>
         <translation>Máscara</translation>
     </message>
+    <message>
+        <source>Set clip shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframe clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show whole video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Showing whole video</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MaskingPanel</name>
@@ -13121,6 +13240,14 @@
     <message>
         <source>Rotate</source>
         <translation>Rodar</translation>
+    </message>
+    <message>
+        <source>Flip H</source>
+        <translation type="unfinished">Espelhar H</translation>
+    </message>
+    <message>
+        <source>Flip V</source>
+        <translation type="unfinished">Espelhar V</translation>
     </message>
     <message>
         <source>Original: %1×%2 • Crop: %3×%4</source>
@@ -14601,6 +14728,10 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>project file is truncated or has trailing data</source>
         <translation>o ficheiro do projeto está truncado ou tem dados adicionais no final</translation>
+    </message>
+    <message>
+        <source>compressed block is too large</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>cannot compress %1</source>
@@ -18376,6 +18507,117 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Adjust extrude</source>
         <translation>Ajustar extrusão</translation>
+    </message>
+</context>
+<context>
+    <name>ShapeCropSection</name>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">Original</translation>
+    </message>
+    <message>
+        <source>Circle</source>
+        <translation type="unfinished">Círculo</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation type="unfinished">Elipse</translation>
+    </message>
+    <message>
+        <source>Triangle</source>
+        <translation type="unfinished">Triângulo</translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished">Quadrado</translation>
+    </message>
+    <message>
+        <source>Diamond</source>
+        <translation type="unfinished">Losango</translation>
+    </message>
+    <message>
+        <source>Pentagon</source>
+        <translation type="unfinished">Pentágono</translation>
+    </message>
+    <message>
+        <source>Hexagon</source>
+        <translation type="unfinished">Hexágono</translation>
+    </message>
+    <message>
+        <source>Octagon</source>
+        <translation type="unfinished">Octógono</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation type="unfinished">Estrela</translation>
+    </message>
+    <message>
+        <source>Heart</source>
+        <translation type="unfinished">Coração</translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">Forma</translation>
+    </message>
+    <message>
+        <source>Content inside shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">Reduzir</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Zoom</translation>
+    </message>
+    <message>
+        <source>Reframe clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">Ampliar</translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation type="unfinished">Horizontal</translation>
+    </message>
+    <message>
+        <source>Horizontal position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation type="unfinished">Vertical</translation>
+    </message>
+    <message>
+        <source>Vertical position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show whole video</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22534,6 +22776,18 @@ Se a reprodução engasgar, experimente outro.</translation>
         <translation>Separar todas as faixas de áudio</translation>
     </message>
     <message>
+        <source>Remove silence</source>
+        <translation type="unfinished">Remover silêncio</translation>
+    </message>
+    <message>
+        <source>Sync by audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel audio analysis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to mask</source>
         <translation>Converter em máscara</translation>
     </message>
@@ -22608,6 +22862,10 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Color grade…</source>
         <translation>Correção de cor…</translation>
+    </message>
+    <message>
+        <source>Blur area…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Edit keyframes…</source>

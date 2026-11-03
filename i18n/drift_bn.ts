@@ -5150,6 +5150,101 @@
     </message>
 </context>
 <context>
+    <name>AudioAlignController</name>
+    <message>
+        <source>Audio analysis already in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a clip with audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finding silence…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Silence removal cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clip changed while it was analysed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No silence found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not remove the silence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove silence</source>
+        <translation type="unfinished">নীরবতা সরান</translation>
+    </message>
+    <message>
+        <source>Removed %1 s of silence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select exactly two clips with audio to sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clips with changed speed or reversed playback can&apos;t be synced. Reset their speed and direction first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Matching audio…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Correlating…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio sync cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>One of the clips is silent, so there is nothing to match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clips are too short to match by audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No clear match between the clips&apos; audio. Nothing was moved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clips changed while they were analysed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The clips are already in sync</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syncing would move the clip before the start of the timeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no room to move the clip there</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync by audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moved the second clip %1 s to match the first</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AudioEffectBrowser</name>
     <message>
         <source>No audio effects</source>
@@ -11877,6 +11972,30 @@
         <source>Mask</source>
         <translation>মাস্ক</translation>
     </message>
+    <message>
+        <source>Set clip shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframe clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reframed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show whole video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Showing whole video</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MaskingPanel</name>
@@ -13121,6 +13240,14 @@
     <message>
         <source>Rotate</source>
         <translation>ঘোরান</translation>
+    </message>
+    <message>
+        <source>Flip H</source>
+        <translation type="unfinished">ফ্লিপ H</translation>
+    </message>
+    <message>
+        <source>Flip V</source>
+        <translation type="unfinished">ফ্লিপ V</translation>
     </message>
     <message>
         <source>Original: %1×%2 • Crop: %3×%4</source>
@@ -14600,6 +14727,10 @@ If playback stutters, try another.</source>
     <message>
         <source>project file is truncated or has trailing data</source>
         <translation>প্রজেক্ট ফাইল ছেঁটে ফেলা হয়েছে বা এর পেছনের ডেটা আছে</translation>
+    </message>
+    <message>
+        <source>compressed block is too large</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>cannot compress %1</source>
@@ -18375,6 +18506,117 @@ If playback stutters, try another.</source>
     <message>
         <source>Adjust extrude</source>
         <translation>এক্সট্রুড সামঞ্জস্য করুন</translation>
+    </message>
+</context>
+<context>
+    <name>ShapeCropSection</name>
+    <message>
+        <source>Original</source>
+        <translation type="unfinished">আসল</translation>
+    </message>
+    <message>
+        <source>Circle</source>
+        <translation type="unfinished">বৃত্ত</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation type="unfinished">উপবৃত্তাকার</translation>
+    </message>
+    <message>
+        <source>Triangle</source>
+        <translation type="unfinished">ত্রিভুজ</translation>
+    </message>
+    <message>
+        <source>Square</source>
+        <translation type="unfinished">বর্গক্ষেত্র</translation>
+    </message>
+    <message>
+        <source>Diamond</source>
+        <translation type="unfinished">হীরা</translation>
+    </message>
+    <message>
+        <source>Pentagon</source>
+        <translation type="unfinished">পঞ্চভুজ</translation>
+    </message>
+    <message>
+        <source>Hexagon</source>
+        <translation type="unfinished">ষড়ভুজ</translation>
+    </message>
+    <message>
+        <source>Octagon</source>
+        <translation type="unfinished">অষ্টভুজ</translation>
+    </message>
+    <message>
+        <source>Star</source>
+        <translation type="unfinished">তারা</translation>
+    </message>
+    <message>
+        <source>Heart</source>
+        <translation type="unfinished">হৃদয়</translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished">আকৃতি</translation>
+    </message>
+    <message>
+        <source>Content inside shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation type="unfinished">জুম কমান</translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">জুম</translation>
+    </message>
+    <message>
+        <source>Reframe clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation type="unfinished">জুম বাড়ান</translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation type="unfinished">অনুভূমিক</translation>
+    </message>
+    <message>
+        <source>Horizontal position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation type="unfinished">উল্লম্ব</translation>
+    </message>
+    <message>
+        <source>Vertical position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nudge content right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show whole video</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -22533,6 +22775,18 @@ If playback stutters, try another.</source>
         <translation>সব অডিও ট্র্যাক আলাদা করুন</translation>
     </message>
     <message>
+        <source>Remove silence</source>
+        <translation type="unfinished">নীরবতা সরান</translation>
+    </message>
+    <message>
+        <source>Sync by audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel audio analysis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to mask</source>
         <translation>মাস্কে রূপান্তর করুন</translation>
     </message>
@@ -22607,6 +22861,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Color grade…</source>
         <translation>কালার গ্রেড…</translation>
+    </message>
+    <message>
+        <source>Blur area…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Edit keyframes…</source>
