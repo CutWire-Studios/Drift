@@ -289,3 +289,5 @@ void DenoiseController::finalize(const QString &clipId, const QString &audioPath
     emit finished(true, tr("Noise removed"));
 }
 
+
+#include "moc_DenoiseController.cpp"

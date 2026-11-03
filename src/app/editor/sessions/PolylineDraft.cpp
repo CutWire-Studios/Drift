@@ -99,3 +99,5 @@ QVariantList PolylineDraft::normalized(double frameW, double frameH, bool clamp)
     }
     return out;
 }
+
+#include "moc_PolylineDraft.cpp"

@@ -95,3 +95,5 @@ void MarketItemLoader::load()
         emit itemChanged();
     });
 }
+
+#include "moc_MarketItemLoader.cpp"

@@ -96,3 +96,5 @@ void McpStdioServer::readLoop()
 }
 
 } // namespace drift::mcp
+
+#include "moc_McpStdioServer.cpp"

@@ -63,3 +63,5 @@ void PointerDevices::setMousePresent(bool present)
 }
 
 } // namespace drift
+
+#include "moc_PointerDevices.cpp"

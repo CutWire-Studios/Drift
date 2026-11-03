@@ -452,3 +452,5 @@ QVariantMap RestoreController::job(const QString &targetId) const
     }
     return {};
 }
+
+#include "moc_RestoreController.cpp"

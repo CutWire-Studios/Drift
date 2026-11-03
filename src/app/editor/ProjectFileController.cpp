@@ -2186,3 +2186,5 @@ void ProjectFileController::discardUnsavedChanges()
     setDirty(false);
     deleteRecoveryFile();
 }
+
+#include "moc_ProjectFileController.cpp"

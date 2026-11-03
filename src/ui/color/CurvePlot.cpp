@@ -359,3 +359,5 @@ void CurvePlot::paint(QPainter *painter)
         painter->drawEllipse(c, m_handleRadius - m_knobBorderWidth / 2, m_handleRadius - m_knobBorderWidth / 2);
     }
 }
+
+#include "moc_CurvePlot.cpp"

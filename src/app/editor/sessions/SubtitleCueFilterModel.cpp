@@ -86,3 +86,5 @@ void SubtitleCueFilterModel::updateCount()
     m_count = count;
     emit countChanged();
 }
+
+#include "moc_SubtitleCueFilterModel.cpp"

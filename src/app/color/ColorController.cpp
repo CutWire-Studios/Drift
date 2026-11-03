@@ -932,3 +932,5 @@ void ColorController::requestThumbnails()
     }
     m_thumbs->request(m_app->playheadUs(), m_sourceClipId, hostId, gradeIndex);
 }
+
+#include "moc_ColorController.cpp"

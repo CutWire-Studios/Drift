@@ -314,3 +314,5 @@ void DriftAssetStore::cancel(const QString &key)
     emit stateChanged(key);
     publishStatus(install, QStringLiteral("cancelled"), tr("Cancelled"), 0, 0, 0, {}, {}, {}, true);
 }
+
+#include "moc_DriftAssetStore.cpp"

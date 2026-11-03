@@ -338,3 +338,5 @@ void KeyframeCurvesItem::paint(QPainter *painter)
         });
     }
 }
+
+#include "moc_KeyframeCurvesItem.cpp"

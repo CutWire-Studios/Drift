@@ -136,3 +136,5 @@ void ClipThumbnailStore::evict()
         }
     }
 }
+
+#include "moc_ClipThumbnailStore.cpp"

@@ -311,3 +311,5 @@ void FaceTrackingController::finalize(const QString &clipId, const QString &trac
     m_app->finishEdit(tr("Detect Faces"));
     m_app->selectClip(trackIndex, clipIndex);
 }
+
+#include "moc_FaceTrackingController.cpp"

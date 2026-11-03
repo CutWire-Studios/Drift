@@ -23486,3 +23486,5 @@ bool AppController::exportUserTextAnimationPreset(const QString &presetId, const
     return true;
 }
 
+
+#include "moc_AppController.cpp"

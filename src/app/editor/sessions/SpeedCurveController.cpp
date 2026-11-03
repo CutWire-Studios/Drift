@@ -261,3 +261,5 @@ void SpeedCurveController::apply()
     m_app->selectClip(newTrack, m_app->m_project.tracks().at(newTrack).clips.size() - 1);
     emit applied();
 }
+
+#include "moc_SpeedCurveController.cpp"

@@ -355,3 +355,5 @@ int ClipPreviewPlayer::fillAudio(float *buffer, int sampleCount)
     m_clock.syncPlaybackUs(static_cast<drift::TimeUs>(m_audio.processedUSecs()));
     return sampleCount;
 }
+
+#include "moc_ClipPreviewPlayer.cpp"

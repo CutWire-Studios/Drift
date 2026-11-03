@@ -6076,3 +6076,5 @@ QJsonObject McpController::cancelJob(const QString &id)
         return err("not_found", QStringLiteral("Unknown job"));
     return ok({{QStringLiteral("cancelled"), m_app->m_jobs->cancel(id)}});
 }
+
+#include "moc_McpController.cpp"

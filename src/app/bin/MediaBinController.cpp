@@ -1099,3 +1099,5 @@ int MediaBinController::rebindClipsToAsset(const QString &assetId, const drift::
     });
     return adjusted;
 }
+
+#include "moc_MediaBinController.cpp"

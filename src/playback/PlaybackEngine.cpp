@@ -1165,3 +1165,5 @@ bool PlaybackEngine::masterMuted() const
 {
     return m_mixer.masterMuted();
 }
+
+#include "moc_PlaybackEngine.cpp"

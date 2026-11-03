@@ -247,3 +247,5 @@ void CommunityInstaller::cancel(const QString &id)
         return;
     }
 }
+
+#include "moc_CommunityInstaller.cpp"

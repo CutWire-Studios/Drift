@@ -510,3 +510,5 @@ int SubtitleController::applyFixOverlaps(int track, int clip, int scope)
         return drift::fixOverlaps(cues, idx);
     });
 }
+
+#include "moc_SubtitleController.cpp"

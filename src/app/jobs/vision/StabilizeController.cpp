@@ -742,3 +742,5 @@ void StabilizeController::setMode(int trackIndex, int clipIndex, const QString &
     emit m_app->selectedClipDataChanged();
     m_app->finishEdit(tr("Change Stabilization Mode"));
 }
+
+#include "moc_StabilizeController.cpp"

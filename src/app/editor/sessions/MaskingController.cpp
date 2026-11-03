@@ -1584,3 +1584,5 @@ void MaskingController::showWholeVideo(int trackIndex, int clipIndex)
     m_app->finishEdit(tr("Showing whole video"));
     m_app->selectClipById(hostId);
 }
+
+#include "moc_MaskingController.cpp"

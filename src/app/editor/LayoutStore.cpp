@@ -132,3 +132,5 @@ void LayoutStore::setLayoutString(const QString &key, const QString &value)
 {
     QSettings().setValue(settingsKey(key), value);
 }
+
+#include "moc_LayoutStore.cpp"
