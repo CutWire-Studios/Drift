@@ -173,7 +173,7 @@ jobs:
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
-            clang-15 libharfbuzz-dev libicu-dev libexpat1-dev libpng-dev \
+            clang-15 lld libharfbuzz-dev libicu-dev libexpat1-dev libpng-dev \
             libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev \
             libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev \
             libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev \
@@ -255,7 +255,10 @@ jobs:
 
       # Everything, not just the test targets: this is the only workflow that sees an ordinary
       # commit, so the app link and QML compilation should be covered here too.
+      # The sloppiness lets ccache hit on objects built against the precompiled header.
       - name: Build
+        env:
+          CCACHE_SLOPPINESS: pch_defines,time_macros,include_file_mtime,include_file_ctime
         run: cmake --build build --parallel
 
       # Deliberately not QT_QPA_PLATFORM=offscreen: that plugin cannot create an OpenGL context
