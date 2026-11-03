@@ -135,3 +135,5 @@ void StartupSplash::drawContents(QPainter *painter)
 void StartupSplash::mousePressEvent(QMouseEvent *)
 {
 }
+
+#include "moc_StartupSplash.cpp"

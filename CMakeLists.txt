@@ -14,6 +14,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(DriftBuildSpeed)
+
+option(DRIFT_PCH "Use a precompiled header for the core, engine and app targets" ON)
+option(DRIFT_QML_CACHEGEN "Compile QML to bytecode/C++ (slow); OFF for fast dev builds" ON)
+option(DRIFT_BUILD_TESTS "Build the test suite" ON)
+option(DRIFT_BUILD_TOOLS "Build the CLI tools" ON)
 
 option(WITH_BGREMOVAL "Enable OpenCV-based background removal" OFF)
 # Skia (Ganesh/GL) draws text, shapes and Lottie/SVG clips on the GPU; see
@@ -1027,26 +1033,108 @@ if(DRIFT_WITH_SKIA)
 endif()
 
 # --- application ------------------------------------------------------------
+# The app sources tst_editorstate also needs, compiled once. Files that read the endpoint/version
+# defines drift sets (or that carry QML_ELEMENT) stay in drift and are compiled separately by the
+# test with its own defines.
+add_library(driftapp STATIC)
+target_include_directories(driftapp PUBLIC src)
+target_link_libraries(driftapp PUBLIC
+    Qt6::Quick
+    Qt6::Multimedia
+    Qt6::Gui
+    Qt6::Concurrent
+    Qt6::Network
+    driftcore
+    driftengine
+)
+if(ANDROID)
+    find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
+    target_link_libraries(driftapp PUBLIC Qt6::CorePrivate)
+endif()
+
 qt_add_executable(drift
     src/app/main.cpp
     src/ui/imageproviders/DriftImageProvider.h
     src/ui/imageproviders/DriftImageProvider.cpp
     src/ui/imageproviders/segment/SegmentImageProvider.h
     src/ui/imageproviders/segment/SegmentImageProvider.cpp
-    src/ui/imageproviders/segment/SegmentImageStore.h
-    src/ui/imageproviders/segment/SegmentImageStore.cpp
     src/ui/imageproviders/clippreview/ClipPreviewImageProvider.h
     src/ui/imageproviders/clippreview/ClipPreviewImageProvider.cpp
+    src/ui/imageproviders/TextStylePreviewImageProvider.h
+    src/ui/imageproviders/TextStylePreviewImageProvider.cpp
+    src/ui/imageproviders/ShapePreviewImageProvider.h
+    src/ui/imageproviders/ShapePreviewImageProvider.cpp
+    src/app/online/addons/AddonEndpoint.h
+    src/app/online/addons/AddonManager.h
+    src/app/online/addons/AddonManager.cpp
+    src/app/online/market/MarketEndpoint.h
+    src/app/online/market/MarketIdentity.h
+    src/app/online/market/MarketIdentity.cpp
+    src/app/online/marketplace/MarketTransport.h
+    src/app/online/marketplace/MarketTransport.cpp
+    src/app/online/marketplace/MarketServices.h
+    src/app/online/marketplace/MarketServices.cpp
+    src/app/online/downloads/DownloadBridges.h
+    src/app/online/downloads/DownloadBridges.cpp
+    src/core/base/VersionCompare.h
+    src/app/online/updates/UpdateChecker.h
+    src/app/online/updates/UpdateChecker.cpp
+    src/app/online/updates/UpdateAsset.h
+    src/app/online/updates/UpdateAsset.cpp
+    src/app/StartupSplash.h
+    src/app/StartupSplash.cpp
+    src/app/editor/sessions/PolylineDraft.h
+    src/app/editor/sessions/PolylineDraft.cpp
+    src/app/jobs/vision/SegmentationPlan.h
+    src/app/mcp/McpDetail.h
+    src/app/editor/AppControllerDetail.h
+    src/app/editor/EditorState.h
+    src/app/editor/LayoutStore.h
+    src/app/editor/LayoutStore.cpp
+    src/app/editor/WorkspaceStore.h
+    src/app/editor/WorkspaceStore.cpp
+    src/app/editor/SearchIndex.h
+    src/app/editor/SearchIndex.cpp
+    src/app/platform/FileDialogs.h
+    src/app/platform/FileDialogs.cpp
+    src/app/platform/Haptics.h
+    src/app/platform/Haptics.cpp
+    src/app/platform/PointerDevices.h
+    src/app/platform/PointerDevices.cpp
+    src/ui/preview/PreviewItem.h
+    src/ui/preview/PreviewItem.cpp
+    src/ui/preview/BrushStrokeItem.h
+    src/ui/preview/BrushStrokeItem.cpp
+    src/ui/preview/ToolCursor.h
+    src/ui/preview/ToolCursor.cpp
+    src/ui/color/ColorWheelMath.h
+    src/ui/color/ColorWheelPad.h
+    src/ui/color/ColorWheelPad.cpp
+    src/ui/color/CurveEdit.h
+    src/ui/color/CurveEdit.cpp
+    src/ui/keyframes/KeyframeDot.h
+    src/ui/keyframes/KeyframeDot.cpp
+    src/ui/keyframes/KeyframeLanesItem.h
+    src/ui/keyframes/KeyframeLanesItem.cpp
+    src/ui/keyframes/KeyframeCurvesItem.h
+    src/ui/keyframes/KeyframeCurvesItem.cpp
+    src/ui/color/CurvePlot.h
+    src/ui/color/CurvePlot.cpp
+    src/ui/preview/TrackerOverlayItem.h
+    src/ui/preview/TrackerOverlayItem.cpp
+    src/ui/preview/TrackerOverlayMath.h
+    src/ui/preview/ConfidenceStripItem.h
+    src/ui/preview/ConfidenceStripItem.cpp
+)
+target_sources(driftapp PRIVATE
+    src/ui/imageproviders/segment/SegmentImageStore.h
+    src/ui/imageproviders/segment/SegmentImageStore.cpp
     src/playback/preview/ClipPreviewImageStore.h
     src/playback/preview/ClipPreviewImageStore.cpp
     src/ui/imageproviders/multicam/MulticamImageProvider.h
     src/ui/imageproviders/multicam/MulticamImageProvider.cpp
     src/ui/imageproviders/multicam/MulticamImageStore.h
     src/ui/imageproviders/multicam/MulticamImageStore.cpp
-    src/ui/imageproviders/TextStylePreviewImageProvider.h
-    src/ui/imageproviders/TextStylePreviewImageProvider.cpp
-    src/ui/imageproviders/ShapePreviewImageProvider.h
-    src/ui/imageproviders/ShapePreviewImageProvider.cpp
     src/ui/imageproviders/color/ColorImageProvider.h
     src/ui/imageproviders/color/ColorImageProvider.cpp
     src/app/color/LookThumbnailService.h
@@ -1055,19 +1143,11 @@ qt_add_executable(drift
     src/app/color/ScopesController.h
     src/app/color/ScopesController.cpp
     src/app/color/LookThumbnailService.cpp
-    src/app/online/addons/AddonEndpoint.h
-    src/app/online/addons/AddonManager.h
     src/app/online/addons/AddonCatalog.cpp
-    src/app/online/addons/AddonManager.cpp
     src/app/jobs/JobRegistry.h
     src/app/jobs/JobRegistry.cpp
     src/app/online/CloudProviders.h
     src/app/online/CloudProviders.cpp
-    src/app/online/market/MarketEndpoint.h
-    src/app/online/market/MarketIdentity.h
-    src/app/online/market/MarketIdentity.cpp
-    src/app/online/marketplace/MarketTransport.h
-    src/app/online/marketplace/MarketTransport.cpp
     src/app/online/marketplace/MarketplaceManifest.h
     src/app/online/marketplace/MarketplaceManifest.cpp
     src/app/online/marketplace/MarketInstall.h
@@ -1078,31 +1158,34 @@ qt_add_executable(drift
     src/app/online/marketplace/CommunityInstaller.cpp
     src/app/online/marketplace/MarketInstallRouter.h
     src/app/online/marketplace/MarketInstallRouter.cpp
-    src/app/online/marketplace/MarketServices.h
-    src/app/online/marketplace/MarketServices.cpp
     src/app/online/downloads/DownloadCenter.h
     src/app/online/downloads/DownloadCenter.cpp
-    src/app/online/downloads/DownloadBridges.h
-    src/app/online/downloads/DownloadBridges.cpp
     src/app/online/assets/DriftAssetStore.h
     src/app/online/assets/DriftAssetStore.cpp
     src/app/online/assets/SfxLibrary.h
     src/app/online/assets/SfxLibrary.cpp
-    src/core/base/VersionCompare.h
-    src/app/online/updates/UpdateChecker.h
-    src/app/online/updates/UpdateChecker.cpp
-    src/app/online/updates/UpdateAsset.h
-    src/app/online/updates/UpdateAsset.cpp
     src/app/editor/AppController.h
     src/app/editor/AppController.cpp
+    src/app/editor/appcontroller/AppControllerInternal.h
+    src/app/editor/appcontroller/AppControllerClipModel.cpp
+    src/app/editor/appcontroller/AppControllerInternal.cpp
+    src/app/editor/appcontroller/AppControllerTimeline.cpp
+    src/app/editor/appcontroller/AppControllerSubtitleMulticam.cpp
+    src/app/editor/appcontroller/AppControllerAdjustments.cpp
+    src/app/editor/appcontroller/AppControllerClipProps.cpp
+    src/app/editor/appcontroller/AppControllerComposite.cpp
+    src/app/editor/appcontroller/AppControllerVector.cpp
+    src/app/editor/appcontroller/AppControllerKeyframes.cpp
+    src/app/editor/appcontroller/AppControllerEffects.cpp
+    src/app/editor/appcontroller/AppControllerTracks.cpp
+    src/app/editor/appcontroller/AppControllerProject.cpp
+    src/app/editor/appcontroller/AppControllerTextLayers.cpp
     src/app/mcp/AgentImageLog.h
     src/app/mcp/AgentImageLog.cpp
     src/app/mcp/McpController.h
     src/app/mcp/McpController.cpp
     src/app/editor/PreferencesController.h
     src/app/editor/PreferencesController.cpp
-    src/app/StartupSplash.h
-    src/app/StartupSplash.cpp
     src/app/GraphicsApiChoice.h
     src/app/GraphicsApiChoice.cpp
     src/app/editor/ProjectFileController.h
@@ -1131,8 +1214,6 @@ qt_add_executable(drift
     src/app/editor/sessions/MaskEditSession.cpp
     src/app/editor/sessions/MaskStackModel.h
     src/app/editor/sessions/MaskStackModel.cpp
-    src/app/editor/sessions/PolylineDraft.h
-    src/app/editor/sessions/PolylineDraft.cpp
     src/app/editor/sessions/MaskingController.h
     src/app/editor/sessions/MaskingController.cpp
     src/app/editor/sessions/SubtitleController.h
@@ -1143,7 +1224,6 @@ qt_add_executable(drift
     src/app/editor/sessions/SubtitleCueFilterModel.cpp
     src/app/jobs/vision/SegmentationController.h
     src/app/jobs/vision/SegmentationController.cpp
-    src/app/jobs/vision/SegmentationPlan.h
     src/app/jobs/vision/SceneDetectController.h
     src/app/jobs/vision/SceneDetectController.cpp
     src/app/jobs/vision/DepthController.h
@@ -1170,21 +1250,6 @@ qt_add_executable(drift
     src/app/jobs/audio/TtsController.cpp
     src/app/jobs/audio/VoiceLibrary.h
     src/app/jobs/audio/VoiceLibrary.cpp
-    src/app/mcp/McpDetail.h
-    src/app/editor/AppControllerDetail.h
-    src/app/editor/EditorState.h
-    src/app/editor/LayoutStore.h
-    src/app/editor/LayoutStore.cpp
-    src/app/editor/WorkspaceStore.h
-    src/app/editor/WorkspaceStore.cpp
-    src/app/editor/SearchIndex.h
-    src/app/editor/SearchIndex.cpp
-    src/app/platform/FileDialogs.h
-    src/app/platform/FileDialogs.cpp
-    src/app/platform/Haptics.h
-    src/app/platform/Haptics.cpp
-    src/app/platform/PointerDevices.h
-    src/app/platform/PointerDevices.cpp
     src/app/bin/AssetLibrary.h
     src/app/bin/AssetLibrary.cpp
     src/app/bin/BinFolderListModel.h
@@ -1207,30 +1272,6 @@ qt_add_executable(drift
     src/playback/stats/PlaybackDiagnostics.cpp
     src/playback/stats/PerfLog.h
     src/playback/stats/PerfLog.cpp
-    src/ui/preview/PreviewItem.h
-    src/ui/preview/PreviewItem.cpp
-    src/ui/preview/BrushStrokeItem.h
-    src/ui/preview/BrushStrokeItem.cpp
-    src/ui/preview/ToolCursor.h
-    src/ui/preview/ToolCursor.cpp
-    src/ui/color/ColorWheelMath.h
-    src/ui/color/ColorWheelPad.h
-    src/ui/color/ColorWheelPad.cpp
-    src/ui/color/CurveEdit.h
-    src/ui/color/CurveEdit.cpp
-    src/ui/keyframes/KeyframeDot.h
-    src/ui/keyframes/KeyframeDot.cpp
-    src/ui/keyframes/KeyframeLanesItem.h
-    src/ui/keyframes/KeyframeLanesItem.cpp
-    src/ui/keyframes/KeyframeCurvesItem.h
-    src/ui/keyframes/KeyframeCurvesItem.cpp
-    src/ui/color/CurvePlot.h
-    src/ui/color/CurvePlot.cpp
-    src/ui/preview/TrackerOverlayItem.h
-    src/ui/preview/TrackerOverlayItem.cpp
-    src/ui/preview/TrackerOverlayMath.h
-    src/ui/preview/ConfidenceStripItem.h
-    src/ui/preview/ConfidenceStripItem.cpp
     src/ui/preview/PreviewController.h
     src/ui/preview/PreviewController.cpp
     src/ui/timeline/ClipThumbnailStore.h
@@ -1247,14 +1288,17 @@ qt_add_executable(drift
 # desktop, and an agent reaches it through `adb forward` — which is what makes the phone build
 # drivable by tooling instead of by blind coordinate taps.
 target_sources(drift PRIVATE
+    src/app/mcp/protocol/McpProtocol.h
+    src/app/mcp/protocol/McpProtocol.cpp
+    src/app/mcp/protocol/McpJson.h
+)
+target_sources(driftapp PRIVATE
     src/app/mcp/protocol/McpSession.h
     src/app/mcp/protocol/McpSession.cpp
     src/app/platform/RunningInstances.h
     src/app/platform/RunningInstances.cpp
     src/app/mcp/tools/McpCatalog.h
     src/app/mcp/tools/McpCatalog.cpp
-    src/app/mcp/protocol/McpProtocol.h
-    src/app/mcp/protocol/McpProtocol.cpp
     src/app/mcp/tools/McpDispatcher.h
     src/app/mcp/tools/McpDispatcher.cpp
     src/app/mcp/tools/McpDispatcherExtended.cpp
@@ -1263,13 +1307,14 @@ target_sources(drift PRIVATE
     src/app/mcp/protocol/McpValidate.h
     src/app/mcp/protocol/McpValidate.cpp
     src/app/mcp/tools/McpMarket.cpp
-    src/app/mcp/protocol/McpJson.h
 )
 
 # The HTTP listener needs QTcpServer, which a browser has no sockets for; McpController does not
 # construct a McpServer under Q_OS_WASM.
 if(NOT EMSCRIPTEN)
     target_sources(drift PRIVATE
+    )
+    target_sources(driftapp PRIVATE
         src/app/mcp/transport/McpHttp.h
         src/app/mcp/transport/McpHttp.cpp
         src/app/mcp/transport/McpServer.h
@@ -1281,14 +1326,16 @@ endif()
 # points driven from a terminal, which an APK has no equivalent of.
 if(NOT ANDROID AND NOT EMSCRIPTEN)
     target_sources(drift PRIVATE
+        src/app/HeadlessApp.h
+        src/app/HeadlessApp.cpp
+    )
+    target_sources(driftapp PRIVATE
         src/app/mcp/transport/McpStdio.h
         src/app/mcp/transport/McpStdio.cpp
         src/app/mcp/transport/McpBridge.h
         src/app/mcp/transport/McpBridge.cpp
         src/app/mcp/transport/McpStdioServer.h
         src/app/mcp/transport/McpStdioServer.cpp
-        src/app/HeadlessApp.h
-        src/app/HeadlessApp.cpp
     )
 endif()
 
@@ -1513,10 +1560,16 @@ elseif(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     list(APPEND DRIFT_BACKDROP_PLATFORM_LIBS "-framework Cocoa")
 endif()
 
+if(DRIFT_QML_CACHEGEN)
+    set(_drift_qml_cachegen_args DISCARD_QML_CONTENTS)
+else()
+    set(_drift_qml_cachegen_args NO_CACHEGEN)
+endif()
+
 qt_add_qml_module(drift
     URI Drift
     VERSION 1.0
-    DISCARD_QML_CONTENTS
+    ${_drift_qml_cachegen_args}
     SOURCES
         src/ui/theme/ThemeManager.h
         src/ui/theme/ThemeManager.cpp
@@ -2446,6 +2499,7 @@ target_link_libraries(drift PRIVATE
     Qt6::Widgets
     Qt6::Concurrent
     Qt6::Network
+    driftapp
     driftcore
     driftengine
 )
@@ -2708,6 +2762,16 @@ target_compile_definitions(drift PRIVATE
     DRIFT_DISTRIBUTION="${DRIFT_DISTRIBUTION}"
 )
 
+if(DRIFT_PCH)
+    foreach(_t driftcore driftengine driftapp drift)
+        target_precompile_headers(${_t} PRIVATE
+            "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/src/pch/DriftPch.h>")
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_compile_options(${_t} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:SHELL:-Xclang -fno-pch-timestamp>")
+        endif()
+    endforeach()
+endif()
+
 # Ship a file-based package directory next to the binaries that load the catalog.
 #
 # Several targets share one output directory (everything under tools/, the two engine tests), so
@@ -2746,7 +2810,7 @@ function(drift_stage_packages target assetdir)
     endif()
     file(RELATIVE_PATH _key "${CMAKE_BINARY_DIR}" "${_outdir}/${assetdir}")
     string(MAKE_C_IDENTIFIER "drift_stage_${_key}" _stage)
-    # Multi-config generators (the Windows job uses Visual Studio) put binaries in <dir>/<config>,
+    # Multi-config generators (Visual Studio, Xcode) put binaries in <dir>/<config>,
     # which is where the packaging step expects the staged packages as well.
     get_property(_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
     if(_multi_config)
@@ -2904,9 +2968,13 @@ else()
 endif()
 
 # --- CLI tools (headless engine testing, no GUI) ----------------------------
-add_subdirectory(tools)
+if(DRIFT_BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()
 
 # --- tests -------------------------------------------------------------------
 enable_testing()
-add_subdirectory(tests)
+if(DRIFT_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
 endif() # NOT ANDROID AND NOT EMSCRIPTEN

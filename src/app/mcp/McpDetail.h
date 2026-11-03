@@ -8,7 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
-#include <QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include <cmath>
 #include <memory>

@@ -247,3 +247,5 @@ QHash<int, QByteArray> TimelineClipsModel::roleNames() const
         {VolumeKeysRole, "volumeKeys"},
     };
 }
+
+#include "moc_TimelineClipsModel.cpp"

@@ -242,3 +242,5 @@ QSGNode *PreviewItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 
     return node;
 }
+
+#include "moc_PreviewItem.cpp"

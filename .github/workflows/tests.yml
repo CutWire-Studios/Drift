@@ -5,8 +5,9 @@ name: Tests
 # until release day. Each job builds the same way package.yml's job for that platform does and
 # then stops: no install tree, no AppImage, no DMG, no artifacts.
 #
-# Two platforms, because one is not enough: allocator and toolchain differences mean a defect
-# can be reliably invisible on Linux and reliably fatal on macOS. See the macos job below.
+# Three platforms, because one is not enough: allocator and toolchain differences mean a defect
+# can be reliably invisible on Linux and reliably fatal on macOS or under MSVC. See the macos
+# job below.
 on:
   push:
   pull_request:
@@ -31,7 +32,6 @@ env:
   # encoder — which would leave the exporter tests with nothing to exercise.
   FFMPEG_REPO: "CutWire-Studios/FFmpeg-Builds"
   FFMPEG_TAG: "n7.1"
-  CCACHE_MAXSIZE: "1G"
 
 jobs:
   macos-icon:
@@ -85,6 +85,9 @@ jobs:
     name: CTest
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -173,7 +176,7 @@ jobs:
             libpulse-dev libasound2-dev \
             libva2 libva-drm2 libva-x11-2 \
             libfontconfig1-dev libfreetype6-dev libxkbcommon-dev libxkbcommon-x11-dev \
-            clang-15 libharfbuzz-dev libicu-dev libexpat1-dev libpng-dev \
+            clang-15 lld libharfbuzz-dev libicu-dev libexpat1-dev libpng-dev \
             libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev \
             libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev \
             libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev \
@@ -199,15 +202,14 @@ jobs:
           key: v2-deps-linux-${{ hashFiles('CMakeLists.txt') }}
 
       # The build tree is not cached, so every run reconfigures and recompiles from scratch —
-      # ccache is what makes that cheap. The sha in the key is what makes the cache save at
-      # all: actions/cache never re-saves on an exact-key hit, so a fixed key would freeze the
-      # cache at its first contents. restore-keys supplies the previous run's objects.
-      - name: Cache ccache
-        uses: actions/cache@v4
+      # ccache is what makes that cheap. The action saves only from main (PR-ref caches are
+      # invisible to other refs) and keeps one entry, so the 10 GB repo budget is not eaten.
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
         with:
-          path: ~/.cache/ccache
-          key: ccache-tests-${{ github.sha }}
-          restore-keys: ccache-tests-
+          phase: restore
+          key-prefix: ccache-tests-linux-
+          max-size: 1G
 
       # Same Skia build package.yml's Linux lane makes, minus SKIA_SYSTEM_ICU=0: nothing is
       # bundled here, so the distro ICU is fine and the cache key stays separate on purpose.
@@ -250,12 +252,14 @@ jobs:
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
             -DDRIFT_WITH_SKIA=ON \
+            -DDRIFT_LINKER=lld \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       # Everything, not just the test targets: this is the only workflow that sees an ordinary
       # commit, so the app link and QML compilation should be covered here too.
       - name: Build
+        id: build
         run: cmake --build build --parallel
 
       # Deliberately not QT_QPA_PLATFORM=offscreen: that plugin cannot create an OpenGL context
@@ -313,9 +317,14 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: ccache statistics
-        if: always()
-        run: ccache --show-stats
+      # The compile output is valid even when a test failed, so save unless the build itself broke.
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-tests-linux-
+          max-size: 1G
 
   # The macOS runner is the reason this job exists rather than trusting the Linux one. glibc's
   # allocator leaves a freed block byte-identical, so a use-after-free through a stale
@@ -330,6 +339,9 @@ jobs:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: macos-15
     timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v4
 
@@ -362,7 +374,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew update
-          brew install qt ffmpeg zstd openssl@3 sound-touch ninja
+          brew install qt ffmpeg zstd openssl@3 sound-touch ninja ccache
 
       # Runs after Install dependencies because the unpacker needs zstd from Homebrew.
       - name: Fetch test models and ONNX Runtime
@@ -409,6 +421,13 @@ jobs:
           JOBS="$(sysctl -n hw.ncpu)" third_party/build-skia.sh mac-arm64
           rm -rf third_party/src
 
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-tests-macos-
+          max-size: 1G
+
       - name: Configure
         run: |
           cmake -B build -G Ninja \
@@ -416,9 +435,12 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$(brew --prefix openssl@3);$(brew --prefix)" \
             -DFETCHCONTENT_BASE_DIR="${FETCHCONTENT_BASE_DIR}" \
             -DDRIFT_BUNDLE_ONNXRUNTIME=OFF \
-            -DDRIFT_WITH_SKIA=ON
+            -DDRIFT_WITH_SKIA=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
+        id: build
         run: cmake --build build --parallel
 
       # No xvfb and no QT_QPA_PLATFORM override: the runner has a real window server, so the
@@ -450,6 +472,246 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       # A suite that QSKIPs still passes, so the failure summary never shows what did not run.
+      - name: Summarize skipped tests
+        if: always() && steps.test.outcome != 'skipped'
+        shell: bash
+        run: |
+          skipped="$(grep -ho 'SKIP   : [^<]*' build/ctest-junit.xml 2>/dev/null \
+            | sed -e 's/&quot;/"/g' -e "s/&apos;/'/g" -e 's/&lt;/</g' -e 's/&gt;/>/g' -e 's/&amp;/\&/g' \
+            | sort | uniq)"
+          {
+            echo '### Skipped tests'
+            echo '```'
+            if [ -n "$skipped" ]; then echo "$skipped"; else echo none; fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-tests-macos-
+          max-size: 1G
+
+  # Windows has its own toolchain (MSVC, vcpkg Skia, Qt's DLL search order), so a Linux or macOS
+  # pass says nothing about it. Mirrors package.yml's windows lane up to the test run; the
+  # ccache prefix and the vcpkg/FetchContent/Qt cache keys are deliberately identical so the two
+  # workflows share one entry each (the repo cache budget is tight).
+  windows:
+    name: CTest (Windows)
+    runs-on: windows-2022
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: write
+    env:
+      CCACHE_VERSION: "4.14.2"
+      MESA_WIN_VERSION: "26.2.4"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out addon content
+        uses: actions/checkout@v4
+        with:
+          repository: CutWire-Studios/Drift-Addons
+          path: drift-addons
+          sparse-checkout: |
+            staging/fonts-essentials/fonts
+            staging/stickers-harmonyos/emoji-font
+            staging/stickers-harmonyos/stickers
+            staging/effects-core/effects
+
+      - name: Fetch test models and ONNX Runtime
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dl="${RUNNER_TEMP}/driftpkg"
+          mkdir -p "$dl"
+          gh release download packages -R CutWire-Studios/Drift-Addons -D "$dl" \
+            -p deepfilternet.v3-1.0.0.driftpkg -p silero.vad-1.0.0.driftpkg -p onnxruntime.cpu.win-x64-1.0.0.driftpkg
+          python "scripts/unpack-driftpkg.py" "$dl/deepfilternet.v3-1.0.0.driftpkg" "${GITHUB_WORKSPACE}"
+          python "scripts/unpack-driftpkg.py" "$dl/silero.vad-1.0.0.driftpkg" "drift-addons/staging/silero-vad"
+          python "scripts/unpack-driftpkg.py" "$dl/onnxruntime.cpu.win-x64-1.0.0.driftpkg" "${GITHUB_WORKSPACE}/.ort"
+          test -d models/deepfilternet3
+          test -f drift-addons/staging/silero-vad/models/silero-vad/silero_vad.onnx
+          test -f .ort/runtime/lib/onnxruntime.dll
+
+      # A copy, not the Linux symlink: creating one outside the workspace needs elevation here.
+      - name: Stage addon content where the tests expect it
+        shell: bash
+        run: |
+          cp -r drift-addons/staging/fonts-essentials/fonts fonts
+          cp -r drift-addons/staging/stickers-harmonyos/emoji-font emoji-fonts
+          cp -r drift-addons ../drift-addons
+          test -f fonts/anton/Anton-400.ttf
+          test -f emoji-fonts/HarmonyOS_4.0.ttf
+          test -f ../drift-addons/staging/effects-core/effects/turbulent_displace/effect.json
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+          add-tools-to-path: true
+
+      # Same key as package.yml, hashing package.yml itself (its vcpkg package list is what the
+      # cache holds). Only main saves, so a PR never writes a ref-scoped copy that nothing else reads.
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}\vcpkg_bincache
+          key: vcpkg-bincache-win-x64-${{ hashFiles('CMakeLists.txt', '.github/workflows/package.yml') }}
+          restore-keys: |
+            vcpkg-bincache-win-x64-
+
+      # Keep the package list and triplets identical to package.yml's Install vcpkg dependencies
+      # step; see the comments there for why zlib and skia are static-md.
+      - name: Install vcpkg dependencies
+        shell: pwsh
+        env:
+          VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg_bincache
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          if (-not (Test-Path vcpkg\vcpkg.exe)) {
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git vcpkg
+            .\vcpkg\bootstrap-vcpkg.bat
+          }
+          .\vcpkg\vcpkg.exe install zstd openssl soundtouch --triplet x64-windows
+          .\vcpkg\vcpkg.exe install zlib "skia[gl,harfbuzz,icu,freetype,png]" --triplet x64-windows-static-md
+
+      - name: Save vcpkg binary cache
+        if: always() && github.ref == 'refs/heads/main' && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}\vcpkg_bincache
+          key: vcpkg-bincache-win-x64-${{ hashFiles('CMakeLists.txt', '.github/workflows/package.yml') }}
+
+      - name: Cache FetchContent dependencies
+        uses: actions/cache@v4
+        with:
+          path: .deps
+          key: v2-deps-win-${{ hashFiles('CMakeLists.txt') }}
+
+      - name: Fetch pinned FFmpeg
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force .deps\ffmpeg, .deps\ffmpeg_extracted -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path .deps\ffmpeg | Out-Null
+          Invoke-WebRequest -Uri "https://github.com/$env:FFMPEG_REPO/releases/download/$env:FFMPEG_TAG/ffmpeg-$env:FFMPEG_TAG-win64-gpl-shared.zip" -OutFile ffmpeg.zip
+          Expand-Archive -Path ffmpeg.zip -DestinationPath .deps\ffmpeg_extracted -Force
+          $extractedRoot = (Get-ChildItem .deps\ffmpeg_extracted)[0].FullName
+          Copy-Item -Path "$extractedRoot\*" -Destination .deps\ffmpeg -Recurse -Force
+
+      - name: Install ccache
+        shell: pwsh
+        run: |
+          $name = "ccache-$env:CCACHE_VERSION-windows-x86_64"
+          Invoke-WebRequest -Uri "https://github.com/ccache/ccache/releases/download/v$env:CCACHE_VERSION/$name.zip" -OutFile ccache.zip
+          Expand-Archive -Path ccache.zip -DestinationPath "$env:RUNNER_TEMP\ccache-bin" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:RUNNER_TEMP\ccache-bin\$name"
+          & "$env:RUNNER_TEMP\ccache-bin\$name\ccache.exe" --version
+
+      # Ninja needs the compiler environment; after the vcpkg step, which finds Visual Studio itself.
+      - name: Set up MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # Same prefix as package.yml's windows lane, so both read and write one cache entry.
+      - name: Restore ccache
+        uses: ./.github/actions/ccache
+        with:
+          phase: restore
+          key-prefix: ccache-windows-x64-
+          max-size: 1G
+
+      # DRIFT_PCH=OFF and the /Z7 settings are what let ccache cache MSVC objects; see package.yml.
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake `
+            -DCMAKE_PREFIX_PATH="${{ env.QT_ROOT_DIR }};${{ github.workspace }}\.deps\ffmpeg;${{ github.workspace }}\vcpkg\installed\x64-windows-static-md" `
+            -DFETCHCONTENT_BASE_DIR=${{ env.FETCHCONTENT_BASE_DIR }} `
+            -DZLIB_INCLUDE_DIR=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\include `
+            -DZLIB_LIBRARY=${{ github.workspace }}\vcpkg\installed\x64-windows-static-md\lib\zs.lib `
+            -DDRIFT_BUNDLE_ONNXRUNTIME=OFF `
+            -DDRIFT_WITH_SKIA=ON `
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache `
+            -DDRIFT_PCH=OFF `
+            -DCMAKE_POLICY_DEFAULT_CMP0141=NEW `
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded
+
+      # --parallel 3: more risks MSVC heap exhaustion / OOM on the 4-core 16 GB runner.
+      - name: Build
+        id: build
+        shell: pwsh
+        run: cmake --build build --parallel 3
+
+      - name: Save ccache
+        if: always() && steps.build.outcome == 'success'
+        uses: ./.github/actions/ccache
+        with:
+          phase: save
+          key-prefix: ccache-windows-x64-
+          max-size: 1G
+
+      # The runner's Mesa is OpenGL 3.0, so ~110 GPU tests skip; llvmpipe provides 4.5. The DLLs
+      # go beside each test exe because opengl32.dll is in System32 and PATH cannot override it.
+      - name: Install Mesa llvmpipe for the GPU tests
+        shell: pwsh
+        run: |
+          $archive = "mesa.7z"
+          Invoke-WebRequest -Uri "https://github.com/pal1000/mesa-dist-win/releases/download/$env:MESA_WIN_VERSION/mesa3d-$env:MESA_WIN_VERSION-release-msvc.7z" -OutFile $archive
+          & "$env:ProgramFiles\7-Zip\7z.exe" x $archive -omesa -y | Out-Null
+          # Only the GL pair: the rest would shadow system copies the D3D11 and decode tests rely on.
+          $dlls = Get-Item mesa\x64\opengl32.dll, mesa\x64\libgallium_wgl.dll
+          $testDirs = Get-ChildItem build -Recurse -Filter "tst_*.exe" | ForEach-Object { $_.DirectoryName } | Sort-Object -Unique
+          if (-not $testDirs) { throw "no tst_*.exe under build; the GPU tests would run on the system Mesa" }
+          foreach ($dir in $testDirs) {
+            Copy-Item $dlls.FullName $dir -Force
+          }
+
+      # .deps\ffmpeg\bin ahead of Qt's bin: Qt ships its own avcodec DLLs under the same names and
+      # the suite must run against the FFmpeg it was built with. Serial for the shared
+      # QStandardPaths test-mode state. QT_FORCE_STDERR_LOGGING: without it QPlainTestLogger sends
+      # output to OutputDebugString when stdout is ctest's pipe, hiding every FAIL! line.
+      - name: Test
+        id: test
+        shell: pwsh
+        env:
+          QT_FORCE_STDERR_LOGGING: 1
+          GALLIUM_DRIVER: llvmpipe
+          DRIFT_ONNXRUNTIME_DIR: ${{ github.workspace }}/.ort/runtime
+          DRIFT_STICKERS_DIR: ${{ github.workspace }}/drift-addons/staging/stickers-harmonyos/stickers
+        run: |
+          $env:PATH = "${{ github.workspace }}\.deps\ffmpeg\bin;${{ env.QT_ROOT_DIR }}\bin;$env:PATH"
+          # Passing suites keep their output so the SKIP lines reach the junit report.
+          ctest --test-dir build --output-on-failure --output-log ctest.log `
+            --output-junit ctest-junit.xml --test-output-size-passed 20000000 --test-output-size-failed 20000000
+
+      - name: Summarize test failures
+        if: failure() && steps.test.outcome == 'failure'
+        shell: bash
+        run: |
+          {
+            echo "### Failed tests"
+            echo '```'
+            sed -n '/^The following tests FAILED:/,/^Errors while running CTest/p' ctest.log | grep -v '^Errors while running CTest'
+            echo
+            grep -E -A1 '^(FAIL!|QFATAL)' ctest.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Summarize skipped tests
         if: always() && steps.test.outcome != 'skipped'
         shell: bash

@@ -122,3 +122,5 @@ void LookThumbnailService::onRenderFinished(int serial)
             startRender();
     }
 }
+
+#include "moc_LookThumbnailService.cpp"

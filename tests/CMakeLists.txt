@@ -53,102 +53,19 @@ add_test(NAME PdfSource COMMAND tst_pdfsource)
 
 qt_add_executable(tst_editorstate
     tst_editorstate.cpp
-    ../src/ui/imageproviders/segment/SegmentImageStore.cpp
-    ../src/playback/preview/ClipPreviewImageStore.cpp
-    ../src/ui/imageproviders/multicam/MulticamImageStore.cpp
-    # The provider, not just the store: the id QML addresses a tile by is parsed here, and a
-    # store test cannot see that half. Costs a Qt6::Quick link, but needs no QML engine —
-    # requestImage is called directly.
-    ../src/ui/imageproviders/multicam/MulticamImageProvider.cpp
-    ../src/app/editor/AppController.cpp
-    ../src/app/mcp/McpController.cpp
-    ../src/app/mcp/AgentImageLog.cpp
-    ../src/app/editor/PreferencesController.cpp
-    ../src/app/GraphicsApiChoice.cpp
-    ../src/app/editor/ProjectFileController.cpp
-    ../src/app/bin/AssetPreviewController.cpp
-    ../src/app/editor/sessions/SpeedCurveController.cpp
-    ../src/app/editor/sessions/CurveEditorController.cpp
-    ../src/app/editor/sessions/KeyframeController.cpp
-    ../src/app/editor/sessions/KeyframeCurves.cpp
-    ../src/app/editor/sessions/KeyframeCurvesModel.cpp
-    ../src/app/editor/sessions/KeyframeRows.cpp
-    ../src/app/editor/sessions/KeyframeRowsModel.cpp
-    ../src/app/editor/sessions/KeyframeSelection.cpp
-    ../src/app/editor/sessions/KeyframeTimeView.cpp
-    ../src/app/editor/sessions/MaskEditSession.cpp
-    ../src/app/editor/sessions/MaskStackModel.cpp
-    ../src/app/editor/sessions/MaskingController.cpp
-    ../src/app/editor/sessions/SubtitleController.cpp
-    ../src/app/editor/sessions/SubtitleCueModel.cpp
-    ../src/app/editor/sessions/SubtitleCueFilterModel.cpp
-    ../src/app/jobs/vision/SegmentationController.cpp
-    ../src/app/jobs/vision/SceneDetectController.cpp
-    ../src/app/jobs/vision/DepthController.cpp
-    ../src/app/jobs/audio/DenoiseController.cpp
-    ../src/app/jobs/audio/AudioAlignController.cpp
-    ../src/app/color/ColorController.cpp
-    ../src/app/color/ScopesController.cpp
-    ../src/app/color/LookThumbnailService.cpp
-    ../src/ui/imageproviders/color/ColorImageProvider.cpp
-    ../src/app/jobs/vision/RestoreController.cpp
-    ../src/app/jobs/vision/FaceTrackingController.cpp
-    ../src/app/jobs/vision/StabilizeController.cpp
-    ../src/app/jobs/vision/TrackingController.cpp
-    ../src/app/jobs/vision/TrackerListModel.cpp
-    ../src/app/bin/MediaBinController.cpp
-    ../src/app/bin/SourceLabController.cpp
-    ../src/app/jobs/audio/TtsController.cpp
-    ../src/app/jobs/audio/VoiceLibrary.cpp
-    ../src/ui/preview/PreviewController.cpp
-    ../src/app/online/addons/AddonCatalog.cpp
+    # Compiled here rather than in driftapp: they read the DRIFT_VERSION/endpoint defines, which
+    # the app sets to release values and this test pins to its own, or they carry QML_ELEMENT.
     ../src/app/online/addons/AddonManager.cpp
-    ../src/app/jobs/JobRegistry.cpp
-    ../src/app/online/CloudProviders.cpp
-    ../src/app/bin/AssetLibrary.cpp
-    ../src/app/bin/BinFolderListModel.cpp
-    ../src/app/editor/TimelineClipsModel.cpp
-    ../src/ui/timeline/TimelineLayout.cpp
-    ../src/ui/timeline/TimelineTrackItem.cpp
-    ../src/ui/timeline/TimelineViewState.cpp
-    ../src/ui/timeline/ClipThumbnailStore.cpp
-    ../src/playback/PlaybackEngine.cpp
-    ../src/playback/PlaybackClock.cpp
-    ../src/playback/AudioOutputChannel.cpp
-    ../src/playback/preview/CompositorService.cpp
-    ../src/playback/stats/PerfLog.cpp
-    ../src/playback/stats/PlaybackStats.cpp
-    ../src/playback/stats/PlaybackDiagnostics.cpp
-    ../src/playback/preview/ClipPreviewPlayer.cpp
-    ../src/app/mcp/protocol/McpSession.cpp
-    ../src/app/platform/RunningInstances.cpp
-    ../src/app/mcp/tools/McpCatalog.cpp
     ../src/app/mcp/protocol/McpProtocol.cpp
-    ../src/app/mcp/transport/McpHttp.cpp
-    ../src/app/mcp/tools/McpDispatcher.cpp
-    ../src/app/mcp/tools/McpDispatcherExtended.cpp
     ../src/ui/theme/ThemeManager.cpp
-    ../src/app/mcp/tools/McpEffectAuthoring.cpp
-    ../src/app/mcp/protocol/McpValidate.cpp
-    ../src/app/mcp/tools/McpMarket.cpp
-    ../src/app/online/marketplace/MarketInstall.cpp
-    ../src/app/online/marketplace/StockInstaller.cpp
     ../src/app/online/marketplace/MarketSourceBrowser.cpp
-    ../src/app/online/marketplace/MarketplaceManifest.cpp
-    ../src/app/online/marketplace/CommunityInstaller.cpp
-    ../src/app/online/marketplace/MarketInstallRouter.cpp
-    ../src/app/online/assets/SfxLibrary.cpp
-    ../src/app/online/downloads/DownloadCenter.cpp
     ../src/app/online/marketplace/MarketTransport.cpp
-    ../src/app/online/assets/DriftAssetStore.cpp
     ../src/app/online/market/MarketIdentity.cpp
-    ../src/app/mcp/transport/McpServer.cpp
-    ../src/app/mcp/transport/McpStdio.cpp
-    ../src/app/mcp/transport/McpBridge.cpp
-    ../src/app/mcp/transport/McpStdioServer.cpp
 )
 target_include_directories(tst_editorstate PRIVATE ../src)
-target_link_libraries(tst_editorstate PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Multimedia Qt6::Concurrent Qt6::Network driftcore driftengine)
+# driftapp holds the multicam provider too, not just the store: the id QML addresses a tile by is
+# parsed there. Costs a Qt6::Quick link, but needs no QML engine — requestImage is called directly.
+target_link_libraries(tst_editorstate PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Multimedia Qt6::Concurrent Qt6::Network driftapp driftcore driftengine)
 target_compile_definitions(tst_editorstate PRIVATE
     DRIFT_TEST_DENOISE_MODEL_DIR="${CMAKE_SOURCE_DIR}/models/deepfilternet3"
     DRIFT_VERSION="${PROJECT_VERSION}")
@@ -322,6 +239,19 @@ qt_add_executable(tst_mcp
     ../src/playback/preview/ClipPreviewImageStore.cpp
     ../src/ui/imageproviders/multicam/MulticamImageStore.cpp
     ../src/app/editor/AppController.cpp
+    ../src/app/editor/appcontroller/AppControllerClipModel.cpp
+    ../src/app/editor/appcontroller/AppControllerInternal.cpp
+    ../src/app/editor/appcontroller/AppControllerTimeline.cpp
+    ../src/app/editor/appcontroller/AppControllerSubtitleMulticam.cpp
+    ../src/app/editor/appcontroller/AppControllerAdjustments.cpp
+    ../src/app/editor/appcontroller/AppControllerClipProps.cpp
+    ../src/app/editor/appcontroller/AppControllerComposite.cpp
+    ../src/app/editor/appcontroller/AppControllerVector.cpp
+    ../src/app/editor/appcontroller/AppControllerKeyframes.cpp
+    ../src/app/editor/appcontroller/AppControllerEffects.cpp
+    ../src/app/editor/appcontroller/AppControllerTracks.cpp
+    ../src/app/editor/appcontroller/AppControllerProject.cpp
+    ../src/app/editor/appcontroller/AppControllerTextLayers.cpp
     ../src/app/mcp/McpController.cpp
     ../src/app/mcp/AgentImageLog.cpp
     ../src/app/editor/PreferencesController.cpp

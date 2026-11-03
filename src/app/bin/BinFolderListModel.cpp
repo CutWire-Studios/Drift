@@ -296,3 +296,5 @@ bool BinFolderListModel::deleteFolder(const QString &id)
     endRemoveRows();
     return true;
 }
+
+#include "moc_BinFolderListModel.cpp"

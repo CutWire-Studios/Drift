@@ -53,6 +53,9 @@ jobs:
 
   package:
     name: Package
+    permissions:
+      contents: write
+      actions: write
     needs: verify
     uses: ./.github/workflows/package.yml
     with:

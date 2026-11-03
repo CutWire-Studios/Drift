@@ -1,35 +1,22 @@
 #pragma once
 
-#include "core/edit/commands/ProjectCommands.h"
-#include "core/effects/EffectStackStore.h"
-#include "core/project/Project.h"
-#include "core/text/animation/TextAnimationPreset.h"
 #include "core/edit/TimelineOps.h"
-#include "core/base/Time.h"
+#include "core/edit/commands/ProjectCommands.h"
 #include "engine/audio/analysis/AudioOnsets.h"
-#include "engine/ml/vision/detection/SceneDetect.h"
-#include "engine/compositor/layers/TransformLayer.h"
 #include "engine/media/thumbnails/FilmstripTileCache.h"
-#include "engine/media/waveforms/MediaWaveform.h"
 #include "engine/media/waveforms/WaveformBlockCache.h"
-#include "engine/project/ProjectBundle.h"
 #include "app/editor/TimelineClipsModel.h"
-#include "app/bin/AssetLibrary.h"
 #include "app/mcp/tools/McpMarket.h"
-#include "app/online/CloudProviders.h"
 #include "core/project/GuideSet.h"
-
 #include <QAtomicInt>
-#include <QtNumeric>
 #include <QColor>
 #include <QCursor>
-#include <QImage>
+#include <QElapsedTimer>
 #include <QFuture>
 #include <QHash>
+#include <QImage>
 #include <QJsonObject>
-#include <QMatrix4x4>
 #include <QMediaDevices>
-#include <QElapsedTimer>
 #include <QObject>
 #include <QPair>
 #include <QSet>
@@ -42,50 +29,51 @@
 
 #include <atomic>
 #include <functional>
-#include <QSharedPointer>
-#include <QMap>
-
 #include <memory>
-#include <optional>
 #include <optional>
 
 struct EffectTemplateEntry;
 struct MediaInfo;
 
+class AssetLibrary;
+class CloudProviders;
+class MediaBinController;
+class SourceLabController;
+class PreviewController;
+class AssetPreviewController;
+class CurveEditorController;
+class KeyframeController;
+class MaskingController;
+class SubtitleController;
+class ColorController;
+class DenoiseController;
+class AudioAlignController;
+class DepthController;
+class FaceTrackingController;
+class McpController;
+class RestoreController;
+class SceneDetectController;
+class SegmentationController;
+class StabilizeController;
+class TrackingController;
+class TtsController;
+class VoiceLibrary;
+class SpeedCurveController;
+class PreferencesController;
+class ProjectFileController;
 class QTimer;
 class AddonManager;
 class JobRegistry;
 
 namespace drift {
 struct MediaEditSpec;
+struct EffectStackPreset;
+struct TextAnimationPreset;
+struct TransformParent;
 }
 
-#include "engine/audio/AudioRecorder.h"
 #include "playback/PlaybackEngine.h"
-#include "ui/preview/PreviewController.h"
-#include "app/bin/AssetPreviewController.h"
-#include "app/editor/sessions/CurveEditorController.h"
-#include "app/editor/sessions/KeyframeController.h"
-#include "app/editor/sessions/MaskingController.h"
-#include "app/editor/sessions/SubtitleController.h"
-#include "app/color/ColorController.h"
-#include "app/jobs/audio/DenoiseController.h"
-#include "app/jobs/audio/AudioAlignController.h"
-#include "app/jobs/vision/DepthController.h"
-#include "app/jobs/vision/FaceTrackingController.h"
-#include "app/mcp/McpController.h"
-#include "app/jobs/vision/RestoreController.h"
-#include "app/jobs/vision/SceneDetectController.h"
-#include "app/jobs/vision/SegmentationController.h"
-#include "app/bin/MediaBinController.h"
-#include "app/bin/SourceLabController.h"
-#include "app/jobs/vision/StabilizeController.h"
-#include "app/jobs/vision/TrackingController.h"
-#include "app/jobs/audio/TtsController.h"
-#include "app/jobs/audio/VoiceLibrary.h"
-#include "app/editor/sessions/SpeedCurveController.h"
-#include "app/editor/PreferencesController.h"
-#include "app/editor/ProjectFileController.h"
+#include "engine/audio/AudioRecorder.h"
 
 // QML-facing controller over the core project model and undo stack.
 class AppController : public QObject
@@ -119,6 +107,33 @@ class AppController : public QObject
     friend class SourceLabController;
     friend class TtsController;
     friend class VoiceLibrary;
+
+    Q_MOC_INCLUDE("app/bin/AssetLibrary.h")
+    Q_MOC_INCLUDE("app/online/CloudProviders.h")
+    Q_MOC_INCLUDE("app/bin/MediaBinController.h")
+    Q_MOC_INCLUDE("app/bin/SourceLabController.h")
+    Q_MOC_INCLUDE("ui/preview/PreviewController.h")
+    Q_MOC_INCLUDE("app/bin/AssetPreviewController.h")
+    Q_MOC_INCLUDE("app/editor/sessions/CurveEditorController.h")
+    Q_MOC_INCLUDE("app/editor/sessions/KeyframeController.h")
+    Q_MOC_INCLUDE("app/editor/sessions/MaskingController.h")
+    Q_MOC_INCLUDE("app/editor/sessions/SubtitleController.h")
+    Q_MOC_INCLUDE("app/color/ColorController.h")
+    Q_MOC_INCLUDE("app/jobs/audio/DenoiseController.h")
+    Q_MOC_INCLUDE("app/jobs/audio/AudioAlignController.h")
+    Q_MOC_INCLUDE("app/jobs/vision/DepthController.h")
+    Q_MOC_INCLUDE("app/jobs/vision/FaceTrackingController.h")
+    Q_MOC_INCLUDE("app/mcp/McpController.h")
+    Q_MOC_INCLUDE("app/jobs/vision/RestoreController.h")
+    Q_MOC_INCLUDE("app/jobs/vision/SceneDetectController.h")
+    Q_MOC_INCLUDE("app/jobs/vision/SegmentationController.h")
+    Q_MOC_INCLUDE("app/jobs/vision/StabilizeController.h")
+    Q_MOC_INCLUDE("app/jobs/vision/TrackingController.h")
+    Q_MOC_INCLUDE("app/jobs/audio/TtsController.h")
+    Q_MOC_INCLUDE("app/jobs/audio/VoiceLibrary.h")
+    Q_MOC_INCLUDE("app/editor/sessions/SpeedCurveController.h")
+    Q_MOC_INCLUDE("app/editor/PreferencesController.h")
+    Q_MOC_INCLUDE("app/editor/ProjectFileController.h")
 
     Q_OBJECT
 

@@ -195,3 +195,5 @@ void FileFetch::finish(const QString &errorCode, const QString &message)
 }
 
 } // namespace drift::market
+
+#include "moc_MarketInstall.cpp"

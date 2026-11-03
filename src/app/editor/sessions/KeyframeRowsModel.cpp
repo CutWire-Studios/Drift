@@ -344,3 +344,5 @@ double KeyframeRowsModel::moveDelta(double origin, double dx, const QVariantList
     const double raw = std::max(lo, std::min(hi, origin + dx / m_timeView->pxPerSecond()));
     return snapKeyTime(raw, excludeRefs, invertSnap) - origin;
 }
+
+#include "moc_KeyframeRowsModel.cpp"

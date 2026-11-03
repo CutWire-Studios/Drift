@@ -1017,3 +1017,5 @@ QVariantList KeyframeController::pasteKeys(int track, int clip, double atSeconds
         m_app->setLastMessage(tr("%n keyframe(s) not pasted", "", skipped), QStringLiteral("warning"));
     return pasted;
 }
+
+#include "moc_KeyframeController.cpp"

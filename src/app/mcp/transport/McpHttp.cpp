@@ -287,3 +287,5 @@ void McpHttp::handleRequest(QTcpSocket *socket, const QByteArray &header, const 
 }
 
 } // namespace drift::mcp
+
+#include "moc_McpHttp.cpp"

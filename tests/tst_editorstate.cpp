@@ -1,4 +1,23 @@
 #include <algorithm>
+#include "app/bin/AssetPreviewController.h"
+#include "app/color/ColorController.h"
+#include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/audio/AudioAlignController.h"
+#include "app/jobs/vision/DepthController.h"
+#include "app/jobs/vision/FaceTrackingController.h"
+#include "app/mcp/McpController.h"
+#include "app/jobs/vision/RestoreController.h"
+#include "app/jobs/vision/SceneDetectController.h"
+#include "app/jobs/vision/SegmentationController.h"
+#include "app/jobs/vision/TrackingController.h"
+#include "app/jobs/audio/TtsController.h"
+#include "app/jobs/audio/VoiceLibrary.h"
+#include "app/editor/sessions/CurveEditorController.h"
+#include "app/editor/sessions/SubtitleController.h"
+#include "app/jobs/vision/StabilizeController.h"
+#include "app/bin/MediaBinController.h"
+#include "app/editor/sessions/SpeedCurveController.h"
+#include "ui/preview/PreviewController.h"
 #include <QtTest>
 
 #include <QAccessible>

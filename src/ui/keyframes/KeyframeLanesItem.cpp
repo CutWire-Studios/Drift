@@ -201,3 +201,5 @@ void KeyframeLanesItem::paint(QPainter *painter)
         });
     }
 }
+
+#include "moc_KeyframeLanesItem.cpp"

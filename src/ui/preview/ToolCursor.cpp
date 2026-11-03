@@ -166,3 +166,5 @@ void ToolCursor::apply()
     m_target->setCursor(QCursor(cursorPixmap(m_shape, dpr), int(kCenter), int(kCenter)));
     m_applied = true;
 }
+
+#include "moc_ToolCursor.cpp"

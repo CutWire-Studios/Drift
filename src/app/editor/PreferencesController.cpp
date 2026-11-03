@@ -1183,3 +1183,5 @@ void PreferencesController::restartApp()
     });
 #endif
 }
+
+#include "moc_PreferencesController.cpp"

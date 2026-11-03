@@ -1,0 +1,50 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
+    },
+    {
+      "name": "dev",
+      "displayName": "Dev (clang, Debug, fast QML)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-dev",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "DRIFT_QML_CACHEGEN": "OFF",
+        "DRIFT_AUTO_UPDATE_TRANSLATIONS": "OFF"
+      }
+    },
+    {
+      "name": "dev-gcc",
+      "displayName": "Dev (gcc, Debug, fast QML)",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-dev-gcc",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "ci-linux",
+      "displayName": "CI Linux (Release, lld)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "DRIFT_LINKER": "lld"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev", "configurePreset": "dev", "targets": ["drift"] },
+    { "name": "dev-gcc", "configurePreset": "dev-gcc", "targets": ["drift"] },
+    { "name": "ci-linux", "configurePreset": "ci-linux" }
+  ]
+}

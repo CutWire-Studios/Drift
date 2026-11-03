@@ -514,3 +514,5 @@ void StockInstaller::pollResolve()
         }
     });
 }
+
+#include "moc_StockInstaller.cpp"

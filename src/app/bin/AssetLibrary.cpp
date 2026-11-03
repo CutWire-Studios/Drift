@@ -2570,3 +2570,5 @@ QStringList AssetLibrary::importFilesReturningIds(const QStringList &paths,
     }
     return ids;
 }
+
+#include "moc_AssetLibrary.cpp"

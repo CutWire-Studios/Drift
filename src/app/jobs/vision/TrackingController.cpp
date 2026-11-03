@@ -3474,3 +3474,5 @@ QString TrackingController::applyTargets(const QString &clipId, const QString &t
         reapplyHost(host.id, trackerId);
     return firstError;
 }
+
+#include "moc_TrackingController.cpp"

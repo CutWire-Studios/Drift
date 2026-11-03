@@ -1,12 +1,12 @@
 #pragma once
 
-#include "playback/AudioOutputChannel.h"
 #include "playback/PlaybackClock.h"
 #include "core/project/clip/Clip.h"
 #include "core/animation/SpeedCurve.h"
 #include "core/base/Time.h"
 #include "engine/audio/dsp/ClipAudioRetimer.h"
 
+#include <memory>
 #include <QImage>
 #include <QMutex>
 #include <QObject>
@@ -15,6 +15,8 @@
 #include <QTimer>
 
 #include <atomic>
+
+class AudioOutputChannel;
 
 // Decodes frames off the GUI thread. Requests are stamped with a token and stale ones are
 // dropped, so a scrub that outruns the decoder collapses to its newest position instead of
@@ -77,7 +79,7 @@ public:
     void setGainDb(double db);
 
     // Empty id follows the system default.
-    void setAudioDeviceId(const QByteArray &id) { m_audio.setDeviceId(id); }
+    void setAudioDeviceId(const QByteArray &id);
 
 signals:
     void frameChanged();
@@ -105,7 +107,7 @@ private:
     drift::ClipAudioRetimer m_retimer;
 
     PlaybackClock m_clock;
-    AudioOutputChannel m_audio;
+    std::unique_ptr<AudioOutputChannel> m_audio;
 
     QThread m_frameThread;
     ClipPreviewFrameWorker *m_frameWorker = nullptr;

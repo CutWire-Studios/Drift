@@ -194,3 +194,5 @@ bool JobRegistry::hasActive(const QString &kind, const QString &target) const
     }
     return false;
 }
+
+#include "moc_JobRegistry.cpp"

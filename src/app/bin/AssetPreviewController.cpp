@@ -294,3 +294,5 @@ void AssetPreviewController::setPreviewGain(double db)
 {
     m_player.setGainDb(db);
 }
+
+#include "moc_AssetPreviewController.cpp"

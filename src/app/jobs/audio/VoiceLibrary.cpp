@@ -393,3 +393,5 @@ std::optional<drift::VoiceConditioning> VoiceLibrary::conditioning(const QString
     }
     return fresh;
 }
+
+#include "moc_VoiceLibrary.cpp"

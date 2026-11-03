@@ -199,3 +199,5 @@ void ClipReaderWorker::resetVideoDecoders()
     for (auto &entry : m_readers)
         entry.second.reader->resetVideoDecoder();
 }
+
+#include "moc_ClipReaderWorker.cpp"

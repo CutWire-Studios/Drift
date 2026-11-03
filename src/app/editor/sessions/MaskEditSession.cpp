@@ -486,3 +486,5 @@ void MaskEditSession::nudge(const QString &clipId, int dirX, int dirY, bool coar
     write(false);
     commit();
 }
+
+#include "moc_MaskEditSession.cpp"

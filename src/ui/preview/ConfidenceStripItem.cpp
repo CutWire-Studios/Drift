@@ -122,3 +122,5 @@ QSGNode *ConfidenceStripItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
     }
     return root;
 }
+
+#include "moc_ConfidenceStripItem.cpp"

@@ -1,4 +1,5 @@
 #include "app/editor/sessions/MaskingController.h"
+#include "app/editor/ProjectFileController.h"
 
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/AppController.h"
@@ -1584,3 +1585,5 @@ void MaskingController::showWholeVideo(int trackIndex, int clipIndex)
     m_app->finishEdit(tr("Showing whole video"));
     m_app->selectClipById(hostId);
 }
+
+#include "moc_MaskingController.cpp"

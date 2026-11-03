@@ -199,3 +199,5 @@ void DownloadCenter::bump()
     m_lastEmit.start();
     emit jobsChanged();
 }
+
+#include "moc_DownloadCenter.cpp"

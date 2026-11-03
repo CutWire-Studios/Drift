@@ -1167,3 +1167,5 @@ void SegmentationController::finalizeSegmentation(const QString &clipId, const Q
         }
     }
 }
+
+#include "moc_SegmentationController.cpp"

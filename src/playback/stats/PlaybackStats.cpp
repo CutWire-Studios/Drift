@@ -308,3 +308,5 @@ QVariantList PlaybackStats::reportRows() const
     rows.append(statRow(tr("Samples"), QString::number(m_composite.count())));
     return rows;
 }
+
+#include "moc_PlaybackStats.cpp"

@@ -1927,3 +1927,5 @@ void TimelineTrackItem::installAccessibility()
         return nullptr;
     });
 }
+
+#include "moc_TimelineTrackItem.cpp"

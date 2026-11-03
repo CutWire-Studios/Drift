@@ -303,3 +303,5 @@ double DepthController::sampleAt(int trackIndex, int clipIndex, double nx, doubl
     const drift::TimeUs at = atSeconds < 0.0 ? m_app->m_playheadUs : drift::secondsToUs(atSeconds);
     return sidecar->sample(clip.timelineToSourceUs(at), qBound(0.0, nx, 1.0), qBound(0.0, ny, 1.0));
 }
+
+#include "moc_DepthController.cpp"

@@ -1,4 +1,13 @@
 #include "app/mcp/tools/McpCatalog.h"
+#include "app/jobs/vision/SceneDetectController.h"
+#include "app/editor/PreferencesController.h"
+#include "app/jobs/audio/DenoiseController.h"
+#include "app/jobs/vision/DepthController.h"
+#include "app/jobs/vision/FaceTrackingController.h"
+#include "app/jobs/vision/StabilizeController.h"
+#include "app/editor/sessions/CurveEditorController.h"
+#include "app/jobs/vision/SegmentationController.h"
+#include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpDispatcher.h"
 
 #include <QColor>

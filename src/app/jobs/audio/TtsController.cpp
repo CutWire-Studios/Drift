@@ -392,3 +392,5 @@ QString TtsController::voiceoverFromSubtitles(int trackIndex, int clipIndex, con
     m_poll.start();
     return m_jobId;
 }
+
+#include "moc_TtsController.cpp"

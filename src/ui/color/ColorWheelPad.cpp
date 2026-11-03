@@ -200,3 +200,5 @@ void ColorWheelPad::paint(QPainter *painter)
     const double pr = (m_puckSize - m_puckBorderWidth) / 2;
     painter->drawEllipse(puck, pr, pr);
 }
+
+#include "moc_ColorWheelPad.cpp"

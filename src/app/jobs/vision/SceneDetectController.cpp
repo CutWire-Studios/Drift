@@ -281,3 +281,5 @@ void SceneDetectController::detect(int trackIndex, int clipIndex, bool withObjec
 }
 
 
+
+#include "moc_SceneDetectController.cpp"
