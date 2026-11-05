@@ -89,6 +89,52 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.9.1" date="2026-11-05">
+      <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.1</url>
+      <description>
+        <p>Drift 0.9.1 is a bug fix update for the interface, with updates to the 3D workspace
+        as well.</p>
+        <ul>
+          <li>3D workspace: two live views side by side, After Effects-style coordinates and a
+          reworked camera</li>
+          <li>Undo history is saved in the project file, with no 50-step limit, and projects save
+          in the background</li>
+          <li>Shape crops: crop a clip to a circle, polygon, star or heart and pan and zoom the
+          content inside it</li>
+          <li>The Crop window opens on the frame under the playhead and can rotate and flip</li>
+          <li>New Privacy Blur effect with blur, mosaic and solid bar modes, and a new Reverb
+          audio effect</li>
+          <li>Remove silence and Sync by audio clip actions</li>
+          <li>Timeline: replace a clip's media with another library asset, a Move to track menu,
+          remove all empty tracks, dissolve a composite clip back into its clips, and tabs to
+          switch between composite sequences</li>
+          <li>Moving a linked video to another track takes its audio with it</li>
+          <li>A shared curve picker for animations, with custom curves</li>
+          <li>A miter limit for text and shape strokes</li>
+          <li>Choose where Drift keeps its cache</li>
+          <li>Text, shapes and Lottie clips render sharply at their on-screen size, including
+          fractional text sizes</li>
+          <li>Relinking a missing file updates every clip that uses it and offers to relink files
+          next to it</li>
+          <li>Timeline fixes: clips can be split and trimmed down to one frame, the playhead no
+          longer steps backwards during playback, dropped transitions are added as chosen, fade
+          handles drag again and follow in/out animations, clips shrink with zoom, and track and
+          keyframe headers resize</li>
+          <li>Interface fixes: context menus stay on screen and scroll when tall, transform grips
+          work outside the canvas, the scale link toggle works again, number fields no longer
+          change on hover, empty panels and toasts draw inside their bounds, and the library tab
+          rail can be resized</li>
+          <li>Render fixes: exports above the project size render at the output resolution,
+          transition edges no longer show dark fringes, and star masks draw five points</li>
+          <li>Android: more reliable clip drag and trim handles on the timeline</li>
+          <li>Translations: Japanese, Portuguese (Portugal) and Vietnamese updated</li>
+        </ul>
+        <p>Thanks to Idelson Queiroz Boone for undo history in the project, shape crops, privacy
+        blur, reverb, remove silence and sync by audio; to @mightycrystal7, @CesarSullen and
+        @Gamistano for reporting issues fixed here; to @Ricardo-Simoes for Portuguese (Portugal);
+        to @coolvitto for Japanese; and to Nguyễn Lam for Vietnamese.</p>
+      </description>
+    </release>
     <release version="0.9.0" date="2026-11-01">
       <url type="details">https://github.com/CutWire-Studios/Drift/releases/tag/v0.9.0</url>
       <description>
