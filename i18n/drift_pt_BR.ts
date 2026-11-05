@@ -752,6 +752,10 @@
         <translation>Atenuação</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">Curva</translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>Concluído</translation>
     </message>
@@ -931,22 +935,6 @@
     <message>
         <source>Done</source>
         <translation>Concluir</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linear</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Suave</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Natural</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personalizada</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1431,6 +1419,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>Renderize-o em um único clipe de vídeo</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2426,26 +2422,6 @@
     <message>
         <source>Bounce</source>
         <translation>Quicar</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linear</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Suave</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Natural</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personalizada</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bézier</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3584,6 +3560,22 @@
         <translation>Composição criada</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>Composição</translation>
     </message>
@@ -4092,6 +4084,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>Suavização do quadro-chave atualizada</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Linear</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Suave</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">Natural</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">Ágil</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Voltar</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Quicar</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6594,6 +6614,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7271,6 +7302,10 @@
         <translation>Mantém até o próximo quadro-chave</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Entrada</translation>
     </message>
@@ -7283,8 +7318,12 @@
         <translation>Entrada-Saída</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>Minhas atenuações</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18440,6 +18479,10 @@ Se a reprodução travar, experimente outro.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>Início do aparo</translation>
     </message>
@@ -21833,26 +21876,6 @@ Se a reprodução travar, experimente outro.</translation>
         <translation>Aleatório</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>Linear</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Suave</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>Ágil</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Voltar</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>Quicar</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>Salvar estilo de texto</translation>
     </message>
@@ -22733,6 +22756,10 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Flatten composite</source>
         <translation>Achatar composto</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24700,26 +24727,6 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">Curva de transição</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linear</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Suave</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Natural</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personalizada</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bezier</translation>
     </message>
     <message>
         <source>On</source>

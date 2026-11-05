@@ -751,6 +751,10 @@
         <translation>Gia tốc</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">Đường cong</translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>Hoàn tất</translation>
     </message>
@@ -930,22 +934,6 @@
     <message>
         <source>Done</source>
         <translation>Hoàn tất</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Tuyến tính</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Mượt</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Tự nhiên</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Tùy chỉnh</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1430,6 +1418,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>Kết xuất nó thành một video clip duy nhất</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2423,26 +2419,6 @@
     <message>
         <source>Bounce</source>
         <translation>Nảy</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Tuyến tính</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Mượt</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Tự nhiên</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Tùy chỉnh</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bezier</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3586,6 +3562,22 @@
         <translation>Đã tạo tổ hợp</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>Tổ hợp</translation>
     </message>
@@ -4092,6 +4084,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>Đã cập nhật gia tốc keyframe</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Tuyến tính</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Mượt</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">Tự nhiên</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">Nhanh gọn</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Quay lại</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Nảy</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6568,6 +6588,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Tùy chỉnh</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished">Bezier</translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7241,6 +7272,10 @@
         <translation>Giữ nguyên cho đến keyframe tiếp theo</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Vào</translation>
     </message>
@@ -7253,8 +7288,12 @@
         <translation>Vào - Ra</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>Gia tốc của tôi</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18374,6 +18413,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>Cắt ngắn phần đầu</translation>
     </message>
@@ -21766,26 +21809,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <source>Random</source>
         <translation>Ngẫu nhiên</translation>
     </message>
-    <message>
-        <source>Linear</source>
-        <translation>Tuyến tính</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Mượt</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>Nhanh gọn</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Quay lại</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>Nảy</translation>
-    </message>
 </context>
 <context>
     <name>TextInspectorAccentSection</name>
@@ -22659,6 +22682,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Flatten composite</source>
         <translation>Làm phẳng tổ hợp</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24619,26 +24646,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">Đường cong chuyển cảnh</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Tuyến tính</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Mượt</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Tự nhiên</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Tùy chỉnh</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bezier</translation>
     </message>
     <message>
         <source>On</source>

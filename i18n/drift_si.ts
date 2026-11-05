@@ -752,6 +752,10 @@
         <translation>Easing</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>නිමයි</translation>
     </message>
@@ -931,22 +935,6 @@
     <message>
         <source>Done</source>
         <translation>අවසන්</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>රේඛීය</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>සුමට</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>ස්වභාවික</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>අභිරුචි</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1431,6 +1419,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>එය තනි වීඩියෝ ක්ලිපයක් බවට රෙන්ඩර් කරන්න</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2426,26 +2422,6 @@
     <message>
         <source>Bounce</source>
         <translation>ගැසීම (Bounce)</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>රේඛීය</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>සුමට</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>ස්වභාවික</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>අභිරුචි</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>බෙසියර් (Bezier)</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3584,6 +3560,22 @@
         <translation>සංයුක්තය සාදන ලදී</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>සංයුක්තය (Composite)</translation>
     </message>
@@ -4092,6 +4084,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>කීෆ්‍රේම Easing යාවත්කාලීන විය</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">රේඛීය</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">ස්වභාවික</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">වේගවත් (Snappy)</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ආපසු</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">ගැසීම (Bounce)</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6594,6 +6614,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">අභිරුචි</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7271,6 +7302,10 @@
         <translation>ඊළඟ කීෆ්‍රේමය තෙක් රඳවා තබා ගනී</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>පිවිසුම (In)</translation>
     </message>
@@ -7283,8 +7318,12 @@
         <translation>In-Out</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>මගේ easings</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18440,6 +18479,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>ආරම්භය කප්පාදු කරන්න</translation>
     </message>
@@ -21833,26 +21876,6 @@ If playback stutters, try another.</source>
         <translation>අහඹු</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>රේඛීය</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>සුමට</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>වේගවත් (Snappy)</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>ආපසු</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>ගැසීම (Bounce)</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>පෙළ විලාසය සුරකින්න</translation>
     </message>
@@ -22733,6 +22756,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Flatten composite</source>
         <translation>සංයුක්තය (Composite) සමතලා කරන්න</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24700,26 +24727,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">සංක්‍රාන්ති වක්‍රය</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>රේඛීය</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>සුමට</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>ස්වභාවික</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>අභිරුචි</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bezier</translation>
     </message>
     <message>
         <source>On</source>

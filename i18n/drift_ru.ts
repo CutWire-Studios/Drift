@@ -753,6 +753,10 @@
         <translation>Сглаживание</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>Готово</translation>
     </message>
@@ -932,22 +936,6 @@
     <message>
         <source>Done</source>
         <translation>Готово</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Линейная</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Плавная</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Естественная</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Настраиваемая</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1432,6 +1420,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>Преобразовать в один видеоклип</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2429,26 +2425,6 @@
     <message>
         <source>Bounce</source>
         <translation>Отскок</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Линейная</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Плавная</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Естественная</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Настраиваемая</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Кривая Безье</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3590,6 +3566,22 @@
         <translation>Композиция создана</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>Композиция</translation>
     </message>
@@ -4100,6 +4092,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>Сглаживание ключевого кадра обновлено</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">Естественная</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">Резко</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Отскок</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6620,6 +6640,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7301,6 +7332,10 @@
         <translation>Удерживать до следующего ключевого кадра</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Начало</translation>
     </message>
@@ -7313,8 +7348,12 @@
         <translation>Вход-выход</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>Мои сглаживания</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18507,6 +18546,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>Обрезать начало</translation>
     </message>
@@ -21908,26 +21951,6 @@ If playback stutters, try another.</source>
         <translation>Случайно</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>Линейно</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Плавно</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>Резко</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>С возвратом</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>Отскок</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>Сохранить стиль текста</translation>
     </message>
@@ -22808,6 +22831,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Flatten composite</source>
         <translation>Объединить композицию</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24782,26 +24809,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">Кривая перехода</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Линейная</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Плавная</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Естественная</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Своя</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Безье</translation>
     </message>
     <message>
         <source>On</source>

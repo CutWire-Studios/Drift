@@ -752,6 +752,10 @@
         <translation>ইজিং</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">কার্ভ</translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>সম্পন্ন</translation>
     </message>
@@ -931,22 +935,6 @@
     <message>
         <source>Done</source>
         <translation>সম্পন্ন</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>সরলরৈখিক</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>মসৃণ</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>স্বাভাবিক</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>কাস্টম</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1431,6 +1419,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>এটিকে একটি একক ভিডিও ক্লিপে রেন্ডার করুন।</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2426,26 +2422,6 @@
     <message>
         <source>Bounce</source>
         <translation>বাউন্স</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>সরলরৈখিক</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>মসৃণ</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>স্বাভাবিক</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>কাস্টম</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>বেজিয়ার</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3584,6 +3560,22 @@
         <translation>কম্পোজিট তৈরি করা হয়েছে</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>কম্পোজিট</translation>
     </message>
@@ -4092,6 +4084,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>কীফ্রেম ইজিং আপডেট করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">সরলরৈখিক</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">মসৃণ</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">স্বাভাবিক</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">কাস্টম</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">চটকদার</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">ফিরে যান</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">বাউন্স</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6594,6 +6614,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">কাস্টম</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished">বেজিয়ার</translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7271,6 +7302,10 @@
         <translation>পরবর্তী কীফ্রেম পর্যন্ত ধরে রাখে</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>ইন</translation>
     </message>
@@ -7283,8 +7318,12 @@
         <translation>ইন-আউট</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>আমার ইজিং</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18440,6 +18479,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>শুরুর অংশ ছাঁটুন</translation>
     </message>
@@ -21833,26 +21876,6 @@ If playback stutters, try another.</source>
         <translation>এলোমেলো</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>সরলরৈখিক</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>মসৃণ</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>চটকদার</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>ফিরে যান</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>বাউন্স</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>টেক্সট শৈলী সংরক্ষণ করুন</translation>
     </message>
@@ -22733,6 +22756,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Flatten composite</source>
         <translation>কম্পোজিটের ক্লিপগুলো আলাদা করুন</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24700,26 +24727,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">ট্রানজিশন কার্ভ</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>সরলরৈখিক</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>মসৃণ</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>স্বাভাবিক</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>কাস্টম</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>বেজিয়ার</translation>
     </message>
     <message>
         <source>On</source>

@@ -752,6 +752,10 @@
         <translation>Amortissement</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">Courbe</translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>Terminé</translation>
     </message>
@@ -931,22 +935,6 @@
     <message>
         <source>Done</source>
         <translation>Terminé</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linéaire</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Fluide</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Naturel</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personnalisé</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1431,6 +1419,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>Le rendre en un seul clip vidéo</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2426,26 +2422,6 @@
     <message>
         <source>Bounce</source>
         <translation>Rebond</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linéaire</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Fluide</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Naturel</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personnalisé</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bézier</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3589,6 +3565,22 @@
         <translation>Composite créé</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>Composite</translation>
     </message>
@@ -4097,6 +4089,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>Lissage de l&apos;image clé mis à jour</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Linéaire</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Fluide</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">Naturel</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Personnalisé</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">Vif</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Retour</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Rebond</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6595,6 +6615,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Personnalisé</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished">Bézier</translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7272,6 +7303,10 @@
         <translation>Maintient jusqu’à la prochaine image clé</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>Entrée</translation>
     </message>
@@ -7284,8 +7319,12 @@
         <translation>Entrée-Sortie</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>Mes amortissements</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18442,6 +18481,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>Rogner le début</translation>
     </message>
@@ -21837,26 +21880,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Aléatoire</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>Linéaire</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Fluide</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>Vif</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Retour</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>Rebond</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>Enregistrer le style de texte</translation>
     </message>
@@ -22737,6 +22760,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Flatten composite</source>
         <translation>Aplatir le composite</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24704,26 +24731,6 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">Courbe de transition</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linéaire</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Fluide</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Naturel</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Personnalisé</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bézier</translation>
     </message>
     <message>
         <source>On</source>

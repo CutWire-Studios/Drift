@@ -756,6 +756,10 @@
         <translation>التخفيف الحركي</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>تم</translation>
     </message>
@@ -935,22 +939,6 @@
     <message>
         <source>Done</source>
         <translation>تم</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>خطي</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>سلس</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>طبيعي</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>مخصص</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1435,6 +1423,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>معالجته في مقطع فيديو واحد</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2440,26 +2436,6 @@
         <translation>ارتداد</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>خطي</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>سلس</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>طبيعي</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>مخصص</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>بيزييه</translation>
-    </message>
-    <message>
         <source>Not available</source>
         <translation>غير متوفر</translation>
     </message>
@@ -3420,6 +3396,22 @@
         <translation>تم فصل الصوت</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All audio tracks separated</source>
         <translation>تم فصل جميع مسارات الصوت</translation>
     </message>
@@ -4072,6 +4064,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>تم تحديث تسهيل الإطار المفتاحي</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">خطي</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">سلس</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">طبيعي</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">مخصص</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">سريع</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">رجوع</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">ارتداد</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6698,6 +6718,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">مخصص</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished">بيزييه</translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7391,6 +7422,10 @@
         <translation>يثبت حتى الإطار المفتاحي التالي</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>دخول</translation>
     </message>
@@ -7403,8 +7438,12 @@
         <translation>دخول-خروج</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>التخفيفات الحركية الخاصة بي</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18708,6 +18747,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>قص البداية</translation>
     </message>
@@ -22133,26 +22176,6 @@ If playback stutters, try another.</source>
         <translation>عشوائي</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>خطي</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>سلس</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>سريع</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>رجوع</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>ارتداد</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>حفظ نمط النص</translation>
     </message>
@@ -23033,6 +23056,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Flatten composite</source>
         <translation>تسطيح المقطع المركب</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -25028,26 +25055,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">منحنى الانتقال</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>خطي</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>سلس</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>طبيعي</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>مخصص</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>بيزييه</translation>
     </message>
     <message>
         <source>On</source>

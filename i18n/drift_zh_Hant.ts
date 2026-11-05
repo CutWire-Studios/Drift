@@ -751,6 +751,10 @@
         <translation>緩動</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">曲線</translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>完成</translation>
     </message>
@@ -930,22 +934,6 @@
     <message>
         <source>Done</source>
         <translation>完成</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>線性</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>平滑</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>自然</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>自訂</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1430,6 +1418,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>將其算圖為單個視頻片段</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2423,26 +2419,6 @@
     <message>
         <source>Bounce</source>
         <translation>彈跳</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>線性</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>平滑</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>自然</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>自訂</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>貝塞爾</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3578,6 +3554,22 @@
         <translation>已創建合成</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>合成</translation>
     </message>
@@ -4084,6 +4076,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>關鍵格緩動已更新</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">線性</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">平滑</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">自然</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">自訂</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">彈跳</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">彈跳</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6568,6 +6588,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">自訂</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished">貝塞爾</translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7241,6 +7272,10 @@
         <translation>保持到下一個關鍵格</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>入</translation>
     </message>
@@ -7253,8 +7288,12 @@
         <translation>入-出</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>我的緩動</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18374,6 +18413,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>起點修剪</translation>
     </message>
@@ -21759,26 +21802,6 @@ If playback stutters, try another.</source>
         <translation>隨機</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>線性</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>平滑</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>彈跳</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>從後向前</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>彈跳</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>儲存文字樣式</translation>
     </message>
@@ -22659,6 +22682,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Flatten composite</source>
         <translation>扁平化組合</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24619,26 +24646,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">轉場曲線</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>線性</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>平滑</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>自然</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>自訂</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>貝塞爾</translation>
     </message>
     <message>
         <source>On</source>

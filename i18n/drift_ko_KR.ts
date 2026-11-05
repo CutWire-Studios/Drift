@@ -751,6 +751,10 @@
         <translation>이징(Easing)</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">곡선</translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>완료</translation>
     </message>
@@ -930,22 +934,6 @@
     <message>
         <source>Done</source>
         <translation>완료</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>선형</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>부드럽게</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>자연스럽게</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>사용자 지정</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1430,6 +1418,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>하나의 동영상 클립으로 렌더링</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2423,26 +2419,6 @@
     <message>
         <source>Bounce</source>
         <translation>바운스</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>선형</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>부드럽게</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>자연스럽게</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>사용자 지정</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>베지어</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3578,6 +3554,22 @@
         <translation>컴포지트가 생성됨</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>컴포지트</translation>
     </message>
@@ -4084,6 +4076,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>키프레임 이징이 업데이트됨</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">선형</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">부드럽게</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">자연스럽게</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">사용자 지정</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">경쾌하게</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">뒤로</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">바운스</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6568,6 +6588,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">사용자 지정</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished">베지어</translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7241,6 +7272,10 @@
         <translation>다음 키프레임까지 유지</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>시작</translation>
     </message>
@@ -7253,8 +7288,12 @@
         <translation>In-Out</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>내 이징</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18366,6 +18405,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>시작 부분 자르기</translation>
     </message>
@@ -21750,26 +21793,6 @@ If playback stutters, try another.</source>
         <translation>무작위</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>선형</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>부드럽게</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>경쾌하게</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>뒤로</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>바운스</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>텍스트 스타일 저장</translation>
     </message>
@@ -22650,6 +22673,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Flatten composite</source>
         <translation>컴포지트 병합</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24610,26 +24637,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">전환 곡선</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>선형</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>부드럽게</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>자연스럽게</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>사용자 지정</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>베지어</translation>
     </message>
     <message>
         <source>On</source>

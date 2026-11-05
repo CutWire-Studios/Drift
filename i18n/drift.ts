@@ -752,6 +752,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
@@ -930,22 +934,6 @@
     </message>
     <message>
         <source>Done</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1430,6 +1418,14 @@
     </message>
     <message>
         <source>Render it into a single video clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2425,26 +2421,6 @@
     </message>
     <message>
         <source>Bounce</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Bezier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3584,6 +3560,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4091,6 +4083,34 @@
     </message>
     <message>
         <source>Keyframe easing updated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bounce</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6594,6 +6614,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7271,6 +7302,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7283,7 +7318,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>My easings</source>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18433,6 +18472,10 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21825,26 +21868,6 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation type="unfinished"></translation>
     </message>
@@ -22724,6 +22747,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Flatten composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24691,26 +24718,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Transition curve</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Bezier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

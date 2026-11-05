@@ -752,6 +752,10 @@
         <translation>Easing</translation>
     </message>
     <message>
+        <source>Curve</source>
+        <translation type="unfinished">Kurba</translation>
+    </message>
+    <message>
         <source>Done</source>
         <translation>Tapos na</translation>
     </message>
@@ -931,22 +935,6 @@
     <message>
         <source>Done</source>
         <translation>Tapos na</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linyar</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Makinis</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Likas</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Pinasadya</translation>
     </message>
     <message>
         <source>%1 s</source>
@@ -1431,6 +1419,14 @@
     <message>
         <source>Render it into a single video clip</source>
         <translation>I-render ito bilang iisang video clip</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release the clips inside back onto the timeline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -2426,26 +2422,6 @@
     <message>
         <source>Bounce</source>
         <translation>Bounce</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linyar</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Makinis</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Likas</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Pinasadya</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bezier</translation>
     </message>
     <message>
         <source>Not available</source>
@@ -3584,6 +3560,22 @@
         <translation>Nalikha ang composite</translation>
     </message>
     <message>
+        <source>Composites that are ramped, reversed or not at normal speed cannot be dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite effects and transform were discarded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Composite dissolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Composite</source>
         <translation>Composite</translation>
     </message>
@@ -4092,6 +4084,34 @@
     <message>
         <source>Keyframe easing updated</source>
         <translation>Na-update ang easing ng keyframe</translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished">Linyar</translation>
+    </message>
+    <message>
+        <source>Smooth</source>
+        <translation type="unfinished">Makinis</translation>
+    </message>
+    <message>
+        <source>Natural</source>
+        <translation type="unfinished">Likas</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Pinasadya</translation>
+    </message>
+    <message>
+        <source>Snappy</source>
+        <translation type="unfinished">Snappy</translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Bumalik</translation>
+    </message>
+    <message>
+        <source>Bounce</source>
+        <translation type="unfinished">Bounce</translation>
     </message>
     <message>
         <source>Keyframe curve changed</source>
@@ -6594,6 +6614,17 @@
     </message>
 </context>
 <context>
+    <name>CurveField</name>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished">Pinasadya</translation>
+    </message>
+    <message>
+        <source>Bezier</source>
+        <translation type="unfinished">Bezier</translation>
+    </message>
+</context>
+<context>
     <name>DebugInfoDialog</name>
     <message>
         <source>Debug info</source>
@@ -7271,6 +7302,10 @@
         <translation>Nagho-hold hanggang sa susunod na keyframe</translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>In</translation>
     </message>
@@ -7283,8 +7318,12 @@
         <translation>In-Out</translation>
     </message>
     <message>
-        <source>My easings</source>
-        <translation>Aking mga easing</translation>
+        <source>My curves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>+ New curve</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My easing</source>
@@ -18441,6 +18480,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Miter limit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim start</source>
         <translation>I-trim ang simula</translation>
     </message>
@@ -21834,26 +21877,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Random</translation>
     </message>
     <message>
-        <source>Linear</source>
-        <translation>Linyar</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Makinis</translation>
-    </message>
-    <message>
-        <source>Snappy</source>
-        <translation>Snappy</translation>
-    </message>
-    <message>
-        <source>Back</source>
-        <translation>Bumalik</translation>
-    </message>
-    <message>
-        <source>Bounce</source>
-        <translation>Bounce</translation>
-    </message>
-    <message>
         <source>Save text style</source>
         <translation>I-save ang estilo ng teksto</translation>
     </message>
@@ -22734,6 +22757,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Flatten composite</source>
         <translation>I-flatten ang composite</translation>
+    </message>
+    <message>
+        <source>Dissolve composite</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Make composite</source>
@@ -24701,26 +24728,6 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Transition curve</source>
         <translation type="unfinished">Curve ng transisyon</translation>
-    </message>
-    <message>
-        <source>Linear</source>
-        <translation>Linyar</translation>
-    </message>
-    <message>
-        <source>Smooth</source>
-        <translation>Makinis</translation>
-    </message>
-    <message>
-        <source>Natural</source>
-        <translation>Likas</translation>
-    </message>
-    <message>
-        <source>Custom</source>
-        <translation>Pinasadya</translation>
-    </message>
-    <message>
-        <source>Bezier</source>
-        <translation>Bezier</translation>
     </message>
     <message>
         <source>On</source>
