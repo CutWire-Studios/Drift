@@ -148,8 +148,10 @@ Item {
                                 anchors.left: parent.left
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
+                                anchors.topMargin: Theme.c.toastHost.radius
+                                anchors.bottomMargin: Theme.c.toastHost.radius
                                 width: Theme.c.toastHost.accentWidth
-                                radius: Theme.c.toastHost.radius
+                                radius: width / 2
                                 color: root._accent(toast.severity)
                             }
                         }
