@@ -152,6 +152,7 @@ QVariantList TimelineClipsModel::transitionRegions() const
     for (const TransitionRegion &region : m_decorations.transitions) {
         out.append(QVariantMap{
             {QStringLiteral("leftClip"), region.leftClip},
+            {QStringLiteral("rightClip"), region.rightClip},
             {QStringLiteral("start"), region.start},
             {QStringLiteral("end"), region.end},
             {QStringLiteral("hasTransition"), region.hasTransition},

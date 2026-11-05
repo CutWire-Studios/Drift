@@ -85,7 +85,7 @@ Item {
                    && (EditorState.selectionContains(transitionRegion.trackIndex,
                                                  transitionRegion.leftClipIndex)
                    || EditorState.selectionContains(transitionRegion.trackIndex,
-                                                    transitionRegion.leftClipIndex + 1)))
+                                                    transitionRegion.modelData.rightClip)))
         onClicked: {
             if (transitionRegion.hasTransition) {
                 Haptics.select()

@@ -1156,6 +1156,7 @@ TimelineClipsModel::Decorations AppController::trackDecorations(const drift::Tra
 
         TimelineClipsModel::TransitionRegion region;
         region.leftClip = left;
+        region.rightClip = right;
         drift::TimeUs startUs = 0;
         drift::TimeUs endUs = 0;
         if (transition) {

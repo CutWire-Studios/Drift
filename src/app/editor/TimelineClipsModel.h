@@ -112,6 +112,7 @@ public:
     struct TransitionRegion
     {
         int leftClip = -1;
+        int rightClip = -1;
         double start = 0.0;
         double end = 0.0;
         bool hasTransition = false;
