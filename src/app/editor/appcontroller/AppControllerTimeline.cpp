@@ -2457,6 +2457,157 @@ QVariantList AppController::compatibleTracksForClip(int trackIndex, int clipInde
     return result;
 }
 
+namespace {
+
+// What a replacement asset turns the clip into, or nullopt when it cannot stand in for it.
+// Audio clips stay audio (a video's soundtrack is fine); visual clips follow the asset's kind but
+// only where the clip's own track still takes the result.
+std::optional<drift::ClipType> replacementClipType(const drift::Project &project, AssetLibrary *library,
+                                                   const drift::Track &track, const drift::Clip &clip,
+                                                   const drift::MediaAsset &asset)
+{
+    if (asset.id == clip.assetId)
+        return std::nullopt;
+    if (clip.type == drift::ClipType::Audio) {
+        if (asset.kind == drift::MediaKind::Audio
+            || (asset.kind == drift::MediaKind::Video
+                && assetHasAudioStreams(project, library, asset.id)))
+            return drift::ClipType::Audio;
+        return std::nullopt;
+    }
+    if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
+        return std::nullopt;
+    if (asset.kind != drift::MediaKind::Video && asset.kind != drift::MediaKind::Image)
+        return std::nullopt;
+    const drift::ClipType type = asset.kind == drift::MediaKind::Image ? drift::ClipType::Image
+                                                                      : drift::ClipType::Video;
+    if (!track.allowsClipType(type))
+        return std::nullopt;
+    return type;
+}
+
+} // namespace
+
+QVariantList AppController::replaceCandidatesForClip(int trackIndex, int clipIndex) const
+{
+    QVariantList result;
+    if (!m_assetLibrary || !isValidClipIndex(trackIndex, clipIndex))
+        return result;
+    const drift::Track &track = m_project.tracks().at(trackIndex);
+    const drift::Clip &clip = track.clips.at(clipIndex);
+    if (!clip.sequenceId.isEmpty() || clip.assetId.isEmpty())
+        return result;
+    for (int i = 0; i < m_assetLibrary->rowCount(); ++i) {
+        const drift::MediaAsset *asset = m_project.asset(m_assetLibrary->assetIdAt(i));
+        if (!asset || !replacementClipType(m_project, m_assetLibrary, track, clip, *asset))
+            continue;
+        const QVariantMap info = m_assetLibrary->assetAt(i);
+        result.append(QVariantMap{
+            {QStringLiteral("assetIndex"), i},
+            {QStringLiteral("name"), asset->name},
+            {QStringLiteral("kind"), info.value(QStringLiteral("kind"))},
+            {QStringLiteral("duration"), info.value(QStringLiteral("duration"))},
+            {QStringLiteral("thumbnail"), asset->thumbnailPath},
+        });
+    }
+    return result;
+}
+
+// Swaps the media under a clip and leaves everything about its place alone: start, length on the
+// timeline, transform, effects and keyframes. The source range restarts at the head of the new
+// file, and the clip gets shorter if the file runs out. Linked audio follows when the new file
+// has sound; otherwise the partner keeps its own media and the link turns loose, which is the one
+// link kind that tolerates partners with unrelated media and lengths.
+bool AppController::replaceClipMedia(int trackIndex, int clipIndex, int assetIndex)
+{
+    if (!m_assetLibrary || !isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    const drift::MediaAsset *asset = m_project.asset(m_assetLibrary->assetIdAt(assetIndex));
+    if (!asset)
+        return false;
+    const drift::Clip target = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (!target.sequenceId.isEmpty() || target.assetId.isEmpty())
+        return false;
+    const auto newType = replacementClipType(m_project, m_assetLibrary, m_project.tracks().at(trackIndex),
+                                             target, *asset);
+    if (!newType)
+        return false;
+
+    m_assetLibrary->ensureMedia(assetIndex);
+    const drift::MediaAsset assetCopy = *asset;
+    const QVariantMap info = m_assetLibrary->assetAt(assetIndex);
+    const bool newHasAudio = assetHasAudioStreams(m_project, m_assetLibrary, assetCopy.id);
+
+    const drift::Project before = m_project.detachedCopy();
+    const QString oldAssetId = target.assetId;
+    const QString linkId = target.linkId;
+    const QString oldName = m_project.asset(oldAssetId) ? m_project.asset(oldAssetId)->name : QString();
+
+    const auto rebind = [&](drift::Clip &clip, drift::ClipType type) {
+        const bool still = type == drift::ClipType::Image;
+        if (clip.name.isEmpty() || clip.name == oldName)
+            clip.name = assetCopy.name;
+        clip.assetId = assetCopy.id;
+        clip.path = assetCopy.path;
+        clip.thumbnailPath = assetCopy.thumbnailPath;
+        clip.filmstripPath = assetCopy.filmstripPath;
+        clip.type = type;
+        clip.audioStreamIndex = 0;
+        if (type != drift::ClipType::Audio) {
+            clip.sourceFrame = info.value(QStringLiteral("sourceFrame"), QRectF(0, 0, 1, 1)).toRectF();
+            clip.rotationCorrection = info.value(QStringLiteral("rotationCorrection")).toInt();
+        }
+        // The landmarks and depth maps were made from the old pixels.
+        clip.faceTrackPath.clear();
+        clip.faceTrackSrcOffsetUs = 0;
+        clip.depthPath.clear();
+
+        if (still) {
+            clip.speed = 1.0;
+            clip.speedCurve = {};
+            clip.reverse = false;
+            clip.srcIn = 0;
+            clip.srcOut = clip.timelineDuration;
+            return;
+        }
+        const drift::TimeUs span = clip.srcOut - clip.srcIn;
+        clip.srcIn = 0;
+        const drift::TimeUs available = assetCopy.durationUs;
+        if (clip.hasSpeedCurve()) {
+            clip.srcOut = span;
+            if (available > 0 && clip.srcOut > available) {
+                clip.srcOut = available;
+                clip.syncDurationFromSpeedCurve();
+            }
+        } else {
+            clip.srcOut = clip.sourceSpanUs();
+            if (available > 0)
+                clip.syncSrcOutFromSpeed(available);
+        }
+    };
+
+    QList<drift::ClipRef> partners;
+    if (!linkId.isEmpty())
+        partners = drift::linkedPartners(m_project, target);
+
+    rebind(m_project.tracks()[trackIndex].clips[clipIndex], *newType);
+    for (const drift::ClipRef &ref : std::as_const(partners)) {
+        drift::Clip &partner = m_project.tracks()[ref.trackIndex].clips[ref.clipIndex];
+        if (partner.assetId != oldAssetId)
+            continue;
+        if (newHasAudio && partner.type == drift::ClipType::Audio) {
+            rebind(partner, drift::ClipType::Audio);
+        } else {
+            partner.linkLoose = true;
+            m_project.tracks()[trackIndex].clips[clipIndex].linkLoose = true;
+        }
+    }
+
+    pushProjectEdit(before, tr("Replace clip"));
+    finishEdit(tr("Replace clip"));
+    return true;
+}
+
 void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())

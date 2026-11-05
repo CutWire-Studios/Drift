@@ -851,6 +851,10 @@ public:
     Q_INVOKABLE void moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart);
     // Other tracks that would take this clip, as {index, name}; name is the user's label or empty.
     Q_INVOKABLE QVariantList compatibleTracksForClip(int trackIndex, int clipIndex) const;
+    // Library assets this clip's media can be swapped for, as {assetIndex, name, kind, duration,
+    // thumbnail}. Empty for anything that is not a plain video, image or audio clip.
+    Q_INVOKABLE QVariantList replaceCandidatesForClip(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE bool replaceClipMedia(int trackIndex, int clipIndex, int assetIndex);
     // Shifts every clip on `trackIndex` starting at/after `gapStartSeconds` left by the
     // width of the gap immediately following that position, closing it. Linked partner
     // clips on other tracks (e.g. a companion audio clip) follow along to stay in sync.

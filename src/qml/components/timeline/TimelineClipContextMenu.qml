@@ -13,9 +13,12 @@ ThemedContextMenu {
     property bool canMergeTrackSubtitles: false
     property bool canRemoveSilence: false
     property bool canSyncByAudio: false
+    property bool canReplaceMedia: false
     onAboutToShow: {
         canRemoveSilence = EditorState.audioAlign.canRemoveSilence(owner.trackIndex, owner.clipIndex)
         canSyncByAudio = EditorState.audioAlign.canSyncByAudio()
+        canReplaceMedia = typeof owner.panel.requestReplaceClip === "function"
+                && EditorState.replaceCandidatesForClip(owner.trackIndex, owner.clipIndex).length > 0
         canPasteEffects = EditorState.clipboardHasEffects()
         canPasteAttributes = EditorState.canPasteAttributes()
         canMergeTrackSubtitles = owner.trackType === "subtitle"
@@ -296,6 +299,12 @@ ThemedContextMenu {
         text: qsTr("Rename…")
         icon.name: Theme.icons.pencil
         onTriggered: owner.panel.requestRenameClip(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
+        text: qsTr("Replace with…")
+        icon.name: Theme.icons.repeat
+        visible: clipContextMenu.canReplaceMedia
+        onTriggered: owner.panel.requestReplaceClip(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuSeparator { visible: !owner.isTransformClip }
     ThemedMenuItem {

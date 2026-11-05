@@ -1097,6 +1097,10 @@ PanelFrame {
         convertToSubtitleDialog.open()
     }
 
+    function requestReplaceClip(trackIndex, clipIndex) {
+        replaceClipDialog.openFor(trackIndex, clipIndex)
+    }
+
     function requestRenameClip(trackIndex, clipIndex) {
         if (trackIndex < 0 || clipIndex < 0)
             return
@@ -2215,6 +2219,10 @@ PanelFrame {
         }
 
         onAccepted: EditorState.convertSelectionToSubtitle()
+    }
+
+    TimelineReplaceClipDialog {
+        id: replaceClipDialog
     }
 
     ThemedDialog {
