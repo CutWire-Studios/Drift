@@ -15,8 +15,8 @@ namespace drift::skia {
 //
 // Skia never draws into a pooled FBO directly: those have no stencil attachment and Skia cannot
 // add one to a framebuffer it did not create. It renders into a surface it owns and the result is
-// blitted into a pooled target through an unpremultiply pass, because layer targets are straight
-// alpha (kLayerFragShader premultiplies at draw time) and Skia only produces premultiplied pixels.
+// copied into a pooled target, which keeps Skia's premultiplied pixels (GlTarget::premultiplied) so
+// bilinear sampling never blends the colour of fully transparent texels into an antialiased edge.
 class SkiaRuntime
 {
 public:
@@ -26,7 +26,7 @@ public:
     // Returns nullptr when Skia could not attach to this context (the caller falls back).
     static SkiaRuntime *acquire(gl::GlRuntime &rt);
 
-    // Paint into a fresh pooled, straight-alpha target of painter.size() that the caller owns and
+    // Paint into a fresh pooled, premultiplied target of painter.size() that the caller owns and
     // may mutate. A non-zero cacheKey() is served from a GPU-resident LRU after the first paint, so
     // static text and shapes cost one blit per frame rather than a redraw. Invalid target on failure.
     gl::GlTarget paintToTarget(gl::GlRuntime &rt, QOpenGLExtraFunctions *gl,

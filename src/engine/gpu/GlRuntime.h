@@ -67,6 +67,9 @@ struct GlTarget
     int width = 0;
     int height = 0;
     bool hasDepth = false;
+    // Colour is already multiplied by alpha (a Skia layer straight off the GPU); every other
+    // layer target is straight alpha.
+    bool premultiplied = false;
 
     GlTarget() = default;
     GlTarget(GlTarget &&) noexcept = default;

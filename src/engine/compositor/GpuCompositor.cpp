@@ -674,6 +674,16 @@ GlTarget buildLayerTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     if (!target.isValid())
         return {};
 
+    // Effects and the cutout swap work on straight alpha; a layer with neither keeps Skia's
+    // premultiplied pixels all the way to the draw.
+    if (target.premultiplied && (!layer.effects.isEmpty() || !layer.fgr.isNull())) {
+        GlTarget straight = unpremultipliedCopy(rt, gl, target);
+        rt.releaseTarget(std::move(target));
+        if (!straight.isValid())
+            return {};
+        target = std::move(straight);
+    }
+
     // A lone cutout's foreground only means anything while the cutout still cuts the layer.
     if (!layer.fgr.isNull() && !chainConsumesMasks(layer) && soleMediaIndex(layer) >= 0)
         target = swapInForeground(rt, gl, std::move(target), layer.fgr);
@@ -827,31 +837,40 @@ void main() {
 // sample it trilinearly.
 GlTarget mipmappedLayerCopy(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GlTarget &src)
 {
-    QOpenGLShaderProgram *program =
-        rt.builtinProgram(QStringLiteral("__premul__"), kQuadVertexShader, kPremultiplyFragShader);
-    if (!program)
-        return {};
-
     GlTarget copy = rt.acquireTarget(src.width, src.height);
     if (!copy.isValid())
         return {};
 
-    copy.fbo->bind();
-    gl->glViewport(0, 0, copy.width, copy.height);
-    gl->glDisable(GL_BLEND);
-    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
-    gl->glClear(GL_COLOR_BUFFER_BIT);
-    program->bind();
-    program->setUniformValue("u_currentTexture", 0);
-    gl->glActiveTexture(GL_TEXTURE0);
-    gl->glBindTexture(GL_TEXTURE_2D, src.texture());
-    bindQuad(rt, gl);
-    program->release();
-    copy.fbo->release();
+    if (src.premultiplied) {
+        if (!blitTextureToTarget(rt, gl, src.texture(), copy)) {
+            rt.releaseTarget(std::move(copy));
+            return {};
+        }
+    } else {
+        QOpenGLShaderProgram *program = rt.builtinProgram(QStringLiteral("__premul__"),
+                                                          kQuadVertexShader, kPremultiplyFragShader);
+        if (!program) {
+            rt.releaseTarget(std::move(copy));
+            return {};
+        }
+        copy.fbo->bind();
+        gl->glViewport(0, 0, copy.width, copy.height);
+        gl->glDisable(GL_BLEND);
+        gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+        gl->glClear(GL_COLOR_BUFFER_BIT);
+        program->bind();
+        program->setUniformValue("u_currentTexture", 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, src.texture());
+        bindQuad(rt, gl);
+        program->release();
+        copy.fbo->release();
+    }
 
     gl->glBindTexture(GL_TEXTURE_2D, copy.texture());
     gl->glGenerateMipmap(GL_TEXTURE_2D);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     return copy;
 }
 
@@ -1253,7 +1272,16 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
     // single bilinear tap is already exact and the copy would be pure cost.
     QSizeF drawnSize = layer.screenSpace && !layer.layoutCanvas.isEmpty() ? QSizeF(canvasSize)
                                                                            : layer.rect.size();
-    if (layer.hasParent && !layer.screenSpace) {
+    if (layer.viewActive && !layer.screenSpace) {
+        const QPolygonF projected = drift::projectedQuad(drift::viewQuadToCanvas(
+            layer.viewProj, layer.rect, layer.rotation, false, false, layer.pose3d, layer.parent,
+            layer.hasParent,
+            layer.layoutCanvas.isEmpty() ? QSizeF(canvasSize) : layer.layoutCanvas));
+        if (!projected.isEmpty()) {
+            drawnSize = QSizeF(QLineF(projected.at(0), projected.at(1)).length(),
+                               QLineF(projected.at(1), projected.at(2)).length());
+        }
+    } else if (layer.hasParent && !layer.screenSpace) {
         const QMatrix4x4 quad =
             layer.pose3d.isActive()
                 ? drift::clipQuadToCanvas(layer.rect, layer.rotation, false, false, layer.pose3d,
@@ -1276,7 +1304,14 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
                           || layerTarget.height > drawnSize.height() * 1.05;
     GlTarget mipTarget = minifies ? mipmappedLayerCopy(rt, gl, layerTarget) : GlTarget{};
     const GLuint layerTex = mipTarget.isValid() ? mipTarget.texture() : layerTarget.texture();
-    const float layerPremul = mipTarget.isValid() ? 1.f : 0.f;
+    const float layerPremul = mipTarget.isValid() || layerTarget.premultiplied ? 1.f : 0.f;
+
+    // Targets are pooled and the filter lives on the texture, so another pass's NEAREST or a
+    // previous mip chain would otherwise decide how this layer is resampled.
+    gl->glBindTexture(GL_TEXTURE_2D, layerTex);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        mipTarget.isValid() ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Targets are pooled by size: hand this one back with the default filter or the next
     // user would sample the mip levels this frame left behind.
@@ -1291,6 +1326,7 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
                 return;
             gl->glBindTexture(GL_TEXTURE_2D, target.texture());
             gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             rt.releaseTarget(std::move(target));
         }
     } mipGuard{rt, gl, mipTarget};
