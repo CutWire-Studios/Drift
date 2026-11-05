@@ -2584,6 +2584,10 @@
         <translation>Bật tắt đường kẻ</translation>
     </message>
     <message>
+        <source>3D gizmo: cycle world/local/view axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add/remove bookmark at current time</source>
         <translation>Thêm/xóa dấu trang tại điểm hiện tại</translation>
     </message>
@@ -3286,6 +3290,22 @@
         <translation>Cài đặt gói nhãn dán biểu tượng cảm xúc để thêm biểu tượng cảm xúc</translation>
     </message>
     <message>
+        <source>Aim camera at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera aims at its point of interest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera uses its own rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit clip</source>
         <translation>Chỉnh sửa clip</translation>
     </message>
@@ -3846,10 +3866,6 @@
         <translation>Chọn lớp chuyển đổi</translation>
     </message>
     <message>
-        <source>3D gizmo: switch global/local axes</source>
-        <translation>3D gizmo: chuyển đổi trục toàn cầu/cục bộ</translation>
-    </message>
-    <message>
         <source>Custom guides</source>
         <translation>Đường kẻ tùy chỉnh</translation>
     </message>
@@ -3900,6 +3916,10 @@
     <message>
         <source>Fly camera</source>
         <translation>Camera bay</translation>
+    </message>
+    <message>
+        <source>Align camera to view</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -4934,6 +4954,20 @@
         <translation>Liên kết Proxy</translation>
     </message>
     <message>
+        <source>Relink other missing files?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Link proxies by pattern?</source>
         <translation>Liên kết proxy theo mẫu?</translation>
     </message>
@@ -5911,58 +5945,133 @@
     </message>
 </context>
 <context>
+    <name>Camera3dPanel</name>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Camera</translation>
+    </message>
+    <message>
+        <source>Add camera</source>
+        <translation type="unfinished">Thêm camera</translation>
+    </message>
+    <message>
+        <source>Add a camera clip at the playhead, for a camera cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a camera track with a camera clip over the sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to the 3D viewport&apos;s view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No camera yet. Without one every clip is seen through its own Perspective.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (active)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select this camera and look through it</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CameraInspector</name>
     <message>
-        <source>Pan X</source>
-        <translation>Pan X</translation>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pan Y</source>
-        <translation>Pan Y</translation>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dolly</source>
-        <translation>Dolly</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch</source>
-        <translation>Độ nghiêng</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yaw</source>
-        <translation>Độ xoay</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Roll</source>
-        <translation>Độ lăn</translation>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lens</source>
-        <translation>Ống kính</translation>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Thu phóng</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
         <translation>Chọn clip camera để lấy khung cảnh quay.</translation>
     </message>
     <message>
-        <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
-        <translation>Mọi thứ trên dòng thời gian đều được nhìn qua camera này trong suốt thời gian clip tồn tại. Một camera đứng yên trông giống hệt như không có camera nào cả, nên các con số bên dưới đều là độ lệch so với khung nhìn bình thường.</translation>
+        <source>Everything on the timeline is seen through this camera while the clip lasts. Position is the camera&apos;s eye in the same 3D space as the clips; a camera at rest looks exactly like no camera at all.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aim at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the camera facing its point of interest. Rotation then turns the camera relative to that aim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focal length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset camera</source>
+        <translation type="unfinished">Đặt lại camera</translation>
+    </message>
+    <message>
+        <source>Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Camera position</source>
         <translation type="unfinished">Vị trí camera</translation>
-    </message>
-    <message>
-        <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation>Ống kính ngắn phóng đại chiều sâu; ống kính dài làm nó phẳng lại. Khi camera này đang chạy, nó thay thế giá trị Phối cảnh riêng của từng clip, vì một cảnh chỉ có một người xem.</translation>
-    </message>
-    <message>
-        <source>Reset camera position</source>
-        <translation>Đặt lại vị trí camera</translation>
-    </message>
-    <message>
-        <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
-        <translation>Trở về trạng thái đứng yên: không lia, đẩy hay xoay, đóng khung canvas trực diện. Ống kính được giữ nguyên.</translation>
     </message>
 </context>
 <context>
@@ -10104,22 +10213,6 @@
         <translation>Chiều cao</translation>
     </message>
     <message>
-        <source>Angle</source>
-        <translation>Góc</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>Nghiêng X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>Nghiêng Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Độ sâu</translation>
-    </message>
-    <message>
         <source>Perspective</source>
         <translation>Phối cảnh</translation>
     </message>
@@ -10146,6 +10239,62 @@
     <message>
         <source>Rotation</source>
         <translation>Xoay</translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Camera</translation>
+    </message>
+    <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Thu phóng</translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Feather</source>
@@ -10249,6 +10398,34 @@
 <context>
     <name>KeyframeGraph</name>
     <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Thu phóng</translation>
+    </message>
+    <message>
         <source>X position</source>
         <translation>Vị trí X</translation>
     </message>
@@ -10269,16 +10446,28 @@
         <translation>Xoay</translation>
     </message>
     <message>
-        <source>Tilt X</source>
-        <translation>Nghiêng X</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tilt Y</source>
-        <translation>Nghiêng Y</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Depth</source>
-        <translation>Độ sâu</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -13039,6 +13228,16 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>Relink media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Sub-clip added</source>
         <translation>Đã thêm sub-clip</translation>
     </message>
@@ -13553,60 +13752,75 @@
         <translation>Độ lệch bắt đầu</translation>
     </message>
     <message>
-        <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
-        <translation>Vị trí, kích thước, xoay và che khuất độ sâu nằm trong tab Chuyển đổi.</translation>
+        <source>Position, size, rotation, anchor point and depth occlusion are on the Transform tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Tỷ lệ</translation>
+    </message>
+    <message>
+        <source>Depth scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Model3DLighting</name>
+    <message>
         <source>Lighting</source>
-        <translation>Tia chớp</translation>
+        <translation type="unfinished">Tia chớp</translation>
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation>Kéo các ánh sáng trong khung nhìn 3D, hoặc thiết lập chúng ở đây. Chúng di chuyển và thay đổi tỷ lệ theo clip; xoay mô hình sẽ làm mô hình xoay bên dưới chúng.</translation>
-    </message>
-    <message>
-        <source>Light %1</source>
-        <translation>Ánh sáng %1</translation>
-    </message>
-    <message>
-        <source>Light %1 colour</source>
-        <translation>Màu ánh sáng %1</translation>
-    </message>
-    <message>
-        <source>Left / right</source>
-        <translation>Trái / phải</translation>
-    </message>
-    <message>
-        <source>Up / down</source>
-        <translation>Lên / xuống</translation>
-    </message>
-    <message>
-        <source>Near / far</source>
-        <translation>Gần / xa</translation>
-    </message>
-    <message>
-        <source>Brightness</source>
-        <translation>Độ sáng</translation>
-    </message>
-    <message>
-        <source>Reach</source>
-        <translation>Phạm vi</translation>
-    </message>
-    <message>
-        <source>Spot angle</source>
-        <translation>Góc chiếu</translation>
-    </message>
-    <message>
-        <source>Aim left / right</source>
-        <translation>Định hướng trái / phải</translation>
-    </message>
-    <message>
-        <source>Aim up / down</source>
-        <translation>Định hướng lên / xuống</translation>
+        <translation type="unfinished">Kéo các ánh sáng trong khung nhìn 3D, hoặc thiết lập chúng ở đây. Chúng di chuyển và thay đổi tỷ lệ theo clip; xoay mô hình sẽ làm mô hình xoay bên dưới chúng.</translation>
     </message>
     <message>
         <source>Ambient</source>
-        <translation>Môi trường</translation>
+        <translation type="unfinished">Môi trường</translation>
+    </message>
+    <message>
+        <source>Light %1</source>
+        <translation type="unfinished">Ánh sáng %1</translation>
+    </message>
+    <message>
+        <source>Light %1 colour</source>
+        <translation type="unfinished">Màu ánh sáng %1</translation>
+    </message>
+    <message>
+        <source>Left / right</source>
+        <translation type="unfinished">Trái / phải</translation>
+    </message>
+    <message>
+        <source>Up / down</source>
+        <translation type="unfinished">Lên / xuống</translation>
+    </message>
+    <message>
+        <source>Near / far</source>
+        <translation type="unfinished">Gần / xa</translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">Độ sáng</translation>
+    </message>
+    <message>
+        <source>Reach</source>
+        <translation type="unfinished">Phạm vi</translation>
+    </message>
+    <message>
+        <source>Spot angle</source>
+        <translation type="unfinished">Góc chiếu</translation>
+    </message>
+    <message>
+        <source>Aim left / right</source>
+        <translation type="unfinished">Định hướng trái / phải</translation>
+    </message>
+    <message>
+        <source>Aim up / down</source>
+        <translation type="unfinished">Định hướng lên / xuống</translation>
     </message>
 </context>
 <context>
@@ -13614,6 +13828,14 @@
     <message>
         <source>Ambient light</source>
         <translation>Ánh sáng môi trường</translation>
+    </message>
+    <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model depth scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>left / right</source>
@@ -13834,6 +14056,37 @@
     <message>
         <source>Update</source>
         <translation>Cập nhật</translation>
+    </message>
+</context>
+<context>
+    <name>Outliner3dPanel</name>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cameras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation type="unfinished">Lớp</translation>
+    </message>
+    <message>
+        <source>No cameras, models or 3D layers at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14282,80 +14535,10 @@
     </message>
 </context>
 <context>
-    <name>Preview3DTools</name>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>Di chuyển</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Xoay</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>Tỷ lệ</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the selection&apos;s own axes (click for world axes)</source>
-        <translation>Gizmo bám theo trục riêng của vùng chọn (nhấp để dùng trục thế giới)</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the world axes (click for the selection&apos;s own)</source>
-        <translation>Gizmo bám theo trục thế giới (nhấp để dùng trục riêng của vùng chọn)</translation>
-    </message>
-    <message>
-        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation>Bay (WASD để di chuyển, Q/E xuống/lên, điều hướng về phía con trỏ)</translation>
-    </message>
-    <message>
-        <source>Look through the camera</source>
-        <translation>Nhìn qua camera</translation>
-    </message>
-    <message>
-        <source>Numpad 0</source>
-        <translation>Phím 0</translation>
-    </message>
-    <message>
-        <source>Reset the scene camera&apos;s position</source>
-        <translation>Đặt lại vị trí camera cảnh</translation>
-    </message>
-    <message>
-        <source>Frame the selection</source>
-        <translation>Đóng khung vùng chọn</translation>
-    </message>
-    <message>
-        <source>Reset the view</source>
-        <translation>Đặt lại khung nhìn</translation>
-    </message>
-</context>
-<context>
     <name>PreviewCompactGpuCaption</name>
     <message>
         <source>GPU preview unavailable</source>
         <translation>Xem trước GPU không có sẵn</translation>
-    </message>
-</context>
-<context>
-    <name>PreviewModeSwitch</name>
-    <message>
-        <source>Camera Output</source>
-        <translation>Đầu ra camera</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation>Hình ảnh của camera, như khi kết xuất. Clip di chuyển và bắt dính trên canvas.</translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation>Cảnh 3D</translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms, and the corner pad steps the view.</source>
-        <translation>Cảnh từ góc nhìn tự do, với camera nằm trong đó. Kéo chuột giữa hoặc chuột phải để quay quanh, giữ Shift để lia, con lăn để thu phóng, và nút điều hướng ở góc để di chuyển khung nhìn theo bước.</translation>
     </message>
 </context>
 <context>
@@ -24261,6 +24444,160 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>Transform3dInspector</name>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">Tỷ lệ clip</translation>
+    </message>
+    <message>
+        <source>Remove the %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A camera has no transform of its own. Position, rotation and zoom are in the Camera panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is flat. Make it a 3D layer to rotate it and move it in depth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D layer, a model or a splat.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make 3D layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">Di chuyển</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">Xoay</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Tỷ lệ</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">Cục bộ</translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the selected object (scale always follows the object&apos;s own edges)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>World and local position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  X %2  Y %3  Z %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position (px)</source>
+        <translation type="unfinished">Vị trí (px)</translation>
+    </message>
+    <message>
+        <source>Reset position &amp; size</source>
+        <translation type="unfinished">Đặt lại vị trí &amp; kích thước</translation>
+    </message>
+    <message>
+        <source>3D position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor point (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the anchor point back at the centre of the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D anchor point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation (°)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale / depth scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset scale to 100%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Occlude by depth</source>
+        <translation type="unfinished">Che khuất theo độ sâu</translation>
+    </message>
+    <message>
+        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
+        <translation type="unfinished">Để độ sâu quyết định cái gì che clip này, thay vì vị trí track của nó. Chỉ những clip bật tùy chọn này mới sắp xếp với nhau; mọi thứ khác vẫn vẽ theo thứ tự track.</translation>
+    </message>
+    <message>
+        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
+        <translation type="unfinished">Cần chế độ hòa trộn Bình thường — các chế độ khác đọc canvas phía sau clip, mà độ sâu không thể sắp xếp.</translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Phối cảnh</translation>
+    </message>
+</context>
+<context>
+    <name>Transform3dPanel</name>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Transform</source>
@@ -24277,26 +24614,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Height</source>
         <translation>Chiều cao</translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation>Góc</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>Nghiêng X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>Nghiêng Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Độ sâu</translation>
-    </message>
-    <message>
-        <source>Perspective</source>
-        <translation>Phối cảnh</translation>
     </message>
     <message>
         <source>Also moved by %1</source>
@@ -24343,6 +24660,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tỷ lệ</translation>
     </message>
     <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation type="unfinished">Vị trí</translation>
     </message>
@@ -24387,6 +24708,26 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Độ mờ &amp; xoay</translation>
     </message>
     <message>
+        <source>Rotate the whole group as one flat card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate the clip in 3D and move it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open 3D workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation</source>
         <translation type="unfinished">Xoay</translation>
     </message>
@@ -24399,72 +24740,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Lớp 3D</translation>
     </message>
     <message>
-        <source>Tilt the whole group as one flat card</source>
-        <translation>Nghiêng cả nhóm dưới dạng một thẻ phẳng</translation>
-    </message>
-    <message>
-        <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
-        <translation>Nghiêng clip và đẩy nó vào chiều sâu bằng cách sử dụng các điểm nhấn 3D trên bản xem trước. Tắt nó đi sẽ làm phẳng clip một lần nữa.</translation>
-    </message>
-    <message>
-        <source>Occlude by depth</source>
-        <translation>Che khuất theo độ sâu</translation>
-    </message>
-    <message>
-        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation>Để độ sâu quyết định cái gì che clip này, thay vì vị trí track của nó. Chỉ những clip bật tùy chọn này mới sắp xếp với nhau; mọi thứ khác vẫn vẽ theo thứ tự track.</translation>
-    </message>
-    <message>
-        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation>Cần chế độ hòa trộn Bình thường — các chế độ khác đọc canvas phía sau clip, mà độ sâu không thể sắp xếp.</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>Di chuyển</translation>
-    </message>
-    <message>
-        <source>Arrows on the preview move the clip along each axis</source>
-        <translation>Mũi tên trên bản xem trước sẽ di chuyển clip dọc theo từng trục</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Xoay</translation>
-    </message>
-    <message>
-        <source>Rings on the preview turn the clip about each axis</source>
-        <translation>Vòng trên bản xem trước xoay clip quanh từng trục</translation>
-    </message>
-    <message>
-        <source>Handles on the preview stretch the clip along its own edges</source>
-        <translation>Tay cầm trên xem trước kéo giãn clip dọc theo các cạnh của chính nó</translation>
-    </message>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Global</source>
-        <translation>Toàn cục</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the camera: X across, Y down, Z toward you</source>
-        <translation>Gizmo theo dõi camera: X ngang, Y xuống, Z hướng về bạn</translation>
-    </message>
-    <message>
-        <source>Local</source>
-        <translation>Cục bộ</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the clip&apos;s own edges and face, however it is turned</source>
-        <translation>Gizmo bám theo cạnh và mặt của chính clip, dù nó được xoay thế nào</translation>
-    </message>
-    <message>
         <source>Fix orientation</source>
         <translation>Sửa hướng</translation>
-    </message>
-    <message>
-        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
-        <translation>Sửa xoay của chính nguồn mà không mất dữ liệu — khác với Angle ở trên, thao tác này thay đổi việc giải mã, không chỉ khung hiển thị trên màn hình.</translation>
     </message>
     <message>
         <source>Flip</source>
@@ -25322,58 +25599,241 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
-    <name>ViewNavPad</name>
+    <name>View3dPanel</name>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation type="unfinished">Lưới</translation>
+    </message>
+    <message>
+        <source>3D grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The floor grid drawn under the scene in the 3D viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing between lines. 0 picks one from the canvas size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished">Bắt dính</translation>
+    </message>
+    <message>
+        <source>3D snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editor field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maya</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender: middle-drag orbits, Shift pans, Ctrl dollies. Maya: Alt with the left, middle or right button orbits, pans or dollies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit around selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit about the selected clip&apos;s centre instead of the view&apos;s target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orthographic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw the viewport without perspective (Numpad 5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D model lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D model to edit its lights.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Viewport3dPanel</name>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Phối cảnh</translation>
+    </message>
+    <message>
+        <source>Front</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Quay lại</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">Trái</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">Phải</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">Trên</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished">Dưới</translation>
+    </message>
+    <message>
+        <source>Scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
-        <source>Orbit left</source>
-        <translation>Xoay sang trái</translation>
+        <source>View</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 4</source>
-        <translation>Phím 4</translation>
+        <source>Look at the scene from a preset side, or through the scene camera</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit up</source>
-        <translation>Xoay lên</translation>
+        <source>Ortho</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 8</source>
-        <translation>Phím 8</translation>
+        <source>Orthographic projection</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit right</source>
-        <translation>Xoay sang phải</translation>
+        <source>Numpad 5</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 6</source>
-        <translation>Phím 6</translation>
+        <source>Move</source>
+        <translation type="unfinished">Di chuyển</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Thu nhỏ</translation>
+        <source>Rotate</source>
+        <translation type="unfinished">Xoay</translation>
     </message>
     <message>
-        <source>Numpad -</source>
-        <translation>Phím -</translation>
+        <source>Scale</source>
+        <translation type="unfinished">Tỷ lệ</translation>
     </message>
     <message>
-        <source>Orbit down</source>
-        <translation>Xoay xuống</translation>
+        <source>World</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 2</source>
-        <translation>Phím 2</translation>
+        <source>Local</source>
+        <translation type="unfinished">Cục bộ</translation>
     </message>
     <message>
-        <source>Zoom in</source>
-        <translation>Phóng to</translation>
+        <source>Which axes the gizmo follows: the scene&apos;s, the selected object&apos;s or the screen&apos;s</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad +</source>
-        <translation>Phím +</translation>
+        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
+        <translation type="unfinished">Bay (WASD để di chuyển, Q/E xuống/lên, điều hướng về phía con trỏ)</translation>
+    </message>
+    <message>
+        <source>Shift+F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numpad 0</source>
+        <translation type="unfinished">Phím 0</translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to this view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished">Đóng khung vùng chọn</translation>
+    </message>
+    <message>
+        <source>F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame everything</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished">Trang chủ</translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished">Đặt lại khung nhìn</translation>
+    </message>
+    <message>
+        <source>Shift+Home</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25771,6 +26231,22 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Tracking</source>
         <translation>Theo dõi</translation>
+    </message>
+    <message>
+        <source>3D Viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Media</source>

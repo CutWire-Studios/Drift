@@ -2587,6 +2587,10 @@
         <translation>Alternar guías</translation>
     </message>
     <message>
+        <source>3D gizmo: cycle world/local/view axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add/remove bookmark at current time</source>
         <translation>Añadir/eliminar marcador en la posición actual</translation>
     </message>
@@ -3292,6 +3296,22 @@
         <translation>Instala el paquete de pegatinas de emojis para añadir emojis</translation>
     </message>
     <message>
+        <source>Aim camera at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera aims at its point of interest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera uses its own rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit clip</source>
         <translation>Editar clip</translation>
     </message>
@@ -3852,10 +3872,6 @@
         <translation>Seleccionar capa de transformación</translation>
     </message>
     <message>
-        <source>3D gizmo: switch global/local axes</source>
-        <translation>Gizmo 3D: alternar ejes globales/locales</translation>
-    </message>
-    <message>
         <source>Custom guides</source>
         <translation>Guías personalizadas</translation>
     </message>
@@ -3906,6 +3922,10 @@
     <message>
         <source>Fly camera</source>
         <translation>Mover cámara en vuelo</translation>
+    </message>
+    <message>
+        <source>Align camera to view</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -4949,6 +4969,21 @@
         <translation>Vincular proxy</translation>
     </message>
     <message>
+        <source>Relink other missing files?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Link proxies by pattern?</source>
         <translation>¿Vincular proxies según patrón?</translation>
     </message>
@@ -5933,58 +5968,133 @@
     </message>
 </context>
 <context>
+    <name>Camera3dPanel</name>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Cámara</translation>
+    </message>
+    <message>
+        <source>Add camera</source>
+        <translation type="unfinished">Añadir cámara</translation>
+    </message>
+    <message>
+        <source>Add a camera clip at the playhead, for a camera cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a camera track with a camera clip over the sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to the 3D viewport&apos;s view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No camera yet. Without one every clip is seen through its own Perspective.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (active)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select this camera and look through it</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CameraInspector</name>
     <message>
-        <source>Pan X</source>
-        <translation>Panorámica X</translation>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pan Y</source>
-        <translation>Panorámica Y</translation>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dolly</source>
-        <translation>Dolly</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch</source>
-        <translation>Cabeceo</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yaw</source>
-        <translation>Guiñada</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Roll</source>
-        <translation>Alabeo</translation>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lens</source>
-        <translation>Lente</translation>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Zoom</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
         <translation>Selecciona un clip de cámara para encuadrar la toma.</translation>
     </message>
     <message>
-        <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
-        <translation>Todo en la línea de tiempo se ve a través de esta cámara mientras dura el clip. Una cámara en reposo se ve exactamente igual que si no hubiera cámara, por lo que los números a continuación son todos desplazamientos respecto a la vista normal.</translation>
+        <source>Everything on the timeline is seen through this camera while the clip lasts. Position is the camera&apos;s eye in the same 3D space as the clips; a camera at rest looks exactly like no camera at all.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aim at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the camera facing its point of interest. Rotation then turns the camera relative to that aim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focal length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset camera</source>
+        <translation type="unfinished">Restablecer cámara</translation>
+    </message>
+    <message>
+        <source>Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Camera position</source>
         <translation type="unfinished">Posición de cámara</translation>
-    </message>
-    <message>
-        <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation>Una lente corta exagera la profundidad; una larga la aplana. Mientras esta cámara está activa, reemplaza el valor de perspectiva propio de cada clip, ya que una escena tiene un solo espectador.</translation>
-    </message>
-    <message>
-        <source>Reset camera position</source>
-        <translation>Restablecer posición de cámara</translation>
-    </message>
-    <message>
-        <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
-        <translation>Volver al reposo: sin panorámica, dolly ni giro, encuadrando el lienzo de frente. Se mantiene la lente.</translation>
     </message>
 </context>
 <context>
@@ -10140,22 +10250,6 @@
         <translation>Altura</translation>
     </message>
     <message>
-        <source>Angle</source>
-        <translation>Ángulo</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>Inclinación X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>Inclinación Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Profundidad</translation>
-    </message>
-    <message>
         <source>Perspective</source>
         <translation>Perspectiva</translation>
     </message>
@@ -10182,6 +10276,62 @@
     <message>
         <source>Rotation</source>
         <translation>Rotación</translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Cámara</translation>
+    </message>
+    <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Zoom</translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Feather</source>
@@ -10286,6 +10436,34 @@
 <context>
     <name>KeyframeGraph</name>
     <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Zoom</translation>
+    </message>
+    <message>
         <source>X position</source>
         <translation>Posición X</translation>
     </message>
@@ -10306,16 +10484,28 @@
         <translation>Rotación</translation>
     </message>
     <message>
-        <source>Tilt X</source>
-        <translation>Inclinación X</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tilt Y</source>
-        <translation>Inclinación Y</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Depth</source>
-        <translation>Profundidad</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -13092,6 +13282,17 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>Relink media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Sub-clip added</source>
         <translation>Subclip añadido</translation>
     </message>
@@ -13611,60 +13812,75 @@
         <translation>Desplazamiento inicial</translation>
     </message>
     <message>
-        <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
-        <translation>La posición, tamaño, rotación y oclusión de profundidad están en la pestaña Transformar.</translation>
+        <source>Position, size, rotation, anchor point and depth occlusion are on the Transform tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Escala</translation>
+    </message>
+    <message>
+        <source>Depth scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Model3DLighting</name>
+    <message>
         <source>Lighting</source>
-        <translation>Iluminación</translation>
+        <translation type="unfinished">Iluminación</translation>
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation>Arrastra las luces en la vista 3D o ajústalas aquí. Se mueven y escalan con el clip; girar el modelo lo gira debajo de ellas.</translation>
-    </message>
-    <message>
-        <source>Light %1</source>
-        <translation>Luz %1</translation>
-    </message>
-    <message>
-        <source>Light %1 colour</source>
-        <translation>Color de luz %1</translation>
-    </message>
-    <message>
-        <source>Left / right</source>
-        <translation>Izquierda / derecha</translation>
-    </message>
-    <message>
-        <source>Up / down</source>
-        <translation>Arriba / abajo</translation>
-    </message>
-    <message>
-        <source>Near / far</source>
-        <translation>Cerca / lejos</translation>
-    </message>
-    <message>
-        <source>Brightness</source>
-        <translation>Brillo</translation>
-    </message>
-    <message>
-        <source>Reach</source>
-        <translation>Alcance</translation>
-    </message>
-    <message>
-        <source>Spot angle</source>
-        <translation>Ángulo focal</translation>
-    </message>
-    <message>
-        <source>Aim left / right</source>
-        <translation>Apuntar izquierda / derecha</translation>
-    </message>
-    <message>
-        <source>Aim up / down</source>
-        <translation>Apuntar arriba / abajo</translation>
+        <translation type="unfinished">Arrastra las luces en la vista 3D o ajústalas aquí. Se mueven y escalan con el clip; girar el modelo lo gira debajo de ellas.</translation>
     </message>
     <message>
         <source>Ambient</source>
-        <translation>Ambiente</translation>
+        <translation type="unfinished">Ambiente</translation>
+    </message>
+    <message>
+        <source>Light %1</source>
+        <translation type="unfinished">Luz %1</translation>
+    </message>
+    <message>
+        <source>Light %1 colour</source>
+        <translation type="unfinished">Color de luz %1</translation>
+    </message>
+    <message>
+        <source>Left / right</source>
+        <translation type="unfinished">Izquierda / derecha</translation>
+    </message>
+    <message>
+        <source>Up / down</source>
+        <translation type="unfinished">Arriba / abajo</translation>
+    </message>
+    <message>
+        <source>Near / far</source>
+        <translation type="unfinished">Cerca / lejos</translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">Brillo</translation>
+    </message>
+    <message>
+        <source>Reach</source>
+        <translation type="unfinished">Alcance</translation>
+    </message>
+    <message>
+        <source>Spot angle</source>
+        <translation type="unfinished">Ángulo focal</translation>
+    </message>
+    <message>
+        <source>Aim left / right</source>
+        <translation type="unfinished">Apuntar izquierda / derecha</translation>
+    </message>
+    <message>
+        <source>Aim up / down</source>
+        <translation type="unfinished">Apuntar arriba / abajo</translation>
     </message>
 </context>
 <context>
@@ -13672,6 +13888,14 @@
     <message>
         <source>Ambient light</source>
         <translation>Luz ambiental</translation>
+    </message>
+    <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model depth scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>left / right</source>
@@ -13892,6 +14116,37 @@
     <message>
         <source>Update</source>
         <translation>Actualizar</translation>
+    </message>
+</context>
+<context>
+    <name>Outliner3dPanel</name>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cameras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation type="unfinished">Capas</translation>
+    </message>
+    <message>
+        <source>No cameras, models or 3D layers at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14345,80 +14600,10 @@
     </message>
 </context>
 <context>
-    <name>Preview3DTools</name>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>Mover</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Rotar</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>Escala</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the selection&apos;s own axes (click for world axes)</source>
-        <translation>El manipulador sigue los ejes propios de la selección (clic para ejes globales)</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the world axes (click for the selection&apos;s own)</source>
-        <translation>El manipulador sigue los ejes globales (clic para los propios de la selección)</translation>
-    </message>
-    <message>
-        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation>Modo vuelo (WASD para mover, Q/E bajar/subir, dirigir hacia el cursor)</translation>
-    </message>
-    <message>
-        <source>Look through the camera</source>
-        <translation>Mirar a través de la cámara</translation>
-    </message>
-    <message>
-        <source>Numpad 0</source>
-        <translation>Teclado numérico 0</translation>
-    </message>
-    <message>
-        <source>Reset the scene camera&apos;s position</source>
-        <translation>Restablecer la posición de la cámara de la escena</translation>
-    </message>
-    <message>
-        <source>Frame the selection</source>
-        <translation>Encuadrar la selección</translation>
-    </message>
-    <message>
-        <source>Reset the view</source>
-        <translation>Restablecer la vista</translation>
-    </message>
-</context>
-<context>
     <name>PreviewCompactGpuCaption</name>
     <message>
         <source>GPU preview unavailable</source>
         <translation>Vista previa por GPU no disponible</translation>
-    </message>
-</context>
-<context>
-    <name>PreviewModeSwitch</name>
-    <message>
-        <source>Camera Output</source>
-        <translation>Salida de cámara</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation>La imagen de la cámara, tal como se exporta. Los clips se mueven y se ajustan en el lienzo.</translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation>Escena 3D</translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms, and the corner pad steps the view.</source>
-        <translation>La escena desde un punto de vista libre, con la cámara dentro. Arrastrar con botón central o derecho orbita, Mayús desplaza, la rueda hace zoom y el panel de esquina cambia la vista paso a paso.</translation>
     </message>
 </context>
 <context>
@@ -24339,6 +24524,160 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>Transform3dInspector</name>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">Escalar clip</translation>
+    </message>
+    <message>
+        <source>Remove the %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A camera has no transform of its own. Position, rotation and zoom are in the Camera panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is flat. Make it a 3D layer to rotate it and move it in depth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D layer, a model or a splat.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make 3D layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">Mover</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Escala</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">Local</translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the selected object (scale always follows the object&apos;s own edges)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>World and local position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  X %2  Y %3  Z %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position (px)</source>
+        <translation type="unfinished">Posición (px)</translation>
+    </message>
+    <message>
+        <source>Reset position &amp; size</source>
+        <translation type="unfinished">Restablecer posición y tamaño</translation>
+    </message>
+    <message>
+        <source>3D position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor point (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the anchor point back at the centre of the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D anchor point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation (°)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale / depth scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset scale to 100%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Occlude by depth</source>
+        <translation type="unfinished">Ocluir por profundidad</translation>
+    </message>
+    <message>
+        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
+        <translation type="unfinished">Deja que la profundidad decida qué cubre este clip, en lugar de su posición de pista. Solo los clips con esto activado se ordenan entre sí; todo lo demás se sigue dibujando en orden de pistas.</translation>
+    </message>
+    <message>
+        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
+        <translation type="unfinished">Requiere el modo de fusión Normal — los demás leen el lienzo detrás del clip, lo que la profundidad no puede ordenar.</translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Perspectiva</translation>
+    </message>
+</context>
+<context>
+    <name>Transform3dPanel</name>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Transform</source>
@@ -24355,26 +24694,6 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Height</source>
         <translation>Altura</translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation>Ángulo</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>Inclinación X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>Inclinación Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Profundidad</translation>
-    </message>
-    <message>
-        <source>Perspective</source>
-        <translation>Perspectiva</translation>
     </message>
     <message>
         <source>Also moved by %1</source>
@@ -24421,6 +24740,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Escala</translation>
     </message>
     <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation type="unfinished">Posición</translation>
     </message>
@@ -24465,6 +24788,26 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Opacidad y rotación</translation>
     </message>
     <message>
+        <source>Rotate the whole group as one flat card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate the clip in 3D and move it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open 3D workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation</source>
         <translation type="unfinished">Rotación</translation>
     </message>
@@ -24477,72 +24820,8 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Capa 3D</translation>
     </message>
     <message>
-        <source>Tilt the whole group as one flat card</source>
-        <translation>Inclina todo el grupo como una tarjeta plana</translation>
-    </message>
-    <message>
-        <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
-        <translation>Inclina el clip y empújalo en profundidad, con tiradores 3D en la vista previa. Desactivarlo vuelve a aplanar el clip.</translation>
-    </message>
-    <message>
-        <source>Occlude by depth</source>
-        <translation>Ocluir por profundidad</translation>
-    </message>
-    <message>
-        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation>Deja que la profundidad decida qué cubre este clip, en lugar de su posición de pista. Solo los clips con esto activado se ordenan entre sí; todo lo demás se sigue dibujando en orden de pistas.</translation>
-    </message>
-    <message>
-        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation>Requiere el modo de fusión Normal — los demás leen el lienzo detrás del clip, lo que la profundidad no puede ordenar.</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>Mover</translation>
-    </message>
-    <message>
-        <source>Arrows on the preview move the clip along each axis</source>
-        <translation>Las flechas en la vista previa mueven el clip a lo largo de cada eje</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Rotar</translation>
-    </message>
-    <message>
-        <source>Rings on the preview turn the clip about each axis</source>
-        <translation>Los anillos en la vista previa giran el clip alrededor de cada eje</translation>
-    </message>
-    <message>
-        <source>Handles on the preview stretch the clip along its own edges</source>
-        <translation>Los tiradores en la vista previa estiran el clip a lo largo de sus propios bordes</translation>
-    </message>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Global</source>
-        <translation>Global</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the camera: X across, Y down, Z toward you</source>
-        <translation>El gizmo sigue a la cámara: X a lo ancho, Y hacia abajo, Z hacia ti</translation>
-    </message>
-    <message>
-        <source>Local</source>
-        <translation>Local</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the clip&apos;s own edges and face, however it is turned</source>
-        <translation>El gizmo sigue los propios bordes y la cara del clip, sin importar cómo esté girado</translation>
-    </message>
-    <message>
         <source>Fix orientation</source>
         <translation>Corregir orientación</translation>
-    </message>
-    <message>
-        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
-        <translation>Corrige la rotación propia del origen sin pérdidas — a diferencia de Ángulo arriba, esto cambia la descodificación, no solo el cuadro en pantalla.</translation>
     </message>
     <message>
         <source>Flip</source>
@@ -25405,58 +25684,241 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
-    <name>ViewNavPad</name>
+    <name>View3dPanel</name>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation type="unfinished">Cuadrícula</translation>
+    </message>
+    <message>
+        <source>3D grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The floor grid drawn under the scene in the 3D viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing between lines. 0 picks one from the canvas size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished">Ajuste magnético</translation>
+    </message>
+    <message>
+        <source>3D snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editor field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maya</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender: middle-drag orbits, Shift pans, Ctrl dollies. Maya: Alt with the left, middle or right button orbits, pans or dollies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit around selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit about the selected clip&apos;s centre instead of the view&apos;s target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orthographic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw the viewport without perspective (Numpad 5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D model lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D model to edit its lights.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Viewport3dPanel</name>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Perspectiva</translation>
+    </message>
+    <message>
+        <source>Front</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Atrás</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">Izquierda</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">Derecha</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">Arriba</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished">Abajo</translation>
+    </message>
+    <message>
+        <source>Scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
-        <source>Orbit left</source>
-        <translation>Orbitar hacia la izquierda</translation>
+        <source>View</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 4</source>
-        <translation>Teclado numérico 4</translation>
+        <source>Look at the scene from a preset side, or through the scene camera</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit up</source>
-        <translation>Orbitar hacia arriba</translation>
+        <source>Ortho</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 8</source>
-        <translation>Teclado numérico 8</translation>
+        <source>Orthographic projection</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit right</source>
-        <translation>Orbitar hacia la derecha</translation>
+        <source>Numpad 5</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 6</source>
-        <translation>Teclado numérico 6</translation>
+        <source>Move</source>
+        <translation type="unfinished">Mover</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Alejar zoom</translation>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad -</source>
-        <translation>Teclado numérico -</translation>
+        <source>Scale</source>
+        <translation type="unfinished">Escala</translation>
     </message>
     <message>
-        <source>Orbit down</source>
-        <translation>Orbitar hacia abajo</translation>
+        <source>World</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 2</source>
-        <translation>Teclado numérico 2</translation>
+        <source>Local</source>
+        <translation type="unfinished">Local</translation>
     </message>
     <message>
-        <source>Zoom in</source>
-        <translation>Acercar zoom</translation>
+        <source>Which axes the gizmo follows: the scene&apos;s, the selected object&apos;s or the screen&apos;s</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad +</source>
-        <translation>Teclado numérico +</translation>
+        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
+        <translation type="unfinished">Modo vuelo (WASD para mover, Q/E bajar/subir, dirigir hacia el cursor)</translation>
+    </message>
+    <message>
+        <source>Shift+F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numpad 0</source>
+        <translation type="unfinished">Teclado numérico 0</translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to this view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished">Encuadrar la selección</translation>
+    </message>
+    <message>
+        <source>F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame everything</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished">Restablecer la vista</translation>
+    </message>
+    <message>
+        <source>Shift+Home</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25854,6 +26316,22 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Tracking</source>
         <translation>Seguimiento</translation>
+    </message>
+    <message>
+        <source>3D Viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Media</source>

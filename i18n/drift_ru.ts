@@ -728,7 +728,7 @@
     </message>
     <message>
         <source>Rotate</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Повернуть</translation>
     </message>
     <message>
         <source>Reset</source>
@@ -2590,6 +2590,10 @@
         <translation>Показать или скрыть направляющие</translation>
     </message>
     <message>
+        <source>3D gizmo: cycle world/local/view axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add/remove bookmark at current time</source>
         <translation>Добавить или удалить закладку в текущей точке</translation>
     </message>
@@ -3298,6 +3302,22 @@
         <translation>Установите пакет стикеров эмодзи, чтобы добавлять эмодзи</translation>
     </message>
     <message>
+        <source>Aim camera at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera aims at its point of interest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera uses its own rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit clip</source>
         <translation>Редактировать клип</translation>
     </message>
@@ -3850,10 +3870,6 @@
         <translation>Выбрать слой трансформации</translation>
     </message>
     <message>
-        <source>3D gizmo: switch global/local axes</source>
-        <translation>3D-манипулятор: переключить глобальные/локальные оси</translation>
-    </message>
-    <message>
         <source>Custom guides</source>
         <translation>Настраиваемые направляющие</translation>
     </message>
@@ -3904,6 +3920,10 @@
     <message>
         <source>Fly camera</source>
         <translation>Свободная камера</translation>
+    </message>
+    <message>
+        <source>Align camera to view</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -4964,6 +4984,22 @@
         <translation>Связать прокси</translation>
     </message>
     <message>
+        <source>Relink other missing files?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Link proxies by pattern?</source>
         <translation>Связать прокси по шаблону?</translation>
     </message>
@@ -5955,58 +5991,133 @@
     </message>
 </context>
 <context>
+    <name>Camera3dPanel</name>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Камера</translation>
+    </message>
+    <message>
+        <source>Add camera</source>
+        <translation type="unfinished">Добавить камеру</translation>
+    </message>
+    <message>
+        <source>Add a camera clip at the playhead, for a camera cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a camera track with a camera clip over the sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to the 3D viewport&apos;s view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No camera yet. Without one every clip is seen through its own Perspective.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (active)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select this camera and look through it</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CameraInspector</name>
     <message>
-        <source>Pan X</source>
-        <translation>Панорамирование X</translation>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pan Y</source>
-        <translation>Панорамирование Y</translation>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dolly</source>
-        <translation>Наезд</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch</source>
-        <translation>Тангаж</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yaw</source>
-        <translation>Рыскание</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Roll</source>
-        <translation>Крен</translation>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lens</source>
-        <translation>Объектив</translation>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Масштаб</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
         <translation>Выберите клип камеры для построения кадра.</translation>
     </message>
     <message>
-        <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
-        <translation>Всё на таймлайне просматривается через эту камеру, пока длится клип. Камера в состоянии покоя выглядит точно так же, как и её отсутствие, поэтому все приведённые ниже значения являются смещениями относительно стандартного вида.</translation>
+        <source>Everything on the timeline is seen through this camera while the clip lasts. Position is the camera&apos;s eye in the same 3D space as the clips; a camera at rest looks exactly like no camera at all.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aim at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the camera facing its point of interest. Rotation then turns the camera relative to that aim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focal length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset camera</source>
+        <translation type="unfinished">Сбросить камеру</translation>
+    </message>
+    <message>
+        <source>Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Camera position</source>
         <translation type="unfinished">Положение камеры</translation>
-    </message>
-    <message>
-        <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation>Короткофокусный объектив усиливает глубину, а длиннофокусный — сглаживает её. Пока эта камера активна, она заменяет собственное значение перспективы каждого клипа, так как у сцены только один наблюдатель.</translation>
-    </message>
-    <message>
-        <source>Reset camera position</source>
-        <translation>Сбросить положение камеры</translation>
-    </message>
-    <message>
-        <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
-        <translation>Возврат в исходное положение: без панорамирования, наезда и поворота, фронтальный вид холста. Фокусное расстояние объектива сохраняется.</translation>
     </message>
 </context>
 <context>
@@ -10176,22 +10287,6 @@
         <translation>Высота</translation>
     </message>
     <message>
-        <source>Angle</source>
-        <translation>Угол</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>Наклон X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>Наклон Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Глубина</translation>
-    </message>
-    <message>
         <source>Perspective</source>
         <translation>Перспектива</translation>
     </message>
@@ -10218,6 +10313,62 @@
     <message>
         <source>Rotation</source>
         <translation>Поворот</translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">Камера</translation>
+    </message>
+    <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Масштаб</translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Feather</source>
@@ -10323,6 +10474,34 @@
 <context>
     <name>KeyframeGraph</name>
     <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">Масштаб</translation>
+    </message>
+    <message>
         <source>X position</source>
         <translation>Положение X</translation>
     </message>
@@ -10343,16 +10522,28 @@
         <translation>Поворот</translation>
     </message>
     <message>
-        <source>Tilt X</source>
-        <translation>Наклон по X</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tilt Y</source>
-        <translation>Наклон по Y</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Depth</source>
-        <translation>Глубина</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -13145,6 +13336,18 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>Relink media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Sub-clip added</source>
         <translation>Субклип добавлен</translation>
     </message>
@@ -13669,60 +13872,75 @@
         <translation>Смещение начала</translation>
     </message>
     <message>
-        <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
-        <translation>Положение, размер, поворот и окклюзия по глубине находятся на вкладке «Трансформация».</translation>
+        <source>Position, size, rotation, anchor point and depth occlusion are on the Transform tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Масштаб</translation>
+    </message>
+    <message>
+        <source>Depth scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Model3DLighting</name>
+    <message>
         <source>Lighting</source>
-        <translation>Освещение</translation>
+        <translation type="unfinished">Освещение</translation>
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation>Перетаскивайте источники света в 3D-виде или настройте их здесь. Они перемещаются и масштабируются вместе с клипом; вращение модели поворачивает её под ними.</translation>
-    </message>
-    <message>
-        <source>Light %1</source>
-        <translation>Источник света %1</translation>
-    </message>
-    <message>
-        <source>Light %1 colour</source>
-        <translation>Цвет источника света %1</translation>
-    </message>
-    <message>
-        <source>Left / right</source>
-        <translation>Влево / вправо</translation>
-    </message>
-    <message>
-        <source>Up / down</source>
-        <translation>Вверх / вниз</translation>
-    </message>
-    <message>
-        <source>Near / far</source>
-        <translation>Ближе / дальше</translation>
-    </message>
-    <message>
-        <source>Brightness</source>
-        <translation>Яркость</translation>
-    </message>
-    <message>
-        <source>Reach</source>
-        <translation>Радиус действия</translation>
-    </message>
-    <message>
-        <source>Spot angle</source>
-        <translation>Угол конуса</translation>
-    </message>
-    <message>
-        <source>Aim left / right</source>
-        <translation>Направление влево / вправо</translation>
-    </message>
-    <message>
-        <source>Aim up / down</source>
-        <translation>Направление вверх / вниз</translation>
+        <translation type="unfinished">Перетаскивайте источники света в 3D-виде или настройте их здесь. Они перемещаются и масштабируются вместе с клипом; вращение модели поворачивает её под ними.</translation>
     </message>
     <message>
         <source>Ambient</source>
-        <translation>Фоновый свет</translation>
+        <translation type="unfinished">Фоновый свет</translation>
+    </message>
+    <message>
+        <source>Light %1</source>
+        <translation type="unfinished">Источник света %1</translation>
+    </message>
+    <message>
+        <source>Light %1 colour</source>
+        <translation type="unfinished">Цвет источника света %1</translation>
+    </message>
+    <message>
+        <source>Left / right</source>
+        <translation type="unfinished">Влево / вправо</translation>
+    </message>
+    <message>
+        <source>Up / down</source>
+        <translation type="unfinished">Вверх / вниз</translation>
+    </message>
+    <message>
+        <source>Near / far</source>
+        <translation type="unfinished">Ближе / дальше</translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">Яркость</translation>
+    </message>
+    <message>
+        <source>Reach</source>
+        <translation type="unfinished">Радиус действия</translation>
+    </message>
+    <message>
+        <source>Spot angle</source>
+        <translation type="unfinished">Угол конуса</translation>
+    </message>
+    <message>
+        <source>Aim left / right</source>
+        <translation type="unfinished">Направление влево / вправо</translation>
+    </message>
+    <message>
+        <source>Aim up / down</source>
+        <translation type="unfinished">Направление вверх / вниз</translation>
     </message>
 </context>
 <context>
@@ -13730,6 +13948,14 @@
     <message>
         <source>Ambient light</source>
         <translation>Фоновое освещение</translation>
+    </message>
+    <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model depth scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>left / right</source>
@@ -13950,6 +14176,37 @@
     <message>
         <source>Update</source>
         <translation>Обновить</translation>
+    </message>
+</context>
+<context>
+    <name>Outliner3dPanel</name>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cameras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation type="unfinished">Слои</translation>
+    </message>
+    <message>
+        <source>No cameras, models or 3D layers at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14408,80 +14665,10 @@
     </message>
 </context>
 <context>
-    <name>Preview3DTools</name>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>Перемещение</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Повернуть</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>Масштаб</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the selection&apos;s own axes (click for world axes)</source>
-        <translation>Гизмо следует собственным осям объекта (нажмите для переключения на глобальные оси)</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the world axes (click for the selection&apos;s own)</source>
-        <translation>Гизмо следует глобальным осям (нажмите для переключения на собственные оси)</translation>
-    </message>
-    <message>
-        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation>Свободный полёт (WASD — перемещение, Q/E — вниз/вверх, наведение указателем)</translation>
-    </message>
-    <message>
-        <source>Look through the camera</source>
-        <translation>Вид из камеры</translation>
-    </message>
-    <message>
-        <source>Numpad 0</source>
-        <translation>Numpad 0</translation>
-    </message>
-    <message>
-        <source>Reset the scene camera&apos;s position</source>
-        <translation>Сбросить положение камеры сцены</translation>
-    </message>
-    <message>
-        <source>Frame the selection</source>
-        <translation>По размеру выделенного</translation>
-    </message>
-    <message>
-        <source>Reset the view</source>
-        <translation>Сбросить вид</translation>
-    </message>
-</context>
-<context>
     <name>PreviewCompactGpuCaption</name>
     <message>
         <source>GPU preview unavailable</source>
         <translation>Предпросмотр на GPU недоступен</translation>
-    </message>
-</context>
-<context>
-    <name>PreviewModeSwitch</name>
-    <message>
-        <source>Camera Output</source>
-        <translation>Вывод камеры</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation>Изображение камеры в виде, в котором оно экспортируется. Клипы перемещаются и привязываются на холсте.</translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation>3D-сцена</translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms, and the corner pad steps the view.</source>
-        <translation>Сцена со свободной точки обзора с отображением камеры. Перетаскивание средней или правой кнопкой мыши вращает сцену, Shift — панорамирует, колесо мыши масштабирует, а угловой манипулятор переключает вид.</translation>
     </message>
 </context>
 <context>
@@ -24418,6 +24605,160 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>Transform3dInspector</name>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">Масштабировать клип</translation>
+    </message>
+    <message>
+        <source>Remove the %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A camera has no transform of its own. Position, rotation and zoom are in the Camera panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is flat. Make it a 3D layer to rotate it and move it in depth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D layer, a model or a splat.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make 3D layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">Перемещение</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">Повернуть</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">Масштаб</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">Локальная</translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the selected object (scale always follows the object&apos;s own edges)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>World and local position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  X %2  Y %3  Z %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position (px)</source>
+        <translation type="unfinished">Положение (пкс)</translation>
+    </message>
+    <message>
+        <source>Reset position &amp; size</source>
+        <translation type="unfinished">Сбросить положение и размер</translation>
+    </message>
+    <message>
+        <source>3D position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor point (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the anchor point back at the centre of the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D anchor point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation (°)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale / depth scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset scale to 100%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Occlude by depth</source>
+        <translation type="unfinished">Перекрытие по глубине</translation>
+    </message>
+    <message>
+        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
+        <translation type="unfinished">Определять перекрытие этого клипа по глубине, а не по положению дорожки. Сортируются только клипы с включённым параметром; остальные отображаются в порядке дорожек.</translation>
+    </message>
+    <message>
+        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
+        <translation type="unfinished">Требуется режим наложения «Обычный» — остальные режимы считывают холст позади клипа, что не поддерживает сортировку по глубине.</translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Перспектива</translation>
+    </message>
+</context>
+<context>
+    <name>Transform3dPanel</name>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -24430,26 +24771,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Height</source>
         <translation>Высота</translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation>Угол</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>Наклон X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>Наклон Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>Глубина</translation>
-    </message>
-    <message>
-        <source>Perspective</source>
-        <translation>Перспектива</translation>
     </message>
     <message>
         <source>Also moved by %1</source>
@@ -24496,6 +24817,10 @@ If playback stutters, try another.</source>
         <translation>Масштаб</translation>
     </message>
     <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation type="unfinished">Положение</translation>
     </message>
@@ -24540,6 +24865,22 @@ If playback stutters, try another.</source>
         <translation>Непрозрачность и поворот</translation>
     </message>
     <message>
+        <source>Rotate the whole group as one flat card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate the clip in 3D and move it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open 3D workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation</source>
         <translation type="unfinished">Поворот</translation>
     </message>
@@ -24548,64 +24889,8 @@ If playback stutters, try another.</source>
         <translation>Повернуть на 90°</translation>
     </message>
     <message>
-        <source>Tilt the whole group as one flat card</source>
-        <translation>Наклонить всю группу как одну плоскость</translation>
-    </message>
-    <message>
-        <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
-        <translation>Наклонить клип и сместить его в глубину с помощью 3D-манипуляторов в предпросмотре. При выключении клип снова станет плоским.</translation>
-    </message>
-    <message>
-        <source>Occlude by depth</source>
-        <translation>Перекрытие по глубине</translation>
-    </message>
-    <message>
-        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation>Определять перекрытие этого клипа по глубине, а не по положению дорожки. Сортируются только клипы с включённым параметром; остальные отображаются в порядке дорожек.</translation>
-    </message>
-    <message>
-        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation>Требуется режим наложения «Обычный» — остальные режимы считывают холст позади клипа, что не поддерживает сортировку по глубине.</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>Перемещение</translation>
-    </message>
-    <message>
-        <source>Arrows on the preview move the clip along each axis</source>
-        <translation>Стрелки в предпросмотре перемещают клип вдоль каждой оси</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Поворот</translation>
-    </message>
-    <message>
-        <source>Rings on the preview turn the clip about each axis</source>
-        <translation>Кольца в предпросмотре поворачивают клип вокруг каждой оси</translation>
-    </message>
-    <message>
-        <source>Handles on the preview stretch the clip along its own edges</source>
-        <translation>Маркеры в предпросмотре растягивают клип вдоль его собственных краёв</translation>
-    </message>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Global</source>
-        <translation>Глобальная</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the camera: X across, Y down, Z toward you</source>
-        <translation>Манипулятор следует за камерой: X — по горизонтали, Y — вниз, Z — к вам</translation>
-    </message>
-    <message>
-        <source>Local</source>
-        <translation>Локальная</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the clip&apos;s own edges and face, however it is turned</source>
-        <translation>Манипулятор следует за краями и плоскостью клипа независимо от его поворота</translation>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flip</source>
@@ -24634,10 +24919,6 @@ If playback stutters, try another.</source>
     <message>
         <source>3D layer</source>
         <translation>3D-слой</translation>
-    </message>
-    <message>
-        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
-        <translation>Исправляет поворот исходного файла без потери качества — в отличие от параметра «Угол» выше, меняет декодирование, а не только отображение.</translation>
     </message>
 </context>
 <context>
@@ -25489,58 +25770,241 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>ViewNavPad</name>
+    <name>View3dPanel</name>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation type="unfinished">Сетка</translation>
+    </message>
+    <message>
+        <source>3D grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The floor grid drawn under the scene in the 3D viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing between lines. 0 picks one from the canvas size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished">Привязка</translation>
+    </message>
+    <message>
+        <source>3D snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editor field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maya</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender: middle-drag orbits, Shift pans, Ctrl dollies. Maya: Alt with the left, middle or right button orbits, pans or dollies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit around selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit about the selected clip&apos;s centre instead of the view&apos;s target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orthographic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw the viewport without perspective (Numpad 5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D model lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D model to edit its lights.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Viewport3dPanel</name>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">Перспектива</translation>
+    </message>
+    <message>
+        <source>Front</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">Назад</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">Слева</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">Справа</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">Сверху</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished">Снизу</translation>
+    </message>
+    <message>
+        <source>Scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
-        <source>Orbit left</source>
-        <translation>Орбита влево</translation>
+        <source>View</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 4</source>
-        <translation>Numpad 4</translation>
+        <source>Look at the scene from a preset side, or through the scene camera</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit up</source>
-        <translation>Орбита вверх</translation>
+        <source>Ortho</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 8</source>
-        <translation>Numpad 8</translation>
+        <source>Orthographic projection</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit right</source>
-        <translation>Орбита вправо</translation>
+        <source>Numpad 5</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 6</source>
-        <translation>Numpad 6</translation>
+        <source>Move</source>
+        <translation type="unfinished">Перемещение</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>Отдалить</translation>
+        <source>Rotate</source>
+        <translation type="unfinished">Повернуть</translation>
     </message>
     <message>
-        <source>Numpad -</source>
-        <translation>Numpad -</translation>
+        <source>Scale</source>
+        <translation type="unfinished">Масштаб</translation>
     </message>
     <message>
-        <source>Orbit down</source>
-        <translation>Орбита вниз</translation>
+        <source>World</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 2</source>
-        <translation>Numpad 2</translation>
+        <source>Local</source>
+        <translation type="unfinished">Локальная</translation>
     </message>
     <message>
-        <source>Zoom in</source>
-        <translation>Приблизить</translation>
+        <source>Which axes the gizmo follows: the scene&apos;s, the selected object&apos;s or the screen&apos;s</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad +</source>
-        <translation>Numpad +</translation>
+        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
+        <translation type="unfinished">Свободный полёт (WASD — перемещение, Q/E — вниз/вверх, наведение указателем)</translation>
+    </message>
+    <message>
+        <source>Shift+F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numpad 0</source>
+        <translation type="unfinished">Numpad 0</translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to this view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished">По размеру выделенного</translation>
+    </message>
+    <message>
+        <source>F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame everything</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished">Сбросить вид</translation>
+    </message>
+    <message>
+        <source>Shift+Home</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25938,6 +26402,22 @@ If playback stutters, try another.</source>
     <message>
         <source>Tracking</source>
         <translation>Трекинг</translation>
+    </message>
+    <message>
+        <source>3D Viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Media</source>

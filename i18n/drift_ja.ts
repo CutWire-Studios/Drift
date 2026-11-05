@@ -3042,6 +3042,10 @@
         <translation>3D ギズモ : スケール / 楕円マスク</translation>
     </message>
     <message>
+        <source>3D gizmo: cycle world/local/view axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cut tool / Brush mask</source>
         <translation>カットツール / ブラシマスク</translation>
     </message>
@@ -3284,6 +3288,22 @@
     <message>
         <source>Install the emoji sticker pack to add emoji</source>
         <translation>絵文字を追加するには絵文字スタンプパックをインストールしてください</translation>
+    </message>
+    <message>
+        <source>Aim camera at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Free camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera aims at its point of interest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera uses its own rotation</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Edit clip</source>
@@ -3838,10 +3858,6 @@
         <translation>変形レイヤーを選択</translation>
     </message>
     <message>
-        <source>3D gizmo: switch global/local axes</source>
-        <translation>3D ギズモ : グローバル/ローカル軸の切り替え</translation>
-    </message>
-    <message>
         <source>Custom guides</source>
         <translation>カスタムガイド</translation>
     </message>
@@ -3892,6 +3908,10 @@
     <message>
         <source>Fly camera</source>
         <translation>カメラをフライ</translation>
+    </message>
+    <message>
+        <source>Align camera to view</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio effects go on the timeline.</source>
@@ -4934,6 +4954,20 @@
         <translation>プロキシをリンク</translation>
     </message>
     <message>
+        <source>Relink other missing files?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Relink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Link proxies by pattern?</source>
         <translation>パターンでプロキシをリンクしますか？</translation>
     </message>
@@ -5911,58 +5945,133 @@
     </message>
 </context>
 <context>
+    <name>Camera3dPanel</name>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">カメラ</translation>
+    </message>
+    <message>
+        <source>Add camera</source>
+        <translation type="unfinished">カメラを追加</translation>
+    </message>
+    <message>
+        <source>Add a camera clip at the playhead, for a camera cut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a camera track with a camera clip over the sequence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to the 3D viewport&apos;s view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No camera yet. Without one every clip is seen through its own Perspective.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> (active)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select this camera and look through it</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CameraInspector</name>
     <message>
-        <source>Pan X</source>
-        <translation>パン X</translation>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pan Y</source>
-        <translation>パン Y</translation>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Dolly</source>
-        <translation>Dolly</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch</source>
-        <translation>ピッチ</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yaw</source>
-        <translation>Yaw</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Roll</source>
-        <translation>ロール</translation>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Lens</source>
-        <translation>レンズ</translation>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">ズーム</translation>
     </message>
     <message>
         <source>Select a camera clip to frame the shot.</source>
         <translation>ショットを決めるには、カメラクリップを選択してください。</translation>
     </message>
     <message>
-        <source>Everything on the timeline is seen through this camera while the clip lasts. A camera at rest looks exactly like no camera at all, so the numbers below are all offsets from the normal view.</source>
-        <translation>クリップが続く間、タイムライン上のすべてはこのカメラを通して見られます。静止状態のカメラはカメラなしとまったく同じ見え方になるため、以下の数値はすべて通常の表示からのオフセットです。</translation>
+        <source>Everything on the timeline is seen through this camera while the clip lasts. Position is the camera&apos;s eye in the same 3D space as the clips; a camera at rest looks exactly like no camera at all.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aim at target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the camera facing its point of interest. Rotation then turns the camera relative to that aim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Focal length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom, focal length (36 × 24 mm film) and field of view are one setting in three units. Zooming does not move the camera. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset camera</source>
+        <translation type="unfinished">カメラをリセット</translation>
+    </message>
+    <message>
+        <source>Back to rest: the default position, no rotation, no target and the default zoom, framing the canvas head on.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Camera position</source>
         <translation>カメラ位置</translation>
-    </message>
-    <message>
-        <source>A short lens exaggerates depth; a long one flattens it. While this camera is running it replaces each clip&apos;s own Perspective value, because a scene has one viewer.</source>
-        <translation>短いレンズは奥行きを誇張し、長いレンズは平坦にします。このカメラが動作している間は、シーンには 1人の視聴者しかいないため、各クリップ自身のパースペクティブ値が置き換えられます。</translation>
-    </message>
-    <message>
-        <source>Reset camera position</source>
-        <translation>カメラ位置をリセット</translation>
-    </message>
-    <message>
-        <source>Back to rest: no pan, dolly or turn, framing the canvas head on. The lens is kept.</source>
-        <translation>初期状態に戻します。パン、ドリー、回転なしで、キャンバスを正面からとらえます。レンズは維持されます。</translation>
     </message>
 </context>
 <context>
@@ -10104,22 +10213,6 @@
         <translation>高さ</translation>
     </message>
     <message>
-        <source>Angle</source>
-        <translation>角度</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>チルト X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>チルト Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>深さ</translation>
-    </message>
-    <message>
         <source>Perspective</source>
         <translation>パースペクティブ</translation>
     </message>
@@ -10146,6 +10239,62 @@
     <message>
         <source>Rotation</source>
         <translation>回転</translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera</source>
+        <translation type="unfinished">カメラ</translation>
+    </message>
+    <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">ズーム</translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Feather</source>
@@ -10249,6 +10398,34 @@
 <context>
     <name>KeyframeGraph</name>
     <message>
+        <source>Position X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Point of Interest Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished">ズーム</translation>
+    </message>
+    <message>
         <source>X position</source>
         <translation>X 位置</translation>
     </message>
@@ -10269,16 +10446,28 @@
         <translation>回転</translation>
     </message>
     <message>
-        <source>Tilt X</source>
-        <translation>チルト X</translation>
+        <source>Rotation X</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tilt Y</source>
-        <translation>チルト Y</translation>
+        <source>Rotation Y</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Depth</source>
-        <translation>深さ</translation>
+        <source>Position Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor Z</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -13039,6 +13228,16 @@
         <translation>%1 (%2)</translation>
     </message>
     <message>
+        <source>Relink media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Relinked %n file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Sub-clip added</source>
         <translation>サブクリップを追加しました</translation>
     </message>
@@ -13553,60 +13752,75 @@
         <translation>開始オフセット</translation>
     </message>
     <message>
-        <source>Position, size, rotation and depth occlusion are on the Transform tab.</source>
-        <translation>位置、サイズ、回転、深度オクルージョンは「トランスフォーム」タブにあります。</translation>
+        <source>Position, size, rotation, anchor point and depth occlusion are on the Transform tab.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">スケール</translation>
+    </message>
+    <message>
+        <source>Depth scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Model3DLighting</name>
+    <message>
         <source>Lighting</source>
-        <translation>ライティング</translation>
+        <translation type="unfinished">ライティング</translation>
     </message>
     <message>
         <source>Drag the lights in the 3D view, or set them here. They move and scale with the clip; turning the model turns it under them.</source>
-        <translation>3D ビューでライトをドラッグするか、ここで設定します。ライトはクリップとともに移動・拡大縮小し、モデルを回転させるとライトの下でモデルが回転します。</translation>
-    </message>
-    <message>
-        <source>Light %1</source>
-        <translation>ライト %1</translation>
-    </message>
-    <message>
-        <source>Light %1 colour</source>
-        <translation>ライト %1 の色</translation>
-    </message>
-    <message>
-        <source>Left / right</source>
-        <translation>左 / 右</translation>
-    </message>
-    <message>
-        <source>Up / down</source>
-        <translation>上 / 下</translation>
-    </message>
-    <message>
-        <source>Near / far</source>
-        <translation>手前 / 奥</translation>
-    </message>
-    <message>
-        <source>Brightness</source>
-        <translation>明るさ</translation>
-    </message>
-    <message>
-        <source>Reach</source>
-        <translation>到達距離</translation>
-    </message>
-    <message>
-        <source>Spot angle</source>
-        <translation>スポット角度</translation>
-    </message>
-    <message>
-        <source>Aim left / right</source>
-        <translation>照射方向 左 / 右</translation>
-    </message>
-    <message>
-        <source>Aim up / down</source>
-        <translation>照射方向 上 / 下</translation>
+        <translation type="unfinished">3D ビューでライトをドラッグするか、ここで設定します。ライトはクリップとともに移動・拡大縮小し、モデルを回転させるとライトの下でモデルが回転します。</translation>
     </message>
     <message>
         <source>Ambient</source>
-        <translation>環境光</translation>
+        <translation type="unfinished">環境光</translation>
+    </message>
+    <message>
+        <source>Light %1</source>
+        <translation type="unfinished">ライト %1</translation>
+    </message>
+    <message>
+        <source>Light %1 colour</source>
+        <translation type="unfinished">ライト %1 の色</translation>
+    </message>
+    <message>
+        <source>Left / right</source>
+        <translation type="unfinished">左 / 右</translation>
+    </message>
+    <message>
+        <source>Up / down</source>
+        <translation type="unfinished">上 / 下</translation>
+    </message>
+    <message>
+        <source>Near / far</source>
+        <translation type="unfinished">手前 / 奥</translation>
+    </message>
+    <message>
+        <source>Brightness</source>
+        <translation type="unfinished">明るさ</translation>
+    </message>
+    <message>
+        <source>Reach</source>
+        <translation type="unfinished">到達距離</translation>
+    </message>
+    <message>
+        <source>Spot angle</source>
+        <translation type="unfinished">スポット角度</translation>
+    </message>
+    <message>
+        <source>Aim left / right</source>
+        <translation type="unfinished">照射方向 左 / 右</translation>
+    </message>
+    <message>
+        <source>Aim up / down</source>
+        <translation type="unfinished">照射方向 上 / 下</translation>
     </message>
 </context>
 <context>
@@ -13614,6 +13828,14 @@
     <message>
         <source>Ambient light</source>
         <translation>環境光</translation>
+    </message>
+    <message>
+        <source>Model scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model depth scale</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>left / right</source>
@@ -13834,6 +14056,37 @@
     <message>
         <source>Update</source>
         <translation>アップデート</translation>
+    </message>
+</context>
+<context>
+    <name>Outliner3dPanel</name>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cameras</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layers</source>
+        <translation type="unfinished">レイヤー</translation>
+    </message>
+    <message>
+        <source>No cameras, models or 3D layers at the playhead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide this clip&apos;s track</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14282,80 +14535,10 @@
     </message>
 </context>
 <context>
-    <name>Preview3DTools</name>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>移動</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>回転</translation>
-    </message>
-    <message>
-        <source>Scale</source>
-        <translation>スケール</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the selection&apos;s own axes (click for world axes)</source>
-        <translation>Gizmo は選択対象自身の軸に従います (クリックでワールド軸)</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the world axes (click for the selection&apos;s own)</source>
-        <translation>Gizmo はワールド軸に従います (クリックで選択対象自身の軸)</translation>
-    </message>
-    <message>
-        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
-        <translation>フライ (WASD で移動、Q/E で下降/上昇、ポインター方向に操縦)</translation>
-    </message>
-    <message>
-        <source>Look through the camera</source>
-        <translation>カメラを通して見る</translation>
-    </message>
-    <message>
-        <source>Numpad 0</source>
-        <translation>テンキー 0</translation>
-    </message>
-    <message>
-        <source>Reset the scene camera&apos;s position</source>
-        <translation>シーンカメラの位置をリセット</translation>
-    </message>
-    <message>
-        <source>Frame the selection</source>
-        <translation>選択対象をフレームに収める</translation>
-    </message>
-    <message>
-        <source>Reset the view</source>
-        <translation>ビューをリセット</translation>
-    </message>
-</context>
-<context>
     <name>PreviewCompactGpuCaption</name>
     <message>
         <source>GPU preview unavailable</source>
         <translation>GPUプレビューは利用できません</translation>
-    </message>
-</context>
-<context>
-    <name>PreviewModeSwitch</name>
-    <message>
-        <source>Camera Output</source>
-        <translation>カメラ出力</translation>
-    </message>
-    <message>
-        <source>The camera&apos;s picture, as it exports. Clips move and snap on the canvas.</source>
-        <translation>書き出し時と同じカメラの映像です。クリップはキャンバス上で移動し、スナップします。</translation>
-    </message>
-    <message>
-        <source>3D Scene</source>
-        <translation>3D シーン</translation>
-    </message>
-    <message>
-        <source>The scene from a free viewpoint, with the camera in it. Middle- or right-drag orbits, Shift pans, the wheel zooms, and the corner pad steps the view.</source>
-        <translation>カメラを含むシーンを自由な視点から表示します。中ボタンまたは右ボタンのドラッグで旋回、Shift でパン、ホイールでズーム、隅のパッドで視点を段階的に移動できます。</translation>
     </message>
 </context>
 <context>
@@ -24261,6 +24444,160 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>Transform3dInspector</name>
+    <message>
+        <source>Scale clip</source>
+        <translation type="unfinished">クリップを拡大縮小</translation>
+    </message>
+    <message>
+        <source>Remove the %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add %1 keyframes at the playhead</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A camera has no transform of its own. Position, rotation and zoom are in the Camera panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This clip is flat. Make it a 3D layer to rotate it and move it in depth.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D layer, a model or a splat.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make 3D layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished">移動</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished">回転</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <translation type="unfinished">スケール</translation>
+    </message>
+    <message>
+        <source>World</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Local</source>
+        <translation type="unfinished">ローカル</translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the selected object (scale always follows the object&apos;s own edges)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo axes follow the screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>World and local position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  X %2  Y %3  Z %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position (px)</source>
+        <translation type="unfinished">位置 (px)</translation>
+    </message>
+    <message>
+        <source>Reset position &amp; size</source>
+        <translation type="unfinished">位置とサイズをリセット</translation>
+    </message>
+    <message>
+        <source>3D position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor point (px)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the anchor point back at the centre of the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D anchor point</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset anchor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation (°)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale / depth scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale (%)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset scale to 100%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Occlude by depth</source>
+        <translation type="unfinished">深度によるオクルージョン</translation>
+    </message>
+    <message>
+        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
+        <translation type="unfinished">このクリップを何が覆うかを、トラック位置ではなく深度で決定します。これがオンのクリップ同士のみが互いに前後を判定し、それ以外はすべてトラック順で描画されます。</translation>
+    </message>
+    <message>
+        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
+        <translation type="unfinished">「通常」ブレンドモードが必要です — 他のモードはクリップ背後のキャンバスを読み取るため、深度で前後を判定できません。</translation>
+    </message>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">パースペクティブ</translation>
+    </message>
+</context>
+<context>
+    <name>Transform3dPanel</name>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TransformInspector</name>
     <message>
         <source>Opacity</source>
@@ -24273,26 +24610,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Height</source>
         <translation>高さ</translation>
-    </message>
-    <message>
-        <source>Angle</source>
-        <translation>角度</translation>
-    </message>
-    <message>
-        <source>Tilt X</source>
-        <translation>チルト X</translation>
-    </message>
-    <message>
-        <source>Tilt Y</source>
-        <translation>チルト Y</translation>
-    </message>
-    <message>
-        <source>Depth</source>
-        <translation>深さ</translation>
-    </message>
-    <message>
-        <source>Perspective</source>
-        <translation>パースペクティブ</translation>
     </message>
     <message>
         <source>Also moved by %1</source>
@@ -24339,6 +24656,10 @@ If playback stutters, try another.</source>
         <translation>スケール</translation>
     </message>
     <message>
+        <source>Rotation Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Position</source>
         <translation>位置</translation>
     </message>
@@ -24383,6 +24704,22 @@ If playback stutters, try another.</source>
         <translation>不透明度 / 回転</translation>
     </message>
     <message>
+        <source>Rotate the whole group as one flat card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate the clip in 3D and move it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open 3D workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Position, rotation, anchor point and depth occlusion are in the 3D workspace&apos;s 3D Transform panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Rotation</source>
         <translation>回転</translation>
     </message>
@@ -24391,64 +24728,8 @@ If playback stutters, try another.</source>
         <translation>90°回転</translation>
     </message>
     <message>
-        <source>Tilt the whole group as one flat card</source>
-        <translation>グループ全体を1枚の平面カードとして傾けます</translation>
-    </message>
-    <message>
-        <source>Tilt the clip and push it in depth, with 3D grips on the preview. Turning it off flattens the clip again.</source>
-        <translation>プレビュー上の 3D グリップでクリップを傾けたり奥行き方向に移動したりします。オフにすると、クリップは再び平面に戻ります。</translation>
-    </message>
-    <message>
-        <source>Occlude by depth</source>
-        <translation>深度によるオクルージョン</translation>
-    </message>
-    <message>
-        <source>Let depth decide what covers this clip, instead of its track position. Only clips with this on sort against each other; everything else still draws in track order.</source>
-        <translation>このクリップを何が覆うかを、トラック位置ではなく深度で決定します。これがオンのクリップ同士のみが互いに前後を判定し、それ以外はすべてトラック順で描画されます。</translation>
-    </message>
-    <message>
-        <source>Needs the Normal blend mode — the others read the canvas behind the clip, which depth cannot sort.</source>
-        <translation>「通常」ブレンドモードが必要です — 他のモードはクリップ背後のキャンバスを読み取るため、深度で前後を判定できません。</translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation>移動</translation>
-    </message>
-    <message>
-        <source>Arrows on the preview move the clip along each axis</source>
-        <translation>プレビュー上の矢印で、各軸に沿ってクリップを移動します</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>回転</translation>
-    </message>
-    <message>
-        <source>Rings on the preview turn the clip about each axis</source>
-        <translation>プレビュー上のリングで、各軸を中心にクリップを回転します</translation>
-    </message>
-    <message>
-        <source>Handles on the preview stretch the clip along its own edges</source>
-        <translation>プレビュー上のハンドルで、クリップ自身のエッジに沿って伸縮します</translation>
-    </message>
-    <message>
-        <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
-    </message>
-    <message>
-        <source>Global</source>
-        <translation>グローバル</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the camera: X across, Y down, Z toward you</source>
-        <translation>ギズモがカメラに追従します : X は横、Y は下、Z は手前</translation>
-    </message>
-    <message>
-        <source>Local</source>
-        <translation>ローカル</translation>
-    </message>
-    <message>
-        <source>Gizmo follows the clip&apos;s own edges and face, however it is turned</source>
-        <translation>どのように回転していても、ギズモがクリップ自身のエッジと面に追従します</translation>
+        <source>Corrects the source&apos;s own rotation losslessly — unlike Rotation above, this changes decoding, not just the on-screen box.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Flip</source>
@@ -24477,10 +24758,6 @@ If playback stutters, try another.</source>
     <message>
         <source>3D layer</source>
         <translation>3D レイヤー</translation>
-    </message>
-    <message>
-        <source>Corrects the source&apos;s own rotation losslessly — unlike Angle above, this changes decoding, not just the on-screen box.</source>
-        <translation>ソース自体の回転をロスレスで補正します — 上記の「角度」とは異なり、画面上の表示枠だけでなくデコード自体を変更します。</translation>
     </message>
 </context>
 <context>
@@ -25322,58 +25599,241 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
-    <name>ViewNavPad</name>
+    <name>View3dPanel</name>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation type="unfinished">グリッド</translation>
+    </message>
+    <message>
+        <source>3D grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The floor grid drawn under the scene in the 3D viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing between lines. 0 picks one from the canvas size.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished">スナッピング</translation>
+    </message>
+    <message>
+        <source>3D snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gizmo drags move and turn in these steps; hold Ctrl for free movement. 0 turns a step off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editor field of view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maya</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blender: middle-drag orbits, Shift pans, Ctrl dollies. Maya: Alt with the left, middle or right button orbits, pans or dollies.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit around selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orbit about the selected clip&apos;s centre instead of the view&apos;s target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orthographic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Draw the viewport without perspective (Numpad 5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D model lights</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a 3D model to edit its lights.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Viewport3dPanel</name>
+    <message>
+        <source>Perspective</source>
+        <translation type="unfinished">パースペクティブ</translation>
+    </message>
+    <message>
+        <source>Front</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished">戻る</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">左</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">右</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished">上</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished">下</translation>
+    </message>
+    <message>
+        <source>Scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>%1 (%2)</source>
-        <translation>%1 (%2)</translation>
+        <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
-        <source>Orbit left</source>
-        <translation>左に旋回</translation>
+        <source>View</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 4</source>
-        <translation>テンキー 4</translation>
+        <source>Look at the scene from a preset side, or through the scene camera</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit up</source>
-        <translation>上に旋回</translation>
+        <source>Ortho</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 8</source>
-        <translation>テンキー 8</translation>
+        <source>Orthographic projection</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Orbit right</source>
-        <translation>右に旋回</translation>
+        <source>Numpad 5</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 6</source>
-        <translation>テンキー 6</translation>
+        <source>Move</source>
+        <translation type="unfinished">移動</translation>
     </message>
     <message>
-        <source>Zoom out</source>
-        <translation>ズームアウト</translation>
+        <source>Rotate</source>
+        <translation type="unfinished">回転</translation>
     </message>
     <message>
-        <source>Numpad -</source>
-        <translation>テンキー -</translation>
+        <source>Scale</source>
+        <translation type="unfinished">スケール</translation>
     </message>
     <message>
-        <source>Orbit down</source>
-        <translation>下に旋回</translation>
+        <source>World</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad 2</source>
-        <translation>テンキー 2</translation>
+        <source>Local</source>
+        <translation type="unfinished">ローカル</translation>
     </message>
     <message>
-        <source>Zoom in</source>
-        <translation>ズームイン</translation>
+        <source>Which axes the gizmo follows: the scene&apos;s, the selected object&apos;s or the screen&apos;s</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Numpad +</source>
-        <translation>テンキー +</translation>
+        <source>Fly (WASD to move, Q/E down/up, steer toward the pointer)</source>
+        <translation type="unfinished">フライ (WASD で移動、Q/E で下降/上昇、ポインター方向に操縦)</translation>
+    </message>
+    <message>
+        <source>Shift+F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look through the scene camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Numpad 0</source>
+        <translation type="unfinished">テンキー 0</translation>
+    </message>
+    <message>
+        <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Align the scene camera to this view</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation type="unfinished">選択対象をフレームに収める</translation>
+    </message>
+    <message>
+        <source>F</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame everything</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished">ホーム</translation>
+    </message>
+    <message>
+        <source>Reset the view</source>
+        <translation type="unfinished">ビューをリセット</translation>
+    </message>
+    <message>
+        <source>Shift+Home</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25771,6 +26231,22 @@ If playback stutters, try another.</source>
     <message>
         <source>Tracking</source>
         <translation>トラッキング</translation>
+    </message>
+    <message>
+        <source>3D Viewport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Outliner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3D Transform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View &amp; Lights</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Media</source>
