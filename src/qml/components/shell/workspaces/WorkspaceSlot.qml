@@ -72,6 +72,7 @@ Item {
 
     Item {
         id: body
+        clip: true
         anchors.top: tabStrip.bottom
         anchors.left: parent.left
         anchors.right: parent.right

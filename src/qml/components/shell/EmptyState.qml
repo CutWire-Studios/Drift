@@ -23,12 +23,30 @@ Item {
 
     signal actionTriggered()
 
+    // Parents that size from this item's height report exactly the full layout, so they
+    // always fit; a zero-height parent is treated as not laid out yet.
+    readonly property real available: parent && parent.height > 0 ? parent.height : Infinity
+    function layoutHeight(icon, hint, action) {
+        let n = 0
+        let h = 0
+        if (icon) { h += 48; n++ }
+        if (root.title.length > 0) { h += titleText.implicitHeight; n++ }
+        if (hint && root.hint.length > 0) { h += hintText.implicitHeight; n++ }
+        if (action && root.actionText.length > 0) { h += actionButton.implicitHeight; n++ }
+        return h + Math.max(0, n - 1) * Theme.spacingLg
+    }
+    readonly property bool actionFits: actionButton.implicitWidth <= root.width
+    readonly property bool showIcon: !compact && layoutHeight(true, true, actionFits) <= available
+    readonly property bool showAction: actionFits && layoutHeight(false, true, true) <= available
+    readonly property bool showHint: layoutHeight(false, true, false) <= available
+
     implicitWidth: Math.min(260, parent ? parent.width : 260)
     // Height follows the column directly — anchors.centerIn on a child whose
     // parent sizes from that child's implicitHeight is circular and can collapse.
     width: parent ? parent.width : implicitWidth
-    height: column.height
+    height: Math.min(column.height, available)
     implicitHeight: column.height
+    clip: true
 
     Column {
         id: column
@@ -37,7 +55,7 @@ Item {
         spacing: Theme.spacingLg
 
         Rectangle {
-            visible: !root.compact
+            visible: root.showIcon
             anchors.horizontalCenter: parent.horizontalCenter
             width: 48
             height: 48
@@ -54,6 +72,7 @@ Item {
         }
 
         Text {
+            id: titleText
             visible: root.title.length > 0
             width: parent.width
             text: root.title
@@ -66,7 +85,8 @@ Item {
         }
 
         Text {
-            visible: root.hint.length > 0
+            id: hintText
+            visible: root.hint.length > 0 && root.showHint
             width: parent.width
             text: root.hint
             color: Theme.c.emptyState.foregroundMuted
@@ -77,7 +97,8 @@ Item {
         }
 
         ThemedButton {
-            visible: root.actionText.length > 0
+            id: actionButton
+            visible: root.actionText.length > 0 && root.showAction
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.actionText
             variant: root.actionVariant

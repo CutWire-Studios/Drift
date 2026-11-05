@@ -962,6 +962,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     TextAssetsTab {
@@ -981,6 +982,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     SubtitlesTab {
@@ -994,6 +996,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     SpeechTab { }
@@ -1005,6 +1008,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     SoundsTab {
@@ -1020,6 +1024,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     StickersTab {
@@ -1038,6 +1043,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     ShapesTab {
@@ -1054,6 +1060,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     ScenesTab {
@@ -1075,6 +1082,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     MasksTab {
@@ -1088,6 +1096,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     EffectBrowser {
@@ -1103,6 +1112,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     EffectTemplateBrowser {
@@ -1118,6 +1128,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     TransitionsTab {
@@ -1135,6 +1146,7 @@ PanelFrame {
                 visible: active
                 width: parent.width
                 height: parent.height - assetsHeader.height
+                clip: true
                 opacity: root.tabOpacity
                 sourceComponent: Component {
                     MediaAssetsTab {

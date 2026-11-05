@@ -213,7 +213,8 @@ Item {
     }
 
     EmptyState {
-        anchors.centerIn: parent
+        anchors.top: header.bottom
+        anchors.bottom: parent.bottom
         width: parent.width
         visible: EditorState.scenes.list.length === 0 && !EditorState.scenes.detecting
         glyph: Theme.icons.listVideo

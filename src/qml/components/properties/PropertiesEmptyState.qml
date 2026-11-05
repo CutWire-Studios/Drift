@@ -10,7 +10,7 @@ Column {
     // Replaces the click-a-clip hint; set by the standalone single-tab panes.
     property string hint: ""
 
-    width: Math.min(260, panelWidth - 32)
+    width: Math.max(1, Math.min(260, panelWidth - 32))
     spacing: 16
 
     Rectangle {

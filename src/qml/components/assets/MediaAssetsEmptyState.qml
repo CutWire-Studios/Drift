@@ -15,12 +15,27 @@ Item {
     anchors.fill: parent
     visible: AssetLibrary.count === 0 && BinFolderModel.count === 0 && !importing
 
+    clip: true
+
+    readonly property bool hasMarketplace: !!ShellBridge.main && !!ShellBridge.main.openMarketplace
+    readonly property real sectionGap: Theme.spacingXl
+    readonly property real buttonsHeight: importRow.height
+        + (hasMarketplace ? marketplaceButton.height + sectionGap : 0) + sectionGap
+    readonly property real textHeight: titleText.implicitHeight + hintText.implicitHeight + sectionGap
+    readonly property real tableHeight: formatBox.height + sectionGap
+    readonly property bool showButtons: height >= 48 + sectionGap + textHeight + buttonsHeight
+    readonly property bool showFormats: showButtons
+        && height >= 48 + sectionGap + textHeight + buttonsHeight + tableHeight
+    readonly property bool showIcon: height >= 48 + sectionGap + textHeight
+    readonly property bool showHint: height >= titleText.implicitHeight + hintText.implicitHeight + sectionGap
+
     Column {
         anchors.centerIn: parent
-        width: Math.min(parent.width - Theme.spacing3xl * 2, 300)
+        width: Math.max(1, Math.min(parent.width - Theme.spacing3xl * 2, 300))
         spacing: Theme.spacingXl
 
         Rectangle {
+            visible: root.showIcon
             anchors.horizontalCenter: parent.horizontalCenter
             width: 48
             height: 48
@@ -36,6 +51,7 @@ Item {
         }
 
         Text {
+            id: titleText
             width: parent.width
             text: qsTr("No media yet")
             color: Theme.c.mediaAssetsEmptyState.foreground
@@ -47,6 +63,8 @@ Item {
         }
 
         Text {
+            id: hintText
+            visible: root.showHint
             width: parent.width
             // The formats table below now carries the kind list, so the hint only has to
             // say how media gets in and what to do with it once it is here.
@@ -59,6 +77,8 @@ Item {
         }
 
         Row {
+            id: importRow
+            visible: root.showButtons
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spacingLg
 
@@ -78,14 +98,17 @@ Item {
         }
 
         ThemedButton {
+            id: marketplaceButton
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: !!ShellBridge.main && !!ShellBridge.main.openMarketplace
+            visible: root.showButtons && root.hasMarketplace
             text: qsTr("Browse the Marketplace")
             glyph: Theme.icons.store
             onClicked: ShellBridge.main.openMarketplace("")
         }
 
         Rectangle {
+            id: formatBox
+            visible: root.showFormats
             width: parent.width
             height: formatColumn.height + Theme.spacingXl * 2
             radius: Theme.c.mediaAssetsEmptyState.formatsRadius
