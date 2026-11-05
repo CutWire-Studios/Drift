@@ -3186,6 +3186,10 @@
         <translation>녹음이 취소됨</translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation>클립이 이동됨</translation>
     </message>
@@ -4474,6 +4478,14 @@
     <message>
         <source>Track deleted</source>
         <translation>트랙이 삭제됨</translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add track</source>
@@ -17638,12 +17650,28 @@ If playback stutters, try another.</source>
         <translation>캐시</translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
-        <translation>%1 사용됨 (%2에 저장됨)</translation>
+        <source>%1 used</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
         <translation>캐시 지우기</translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">초기화</translation>
+    </message>
+    <message>
+        <source>Change…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22846,6 +22874,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>속성</translation>
     </message>
@@ -22976,6 +23008,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rename…</source>
         <translation>이름 변경…</translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -23172,10 +23208,36 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished">미디어 검색</translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
         <translation>클릭하거나 드래그하여 탐색</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished">메인</translation>
     </message>
 </context>
 <context>
@@ -23422,28 +23484,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Customize toolbar…</source>
         <translation>도구 모음 사용자 지정…</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation>메인</translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation>컴포지트</translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation>메인 타임라인과 컴포지트 클립 사이 전환</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
-        <translation>아직 컴포지트 클립이 없습니다</translation>
     </message>
 </context>
 <context>
@@ -23732,6 +23772,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete track</source>
         <translation>트랙 삭제</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

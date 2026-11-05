@@ -3186,6 +3186,10 @@
         <translation>錄製已取消</translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation>片段已移動</translation>
     </message>
@@ -4474,6 +4478,14 @@
     <message>
         <source>Track deleted</source>
         <translation>軌道已刪除</translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add track</source>
@@ -17646,12 +17658,28 @@ If playback stutters, try another.</source>
         <translation>緩存</translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
-        <translation>已用 %1，存儲於 %2</translation>
+        <source>%1 used</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
         <translation>清除緩存</translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">重置</translation>
+    </message>
+    <message>
+        <source>Change…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22855,6 +22883,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>屬性</translation>
     </message>
@@ -22985,6 +23017,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rename…</source>
         <translation>重命名…</translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -23181,10 +23217,36 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished">搜索媒體</translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
         <translation>單擊或拖動以跳轉</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished">主</translation>
     </message>
 </context>
 <context>
@@ -23431,28 +23493,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Customize toolbar…</source>
         <translation>自訂工具欄…</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation>主</translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation>合成</translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation>在主時間線和合成片段之間切換</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
-        <translation>暫無合成片段</translation>
     </message>
 </context>
 <context>
@@ -23741,6 +23781,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete track</source>
         <translation>刪除軌道</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

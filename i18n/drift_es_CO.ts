@@ -3192,6 +3192,10 @@
         <translation>Grabación cancelada</translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation>Clips movidos</translation>
     </message>
@@ -4493,6 +4497,14 @@
     <message>
         <source>Track deleted</source>
         <translation>Pista eliminada</translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add track</source>
@@ -17714,12 +17726,28 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Caché</translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
-        <translation>%1 usado, almacenado en %2</translation>
+        <source>%1 used</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
         <translation>Borrar caché</translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Restablecer</translation>
+    </message>
+    <message>
+        <source>Change…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22931,6 +22959,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>Propiedades</translation>
     </message>
@@ -23061,6 +23093,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Rename…</source>
         <translation>Cambiar nombre…</translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -23257,10 +23293,36 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancelar</translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished">Buscar medios</translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
         <translation>Haz clic o arrastra para buscar posición</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished">Principal</translation>
     </message>
 </context>
 <context>
@@ -23508,28 +23570,6 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Customize toolbar…</source>
         <translation>Personalizar barra de herramientas…</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation>Principal</translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation>Composición</translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation>Cambiar entre la línea de tiempo principal y los clips de composición</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
-        <translation>Aún no hay clips de composición</translation>
     </message>
 </context>
 <context>
@@ -23819,6 +23859,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Delete track</source>
         <translation>Eliminar pista</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

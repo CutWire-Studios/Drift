@@ -3186,6 +3186,10 @@
         <translation>Đã hủy bỏ ghi âm</translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation>Đã di chuyển clip</translation>
     </message>
@@ -4482,6 +4486,14 @@
     <message>
         <source>Track deleted</source>
         <translation>Đã xóa track</translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add track</source>
@@ -17646,12 +17658,28 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Bộ nhớ đệm</translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
-        <translation>Đã dùng %1, lưu trữ trong %2</translation>
+        <source>%1 used</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
         <translation>Xóa bộ nhớ đệm</translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Đặt lại</translation>
+    </message>
+    <message>
+        <source>Change…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22855,6 +22883,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>Thuộc tính</translation>
     </message>
@@ -22985,6 +23017,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Rename…</source>
         <translation>Đổi tên…</translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -23181,10 +23217,36 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Hủy bỏ</translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished">Tìm kiếm phương tiện</translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
         <translation>Nhấp hoặc kéo để tua</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished">Chính</translation>
     </message>
 </context>
 <context>
@@ -23431,28 +23493,6 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Customize toolbar…</source>
         <translation>Tùy chỉnh thanh công cụ…</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation>Chính</translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation>Tổ hợp</translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation>Chuyển đổi giữa dòng thời gian chính và các clip tổ hợp</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
-        <translation>Chưa có clip tổ hợp nào</translation>
     </message>
 </context>
 <context>
@@ -23741,6 +23781,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Delete track</source>
         <translation>Xóa track</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

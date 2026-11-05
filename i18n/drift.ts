@@ -3192,6 +3192,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4484,6 +4488,14 @@
     </message>
     <message>
         <source>Track deleted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -17707,11 +17719,27 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
+        <source>%1 used</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22923,6 +22951,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation type="unfinished"></translation>
     </message>
@@ -23052,6 +23084,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Rename…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -23249,9 +23285,35 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -23499,28 +23561,6 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Customize toolbar…</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -23810,6 +23850,10 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Delete track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

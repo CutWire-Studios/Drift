@@ -3192,6 +3192,10 @@
         <translation>রেকর্ডিং বাতিল করা হয়েছে।</translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation>ক্লিপগুলি সরানো হয়েছে।</translation>
     </message>
@@ -4485,6 +4489,14 @@
     <message>
         <source>Track deleted</source>
         <translation>ট্র্যাক মুছে ফেলা হয়েছে।</translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add track</source>
@@ -17714,12 +17726,28 @@ If playback stutters, try another.</source>
         <translation>ক্যাশ</translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
-        <translation>%1 ব্যবহৃত, %2-এ সংরক্ষিত</translation>
+        <source>%1 used</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
         <translation>ক্যাশ সাফ করুন</translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">রিসেট করুন</translation>
+    </message>
+    <message>
+        <source>Change…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22931,6 +22959,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>বৈশিষ্ট্য</translation>
     </message>
@@ -23061,6 +23093,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rename…</source>
         <translation>নাম পরিবর্তন করুন…</translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -23257,10 +23293,36 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">বাতিল করুন</translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished">সার্চ মিডিয়া</translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
         <translation>খুঁজতে ক্লিক করুন বা টেনে আনুন</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished">মূল</translation>
     </message>
 </context>
 <context>
@@ -23508,28 +23570,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Customize toolbar…</source>
         <translation>টুলবার সাজান…</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation>মূল</translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation>কম্পোজিট</translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation>প্রধান টাইমলাইন এবং কম্পোজিট ক্লিপগুলির মধ্যে স্যুইচ করুন</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
-        <translation>এখনও কোনো কম্পোজিট ক্লিপ নেই</translation>
     </message>
 </context>
 <context>
@@ -23819,6 +23859,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete track</source>
         <translation>ট্র্যাক মুছুন</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

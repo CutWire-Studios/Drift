@@ -3192,6 +3192,10 @@
         <translation>පටිගත කිරීම අවලංගු කෙරිණි</translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation>ක්ලිප් ගෙන යන ලදී</translation>
     </message>
@@ -4485,6 +4489,14 @@
     <message>
         <source>Track deleted</source>
         <translation>ට්‍රැකය මකා දමන ලදී</translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add track</source>
@@ -17714,12 +17726,28 @@ If playback stutters, try another.</source>
         <translation>හැඹිලිය</translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
-        <translation>%1ක් භාවිතා කර ඇත, %2 හි ගබඩා කර ඇත</translation>
+        <source>%1 used</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
         <translation>හැඹිලිය හිස් කරන්න</translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">යළි සකසන්න</translation>
+    </message>
+    <message>
+        <source>Change…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -22931,6 +22959,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>ගුණාංග</translation>
     </message>
@@ -23061,6 +23093,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rename…</source>
         <translation>නම වෙනස් කරන්න…</translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -23257,10 +23293,36 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">අවලංගු කරන්න</translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished">මාධ්‍ය සොයන්න</translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
         <translation>සොයාබැලීමට ක්ලික් කරන්න හෝ අදින්න</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished">ප්‍රධාන</translation>
     </message>
 </context>
 <context>
@@ -23508,28 +23570,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Customize toolbar…</source>
         <translation>මෙවලම් තීරුව අභිරුචිකරණය කරන්න…</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation>ප්‍රධාන</translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation>සංයුක්තය (Composite)</translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation>ප්‍රධාන කාලරේඛාව සහ සංයුක්ත ක්ලිප් අතර මාරු වන්න</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
-        <translation>තවමත් සංයුක්ත ක්ලිප් නැත</translation>
     </message>
 </context>
 <context>
@@ -23819,6 +23859,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete track</source>
         <translation>ට්‍රැකය මකන්න</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

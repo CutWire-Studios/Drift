@@ -3198,6 +3198,10 @@
         <translation>Запись отменена</translation>
     </message>
     <message>
+        <source>Replace clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clips moved</source>
         <translation>Клипы перемещены</translation>
     </message>
@@ -4496,6 +4500,14 @@
     <message>
         <source>Track deleted</source>
         <translation>Дорожка удалена</translation>
+    </message>
+    <message>
+        <source>Delete empty tracks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Empty tracks deleted</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add track</source>
@@ -17783,12 +17795,28 @@ If playback stutters, try another.</source>
         <translation>Кэш</translation>
     </message>
     <message>
-        <source>%1 used, stored in %2</source>
-        <translation>Использовано: %1, хранится в %2</translation>
+        <source>%1 used</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear cache</source>
         <translation>Очистить кэш</translation>
+    </message>
+    <message>
+        <source>Cache location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1. Takes effect after restart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished">Сбросить</translation>
+    </message>
+    <message>
+        <source>Change…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings file</source>
@@ -23008,6 +23036,10 @@ If playback stutters, try another.</source>
 <context>
     <name>TimelineClipContextMenu</name>
     <message>
+        <source>Move to track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Properties</source>
         <translation>Свойства</translation>
     </message>
@@ -23138,6 +23170,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Rename…</source>
         <translation>Переименовать…</translation>
+    </message>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy effects</source>
@@ -23334,10 +23370,36 @@ If playback stutters, try another.</source>
     </message>
 </context>
 <context>
+    <name>TimelineReplaceClipDialog</name>
+    <message>
+        <source>Replace with…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Отмена</translation>
+    </message>
+    <message>
+        <source>Search media</source>
+        <translation type="unfinished">Поиск медиафайлов</translation>
+    </message>
+    <message>
+        <source>No matching media</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TimelineSeekStrip</name>
     <message>
         <source>Click or drag to seek</source>
         <translation>Нажмите или перетащите для перехода ко времени</translation>
+    </message>
+</context>
+<context>
+    <name>TimelineSequenceTabs</name>
+    <message>
+        <source>Main</source>
+        <translation type="unfinished">Основной</translation>
     </message>
 </context>
 <context>
@@ -23586,28 +23648,6 @@ If playback stutters, try another.</source>
     <message>
         <source>Customize toolbar…</source>
         <translation>Настроить панель инструментов…</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneBadge</name>
-    <message>
-        <source>Main</source>
-        <translation>Основной</translation>
-    </message>
-    <message>
-        <source>Composite</source>
-        <translation>Композиция</translation>
-    </message>
-    <message>
-        <source>Switch between the main timeline and composite clips</source>
-        <translation>Переключить между основным таймлайном и клипами композиций</translation>
-    </message>
-</context>
-<context>
-    <name>TimelineToolbarSceneEmptyItem</name>
-    <message>
-        <source>No composite clips yet</source>
-        <translation>Клипов композиций пока нет</translation>
     </message>
 </context>
 <context>
@@ -23898,6 +23938,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete track</source>
         <translation>Удалить дорожку</translation>
+    </message>
+    <message>
+        <source>Remove empty tracks</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
