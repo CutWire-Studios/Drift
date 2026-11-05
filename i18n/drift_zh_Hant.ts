@@ -90,12 +90,12 @@
         <translation>另一個附加包仍在安裝中。</translation>
     </message>
     <message>
-        <source>This is not a Drift addon file.</source>
-        <translation>這不是 Drift 附加包檔案。</translation>
+        <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not use this addon (%1).</source>
-        <translation>無法使用此附加包（%1）。</translation>
+        <source>Drift cannot use this file: %1.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8984,22 +8984,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">安裝附加包</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift 附加包 (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">無法安裝“%1”：%2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">已安裝“%1”</translation>
-    </message>
-    <message>
         <source>Remove this pack?</source>
         <translation type="unfinished">要移除這個包嗎？</translation>
     </message>
@@ -9010,54 +8994,6 @@
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
         <translation type="unfinished">“%1” 和它下載的數據將被刪除。你可以稍後再重新安裝。</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">安裝非官方附加包？</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">仍要安裝</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1”（作者：%2）</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 未由 Drift 團隊簽名。請只安裝你信任的檔案。</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">其中包含會在你的電腦上運行的代碼。</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">它將替換“%1”。</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">安裝此轉場？</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">安裝此音效？</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">安裝此效果？</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">安裝</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 由用戶製作，並非來自 Drift 團隊，且未經任何檢查。請只安裝你信任的檔案。</translation>
     </message>
     <message>
         <source>Search extras</source>
@@ -25448,6 +25384,81 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom model</source>
         <translation>自訂模型</translation>
+    </message>
+</context>
+<context>
+    <name>UserPackageImporter</name>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">安裝附加包</translation>
+    </message>
+    <message>
+        <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">已安裝“%1”</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">安裝非官方附加包？</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">仍要安裝</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1”（作者：%2）</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 未由 Drift 團隊簽名。請只安裝你信任的檔案。</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">其中包含會在你的電腦上運行的代碼。</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">它將替換“%1”。</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">安裝此轉場？</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">安裝此音效？</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">安裝此效果？</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">安裝</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 由用戶製作，並非來自 Drift 團隊，且未經任何檢查。請只安裝你信任的檔案。</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished">確定</translation>
     </message>
 </context>
 <context>

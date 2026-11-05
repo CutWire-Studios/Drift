@@ -90,12 +90,12 @@
         <translation>আরেকটি অ্যাডন এখনও ইনস্টল করা হচ্ছে.</translation>
     </message>
     <message>
-        <source>This is not a Drift addon file.</source>
-        <translation>এটি একটি Drift অ্যাডন ফাইল নয়.</translation>
+        <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not use this addon (%1).</source>
-        <translation>এই অ্যাডঅনটি ব্যবহার করা যায়নি (%1).</translation>
+        <source>Drift cannot use this file: %1.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9018,22 +9018,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">অ্যাডঅন ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift অ্যাডঅন (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">“%1” ইনস্টল করা যায়নি: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">“%1” ইনস্টল করা হয়েছে</translation>
-    </message>
-    <message>
         <source>Remove this pack?</source>
         <translation type="unfinished">এই প্যাকটি সরাবেন?</translation>
     </message>
@@ -9044,54 +9028,6 @@
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
         <translation type="unfinished">“%1” এবং এর ডাউনলোড করা ডেটা মুছে ফেলা হবে। আপনি এটি পরে আবার ইনস্টল করতে পারেন.</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">একটি অনানুষ্ঠানিক অ্যাডন ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">তবুও ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” — নির্মাতা: %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 Drift টিম দ্বারা স্বাক্ষরিত নয়। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">এতে কোড রয়েছে যা আপনার কম্পিউটারে চলে.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">এটি “%1”-কে প্রতিস্থাপন করবে.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">এই ট্রানজিশনটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">এই অডিও ইফেক্টটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">এই ইফেক্টটি ইনস্টল করবেন?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">ইনস্টল করুন</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 একজন ব্যবহারকারী দ্বারা তৈরি করা হয়েছে, Drift দল নয়, এবং কিছুই এটি পরীক্ষা করেনি। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
     </message>
     <message>
         <source>Search extras</source>
@@ -25534,6 +25470,81 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom model</source>
         <translation>কাস্টম মডেল</translation>
+    </message>
+</context>
+<context>
+    <name>UserPackageImporter</name>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">অ্যাডঅন ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” ইনস্টল করা হয়েছে</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">একটি অনানুষ্ঠানিক অ্যাডন ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">তবুও ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” — নির্মাতা: %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 Drift টিম দ্বারা স্বাক্ষরিত নয়। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">এতে কোড রয়েছে যা আপনার কম্পিউটারে চলে.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">এটি “%1”-কে প্রতিস্থাপন করবে.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">এই ট্রানজিশনটি ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">এই অডিও ইফেক্টটি ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">এই ইফেক্টটি ইনস্টল করবেন?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">ইনস্টল করুন</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 একজন ব্যবহারকারী দ্বারা তৈরি করা হয়েছে, Drift দল নয়, এবং কিছুই এটি পরীক্ষা করেনি। শুধুমাত্র আপনি বিশ্বাসযোগ্য ফাইল ইনস্টল করুন.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished">ঠিক আছে</translation>
     </message>
 </context>
 <context>

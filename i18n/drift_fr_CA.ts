@@ -90,12 +90,12 @@
         <translation>Un autre module d’extension est en cours d’installation.</translation>
     </message>
     <message>
-        <source>This is not a Drift addon file.</source>
-        <translation>Ce n’est pas un fichier de module d’extension Drift.</translation>
+        <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not use this addon (%1).</source>
-        <translation>Impossible d’utiliser ce module d’extension (%1).</translation>
+        <source>Drift cannot use this file: %1.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9019,22 +9019,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">Installer le module d’extension</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Modules d’extension Drift (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">Impossible d’installer « %1 » : %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">« %1 » installé</translation>
-    </message>
-    <message>
         <source>Remove this pack?</source>
         <translation type="unfinished">Supprimer cette extension?</translation>
     </message>
@@ -9045,54 +9029,6 @@
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
         <translation type="unfinished">&quot;%1&quot; et ses données téléchargées seront supprimées. Vous pourrez le réinstaller plus tard.</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">Installer un module d’extension non officiel?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">Installer quand même</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">« %1 » par %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">« %1 »</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 n’est pas signé par l’équipe de Drift. N’installez que des fichiers fiables.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">Il contient du code qui s’exécute sur votre ordinateur.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">Il remplacera « %1 ».</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">Installer cette transition?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">Installer cet effet audio?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">Installer cet effet?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">Installer</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 a été créé par un utilisateur, pas par l’équipe de Drift, et n’a fait l’objet d’aucune vérification. N’installez que des fichiers fiables.</translation>
     </message>
     <message>
         <source>Search extras</source>
@@ -25538,6 +25474,81 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Custom model</source>
         <translation>Modèle personnalisé</translation>
+    </message>
+</context>
+<context>
+    <name>UserPackageImporter</name>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">Installer le module d’extension</translation>
+    </message>
+    <message>
+        <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">« %1 » installé</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">Installer un module d’extension non officiel?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">Installer quand même</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">« %1 » par %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">« %1 »</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 n’est pas signé par l’équipe de Drift. N’installez que des fichiers fiables.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">Il contient du code qui s’exécute sur votre ordinateur.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">Il remplacera « %1 ».</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">Installer cette transition?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">Installer cet effet audio?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">Installer cet effet?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Installer</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 a été créé par un utilisateur, pas par l’équipe de Drift, et n’a fait l’objet d’aucune vérification. N’installez que des fichiers fiables.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished">Valider</translation>
     </message>
 </context>
 <context>

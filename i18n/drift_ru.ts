@@ -90,12 +90,12 @@
         <translation>Другое расширение все ещё устанавливается.</translation>
     </message>
     <message>
-        <source>This is not a Drift addon file.</source>
-        <translation>Это не файл расширения Drift.</translation>
+        <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not use this addon (%1).</source>
-        <translation>Не удалось использовать это расширение (%1).</translation>
+        <source>Drift cannot use this file: %1.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9052,22 +9052,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">Установить расширение</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Расширения Drift (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">Не удалось установить «%1»: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">Установлено «%1»</translation>
-    </message>
-    <message>
         <source>Remove this pack?</source>
         <translation type="unfinished">Удалить этот пакет?</translation>
     </message>
@@ -9078,54 +9062,6 @@
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
         <translation type="unfinished">«%1» и загруженные данные будут удалены. Вы сможете установить пакет снова позже.</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">Установить неофициальное расширение?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">Установить в любом случае</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">«%1» от %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">«%1»</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 не подписан командой Drift. Устанавливайте только те файлы, которым вы доверяете.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">Содержит код, который выполняется на вашем компьютере.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">Это заменит «%1».</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">Установить этот переход?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">Установить этот звуковой эффект?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">Установить этот эффект?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">Установить</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 был создан пользователем, а не командой Drift, и его никто не проверял. Устанавливайте только те файлы, которым вы доверяете.</translation>
     </message>
     <message>
         <source>Search extras</source>
@@ -25621,6 +25557,81 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom model</source>
         <translation>Пользовательская модель</translation>
+    </message>
+</context>
+<context>
+    <name>UserPackageImporter</name>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">Установить расширение</translation>
+    </message>
+    <message>
+        <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">Установлено «%1»</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">Установить неофициальное расширение?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">Установить в любом случае</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">«%1» от %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">«%1»</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1 не подписан командой Drift. Устанавливайте только те файлы, которым вы доверяете.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">Содержит код, который выполняется на вашем компьютере.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">Это заменит «%1».</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">Установить этот переход?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">Установить этот звуковой эффект?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">Установить этот эффект?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">Установить</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1 был создан пользователем, а не командой Drift, и его никто не проверял. Устанавливайте только те файлы, которым вы доверяете.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished">ОК</translation>
     </message>
 </context>
 <context>

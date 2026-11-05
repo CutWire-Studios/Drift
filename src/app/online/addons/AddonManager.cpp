@@ -7,6 +7,7 @@
 #include "engine/platform/AndroidUri.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/effects/EffectPackageLoader.h"
 #include "engine/packages/effects/EffectTemplateCatalog.h"
 #include "engine/packages/looks/LookCatalog.h"
 #include "engine/packages/assets/EmojiCatalog.h"
@@ -17,6 +18,7 @@
 #include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "engine/packages/assets/StickerCatalog.h"
 #include "engine/packages/transitions/TransitionCatalog.h"
+#include "engine/packages/transitions/TransitionPackageLoader.h"
 #include "core/base/ZipArchive.h"
 
 #include <QDateTime>
@@ -1392,6 +1394,20 @@ namespace {
 // name, kind, error
 using UserPackageResult = std::tuple<QString, QString, QString>;
 
+// The catalogs skip a package they cannot parse without a word, so one that would install and
+// then never show up is refused instead. Shaders are not compiled here: that needs the GL thread.
+QString validateCustomEffect(const QString &kind, const QString &dir)
+{
+    QString error;
+    if (kind == QLatin1String("effects"))
+        EffectPackageLoader::loadPackage(dir, &error);
+    else if (kind == QLatin1String("transitions"))
+        TransitionPackageLoader::loadPackage(dir, &error);
+    else
+        loadAudioEffectPackage(dir, &error);
+    return error.isEmpty() ? QString() : QStringLiteral("Drift cannot read it: %1").arg(error);
+}
+
 UserPackageResult extractUserPackage(const QString &packagePath, const QString &appData)
 {
     QString error;
@@ -1410,9 +1426,14 @@ UserPackageResult extractUserPackage(const QString &packagePath, const QString &
     if (!drift::addon::install(packagePath, staging, {}, &info, &error, Container::User))
         return {manifest->name, provide.kind, error};
 
+    const QString extracted = QDir(staging).filePath(provide.root + QLatin1Char('/') + folder);
+    if (const QString invalid = validateCustomEffect(provide.kind, extracted); !invalid.isEmpty()) {
+        QDir(staging).removeRecursively();
+        return {info.name, provide.kind, invalid};
+    }
     const QString destination = kindDir.filePath(folder);
     QDir(destination).removeRecursively();
-    const bool moved = QDir().rename(QDir(staging).filePath(provide.root + QLatin1Char('/') + folder), destination);
+    const bool moved = QDir().rename(extracted, destination);
     QDir(staging).removeRecursively();
     if (!moved)
         return {info.name, provide.kind, QStringLiteral("cannot move %1 into place").arg(folder)};
@@ -1453,6 +1474,8 @@ UserPackageResult extractForgeZip(const QString &zipPath, const QString &folder,
             return fail(QStringLiteral("cannot write %1").arg(target));
     }
 
+    if (const QString invalid = validateCustomEffect(kind, staging); !invalid.isEmpty())
+        return fail(invalid);
     const QString destination = kindDir.filePath(folder);
     QDir(destination).removeRecursively();
     if (!QDir().rename(staging, destination))
@@ -1519,7 +1542,7 @@ QVariantMap AddonManager::inspectAddonFile(const QUrl &url)
         else if (drift::zip::looksLikeZip(head))
             m_addonFileType = QStringLiteral("zip");
         else
-            return {{QStringLiteral("error"), tr("This is not a Drift addon file.")}};
+            return {{QStringLiteral("error"), tr("This is not a Drift addon, a .driftfx or a Drift Forge zip.")}};
 
         if (url.isLocalFile()) {
             path = url.toLocalFile();
@@ -1642,15 +1665,18 @@ QVariantMap AddonManager::inspectAddonFile(const QUrl &url)
                         {QStringLiteral("description"), effect.value(QStringLiteral("description")).toString()},
                     };
                 }
+            } else if (found > 1) {
+                error = QStringLiteral("it holds more than one effect; install them one at a time");
             } else {
-                error = QStringLiteral("no manifest.json");
+                error = QStringLiteral("it is neither an addon (no manifest.json) nor a Drift Forge export "
+                                       "(no folder with effect.json, transition.json or audio-effect.json)");
             }
         }
     }
 
     if (!info || !checkCompatible(*info, &error)) {
         discardAddonFile();
-        return {{QStringLiteral("error"), tr("Could not use this addon (%1).").arg(error)}};
+        return {{QStringLiteral("error"), tr("Drift cannot use this file: %1.").arg(error)}};
     }
 
     m_addonFileId = info->id;

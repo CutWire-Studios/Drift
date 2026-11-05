@@ -90,12 +90,12 @@
         <translation>다른 추가 기능이 아직 설치 중입니다.</translation>
     </message>
     <message>
-        <source>This is not a Drift addon file.</source>
-        <translation>올바른 Drift 추가 기능 파일이 아닙니다.</translation>
+        <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not use this addon (%1).</source>
-        <translation>이 추가 기능을 사용할 수 없습니다 (%1).</translation>
+        <source>Drift cannot use this file: %1.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8984,22 +8984,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">추가 기능 설치</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Drift 추가 기능 (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">“%1”을(를) 설치할 수 없습니다: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">“%1” 설치됨</translation>
-    </message>
-    <message>
         <source>Remove this pack?</source>
         <translation type="unfinished">이 팩을 제거하시겠습니까?</translation>
     </message>
@@ -9010,54 +8994,6 @@
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
         <translation type="unfinished">“%1”과(와) 다운로드된 데이터가 삭제됩니다. 나중에 다시 설치할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">공식 인증되지 않은 추가 기능을 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">무시하고 설치</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” (%2 제작)</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1은(는) Drift 팀에서 서명하지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">컴퓨터에서 실행되는 코드가 포함되어 있습니다.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">“%1”을(를) 대체합니다.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">이 전환 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">이 오디오 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">이 효과를 설치하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">설치</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1은(는) Drift 팀이 아닌 사용자가 제작했으며 검증되지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
     </message>
     <message>
         <source>Search extras</source>
@@ -25439,6 +25375,81 @@ If playback stutters, try another.</source>
     <message>
         <source>Custom model</source>
         <translation>사용자 정의 모델</translation>
+    </message>
+</context>
+<context>
+    <name>UserPackageImporter</name>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">추가 기능 설치</translation>
+    </message>
+    <message>
+        <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">“%1” 설치됨</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">공식 인증되지 않은 추가 기능을 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">무시하고 설치</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” (%2 제작)</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">%1은(는) Drift 팀에서 서명하지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">컴퓨터에서 실행되는 코드가 포함되어 있습니다.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">“%1”을(를) 대체합니다.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">이 전환 효과를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">이 오디오 효과를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">이 효과를 설치하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">설치</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">%1은(는) Drift 팀이 아닌 사용자가 제작했으며 검증되지 않았습니다. 신뢰할 수 있는 파일만 설치하세요.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished">확인</translation>
     </message>
 </context>
 <context>

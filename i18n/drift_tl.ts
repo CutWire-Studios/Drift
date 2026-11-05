@@ -90,12 +90,12 @@
         <translation>Kasalukuyan pang nag-i-install ang isa pang addon.</translation>
     </message>
     <message>
-        <source>This is not a Drift addon file.</source>
-        <translation>Hindi ito isang file ng addon ng Drift.</translation>
+        <source>This is not a Drift addon, a .driftfx or a Drift Forge zip.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not use this addon (%1).</source>
-        <translation>Hindi magamit ang addon na ito (%1).</translation>
+        <source>Drift cannot use this file: %1.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -9018,22 +9018,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install Addon</source>
-        <translation type="unfinished">I-install ang Addon</translation>
-    </message>
-    <message>
-        <source>Drift addons (*.driftpkg *.driftfx *.zip)</source>
-        <translation type="unfinished">Mga addon ng Drift (*.driftpkg *.driftfx *.zip)</translation>
-    </message>
-    <message>
-        <source>Could not install “%1”: %2</source>
-        <translation type="unfinished">Hindi ma-install ang “%1”: %2</translation>
-    </message>
-    <message>
-        <source>Installed “%1”</source>
-        <translation type="unfinished">Na-install ang “%1”</translation>
-    </message>
-    <message>
         <source>Remove this pack?</source>
         <translation type="unfinished">Gusto mo tanggalin ang dagdag?</translation>
     </message>
@@ -9044,54 +9028,6 @@
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
         <translation type="unfinished">Matatanggal ang “%1” at ang na-download nitong data. Maaari mo itong i-install muli mamaya.</translation>
-    </message>
-    <message>
-        <source>Install an unofficial addon?</source>
-        <translation type="unfinished">Mag-install ng hindi opisyal na addon?</translation>
-    </message>
-    <message>
-        <source>Install anyway</source>
-        <translation type="unfinished">I-install pa rin</translation>
-    </message>
-    <message>
-        <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” ni %2</translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
-    </message>
-    <message>
-        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">Ang %1 ay hindi nilagdaan ng koponan ng Drift. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
-    </message>
-    <message>
-        <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">Naglalaman ito ng code na tatakbo sa iyong kompyuter.</translation>
-    </message>
-    <message>
-        <source>It will replace “%1”.</source>
-        <translation type="unfinished">Papalitan nito ang “%1”.</translation>
-    </message>
-    <message>
-        <source>Install this transition?</source>
-        <translation type="unfinished">I-install ang transisyong ito?</translation>
-    </message>
-    <message>
-        <source>Install this audio effect?</source>
-        <translation type="unfinished">I-install ang epektong audio na ito?</translation>
-    </message>
-    <message>
-        <source>Install this effect?</source>
-        <translation type="unfinished">I-install ang epektong ito?</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="unfinished">I-install</translation>
-    </message>
-    <message>
-        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">Ang %1 ay ginawa ng isang user, hindi ng koponan ng Drift, at walang sumuri dito. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
     </message>
     <message>
         <source>Search extras</source>
@@ -25535,6 +25471,81 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Custom model</source>
         <translation>Custom na model</translation>
+    </message>
+</context>
+<context>
+    <name>UserPackageImporter</name>
+    <message>
+        <source>Install Addon</source>
+        <translation type="unfinished">I-install ang Addon</translation>
+    </message>
+    <message>
+        <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not install “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installed “%1”</source>
+        <translation type="unfinished">Na-install ang “%1”</translation>
+    </message>
+    <message>
+        <source>Install an unofficial addon?</source>
+        <translation type="unfinished">Mag-install ng hindi opisyal na addon?</translation>
+    </message>
+    <message>
+        <source>Install anyway</source>
+        <translation type="unfinished">I-install pa rin</translation>
+    </message>
+    <message>
+        <source>“%1” by %2</source>
+        <translation type="unfinished">“%1” ni %2</translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished">“%1”</translation>
+    </message>
+    <message>
+        <source>%1 is not signed by the Drift team. Only install files you trust.</source>
+        <translation type="unfinished">Ang %1 ay hindi nilagdaan ng koponan ng Drift. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
+    </message>
+    <message>
+        <source>It contains code that runs on your computer.</source>
+        <translation type="unfinished">Naglalaman ito ng code na tatakbo sa iyong kompyuter.</translation>
+    </message>
+    <message>
+        <source>It will replace “%1”.</source>
+        <translation type="unfinished">Papalitan nito ang “%1”.</translation>
+    </message>
+    <message>
+        <source>Install this transition?</source>
+        <translation type="unfinished">I-install ang transisyong ito?</translation>
+    </message>
+    <message>
+        <source>Install this audio effect?</source>
+        <translation type="unfinished">I-install ang epektong audio na ito?</translation>
+    </message>
+    <message>
+        <source>Install this effect?</source>
+        <translation type="unfinished">I-install ang epektong ito?</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation type="unfinished">I-install</translation>
+    </message>
+    <message>
+        <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
+        <translation type="unfinished">Ang %1 ay ginawa ng isang user, hindi ng koponan ng Drift, at walang sumuri dito. Mag-install lamang ng mga file na pinagkakatiwalaan mo.</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished">OK</translation>
     </message>
 </context>
 <context>

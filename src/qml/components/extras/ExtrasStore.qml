@@ -22,8 +22,6 @@ Item {
 
     property string pendingRemovalId: ""
     property string pendingRemovalName: ""
-    property var pendingUserPackage: ({})
-    property var pendingAddonFile: ({})
 
     signal showRequested()
 
@@ -208,25 +206,9 @@ Item {
     }
 
     function importUserPackage(url) {
-        if (!url || String(url) === "")
-            url = FileDialogs.openFile(qsTr("Install Addon"),
-                                       [qsTr("Drift addons (*.driftpkg *.driftfx *.zip)")])
-        if (!url || String(url) === "")
-            return
-        const info = Addons.inspectAddonFile(url)
-        if (info.error) {
-            Toasts.error(info.error)
-            return
-        }
         if (!root.visible)
             root.showRequested()
-        if (info.type === "driftfx") {
-            root.pendingUserPackage = info
-            confirmUserPackage.open()
-            return
-        }
-        root.pendingAddonFile = info
-        Addons.installAddonFile(false)
+        importer.importFile(url)
     }
 
     onSectionChanged: scroller.contentY = 0
@@ -247,15 +229,6 @@ Item {
             }
             if (Object.keys(next).length !== Object.keys(root.selection).length)
                 root.selection = next
-        }
-        function onAddonFileNeedsConfirmation() {
-            confirmUnverified.open()
-        }
-        function onUserPackageInstalled(name, error) {
-            if (error.length > 0)
-                Toasts.error(qsTr("Could not install “%1”: %2").arg(name).arg(error))
-            else
-                Toasts.success(qsTr("Installed “%1”").arg(name))
         }
     }
 
@@ -282,62 +255,7 @@ Item {
         onRejected: root.pendingRemovalId = ""
     }
 
-    ThemedDialog {
-        id: confirmUnverified
-        title: qsTr("Install an unofficial addon?")
-        acceptText: qsTr("Install anyway")
-        acceptVariant: root.pendingAddonFile.nativeCode ? "destructive" : "primary"
-        preferredWidth: Theme.dialogWidthSm
-        acceptOnReturn: false
-
-        contentItem: ThemedLabel {
-            width: parent ? parent.width : Theme.dialogWidthSm
-            wrapMode: Text.WordWrap
-            size: "sm"
-            text: {
-                const p = root.pendingAddonFile
-                const by = p.author ? qsTr("“%1” by %2").arg(p.name).arg(p.author) : qsTr("“%1”").arg(p.name)
-                const lines = [qsTr("%1 is not signed by the Drift team. Only install files you trust.").arg(by)]
-                if (p.nativeCode)
-                    lines.push(qsTr("It contains code that runs on your computer."))
-                if (p.replaces)
-                    lines.push(qsTr("It will replace “%1”.").arg(p.replaces))
-                return lines.join("\n\n")
-            }
-        }
-
-        onAccepted: Addons.installAddonFile(true)
-        onRejected: {
-            Addons.discardAddonFile()
-            root.pendingAddonFile = {}
-        }
-    }
-
-    ThemedDialog {
-        id: confirmUserPackage
-        title: root.pendingUserPackage.kind === "transitions" ? qsTr("Install this transition?")
-               : root.pendingUserPackage.kind === "audio-effects" ? qsTr("Install this audio effect?")
-                                                                   : qsTr("Install this effect?")
-        acceptText: qsTr("Install")
-        preferredWidth: Theme.dialogWidthSm
-
-        contentItem: ThemedLabel {
-            width: parent ? parent.width : Theme.dialogWidthSm
-            wrapMode: Text.WordWrap
-            size: "sm"
-            text: {
-                const p = root.pendingUserPackage
-                const by = p.author ? qsTr("“%1” by %2").arg(p.name).arg(p.author) : qsTr("“%1”").arg(p.name)
-                return qsTr("%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.").arg(by)
-            }
-        }
-
-        onAccepted: {
-            Addons.installUserPackage()
-            root.pendingUserPackage = {}
-        }
-        onRejected: root.pendingUserPackage = {}
-    }
+    UserPackageImporter { id: importer }
 
     component SearchBox: ThemedTextField {
         id: box

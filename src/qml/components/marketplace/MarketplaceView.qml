@@ -78,6 +78,11 @@ Item {
 
     property bool loadingItem: false
 
+    // An empty url asks with a file dialog. The dialogs open in this view's window.
+    function importUserPackage(url) {
+        importer.importFile(url)
+    }
+
     function showItem(item) {
         detailItem = item
         detailShown = true
@@ -142,6 +147,8 @@ Item {
     }
 
     MarketTimelineAdd { id: addHelper }
+
+    UserPackageImporter { id: importer }
 
     MarketItemLoader {
         id: itemLoader
@@ -294,7 +301,7 @@ Item {
                 glyph: Theme.icons.upload
                 text: qsTr("Install from file…")
                 tooltip: qsTr("Install a .driftfx or a zip made in Drift Forge, or an addon")
-                onClicked: ShellBridge.main.importUserPackage("")
+                onClicked: root.importUserPackage("")
             }
 
             ThemedButton {
@@ -408,7 +415,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 glyph: Theme.icons.upload
                 tooltip: qsTr("Install from file…")
-                onClicked: ShellBridge.main.importUserPackage("")
+                onClicked: root.importUserPackage("")
             }
 
             ThemedButton {

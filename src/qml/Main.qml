@@ -492,6 +492,9 @@ ApplicationWindow {
         }
     }
 
+    // Imports started in this window (the effect browsers, Open With) ask and report here.
+    UserPackageImporter { id: userPackageImporter }
+
     // Kept loaded so the store keeps its section and open detail between visits.
     LazyLoader {
         id: extrasWindowLoader
@@ -977,10 +980,10 @@ ApplicationWindow {
         openExtrasTarget(kind ? "kind:" + kind : "")
     }
 
-    // A .driftfx from Drift Forge; an empty url asks with a file dialog. Shared with the effects
-    // panel's Import button.
+    // A .driftfx or Drift Forge zip (or any addon file); an empty url asks with a file dialog.
+    // Shared with the effects panel's Import button.
     function importUserPackage(url) {
-        extrasWindowLoader.ensure().importUserPackage(url)
+        userPackageImporter.importFile(url)
     }
 
     function openExtras() {

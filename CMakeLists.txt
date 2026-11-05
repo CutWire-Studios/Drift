@@ -2089,6 +2089,7 @@ qt_add_qml_module(drift
         src/qml/components/controls/ThemedColorDialog.qml
         src/qml/components/ColorEyedropper.qml
         src/qml/components/EffectBrowser.qml
+        src/qml/components/UserPackageImporter.qml
         src/qml/components/AudioEffectBrowser.qml
         src/qml/components/EffectTemplateBrowser.qml
         src/qml/components/controls/ThemedSlider.qml

@@ -70,7 +70,7 @@ Item {
             title: qsTr("No custom effects yet")
             hint: qsTr("Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.")
             actionText: qsTr("Install from file…")
-            onActionTriggered: ShellBridge.main.importUserPackage("")
+            onActionTriggered: root.host.importUserPackage("")
         }
 
         Flickable {
