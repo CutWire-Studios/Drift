@@ -66,7 +66,7 @@ Item {
                 glyph: Theme.icons.download
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
-                tooltip: qsTr("Install a custom transition or effect from a .driftfx file made in Drift Forge")
+                tooltip: qsTr("Install a custom transition or effect from a .driftfx or zip made in Drift Forge")
                 onClicked: ShellBridge.main.importUserPackage("")
             }
         }
@@ -119,7 +119,7 @@ Item {
                 hint: root.query.length > 0
                       ? qsTr("Try a different name.")
                       : (root.activeCategory === root.mineId
-                         ? qsTr("Import a .driftfx file made in Drift Forge to add your own.")
+                         ? qsTr("Import a .driftfx or zip made in Drift Forge to add your own.")
                          : root.activeCategory === root.favoritesId
                          ? qsTr("Star transitions to save them here.")
                          : qsTr("Pick another category."))

@@ -3,7 +3,7 @@
 A custom effect is a folder holding a JSON manifest, plus shaders for the GPU kinds. Drift loads it
 the same way it loads the bundled packages. Folders under `<AppData>/effects`,
 `<AppData>/transitions` and `<AppData>/audio-effects` appear under **My Effects** in the browsers.
-They get there in one of three ways: imported from a `.driftfx`, dropped in by hand, or written by an
+They get there in one of three ways: imported from a `.driftfx` or a Drift Forge zip, dropped in by hand, or written by an
 agent over MCP (see [MCP.md](MCP.md#custom-effects)).
 
 | Kind | Manifest | Code | Reference |
@@ -155,5 +155,16 @@ to WebAssembly (`wasm/`).
 ## Sharing
 
 A `.driftfx` file is the folder packed with zstd. It has a SHA-256 digest but no signature (see
-`src/engine/addons/AddonPackage.h`). Users import one through the Import button in the effect browsers.
-`export_effect` writes one for any My Effects package.
+`src/engine/addons/AddonPackage.h`). Users import one through the Import button in the effect browsers,
+or **Install from file…** in the Marketplace and Extras windows. `export_effect` writes one for any
+My Effects package.
+
+The zip Drift Forge downloads installs the same way. It has no `manifest.json`: it holds one folder
+with `effect.json`, `transition.json` or `audio-effect.json` (plus `forge.json`, whose `meta` gives
+the author and version shown before installing), and that folder is copied to
+`<AppData>/<kind>/<folder>`. A zip with the manifest at the top level instead of inside a folder is
+not recognised.
+
+To install by hand, copy the package folder into the matching `<AppData>` folder. The Marketplace's
+**Custom effects** page lists everything in the three folders, removes packages, and its sidebar has
+**Open custom effects folder** and **Refresh custom effects**, which rescans without a restart.

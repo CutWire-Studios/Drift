@@ -116,7 +116,9 @@ public:
     // Reads what the file claims to be and refuses it if this build cannot use it. Returns type
     // ("driftpkg" | "zip" | "driftfx"), name, version, author, description, nativeCode and
     // replaces (the name of an installed addon or store pack with the same id), or only `error`.
-    // A "driftfx" result has gone through inspectUserPackage() and follows that flow instead.
+    // A "driftfx" result has gone through inspectUserPackage() and follows that flow instead; so
+    // does a zip from Drift Forge (one folder with effect.json, transition.json or
+    // audio-effect.json and no manifest.json).
     Q_INVOKABLE QVariantMap inspectAddonFile(const QUrl &url);
     // Installs the file inspected last. An officially signed .driftpkg installs straight away;
     // anything else emits addonFileNeedsConfirmation() until called again with acceptUnverified.
@@ -125,6 +127,15 @@ public:
     Q_INVOKABLE void discardAddonFile();
     // customAddonsDir(), created if missing so the file manager has something to open.
     Q_INVOKABLE QUrl customAddonsFolderUrl() const;
+    // --- Custom effects: package folders under <AppData>/effects, transitions, audio-effects ---
+    // One map per folder holding its manifest: kind, folder, name, description, category and
+    // thumbnail (a file url, or "").
+    Q_INVOKABLE QVariantList customEffects() const;
+    // Deletes <AppData>/<kind>/<folder> and reloads that catalog.
+    Q_INVOKABLE bool removeCustomEffect(const QString &kind, const QString &folder);
+    Q_INVOKABLE QUrl customEffectsFolderUrl(const QString &kind) const;
+    // Rescans all three, for folders the user changed by hand.
+    Q_INVOKABLE void reloadCustomEffects();
     // Picks up folders added to or removed from the custom directory since the last look.
     Q_INVOKABLE void rescanCustomAddons();
 
@@ -232,6 +243,11 @@ private:
     std::optional<QString> m_askAnswer;
     bool m_quitting = false;
     QString m_userPackagePath;
+    // Set when m_userPackagePath is a zip exported by Drift Forge rather than a .driftfx:
+    // the top folder holding the manifest, its catalog kind and display name.
+    QString m_userPackageZipFolder;
+    QString m_userPackageZipKind;
+    QString m_userPackageZipName;
     QString m_addonFilePath;
     QString m_addonFileType; // "driftpkg" | "zip"
     // Inside the zip: "" or "<top folder>/", whichever holds manifest.json.

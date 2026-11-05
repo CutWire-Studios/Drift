@@ -2384,6 +2384,9 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | marketplace | heroForeground | $semantic.onMedia | $semantic.onMedia |
 | marketplace | heroRadius | $metrics.radius.lg | $metrics.radius.lg |
 | marketplace | heroScrim | $semantic.scrimStrong | $semantic.scrimStrong |
+| marketplace | itemHover | $semantic.popoverHover | $semantic.popoverHover |
+| marketplace | itemRadius | $metrics.radius.md | $metrics.radius.md |
+| marketplace | itemSelected | $semantic.panel.accent | $semantic.panel.accent |
 | marketplace | link | $semantic.accentOnPanel | $semantic.accentOnPanel |
 | marketplace | linkHover | $semantic.panel.foreground | $semantic.panel.foreground |
 | marketplace | noticeInfoBackground | $semantic.panel.accent | $semantic.panel.accent |
@@ -2395,6 +2398,8 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | marketplace | noticeWarningIcon | $semantic.warning | $semantic.warning |
 | marketplace | previewBackground | $semantic.panel.accent | $semantic.panel.accent |
 | marketplace | previewRadius | $metrics.radius.md | $metrics.radius.md |
+| marketplace | sidebarBackground | $semantic.surface.panel | $semantic.surface.panel |
+| marketplace | sidebarBorder | $semantic.panel.border | $semantic.panel.border |
 | marketplace | stateBadgeBackground | $semantic.scrimStrong | $semantic.scrimStrong |
 | marketplace | stateBadgeRadius | $metrics.radius.pill | $metrics.radius.pill |
 | marketplace | stateFailed | $semantic.destructive | $semantic.destructive |

@@ -1803,6 +1803,7 @@ qt_add_qml_module(drift
         src/qml/components/marketplace/sections/MarketChipsSection.qml
         src/qml/components/marketplace/sections/MarketStockBrowserSection.qml
         src/qml/components/marketplace/sections/MarketSfxSection.qml
+        src/qml/components/marketplace/sections/MarketCustomEffectsSection.qml
         src/qml/components/marketplace/sections/MarketDownloadsSection.qml
         src/qml/components/assets/MarketSearchField.qml
         src/qml/components/assets/DriftAssetCard.qml

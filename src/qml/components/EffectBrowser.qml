@@ -114,7 +114,7 @@ Column {
                 glyph: Theme.icons.download
                 variant: "ghost"
                 buttonSize: Theme.controlHeight
-                tooltip: qsTr("Install a custom effect or transition from a .driftfx file made in Drift Forge")
+                tooltip: qsTr("Install a custom effect or transition from a .driftfx or zip made in Drift Forge")
                 onClicked: ShellBridge.main.importUserPackage("")
             }
         }
@@ -150,7 +150,7 @@ Column {
                 text: root.query.length > 0
                       ? qsTr("No effects match “%1”.").arg(search.text.trim())
                       : (root.activeCategory === root.mineId
-                         ? qsTr("Nothing here yet. Import a .driftfx file to add your own.")
+                         ? qsTr("Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.")
                          : root.activeCategory === root.favoritesId
                          ? qsTr("No favorites yet. Star presets to save them here.")
                          : qsTr("Nothing in this category."))
@@ -169,7 +169,7 @@ Column {
                 compact: true
                 glyph: Theme.icons.download
                 title: qsTr("%1 is empty").arg(qsTr("My Effects"))
-                hint: qsTr("Import a .driftfx file made in Drift Forge to add your own.")
+                hint: qsTr("Import a .driftfx or zip made in Drift Forge to add your own.")
                 actionText: qsTr("Import")
                 onActionTriggered: ShellBridge.main.importUserPackage("")
             }

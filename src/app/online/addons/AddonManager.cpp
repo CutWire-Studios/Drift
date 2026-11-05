@@ -1349,6 +1349,7 @@ QVariantMap AddonManager::inspectUserPackage(const QUrl &url)
 {
     QFile::remove(m_userPackagePath);
     m_userPackagePath.clear();
+    m_userPackageZipFolder.clear();
 
     // Staged locally first: the installer seeks and checks the file size, which a content:// URI
     // does not reliably support.
@@ -1418,6 +1419,47 @@ UserPackageResult extractUserPackage(const QString &packagePath, const QString &
     return {info.name, provide.kind, QString()};
 }
 
+// A zip from Drift Forge: <folder>/ holds the files that go into <AppData>/<kind>/<folder>.
+UserPackageResult extractForgeZip(const QString &zipPath, const QString &folder, const QString &kind,
+                                  const QString &name, const QString &appData)
+{
+    QString error;
+    QFile zip(zipPath);
+    if (!zip.open(QIODevice::ReadOnly))
+        return {name, kind, zip.errorString()};
+    const QList<drift::zip::Entry> entries = drift::zip::readEntries(zip, &error);
+    if (entries.isEmpty())
+        return {name, kind, error.isEmpty() ? QStringLiteral("the zip is empty") : error};
+
+    const QDir kindDir(QDir(appData).filePath(kind));
+    const QString staging = kindDir.filePath(QStringLiteral(".import-") + folder);
+    QDir(staging).removeRecursively();
+    const auto fail = [&](const QString &message) -> UserPackageResult {
+        QDir(staging).removeRecursively();
+        return {name, kind, message};
+    };
+    const QString prefix = folder + QLatin1Char('/');
+    for (const drift::zip::Entry &entry : entries) {
+        if (entry.isDir || !entry.path.startsWith(prefix))
+            continue;
+        QByteArray bytes;
+        if (!drift::zip::extractEntry(zip, entry, bytes))
+            return fail(QStringLiteral("cannot extract %1").arg(entry.path));
+        const QString target = QDir(staging).filePath(entry.path.mid(prefix.size()));
+        if (!QDir().mkpath(QFileInfo(target).absolutePath()))
+            return fail(QStringLiteral("cannot create %1").arg(QFileInfo(target).absolutePath()));
+        QFile out(target);
+        if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate) || out.write(bytes) != bytes.size())
+            return fail(QStringLiteral("cannot write %1").arg(target));
+    }
+
+    const QString destination = kindDir.filePath(folder);
+    QDir(destination).removeRecursively();
+    if (!QDir().rename(staging, destination))
+        return fail(QStringLiteral("cannot move %1 into place").arg(folder));
+    return {name, kind, QString()};
+}
+
 } // namespace
 
 void AddonManager::installUserPackage()
@@ -1425,6 +1467,9 @@ void AddonManager::installUserPackage()
     if (m_userPackagePath.isEmpty())
         return;
     const QString packagePath = std::exchange(m_userPackagePath, QString());
+    const QString zipFolder = std::exchange(m_userPackageZipFolder, QString());
+    const QString zipKind = m_userPackageZipKind;
+    const QString zipName = m_userPackageZipName;
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
     auto *watcher = new QFutureWatcher<UserPackageResult>(this);
@@ -1437,7 +1482,10 @@ void AddonManager::installUserPackage()
         emit userPackageInstalled(name, error);
     });
 
-    watcher->setFuture(QtConcurrent::run([packagePath, appData] { return extractUserPackage(packagePath, appData); }));
+    watcher->setFuture(QtConcurrent::run([=] {
+        return zipFolder.isEmpty() ? extractUserPackage(packagePath, appData)
+                                   : extractForgeZip(packagePath, zipFolder, zipKind, zipName, appData);
+    }));
 }
 
 QString AddonManager::installUserPackageFile(const QString &path)
@@ -1524,7 +1572,79 @@ QVariantMap AddonManager::inspectAddonFile(const QUrl &url)
             else
                 error = QStringLiteral("cannot read manifest.json");
         } else if (error.isEmpty()) {
-            error = QStringLiteral("no manifest.json");
+            // No manifest.json: maybe a zip from Drift Forge, one folder holding a single
+            // effect.json, transition.json or audio-effect.json. It installs like a .driftfx.
+            static const std::pair<QLatin1String, QLatin1String> kForgeManifests[] = {
+                {QLatin1String("effect.json"), QLatin1String("effects")},
+                {QLatin1String("transition.json"), QLatin1String("transitions")},
+                {QLatin1String("audio-effect.json"), QLatin1String("audio-effects")},
+            };
+            const drift::zip::Entry *forge = nullptr;
+            QString kind;
+            int found = 0;
+            for (const drift::zip::Entry &entry : entries) {
+                if (entry.isDir || entry.path.count(QLatin1Char('/')) != 1)
+                    continue;
+                const QString folder = entry.path.section(QLatin1Char('/'), 0, 0);
+                if (folder.isEmpty() || folder == QLatin1String(".") || folder == QLatin1String(".."))
+                    continue;
+                const QString file = entry.path.section(QLatin1Char('/'), 1);
+                for (const auto &[manifestName, manifestKind] : kForgeManifests) {
+                    if (file == manifestName) {
+                        forge = &entry;
+                        kind = manifestKind;
+                        ++found;
+                    }
+                }
+            }
+            if (found == 1) {
+                const QString folder = forge->path.section(QLatin1Char('/'), 0, 0);
+                QByteArray json;
+                const QJsonObject effect = drift::zip::extractEntry(zip, *forge, json)
+                    ? QJsonDocument::fromJson(json).object() : QJsonObject();
+                QJsonObject meta;
+                for (const drift::zip::Entry &entry : entries) {
+                    QByteArray forgeJson;
+                    if (entry.path == folder + QLatin1String("/forge.json")
+                        && drift::zip::extractEntry(zip, entry, forgeJson))
+                        meta = QJsonDocument::fromJson(forgeJson).object().value(QStringLiteral("meta")).toObject();
+                }
+                zip.close();
+                const QString minAppVersion = effect.value(QStringLiteral("minAppVersion")).toString();
+                if (effect.isEmpty()) {
+                    error = QStringLiteral("cannot read %1").arg(forge->path);
+                } else if (!minAppVersion.isEmpty()
+                           && drift::compareVersions(QStringLiteral(DRIFT_VERSION), minAppVersion) < 0) {
+                    error = QStringLiteral("it requires Drift %1 or newer, but this is %2")
+                                .arg(minAppVersion, QStringLiteral(DRIFT_VERSION));
+                } else {
+                    // Copied, since installUserPackage() deletes its file when done.
+                    QFile::remove(m_userPackagePath);
+                    const QString staged = QDir(addonDownloadCacheDir()).filePath(QStringLiteral("user-import.zip"));
+                    QFile::remove(staged);
+                    const bool copied = QFile::copy(path, staged);
+                    discardAddonFile();
+                    if (!copied)
+                        return {{QStringLiteral("error"), tr("Could not read that file.")}};
+                    const QString id = effect.value(QStringLiteral("id")).toString(folder);
+                    m_userPackagePath = staged;
+                    m_userPackageZipFolder = folder;
+                    m_userPackageZipKind = kind;
+                    m_userPackageZipName = effect.value(QStringLiteral("displayName")).toString(id);
+                    return {
+                        {QStringLiteral("type"), QStringLiteral("driftfx")},
+                        {QStringLiteral("id"), id},
+                        {QStringLiteral("folder"), folder},
+                        {QStringLiteral("name"), m_userPackageZipName},
+                        {QStringLiteral("kind"), kind},
+                        {QStringLiteral("version"), meta.value(QStringLiteral("version")).toString()},
+                        {QStringLiteral("author"), meta.value(QStringLiteral("author")).toString()},
+                        {QStringLiteral("description"), effect.value(QStringLiteral("description")).toString()},
+                    };
+                }
+            } else {
+                error = QStringLiteral("no manifest.json");
+            }
         }
     }
 
@@ -1702,6 +1822,85 @@ QUrl AddonManager::customAddonsFolderUrl() const
 {
     QDir().mkpath(customAddonsDir());
     return QUrl::fromLocalFile(customAddonsDir());
+}
+
+namespace {
+
+const std::pair<QLatin1String, QLatin1String> kCustomEffectKinds[] = {
+    {QLatin1String("effects"), QLatin1String("effect.json")},
+    {QLatin1String("transitions"), QLatin1String("transition.json")},
+    {QLatin1String("audio-effects"), QLatin1String("audio-effect.json")},
+};
+
+QString customEffectsDir(const QString &kind)
+{
+    return QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath(kind);
+}
+
+bool isCustomEffectKind(const QString &kind)
+{
+    return std::any_of(std::begin(kCustomEffectKinds), std::end(kCustomEffectKinds),
+                       [&](const auto &entry) { return entry.first == kind; });
+}
+
+} // namespace
+
+QVariantList AddonManager::customEffects() const
+{
+    QVariantList out;
+    for (const auto &[kind, manifestName] : kCustomEffectKinds) {
+        const QDir root(customEffectsDir(kind));
+        // Dot folders are staging for an import in progress.
+        const QStringList folders = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name | QDir::IgnoreCase);
+        for (const QString &folder : folders) {
+            const QDir dir(root.filePath(folder));
+            QFile manifest(dir.filePath(manifestName));
+            if (!manifest.open(QIODevice::ReadOnly))
+                continue;
+            const QJsonObject json = QJsonDocument::fromJson(manifest.readAll()).object();
+            QString thumbnail;
+            for (const QString &candidate : {json.value(QStringLiteral("thumbnail")).toString(),
+                                             QStringLiteral("thumbnail.webp"), QStringLiteral("thumbnail.png")}) {
+                if (!candidate.isEmpty() && QFileInfo::exists(dir.filePath(candidate))) {
+                    thumbnail = QUrl::fromLocalFile(dir.filePath(candidate)).toString();
+                    break;
+                }
+            }
+            out.append(QVariantMap{
+                {QStringLiteral("kind"), QString(kind)},
+                {QStringLiteral("folder"), folder},
+                {QStringLiteral("name"), json.value(QStringLiteral("displayName")).toString(folder)},
+                {QStringLiteral("description"), json.value(QStringLiteral("description")).toString()},
+                {QStringLiteral("category"), json.value(QStringLiteral("category")).toString()},
+                {QStringLiteral("thumbnail"), thumbnail},
+            });
+        }
+    }
+    return out;
+}
+
+bool AddonManager::removeCustomEffect(const QString &kind, const QString &folder)
+{
+    if (!isCustomEffectKind(kind) || folder.isEmpty() || folder.startsWith(QLatin1Char('.'))
+        || folder.contains(QLatin1Char('/')) || folder.contains(QLatin1Char('\\')))
+        return false;
+    if (!QDir(QDir(customEffectsDir(kind)).filePath(folder)).removeRecursively())
+        return false;
+    reloadForKinds({kind});
+    return true;
+}
+
+QUrl AddonManager::customEffectsFolderUrl(const QString &kind) const
+{
+    if (!isCustomEffectKind(kind))
+        return {};
+    QDir().mkpath(customEffectsDir(kind));
+    return QUrl::fromLocalFile(customEffectsDir(kind));
+}
+
+void AddonManager::reloadCustomEffects()
+{
+    reloadForKinds({QStringLiteral("effects"), QStringLiteral("transitions"), QStringLiteral("audio-effects")});
 }
 
 void AddonManager::rescanCustomAddons()
