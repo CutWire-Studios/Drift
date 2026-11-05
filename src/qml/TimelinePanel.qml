@@ -41,6 +41,10 @@ PanelFrame {
     // state lives here rather than in the backend, so Main.qml dispatches them
     // alongside Escape, which exits the tool without clearing the selection.
 
+    function trackNameAt(i) {
+        return trackLabelsArea.trackNameAt(i)
+    }
+
     // Y offset of a track row within the track column (excludes ruler/bookmark).
     function trackOffsetY(index) {
         var cursor = 0

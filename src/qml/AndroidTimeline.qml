@@ -66,6 +66,10 @@ Item {
         convertToSubtitleDialog.open()
     }
 
+    function trackNameAt(i) {
+        return trackLabelsArea.trackNameAt(i)
+    }
+
     // TimelineClipItem's context menu calls this on its `panel`, so the touch timeline
     // has to answer it exactly as TimelinePanel does or "Rename…" is a TypeError.
     function requestRenameClip(trackIndex, clipIndex) {
@@ -1160,6 +1164,7 @@ Item {
                 }
 
                 TrackHeaderColumn {
+                    id: trackLabelsArea
                     width: parent.width
                     height: Math.max(0, parent.height - root.seekHeaderHeight)
                     tracks: root.tracks

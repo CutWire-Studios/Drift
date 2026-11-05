@@ -20,6 +20,51 @@ ThemedContextMenu {
         canPasteAttributes = EditorState.canPasteAttributes()
         canMergeTrackSubtitles = owner.trackType === "subtitle"
                 && EditorState.canMergeAllSubtitlesOnTrack(owner.trackIndex)
+        rebuildMoveToTrackMenu()
+    }
+
+    property var moveToTrackMenu: null
+
+    function rebuildMoveToTrackMenu() {
+        if (moveToTrackMenu) {
+            removeMenu(moveToTrackMenu)
+            moveToTrackMenu = null
+        }
+        const targets = EditorState.compatibleTracksForClip(owner.trackIndex, owner.clipIndex)
+        if (targets.length === 0)
+            return
+        const sub = moveToTrackMenuComponent.createObject(null)
+        for (let i = 0; i < targets.length; i++) {
+            const label = targets[i].name || owner.panel.trackNameAt(targets[i].index)
+            sub.addItem(moveToTrackItemComponent.createObject(null,
+                { text: label, targetTrack: targets[i].index }))
+        }
+        let at = count
+        for (let i = 0; i < count; i++) {
+            if (itemAt(i) === moveToOwnTrackItem) {
+                at = i + 1
+                break
+            }
+        }
+        insertMenu(at, sub)
+        moveToTrackMenu = sub
+    }
+
+    Component {
+        id: moveToTrackMenuComponent
+        ThemedContextMenu {
+            title: qsTr("Move to track")
+        }
+    }
+
+    Component {
+        id: moveToTrackItemComponent
+        ThemedMenuItem {
+            required property int targetTrack
+            onTriggered: EditorState.moveClipToTrack(clipContextMenu.owner.trackIndex,
+                                                     clipContextMenu.owner.clipIndex, targetTrack,
+                                                     clipContextMenu.owner.clipData.start || 0)
+        }
     }
     // Deferred: onClosed runs inside the Popup's own close path, and dropping the
     // Loader's item there would destroy an object still unwinding.
@@ -319,6 +364,7 @@ ThemedContextMenu {
         onTriggered: EditorState.unlinkAdjustment(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        id: moveToOwnTrackItem
         text: qsTr("Move to its own track")
         icon.name: Theme.icons.layers
         // Only meaningful for a nested one: a standalone adjustment already has one.

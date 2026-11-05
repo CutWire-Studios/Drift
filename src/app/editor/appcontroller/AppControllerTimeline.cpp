@@ -2441,6 +2441,22 @@ void AppController::splitSelectedClipRight()
     splitClipRightAt(m_selectedTrack, m_selectedClip, playheadSeconds());
 }
 
+QVariantList AppController::compatibleTracksForClip(int trackIndex, int clipIndex) const
+{
+    QVariantList result;
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return result;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    for (int i = 0; i < m_project.tracks().size(); ++i) {
+        const drift::Track &track = m_project.tracks().at(i);
+        // Nested lanes have no row or label of their own to pick.
+        if (i == trackIndex || track.isAdjustmentLane() || !track.acceptsClip(clip))
+            continue;
+        result.append(QVariantMap{{QStringLiteral("index"), i}, {QStringLiteral("name"), track.name}});
+    }
+    return result;
+}
+
 void AppController::moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
