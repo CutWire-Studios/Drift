@@ -1,5 +1,6 @@
 #include "core/text/animation/TextAnimator.h"
 
+#include "core/animation/Easing.h"
 #include "core/base/Bezier.h"
 
 #include <QEasingCurve>
@@ -935,7 +936,14 @@ QJsonValue textEaseSpecToJson(const TextEaseSpec &e)
 TextEaseSpec textEaseSpecFromJson(const QJsonValue &v)
 {
     TextEaseSpec e;
-    if (v.isString()) {
+    if (v.isString() && v.toString().startsWith(QStringLiteral("cubic-bezier("))) {
+        if (const std::optional<EasingSpec> css = EasingSpec::parseCss(v.toString());
+            css && css->kind == EasingSpec::Kind::Bezier) {
+            e.kind = TextEaseKind::Bezier;
+            e.c1 = QPointF(css->x1, css->y1);
+            e.c2 = QPointF(css->x2, css->y2);
+        }
+    } else if (v.isString()) {
         e.kind = textEaseKindFromString(v.toString());
     } else if (v.isObject()) {
         const QJsonObject o = v.toObject();

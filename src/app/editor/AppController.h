@@ -704,7 +704,7 @@ public:
     Q_INVOKABLE void clearClipSpeedCurve(int trackIndex, int clipIndex);
 
     Q_INVOKABLE void setTransitionEasing(int trackIndex, const QString &transitionId,
-                                         const QString &curve);
+                                         const QString &curve, const QVariantList &handles = {});
 
 
     // Whether the optional object-labelling pass can run. False until the object-model
@@ -1190,8 +1190,10 @@ public:
     Q_INVOKABLE QVariantMap inspectPdf(const QString &path) const;
     Q_INVOKABLE QVariantMap inspectPdfClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void setClipFade(int trackIndex, int clipIndex, double fadeInSeconds, double fadeOutSeconds);
-    Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve);
-    // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease).
+    Q_INVOKABLE void setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve,
+                                      const QVariantList &handles = {});
+    // which: "animIn" | "animOut". Partial patch: kind / duration / curve (or legacy ease) /
+    // handles ([x1, y1, x2, y2] for the bezier curve).
     Q_INVOKABLE void setClipAnimation(int trackIndex, int clipIndex, const QString &which,
                                       const QVariantMap &patch);
     // linkedAudio: also add the same transition between the two clips' linked audio, when they sit
@@ -1265,6 +1267,8 @@ public:
     // Curve-editor easing, addressed by key time. A spec is an EasingSpec::toJson() map. The
     // `preview` variant skips the undo entry; the QML wraps it in begin/commitPreviewDrag.
     Q_INVOKABLE QVariantList easingPresets() const;
+    // Named non-bezier curves for a place that picks one: "fade" or "text". {id, label, samples}.
+    Q_INVOKABLE QVariantList curveStyles(const QString &domain) const;
     Q_INVOKABLE QVariantList easingSamples(const QVariantMap &spec, int n) const;
     Q_INVOKABLE QVariantMap keyframeSegmentEasing(int trackIndex, int clipIndex, const QString &prop,
                                                   double atSeconds) const;

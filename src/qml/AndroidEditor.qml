@@ -199,6 +199,18 @@ Item {
         easingSheet.openFor(track, clip, prop, label, seconds)
     }
 
+    function openCurveSheet(config, host) {
+        composer.close()
+        preview.textEditor.commit()
+        if (assetsSheet.opened)
+            assetsSheet.dismiss()
+        if (moreToolsSheet.opened)
+            moreToolsSheet.dismiss()
+        if (fadeSheet.opened)
+            fadeSheet.dismiss()
+        easingSheet.openForCurve(config, host)
+    }
+
     // Typing on a phone happens on the clip in the preview, with a slim bar above the keyboard:
     // the sheets are put away so they do not sit under it, and the preview shrinks into the
     // space the keyboard leaves.
@@ -668,6 +680,9 @@ Item {
         target: ShellBridge
         function onEasingSheetRequested(track, clip, prop, label, seconds) {
             root.openEasingSheet(track, clip, prop, label, seconds)
+        }
+        function onCurveSheetRequested(config, host) {
+            root.openCurveSheet(config, host)
         }
     }
 

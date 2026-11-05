@@ -176,8 +176,7 @@ Item {
                 ShellBridge.main.editorPage.openTool("transition")
             break
         case "transitionCurve":
-            ShellBridge.main.openTransitionCurve(EditorState.selectedTransitionTrack,
-                                              EditorState.selectedTransitionData.id)
+            transitionCurveHost.openPicker()
             break
         case "transitionReplace":
             if (ShellBridge.main.editorPage)
@@ -197,6 +196,22 @@ Item {
         case "more":
             root.moreRequested()
             break
+        }
+    }
+
+    CurveField {
+        id: transitionCurveHost
+        visible: false
+        domain: "fade"
+        useSheet: true
+        curve: EditorState.selectedTransitionData.easingCurve || "linear"
+        handles: EditorState.selectedTransitionData.easingHandles || []
+        onCurveChosen: (curve, handles) => {
+            EditorState.setTransitionEasing(EditorState.selectedTransitionTrack,
+                                            EditorState.selectedTransitionData.id, curve, handles)
+            if (curve === "custom")
+                ShellBridge.main.openTransitionCurve(EditorState.selectedTransitionTrack,
+                                                     EditorState.selectedTransitionData.id)
         }
     }
 

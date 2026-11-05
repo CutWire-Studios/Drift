@@ -267,24 +267,20 @@ Item {
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
                 }
-                ThemedComboBox {
+                CurveField {
                     id: transitionCurveBox
                     width: parent.width
-                    readonly property var curveIds: ["linear", "smooth", "equalPower", "custom", "bezier"]
-                    model: [qsTr("Linear"), qsTr("Smooth"), qsTr("Natural"), qsTr("Custom"), qsTr("Bezier")]
-                    currentIndex: Math.max(0, curveIds.indexOf(
-                                               root.activeTransition.easingCurve || "linear"))
-                    onActivated: (index) => {
+                    domain: "fade"
+                    curve: root.activeTransition.easingCurve || "linear"
+                    handles: root.activeTransition.easingHandles || []
+                    onCurveChosen: (curve, handles) => {
                         if (!root.hasActiveTransition)
                             return
-                        const id = transitionCurveBox.curveIds[index]
-                        if (id === "custom" || id === "bezier") {
+                        EditorState.setTransitionEasing(
+                                    root.transitionEditTrack, root.activeTransition.id, curve, handles)
+                        if (curve === "custom")
                             ShellBridge.main.openTransitionCurve(
                                         root.transitionEditTrack, root.activeTransition.id)
-                            return
-                        }
-                        EditorState.setTransitionEasing(
-                                    root.transitionEditTrack, root.activeTransition.id, id)
                     }
                 }
             }

@@ -28,6 +28,29 @@ using drift::mcpdetail::runBeatAnalysis;
 
 namespace drift::appcontroller_detail {
 
+// Bezier handles as [x1, y1, x2, y2]; any other length leaves the shape's handles as they were.
+// A Bezier curve always ends up with handles set, so they are written out with the project.
+inline drift::FadeShape shapeWithHandles(drift::FadeShape shape, const QVariantList &handles,
+                                         bool bezier)
+{
+    if (handles.size() == 4)
+        shape.setHandles(QPointF(handles.at(0).toDouble(), handles.at(1).toDouble()),
+                         QPointF(handles.at(2).toDouble(), handles.at(3).toDouble()));
+    else if (bezier && !shape.hasHandles())
+        shape.setHandles(shape.handle1(), shape.handle2());
+    return shape;
+}
+
+inline bool sameHandles(const drift::FadeShape &a, const drift::FadeShape &b)
+{
+    return a.hasHandles() == b.hasHandles() && a.handle1() == b.handle1()
+           && a.handle2() == b.handle2();
+}
+
+inline QVariantList handlesToVariant(const drift::FadeShape &shape)
+{
+    return {shape.handle1().x(), shape.handle1().y(), shape.handle2().x(), shape.handle2().y()};
+}
 
 // Packages the user brought themselves (an imported .driftfx, or a folder dropped in by hand) live
 // under <AppData>/<subdir>; signed addons install to their own roots, and the bundled ones sit

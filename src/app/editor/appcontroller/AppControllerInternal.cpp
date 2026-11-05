@@ -833,6 +833,7 @@ QVariantMap transitionToMap(const drift::Project &project, const drift::Track &t
         {QStringLiteral("label"), def ? def->meta.displayName : t.kindId},
         {QStringLiteral("params"), params},
         {QStringLiteral("easingCurve"), drift::fadeCurveToString(t.easingCurve)},
+        {QStringLiteral("easingHandles"), handlesToVariant(t.easingShape)},
         {QStringLiteral("audioOnly"), track.type == drift::TrackType::Audio},
         {QStringLiteral("audioCurve"), def && !def->audioCurve.isEmpty() ? def->audioCurve : QStringLiteral("crossfade")},
         {QStringLiteral("handles"), handles},

@@ -97,6 +97,9 @@ QtObject {
     readonly property bool phoneShell: EditorState.preferences.appliedShell === "mobile"
     // Deep inspector controls ask the phone editor for the easing sheet through here.
     signal easingSheetRequested(int track, int clip, string prop, string label, real seconds)
+    // A CurveField on touch asks for the curve sheet; `host` is the field, which the sheet reads
+    // the current curve from and writes the pick back to.
+    signal curveSheetRequested(var config, var host)
 
     // Dialogs the navigator cannot open itself. The header handles them.
     signal dialogRequested(string name, var params)

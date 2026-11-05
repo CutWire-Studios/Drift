@@ -132,7 +132,8 @@ QJsonObject clipAnimationToJson(const ClipAnimation &anim)
         {QStringLiteral("ease"), clipAnimEaseToString(anim.ease)},
         {QStringLiteral("curve"), fadeCurveToString(anim.curve)},
     };
-    if (anim.curve == FadeCurve::Custom && !anim.shape.isEmpty())
+    if ((anim.curve == FadeCurve::Custom && !anim.shape.isEmpty())
+        || (anim.curve == FadeCurve::Bezier && anim.shape.hasHandles()))
         object.insert(QStringLiteral("shape"), anim.shape.toJson());
     return object;
 }

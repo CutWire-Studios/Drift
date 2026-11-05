@@ -196,6 +196,8 @@ private slots:
     void transitionEasingRemapsProgress();
     void bezierCurveShapesProgress();
     void bezierShapeRoundTrips();
+    void clipAnimationBezierHandlesRoundTrip();
+    void textEaseParsesCubicBezier();
     void physicalOverlapTransitionWindow();
     void adjacentTransitionWindowClampsToClipExtents();
     void clampClipStartNoOverlapPushesPastBlockers();
@@ -4359,6 +4361,32 @@ void CoreTest::bezierCurveShapesProgress()
     eased.setHandles(QPointF(0.42, 0.0), QPointF(1.0, 1.0));
     QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Bezier, eased), eased.bezierAt(0.5));
     QCOMPARE(drift::shapedProgress(0.5, drift::FadeCurve::Linear, eased), 0.5);
+}
+
+void CoreTest::clipAnimationBezierHandlesRoundTrip()
+{
+    drift::ClipAnimation anim;
+    anim.kind = drift::ClipAnimKind::SlideUp;
+    anim.curve = drift::FadeCurve::Bezier;
+    anim.shape.setHandles(QPointF(0.17, 0.67), QPointF(0.83, 0.2));
+
+    const drift::ClipAnimation out = drift::clipAnimationFromJson(drift::clipAnimationToJson(anim));
+    QCOMPARE(out.curve, drift::FadeCurve::Bezier);
+    QVERIFY(out.shape.hasHandles());
+    QCOMPARE(out.shape.handle1(), QPointF(0.17, 0.67));
+    QCOMPARE(out.shape.handle2(), QPointF(0.83, 0.2));
+}
+
+void CoreTest::textEaseParsesCubicBezier()
+{
+    using namespace drift;
+    const TextEaseSpec e = textEaseSpecFromJson(QJsonValue(QStringLiteral("cubic-bezier(0.1, -0.4, 0.6, 1.2)")));
+    QCOMPARE(e.kind, TextEaseKind::Bezier);
+    QCOMPARE(e.c1, QPointF(0.1, -0.4));
+    QCOMPARE(e.c2, QPointF(0.6, 1.2));
+    QCOMPARE(textEaseSpecFromJson(QJsonValue(QStringLiteral("back"))).kind, TextEaseKind::Back);
+    QCOMPARE(textEaseSpecFromJson(QJsonValue(QStringLiteral("cubic-bezier(2,0,1,1)"))).kind,
+             TextEaseKind::EaseOut);
 }
 
 void CoreTest::bezierShapeRoundTrips()

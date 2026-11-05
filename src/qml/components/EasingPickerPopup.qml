@@ -13,6 +13,9 @@ Popup {
     property string propKey: ""
     property string propLabel: ""
     property real keySeconds: 0
+    // Set while the popup picks a plain curve for a CurveField rather than a keyframe easing.
+    property var curveHost: null
+    property var curveConfig: ({})
 
     readonly property real pickerWidth: 272
     readonly property real edgeMargin: Theme.spacingLg
@@ -25,10 +28,18 @@ Popup {
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     function openFor(track, clip, prop, seconds) {
+        curveHost = null
         trackIndex = track
         clipIndex = clip
         propKey = prop
         keySeconds = seconds
+        placeNearAnchor()
+        open()
+    }
+
+    function openForCurve(config, host) {
+        curveConfig = config
+        curveHost = host
         placeNearAnchor()
         open()
     }
@@ -105,6 +116,14 @@ Popup {
         propKey: root.propKey
         propLabel: root.propLabel
         keySeconds: root.keySeconds
+        mode: root.curveHost ? "curve" : "keyframe"
+        currentSpec: root.curveHost ? root.curveHost.currentSpec : null
+        currentStyle: root.curveHost ? root.curveHost.currentStyle : ""
+        styles: root.curveHost ? EditorState.curveStyles(root.curveConfig.domain) : []
+        allowFunctions: !!root.curveConfig.allowFunctions
+        unitRange: !!root.curveConfig.unitRange
+        onPicked: (spec) => { if (root.curveHost) root.curveHost.applyCurve(spec) }
+        onStylePicked: (id) => { if (root.curveHost) root.curveHost.applyStyle(id) }
         onCloseRequested: root.close()
     }
 }

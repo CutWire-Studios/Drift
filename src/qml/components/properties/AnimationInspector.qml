@@ -27,9 +27,6 @@ Item {
         qsTr("Slide left"), qsTr("Slide right"), qsTr("Zoom in"), qsTr("Zoom out"),
         qsTr("Pop"), qsTr("Spin CW"), qsTr("Spin CCW"), qsTr("Bounce")
     ]
-    readonly property var styleIds: ["linear", "smooth", "equalPower", "custom", "bezier"]
-    readonly property var styleLabels: [qsTr("Linear"), qsTr("Smooth"), qsTr("Natural"), qsTr("Custom"), qsTr("Bezier")]
-
     readonly property var animIn: {
         void clipDataRevision
         return (clipData && clipData.animIn)
@@ -57,19 +54,13 @@ Item {
         root.setAnim("animOut", { kind: kind, duration: duration, curve: curve })
     }
 
-    function styleIndexFor(anim) {
-        const id = (anim && anim.curve) ? anim.curve : (root.clipData.fadeCurve || "smooth")
-        return Math.max(0, root.styleIds.indexOf(id))
-    }
-
-    function setStyle(which, index) {
-        const id = root.styleIds[index]
-        if (id === "custom" || id === "bezier") {
-            root.setAnim(which, { curve: id })
+    function setStyle(which, curve, handles) {
+        const patch = { curve: curve }
+        if (handles.length === 4)
+            patch.handles = handles
+        root.setAnim(which, patch)
+        if (curve === "custom")
             ShellBridge.main.openFadeCurve(EditorState.selectedTrack, EditorState.selectedClip)
-            return
-        }
-        root.setAnim(which, { curve: id })
     }
 
     function refreshFields() {
@@ -158,22 +149,17 @@ Item {
             font.pixelSize: Theme.fontSizeXs
         }
 
-        ThemedComboBox {
+        CurveField {
             visible: root.clipKind === "audio"
             width: parent.width
-            model: root.styleLabels
-            currentIndex: Math.max(0, root.styleIds.indexOf(root.clipData.fadeCurve || "smooth"))
-            onActivated: (index) => {
-                const id = root.styleIds[index]
-                if (id === "custom" || id === "bezier") {
-                    EditorState.setClipFadeCurve(
-                                EditorState.selectedTrack, EditorState.selectedClip, id)
-                    ShellBridge.main.openFadeCurve(
-                                EditorState.selectedTrack, EditorState.selectedClip)
-                    return
-                }
-                EditorState.setClipFadeCurve(
-                            EditorState.selectedTrack, EditorState.selectedClip, id)
+            domain: "fade"
+            curve: root.clipData.fadeCurve || "smooth"
+            handles: root.clipData.fadeHandles || []
+            onCurveChosen: (curve, handles) => {
+                EditorState.setClipFadeCurve(EditorState.selectedTrack, EditorState.selectedClip,
+                                             curve, handles)
+                if (curve === "custom")
+                    ShellBridge.main.openFadeCurve(EditorState.selectedTrack, EditorState.selectedClip)
             }
         }
 
@@ -237,11 +223,13 @@ Item {
                 currentIndex: Math.max(0, root.animKinds.indexOf(root.animIn.kind || "none"))
                 onActivated: root.setAnim("animIn", { kind: root.animKinds[currentIndex] })
             }
-            ThemedComboBox {
+            CurveField {
                 width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
-                model: root.styleLabels
-                currentIndex: root.styleIndexFor(root.animIn)
-                onActivated: (index) => root.setStyle("animIn", index)
+                anchors.verticalCenter: parent.verticalCenter
+                domain: "fade"
+                curve: root.animIn.curve || root.clipData.fadeCurve || "smooth"
+                handles: root.animIn.handles || []
+                onCurveChosen: (curve, handles) => root.setStyle("animIn", curve, handles)
             }
             ThemedNumberField {
                 id: animInDurationField
@@ -279,11 +267,13 @@ Item {
                 currentIndex: Math.max(0, root.animKinds.indexOf(root.animOut.kind || "none"))
                 onActivated: root.setAnim("animOut", { kind: root.animKinds[currentIndex] })
             }
-            ThemedComboBox {
+            CurveField {
                 width: Math.max(40, (parent.width - parent.spacing * 2 - 56) / 2)
-                model: root.styleLabels
-                currentIndex: root.styleIndexFor(root.animOut)
-                onActivated: (index) => root.setStyle("animOut", index)
+                anchors.verticalCenter: parent.verticalCenter
+                domain: "fade"
+                curve: root.animOut.curve || root.clipData.fadeCurve || "smooth"
+                handles: root.animOut.handles || []
+                onCurveChosen: (curve, handles) => root.setStyle("animOut", curve, handles)
             }
             ThemedNumberField {
                 id: animOutDurationField

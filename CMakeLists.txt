@@ -2070,6 +2070,7 @@ qt_add_qml_module(drift
         src/qml/components/ChannelKeyButton.qml
         src/qml/components/Vec2Param.qml
         src/qml/components/PropertyKeyframeRow.qml
+        src/qml/components/CurveField.qml
         src/qml/components/EasingPicker.qml
         src/qml/components/EasingPickerPopup.qml
         src/qml/components/EasingThumb.qml

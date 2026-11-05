@@ -1287,7 +1287,7 @@ void AppController::clearClipSpeedCurve(int trackIndex, int clipIndex)
 }
 
 void AppController::setTransitionEasing(int trackIndex, const QString &transitionId,
-                                        const QString &curve)
+                                        const QString &curve, const QVariantList &handles)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
@@ -1296,12 +1296,17 @@ void AppController::setTransitionEasing(int trackIndex, const QString &transitio
         return;
 
     const drift::FadeCurve next = drift::fadeCurveFromString(curve);
-    if (next == transition->easingCurve)
+    const bool bezier = next == drift::FadeCurve::Bezier;
+    const drift::FadeShape nextShape =
+        bezier ? shapeWithHandles(transition->easingShape, handles, true) : transition->easingShape;
+    if (next == transition->easingCurve && (!bezier || sameHandles(nextShape, transition->easingShape)))
         return;
 
     const drift::Project before = m_project;
     transition->easingCurve = next;
-    if (next != drift::FadeCurve::Custom)
+    if (bezier)
+        transition->easingShape = nextShape;
+    else if (next != drift::FadeCurve::Custom)
         transition->easingShape.clear();
     if (drift::Transition *mirror = mirroredAudioTransition(m_project, trackIndex, *transition)) {
         mirror->easingCurve = transition->easingCurve;

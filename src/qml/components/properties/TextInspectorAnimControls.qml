@@ -186,18 +186,11 @@ Column {
             font.pixelSize: Theme.fontSizeXs
             font.family: Theme.fontFamily
         }
-        Flow {
+        CurveField {
             width: parent.width
-            spacing: Theme.spacingSm
-            Repeater {
-                model: inspector.easeChips
-                delegate: ThemedChip {
-                    required property var modelData
-                    text: modelData.label
-                    selected: (inspector.slotData.ease || "") === modelData.id
-                    onClicked: inspector.setSlot({ "ease": modelData.id })
-                }
-            }
+            domain: "text"
+            curve: inspector.slotData.ease || "easeOut"
+            onCurveChosen: (curve, handles) => inspector.setSlot({ "ease": curve })
         }
     }
 

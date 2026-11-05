@@ -27,9 +27,6 @@ AndroidBottomSheet {
     // Past a few seconds a fade is a different effect; the cap keeps the slider's travel useful.
     readonly property real maxFade: Math.max(0.1, Math.min(10, clipDuration))
 
-    readonly property var curveIds: ["linear", "smooth", "equalPower", "custom"]
-    readonly property var curveLabels: [qsTr("Linear"), qsTr("Smooth"), qsTr("Natural"), qsTr("Custom")]
-
     Connections {
         target: EditorState
         function onSelectedClipDataChanged() { root.clipDataRevision++ }
@@ -103,30 +100,18 @@ AndroidBottomSheet {
                     size: "sm"
                 }
 
-                Flow {
+                CurveField {
                     width: parent.width
-                    spacing: Theme.spacingSm
-
-                    Repeater {
-                        model: root.curveIds.length
-
-                        delegate: ThemedChip {
-                            required property int index
-                            readonly property string curveId: root.curveIds[index]
-                            text: root.curveLabels[index]
-                            selected: (root.clipData.fadeCurve || "smooth") === curveId
-                                      || (curveId === "custom" && root.clipData.fadeCurve === "bezier")
-                            onClicked: {
-                                Haptics.select()
-                                if (curveId === "custom") {
-                                    root.hostWindow.openFadeCurve(EditorState.selectedTrack,
-                                                                  EditorState.selectedClip)
-                                    return
-                                }
-                                EditorState.setClipFadeCurve(EditorState.selectedTrack,
-                                                             EditorState.selectedClip, curveId)
-                            }
-                        }
+                    domain: "fade"
+                    curve: root.clipData.fadeCurve || "smooth"
+                    handles: root.clipData.fadeHandles || []
+                    onCurveChosen: (curve, handles) => {
+                        Haptics.select()
+                        EditorState.setClipFadeCurve(EditorState.selectedTrack,
+                                                     EditorState.selectedClip, curve, handles)
+                        if (curve === "custom")
+                            root.hostWindow.openFadeCurve(EditorState.selectedTrack,
+                                                          EditorState.selectedClip)
                     }
                 }
             }

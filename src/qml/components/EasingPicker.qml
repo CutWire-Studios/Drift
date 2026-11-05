@@ -16,6 +16,21 @@ Column {
     property string propLabel: ""
     property real keySeconds: 0
 
+    // "curve" picks a plain curve for a host that owns the value (fade, transition, text ease)
+    // instead of shaping a keyframe segment; the track/clip/key properties are then unused.
+    property string mode: "keyframe"
+    property var currentSpec: null
+    property string currentStyle: ""
+    property var styles: []
+    property bool allowFunctions: false
+    property bool unitRange: false
+    readonly property bool curveMode: mode === "curve"
+    // The curve being edited before the host has adopted it: a fresh "New curve" seed.
+    property var draft: null
+
+    signal picked(var spec)
+    signal stylePicked(string id)
+
     // Nothing emits this yet; the popup closes on it so a later caller can dismiss the picker.
     signal closeRequested()
 
@@ -29,19 +44,24 @@ Column {
 
     readonly property var current: {
         void revision
+        if (root.curveMode)
+            return { hasSegment: true, spec: root.currentSpec ? root.currentSpec : null,
+                     presetId: root.currentStyle ? "" : root.matchPreset(root.currentSpec) }
         return EditorState.keyframeSegmentEasing(root.trackIndex, root.clipIndex, root.propKey,
                                                  root.keySeconds)
     }
     readonly property bool hasSegment: !!current.hasSegment
     readonly property var spec: current.spec ? current.spec : null
-    readonly property var shownSpec: dragSpec ? dragSpec : spec
-    readonly property string kind: spec ? spec.kind : ""
+    readonly property var baseSpec: draft ? draft : spec
+    readonly property var shownSpec: dragSpec ? dragSpec : baseSpec
+    readonly property string kind: baseSpec ? baseSpec.kind : ""
 
     readonly property var presets: {
         void revision
         return EditorState.easingPresets()
     }
-    readonly property var userPresets: presets.filter(p => p.user)
+    readonly property var pickable: curveMode ? presets.filter(p => root.pickableSpec(p.spec)) : presets
+    readonly property var userPresets: pickable.filter(p => p.user)
 
     // Handle positions for the kinds drawn with a unit-square editor; null for the rest.
     readonly property var handles: {
@@ -66,12 +86,14 @@ Column {
     readonly property var familyPresets: {
         void variant
         const out = []
-        for (const p of presets) {
+        for (const p of pickable) {
             if (p.family === "basic" || (!p.user && p.id === p.family + variant))
                 out.push(p)
         }
         return out
     }
+
+    onCurrentSpecChanged: draft = null
 
     onCurrentChanged: {
         const v = variantOf(current.presetId)
@@ -95,16 +117,66 @@ Column {
         return ""
     }
 
+    function pickableSpec(s) {
+        if (!s || s.kind === "hold")
+            return false
+        if (s.kind === "function")
+            return root.allowFunctions
+        if (s.kind === "bezier" && root.unitRange)
+            return s.y1 >= 0 && s.y1 <= 1 && s.y2 >= 0 && s.y2 <= 1
+        return true
+    }
+
+    function sameSpec(a, b) {
+        if (!a || !b || a.kind !== b.kind)
+            return false
+        const near = (u, v) => Math.abs(u - v) < 1e-3
+        if (a.kind === "bezier")
+            return near(a.x1, b.x1) && near(a.y1, b.y1) && near(a.x2, b.x2) && near(a.y2, b.y2)
+        if (a.kind === "function")
+            return a.fn === b.fn && near(a.amplitude, b.amplitude) && near(a.period, b.period)
+        return true
+    }
+
+    function matchPreset(s) {
+        if (!s)
+            return ""
+        for (const p of root.presets) {
+            if (root.sameSpec(p.spec, s))
+                return p.id
+        }
+        return ""
+    }
+
+    function startNewCurve() {
+        const s = root.baseSpec
+        root.draft = (s && s.kind === "bezier")
+                ? Object.assign({}, s)
+                : { kind: "bezier", x1: 0.42, y1: 0, x2: 0.58, y2: 1 }
+    }
+
     function apply(spec) {
         if (!spec)
             return
+        if (root.curveMode) {
+            root.draft = null
+            root.picked(spec)
+            return
+        }
         EditorState.setKeyframeSegmentEasing(root.trackIndex, root.clipIndex, root.propKey,
                                              root.keySeconds, spec)
     }
 
     function setFunctionParam(key, v, dragging) {
-        const s = Object.assign({}, root.spec)
+        const s = Object.assign({}, root.baseSpec)
         s[key] = v
+        if (root.curveMode) {
+            if (dragging)
+                root.dragSpec = s
+            else
+                root.picked(s)
+            return
+        }
         if (dragging)
             EditorState.previewSetKeyframeSegmentEasing(root.trackIndex, root.clipIndex, root.propKey,
                                                         root.keySeconds, s)
@@ -127,8 +199,8 @@ Column {
 
     function finishSave() {
         const name = saveField.text.trim()
-        if (name.length > 0 && root.spec)
-            EditorState.saveEasingPreset(name, root.spec)
+        if (name.length > 0 && root.baseSpec)
+            EditorState.saveEasingPreset(name, root.baseSpec)
         saving = false
     }
 
@@ -174,7 +246,7 @@ Column {
             function toX(x) { return Math.max(0, Math.min(1, (x - pad) / (width - 2 * pad))) }
             function toY(y) {
                 const v = (height - pad - y) / (height - 2 * pad) * 2 - 0.5
-                return Math.max(-0.5, Math.min(1.5, v))
+                return Math.max(root.unitRange ? 0 : -0.5, Math.min(root.unitRange ? 1 : 1.5, v))
             }
 
             readonly property var curvePath: {
@@ -276,7 +348,8 @@ Column {
                     grabbed = hit.index
                     root.dragSpec = { kind: "bezier", x1: editorBox.h.x1, y1: editorBox.h.y1,
                                       x2: editorBox.h.x2, y2: editorBox.h.y2 }
-                    EditorState.beginPreviewDrag(qsTr("Edit easing"))
+                    if (!root.curveMode)
+                        EditorState.beginPreviewDrag(qsTr("Edit easing"))
                 }
                 onPositionChanged: (mouse) => {
                     if (grabbed < 0)
@@ -290,8 +363,9 @@ Column {
                         s.y2 = editorBox.toY(mouse.y)
                     }
                     root.dragSpec = s
-                    EditorState.previewSetKeyframeSegmentEasing(root.trackIndex, root.clipIndex,
-                                                                root.propKey, root.keySeconds, s)
+                    if (!root.curveMode)
+                        EditorState.previewSetKeyframeSegmentEasing(root.trackIndex, root.clipIndex,
+                                                                    root.propKey, root.keySeconds, s)
                 }
                 onReleased: endDrag()
                 onCanceled: endDrag()
@@ -300,7 +374,13 @@ Column {
                     if (grabbed < 0)
                         return
                     grabbed = -1
-                    EditorState.commitPreviewDrag()
+                    if (root.curveMode) {
+                        const s = root.dragSpec
+                        root.draft = s
+                        root.picked(s)
+                    } else {
+                        EditorState.commitPreviewDrag()
+                    }
                     root.dragSpec = null
                 }
             }
@@ -350,9 +430,17 @@ Column {
                         to: paramRow.modelData.to
                         Binding on value {
                             when: !paramSlider.pressed
-                            value: root.spec ? root.spec[paramRow.modelData.key] : paramRow.modelData.from
+                            value: root.baseSpec ? root.baseSpec[paramRow.modelData.key] : paramRow.modelData.from
                         }
                         onPressedChanged: {
+                            if (root.curveMode) {
+                                if (!pressed && root.dragSpec) {
+                                    const s = root.dragSpec
+                                    root.dragSpec = null
+                                    root.picked(s)
+                                }
+                                return
+                            }
                             if (pressed)
                                 EditorState.beginPreviewDrag(qsTr("Edit easing"))
                             else
@@ -395,6 +483,37 @@ Column {
                 color: Theme.c.easingPicker.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
+            }
+        }
+
+        // --- Named styles, for hosts that offer curves beyond the cubic presets ----
+        Text {
+            visible: root.curveMode && root.styles.length > 0
+            text: qsTr("Styles")
+            color: Theme.c.easingPicker.foregroundMuted
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeTiny
+        }
+
+        Flow {
+            visible: root.curveMode && root.styles.length > 0
+            width: body.width
+            spacing: root.tileSpacing
+
+            Repeater {
+                model: root.styles
+                delegate: EasingTile {
+                    id: styleTile
+                    required property var modelData
+                    preset: styleTile.modelData
+                    width: root.tileWidth
+                    selected: root.currentStyle === styleTile.modelData.id && !root.draft
+                    onActivated: {
+                        Haptics.select()
+                        root.draft = null
+                        root.stylePicked(styleTile.modelData.id)
+                    }
+                }
             }
         }
 
@@ -441,19 +560,30 @@ Column {
             }
         }
 
-        // --- My easings: saved presets, with rename and delete on right-click / hold
+        // --- My curves: saved presets, with rename and delete on right-click / hold
         Text {
-            visible: root.userPresets.length > 0
-            text: qsTr("My easings")
+            visible: root.curveMode || root.userPresets.length > 0
+            text: qsTr("My curves")
             color: Theme.c.easingPicker.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeTiny
         }
 
         Flow {
-            visible: root.userPresets.length > 0
+            visible: root.curveMode || root.userPresets.length > 0
             width: body.width
             spacing: root.tileSpacing
+
+            EasingTile {
+                visible: root.curveMode
+                preset: ({ label: qsTr("+ New curve"), samples: [] })
+                width: root.tileWidth
+                selected: root.draft !== null
+                onActivated: {
+                    Haptics.select()
+                    root.startNewCurve()
+                }
+            }
 
             Repeater {
                 model: root.userPresets
@@ -514,6 +644,7 @@ Column {
             }
 
             IconButton {
+                visible: !root.curveMode
                 glyph: Theme.icons.copy
                 tooltip: qsTr("Copy easing")
                 enabled: root.spec !== null
@@ -521,6 +652,7 @@ Column {
             }
 
             IconButton {
+                visible: !root.curveMode
                 glyph: Theme.icons.clipboardPaste
                 tooltip: qsTr("Paste easing")
                 onClicked: {
@@ -531,6 +663,7 @@ Column {
             }
 
             ThemedChip {
+                visible: !root.curveMode
                 text: qsTr("Apply to all")
                 tooltip: qsTr("Use this easing between every keyframe of %1").arg(root.propLabel)
                 variant: "outline"

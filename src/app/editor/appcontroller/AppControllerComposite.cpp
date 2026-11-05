@@ -1933,7 +1933,8 @@ void AppController::setClipFade(int trackIndex, int clipIndex, double fadeInSeco
     finishEdit(tr("Fade updated"));
 }
 
-void AppController::setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve)
+void AppController::setClipFadeCurve(int trackIndex, int clipIndex, const QString &curve,
+                                     const QVariantList &handles)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
         return;
@@ -1944,14 +1945,20 @@ void AppController::setClipFadeCurve(int trackIndex, int clipIndex, const QStrin
 
     drift::Clip &clip = track.clips[clipIndex];
     const drift::FadeCurve newCurve = drift::fadeCurveFromString(curve);
+    const bool bezier = newCurve == drift::FadeCurve::Bezier;
+    const drift::FadeShape nextShape =
+        bezier ? shapeWithHandles(clip.fadeShape, handles, true) : clip.fadeShape;
     if (clip.fadeCurve == newCurve
-        && (newCurve != drift::FadeCurve::Custom || !clip.fadeShape.isEmpty()))
+        && (newCurve != drift::FadeCurve::Custom || !clip.fadeShape.isEmpty())
+        && (!bezier || sameHandles(nextShape, clip.fadeShape)))
         return;
 
     const drift::Project before = m_project;
     clip.fadeCurve = newCurve;
     if (newCurve == drift::FadeCurve::Custom && clip.fadeShape.isEmpty())
         clip.fadeShape = drift::FadeShape::smoothPreset();
+    if (bezier)
+        clip.fadeShape = nextShape;
     // Keep CapCut Fade animations on the same style as the timeline curve editor.
     if (clip.animIn.kind == drift::ClipAnimKind::Fade) {
         clip.animIn.curve = newCurve;
@@ -2004,13 +2011,19 @@ void AppController::setClipAnimation(int trackIndex, int clipIndex, const QStrin
         next.curve = drift::clipAnimEaseToCurve(next.ease);
     }
 
+    if (next.curve == drift::FadeCurve::Bezier) {
+        const QVariantList handles = patch.value(QStringLiteral("handles")).toList();
+        next.shape = shapeWithHandles(next.shape, handles, true);
+    }
+
     if (next.kind != drift::ClipAnimKind::None && next.durationUs <= 0)
         next.durationUs = 500000;
     next.durationUs = qMin(next.durationUs, clip.timelineDuration);
 
     const drift::ClipAnimation &current = isIn ? clip.animIn : clip.animOut;
     if (next.kind == current.kind && next.durationUs == current.durationUs
-        && next.curve == current.curve && next.ease == current.ease)
+        && next.curve == current.curve && next.ease == current.ease
+        && (next.curve != drift::FadeCurve::Bezier || sameHandles(next.shape, current.shape)))
         return;
 
     const drift::Project before = m_project;
@@ -2025,7 +2038,7 @@ void AppController::setClipAnimation(int trackIndex, int clipIndex, const QStrin
         if (next.kind == drift::ClipAnimKind::Fade) {
             mutableClip.fadeInUs = next.durationUs;
             mutableClip.fadeCurve = next.curve;
-            if (next.curve == drift::FadeCurve::Custom)
+            if (next.curve == drift::FadeCurve::Custom || next.curve == drift::FadeCurve::Bezier)
                 mutableClip.fadeShape = next.shape;
         } else {
             mutableClip.fadeInUs = 0;
@@ -2034,7 +2047,7 @@ void AppController::setClipAnimation(int trackIndex, int clipIndex, const QStrin
         if (next.kind == drift::ClipAnimKind::Fade) {
             mutableClip.fadeOutUs = next.durationUs;
             mutableClip.fadeCurve = next.curve;
-            if (next.curve == drift::FadeCurve::Custom)
+            if (next.curve == drift::FadeCurve::Custom || next.curve == drift::FadeCurve::Bezier)
                 mutableClip.fadeShape = next.shape;
         } else {
             mutableClip.fadeOutUs = 0;

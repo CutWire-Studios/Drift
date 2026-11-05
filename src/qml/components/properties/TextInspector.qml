@@ -157,13 +157,6 @@ Item {
     readonly property var animUnitLabels: [qsTr("Whole block"), qsTr("Character"), qsTr("Word"), qsTr("Line")]
     readonly property var animOrders: ["forward", "backward", "centerOut", "random"]
     readonly property var animOrderLabels: [qsTr("Forward"), qsTr("Backward"), qsTr("Center out"), qsTr("Random")]
-    readonly property var easeChips: [
-        { "id": "linear", "label": qsTr("Linear") },
-        { "id": "easeInOut", "label": qsTr("Smooth") },
-        { "id": "easeOut", "label": qsTr("Snappy") },
-        { "id": "back", "label": qsTr("Back") },
-        { "id": "bounce", "label": qsTr("Bounce") }
-    ]
 
     // Sub-page of the inspector: "text", "style" or "animate". Survives selection changes so a
     // pass over several clips stays on the page being worked in.

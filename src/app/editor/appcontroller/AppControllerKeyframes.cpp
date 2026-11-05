@@ -715,6 +715,45 @@ QVariantList AppController::easingPresets() const
     return out;
 }
 
+QVariantList AppController::curveStyles(const QString &domain) const
+{
+    constexpr int kSamples = 24;
+    const auto entry = [](const QString &id, const QString &label, const std::function<double(double)> &fn) {
+        QVariantList samples;
+        for (int i = 0; i <= kSamples; ++i) {
+            const double x = static_cast<double>(i) / kSamples;
+            samples.append(QPointF(x, fn(x)));
+        }
+        return QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("label"), label},
+                           {QStringLiteral("samples"), samples}};
+    };
+    QVariantList out;
+    if (domain == QLatin1String("fade")) {
+        const drift::FadeShape none;
+        const auto curve = [&none](drift::FadeCurve c) {
+            return [c, &none](double t) { return drift::shapedProgress(t, c, none); };
+        };
+        out.append(entry(QStringLiteral("linear"), tr("Linear"), curve(drift::FadeCurve::Linear)));
+        out.append(entry(QStringLiteral("smooth"), tr("Smooth"), curve(drift::FadeCurve::Smooth)));
+        out.append(entry(QStringLiteral("equalPower"), tr("Natural"), curve(drift::FadeCurve::EqualPower)));
+        out.append(entry(QStringLiteral("custom"), tr("Custom"), curve(drift::FadeCurve::Smooth)));
+    } else if (domain == QLatin1String("text")) {
+        const auto ease = [](drift::TextEaseKind kind) {
+            return [kind](double t) {
+                drift::TextEaseSpec spec;
+                spec.kind = kind;
+                return spec.value(t);
+            };
+        };
+        out.append(entry(QStringLiteral("linear"), tr("Linear"), ease(drift::TextEaseKind::Linear)));
+        out.append(entry(QStringLiteral("easeInOut"), tr("Smooth"), ease(drift::TextEaseKind::EaseInOut)));
+        out.append(entry(QStringLiteral("easeOut"), tr("Snappy"), ease(drift::TextEaseKind::EaseOut)));
+        out.append(entry(QStringLiteral("back"), tr("Back"), ease(drift::TextEaseKind::Back)));
+        out.append(entry(QStringLiteral("bounce"), tr("Bounce"), ease(drift::TextEaseKind::Bounce)));
+    }
+    return out;
+}
+
 QVariantList AppController::easingSamples(const QVariantMap &spec, int n) const
 {
     return easingSamplesToVariant(easingSpecFromVariant(spec), n);
