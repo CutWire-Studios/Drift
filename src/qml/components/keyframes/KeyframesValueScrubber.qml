@@ -198,7 +198,7 @@ Item {
         visible: root.scrubbable
         anchors.fill: parent
         radius: Theme.c.keyframesScrubber.radius
-        color: area.containsMouse || root.dragging ? Theme.c.keyframesScrubber.backgroundHover
+        color: root.dragging ? Theme.c.keyframesScrubber.backgroundHover
                                                     : Theme.c.keyframesScrubber.background
         opacity: root.locked ? 0.5 : 1
 

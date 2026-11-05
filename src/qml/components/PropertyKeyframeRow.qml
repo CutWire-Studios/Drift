@@ -659,7 +659,7 @@ Column {
                     anchors.fill: parent
                     visible: !readoutBox.typing
                     radius: Theme.c.propertyKeyframeRow.radius
-                    color: readoutArea.containsMouse || readoutArea.scrubbing
+                    color: readoutArea.scrubbing
                            ? Theme.c.propertyKeyframeRow.backgroundHover : "transparent"
 
                     Behavior on color {
