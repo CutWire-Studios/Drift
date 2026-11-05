@@ -13,10 +13,29 @@ Item {
     width: 14
     height: 14
     x: rotateHandle.target.width / 2 - width / 2
-    y: -28
+
+    // Above the box, unless that would leave the viewport (the handle would be cut off and
+    // ungrabbable): then below it, and inside it when neither side has room.
+    readonly property int placement: {
+        void rotateHandle.target.x
+        void rotateHandle.target.y
+        void rotateHandle.target.width
+        void rotateHandle.target.height
+        void rotateHandle.target.rotation
+        void rotateHandle.overlay.stage.x
+        void rotateHandle.overlay.stage.y
+        const half = rotateHandle.height / 2
+        const above = rotateHandle.target.mapToItem(rotateHandle.overlay, 0, -28 + half).y
+        if (above - half >= 0)
+            return 0
+        const below = rotateHandle.target.mapToItem(rotateHandle.overlay, 0, rotateHandle.target.height + 28 - half).y
+        return below + half <= rotateHandle.overlay.height ? 1 : 2
+    }
+    y: placement === 0 ? -28 : placement === 1 ? rotateHandle.target.height + 14 : 14
 
     Rectangle {
-        anchors.top: parent.bottom
+        visible: rotateHandle.placement !== 2
+        y: rotateHandle.placement === 0 ? parent.height : -height
         anchors.horizontalCenter: parent.horizontalCenter
         width: 1
         height: 16
@@ -44,14 +63,14 @@ Item {
         // as the clip rotation (the grip sits above the box, hence +90).
         function pointerAngle() {
             if (rotateDrag.toLocal) {
-                const raw = rotateHandle.overlay.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
+                const raw = rotateHandle.overlay.stage.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
                                                              rotateDrag.centroid.scenePosition.y)
                 const l = rotateDrag.toLocal(raw.x, raw.y)
                 return Math.atan2(l.y - rotateHandle.target.layoutH * rotateHandle.target.sy / 2,
                                   l.x - rotateHandle.target.layoutW * rotateHandle.target.sx / 2) * 180 / Math.PI + 90
             }
             // Measured in the box's own frame: a parent's turn is not the clip's.
-            const p = rotateHandle.target.toParentLocal(rotateHandle.overlay.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
+            const p = rotateHandle.target.toParentLocal(rotateHandle.overlay.stage.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
                                                                             rotateDrag.centroid.scenePosition.y))
             // A tilted box spins about its projected centre.
             const c = rotateHandle.target.is3d

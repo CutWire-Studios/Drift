@@ -221,6 +221,7 @@ PanelFrame {
     Component {
         id: transformTool
         TransformOverlay {
+            canvas: panelViewport.canvas
             onTextEditRequested: (track, clip) => panelViewport.textEditor.start(track, clip, false)
         }
     }

@@ -11,10 +11,31 @@ Item {
     width: overlay.gripTouch
     height: overlay.gripTouch
     x: frameItem.width / 2 - width / 2
-    y: -height - Theme.spacingLg
+
+    // Above the box, unless that would leave the viewport (the handle would be cut off and
+    // ungrabbable): then below it, and inside it when neither side has room.
+    readonly property int placement: {
+        void frameItem.x
+        void frameItem.y
+        void frameItem.width
+        void frameItem.height
+        void frameItem.rotation
+        void overlay.stage.x
+        void overlay.stage.y
+        const half = rotateGrip.height / 2
+        const gap = rotateGrip.height + Theme.spacingLg
+        const above = frameItem.mapToItem(overlay, 0, -gap + half).y
+        if (above - half >= 0)
+            return 0
+        const below = frameItem.mapToItem(overlay, 0, frameItem.height + Theme.spacingLg + half).y
+        return below + half <= overlay.height ? 1 : 2
+    }
+    y: placement === 0 ? -height - Theme.spacingLg
+       : placement === 1 ? frameItem.height + Theme.spacingLg : Theme.spacingLg
 
     Rectangle {
-        anchors.top: parent.verticalCenter
+        visible: rotateGrip.placement !== 2
+        y: rotateGrip.placement === 0 ? parent.height / 2 : parent.height / 2 - height
         anchors.horizontalCenter: parent.horizontalCenter
         width: Theme.c.androidTransformRotateHandle.stemWidth
         height: rotateGrip.height / 2 + Theme.spacingLg
@@ -65,7 +86,7 @@ Item {
             if (rotateDrag.toLocal) {
                 // Under the camera: read in the box's own plane as it stood at the grab,
                 // whose frame is already turned by the starting rotation.
-                const raw = overlay.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
+                const raw = overlay.stage.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
                                              rotateDrag.centroid.scenePosition.y)
                 const l = rotateDrag.toLocal(raw.x, raw.y)
                 deg = Math.atan2(l.y - frameItem.layoutH * frameItem.sy / 2,
@@ -73,7 +94,7 @@ Item {
                       + rotateDrag.startRotation
                 deg = ((deg + 180) % 360 + 360) % 360 - 180
             } else {
-                const p = frameItem.toParentLocal(overlay.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
+                const p = frameItem.toParentLocal(overlay.stage.mapFromItem(null, rotateDrag.centroid.scenePosition.x,
                                                                 rotateDrag.centroid.scenePosition.y))
                 // A tilted box spins about its projected centre.
                 const c = frameItem.is3d

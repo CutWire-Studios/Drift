@@ -10,8 +10,8 @@ Item {
     required property var overlay
     required property var boxes
 
-    readonly property real sx: overlay.width / Math.max(1, boxes.length > 0 ? boxes[0].canvasWidth : 1)
-    readonly property real sy: overlay.height / Math.max(1, boxes.length > 0 ? boxes[0].canvasHeight : 1)
+    readonly property real sx: overlay.stage.width / Math.max(1, boxes.length > 0 ? boxes[0].canvasWidth : 1)
+    readonly property real sy: overlay.stage.height / Math.max(1, boxes.length > 0 ? boxes[0].canvasHeight : 1)
 
     // Bounds of every member's projected quad, in canvas px.
     readonly property rect bounds: {
@@ -59,7 +59,7 @@ Item {
     }
 
     function canvasPoint(scenePos) {
-        const p = overlay.mapFromItem(null, scenePos.x, scenePos.y)
+        const p = overlay.stage.mapFromItem(null, scenePos.x, scenePos.y)
         return Qt.point(p.x / group.sx, p.y / group.sy)
     }
 

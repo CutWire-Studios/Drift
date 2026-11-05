@@ -239,6 +239,7 @@ Item {
     Component {
         id: transformTool
         AndroidTransformOverlay {
+            canvas: viewport.canvas
             onTextEditRequested: (track, clip) => viewport.textEditor.start(track, clip, false)
         }
     }

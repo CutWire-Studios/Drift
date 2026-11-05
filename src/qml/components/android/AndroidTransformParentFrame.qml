@@ -11,8 +11,8 @@ Item {
     z: 880
     visible: overlay.parentFrameBox !== null && !overlay.interacting
     readonly property var quad: overlay.parentFrameBox ? (overlay.parentFrameBox.quad || []) : []
-    readonly property real qsx: overlay.width / Math.max(1, overlay.parentFrameBox ? overlay.parentFrameBox.canvasWidth : 1)
-    readonly property real qsy: overlay.height / Math.max(1, overlay.parentFrameBox ? overlay.parentFrameBox.canvasHeight : 1)
+    readonly property real qsx: overlay.stage.width / Math.max(1, overlay.parentFrameBox ? overlay.parentFrameBox.canvasWidth : 1)
+    readonly property real qsy: overlay.stage.height / Math.max(1, overlay.parentFrameBox ? overlay.parentFrameBox.canvasHeight : 1)
     function corner(i) {
         const q = parentFrame.quad[i]
         return q ? Qt.point(q.x * qsx, q.y * qsy) : Qt.point(0, 0)
@@ -39,7 +39,7 @@ Item {
 
     Rectangle {
         visible: parentFrame.quad.length === 4
-        x: Math.max(0, Math.min(overlay.width - width, parentFrame.corner(0).x))
+        x: Math.max(0, Math.min(overlay.stage.width - width, parentFrame.corner(0).x))
         y: Math.max(0, parentFrame.corner(0).y - height - Theme.spacingSm)
         width: androidParentChipLabel.implicitWidth + Theme.spacingXl * 2
         height: 48
