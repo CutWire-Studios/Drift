@@ -15,7 +15,18 @@ Menu {
 
     implicitWidth: 200
     padding: Theme.spacingSm
-    popupType: Popup.Item
+    popupType: (Qt.platform.os === "android" || Qt.platform.os === "wasm") ? Popup.Item : Popup.Window
+    margins: Theme.spacingSm
+    readonly property real _maxHeight: {
+        const host = root.parent
+        const avail = popupType === Popup.Window && host
+                      ? host.Screen.desktopAvailableHeight
+                      : (Overlay.overlay ? Overlay.overlay.height : 0)
+        return avail > 0 ? avail - 2 * Theme.spacingSm : Number.POSITIVE_INFINITY
+    }
+    implicitHeight: Math.min(Math.max(implicitBackgroundHeight + topInset + bottomInset,
+                                      implicitContentHeight + topPadding + bottomPadding),
+                             _maxHeight)
     // Escape closes; clicking outside dismisses.
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 

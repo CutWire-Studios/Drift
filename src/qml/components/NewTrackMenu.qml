@@ -8,6 +8,7 @@ Popup {
 
     width: 180
     padding: Theme.spacingMd
+    margins: Theme.spacingSm
     modal: true
     dim: false
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
