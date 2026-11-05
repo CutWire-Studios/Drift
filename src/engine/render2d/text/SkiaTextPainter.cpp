@@ -360,7 +360,10 @@ private:
         }
         m_strokeWidthPx = widestStroke(m_style) * m_scale;
         if (const TextShadingLayer *stroke = firstTextLayerOfKind(m_style.layers, TextLayerKind::Stroke, true))
+        {
             m_strokeJoin = stroke->join;
+            m_strokeMiter = stroke->miterLimit;
+        }
     }
 
     // The front-most enabled fill: the one the legacy accent colour overrides.
@@ -544,7 +547,7 @@ private:
             // over it, which is what the legacy outline did; Inside clips the same stroke to the
             // glyph instead.
             paint.setStrokeWidth(float(layer.strokeAlign != StrokeAlign::Center ? width * 2.0 : width));
-            applyStrokeJoin(paint, layer.join);
+            applyStrokeJoin(paint, layer.join, layer.miterLimit);
             paint.setStrokeCap(SkPaint::kRound_Cap);
             paint.setPathEffect(strokePathEffectFor(layer, width, m_scale));
             if (layer.strokeAlign == StrokeAlign::Inside) {
@@ -577,7 +580,7 @@ private:
             if (m_strokeWidthPx > 0.0) {
                 paint.setStyle(SkPaint::kStroke_Style);
                 paint.setStrokeWidth(float(m_strokeWidthPx * 2.0));
-                applyStrokeJoin(paint, m_strokeJoin);
+                applyStrokeJoin(paint, m_strokeJoin, m_strokeMiter);
                 canvas.drawPath(piece.glyphs, paint);
             }
             break;
@@ -712,6 +715,7 @@ private:
     QList<SkMatrix> m_matrices;
     double m_strokeWidthPx = 0.0;
     StrokeJoin m_strokeJoin = StrokeJoin::Round;
+    double m_strokeMiter = 4.0;
 };
 
 // Selection, preedit underline and caret over a laid-out block; see TextEditPaintRequest.

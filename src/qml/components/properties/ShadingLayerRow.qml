@@ -196,6 +196,31 @@ Column {
             }
         }
 
+        Column {
+            width: (parent.width - parent.leftPadding - parent.rightPadding - 8) / 2
+            spacing: 4
+            visible: row.kind === "stroke" && (row.layerData.join || "round") === "miter"
+            Text {
+                text: qsTr("Miter limit")
+                color: Theme.c.shadingLayerRow.foregroundMuted
+                font.pixelSize: Theme.fontSizeXs
+                font.family: Theme.fontFamily
+            }
+            ThemedNumberField {
+                id: miterLimitField
+                width: parent.width
+                decimals: 1
+                step: 0.5
+                from: 1
+                to: 100
+                Binding on value {
+                    when: !miterLimitField.activeFocus
+                    value: row.layerData.miterLimit === undefined ? 4 : Number(row.layerData.miterLimit)
+                }
+                onEdited: v => row.setLayer({ "miterLimit": Math.max(1, Math.min(100, v)) })
+            }
+        }
+
         Row {
             width: parent.width - parent.leftPadding - parent.rightPadding
             spacing: 8

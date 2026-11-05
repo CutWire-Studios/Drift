@@ -394,7 +394,7 @@ quint64 textLayersHash(const QList<TextShadingLayer> &layers)
             continue;
         h = qHashMulti(h, l.id, static_cast<int>(l.kind), paintHash(l.paint), l.opacity, static_cast<int>(l.blend),
                        l.offsetX, l.offsetY, l.blur, l.width, l.spread, static_cast<int>(l.strokeAlign),
-                       static_cast<int>(l.dash), static_cast<int>(l.join), l.dashOffset, l.knockout, l.trimStart, l.trimEnd, l.sketchLength,
+                       static_cast<int>(l.dash), static_cast<int>(l.join), l.miterLimit, l.dashOffset, l.knockout, l.trimStart, l.trimEnd, l.sketchLength,
                        l.sketchDeviation, l.sketchSeed, l.extrudeSteps, l.extrudeAngle, l.extrudeDarken,
                        static_cast<int>(l.scope));
     }
@@ -543,6 +543,8 @@ QJsonObject textShadingLayerToJson(const TextShadingLayer &l)
         o.insert(QStringLiteral("strokeAlign"), strokeAlignToString(l.strokeAlign));
         o.insert(QStringLiteral("dash"), strokeDashToString(l.dash));
         o.insert(QStringLiteral("join"), strokeJoinToString(l.join));
+        if (l.miterLimit != 4.0)
+            o.insert(QStringLiteral("miterLimit"), l.miterLimit);
         o.insert(QStringLiteral("dashOffset"), l.dashOffset);
     }
     if (l.sketchLength > 0.0 || l.sketchDeviation > 0.0) {
@@ -584,6 +586,7 @@ TextShadingLayer textShadingLayerFromJson(const QJsonObject &o)
         l.strokeAlign = o.value(QStringLiteral("strokeOutside")).toBool(true) ? StrokeAlign::Outside : StrokeAlign::Center;
     l.dash = strokeDashFromString(o.value(QStringLiteral("dash")).toString());
     l.join = strokeJoinFromString(o.value(QStringLiteral("join")).toString());
+    l.miterLimit = qBound(1.0, o.value(QStringLiteral("miterLimit")).toDouble(4.0), 100.0);
     l.dashOffset = o.value(QStringLiteral("dashOffset")).toDouble(0.0);
     l.sketchLength = o.value(QStringLiteral("sketchLength")).toDouble(0.0);
     l.sketchDeviation = o.value(QStringLiteral("sketchDeviation")).toDouble(0.0);

@@ -52,8 +52,6 @@ QString strokeDashToString(StrokeDash dash);
 StrokeDash strokeDashFromString(const QString &dash);
 QString strokeJoinToString(StrokeJoin join);
 StrokeJoin strokeJoinFromString(const QString &join);
-// Skia's default miter limit; a sharper corner falls back to a bevel.
-inline constexpr double kStrokeMiterLimit = 4.0;
 // On/off run lengths in stroke widths; empty for Solid.
 QList<double> strokeDashIntervals(StrokeDash dash);
 
@@ -120,6 +118,7 @@ struct TextShadingLayer
     StrokeAlign strokeAlign = StrokeAlign::Outside; // the legacy outline grew outward only
     StrokeDash dash = StrokeDash::Solid;
     StrokeJoin join = StrokeJoin::Round;
+    double miterLimit = 4.0;   // 1-100; a sharper miter corner falls back to a bevel (Skia's default is 4)
     double dashOffset = 0.0;   // dash phase in stroke widths (keyframable → marching ants)
     bool knockout = false;     // a fill that punches through the layers beneath (hollow text)
     double trimStart = 0.0;    // stroke write-on

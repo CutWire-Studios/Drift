@@ -1004,7 +1004,7 @@ double bleedFor(const drift::TextStyle &style)
     const drift::TextShadingLayer *firstStroke =
         drift::firstTextLayerOfKind(style.layers, drift::TextLayerKind::Stroke, true);
     const double silhouette =
-        stroke * (firstStroke && firstStroke->join == drift::StrokeJoin::Miter ? drift::kStrokeMiterLimit : 1.0);
+        stroke * (firstStroke && firstStroke->join == drift::StrokeJoin::Miter ? firstStroke->miterLimit : 1.0);
     double widest = 0.0;
     for (const drift::TextShadingLayer &layer : style.layers) {
         if (!layer.enabled)
@@ -1015,7 +1015,7 @@ double bleedFor(const drift::TextStyle &style)
             reach += (layer.strokeAlign == drift::StrokeAlign::Inside    ? 0.0
                       : layer.strokeAlign == drift::StrokeAlign::Center ? layer.width * 0.5
                                                                          : layer.width)
-                     * (layer.join == drift::StrokeJoin::Miter ? drift::kStrokeMiterLimit : 1.0);
+                     * (layer.join == drift::StrokeJoin::Miter ? layer.miterLimit : 1.0);
         else if (layer.kind == drift::TextLayerKind::Extrude)
             reach += layer.width;
         else

@@ -51,11 +51,11 @@ double strokeReachFactor(StrokeAlign align)
 double strokeReachFactor(const TextShadingLayer &layer)
 {
     const double factor = strokeReachFactor(layer.strokeAlign);
-    return layer.join == StrokeJoin::Miter ? factor * kStrokeMiterLimit : factor;
+    return layer.join == StrokeJoin::Miter ? factor * layer.miterLimit : factor;
 }
 
 // The outward stroke a shadow or glow silhouette grows by; `join` takes that stroke's corners.
-double widestOutwardStroke(const ShapeStyle &style, StrokeJoin *join = nullptr)
+double widestOutwardStroke(const ShapeStyle &style, StrokeJoin *join = nullptr, double *miter = nullptr)
 {
     double widest = 0.0;
     for (const TextShadingLayer &layer : style.layers) {
@@ -66,6 +66,8 @@ double widestOutwardStroke(const ShapeStyle &style, StrokeJoin *join = nullptr)
             widest = reach;
             if (join)
                 *join = layer.join;
+            if (miter)
+                *miter = layer.miterLimit;
         }
     }
     return widest;
@@ -96,7 +98,7 @@ public:
         } else {
             m_path = outline;
         }
-        m_silhouetteStrokePx = widestOutwardStroke(style, &m_silhouetteJoin) * m_scale * 2.0;
+        m_silhouetteStrokePx = widestOutwardStroke(style, &m_silhouetteJoin, &m_silhouetteMiter) * m_scale * 2.0;
     }
 
     QSize size() const override { return m_size; }
@@ -136,7 +138,7 @@ private:
                 break;
             applyShadingPaint(paint, layer.paint, box, m_timeSec, 1.0, -1.0, m_frameRate);
             paint.setStyle(SkPaint::kStroke_Style);
-            applyStrokeJoin(paint, layer.join);
+            applyStrokeJoin(paint, layer.join, layer.miterLimit);
             paint.setStrokeCap(SkPaint::kRound_Cap);
             paint.setPathEffect(strokePathEffectFor(layer, width, m_scale));
             if (layer.strokeAlign == StrokeAlign::Center) {
@@ -162,7 +164,7 @@ private:
             if (m_silhouetteStrokePx > 0.0) {
                 paint.setStyle(SkPaint::kStroke_Style);
                 paint.setStrokeWidth(float(m_silhouetteStrokePx));
-                applyStrokeJoin(paint, m_silhouetteJoin);
+                applyStrokeJoin(paint, m_silhouetteJoin, m_silhouetteMiter);
                 canvas.drawPath(m_path, paint);
             }
             break;
@@ -193,6 +195,7 @@ private:
     SkPath m_path;
     double m_silhouetteStrokePx = 0.0;
     StrokeJoin m_silhouetteJoin = StrokeJoin::Round;
+    double m_silhouetteMiter = 4.0;
 };
 
 } // namespace
@@ -200,9 +203,10 @@ private:
 double shapeBleedFor(const ShapeStyle &style)
 {
     StrokeJoin silhouetteJoin = StrokeJoin::Round;
-    double silhouette = widestOutwardStroke(style, &silhouetteJoin);
+    double silhouetteMiter = 4.0;
+    double silhouette = widestOutwardStroke(style, &silhouetteJoin, &silhouetteMiter);
     if (silhouetteJoin == StrokeJoin::Miter)
-        silhouette *= kStrokeMiterLimit;
+        silhouette *= silhouetteMiter;
     double widest = 0.0;
     for (const TextShadingLayer &layer : style.layers) {
         if (!layer.enabled)

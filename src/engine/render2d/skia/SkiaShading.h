@@ -31,7 +31,7 @@ void applyShadingPaint(SkPaint &paint, const TextPaint &source, const QRectF &bo
 // `strokeWidthPx` scales the dash pattern and offset; `scale` the sketch lengths.
 sk_sp<SkPathEffect> strokePathEffectFor(const TextShadingLayer &layer, double strokeWidthPx, double scale);
 // The layer's corner join (and the miter limit it implies) on a stroke paint.
-void applyStrokeJoin(SkPaint &paint, StrokeJoin join);
+void applyStrokeJoin(SkPaint &paint, StrokeJoin join, double miterLimit);
 // The sketch jitter on a fill outline; null when off.
 sk_sp<SkPathEffect> fillPathEffectFor(const TextShadingLayer &layer, double scale);
 
