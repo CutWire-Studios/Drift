@@ -1994,9 +1994,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineToolbarToolButton.qml
         src/qml/components/timeline/TimelineToolbarTimecode.qml
         src/qml/components/timeline/TimelineToolbarSeparator.qml
-        src/qml/components/timeline/TimelineToolbarSceneMenuItem.qml
-        src/qml/components/timeline/TimelineToolbarSceneEmptyItem.qml
-        src/qml/components/timeline/TimelineToolbarSceneBadge.qml
+        src/qml/components/timeline/TimelineSequenceTabs.qml
         src/qml/components/timeline/TimelineToolbarOverflowMenuItem.qml
         src/qml/components/timeline/TimelineToolbarOverflowButton.qml
         src/qml/components/timeline/TimelineToolbarHairline.qml

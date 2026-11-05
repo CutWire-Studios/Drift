@@ -1573,12 +1573,13 @@
     "timelineToolbarHairline": {
       "border": "$semantic.panel.border"
     },
-    "timelineToolbarSceneBadge": {
+    "timelineSequenceTabs": {
       "radius": "$metrics.radius.sm",
-      "borderWidth": "$metrics.borderWidth",
-      "border": "$semantic.panel.foreground",
-      "icon": "$semantic.mutedForeground",
-      "foreground": "$semantic.panel.foreground"
+      "backgroundActive": "$semantic.panel.accent",
+      "backgroundHover": "$semantic.panel.muted",
+      "foreground": "$semantic.mutedForeground",
+      "foregroundActive": "$semantic.panel.foreground",
+      "icon": "$semantic.mutedForeground"
     },
     "timelineToolbarSeparator": {
       "borderWidth": "$metrics.borderWidth",

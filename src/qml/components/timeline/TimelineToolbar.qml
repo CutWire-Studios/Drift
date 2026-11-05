@@ -204,8 +204,7 @@ Item {
         id: customizeDialog
     }
 
-    TimelineToolbarSceneBadge {
-        host: toolbar
+    TimelineSequenceTabs {
         leftGroup: leftControls
         rightGroup: rightControls
     }

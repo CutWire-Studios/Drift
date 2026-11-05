@@ -1200,11 +1200,12 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timelineToolbarCustomizeRow | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | timelineToolbarCustomizeRow | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
 | timelineToolbarHairline | border | $semantic.panel.border | $semantic.panel.border |
-| timelineToolbarSceneBadge | radius | $metrics.radius.sm | $metrics.radius.sm |
-| timelineToolbarSceneBadge | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
-| timelineToolbarSceneBadge | border | $semantic.panel.foreground | $semantic.panel.foreground |
-| timelineToolbarSceneBadge | icon | $semantic.mutedForeground | $semantic.mutedForeground |
-| timelineToolbarSceneBadge | foreground | $semantic.panel.foreground | $semantic.panel.foreground |
+| timelineSequenceTabs | radius | $metrics.radius.sm | $metrics.radius.sm |
+| timelineSequenceTabs | backgroundActive | $semantic.panel.accent | $semantic.panel.accent |
+| timelineSequenceTabs | backgroundHover | $semantic.panel.muted | $semantic.panel.muted |
+| timelineSequenceTabs | foreground | $semantic.mutedForeground | $semantic.mutedForeground |
+| timelineSequenceTabs | foregroundActive | $semantic.panel.foreground | $semantic.panel.foreground |
+| timelineSequenceTabs | icon | $semantic.mutedForeground | $semantic.mutedForeground |
 | timelineToolbarSeparator | borderWidth | $metrics.borderWidth | $metrics.borderWidth |
 | timelineToolbarSeparator | foreground | $semantic.panel.border | $semantic.panel.border |
 | timelineToolbarTimecode | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
