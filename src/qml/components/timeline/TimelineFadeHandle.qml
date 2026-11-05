@@ -57,7 +57,7 @@ Rectangle {
             if (!pressed)
                 return
             const px = Math.max(0, Math.min(owner.width,
-                                            mapToItem(clip, mouse.x, mouse.y).x))
+                                            mapToItem(owner, mouse.x, mouse.y).x))
             handle.x = Math.max(owner.fadeHandleInset,
                                 Math.min(owner.width - owner.fadeHandleInset - handle.width,
                                          px - handle.width / 2))
