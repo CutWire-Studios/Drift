@@ -20,8 +20,18 @@ QtObject {
 
     readonly property bool _running: active && EditorState.playing
 
-    function _reanchor() {
-        _anchorSeconds = EditorState.playheadSeconds
+    // While playing, a publish just behind the extrapolated needle (the clock held for a sink
+    // re-sync, then resumed) holds the needle until it is passed instead of stepping it back.
+    // Seeks, loops and anything further back than the lead still snap.
+    property real _holdSeconds: -1
+
+    function _reanchor(snap) {
+        const published = EditorState.playheadSeconds
+        const rate = EditorState.playback ? EditorState.playback.playbackRate : 1
+        const behind = seconds - published
+        _holdSeconds = (!snap && _running && rate > 0 && behind > 0 && behind <= maxLeadSeconds * rate)
+                ? seconds : -1
+        _anchorSeconds = published
         _anchorMs = Date.now()
         if (!_running)
             seconds = _anchorSeconds
@@ -29,8 +39,8 @@ QtObject {
 
     property Connections _playhead: Connections {
         target: EditorState
-        function onPlayheadSecondsChanged() { root._reanchor() }
-        function onPlayingChanged() { root._reanchor() }
+        function onPlayheadSecondsChanged() { root._reanchor(false) }
+        function onPlayingChanged() { root._reanchor(true) }
     }
 
     property FrameAnimation _frames: FrameAnimation {
@@ -39,7 +49,11 @@ QtObject {
             const rate = EditorState.playback ? EditorState.playback.playbackRate : 1
             const lead = Math.min(root.maxLeadSeconds * rate,
                                   (Date.now() - root._anchorMs) / 1000 * rate)
-            root.seconds = root._anchorSeconds + Math.max(0, lead)
+            const next = root._anchorSeconds + Math.max(0, lead)
+            if (root._holdSeconds >= 0 && next < root._holdSeconds)
+                return
+            root._holdSeconds = -1
+            root.seconds = next
         }
     }
 }
