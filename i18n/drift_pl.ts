@@ -4095,11 +4095,11 @@
     </message>
     <message>
         <source>Linear</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Liniowy</translation>
     </message>
     <message>
         <source>Smooth</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Płynny</translation>
     </message>
     <message>
         <source>Natural</source>
@@ -10468,6 +10468,10 @@
     <message>
         <source>Find beats and hits in the audio under this clip</source>
         <translation>Znajdź beaty i uderzenia w audio pod tym klipem</translation>
+    </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23638,6 +23642,22 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
         <translation>Wycisz ścieżkę</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">Zatrzymaj nagrywanie</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">Nagraj lektora</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">Pokaż jedną połączoną falę</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>Pokaż ścieżkę</translation>
     </message>
@@ -23774,6 +23794,13 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Mute track</source>
         <translation>Wycisz ścieżkę</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

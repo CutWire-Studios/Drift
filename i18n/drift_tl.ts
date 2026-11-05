@@ -10432,6 +10432,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>Hanapin ang mga beat at hit sa audio sa ilalim ng clip na ito</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23561,6 +23565,22 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>I-mute ang track</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">Ihinto ang pag-record</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">Mag-record ng voiceover</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">Ipakita ang isang pinagsamang waveform</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>Ipakita ang track</translation>
     </message>
@@ -23696,6 +23716,13 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Mute track</source>
         <translation>I-mute ang track</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

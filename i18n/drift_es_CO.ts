@@ -10432,6 +10432,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>Buscar ritmos y golpes en el audio debajo de este clip</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23560,6 +23564,22 @@ Si la reproducción se corta, prueba con otra opción.</translation>
         <translation>Silenciar pista</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">Detener grabación</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">Grabar voz en off</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">Mostrar una forma de onda combinada</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>Mostrar pista</translation>
     </message>
@@ -23695,6 +23715,13 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Mute track</source>
         <translation>Silenciar pista</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -10432,6 +10432,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23552,6 +23556,22 @@ If playback stutters, try another.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation type="unfinished"></translation>
     </message>
@@ -23686,6 +23706,13 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Mute track</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

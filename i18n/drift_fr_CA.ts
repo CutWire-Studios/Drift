@@ -10434,6 +10434,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>Trouver les battements et les frappes dans l&apos;audio sous ce clip</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23564,6 +23568,22 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Mettre la piste en sourdine</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">Arrêter l&apos;enregistrement</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">Enregistrer une voix hors champ</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">Afficher une forme d&apos;onde combinée</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>Afficher la piste</translation>
     </message>
@@ -23699,6 +23719,13 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Mute track</source>
         <translation>Mettre la piste en sourdine</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

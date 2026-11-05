@@ -10580,6 +10580,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>البحث عن الإيقاعات والضربات في الصوت أسفل هذا المقطع</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23868,6 +23872,22 @@ If playback stutters, try another.</source>
         <translation>كتم المسار</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">إيقاف التسجيل</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">تسجيل تعليق صوتي</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">إظهار شكل موجي مدمج واحد</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>إظهار المسار</translation>
     </message>
@@ -24007,6 +24027,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>كتم المسار</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

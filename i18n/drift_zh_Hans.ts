@@ -10395,6 +10395,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>查找此片段音频中的节拍与拍点</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23484,6 +23488,22 @@ If playback stutters, try another.</source>
         <translation>静音轨道</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">停止录制</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">录制配音</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">显示单个合并波形</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>显示轨道</translation>
     </message>
@@ -23618,6 +23638,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>静音轨道</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

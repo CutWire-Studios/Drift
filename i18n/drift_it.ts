@@ -6621,7 +6621,7 @@
     </message>
     <message>
         <source>Bezier</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Bezier</translation>
     </message>
 </context>
 <context>
@@ -10431,6 +10431,10 @@
     <message>
         <source>Find beats and hits in the audio under this clip</source>
         <translation>Trova battute e colpi nell&apos;audio sotto questa clip</translation>
+    </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23560,6 +23564,22 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Disattiva audio traccia</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">Interrompi registrazione</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">Registra voce fuori campo</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">Mostra un&apos;unica forma d&apos;onda combinata</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>Mostra traccia</translation>
     </message>
@@ -23695,6 +23715,13 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     <message>
         <source>Mute track</source>
         <translation>Disattiva audio traccia</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

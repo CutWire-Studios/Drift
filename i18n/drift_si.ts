@@ -6621,7 +6621,7 @@
     </message>
     <message>
         <source>Bezier</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">බෙසියර් (Bezier)</translation>
     </message>
 </context>
 <context>
@@ -10431,6 +10431,10 @@
     <message>
         <source>Find beats and hits in the audio under this clip</source>
         <translation>මෙම ක්ලිපය යටතේ ඇති ශ්‍රව්‍යයේ බීට් සහ හිට්ස් හඳුනාගන්න</translation>
+    </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -23560,6 +23564,22 @@ If playback stutters, try another.</source>
         <translation>ට්‍රැකය නිහඬ කරන්න</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">පටිගත කිරීම නවත්වන්න</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">හඬ කැවීම් පටිගත කරන්න</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">එක් ඒකාබද්ධ තරංග ආකාරයක් පෙන්වන්න</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>ට්‍රැකය පෙන්වන්න</translation>
     </message>
@@ -23695,6 +23715,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>ට්‍රැකය නිහඬ කරන්න</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

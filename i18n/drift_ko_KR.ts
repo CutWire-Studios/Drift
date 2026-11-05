@@ -10395,6 +10395,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>이 클립 아래의 오디오에서 비트와 히트를 찾습니다</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23475,6 +23479,22 @@ If playback stutters, try another.</source>
         <translation>트랙 음소거</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">녹음 중지</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">보이스오버 녹음</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">하나의 통합 파형 표시</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>트랙 표시</translation>
     </message>
@@ -23609,6 +23629,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>트랙 음소거</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

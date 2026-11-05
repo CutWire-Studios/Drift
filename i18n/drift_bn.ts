@@ -10432,6 +10432,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>এই ক্লিপের অধীনে অডিওতে বীট এবং হিট খুঁজুন</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -23560,6 +23564,22 @@ If playback stutters, try another.</source>
         <translation>নিঃশব্দ ট্র্যাক</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">রেকর্ডিং বন্ধ করুন</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">রেকর্ড ভয়েসওভার</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">একটি সম্মিলিত তরঙ্গরূপ দেখান</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>ট্র্যাক দেখান</translation>
     </message>
@@ -23695,6 +23715,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>নিঃশব্দ ট্র্যাক</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

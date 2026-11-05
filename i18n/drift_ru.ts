@@ -2063,7 +2063,7 @@
     <name>AndroidSubPage</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Назад</translation>
     </message>
 </context>
 <context>
@@ -4095,7 +4095,7 @@
     </message>
     <message>
         <source>Linear</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Линейная</translation>
     </message>
     <message>
         <source>Smooth</source>
@@ -4115,7 +4115,7 @@
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Назад</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -6647,7 +6647,7 @@
     </message>
     <message>
         <source>Bezier</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Безье</translation>
     </message>
 </context>
 <context>
@@ -8728,7 +8728,7 @@
     <name>ExtrasDetail</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Назад</translation>
     </message>
     <message>
         <source>Unofficial</source>
@@ -10469,6 +10469,10 @@
         <source>Find beats and hits in the audio under this clip</source>
         <translation>Найти ритм и акценты в звуке под этим клипом</translation>
     </message>
+    <message>
+        <source>More keyframe tools</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>KeyframeGraphKeyDot</name>
@@ -11485,7 +11489,7 @@
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Назад</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -15698,7 +15702,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Назад</translation>
     </message>
     <message>
         <source>Finish</source>
@@ -23637,6 +23641,22 @@ If playback stutters, try another.</source>
         <translation>Отключить звук дорожки</translation>
     </message>
     <message>
+        <source>Stop recording</source>
+        <translation type="unfinished">Остановить запись</translation>
+    </message>
+    <message>
+        <source>Record voiceover</source>
+        <translation type="unfinished">Записать озвучку</translation>
+    </message>
+    <message>
+        <source>Show one combined waveform</source>
+        <translation type="unfinished">Показывать общую звуковую волну</translation>
+    </message>
+    <message>
+        <source>Show each channel separately</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show track</source>
         <translation>Показать дорожку</translation>
     </message>
@@ -23773,6 +23793,13 @@ If playback stutters, try another.</source>
     <message>
         <source>Mute track</source>
         <translation>Отключить звук дорожки</translation>
+    </message>
+</context>
+<context>
+    <name>TrackHeaderOverflowButton</name>
+    <message>
+        <source>More track actions</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
