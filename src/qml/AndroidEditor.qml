@@ -451,7 +451,7 @@ Item {
             // the vertical numbers let the preview shrink to 120px — narrower than its own
             // transport.
             readonly property real wantPreviewMinW: 220
-            readonly property real wantTimelineMinW: Theme.androidTrackLabelsWidth + 160
+            readonly property real wantTimelineMinW: EditorState.preferences.androidTrackLabelsWidth + 160
             readonly property real minScale: {
                 const want = sideBySide ? wantPreviewMinW + wantTimelineMinW
                                         : wantPreviewMin + wantTimelineMin

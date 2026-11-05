@@ -1,31 +1,74 @@
 import QtQuick
 import Drift
 
-// Drag to widen the header column; double-click restores the default.
-MouseArea {
-    property bool resizable: false
+// Drag to widen the header column; double-click restores the default. A mouse grabs the thin
+// strip on the edge; a finger gets a wider zone that only reacts to touch presses.
+Item {
     id: widthHandle
+    property bool resizable: false
+    // The phone timeline keeps its own width so desktop and phone settings do not fight.
+    property bool phone: false
+    readonly property real defaultWidth: phone ? Theme.androidTrackLabelsWidth : Theme.trackLabelsWidth
+    property real touchStartWidth: 0
+
+    function setWidth(w) {
+        if (phone)
+            EditorState.preferences.androidTrackLabelsWidth = w
+        else
+            EditorState.preferences.trackLabelsWidth = w
+    }
+
     visible: resizable
     anchors.right: parent.right
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-    width: 6
+    width: 20
     z: 50
-    hoverEnabled: true
-    cursorShape: Qt.SplitHCursor
-    preventStealing: true
-    onPositionChanged: (mouse) => {
-        if (pressed)
-            EditorState.preferences.trackLabelsWidth = x + mouse.x + width / 2
+
+    MouseArea {
+        id: mouseStrip
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 6
+        hoverEnabled: true
+        cursorShape: Qt.SplitHCursor
+        preventStealing: true
+        onPressed: (mouse) => mouse.accepted = mouse.source === Qt.MouseEventNotSynthesized
+        onPositionChanged: (mouse) => {
+            if (pressed)
+                widthHandle.setWidth(widthHandle.x + x + mouse.x + width / 2)
+        }
+        onDoubleClicked: widthHandle.setWidth(widthHandle.defaultWidth)
     }
-    onDoubleClicked: EditorState.preferences.trackLabelsWidth = Theme.trackLabelsWidth
+
+    DragHandler {
+        id: touchDrag
+        target: null
+        acceptedDevices: PointerDevice.TouchScreen
+        xAxis.enabled: true
+        yAxis.enabled: false
+        onActiveChanged: {
+            if (active)
+                widthHandle.touchStartWidth = widthHandle.parent.width
+        }
+        onTranslationChanged: {
+            if (active)
+                widthHandle.setWidth(widthHandle.touchStartWidth + translation.x)
+        }
+    }
+
+    TapHandler {
+        acceptedDevices: PointerDevice.TouchScreen
+        onDoubleTapped: widthHandle.setWidth(widthHandle.defaultWidth)
+    }
 
     Rectangle {
         anchors.right: parent.right
         width: 2
         height: parent.height
         color: Theme.c.trackHeaderResizeHandle.foreground
-        opacity: widthHandle.pressed || widthHandle.containsMouse ? 1 : 0
+        opacity: mouseStrip.pressed || mouseStrip.containsMouse || touchDrag.active ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }

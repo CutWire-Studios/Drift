@@ -38,6 +38,8 @@ class PreferencesController : public QObject
                    WRITE setAudioMixerWidth NOTIFY audioMixerWidthChanged)
     Q_PROPERTY(qreal trackLabelsWidth READ trackLabelsWidth
                    WRITE setTrackLabelsWidth NOTIFY trackLabelsWidthChanged)
+    Q_PROPERTY(qreal androidTrackLabelsWidth READ androidTrackLabelsWidth
+                   WRITE setAndroidTrackLabelsWidth NOTIFY androidTrackLabelsWidthChanged)
     // Timeline toolbar layout: action ids shown as buttons, then the ones in its More menu.
     // Empty means the QML defaults; ids are validated on the QML side, which owns the registry.
     Q_PROPERTY(QStringList timelineToolbarItems READ timelineToolbarItems
@@ -161,6 +163,8 @@ public:
     void setAudioMixerWidth(qreal width);
     qreal trackLabelsWidth() const { return m_trackLabelsWidth; }
     void setTrackLabelsWidth(qreal width);
+    qreal androidTrackLabelsWidth() const { return m_androidTrackLabelsWidth; }
+    void setAndroidTrackLabelsWidth(qreal width);
     QStringList timelineToolbarItems() const { return m_timelineToolbarItems; }
     QStringList timelineMenuItems() const { return m_timelineMenuItems; }
     QStringList proxyNamePatterns() const { return m_proxyNamePatterns; }
@@ -290,6 +294,7 @@ signals:
     void audioMixerVisibleChanged();
     void audioMixerWidthChanged();
     void trackLabelsWidthChanged();
+    void androidTrackLabelsWidthChanged();
     void proxyNamePatternsChanged();
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
@@ -323,6 +328,7 @@ private:
     bool m_audioMixerVisible = false;
     qreal m_audioMixerWidth = 0;
     qreal m_trackLabelsWidth = 130;
+    qreal m_androidTrackLabelsWidth = 80;
     QStringList m_timelineToolbarItems;
     QStringList m_proxyNamePatterns;
     QStringList m_timelineMenuItems;

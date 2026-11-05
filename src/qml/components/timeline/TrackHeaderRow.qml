@@ -66,6 +66,47 @@ Item {
     // aligned with their rows.
     y: rowTop - column.contentY
     opacity: column.draggingTrackFrom === index ? 0.45 : 1.0
+    clip: true
+
+    readonly property string trackType: column.tracks[index].type
+    readonly property bool wantMute: trackType === "video" || trackType === "audio"
+    readonly property bool wantHide: trackType === "video" || trackType === "adjustment"
+                                     || trackType === "text" || trackType === "subtitle"
+                                     || trackType === "shape" || isTransformLayer
+    readonly property bool wantMic: trackType === "audio"
+                                    && column.tracks[index].isAdjustmentLane !== true
+    readonly property int laneChannels: {
+        const dep = column.tracks.length
+        return EditorState.trackMaxChannelCount(index)
+    }
+    readonly property bool wantLanes: (trackType === "audio" || (trackType === "video" && trackWaveform))
+                                      && laneChannels > 1
+    readonly property bool lanesOn: column.tracks[index].showChannelWaveforms === true
+    readonly property bool isRecordingHere:
+        EditorState.isRecordingAudio && EditorState.recordingTrackIndex === index
+    readonly property bool wantClip: !column.compact && trackType === "video"
+    // Toggles drop out lowest-priority first as the header narrows; whatever does not fit is
+    // reachable from the overflow button, which opens the context menu.
+    readonly property var iconFit: {
+        const wants = [wantMute, wantHide, wantMic, wantLanes, wantClip]
+        const spacing = trackIconRow.spacing
+        const nameReserve = column.compact ? 8 : (column.trackHeight(index) < 40 ? 36 : 0)
+        const avail = width - (column.compact ? 16 : 22) - (column.compact ? 4 : 12) - nameReserve
+        const cap = Math.max(0, Math.floor((avail + spacing) / (16 + spacing)))
+        let total = 0
+        for (const w of wants)
+            total += w ? 1 : 0
+        const overflow = total > cap
+        let room = overflow ? Math.max(0, cap - 1) : cap
+        const fit = { overflow: overflow }
+        const keys = ["mute", "hide", "mic", "lanes", "clip"]
+        for (let i = 0; i < wants.length; ++i) {
+            fit[keys[i]] = wants[i] && room > 0
+            if (fit[keys[i]])
+                --room
+        }
+        return fit
+    }
 
     ThemeSlot {
         slot: "TrackHeaderRowBackground"
@@ -221,27 +262,21 @@ Item {
 
         TrackHeaderMicButton {
             trackIndex: index
-            shown: column.tracks[index].type === "audio" && column.tracks[index].isAdjustmentLane !== true
+            shown: trackLabelRow.iconFit.mic
         }
         TrackHeaderMuteButton {
             trackIndex: index
-            shown: column.tracks[index].type === "video" || column.tracks[index].type === "audio"
+            shown: trackLabelRow.iconFit.mute
             trackMuted: trackLabelRow.trackMuted
         }
         TrackHeaderChannelLanesButton {
             column: trackLabelRow.column
             trackIndex: index
-            shown: column.tracks[index].type === "audio"
-                   || (column.tracks[index].type === "video" && trackLabelRow.trackWaveform)
+            shown: trackLabelRow.iconFit.lanes
         }
         TrackHeaderHideButton {
             trackIndex: index
-            shown: column.tracks[index].type === "video"
-                   || column.tracks[index].type === "adjustment"
-                   || column.tracks[index].type === "text"
-                   || column.tracks[index].type === "subtitle"
-                   || column.tracks[index].type === "shape"
-                   || trackLabelRow.isTransformLayer
+            shown: trackLabelRow.iconFit.hide
             trackHidden: trackLabelRow.trackHidden
             hideLabel: trackLabelRow.hideLabel
         }
@@ -249,7 +284,12 @@ Item {
             column: trackLabelRow.column
             trackIndex: index
             clipDisplay: trackLabelRow.clipDisplay
-            shown: !column.compact && column.tracks[index].type === "video"
+            shown: trackLabelRow.iconFit.clip
+        }
+        TrackHeaderOverflowButton {
+            id: overflowButton
+            shown: trackLabelRow.iconFit.overflow
+            onActivated: trackContextMenu.popup(overflowButton, 0, overflowButton.height)
         }
     }
 
@@ -258,7 +298,7 @@ Item {
     // overlapping), so the name sits inline here instead, between the grip and the
     // type/toggle icons.
     TrackHeaderInlineName {
-        visible: !column.compact && column.trackHeight(index) < 40
+        visible: !column.compact && column.trackHeight(index) < 40 && width >= 24
         label: trackLabelRow.trackDisplayName
         centerOffset: trackLabelRow.centerOffset
         iconRow: trackIconRow
@@ -270,7 +310,7 @@ Item {
     // one is set — the context menu's Rename is reachable here too (long-press),
     // and a rename that changes nothing visible would look like it silently failed.
     TrackHeaderCompactName {
-        visible: column.compact
+        visible: column.compact && width >= 16
         label: trackLabelRow.trackCompactLabel
         centerOffset: trackLabelRow.centerOffset
         iconRow: trackIconRow
@@ -290,7 +330,7 @@ Item {
     // Track name. Nothing in the header used to say which
     // track this was beyond the type glyph.
     TrackHeaderBandName {
-        visible: !column.compact && column.trackHeight(index) >= 40
+        visible: !column.compact && column.trackHeight(index) >= 40 && width >= 24
         label: trackLabelRow.trackDisplayName
     }
 

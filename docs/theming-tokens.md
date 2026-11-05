@@ -1250,6 +1250,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | trackHeaderMicButton | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | trackHeaderMuteButton | destructive | $semantic.destructive | $semantic.destructive |
 | trackHeaderMuteButton | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
+| trackHeaderOverflowButton | foregroundMuted | $semantic.mutedForeground | $semantic.mutedForeground |
 | trackHeaderResizeHandle | foreground | $semantic.primary | $semantic.primary |
 | trackHeaderRow | background | $semantic.timeline.headerBackground | $semantic.timeline.headerBackground |
 | trackHeaderWash | background | $semantic.clip.transform | $semantic.clip.transform |
@@ -3029,7 +3030,7 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | android.liftStepAsideDistance | 56 | 56 |
 | android.railFabSize | 48 | 48 |
 | android.addRowHeight | 64 | 64 |
-| android.trackLabelsWidth | 88 | 88 |
+| android.trackLabelsWidth | 80 | 80 |
 | android.playheadCentreWidth | 2 | 2 |
 | android.clipTrimHandleWidth | 20 | 20 |
 | android.clipEdgeMargin | 22 | 22 |

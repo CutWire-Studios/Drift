@@ -437,6 +437,7 @@ Item {
             id: leftGutter
             width: root.labelsWidth
             height: parent.height
+            clip: true
 
             // DAW-style lane zoom: wheel over this header grows/shrinks the keyframe lane
             MouseArea {

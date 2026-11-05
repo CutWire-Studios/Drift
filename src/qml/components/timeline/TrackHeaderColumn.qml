@@ -21,8 +21,10 @@ Item {
     // The hold-to-reorder / hold-for-menu gestures, which a touchscreen needs even when
     // the desktop layout is showing.
     readonly property bool touchHold: touchMode || Theme.touchInput
-    // Desktop: a handle on the right edge drags EditorState.preferences.trackLabelsWidth.
+    // A handle on the right edge drags EditorState.preferences.trackLabelsWidth.
     property bool resizable: false
+    // Resizing writes the phone's own width preference.
+    property bool phone: false
 
     // Transform layer brackets. Desktop reserves a gutter on the left for them (one indent per
     // nesting level); the compact header draws them over the grip instead.
@@ -305,5 +307,6 @@ Item {
     // Drag to widen the header column; double-click restores the default.
     TrackHeaderResizeHandle {
         resizable: root.resizable
+        phone: root.phone
     }
 }

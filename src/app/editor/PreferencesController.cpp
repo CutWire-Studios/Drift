@@ -247,8 +247,10 @@ PreferencesController::PreferencesController(QObject *parent)
     m_audioMixerWidth = settings.value(QStringLiteral("ui/audioMixerWidth"), 0.0).toDouble();
     if (m_audioMixerWidth > 0)
         m_audioMixerWidth = qBound(160.0, m_audioMixerWidth, 2000.0);
-    m_trackLabelsWidth = qBound(110.0,
-        settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 320.0);
+    m_trackLabelsWidth = qBound(64.0,
+        settings.value(QStringLiteral("ui/trackLabelsWidth"), 130.0).toDouble(), 360.0);
+    m_androidTrackLabelsWidth = qBound(56.0,
+        settings.value(QStringLiteral("ui/androidTrackLabelsWidth"), 80.0).toDouble(), 200.0);
     m_timelineToolbarItems = settings.value(QStringLiteral("ui/timelineToolbarItems")).toStringList();
     m_timelineMenuItems = settings.value(QStringLiteral("ui/timelineMenuItems")).toStringList();
     m_proxyNamePatterns = settings.contains(QStringLiteral("proxy/namePatterns"))
@@ -382,13 +384,24 @@ void PreferencesController::setAudioMixerWidth(qreal width)
 
 void PreferencesController::setTrackLabelsWidth(qreal width)
 {
-    width = qBound(110.0, qreal(qRound(width)), 320.0);
+    width = qBound(64.0, qreal(qRound(width)), 360.0);
     if (qFuzzyCompare(m_trackLabelsWidth, width))
         return;
     m_trackLabelsWidth = width;
     QSettings settings;
     settings.setValue(QStringLiteral("ui/trackLabelsWidth"), m_trackLabelsWidth);
     emit trackLabelsWidthChanged();
+}
+
+void PreferencesController::setAndroidTrackLabelsWidth(qreal width)
+{
+    width = qBound(56.0, qreal(qRound(width)), 200.0);
+    if (qFuzzyCompare(m_androidTrackLabelsWidth, width))
+        return;
+    m_androidTrackLabelsWidth = width;
+    QSettings settings;
+    settings.setValue(QStringLiteral("ui/androidTrackLabelsWidth"), m_androidTrackLabelsWidth);
+    emit androidTrackLabelsWidthChanged();
 }
 
 void PreferencesController::setProxyNamePatterns(const QStringList &patterns)

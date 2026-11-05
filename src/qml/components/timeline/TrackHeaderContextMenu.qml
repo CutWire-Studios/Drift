@@ -32,6 +32,28 @@ ThemedContextMenu {
         onTriggered: EditorState.setTrackMuted(header.index, !header.trackMuted)
     }
     ThemedMenuItem {
+        visible: header.wantMic
+        text: header.isRecordingHere ? qsTr("Stop recording") : qsTr("Record voiceover")
+        icon.name: Theme.icons.mic
+        onTriggered: {
+            if (EditorState.isRecordingAudio)
+                EditorState.stopAudioRecording()
+            else
+                EditorState.startAudioRecording(header.index)
+        }
+    }
+    ThemedMenuItem {
+        visible: header.wantLanes
+        text: header.lanesOn ? qsTr("Show one combined waveform") : qsTr("Show each channel separately")
+        icon.name: Theme.icons.split
+        onTriggered: {
+            const on = !header.lanesOn
+            EditorState.setTrackShowChannelWaveforms(header.index, on)
+            if (on)
+                column.growRowForChannelLanes(header.index, header.laneChannels)
+        }
+    }
+    ThemedMenuItem {
         text: header.trackHidden ? qsTr("Show track")
                                         : qsTr("Hide track")
         icon.name: header.trackHidden ? Theme.icons.eye

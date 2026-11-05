@@ -1675,6 +1675,9 @@
       "destructive": "$semantic.destructive",
       "foregroundMuted": "$semantic.mutedForeground"
     },
+    "trackHeaderOverflowButton": {
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
     "trackHeaderResizeHandle": {
       "foreground": "$semantic.primary"
     },
@@ -4254,7 +4257,7 @@
       "liftStepAsideDistance": 56,
       "railFabSize": 48,
       "addRowHeight": 64,
-      "trackLabelsWidth": 88,
+      "trackLabelsWidth": 80,
       "playheadCentreWidth": 2,
       "clipTrimHandleWidth": 20,
       "clipEdgeMargin": 22,

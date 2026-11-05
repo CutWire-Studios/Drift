@@ -300,7 +300,7 @@ Item {
         zoom = Math.max(minZoom, Math.min(maxZoom, fit))
         filmstripRefreshEpoch++
     }
-    readonly property real labelsWidth: Theme.androidTrackLabelsWidth
+    readonly property real labelsWidth: EditorState.preferences.androidTrackLabelsWidth
 
     // Beat analysis is triggered from AndroidMoreToolsSheet (the beat toggle, which sets
     // beatGridVisible / onsetsVisible and calls analyzeBeats over the whole timeline);
@@ -1167,6 +1167,8 @@ Item {
                     labelsWidth: root.labelsWidth
                     compact: true
                     touchMode: true
+                    resizable: true
+                    phone: true
                     onScrollRequested: (dy) => {
                         flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height,
                                                               flick.contentY + dy))

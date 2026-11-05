@@ -7,12 +7,16 @@ Item {
     width: lane.labelsWidth
     height: parent.height
 
+    clip: true
+
     Column {
         anchors.fill: parent
         anchors.margins: 6
         spacing: 2
 
         Text {
+            width: parent.width
+            elide: Text.ElideRight
             text: qsTr("Subtitles")
             color: Theme.c.subtitleCueGutter.foregroundMuted
             font.family: Theme.fontFamily
@@ -20,6 +24,9 @@ Item {
             font.weight: Font.Medium
         }
         Text {
+            width: parent.width
+            elide: Text.ElideRight
+            visible: parent.width >= 60
             text: qsTr("%n captions", "", lane.cues.length)
             color: Theme.c.subtitleCueGutter.foregroundMuted
             font.family: Theme.fontFamily
