@@ -17,6 +17,7 @@
 #include <QMatrix4x4>
 #include <QPointingDevice>
 #include <QQuickWindow>
+#include <QSGClipNode>
 #include <QSGFlatColorMaterial>
 #include <QSGGeometryNode>
 #include <QSGImageNode>
@@ -75,15 +76,18 @@ void appendRect(QVector<Vertex> &out, const QRectF &r, const QColor &c, double o
                vertex(l, r.bottom(), c));
 }
 
-// Clockwise outline of a rounded rect.
-QVector<QPointF> roundedPolygon(const QRectF &r, double radius)
+enum Corner { TopRight = 1, BottomRight = 2, BottomLeft = 4, TopLeft = 8, AllCorners = 15 };
+
+// Clockwise outline of a rounded rect; corners outside `corners` stay square.
+QVector<QPointF> roundedPolygon(const QRectF &r, double radius, int corners = AllCorners)
 {
     radius = std::clamp(radius, 0.0, std::min(r.width(), r.height()) / 2.0);
     QVector<QPointF> pts;
-    if (radius < 0.5) {
+    if (radius < 0.5 || corners == 0) {
         pts = {r.topLeft(), r.topRight(), r.bottomRight(), r.bottomLeft()};
         return pts;
     }
+    const QPointF squareCorners[4] = {r.topRight(), r.bottomRight(), r.bottomLeft(), r.topLeft()};
     const QPointF centers[4] = {
         {r.right() - radius, r.top() + radius},
         {r.right() - radius, r.bottom() - radius},
@@ -94,6 +98,10 @@ QVector<QPointF> roundedPolygon(const QRectF &r, double radius)
     const double starts[4] = {-M_PI / 2.0, 0.0, M_PI / 2.0, M_PI};
     pts.reserve(4 * (kCornerSegments + 1));
     for (int c = 0; c < 4; ++c) {
+        if (!(corners & (1 << c))) {
+            pts.append(squareCorners[c]);
+            continue;
+        }
         for (int i = 0; i <= kCornerSegments; ++i) {
             const double a = starts[c] + (M_PI / 2.0) * i / kCornerSegments;
             pts.append({centers[c].x() + radius * std::cos(a), centers[c].y() + radius * std::sin(a)});
@@ -136,11 +144,11 @@ void appendConvex(QVector<Vertex> &out, const QVector<QPointF> &pts, const QColo
 }
 
 void appendRoundedRect(QVector<Vertex> &out, const QRectF &r, double radius, const QColor &c,
-                       double ox)
+                       double ox, int corners = AllCorners)
 {
     if (r.width() <= 0.0 || r.height() <= 0.0)
         return;
-    appendConvex(out, roundedPolygon(r, radius), c, ox);
+    appendConvex(out, roundedPolygon(r, radius, corners), c, ox);
 }
 
 // A border drawn inside the rect, like a QML Rectangle's.
@@ -279,6 +287,7 @@ public:
     QHash<QString, qsizetype> textureBytes;
     qsizetype cachedTextureBytes = 0;
     QList<QSGImageNode *> images;
+    QList<QSGClipNode *> clips;
     // Several clips can carry the same label (a split clip keeps its name), so each look maps to
     // a list of placed nodes. The transform owns its text node.
     QHash<QString, QList<QSGTransformNode *>> labels;
@@ -852,6 +861,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     if (lit)
         base = base.lighter(115);
     appendRoundedRect(m_under, rect, s.radiusSm, base, ox);
+    const double clipRadius = std::min(s.radiusSm, std::min(rect.width(), rect.height()) / 2.0);
 
     const bool bandTrack = m_trackType == QLatin1String("video")
                            || m_trackType == QLatin1String("audio")
@@ -870,7 +880,7 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
     if (filmstrip) {
         const QRectF body = rect.adjusted(0.0, bandTrack ? band : 0.0, 0.0,
                                           showWaveformBar ? -barHeight : 0.0);
-        buildFilmstrip(index, body, inPoint, outPoint);
+        buildFilmstrip(index, body, rect, clipRadius, inPoint, outPoint);
     }
 
     // --- waveform ----------------------------------------------------------------------------
@@ -882,7 +892,8 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                           rect.width(),
                           showWaveformBar ? barHeight : std::max(0.0, rect.height() - band));
         if (showWaveformBar)
-            appendRect(m_over, area, QColor(0, 0, 0, 89), ox);
+            appendRoundedRect(m_over, area, clipRadius, QColor(0, 0, 0, 89), ox,
+                              BottomLeft | BottomRight);
         buildWaveform(index, area, rect.left(), rect.width(), inPoint, outPoint, showWaveformBar);
     }
 
@@ -894,7 +905,8 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
                            && m_editor->playback()->useProxies() && row.kind == QLatin1String("video")
                            && m_assets->hasProxyForPath(row.path);
         const QRectF bandRect(rect.left(), rect.top(), rect.width(), band);
-        appendRect(m_over, bandRect, proxy ? s.proxyBand : s.scrim, ox);
+        appendRoundedRect(m_over, bandRect, clipRadius, proxy ? s.proxyBand : s.scrim, ox,
+                          TopLeft | TopRight);
 
         QString assetId;
         if (m_assets && !row.path.isEmpty())
@@ -1036,18 +1048,28 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         if (w <= 0.5 || rect.height() <= 0.5)
             return;
         const int steps = std::clamp(int(std::ceil(w / 2.0)), 8, 64);
+        // How far the rounded clip shape is inset from the top/bottom edge at x.
+        const auto inset = [&](double x) {
+            const double d = std::min(x - rect.left(), rect.right() - x);
+            if (clipRadius < 0.5 || d >= clipRadius)
+                return 0.0;
+            const double dx = clipRadius - std::max(0.0, d);
+            return clipRadius - std::sqrt(std::max(0.0, clipRadius * clipRadius - dx * dx));
+        };
         QVector<QPointF> curve;
         curve.reserve(steps + 1);
         for (int i = 0; i <= steps; ++i) {
             const double t = double(i) / steps;
             const double g = gain(out ? 1.0 - t : t);
-            curve.append({left + t * w, rect.top() + rect.height() * (1.0 - g)});
+            const double x = left + t * w;
+            const double y = rect.top() + rect.height() * (1.0 - g);
+            curve.append({x, std::clamp(y, rect.top() + inset(x), rect.bottom() - inset(x))});
         }
         for (int i = 0; i < steps; ++i) {
             const QPointF a = curve[i];
             const QPointF b = curve[i + 1];
-            appendQuad(m_over, vertex(a.x() - ox, rect.top(), fadeFill),
-                       vertex(b.x() - ox, rect.top(), fadeFill), vertex(b.x() - ox, b.y(), fadeFill),
+            appendQuad(m_over, vertex(a.x() - ox, rect.top() + inset(a.x()), fadeFill),
+                       vertex(b.x() - ox, rect.top() + inset(b.x()), fadeFill), vertex(b.x() - ox, b.y(), fadeFill),
                        vertex(a.x() - ox, a.y(), fadeFill));
         }
         appendStroke(m_over, curve, 1.5, fadeStroke, ox);
@@ -1200,7 +1222,8 @@ void TimelineTrackItem::buildWaveform(int index, const QRectF &area, double clip
     }
 }
 
-void TimelineTrackItem::buildFilmstrip(int index, const QRectF &body, double inPoint,
+void TimelineTrackItem::buildFilmstrip(int index, const QRectF &body, const QRectF &clipRect,
+                                       double clipRadius, double inPoint,
                                        double outPoint)
 {
     const TimelineClipsModel::Row &row = m_clips->rows().at(index);
@@ -1242,7 +1265,7 @@ void TimelineTrackItem::buildFilmstrip(int index, const QRectF &body, double inP
                         QRectF tgt = target;
                         QRectF src = aspectCrop(QRectF(QPointF(0, 0), image.size()), tgt.size());
                         if (clipTile(tgt, src, body))
-                            m_tiles.append({file, image, tgt.translated(-m_originX, 0), src});
+                            appendTile(file, image, tgt, src, clipRect, clipRadius);
                         continue;
                     }
                 }
@@ -1256,8 +1279,19 @@ void TimelineTrackItem::buildFilmstrip(int index, const QRectF &body, double inP
         QRectF src = aspectCrop(QRectF(frame * frameW, 0, frameW, strip.height()), target.size());
         QRectF tgt = target;
         if (clipTile(tgt, src, body))
-            m_tiles.append({row.filmstripPath, strip, tgt.translated(-m_originX, 0), src});
+            appendTile(row.filmstripPath, strip, tgt, src, clipRect, clipRadius);
     }
+}
+
+void TimelineTrackItem::appendTile(const QString &key, const QImage &image, const QRectF &target,
+                                   const QRectF &source, const QRectF &clipRect, double clipRadius)
+{
+    Tile tile{key, image, target.translated(-m_originX, 0), source, {}};
+    const bool atEnd = target.left() <= clipRect.left() + 0.5 || target.right() >= clipRect.right() - 0.5;
+    if (atEnd && clipRadius >= 0.5) {
+        tile.clip = roundedPolygon(clipRect.translated(-m_originX, 0), clipRadius);
+    }
+    m_tiles.append(tile);
 }
 
 QSGNode *TimelineTrackItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
@@ -1279,9 +1313,10 @@ QSGNode *TimelineTrackItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
     QQuickWindow *win = window();
     while (root->images.size() > m_tiles.size()) {
         QSGImageNode *node = root->images.takeLast();
-        root->tiles->removeChildNode(node);
+        node->parent()->removeChildNode(node);
         delete node;
     }
+    int clipsUsed = 0;
     for (int i = 0; i < m_tiles.size(); ++i) {
         const Tile &tile = m_tiles.at(i);
         QSGTexture *texture = root->textures.value(tile.key);
@@ -1313,6 +1348,44 @@ QSGNode *TimelineTrackItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeDat
         node->setTexture(texture);
         node->setRect(tile.target);
         node->setSourceRect(tile.source);
+
+        QSGNode *wanted = root->tiles;
+        if (!tile.clip.isEmpty()) {
+            QSGClipNode *clip = nullptr;
+            if (clipsUsed < root->clips.size()) {
+                clip = root->clips.at(clipsUsed);
+            } else {
+                clip = new QSGClipNode;
+                clip->setIsRectangular(false);
+                clip->setFlag(QSGNode::OwnsGeometry);
+                clip->setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 0));
+                clip->geometry()->setDrawingMode(QSGGeometry::DrawTriangleFan);
+                root->tiles->appendChildNode(clip);
+                root->clips.append(clip);
+            }
+            ++clipsUsed;
+            QSGGeometry *g = clip->geometry();
+            g->allocate(tile.clip.size());
+            QSGGeometry::Point2D *v = g->vertexDataAsPoint2D();
+            for (int k = 0; k < tile.clip.size(); ++k)
+                v[k].set(float(tile.clip[k].x()), float(tile.clip[k].y()));
+            clip->setClipRect(tile.clip.isEmpty() ? QRectF() : QPolygonF(tile.clip).boundingRect());
+            clip->markDirty(QSGNode::DirtyGeometry);
+            wanted = clip;
+        }
+        if (node->parent() != wanted) {
+            node->parent()->removeChildNode(node);
+            wanted->appendChildNode(node);
+        }
+    }
+    while (root->clips.size() > clipsUsed) {
+        QSGClipNode *clip = root->clips.takeLast();
+        while (QSGNode *child = clip->firstChild()) {
+            clip->removeChildNode(child);
+            root->tiles->appendChildNode(child);
+        }
+        root->tiles->removeChildNode(clip);
+        delete clip;
     }
     if (root->textures.size() > kMaxCachedTextures
         || root->cachedTextureBytes > kMaxCachedTextureBytes) {

@@ -171,6 +171,8 @@ public:
         QImage image;
         QRectF target;
         QRectF source;
+        // The rounded clip outline, set only on tiles that reach a clip end.
+        QVector<QPointF> clip;
     };
 
 private:
@@ -234,7 +236,10 @@ private:
     void appendClip(int index, const QRectF &rect, bool selected, bool lit, bool lifted);
     void buildWaveform(int index, const QRectF &area, double clipX, double clipWidth,
                        double inPoint, double outPoint, bool bar);
-    void buildFilmstrip(int index, const QRectF &body, double inPoint, double outPoint);
+    void buildFilmstrip(int index, const QRectF &body, const QRectF &clipRect, double clipRadius,
+                        double inPoint, double outPoint);
+    void appendTile(const QString &key, const QImage &image, const QRectF &target,
+                    const QRectF &source, const QRectF &clipRect, double clipRadius);
     QRectF effectiveRect(int index, double *inPoint = nullptr, double *outPoint = nullptr) const;
     int clipAt(const QPointF &point, timelinelayout::Zone *zone = nullptr) const;
     double edgeMargin(double clipWidth) const;
