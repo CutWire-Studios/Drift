@@ -934,6 +934,8 @@ void TimelineTrackItem::appendClip(int index, const QRectF &baseRect, bool selec
         double x = rowLeft;
         const auto drawBadge = [&](const QColor &fill, const QString &tip) {
             const double size = std::min(s.iconSizeSm, band - 2.0);
+            if (x + size > rect.right() - 6.0)
+                return;
             const QRectF badge(x, centerY - size / 2.0, size, size);
             appendRoundedRect(m_over, badge, size / 2.0, fill, ox);
             const QFont bangFont = labelFont(m_fontFamily, size * 0.75, true);

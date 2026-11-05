@@ -85,7 +85,7 @@ public:
         double ringWidth = 1.5;
         double borderWidthFocus = 2.0;
         double headerBandHeight = 20.0;
-        double clipMinWidth = 24.0;
+        double clipMinWidth = 2.0;
         double iconSizeSm = 12.0;
         double spacingLg = 8.0;
         double spacingMd = 6.0;

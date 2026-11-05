@@ -201,7 +201,7 @@ Item {
     // Width is floored so the clip never becomes
     // an unusable sliver; at that floor both
     // edges stay trimmable and the middle moves.
-    readonly property bool showTrimHandles: selected && !pinnedToClip
+    readonly property bool showTrimHandles: selected && !pinnedToClip && width >= Theme.clipControlsMinWidth
     readonly property real minDurationSeconds: Math.max(
         1.0 / Math.max(1, EditorState.projectFile.projectFps()),
         Theme.clipMinWidth / panel.pxPerSecond)
@@ -281,7 +281,6 @@ Item {
     // strips leave room for them.
     readonly property real fadeHandleSize: 13
     readonly property real fadeHandleInset: 0
-    readonly property real fadeHandleMinWidth: 26
 
     // Floored so short clips stay visible and
     // trimmable even at low zoom.
