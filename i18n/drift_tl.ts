@@ -5330,8 +5330,16 @@
         <translation>Maghanap ng mga epektong audio</translation>
     </message>
     <message>
-        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation type="unfinished">Mag-import ng visual o audio effect (.driftfx) na ginawa sa Drift Forge</translation>
+        <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5340,10 +5348,6 @@
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>Walang epektong audio na tumutugma sa “%1”.</translation>
-    </message>
-    <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>Wala pa rito. Mag-import ng .driftfx file upang magdagdag ng sarili mo.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -5356,10 +5360,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>Walang laman ang %1</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Mag-import ng .driftfx file na ginawa sa Drift Forge upang magdagdag ng sarili mo.</translation>
     </message>
     <message>
         <source>Import</source>
@@ -7844,12 +7844,20 @@
         <translation>Adjustment layer</translation>
     </message>
     <message>
-        <source>Import</source>
-        <translation>Mag-import</translation>
+        <source>Install a custom effect or transition from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation>Mag-install ng custom na epekto o transisyon mula sa isang .driftfx file na ginawa sa Drift Forge</translation>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Mag-import</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
@@ -7864,10 +7872,6 @@
         <translation>Walang mga epektong tumutugma sa “%1”.</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>Wala pa rito. Mag-import ng isang .driftfx file upang magdagdag ng sarili mo.</translation>
-    </message>
-    <message>
         <source>No favorites yet. Star presets to save them here.</source>
         <translation>Wala pang mga paborito. Lagyan ng bituin ang mga preset upang i-save ang mga ito rito.</translation>
     </message>
@@ -7878,10 +7882,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>Walang laman ang %1</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Mag-import ng isang .driftfx file na ginawa sa Drift Forge upang magdagdag ng sarili mo.</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -11467,6 +11467,68 @@
     </message>
 </context>
 <context>
+    <name>MarketCustomEffectsSection</name>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Pagbabagong-kalagayan</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n custom effect(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No custom effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">I-install mula sa file…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Tanggal</translation>
+    </message>
+    <message>
+        <source>Remove “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removed “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not remove “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its folder is deleted. Clips that use it will play without it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MarketDownloadsSection</name>
     <message numerus="yes">
         <source>%n active</source>
@@ -11855,8 +11917,48 @@
 <context>
     <name>MarketplaceView</name>
     <message>
+        <source>Custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">Mga Pag-download</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">I-install mula sa file…</translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open custom effects folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy an effect&apos;s folder here, then refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Epekto</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Pagbabagong-kalagayan</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom effects refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse more online</source>
@@ -25118,8 +25220,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Maghanap ng mga transisyon</translation>
     </message>
     <message>
-        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Mag-install ng custom na transisyon o epekto mula sa isang .driftfx file na ginawa sa Drift Forge</translation>
+        <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Transitions</source>
@@ -25158,8 +25260,8 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Subukan ang ibang pangalan.</translation>
     </message>
     <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Mag-import ng .driftfx file na ginawa sa Drift Forge upang magdagdag ng sarili mo.</translation>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>

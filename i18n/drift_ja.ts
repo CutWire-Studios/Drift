@@ -5307,8 +5307,16 @@
         <translation>オーディオエフェクトを検索</translation>
     </message>
     <message>
-        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge で作成した .driftfx ファイルから、カスタムオーディオエフェクトまたはエフェクトをインストールします</translation>
+        <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5317,10 +5325,6 @@
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>「%1」に一致するオーディオエフェクトはありません。</translation>
-    </message>
-    <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>まだ何もありません。.driftfx ファイルをインポートして独自のものを追加してください。</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -5333,10 +5337,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1 は空です</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Drift Forge で作成した .driftfx ファイルをインポートして、独自のものを追加してください。</translation>
     </message>
     <message>
         <source>Import</source>
@@ -7812,12 +7812,20 @@
         <translation>調整レイヤー</translation>
     </message>
     <message>
-        <source>Import</source>
-        <translation>インポート</translation>
+        <source>Install a custom effect or transition from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge で作成した .driftfx ファイルから、カスタムエフェクトまたはトランジションをインストールします</translation>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>インポート</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
@@ -7832,10 +7840,6 @@
         <translation>「%1」に一致するエフェクトはありません。</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>まだ何もありません。.driftfx ファイルをインポートして独自のものを追加してください。</translation>
-    </message>
-    <message>
         <source>No favorites yet. Star presets to save them here.</source>
         <translation>お気に入りはまだありません。プリセットにスターを付けてここに保存します。</translation>
     </message>
@@ -7846,10 +7850,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1 は空です</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Drift Forge で作成した .driftfx ファイルをインポートして、独自のものを追加してください。</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -11426,6 +11426,67 @@
     </message>
 </context>
 <context>
+    <name>MarketCustomEffectsSection</name>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n custom effect(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No custom effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">ファイルからインストール…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">削除</translation>
+    </message>
+    <message>
+        <source>Remove “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removed “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not remove “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its folder is deleted. Clips that use it will play without it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MarketDownloadsSection</name>
     <message numerus="yes">
         <source>%n active</source>
@@ -11810,8 +11871,48 @@
 <context>
     <name>MarketplaceView</name>
     <message>
+        <source>Custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation>ダウンロード</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">ファイルからインストール…</translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open custom effects folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy an effect&apos;s folder here, then refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">エフェクト</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">トランジション</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom effects refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse more online</source>
@@ -25034,8 +25135,8 @@ If playback stutters, try another.</source>
         <translation>トランジションを検索</translation>
     </message>
     <message>
-        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge で作成した .driftfx ファイルから、カスタムトランジションまたはエフェクトをインストールします</translation>
+        <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Transitions</source>
@@ -25074,8 +25175,8 @@ If playback stutters, try another.</source>
         <translation>別の名前を試してください。</translation>
     </message>
     <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Drift Forge で作成した .driftfx ファイルをインポートして、独自のものを追加してください。</translation>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>

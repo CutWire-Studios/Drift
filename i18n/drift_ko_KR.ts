@@ -5307,8 +5307,16 @@
         <translation>오디오 효과 검색</translation>
     </message>
     <message>
-        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge에서 생성된 .driftfx 파일에서 사용자 정의 오디오 효과 또는 효과 설치</translation>
+        <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5317,10 +5325,6 @@
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>“%1”과(와) 일치하는 오디오 효과가 없습니다.</translation>
-    </message>
-    <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>아직 항목이 없습니다. .driftfx 파일을 가져와 자신만의 효과를 추가하세요.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -5333,10 +5337,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1이(가) 비어 있습니다</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Drift Forge에서 제작된 .driftfx 파일을 가져와 직접 추가하세요.</translation>
     </message>
     <message>
         <source>Import</source>
@@ -7812,12 +7812,20 @@
         <translation>보정 레이어</translation>
     </message>
     <message>
-        <source>Import</source>
-        <translation>가져오기</translation>
+        <source>Install a custom effect or transition from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge에서 생성된 .driftfx 파일에서 사용자 정의 효과 또는 전환 설치</translation>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>가져오기</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
@@ -7832,10 +7840,6 @@
         <translation>“%1”과(와) 일치하는 효과가 없습니다.</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>아직 항목이 없습니다. .driftfx 파일을 가져와 자신만의 효과를 추가하세요.</translation>
-    </message>
-    <message>
         <source>No favorites yet. Star presets to save them here.</source>
         <translation>아직 즐겨찾기가 없습니다. 프리셋에 별표를 표시하여 여기에 저장하세요.</translation>
     </message>
@@ -7846,10 +7850,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1이(가) 비어 있습니다</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>자신만의 효과를 추가하려면 Drift Forge에서 제작된 .driftfx 파일을 가져오세요.</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -11426,6 +11426,67 @@
     </message>
 </context>
 <context>
+    <name>MarketCustomEffectsSection</name>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n custom effect(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No custom effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">제거</translation>
+    </message>
+    <message>
+        <source>Remove “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removed “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not remove “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its folder is deleted. Clips that use it will play without it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MarketDownloadsSection</name>
     <message numerus="yes">
         <source>%n active</source>
@@ -11810,8 +11871,48 @@
 <context>
     <name>MarketplaceView</name>
     <message>
+        <source>Custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">다운로드</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">파일에서 설치…</translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open custom effects folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy an effect&apos;s folder here, then refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">효과</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">전환</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom effects refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse more online</source>
@@ -25025,8 +25126,8 @@ If playback stutters, try another.</source>
         <translation>전환 검색</translation>
     </message>
     <message>
-        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge에서 제작된 .driftfx 파일에서 사용자 정의 전환 또는 효과 설치</translation>
+        <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Transitions</source>
@@ -25065,8 +25166,8 @@ If playback stutters, try another.</source>
         <translation>다른 이름을 입력해 보세요.</translation>
     </message>
     <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>직접 추가하려면 Drift Forge에서 제작된 .driftfx 파일을 가져오세요.</translation>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>

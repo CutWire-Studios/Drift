@@ -5330,8 +5330,16 @@
         <translation>ශ්‍රව්‍ය ප්‍රයෝග සොයන්න</translation>
     </message>
     <message>
-        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge හි සාදන ලද .driftfx ගොනුවකින් අභිරුචි ශ්‍රව්‍ය ප්‍රයෝගයක් හෝ ප්‍රයෝගයක් ස්ථාපනය කරන්න</translation>
+        <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5340,10 +5348,6 @@
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>“%1” ට ගැලපෙන ශ්‍රව්‍ය ප්‍රයෝග නැත.</translation>
-    </message>
-    <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>මෙහි තවමත් කිසිවක් නැත. ඔබේම දෑ එක් කිරීමට .driftfx ගොනුවක් ආයාත කරන්න.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -5356,10 +5360,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1 හිස්ය</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>ඔබේම දෑ එක් කිරීමට Drift Forge හි සාදන ලද .driftfx ගොනුවක් ආයාත කරන්න.</translation>
     </message>
     <message>
         <source>Import</source>
@@ -7844,12 +7844,20 @@
         <translation>ගැළපුම් ස්තරය</translation>
     </message>
     <message>
-        <source>Import</source>
-        <translation>ආයාත කරන්න</translation>
+        <source>Install a custom effect or transition from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge හි සාදන ලද .driftfx ගොනුවකින් අභිරුචි ප්‍රයෝගයක් හෝ සංක්‍රාන්තියක් ස්ථාපනය කරන්න</translation>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>ආයාත කරන්න</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
@@ -7864,10 +7872,6 @@
         <translation>“%1” ට ගැලපෙන ප්‍රයෝග නැත.</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>මෙහි තවමත් කිසිවක් නැත. ඔබේම දෑ එක් කිරීමට .driftfx ගොනුවක් ආයාත කරන්න.</translation>
-    </message>
-    <message>
         <source>No favorites yet. Star presets to save them here.</source>
         <translation>තවමත් ප්‍රියතමයන් නැත. මෙහි සුරැකීමට පෙරසැකසුම් තරු ලකුණු කරන්න.</translation>
     </message>
@@ -7878,10 +7882,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1 හිස්ය</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>ඔබේම දෑ එක් කිරීමට Drift Forge හි සාදන ලද .driftfx ගොනුවක් ආයාත කරන්න.</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -11467,6 +11467,68 @@
     </message>
 </context>
 <context>
+    <name>MarketCustomEffectsSection</name>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ප්‍රයෝග</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">සංක්‍රාන්ති</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n custom effect(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No custom effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">ගොනුවෙන් ස්ථාපනය කරන්න…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">ඉවත් කරන්න</translation>
+    </message>
+    <message>
+        <source>Remove “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removed “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not remove “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its folder is deleted. Clips that use it will play without it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MarketDownloadsSection</name>
     <message numerus="yes">
         <source>%n active</source>
@@ -11855,8 +11917,48 @@
 <context>
     <name>MarketplaceView</name>
     <message>
+        <source>Custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">බාගැනීම්</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">ගොනුවෙන් ස්ථාපනය කරන්න…</translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open custom effects folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy an effect&apos;s folder here, then refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">ප්‍රයෝග</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">සංක්‍රාන්ති</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom effects refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse more online</source>
@@ -25117,8 +25219,8 @@ If playback stutters, try another.</source>
         <translation>සංක්‍රාන්ති සොයන්න</translation>
     </message>
     <message>
-        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Drift Forge හි සාදන ලද .driftfx ගොනුවකින් අභිරුචි සංක්‍රාන්තියක් හෝ ප්‍රයෝගයක් ස්ථාපනය කරන්න</translation>
+        <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Transitions</source>
@@ -25157,8 +25259,8 @@ If playback stutters, try another.</source>
         <translation>වෙනත් නමක් උත්සාහ කරන්න.</translation>
     </message>
     <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>ඔබේම දෑ එක් කිරීමට Drift Forge හි සාදන ලද .driftfx ගොනුවක් ආයාත කරන්න.</translation>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>

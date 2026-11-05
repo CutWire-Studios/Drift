@@ -5307,8 +5307,16 @@
         <translation>Tìm hiệu ứng âm thanh</translation>
     </message>
     <message>
-        <source>Install a custom audio effect or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Cài đặt một hiệu ứng hoặc hiệu ứng âm thanh tùy chỉnh từ tệp .driftfx được tạo trong Drift Forge</translation>
+        <source>Install a custom audio effect or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Audio Effects</source>
@@ -5317,10 +5325,6 @@
     <message>
         <source>No audio effects match “%1”.</source>
         <translation>Không có hiệu ứng âm thanh nào khớp với “%1”.</translation>
-    </message>
-    <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>Chưa có gì ở đây. Nhập tệp .driftfx để thêm tệp của riêng bạn.</translation>
     </message>
     <message>
         <source>No favorites yet. Star presets to save them here.</source>
@@ -5333,10 +5337,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1 đang rỗng</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Nhập tệp .driftfx được tạo trong Drift Forge để thêm tệp của riêng bạn.</translation>
     </message>
     <message>
         <source>Import</source>
@@ -7812,12 +7812,20 @@
         <translation>Lớp điều chỉnh</translation>
     </message>
     <message>
-        <source>Import</source>
-        <translation>Nhập</translation>
+        <source>Install a custom effect or transition from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install a custom effect or transition from a .driftfx file made in Drift Forge</source>
-        <translation>Cài đặt một hiệu ứng hoặc hiệu ứng âm thanh tùy chỉnh từ tệp .driftfx được tạo trong Drift Forge</translation>
+        <source>Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>Nhập</translation>
     </message>
     <message>
         <source>Add adjustment layer — click, or drag it onto a track</source>
@@ -7832,10 +7840,6 @@
         <translation>Không có hiệu ứng nào khớp với “%1”.</translation>
     </message>
     <message>
-        <source>Nothing here yet. Import a .driftfx file to add your own.</source>
-        <translation>Chưa có gì ở đây. Nhập tệp .driftfx để thêm tệp của riêng bạn.</translation>
-    </message>
-    <message>
         <source>No favorites yet. Star presets to save them here.</source>
         <translation>Chưa có mục yêu thích nào. Gắn dấu sao cho các preset để lưu chúng ở đây.</translation>
     </message>
@@ -7846,10 +7850,6 @@
     <message>
         <source>%1 is empty</source>
         <translation>%1 đang rỗng</translation>
-    </message>
-    <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Nhập tệp .driftfx được tạo trong Drift Forge để thêm tệp của riêng bạn.</translation>
     </message>
     <message>
         <source>Delete effect</source>
@@ -11426,6 +11426,67 @@
     </message>
 </context>
 <context>
+    <name>MarketCustomEffectsSection</name>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Chuyển cảnh</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n custom effect(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No custom effects yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or copy its folder into the custom effects folder and refresh.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">Cài đặt từ tệp…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished">Xóa</translation>
+    </message>
+    <message>
+        <source>Remove “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removed “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not remove “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its folder is deleted. Clips that use it will play without it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MarketDownloadsSection</name>
     <message numerus="yes">
         <source>%n active</source>
@@ -11810,8 +11871,48 @@
 <context>
     <name>MarketplaceView</name>
     <message>
+        <source>Custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloads</source>
         <translation type="unfinished">Tải xuống</translation>
+    </message>
+    <message>
+        <source>Install from file…</source>
+        <translation type="unfinished">Cài đặt từ tệp…</translation>
+    </message>
+    <message>
+        <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open custom effects folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy an effect&apos;s folder here, then refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished">Hiệu ứng</translation>
+    </message>
+    <message>
+        <source>Transitions</source>
+        <translation type="unfinished">Chuyển cảnh</translation>
+    </message>
+    <message>
+        <source>Audio effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh custom effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom effects refreshed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Browse more online</source>
@@ -25034,8 +25135,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tìm hiệu ứng chuyển cảnh</translation>
     </message>
     <message>
-        <source>Install a custom transition or effect from a .driftfx file made in Drift Forge</source>
-        <translation>Cài đặt một hiệu ứng hoặc hiệu ứng âm thanh tùy chỉnh từ tệp .driftfx được tạo trong Drift Forge</translation>
+        <source>Install a custom transition or effect from a .driftfx or zip made in Drift Forge</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>My Transitions</source>
@@ -25074,8 +25175,8 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Hãy thử một tên khác.</translation>
     </message>
     <message>
-        <source>Import a .driftfx file made in Drift Forge to add your own.</source>
-        <translation>Nhập tệp .driftfx được tạo trong Drift Forge để thêm tệp của riêng bạn.</translation>
+        <source>Import a .driftfx or zip made in Drift Forge to add your own.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Star transitions to save them here.</source>
