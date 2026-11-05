@@ -929,13 +929,13 @@ void AppController::applyMulticamSlicesToProject(drift::Project &project, bool c
         if (keepUnedited || !m_multicamCuts.isEmpty()) {
             auto appendInterval = [&](drift::TimeUs startUs, drift::TimeUs endUs) {
                 drift::Clip video;
-                if (!drift::sliceClipToTimelineRange(snap.original, startUs, endUs, video))
+                if (!drift::sliceClipToTimelineRange(snap.original, startUs, endUs, video, m_project.fps()))
                     return;
                 video.id = newClipId();
                 video.linkId.clear();
                 if (snap.hasAudio) {
                     drift::Clip audio;
-                    if (drift::sliceClipToTimelineRange(snap.originalAudio, startUs, endUs, audio)) {
+                    if (drift::sliceClipToTimelineRange(snap.originalAudio, startUs, endUs, audio, m_project.fps())) {
                         audio.id = newClipId();
                         const QString link = newClipId();
                         video.linkId = link;
@@ -1111,7 +1111,7 @@ void AppController::switchMulticamAngle(int angleIndex)
     const drift::TimeUs atUs = multicamSwitchTimeUs();
     const drift::MulticamSwitchResult result =
         drift::applyMulticamSwitch(m_multicamCuts, m_multicamRangeStart, m_multicamRangeEnd,
-                                   angleIndex, atUs, 0);
+                                   angleIndex, atUs, 0, m_project.fps());
     switch (result) {
     case drift::MulticamSwitchResult::NoOp:
         return;

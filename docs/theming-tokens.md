@@ -3015,7 +3015,6 @@ Values are the document text. `$palette` and `$semantic` references are unresolv
 | timeline.clipHeaderBandHeight | 20 | 20 |
 | timeline.clipTrimHandleWidth | 12 | 12 |
 | timeline.clipMinInteractiveWidth | 28 | 28 |
-| timeline.clipMinDurationSeconds | 0.1 | 0.1 |
 | android.iconButtonSize | 48 | 48 |
 | android.timelineToolbarHeight | 56 | 56 |
 | android.previewTransportHeight | 56 | 56 |

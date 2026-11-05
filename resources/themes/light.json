@@ -4237,8 +4237,7 @@
       "clipSelectionRingWidth": 1.5,
       "clipHeaderBandHeight": 20,
       "clipTrimHandleWidth": 12,
-      "clipMinInteractiveWidth": 28,
-      "clipMinDurationSeconds": 0.1
+      "clipMinInteractiveWidth": 28
     },
     "android": {
       "iconButtonSize": 48,

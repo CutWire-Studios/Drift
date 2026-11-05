@@ -16,8 +16,10 @@ void setImageClipDurationUs(TimeUs duration);
 
 constexpr TimeUs kTextClipDurationUs = 5 * kUsPerSecond;
 constexpr TimeUs kSubtitleClipDurationUs = 30 * kUsPerSecond;
-constexpr TimeUs kMinClipDurationUs = kUsPerSecond / 10;
 constexpr TimeUs kSnapThresholdUs = 150'000;
+
+// One project frame: the shortest clip, split half or trim a user can make. fps <= 0 falls back to 120.
+TimeUs minClipDurationUs(double fps);
 
 // Every time an edge can snap to, sorted and deduplicated. Built once and reused: snapTime()
 // below collects the same set from scratch on every call, which is two entries per clip in the
@@ -271,9 +273,9 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip);
 // Split `head` at `offset` from its timeline start into head + tail (same reverse/speed).
 // Caller assigns `tail.id`. Returns false if the offset is too close to either end. The cut
 // edges get no fade or animation; the outer ones are kept, clamped to each half.
-bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset);
+bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset, double fps = 0);
 // Same, with the minimum half length the caller chooses (splitClipAtOffset uses
-// kMinClipDurationUs). Word-level cutting needs pieces shorter than an interactive split allows.
+// one frame). Word-level cutting needs pieces shorter than an interactive split allows.
 bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeUs);
 
 // Repoint `dst` at the media `src` carries while keeping dst's timeline placement. The source
@@ -364,7 +366,7 @@ enum class MulticamSwitchResult { Applied, NoOp, OutOfRange, TooCloseToEdge };
 // Punch `angle` at `atUs` inside `[rangeStart, rangeEnd)`. Empty `cuts` is the unedited
 // stack; `initialAngle` is the topmost camera, which is program until the first punch.
 MulticamSwitchResult applyMulticamSwitch(QList<MulticamCut> &cuts, TimeUs rangeStart, TimeUs rangeEnd,
-                                         int angle, TimeUs atUs, int initialAngle);
+                                         int angle, TimeUs atUs, int initialAngle, double fps = 0);
 
 int multicamAngleAt(const QList<MulticamCut> &cuts, TimeUs rangeStart, TimeUs rangeEnd, TimeUs timeUs,
                     int uneditedAngle);
@@ -373,7 +375,7 @@ QList<MulticamInterval> multicamIntervals(const QList<MulticamCut> &cuts, TimeUs
                                           TimeUs rangeEnd, int uneditedAngle);
 
 // Intersection of `src` with `[start, end)`. False when that span is empty or shorter than
-// kMinClipDurationUs. `out` keeps `src`'s id; the caller mints a new one if it needs one.
+// one frame. `out` keeps `src`'s id; the caller mints a new one if it needs one.
 // Move every clip-relative keyframe on a clip by `delta`. Key times are relative to the clip's
 // own start, so a clip that keeps its material but starts somewhere else has to carry its curves
 // with it. Keys pushed before the start are dropped.
@@ -383,6 +385,6 @@ void shiftClipKeyframes(Clip &clip, TimeUs delta);
 // the animation continues rather than restarting.
 void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset);
 
-bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out);
+bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out, double fps = 0);
 
 } // namespace drift

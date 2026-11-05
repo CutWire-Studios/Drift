@@ -508,7 +508,7 @@ Item {
                     width: parent.width
                     decimals: 2
                     step: 0.1
-                    from: 0.1
+                    from: 1.0 / Math.max(1, EditorState.projectFile.projectFps())
                     onEdited: v => EditorState.setClipDuration(
                                         EditorState.selectedTrack, EditorState.selectedClip, v)
                 }

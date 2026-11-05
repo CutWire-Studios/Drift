@@ -203,7 +203,7 @@ Item {
     // edges stay trimmable and the middle moves.
     readonly property bool showTrimHandles: selected && !pinnedToClip
     readonly property real minDurationSeconds: Math.max(
-        Theme.clipMinDurationSeconds,
+        1.0 / Math.max(1, EditorState.projectFile.projectFps()),
         Theme.clipMinWidth / panel.pxPerSecond)
     // On touch the bars give way on a narrow clip, so its middle — where a long-press picks it
     // up — never shrinks to a sliver between two trim handles. The grab outside the clip stays.

@@ -443,7 +443,7 @@ QVariantMap AppController::addModel3dClip(const QString &path, int trackIndex, d
         model.animationDurationUs() > 0 ? model.animationDurationUs() : drift::imageClipDurationUs();
     if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
         duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
-    duration = qMax(duration, drift::kMinClipDurationUs);
+    duration = qMax(duration, drift::minClipDurationUs(m_project.fps()));
 
     const drift::TimeUs startUs = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
     int target = trackIndex;
@@ -564,7 +564,7 @@ QVariantMap AppController::addVectorClip(const QString &source, int trackIndex, 
     drift::TimeUs duration = vector.durationUs > 0 ? vector.durationUs : drift::imageClipDurationUs();
     if (opts.value(QStringLiteral("duration")).toDouble() > 0.0)
         duration = drift::secondsToUs(opts.value(QStringLiteral("duration")).toDouble());
-    duration = qMax(duration, drift::kMinClipDurationUs);
+    duration = qMax(duration, drift::minClipDurationUs(m_project.fps()));
 
     const drift::TimeUs wantStart = atSeconds < 0.0 ? m_playheadUs : drift::secondsToUs(atSeconds);
     int target = trackIndex;

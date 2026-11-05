@@ -1317,9 +1317,16 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
     return qMax(clip.srcOut, clip.timelineDuration);
 }
 
-bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset)
+TimeUs minClipDurationUs(double fps)
 {
-    return splitClipAtOffsetMin(head, tail, offset, kMinClipDurationUs);
+    if (fps <= 0.0)
+        return kUsPerSecond / 120;
+    return static_cast<TimeUs>(std::ceil(static_cast<double>(kUsPerSecond) / fps));
+}
+
+bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset, double fps)
+{
+    return splitClipAtOffsetMin(head, tail, offset, minClipDurationUs(fps));
 }
 
 bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeUs)
@@ -1799,9 +1806,10 @@ int multicamCutIndexAtOrBefore(const QList<MulticamCut> &cuts, TimeUs timeUs)
 } // namespace
 
 MulticamSwitchResult applyMulticamSwitch(QList<MulticamCut> &cuts, TimeUs rangeStart, TimeUs rangeEnd,
-                                         int angle, TimeUs atUs, int initialAngle)
+                                         int angle, TimeUs atUs, int initialAngle, double fps)
 {
-    if (rangeEnd - rangeStart < kMinClipDurationUs)
+    const TimeUs minUs = minClipDurationUs(fps);
+    if (rangeEnd - rangeStart < minUs)
         return MulticamSwitchResult::OutOfRange;
     if (atUs < rangeStart || atUs >= rangeEnd)
         return MulticamSwitchResult::OutOfRange;
@@ -1813,7 +1821,7 @@ MulticamSwitchResult applyMulticamSwitch(QList<MulticamCut> &cuts, TimeUs rangeS
             cuts.append(MulticamCut{rangeStart, angle});
             return MulticamSwitchResult::Applied;
         }
-        if (atUs - rangeStart < kMinClipDurationUs || rangeEnd - atUs < kMinClipDurationUs)
+        if (atUs - rangeStart < minUs || rangeEnd - atUs < minUs)
             return MulticamSwitchResult::TooCloseToEdge;
         cuts.append(MulticamCut{rangeStart, initialAngle});
         cuts.append(MulticamCut{atUs, angle});
@@ -1832,7 +1840,7 @@ MulticamSwitchResult applyMulticamSwitch(QList<MulticamCut> &cuts, TimeUs rangeS
         return MulticamSwitchResult::Applied;
     }
 
-    if (atUs - intervalStart < kMinClipDurationUs || intervalEnd - atUs < kMinClipDurationUs)
+    if (atUs - intervalStart < minUs || intervalEnd - atUs < minUs)
         return MulticamSwitchResult::TooCloseToEdge;
 
     cuts.insert(index + 1, MulticamCut{atUs, angle});
@@ -1924,11 +1932,11 @@ void rebaseKeyframesForSplitTail(Clip &tail, TimeUs offset)
     });
 }
 
-bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out)
+bool sliceClipToTimelineRange(const Clip &src, TimeUs start, TimeUs end, Clip &out, double fps)
 {
     const TimeUs from = qMax(start, src.timelineStart);
     const TimeUs to = qMin(end, src.timelineEnd());
-    if (to - from < kMinClipDurationUs)
+    if (to - from < minClipDurationUs(fps))
         return false;
 
     Clip work = src;

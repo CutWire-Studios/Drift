@@ -5426,7 +5426,7 @@ void CoreTest::applyMulticamSwitchRejectsEdges()
              drift::MulticamSwitchResult::OutOfRange);
 
     // Closer to the start than a clip is allowed to be.
-    QCOMPARE(drift::applyMulticamSwitch(cuts, start, end, 1, drift::kMinClipDurationUs / 2, 0),
+    QCOMPARE(drift::applyMulticamSwitch(cuts, start, end, 1, drift::minClipDurationUs(0) / 2, 0),
              drift::MulticamSwitchResult::TooCloseToEdge);
     QVERIFY(cuts.isEmpty());
 
@@ -5452,7 +5452,7 @@ void CoreTest::sliceClipToTimelineRangeKeepsSourceInSync()
     drift::Clip miss;
     QVERIFY(!drift::sliceClipToTimelineRange(src, drift::secondsToUs(11.0), drift::secondsToUs(12.0),
                                              miss));
-    QVERIFY(!drift::sliceClipToTimelineRange(src, 0, drift::kMinClipDurationUs / 2, miss));
+    QVERIFY(!drift::sliceClipToTimelineRange(src, 0, drift::minClipDurationUs(0) / 2, miss));
 }
 
 // The user library shares TextStyle's project-file codec, so the risk is not the fields but the
@@ -6822,8 +6822,13 @@ void CoreTest::splitClipClearsInnerFades()
 
     // Too close to an edge for an interactive split, fine for the cut engine's floor.
     drift::Clip h2 = clip;
-    QVERIFY(!drift::splitClipAtOffset(h2, tail, drift::secondsToUs(0.05)));
-    QVERIFY(drift::splitClipAtOffsetMin(h2, tail, drift::secondsToUs(0.05), drift::secondsToUs(0.01)));
+    QVERIFY(!drift::splitClipAtOffset(h2, tail, drift::secondsToUs(0.005), 100));
+    QVERIFY(drift::splitClipAtOffsetMin(h2, tail, drift::secondsToUs(0.005), drift::secondsToUs(0.001)));
+
+    drift::Clip h3 = clip;
+    QVERIFY(drift::splitClipAtOffset(h3, tail, drift::secondsToUs(0.01), 100));
+    drift::Clip h4 = clip;
+    QVERIFY(drift::splitClipAtOffset(h4, tail, h4.timelineDuration - drift::minClipDurationUs(100), 100));
 }
 
 void CoreTest::splitThenMergeRestoresFades()

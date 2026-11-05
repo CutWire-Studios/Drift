@@ -128,7 +128,7 @@ void splitLinkedPartnerAt(drift::Project &project, const drift::Clip &sourceHead
 
         const drift::TimeUs offset = playheadUs - partner.timelineStart;
         drift::Clip partnerTail;
-        if (!drift::splitClipAtOffset(partner, partnerTail, offset))
+        if (!drift::splitClipAtOffset(partner, partnerTail, offset, project.fps()))
             continue;
 
         partnerTail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -1635,7 +1635,7 @@ void AppController::splitAtPlayhead()
 
             const drift::TimeUs offset = m_playheadUs - clip.timelineStart;
             drift::Clip tail;
-            if (!drift::splitClipAtOffset(clip, tail, offset))
+            if (!drift::splitClipAtOffset(clip, tail, offset, m_project.fps()))
                 continue;
 
             tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -1681,7 +1681,7 @@ void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)
     const drift::Project before = m_project;
     const drift::TimeUs offset = atUs - clip.timelineStart;
     drift::Clip tail;
-    if (!drift::splitClipAtOffset(clip, tail, offset))
+    if (!drift::splitClipAtOffset(clip, tail, offset, m_project.fps()))
         return;
 
     tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -1737,7 +1737,7 @@ void AppController::trimClipGroupAt(int trackIndex, int clipIndex, drift::TimeUs
             }
             drift::Clip left = member;
             drift::Clip right;
-            if (!drift::splitClipAtOffset(left, right, atUs - member.timelineStart)) {
+            if (!drift::splitClipAtOffset(left, right, atUs - member.timelineStart, m_project.fps())) {
                 if (isMain)
                     return;
                 continue;
@@ -2023,7 +2023,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
 
     if (isSyntheticTimelineClip(clip.type)) {
         if (delta > 0) {
-            if (clip.timelineDuration - delta < drift::kMinClipDurationUs) {
+            if (clip.timelineDuration - delta < drift::minClipDurationUs(m_project.fps())) {
                 out.outcome = TrimBlocked;
                 return out;
             }
@@ -2060,7 +2060,7 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
     }
 
     if (delta > 0) {
-        if (clip.timelineDuration - delta < drift::kMinClipDurationUs) {
+        if (clip.timelineDuration - delta < drift::minClipDurationUs(m_project.fps())) {
             out.outcome = TrimBlocked;
             return out;
         }
@@ -2070,11 +2070,11 @@ AppController::TrimComputation AppController::computeTrimLeft(int trackIndex, in
             return out;
         }
         if (clip.reverse) {
-            if (clip.srcOut <= clip.srcIn + sourceDelta + drift::kMinClipDurationUs) {
+            if (clip.srcOut <= clip.srcIn + sourceDelta + drift::minClipDurationUs(m_project.fps())) {
                 out.outcome = TrimBlocked;
                 return out;
             }
-        } else if (clip.srcIn + sourceDelta > clip.srcOut - drift::kMinClipDurationUs) {
+        } else if (clip.srcIn + sourceDelta > clip.srcOut - drift::minClipDurationUs(m_project.fps())) {
             out.outcome = TrimBlocked;
             return out;
         }
@@ -2156,7 +2156,7 @@ AppController::TrimComputation AppController::computeTrimRight(int trackIndex, i
             : maxSourceSpan;
     const drift::TimeUs maxDuration =
         syntheticVisual ? syntheticClipMaxDurationUs() : mediaMaxDuration;
-    newDuration = qBound(drift::kMinClipDurationUs, newDuration, maxDuration);
+    newDuration = qBound(drift::minClipDurationUs(m_project.fps()), newDuration, maxDuration);
 
     // An edge parked against a snap target or against maxDuration has nowhere to go.
     if (newDuration == clip.timelineDuration)
@@ -2372,8 +2372,8 @@ void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, d
     const bool syntheticVisual = isSyntheticTimelineClip(clip.type);
     const drift::TimeUs sourceDuration = syntheticVisual ? syntheticClipMaxDurationUs() : sourceDurationForClip(clip);
     const drift::TimeUs clampedIn = qBound<drift::TimeUs>(0, drift::secondsToUs(inPoint),
-                                                          sourceDuration - drift::kMinClipDurationUs);
-    const drift::TimeUs clampedOut = qBound(clampedIn + drift::kMinClipDurationUs, drift::secondsToUs(outPoint),
+                                                          sourceDuration - drift::minClipDurationUs(m_project.fps()));
+    const drift::TimeUs clampedOut = qBound(clampedIn + drift::minClipDurationUs(m_project.fps()), drift::secondsToUs(outPoint),
                                             sourceDuration);
     const drift::TimeUs newDuration = clampedOut - clampedIn;
     const double speed = clip.effectiveSpeed();
@@ -2382,7 +2382,7 @@ void AppController::setClipTrim(int trackIndex, int clipIndex, double inPoint, d
     clip.srcIn = clampedIn;
     clip.srcOut = clampedOut;
     clip.timelineDuration = static_cast<drift::TimeUs>(llround(static_cast<double>(newDuration) / speed));
-    clip.timelineDuration = qMax(clip.timelineDuration, drift::kMinClipDurationUs);
+    clip.timelineDuration = qMax(clip.timelineDuration, drift::minClipDurationUs(m_project.fps()));
     // A ramp re-derives the duration from the range that survived the trim.
     clip.syncDurationFromSpeedCurve();
     pushProjectEdit(before, tr("Trim updated"));

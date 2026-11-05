@@ -338,7 +338,7 @@ void AppController::convertSubtitleToTextClips(int trackIndex, int clipIndex)
             continue;
 
         // Built by hand rather than with sliceClipToTimelineRange: its split refuses cuts closer
-        // than kMinClipDurationUs to an edge, which would drop cues that start right at the clip's
+        // than one frame to an edge, which would drop cues that start right at the clip's
         // head or are very short.
         drift::Clip text = subtitle;
         text.id = QUuid::createUuid().toString(QUuid::WithoutBraces);

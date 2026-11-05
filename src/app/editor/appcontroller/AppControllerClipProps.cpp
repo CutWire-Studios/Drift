@@ -590,7 +590,7 @@ void AppController::setClipDuration(int trackIndex, int clipIndex, double durati
                    ? static_cast<drift::TimeUs>(
                          llround(static_cast<double>(maxSourceSpan) / clip.effectiveSpeed()))
                    : maxSourceSpan);
-    clip.timelineDuration = qBound(drift::kMinClipDurationUs, drift::secondsToUs(duration), maxDuration);
+    clip.timelineDuration = qBound(drift::minClipDurationUs(m_project.fps()), drift::secondsToUs(duration), maxDuration);
     if (syntheticVisual) {
         syncSyntheticSourceRange(clip);
     } else {
