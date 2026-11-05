@@ -657,6 +657,68 @@ void AppController::removeTrack(int trackIndex)
     finishEdit(tr("Track deleted"));
 }
 
+QList<int> AppController::removableEmptyTrackIndices() const
+{
+    const QList<drift::Track> &tracks = m_project.tracks();
+    QList<int> result;
+    int topLevelCount = 0;
+    for (int i = 0; i < tracks.size(); ++i) {
+        const drift::Track &track = tracks.at(i);
+        if (track.isAdjustmentLane())
+            continue;
+        ++topLevelCount;
+        bool empty = track.clips.isEmpty();
+        for (int j = 0; empty && j < tracks.size(); ++j) {
+            const drift::Track &lane = tracks.at(j);
+            if (lane.isAdjustmentLane() && lane.parentTrackId == track.id && !lane.clips.isEmpty())
+                empty = false;
+        }
+        if (empty)
+            result.append(i);
+    }
+    // The project always keeps a track; when everything is empty the lowest one stays.
+    if (!result.isEmpty() && result.size() == topLevelCount)
+        result.removeFirst();
+    return result;
+}
+
+bool AppController::hasEmptyTracks() const
+{
+    return !removableEmptyTrackIndices().isEmpty();
+}
+
+int AppController::removeEmptyTracks()
+{
+    if (removableEmptyTrackIndices().isEmpty())
+        return 0;
+
+    const drift::Project before = m_project;
+    m_project.ensureTrackIds();
+
+    const QList<QPair<QString, int>> selection = captureSelectionByTrackId();
+    const QString transitionTrackId = trackIdAt(m_selectedTransitionTrack);
+
+    const QList<int> indices = removableEmptyTrackIndices();
+    QSet<QString> removedIds;
+    for (const int index : indices)
+        removedIds.insert(m_project.tracks().at(index).id);
+    for (int i = m_project.tracks().size() - 1; i >= 0; --i) {
+        const drift::Track &track = m_project.tracks().at(i);
+        if (removedIds.contains(track.id)
+            || (track.isAdjustmentLane() && removedIds.contains(track.parentTrackId))) {
+            m_project.tracks().removeAt(i);
+        }
+    }
+    normalizeAdjustmentLanes(m_project);
+
+    restoreSelectionByTrackId(selection);
+    m_selectedTransitionTrack = m_project.trackIndexById(transitionTrackId);
+
+    pushProjectEdit(before, tr("Delete empty tracks"));
+    finishEdit(tr("Empty tracks deleted"));
+    return indices.size();
+}
+
 void AppController::addTrack(const QString &type)
 {
     const QString normalized = type.trimmed().toLower();

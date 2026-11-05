@@ -11,6 +11,9 @@ ThemedContextMenu {
     property var deleteDialog
     signal coversRequested()
 
+    property bool hasEmptyTracks: false
+    onAboutToShow: hasEmptyTracks = EditorState.hasEmptyTracks()
+
     ThemedMenuItem {
         text: qsTr("Rename…")
         icon.name: Theme.icons.pencil
@@ -173,5 +176,11 @@ ThemedContextMenu {
             column.pendingDeleteTrack = header.index
             deleteDialog.open()
         }
+    }
+    ThemedMenuItem {
+        text: qsTr("Remove empty tracks")
+        icon.name: Theme.icons.trash
+        enabled: trackContextMenu.hasEmptyTracks
+        onTriggered: EditorState.removeEmptyTracks()
     }
 }

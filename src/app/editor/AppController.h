@@ -1438,6 +1438,8 @@ public:
     Q_INVOKABLE void moveTrack(int fromIndex, int toIndex);
     Q_INVOKABLE void addTrack(const QString &type);
     Q_INVOKABLE void removeTrack(int trackIndex);
+    Q_INVOKABLE int removeEmptyTracks();
+    Q_INVOKABLE bool hasEmptyTracks() const;
     Q_INVOKABLE void addBookmark(double seconds, const QString &label);
     Q_INVOKABLE void removeBookmark(int index);
     Q_INVOKABLE void updateBookmark(int index, double seconds, const QString &label);
@@ -2019,6 +2021,8 @@ protected:
     void restoreFilmstripsAfterLoad();
     void normalizeSelection();
     bool isValidClipIndex(int trackIndex, int clipIndex) const;
+    // Indices of the tracks removeEmptyTracks() would delete, ascending.
+    QList<int> removableEmptyTrackIndices() const;
     // Adds a video Drift rendered to the bin as one undoable edit; returns its asset id.
     QString addRenderedVideoAsset(const QString &path, const QString &name,
                                   const QString &folderId, const MediaInfo &info,

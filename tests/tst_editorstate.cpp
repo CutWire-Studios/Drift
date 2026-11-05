@@ -150,6 +150,7 @@ private slots:
     void linkedVideoMovesWithItsAudioAndAdjustments();
     void pasteSelectsWhatItPastedWhenATrackIsAdded();
     void compositeTabEditUndoesFromMain();
+    void removeEmptyTracksKeepsPopulatedAndUndoes();
     void compositeSeparateAudioAndRemoval();
     void dissolveCompositeRoundTrip();
     void retimeKeepsDisabledKeyframeTrackDisabled();
@@ -1489,6 +1490,33 @@ void EditorStateTest::pasteSelectsWhatItPastedWhenATrackIsAdded()
         kinds.insert(clip.type);
     }
     QCOMPARE(kinds, (QSet<drift::ClipType>{drift::ClipType::Shape, drift::ClipType::Text}));
+}
+
+void EditorStateTest::removeEmptyTracksKeepsPopulatedAndUndoes()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+    drift::Track emptyAudio;
+    emptyAudio.type = drift::TrackType::Audio;
+    state.project()->tracks().append(emptyAudio);
+    state.project()->ensureTrackIds();
+    const int before = state.project()->tracks().size();
+    QVERIFY(before >= 2);
+
+    QVERIFY(state.hasEmptyTracks());
+    const int removed = state.removeEmptyTracks();
+    QVERIFY(removed >= 1);
+    QCOMPARE(state.project()->tracks().size(), before - removed);
+    int clipCount = 0;
+    for (const drift::Track &track : state.project()->tracks())
+        clipCount += track.clips.size();
+    QCOMPARE(clipCount, 2);
+    QVERIFY(!state.hasEmptyTracks());
+    QCOMPARE(state.removeEmptyTracks(), 0);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().size(), before);
 }
 
 void EditorStateTest::compositeTabEditUndoesFromMain()
