@@ -594,7 +594,29 @@ Item {
     // still moves the view — it writes contentX/contentY directly, which an inactive
     // Flickable honours.
     property bool scrollLocked: false
-    function setScrollLocked(locked) { scrollLocked = locked }
+    property real scrollLockContentX: 0
+    function setScrollLocked(locked) {
+        if (locked === scrollLocked)
+            return
+        if (locked) {
+            scrollLockContentX = flick.contentX
+        } else if (flick.contentX !== scrollLockContentX) {
+            // Edge autoscroll moved the view without moving time; unlocking would let the
+            // contentX Binding snap it back to the old playhead.
+            EditorState.playheadSeconds = EditorState.snapTime(root.viewCentreSeconds)
+        }
+        scrollLocked = locked
+    }
+
+    property bool laneBarShown: false
+    readonly property bool laneBarWanted: root.multiSelectActive
+                                          || keyframeLane.allSeries.length > 0
+    Binding {
+        target: root
+        property: "laneBarShown"
+        value: root.laneBarWanted
+        when: !root.scrollLocked
+    }
 
     // Edge autoscroll for an in-progress clip drag. The timeline pane is barely two
     // track rows tall and a few seconds wide on a phone, so without this a clip could
@@ -831,6 +853,10 @@ Item {
     }
 
     function clearTouchDrop() {
+        if (dropEdgeScroll.scrolled) {
+            dropEdgeScroll.scrolled = false
+            EditorState.playheadSeconds = EditorState.snapTime(root.viewCentreSeconds)
+        }
         clearLandingPreview()
         clearEffectDropHighlight()
         pendingDropKind = ""
@@ -881,6 +907,7 @@ Item {
         running: false
         property real viewX: 0
         property real viewY: 0
+        property bool scrolled: false
         readonly property real band: 48
         readonly property real speed: 12
 
@@ -904,6 +931,8 @@ Item {
             const applied = root.dragEdgeScroll(dx, dy)
             if (applied.x === 0 && applied.y === 0)
                 return
+            if (applied.x !== 0)
+                scrolled = true
             // Re-resolve against the view that just moved, or the landing outline
             // would stay pinned to the content the finger has scrolled away from.
             root.updateTouchDrop(TouchDrag.kind, TouchDrag.payload,
@@ -1036,7 +1065,7 @@ Item {
         AndroidTimelineLaneBar {
             id: laneBar
             width: parent.width
-            visible: root.multiSelectActive || keyframeLane.allSeries.length > 0
+            visible: root.laneBarShown
             height: visible ? 32 : 0
             multiSelectActive: root.multiSelectActive
             keyframeLaneOpen: root.keyframeLaneOpen
@@ -1455,6 +1484,10 @@ Item {
                                 // what is left without knowing lanes exist.
                                 Item {
                                     id: trackClipArea
+                                    // Above the gap presses, which are declared later: the trim
+                                    // handles reach outside their clips and a gap tap there would
+                                    // clear the selection. The renderer only claims clip areas.
+                                    z: 2
                                     // Explicit for the same reason as the desktop panel: this
                                     // Item becomes TimelineClipItem's `trackRow`, shadowing the
                                     // outer id at the binding below.

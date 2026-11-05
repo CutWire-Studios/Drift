@@ -79,6 +79,13 @@ Item {
         anchors.centerIn: parent
         width: Math.min(parent.width, Theme.androidIconButtonSize)
         height: parent.height
+        // A selected neighbour shows trim handles under this glyph; a tap meant for them
+        // must not add a crossfade.
+        enabled: !(EditorState.selectionRevision >= 0
+                   && (EditorState.selectionContains(transitionRegion.trackIndex,
+                                                 transitionRegion.leftClipIndex)
+                   || EditorState.selectionContains(transitionRegion.trackIndex,
+                                                    transitionRegion.leftClipIndex + 1)))
         onClicked: {
             if (transitionRegion.hasTransition) {
                 Haptics.select()
