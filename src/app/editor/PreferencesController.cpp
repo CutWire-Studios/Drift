@@ -823,7 +823,7 @@ QString PreferencesController::cacheLocation() const
 {
     const QString custom = QSettings().value(QStringLiteral("storage/cacheDir")).toString().trimmed();
     return custom.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
-                            : QDir::cleanPath(custom);
+                            : drift::customCacheRoot(custom);
 }
 
 bool PreferencesController::cacheLocationCustom() const
