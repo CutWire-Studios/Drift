@@ -1794,7 +1794,7 @@ PanelFrame {
                                             return
                                         }
                                         if (isTransitionDrag(drop)) {
-                                            const kind = drop.getDataAsString("application/x-drift-transition")
+                                            const kind = AssetDrag.payloadFromDrop(drop, "transition")
                                             root.applyTransitionDrop(trackRow.trackIndex, drop.x, kind)
                                             return
                                         }

@@ -80,7 +80,7 @@ Item {
         onDropped: (drop) => {
             drop.accept(Qt.CopyAction)
             panel.clearTransitionDropPreview()
-            const kind = drop.getDataAsString("application/x-drift-transition")
+            const kind = AssetDrag.payloadFromDrop(drop, "transition")
             if (kind.length > 0)
                 EditorState.addTransition(trackIndex,
                                           transitionRegion.leftClipIndex,

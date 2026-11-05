@@ -101,6 +101,12 @@ Column {
             // drag has no touch gesture and cannot leave the sheet.
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
+            onActiveChanged: {
+                if (active)
+                    AssetDrag.begin("transition", root.modelData.kind, root.modelData.label)
+                else
+                    AssetDrag.end()
+            }
         }
 
         // Hold to carry the transition onto the join between two
