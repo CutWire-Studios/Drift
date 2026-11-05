@@ -157,9 +157,7 @@ SettingsPage {
     SettingsRow {
         title: qsTr("Cache")
         searchId: "general-cache"
-        description: qsTr("%1 used, stored in %2")
-                         .arg(page.cacheSizeText(EditorState.preferences.cacheSizeBytes))
-                         .arg(EditorState.preferences.cacheLocation)
+        description: qsTr("%1 used").arg(page.cacheSizeText(EditorState.preferences.cacheSizeBytes))
         keywords: "disk space thumbnails proxies"
         query: page.query
         Component.onCompleted: EditorState.preferences.refreshCacheSize()
@@ -169,6 +167,34 @@ SettingsPage {
             text: qsTr("Clear cache")
             enabled: !EditorState.preferences.cacheBusy
             onClicked: EditorState.preferences.clearCache()
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Cache location")
+        searchId: "general-cache-location"
+        description: EditorState.preferences.cacheLocationPendingRestart
+                         ? qsTr("%1. Takes effect after restart.").arg(EditorState.preferences.cacheLocation)
+                         : EditorState.preferences.cacheLocation
+        keywords: "cache folder directory path storage"
+        available: Qt.platform.os !== "android" && Qt.platform.os !== "wasm"
+        query: page.query
+
+        ThemedButton {
+            variant: "secondary"
+            text: qsTr("Reset")
+            visible: EditorState.preferences.cacheLocationCustom
+            onClicked: EditorState.preferences.resetCacheLocation()
+        }
+
+        ThemedButton {
+            variant: "secondary"
+            text: qsTr("Change…")
+            onClicked: {
+                const url = FileDialogs.openDirectory(qsTr("Cache location"))
+                if (url && url.toString() !== "")
+                    EditorState.preferences.setCacheLocation(url)
+            }
         }
     }
 

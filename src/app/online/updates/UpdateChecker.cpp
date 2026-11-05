@@ -1,4 +1,5 @@
 #include "app/online/updates/UpdateChecker.h"
+#include "core/base/CacheRoot.h"
 
 #include "app/online/updates/UpdateAsset.h"
 #include "core/base/VersionCompare.h"
@@ -682,7 +683,7 @@ void UpdateChecker::announceIfNeeded()
 
 QString UpdateChecker::updatesDir() const
 {
-    QString base = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QString base = drift::cacheRoot();
     if (base.isEmpty())
         base = QDir::tempPath();
     const QString dir = base + QStringLiteral("/updates");

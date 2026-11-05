@@ -1,4 +1,5 @@
 #include "playback/stats/PlaybackDiagnostics.h"
+#include "core/base/CacheRoot.h"
 
 #include "playback/stats/PlaybackStats.h"
 #include "engine/decode/readers/ClipReader.h"
@@ -64,7 +65,7 @@ QString PlaybackDiagnostics::bundledBenchmarkClip()
 {
     // FFmpeg cannot open a qrc path, so the clip has to exist on disk. Cached next to the
     // other app scratch files and reused, rather than re-extracted per run.
-    const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    const QString dir = drift::cacheRoot();
     if (dir.isEmpty() || !QDir().mkpath(dir))
         return {};
     const QString out = QDir(dir).filePath(QStringLiteral("bench1080p60.mp4"));

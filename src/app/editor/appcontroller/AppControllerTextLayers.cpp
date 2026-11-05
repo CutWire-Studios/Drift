@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "core/base/CacheRoot.h"
 
 #include "core/project/sources/DotLottie.h"
 #include "core/text/animation/LottieTextImport.h"
@@ -547,7 +548,7 @@ QVariantMap AppController::importTextAnimationPreset(const QUrl &fileUrl, const 
     QStringList files{path};
     if (drift::isDotLottiePath(path)) {
         QString unpackError;
-        files = drift::unpackDotLottie(path, QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+        files = drift::unpackDotLottie(path, QDir(drift::cacheRoot())
                                                 .filePath(QStringLiteral("dotlottie")), &unpackError);
         if (files.isEmpty()) {
             result.insert(QStringLiteral("error"), unpackError.isEmpty() ? tr("Could not unpack the bundle") : unpackError);

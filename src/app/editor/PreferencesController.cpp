@@ -1,5 +1,6 @@
 #include "app/editor/PreferencesController.h"
 #include "app/GraphicsApiChoice.h"
+#include "core/base/CacheRoot.h"
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/EngineTuning.h"
 
@@ -820,7 +821,34 @@ void PreferencesController::resetPerformanceDefaults()
 
 QString PreferencesController::cacheLocation() const
 {
-    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    const QString custom = QSettings().value(QStringLiteral("storage/cacheDir")).toString().trimmed();
+    return custom.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+                            : QDir::cleanPath(custom);
+}
+
+bool PreferencesController::cacheLocationCustom() const
+{
+    return !QSettings().value(QStringLiteral("storage/cacheDir")).toString().trimmed().isEmpty();
+}
+
+bool PreferencesController::cacheLocationPendingRestart() const
+{
+    return QDir::cleanPath(cacheLocation()) != QDir::cleanPath(drift::cacheRoot());
+}
+
+void PreferencesController::setCacheLocation(const QUrl &folder)
+{
+    const QString path = folder.toLocalFile();
+    if (path.isEmpty())
+        return;
+    QSettings().setValue(QStringLiteral("storage/cacheDir"), QDir::cleanPath(path));
+    emit cacheLocationChanged();
+}
+
+void PreferencesController::resetCacheLocation()
+{
+    QSettings().remove(QStringLiteral("storage/cacheDir"));
+    emit cacheLocationChanged();
 }
 
 void PreferencesController::refreshCacheSize()
@@ -839,7 +867,8 @@ void PreferencesController::runCacheJob(bool clear)
         return;
     m_cacheBusy = true;
     emit cacheSizeChanged();
-    const QString root = cacheLocation();
+    // The active root, not the pending setting: this is what the session is actually writing to.
+    const QString root = drift::cacheRoot();
     auto *watcher = new QFutureWatcher<qint64>(this);
     connect(watcher, &QFutureWatcher<qint64>::finished, this, [this, watcher] {
         m_cacheSizeBytes = watcher->result();

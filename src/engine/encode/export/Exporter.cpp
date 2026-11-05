@@ -1,4 +1,5 @@
 #include "engine/encode/export/Exporter.h"
+#include "core/base/CacheRoot.h"
 #include "engine/EngineTuning.h"
 
 #include "engine/audio/AudioMixer.h"
@@ -1575,7 +1576,7 @@ bool runToDocument(const drift::Project &project, const ExportSettings &settings
                                  false);
     }
 
-    QTemporaryFile staging(QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+    QTemporaryFile staging(QDir(drift::cacheRoot())
                                .filePath(QStringLiteral("export-XXXXXX.") + suffix));
     if (!staging.open()) {
         if (errorOut)

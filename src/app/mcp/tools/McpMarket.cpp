@@ -1,4 +1,5 @@
 #include "app/mcp/tools/McpMarket.h"
+#include "core/base/CacheRoot.h"
 #include "app/mcp/McpDetail.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/online/assets/DriftAssetStore.h"
@@ -411,7 +412,7 @@ QJsonObject installedResult(const QString &family, const QVariantMap &item, cons
 
 QString previewCacheDir()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/marketplace/previews");
+    return drift::cacheRoot() + QStringLiteral("/marketplace/previews");
 }
 
 QString cachedPreview(const QString &url, QString *mime, QJsonObject *error)

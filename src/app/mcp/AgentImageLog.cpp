@@ -1,4 +1,5 @@
 #include "app/mcp/AgentImageLog.h"
+#include "core/base/CacheRoot.h"
 
 #include <QBuffer>
 #include <QClipboard>
@@ -101,7 +102,7 @@ QString AgentImageLog::sessionDir() const
 {
     if (!m_dir.isEmpty())
         return m_dir;
-    const QString base = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    const QString base = drift::cacheRoot();
     if (base.isEmpty())
         return {};
     const QDir root(QDir(base).filePath(QStringLiteral("agent-images")));

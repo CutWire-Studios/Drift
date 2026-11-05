@@ -1,4 +1,5 @@
 #include "engine/ml/vision/depth/DepthSidecar.h"
+#include "core/base/CacheRoot.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -490,7 +491,7 @@ std::shared_ptr<const DepthSidecar> loadDepthSidecarCached(const QString &path)
 
 QString depthCacheDir()
 {
-    const QString base = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    const QString base = drift::cacheRoot();
     if (base.isEmpty())
         return {};
     const QString dir = QDir(base).filePath(QStringLiteral("depth"));

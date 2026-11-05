@@ -1,4 +1,5 @@
 #include "engine/media/thumbnails/MediaThumbnail.h"
+#include "core/base/CacheRoot.h"
 
 #include "engine/render2d/pdf/PdfClipRenderer.h"
 #include "engine/render2d/vector/VectorClipRenderer.h"
@@ -36,7 +37,7 @@ QString cacheDir()
 {
     // Memoized: tile lookups hit this per visible tile, and mkpath is a syscall each time.
     static const QString dir = [] {
-        const QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+        const QString path = drift::cacheRoot()
                              + QStringLiteral("/thumbnails");
         QDir().mkpath(path);
         return path;

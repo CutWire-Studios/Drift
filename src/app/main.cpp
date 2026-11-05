@@ -1,4 +1,5 @@
 #include "engine/encode/writers/AudioFileWriter.h"
+#include "core/base/CacheRoot.h"
 #include "app/bin/MediaBinController.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
@@ -210,7 +211,7 @@ public:
     {
         auto *manager = new QNetworkAccessManager(parent);
         auto *cache = new QNetworkDiskCache(manager);
-        cache->setCacheDirectory(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+        cache->setCacheDirectory(drift::cacheRoot()
                                  + QStringLiteral("/qml-http"));
         cache->setMaximumCacheSize(256LL * 1024 * 1024);
         manager->setCache(cache);
@@ -748,7 +749,7 @@ int main(int argc, char *argv[])
     // Every content:// write is staged through <cache>/staged and unlinked once the copy into the
     // document finishes, so a file still here is debris from an encode that was killed.
     {
-        QDir staged(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+        QDir staged(drift::cacheRoot()
                     + QStringLiteral("/staged"));
         const QFileInfoList leftovers = staged.entryInfoList(QDir::Files);
         for (const QFileInfo &file : leftovers)

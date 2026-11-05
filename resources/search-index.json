@@ -1123,8 +1123,15 @@
       "context": "SettingsGeneralPage",
       "source": "Cache",
       "keywords": "disk space thumbnails proxies",
-      "needs": [],
-      "descriptionSource": "%1 used, stored in %2"
+      "needs": []
+    },
+    {
+      "id": "general-cache-location",
+      "target": "settings:general#general-cache-location",
+      "context": "SettingsGeneralPage",
+      "source": "Cache location",
+      "keywords": "cache folder directory path storage",
+      "needs": []
     },
     {
       "id": "general-export-import",

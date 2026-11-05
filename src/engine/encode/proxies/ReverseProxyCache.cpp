@@ -1,4 +1,5 @@
 #include "engine/encode/proxies/ReverseProxyCache.h"
+#include "core/base/CacheRoot.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 
 #include <QDateTime>
@@ -470,7 +471,7 @@ QString reverseCacheDir()
     //
     // Memoized so the one-time legacy cleanup below runs once per process rather than per call.
     static const QString dir = [] {
-        const QString base = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+        const QString base = drift::cacheRoot();
         if (base.isEmpty())
             return QString();
         const QString path = QDir(base).filePath(QStringLiteral("reversed"));

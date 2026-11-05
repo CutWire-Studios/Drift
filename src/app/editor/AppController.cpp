@@ -1,4 +1,5 @@
 #include "engine/platform/AndroidUri.h"
+#include "core/base/CacheRoot.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "engine/render2d/pdf/PdfiumRuntime.h"
 #include "app/bin/AssetPreviewController.h"
@@ -70,7 +71,7 @@ QString writeTargetPath(const QUrl &url, const QString &suffix = {})
     Q_UNUSED(suffix);
 #ifdef Q_OS_ANDROID
     if (AndroidUri::isContentUri(url)) {
-        const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+        const QString dir = drift::cacheRoot()
                             + QStringLiteral("/staged");
         if (!QDir().mkpath(dir))
             return {};
@@ -103,7 +104,7 @@ QString readTargetPath(const QUrl &url)
         if (!src)
             return {};
 
-        const QString dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+        const QString dir = drift::cacheRoot()
                             + QStringLiteral("/staged");
         if (!QDir().mkpath(dir))
             return {};

@@ -1,4 +1,5 @@
 #include "app/online/marketplace/CommunityInstaller.h"
+#include "core/base/CacheRoot.h"
 
 #include "app/online/downloads/DownloadCenter.h"
 #include "app/online/marketplace/MarketInstall.h"
@@ -24,9 +25,9 @@ QString versionOf(const QVariantMap &item)
     return item.value(QStringLiteral("extra")).toMap().value(QStringLiteral("version")).toString();
 }
 
-QString cacheRoot()
+QString communityCacheDir()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+    return drift::cacheRoot()
         + QStringLiteral("/marketplace/community");
 }
 
@@ -148,7 +149,7 @@ void CommunityInstaller::install(const QVariantMap &item)
     install->version = versionOf(item);
     QString safeId = itemId;
     safeId.replace(QRegularExpression(QStringLiteral("[^A-Za-z0-9._-]")), QStringLiteral("_"));
-    install->dir = cacheRoot() + QLatin1Char('/') + safeId;
+    install->dir = communityCacheDir() + QLatin1Char('/') + safeId;
     m_installs.insert(itemId, install);
     setState(install, QStringLiteral("installing"));
     publish(install, QStringLiteral("queued"), tr("Starting…"), 0);

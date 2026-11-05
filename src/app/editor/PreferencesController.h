@@ -102,7 +102,9 @@ class PreferencesController : public QObject
     // clearCache run off the GUI thread; cacheBusy is true while either is in flight.
     Q_PROPERTY(qint64 cacheSizeBytes READ cacheSizeBytes NOTIFY cacheSizeChanged)
     Q_PROPERTY(bool cacheBusy READ cacheBusy NOTIFY cacheSizeChanged)
-    Q_PROPERTY(QString cacheLocation READ cacheLocation CONSTANT)
+    Q_PROPERTY(QString cacheLocation READ cacheLocation NOTIFY cacheLocationChanged)
+    Q_PROPERTY(bool cacheLocationCustom READ cacheLocationCustom NOTIFY cacheLocationChanged)
+    Q_PROPERTY(bool cacheLocationPendingRestart READ cacheLocationPendingRestart NOTIFY cacheLocationChanged)
     // App-wide interface language, QSettings("ui/language"). Empty means follow the OS locale.
     // "en" is the source catalog (no .qm). Other codes match i18n/drift_<code>.qm.
     // needsUiLanguagePrompt is true only on a brand-new install, before the first-launch chooser
@@ -237,6 +239,10 @@ public:
     qint64 cacheSizeBytes() const { return m_cacheSizeBytes; }
     bool cacheBusy() const { return m_cacheBusy; }
     QString cacheLocation() const;
+    bool cacheLocationCustom() const;
+    bool cacheLocationPendingRestart() const;
+    Q_INVOKABLE void setCacheLocation(const QUrl &folder);
+    Q_INVOKABLE void resetCacheLocation();
     Q_INVOKABLE void refreshCacheSize();
     Q_INVOKABLE void clearCache();
 
@@ -310,6 +316,7 @@ signals:
     void stillDurationSecondsChanged();
     void transitionDurationSecondsChanged();
     void cacheSizeChanged();
+    void cacheLocationChanged();
     void uiLanguageChanged();
     void quickSetupCompleted();
     void uiScaleChanged();

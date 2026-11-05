@@ -1,4 +1,5 @@
 #include "app/online/marketplace/MarketTransport.h"
+#include "core/base/CacheRoot.h"
 
 #include "app/online/market/MarketEndpoint.h"
 #include "app/online/market/MarketIdentity.h"
@@ -51,7 +52,7 @@ MarketTransport::MarketTransport(QObject *parent)
     , m_network(new QNetworkAccessManager(this))
 {
     auto *cache = new QNetworkDiskCache(this);
-    cache->setCacheDirectory(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+    cache->setCacheDirectory(drift::cacheRoot()
                              + QStringLiteral("/marketplace"));
     cache->setMaximumCacheSize(256 * 1024 * 1024);
     m_network->setCache(cache);

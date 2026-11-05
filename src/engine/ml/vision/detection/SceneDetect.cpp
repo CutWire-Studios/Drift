@@ -1,4 +1,5 @@
 #include "engine/ml/vision/detection/SceneDetect.h"
+#include "core/base/CacheRoot.h"
 
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/ml/vision/detection/ObjectDetector.h"
@@ -361,7 +362,7 @@ QString cacheDigest(const SceneDetectRequest &request)
 
 QString cacheDir()
 {
-    return QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+    return QDir(drift::cacheRoot())
         .filePath(QStringLiteral("scenes"));
 }
 
