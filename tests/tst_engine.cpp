@@ -395,6 +395,7 @@ private slots:
     void brokenTransitionShaderFallsBackToCrossfade();
     void transitionRenderingIsDeterministic();
     void textClipRendersInsideTransition();
+    void transitionKeepsTranslucentSidesBrightness();
     void fontCatalogLoadsFamilies();
     void fontForStyleResolvesRequestedFace();
     void textRasterIsCached();
@@ -10557,6 +10558,30 @@ void EngineTest::brokenTransitionShaderFallsBackToCrossfade()
     QVERIFY(qBlue(center) > 0);
 
     reloadTransitionCatalog({QString::fromUtf8(DRIFT_TEST_TRANSITIONS_DIR)});
+}
+
+// Each side is drawn into its own canvas, which leaves it premultiplied; fed to the transition as
+// if straight, a half-transparent side lost half its colour again for as long as the transition ran.
+void EngineTest::transitionKeepsTranslucentSidesBrightness()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+
+    drift::Project project;
+    appendRedBlueShapeTransition(project, QStringLiteral("crossfade"));
+    project.tracks()[0].clips[0].shapeStyle.setSolidFill(QColor(255, 0, 0, 128));
+    project.tracks()[0].clips[1].shapeStyle.setSolidFill(QColor(0, 0, 255, 128));
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+
+    const QImage before = compositor.compositeAt(drift::secondsToUs(0.5));
+    const QImage mid = compositor.compositeAt(drift::secondsToUs(2.0));
+    QVERIFY(!before.isNull() && !mid.isNull());
+    const QColor alone = before.pixelColor(64, 64);
+    const QColor mixed = mid.pixelColor(64, 64);
+    // Halfway through, each side shows at half its own strength.
+    QVERIFY(qAbs(mixed.red() - alone.red() / 2) <= 12);
+    QVERIFY(qAbs(mixed.blue() - alone.red() / 2) <= 12);
 }
 
 // The old CPU path never handled ClipType::Text inside drawTransitionFrame, and the main draw

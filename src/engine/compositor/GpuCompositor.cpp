@@ -1547,7 +1547,14 @@ GlTarget renderIsolatedLayer(GlRuntime &rt, QOpenGLExtraFunctions *gl, const Gpu
         drawLayerOnCanvas(rt, gl, isolated, source, layer, drift::BlendMode::Normal, canvasSize);
     }
     rt.releaseTarget(std::move(source));
-    return isolated;
+
+    // Drawing source-over leaves the canvas premultiplied; transition and effect shaders, and
+    // the draw that composites a transition's result, take straight alpha like any layer target.
+    GlTarget straight = unpremultipliedCopy(rt, gl, isolated);
+    if (!straight.isValid())
+        return isolated;
+    rt.releaseTarget(std::move(isolated));
+    return straight;
 }
 
 // Renders the track inputs one effect reads: a track's picture, or its folded masks laid out on the
