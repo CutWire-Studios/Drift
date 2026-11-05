@@ -757,6 +757,236 @@ void AppController::makeCompositeFromSelection()
     selectClip(trackIndex, insertAt);
     emit sequenceTabsChanged();
 }
+bool AppController::canDissolveComposite(int trackIndex, int clipIndex) const
+{
+    if (!m_project.activeSequenceId().isEmpty() || !isValidClipIndex(trackIndex, clipIndex))
+        return false;
+    const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    return clip.type == drift::ClipType::Composite && m_project.hasSequence(clip.sequenceId)
+           && !clip.sequenceId.isEmpty();
+}
+
+void AppController::dissolveComposite(int trackIndex, int clipIndex)
+{
+    if (!canDissolveComposite(trackIndex, clipIndex))
+        return;
+    const drift::Clip composite = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (composite.hasSpeedCurve() || composite.reverse || !qFuzzyCompare(composite.effectiveSpeed(), 1.0)) {
+        setLastMessage(tr("Composites that are ramped, reversed or not at normal speed cannot be dissolved"),
+                       QStringLiteral("warning"));
+        return;
+    }
+
+    const bool discarding =
+        !composite.effects.isEmpty() || !composite.audioEffects.isEmpty() || composite.fadeInUs > 0
+        || composite.fadeOutUs > 0 || composite.animIn.kind != drift::ClipAnimKind::None
+        || composite.animOut.kind != drift::ClipAnimKind::None || !composite.opacity.isEmpty()
+        || !composite.transformX.isEmpty() || !composite.transformY.isEmpty()
+        || !composite.transformW.isEmpty() || !composite.transformH.isEmpty()
+        || !composite.rotation.isEmpty() || !composite.volume.isEmpty() || composite.flipH
+        || composite.flipV || composite.layer3d;
+
+    setPlaying(false);
+    const drift::Project before = m_project.detachedCopy();
+    m_project.ensureTrackIds();
+
+    const drift::TimeUs shift = composite.timelineStart - composite.srcIn;
+    QHash<QString, QString> newClipIds;
+    QHash<QString, QString> newLinkIds;
+    QList<drift::Track> released;
+    for (const drift::Track &source : m_project.sequenceTracks(composite.sequenceId)) {
+        drift::Track copy = source;
+        copy.locked = false;
+        copy.clips.clear();
+        copy.transitions.clear();
+        for (const drift::Clip &clip : source.clips) {
+            drift::Clip piece;
+            if (!drift::sliceClipToTimelineRange(clip, composite.srcIn, composite.srcOut, piece,
+                                                 m_project.fps()))
+                continue;
+            piece.timelineStart += shift;
+            newClipIds.insert(clip.id, QUuid::createUuid().toString(QUuid::WithoutBraces));
+            copy.clips.append(piece);
+        }
+        for (const drift::Transition &transition : source.transitions) {
+            if (newClipIds.contains(transition.fromClipId) && newClipIds.contains(transition.toClipId))
+                copy.transitions.append(transition);
+        }
+        released.append(copy);
+    }
+    QHash<QString, int> linkCounts;
+    for (const drift::Track &track : released) {
+        for (const drift::Clip &clip : track.clips) {
+            if (!clip.linkId.isEmpty())
+                ++linkCounts[clip.linkId];
+        }
+    }
+    QSet<QString> releasedIds;
+    for (drift::Track &track : released) {
+        for (int i = track.clips.size() - 1; i >= 0; --i) {
+            drift::Clip &clip = track.clips[i];
+            if (!clip.linkedClipId.isEmpty() && !newClipIds.contains(clip.linkedClipId)) {
+                newClipIds.remove(clip.id);
+                track.clips.removeAt(i);
+            }
+        }
+    }
+    for (drift::Track &track : released) {
+        for (drift::Clip &clip : track.clips) {
+            clip.id = newClipIds.value(clip.id);
+            releasedIds.insert(clip.id);
+            if (!clip.linkedClipId.isEmpty())
+                clip.linkedClipId = newClipIds.value(clip.linkedClipId);
+            if (clip.linkId.isEmpty())
+                continue;
+            if (linkCounts.value(clip.linkId) < 2) {
+                clip.linkId.clear();
+                continue;
+            }
+            if (!newLinkIds.contains(clip.linkId))
+                newLinkIds.insert(clip.linkId, QUuid::createUuid().toString(QUuid::WithoutBraces));
+            clip.linkId = newLinkIds.value(clip.linkId);
+        }
+        for (int i = track.transitions.size() - 1; i >= 0; --i) {
+            drift::Transition &transition = track.transitions[i];
+            if (!newClipIds.contains(transition.fromClipId) || !newClipIds.contains(transition.toClipId)) {
+                track.transitions.removeAt(i);
+                continue;
+            }
+            transition.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            transition.fromClipId = newClipIds.value(transition.fromClipId);
+            transition.toClipId = newClipIds.value(transition.toClipId);
+        }
+    }
+
+    // The composite goes first, along with the adjustments pinned to it.
+    for (drift::Track &track : m_project.tracks()) {
+        for (int i = track.clips.size() - 1; i >= 0; --i) {
+            const drift::Clip &clip = track.clips.at(i);
+            if (clip.id == composite.id || clip.linkedClipId == composite.id)
+                track.clips.removeAt(i);
+        }
+        for (int i = track.transitions.size() - 1; i >= 0; --i) {
+            const drift::Transition &transition = track.transitions.at(i);
+            if (transition.fromClipId == composite.id || transition.toClipId == composite.id)
+                track.transitions.removeAt(i);
+        }
+    }
+
+    const QString compositeTrackId = m_project.tracks().at(trackIndex).id;
+    auto indexOfTrack = [this](const QString &id) {
+        for (int i = 0; i < m_project.tracks().size(); ++i) {
+            if (m_project.tracks().at(i).id == id)
+                return i;
+        }
+        return -1;
+    };
+    auto spanFree = [](const drift::Track &host, const drift::Track &incoming) {
+        if (host.locked)
+            return false;
+        for (const drift::Clip &a : incoming.clips) {
+            for (const drift::Clip &b : host.clips) {
+                if (a.timelineStart < b.timelineEnd() && b.timelineStart < a.timelineEnd())
+                    return false;
+            }
+        }
+        return true;
+    };
+
+    // Bottom track first so the lowest track of each type takes the composite's own row, and
+    // lanes find their parent already placed.
+    QHash<QString, QString> outerIds;
+    QSet<QString> claimed;
+    for (int r = released.size() - 1; r >= 0; --r) {
+        drift::Track &incoming = released[r];
+        if (incoming.clips.isEmpty())
+            continue;
+        const QString innerId = incoming.id;
+        const bool plain = incoming.type != drift::TrackType::Adjustment;
+        QString hostId;
+        if (plain) {
+            const int own = indexOfTrack(compositeTrackId);
+            QList<int> order;
+            if (own >= 0)
+                order.append(own);
+            for (int t = own - 1; t >= 0; --t)
+                order.append(t);
+            for (int t = own + 1; t < m_project.tracks().size(); ++t)
+                order.append(t);
+            for (int t : order) {
+                const drift::Track &host = m_project.tracks().at(t);
+                if (host.type == incoming.type && !claimed.contains(host.id) && spanFree(host, incoming)) {
+                    hostId = host.id;
+                    break;
+                }
+            }
+        }
+        if (hostId.isEmpty()) {
+            incoming.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            incoming.parentTrackId = outerIds.value(incoming.parentTrackId);
+            incoming.spanEndTrackId = outerIds.value(incoming.spanEndTrackId);
+            if (incoming.adjustmentScope == drift::AdjustmentScope::ParentTrack
+                && incoming.parentTrackId.isEmpty())
+                incoming.adjustmentScope = drift::AdjustmentScope::AllBelow;
+            int at = indexOfTrack(incoming.parentTrackId);
+            if (at < 0)
+                at = qMax(0, indexOfTrack(compositeTrackId));
+            hostId = incoming.id;
+            m_project.tracks().insert(at, incoming);
+        } else {
+            drift::Track &host = m_project.tracks()[indexOfTrack(hostId)];
+            host.clips.append(incoming.clips);
+            std::stable_sort(host.clips.begin(), host.clips.end(),
+                             [](const drift::Clip &a, const drift::Clip &b) {
+                                 return a.timelineStart < b.timelineStart;
+                             });
+            host.transitions.append(incoming.transitions);
+        }
+        claimed.insert(hostId);
+        outerIds.insert(innerId, hostId);
+    }
+
+    bool stillUsed = false;
+    m_project.forEachTrackList([&](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.sequenceId == composite.sequenceId || clip.assetId == composite.assetId)
+                    stillUsed = true;
+            }
+        }
+    });
+    if (!stillUsed) {
+        m_project.assets().remove(composite.assetId);
+        m_project.assetOrder().removeAll(composite.assetId);
+        if (m_assetLibrary)
+            m_assetLibrary->syncToProject();
+        pruneOrphanSequences();
+    }
+
+    m_project.ensureTrackIds();
+    QList<QPair<int, int>> selection;
+    for (int t = 0; t < m_project.tracks().size(); ++t) {
+        const QList<drift::Clip> &clips = m_project.tracks().at(t).clips;
+        for (int c = 0; c < clips.size(); ++c) {
+            if (releasedIds.contains(clips.at(c).id))
+                selection.append(qMakePair(t, c));
+        }
+    }
+    m_selection = selection;
+    m_selectedTrack = selection.isEmpty() ? -1 : selection.constLast().first;
+    m_selectedClip = selection.isEmpty() ? -1 : selection.constLast().second;
+    m_selectedTransitionTrack = -1;
+    m_selectedTransitionLeftClip = -1;
+
+    pushProjectEdit(before, tr("Dissolve composite"));
+    if (discarding)
+        setLastMessage(tr("Composite effects and transform were discarded"), QStringLiteral("warning"));
+    else
+        finishEdit(tr("Composite dissolved"));
+    notifySelectionChanged();
+    emit sequenceTabsChanged();
+}
+
 namespace {
 
 

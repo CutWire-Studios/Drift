@@ -1289,6 +1289,25 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                    {QStringLiteral("asset"), clip.assetId}});
     }
 
+    if (tool == QLatin1String("dissolve_composite")) {
+        const drift::Project *project = m_controller->project();
+        const int track = m_controller->selectedTrack();
+        const int index = m_controller->selectedClip();
+        if (!m_controller->canDissolveComposite(track, index))
+            return err("bad_args", QStringLiteral(
+                "Select a composite clip on the main timeline first"));
+        const QString compositeId = project->tracks().at(track).clips.at(index).id;
+        m_controller->dissolveComposite(track, index);
+        for (const drift::Track &t : m_controller->project()->tracks()) {
+            for (const drift::Clip &c : t.clips) {
+                if (c.id == compositeId)
+                    return err("apply_failed", QStringLiteral(
+                        "The composite could not be dissolved (ramped, reversed or retimed composites are refused)"));
+            }
+        }
+        return ok({});
+    }
+
     if (tool == QLatin1String("open_composite")) {
         QString sequenceId;
         if (args.value(QStringLiteral("main")).toBool()) {

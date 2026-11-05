@@ -148,6 +148,7 @@ private slots:
     void pasteSelectsWhatItPastedWhenATrackIsAdded();
     void compositeTabEditUndoesFromMain();
     void compositeSeparateAudioAndRemoval();
+    void dissolveCompositeRoundTrip();
     void retimeKeepsDisabledKeyframeTrackDisabled();
     void effectStackCopyPasteAppendsAndRescales();
     void chromaKeyHueIsFlaggedForTheColourSwatch();
@@ -1500,6 +1501,62 @@ void EditorStateTest::compositeTabEditUndoesFromMain()
     state.closeSequenceTab(sequenceId);
     QVERIFY(state.activeSequenceId().isEmpty());
     QVERIFY(state.sequenceTabs().isEmpty());
+}
+
+void EditorStateTest::dissolveCompositeRoundTrip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    setUpTwoClipSelection(library, state);
+    drift::Track second;
+    second.type = drift::TrackType::Video;
+    drift::Clip moved = state.project()->tracks()[0].clips.takeLast();
+    second.clips.append(moved);
+    state.project()->tracks().append(second);
+    state.project()->ensureTrackIds();
+    QCOMPARE(state.project()->tracks().size(), 2);
+    state.setSelection({QVariantMap{{QStringLiteral("track"), 0}, {QStringLiteral("clip"), 0}},
+                        QVariantMap{{QStringLiteral("track"), 1}, {QStringLiteral("clip"), 0}}});
+    state.makeCompositeFromSelection();
+    QCOMPARE(state.project()->sequenceIds().size(), 1);
+    QCOMPARE(library.count(), 2);
+
+    int compositeTrack = -1;
+    for (int t = 0; t < state.project()->tracks().size(); ++t) {
+        for (const drift::Clip &clip : state.project()->tracks().at(t).clips) {
+            if (clip.type == drift::ClipType::Composite)
+                compositeTrack = t;
+        }
+    }
+    QVERIFY(compositeTrack >= 0);
+    QVERIFY(state.canDissolveComposite(compositeTrack, 0));
+    state.dissolveComposite(compositeTrack, 0);
+
+    const drift::Project &project = *state.project();
+    QVERIFY(project.sequenceIds().isEmpty());
+    QCOMPARE(library.count(), 1);
+    QList<drift::TimeUs> starts;
+    int clips = 0;
+    int occupied = 0;
+    for (const drift::Track &track : project.tracks()) {
+        QCOMPARE(track.type, drift::TrackType::Video);
+        if (!track.clips.isEmpty())
+            ++occupied;
+        for (const drift::Clip &clip : track.clips) {
+            ++clips;
+            QCOMPARE(clip.type, drift::ClipType::Video);
+            QCOMPARE(clip.timelineDuration, drift::secondsToUs(5.0));
+            starts.append(clip.timelineStart);
+        }
+    }
+    std::sort(starts.begin(), starts.end());
+    QCOMPARE(clips, 2);
+    QCOMPARE(starts, (QList<drift::TimeUs>{drift::secondsToUs(1.0), drift::secondsToUs(10.0)}));
+    QCOMPARE(state.selection().size(), 2);
+    QVERIFY(occupied >= 1);
+
+    state.undo();
+    QCOMPARE(project.sequenceIds().size(), 1);
 }
 
 void EditorStateTest::compositeSeparateAudioAndRemoval()

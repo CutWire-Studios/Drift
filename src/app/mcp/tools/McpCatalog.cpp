@@ -1275,7 +1275,7 @@ QStringList selectionBasedOps()
         QStringLiteral("separate_audio"), QStringLiteral("unlink_audio"), QStringLiteral("link_clips"),
         QStringLiteral("merge_clips"),    QStringLiteral("align_clip_left"),
         QStringLiteral("align_clip_right"), QStringLiteral("copy_selection"),
-        QStringLiteral("cut_selection"),  QStringLiteral("make_composite"),
+        QStringLiteral("cut_selection"),  QStringLiteral("make_composite"), QStringLiteral("dissolve_composite"),
     };
     return k;
 }

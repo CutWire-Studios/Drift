@@ -152,6 +152,12 @@
           "Acts on the current selection — call select_clips first. Only on the main timeline, and "
           "the selection must not already contain a composite. Returns {clip, sequence, asset}.",
           objectSchema({}) },
+        { "dissolve_composite", "timeline", "Turn a composite back into its clips",
+          "Release the selected composite clip's inner clips onto the main timeline at their original "
+          "times, cut to the composite's trim, and remove the composite. The composite's own effects, "
+          "transform, fades and keyframes are discarded. Fails when the composite is ramped, reversed "
+          "or not at 1x. Acts on the current selection — call select_clip first.",
+          objectSchema({}) },
         { "open_composite", "timeline", "Edit inside a composite",
           "Open a composite's timeline in its own tab and make it the timeline every other op edits "
           "(tracks, clips, inspect). Name it by a composite clip (clip or track+index), by sequence "

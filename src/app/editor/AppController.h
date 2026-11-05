@@ -1049,6 +1049,10 @@ public:
     // its linked partners) into a new sequence and leaves a composite clip in its place.
     Q_INVOKABLE bool canMakeCompositeFromSelection() const;
     Q_INVOKABLE void makeCompositeFromSelection();
+    // Turns a composite back into its own clips at their original times. The composite's effects,
+    // transform, fades and keyframes are discarded; ramped, reversed and non-1x composites refuse.
+    Q_INVOKABLE bool canDissolveComposite(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE void dissolveComposite(int trackIndex, int clipIndex);
 
     // Transform layers: a Range adjustment track whose Transform clips move, scale, rotate, tilt
     // and fade every visual track from just below it down to its span end, as one.

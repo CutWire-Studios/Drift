@@ -57,6 +57,13 @@ ThemedContextMenu {
         onTriggered: EditorState.flattenComposite(owner.trackIndex, owner.clipIndex)
     }
     ThemedMenuItem {
+        text: qsTr("Dissolve composite")
+        icon.name: Theme.icons.layers
+        visible: owner.clipData.kind === "composite"
+        enabled: EditorState.canDissolveComposite(owner.trackIndex, owner.clipIndex)
+        onTriggered: EditorState.dissolveComposite(owner.trackIndex, owner.clipIndex)
+    }
+    ThemedMenuItem {
         text: qsTr("Make composite")
         icon.name: Theme.icons.layers
         visible: EditorState.makeCompositeAvailable
