@@ -1836,6 +1836,16 @@ void EngineTest::sceneCameraClipDrivesTheWholeTimeline()
                                 .arg(centroidX(small) / small.width())
                                 .arg(centroidX(panned) / panned.width())));
 
+    // Only export raises the ceiling: past project size the canvas follows maxScale, and the
+    // framing is still the same fraction of it.
+    FrameCompositor::RenderOptions over;
+    over.previewScale = 2.0;
+    QCOMPARE(compositor.compositeAt(drift::secondsToUs(2.0), over).size(), panned.size());
+    over.maxScale = 2.0;
+    const QImage big = compositor.compositeAt(drift::secondsToUs(2.0), over);
+    QCOMPARE(big.size(), panned.size() * 2);
+    QVERIFY(std::abs(centroidX(big) / big.width() - centroidX(panned) / panned.width()) < 0.01);
+
     // Hiding the camera track bypasses it, the way hiding a transform layer does.
     project.tracks()[cameraTrack].hidden = true;
     GpuScene hidden;

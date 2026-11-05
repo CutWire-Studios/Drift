@@ -2057,6 +2057,11 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
     int outH = 0;
     scaleSize(projW, projH, settings.targetHeight, outW, outH);
 
+    // Past the driver's texture limit the canvas stays at project size and sws upscales.
+    const bool renderAtOutput = outH > projH && GpuCompositor::maxCanvasDimension() >= qMax(outW, outH);
+    const int canvasW = renderAtOutput ? outW : projW;
+    const int canvasH = renderAtOutput ? outH : projH;
+
     // The export rate is independent of the project rate: sampling the timeline
     // faster pulls extra frames out of the source wherever it has them, which is
     // what makes slowed clips look smooth.
@@ -2267,8 +2272,8 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
 
         if (!useGpuNv12) {
             // Lanczos when down/upscaling; bicubic is enough for a pure format convert.
-            const int swsFlags = (projW != outW || projH != outH) ? SWS_LANCZOS : SWS_BICUBIC;
-            sws = sws_getContext(projW, projH, AV_PIX_FMT_RGBA, outW, outH, swPixFmt, swsFlags,
+            const int swsFlags = (canvasW != outW || canvasH != outH) ? SWS_LANCZOS : SWS_BICUBIC;
+            sws = sws_getContext(canvasW, canvasH, AV_PIX_FMT_RGBA, outW, outH, swPixFmt, swsFlags,
                                  nullptr, nullptr, nullptr);
             if (!sws) {
                 error = QStringLiteral("Could not create the scaler");
@@ -2397,8 +2402,12 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
         };
 
         FrameCompositor::RenderOptions composeOptions;
-        if (outH < projH)
+        if (outH < projH) {
             composeOptions.previewScale = double(outH) / double(projH);
+        } else if (renderAtOutput) {
+            composeOptions.previewScale = double(outH) / double(projH);
+            composeOptions.maxScale = composeOptions.previewScale;
+        }
         composeOptions.readAheadUs = static_cast<drift::TimeUs>(
             std::llround(2.0 * 1e6 * frameRate.den / frameRate.num));
 
@@ -2520,15 +2529,15 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
                 continue;
             }
 
-            QImage img = compositor.compositeAt(t);
+            QImage img = renderAtOutput ? compositor.compositeAt(t, composeOptions) : compositor.compositeAt(t);
             if (img.isNull()) {
-                img = QImage(projW, projH, QImage::Format_RGBA8888);
+                img = QImage(canvasW, canvasH, QImage::Format_RGBA8888);
                 img.fill(vdef->hasAlpha ? Qt::transparent : Qt::black);
             } else if (img.format() != QImage::Format_RGBA8888) {
                 img = img.convertToFormat(QImage::Format_RGBA8888);
             }
-            if (img.width() != projW || img.height() != projH)
-                img = img.scaled(projW, projH, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+            if (img.width() != canvasW || img.height() != canvasH)
+                img = img.scaled(canvasW, canvasH, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
             if (av_frame_make_writable(vframe) < 0) {
                 error = QStringLiteral("Video frame not writable");
@@ -2537,7 +2546,7 @@ bool Exporter::run(const drift::Project &project, const ExportSettings &settings
             {
                 const uint8_t *srcData[4] = {img.constBits(), nullptr, nullptr, nullptr};
                 const int srcStride[4] = {static_cast<int>(img.bytesPerLine()), 0, 0, 0};
-                sws_scale(sws, srcData, srcStride, 0, projH, vframe->data, vframe->linesize);
+                sws_scale(sws, srcData, srcStride, 0, canvasH, vframe->data, vframe->linesize);
             }
             if (!sendVideoAndAudio(i))
                 goto cleanup;

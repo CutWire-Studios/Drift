@@ -243,6 +243,9 @@ QSizeF drawnSize(const GpuLayer &layer, const QSize &canvas);
 
 bool isAvailable();
 
+// Largest canvas edge the GL driver accepts; 0 when OpenGL is unavailable.
+int maxCanvasDimension();
+
 // Why the compositor is unusable, for the preview's error state and the debug
 // report. A snapshot: unlike isAvailable() it never forces a bring-up attempt,
 // so call that first when you want one made.

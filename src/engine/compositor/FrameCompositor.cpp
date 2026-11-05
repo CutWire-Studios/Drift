@@ -2018,7 +2018,7 @@ bool FrameCompositor::prepare(drift::TimeUs timelineUs, const RenderOptions &opt
 
     const int projectWidth = m_project->width();
     const int projectHeight = m_project->height();
-    const double renderScale = qBound(kMinPreviewScale, options.previewScale, 1.0);
+    const double renderScale = qBound(kMinPreviewScale, options.previewScale, qMax(1.0, options.maxScale));
     const int width = qMax(1, static_cast<int>(std::lround(projectWidth * renderScale)));
     const int height = qMax(1, static_cast<int>(std::lround(projectHeight * renderScale)));
     if (width <= 0 || height <= 0)

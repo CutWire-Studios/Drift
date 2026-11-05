@@ -1977,6 +1977,20 @@ bool isAvailable()
     return runtime().available();
 }
 
+int maxCanvasDimension()
+{
+    static int cached = -1;
+    if (cached < 0) {
+        GLint v = 0;
+        GlRuntime &rt = runtime();
+        if (rt.exec([&] { rt.functions()->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &v); }))
+            cached = int(v);
+        else
+            return 0;
+    }
+    return cached;
+}
+
 QSizeF drawnSize(const GpuLayer &layer, const QSize &canvas)
 {
     return drawnLayerSize(layer, canvas, true);
