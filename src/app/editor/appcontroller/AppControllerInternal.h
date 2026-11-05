@@ -47,6 +47,37 @@ inline bool sameHandles(const drift::FadeShape &a, const drift::FadeShape &b)
            && a.handle2() == b.handle2();
 }
 
+// The timeline fade handles edit the In/Out animation's length on a visual clip, whatever its
+// kind; only a Fade animation also owns the edge fade. Dragging a handle to zero removes it.
+inline void setEdgeAnimationDuration(drift::Clip &clip, bool isIn, drift::TimeUs us)
+{
+    drift::ClipAnimation &anim = isIn ? clip.animIn : clip.animOut;
+    drift::TimeUs &edge = isIn ? clip.fadeInUs : clip.fadeOutUs;
+    if (us <= 0) {
+        anim.kind = drift::ClipAnimKind::None;
+        edge = 0;
+        return;
+    }
+    if (anim.kind == drift::ClipAnimKind::None) {
+        anim.kind = drift::ClipAnimKind::Fade;
+        anim.curve = clip.fadeCurve;
+        anim.shape = clip.fadeShape;
+        anim.ease = drift::clipAnimCurveToEase(clip.fadeCurve);
+    }
+    anim.durationUs = us;
+    edge = anim.kind == drift::ClipAnimKind::Fade ? us : 0;
+}
+
+// What the fade handles show: the In/Out animation's length on a visual clip that has one.
+inline drift::TimeUs edgeHandleUs(const drift::Clip &clip, bool isIn)
+{
+    const drift::ClipAnimation &anim = isIn ? clip.animIn : clip.animOut;
+    const bool visual = clip.type != drift::ClipType::Audio && clip.type != drift::ClipType::Subtitle;
+    if (visual && anim.kind != drift::ClipAnimKind::None)
+        return anim.durationUs;
+    return isIn ? clip.fadeInUs : clip.fadeOutUs;
+}
+
 inline QVariantList handlesToVariant(const drift::FadeShape &shape)
 {
     return {shape.handle1().x(), shape.handle1().y(), shape.handle2().x(), shape.handle2().y()};

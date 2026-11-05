@@ -1895,7 +1895,7 @@ void AppController::setClipFade(int trackIndex, int clipIndex, double fadeInSeco
     drift::TimeUs fout = qMax<drift::TimeUs>(0, drift::secondsToUs(fadeOutSeconds));
     fin = qMin(fin, clip.timelineDuration);
     fout = qMin(fout, clip.timelineDuration - fin);
-    if (clip.fadeInUs == fin && clip.fadeOutUs == fout)
+    if (edgeHandleUs(clip, true) == fin && edgeHandleUs(clip, false) == fout)
         return;
 
     const drift::Project before = m_project;
@@ -1906,26 +1906,9 @@ void AppController::setClipFade(int trackIndex, int clipIndex, double fadeInSeco
     clip.fadeInUs = fin;
     clip.fadeOutUs = fout;
 
-    // Timeline fade handles are the CapCut Fade In/Out animation for visual clips.
     if (clip.type != drift::ClipType::Audio && clip.type != drift::ClipType::Subtitle) {
-        if (fin > 0) {
-            clip.animIn.kind = drift::ClipAnimKind::Fade;
-            clip.animIn.durationUs = fin;
-            clip.animIn.curve = clip.fadeCurve;
-            clip.animIn.shape = clip.fadeShape;
-            clip.animIn.ease = drift::clipAnimCurveToEase(clip.fadeCurve);
-        } else if (clip.animIn.kind == drift::ClipAnimKind::Fade) {
-            clip.animIn.kind = drift::ClipAnimKind::None;
-        }
-        if (fout > 0) {
-            clip.animOut.kind = drift::ClipAnimKind::Fade;
-            clip.animOut.durationUs = fout;
-            clip.animOut.curve = clip.fadeCurve;
-            clip.animOut.shape = clip.fadeShape;
-            clip.animOut.ease = drift::clipAnimCurveToEase(clip.fadeCurve);
-        } else if (clip.animOut.kind == drift::ClipAnimKind::Fade) {
-            clip.animOut.kind = drift::ClipAnimKind::None;
-        }
+        setEdgeAnimationDuration(clip, true, fin);
+        setEdgeAnimationDuration(clip, false, fout);
     }
 
     syncLinkedPartnersFrom(m_project, clip);

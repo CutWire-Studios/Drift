@@ -444,22 +444,8 @@ void AppController::previewSetClipFade(int trackIndex, int clipIndex, double fad
     clip.fadeInUs = fin;
     clip.fadeOutUs = fout;
     if (clip.type != drift::ClipType::Audio && clip.type != drift::ClipType::Subtitle) {
-        if (fin > 0) {
-            clip.animIn.kind = drift::ClipAnimKind::Fade;
-            clip.animIn.durationUs = fin;
-            clip.animIn.curve = clip.fadeCurve;
-            clip.animIn.shape = clip.fadeShape;
-        } else if (clip.animIn.kind == drift::ClipAnimKind::Fade) {
-            clip.animIn.kind = drift::ClipAnimKind::None;
-        }
-        if (fout > 0) {
-            clip.animOut.kind = drift::ClipAnimKind::Fade;
-            clip.animOut.durationUs = fout;
-            clip.animOut.curve = clip.fadeCurve;
-            clip.animOut.shape = clip.fadeShape;
-        } else if (clip.animOut.kind == drift::ClipAnimKind::Fade) {
-            clip.animOut.kind = drift::ClipAnimKind::None;
-        }
+        setEdgeAnimationDuration(clip, true, fin);
+        setEdgeAnimationDuration(clip, false, fout);
     }
     syncLinkedPartnersFrom(m_project, clip);
     emitPreviewFrame();

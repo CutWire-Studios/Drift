@@ -945,8 +945,8 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("audioStreamIndex"), clip.audioStreamIndex},
         {QStringLiteral("pan"), clip.pan},
         {QStringLiteral("volume"), clip.volume.isEmpty() ? 1.0 : clip.volume.evaluateAt(0)},
-        {QStringLiteral("fadeIn"), drift::usToSeconds(clip.fadeInUs)},
-        {QStringLiteral("fadeOut"), drift::usToSeconds(clip.fadeOutUs)},
+        {QStringLiteral("fadeIn"), drift::usToSeconds(edgeHandleUs(clip, true))},
+        {QStringLiteral("fadeOut"), drift::usToSeconds(edgeHandleUs(clip, false))},
         {QStringLiteral("fadeCurve"), drift::fadeCurveToString(clip.fadeCurve)},
         {QStringLiteral("fadeShape"), fadeShape},
         {QStringLiteral("fadeHandles"),
@@ -1013,8 +1013,8 @@ TimelineClipsModel::Row AppController::clipRow(const drift::Clip &clip,
     // audio stream. An unprobed source gets the benefit of the doubt; its waveform stays empty.
     row.hasEmbeddedAudio = clip.type == drift::ClipType::Video && !clip.suppressEmbeddedAudio
         && (!sourceAsset || !sourceAsset->hasAudioKnown || sourceAsset->hasAudio);
-    row.fadeIn = drift::usToSeconds(clip.fadeInUs);
-    row.fadeOut = drift::usToSeconds(clip.fadeOutUs);
+    row.fadeIn = drift::usToSeconds(edgeHandleUs(clip, true));
+    row.fadeOut = drift::usToSeconds(edgeHandleUs(clip, false));
     row.fadeCurve = drift::fadeCurveToString(clip.fadeCurve);
     // Only a Custom curve is drawn from these points, and the strip keys its fade canvases on
     // the list — so it has to be present, not populated.
