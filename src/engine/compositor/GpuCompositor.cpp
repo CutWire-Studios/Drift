@@ -1215,6 +1215,48 @@ GlTarget depthCanvasTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLa
     return out;
 }
 
+// The size, in canvas pixels, the layer's quad lands on: its rect through whatever parent, view
+// or tilt moves it. Edge lengths rather than a bounding box, which a rotation inflates. A tilt
+// alone is judged by its bounding box and never reads larger than the rect unless `exact`: the mip
+// check only wants to know if the quad shrinks, a raster scale also needs to know if it grows.
+QSizeF drawnLayerSize(const GpuLayer &layer, const QSize &canvasSize, bool exact = false)
+{
+    QSizeF drawnSize = layer.screenSpace && !layer.layoutCanvas.isEmpty() ? QSizeF(canvasSize)
+                                                                           : layer.rect.size();
+    if (layer.viewActive && !layer.screenSpace) {
+        const QPolygonF projected = drift::projectedQuad(drift::viewQuadToCanvas(
+            layer.viewProj, layer.rect, layer.rotation, false, false, layer.pose3d, layer.parent,
+            layer.hasParent,
+            layer.layoutCanvas.isEmpty() ? QSizeF(canvasSize) : layer.layoutCanvas));
+        if (!projected.isEmpty()) {
+            drawnSize = QSizeF(QLineF(projected.at(0), projected.at(1)).length(),
+                               QLineF(projected.at(1), projected.at(2)).length());
+        }
+    } else if (layer.hasParent && !layer.screenSpace) {
+        const QMatrix4x4 quad =
+            layer.pose3d.isActive()
+                ? drift::clipQuadToCanvas(layer.rect, layer.rotation, false, false, layer.pose3d,
+                                          QSizeF(canvasSize))
+                : drift::flatQuadToCanvas(layer.rect, layer.rotation, false, false);
+        const QPolygonF projected =
+            drift::projectedQuad(drift::parentedQuadToCanvas(layer.parent, quad));
+        if (!projected.isEmpty()) {
+            // The quad's own edge lengths, not its bounding box, which a rotation inflates.
+            drawnSize = QSizeF(QLineF(projected.at(0), projected.at(1)).length(),
+                               QLineF(projected.at(1), projected.at(2)).length());
+        }
+    } else if (layer.pose3d.isActive()) {
+        const QPolygonF quad =
+            drift::projectedClipQuad(layer.rect, layer.rotation, layer.pose3d, QSizeF(canvasSize));
+        if (!quad.isEmpty()) {
+            drawnSize = exact ? QSizeF(QLineF(quad.at(0), quad.at(1)).length(),
+                                       QLineF(quad.at(1), quad.at(2)).length())
+                              : drawnSize.boundedTo(quad.boundingRect().size());
+        }
+    }
+    return drawnSize;
+}
+
 // Draw a prepared layer target onto the canvas with transform, opacity, mask and
 // blend mode. For non-fixed-function modes the canvas is ping-ponged.
 void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas,
@@ -1270,36 +1312,7 @@ void drawLayerOnCanvas(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canva
 
     // Only worth it when the quad is actually smaller than the texture; at ~1:1 the
     // single bilinear tap is already exact and the copy would be pure cost.
-    QSizeF drawnSize = layer.screenSpace && !layer.layoutCanvas.isEmpty() ? QSizeF(canvasSize)
-                                                                           : layer.rect.size();
-    if (layer.viewActive && !layer.screenSpace) {
-        const QPolygonF projected = drift::projectedQuad(drift::viewQuadToCanvas(
-            layer.viewProj, layer.rect, layer.rotation, false, false, layer.pose3d, layer.parent,
-            layer.hasParent,
-            layer.layoutCanvas.isEmpty() ? QSizeF(canvasSize) : layer.layoutCanvas));
-        if (!projected.isEmpty()) {
-            drawnSize = QSizeF(QLineF(projected.at(0), projected.at(1)).length(),
-                               QLineF(projected.at(1), projected.at(2)).length());
-        }
-    } else if (layer.hasParent && !layer.screenSpace) {
-        const QMatrix4x4 quad =
-            layer.pose3d.isActive()
-                ? drift::clipQuadToCanvas(layer.rect, layer.rotation, false, false, layer.pose3d,
-                                          QSizeF(canvasSize))
-                : drift::flatQuadToCanvas(layer.rect, layer.rotation, false, false);
-        const QPolygonF projected =
-            drift::projectedQuad(drift::parentedQuadToCanvas(layer.parent, quad));
-        if (!projected.isEmpty()) {
-            // The quad's own edge lengths, not its bounding box, which a rotation inflates.
-            drawnSize = QSizeF(QLineF(projected.at(0), projected.at(1)).length(),
-                               QLineF(projected.at(1), projected.at(2)).length());
-        }
-    } else if (layer.pose3d.isActive()) {
-        const QPolygonF quad =
-            drift::projectedClipQuad(layer.rect, layer.rotation, layer.pose3d, QSizeF(canvasSize));
-        if (!quad.isEmpty())
-            drawnSize = drawnSize.boundedTo(quad.boundingRect().size());
-    }
+    const QSizeF drawnSize = drawnLayerSize(layer, canvasSize);
     const bool minifies = layerTarget.width > drawnSize.width() * 1.05
                           || layerTarget.height > drawnSize.height() * 1.05;
     GlTarget mipTarget = minifies ? mipmappedLayerCopy(rt, gl, layerTarget) : GlTarget{};
@@ -1962,6 +1975,11 @@ static_assert(GlRuntime::kPresentRingSize >= kMaxPreviewComposites + 1,
 bool isAvailable()
 {
     return runtime().available();
+}
+
+QSizeF drawnSize(const GpuLayer &layer, const QSize &canvas)
+{
+    return drawnLayerSize(layer, canvas, true);
 }
 
 drift::gl::GlStatusInfo status()

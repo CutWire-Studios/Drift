@@ -1230,6 +1230,31 @@ private:
     QSize m_size;
 };
 
+#ifdef DRIFT_WITH_SKIA
+// A vector layer is rasterized at its layout size, but the GPU may draw it larger: block and clip
+// animation scale, a transform-layer parent, the scene camera or editor view, a 3D tilt. Redo the
+// raster at the size the quad lands on so it is not a magnified bitmap, never past the canvas's own
+// resolution and never smaller (shrinking is the mip chain's job). The scale is bucketed in quarter
+// octaves so an animated zoom reuses cached rasters instead of repainting at every frame's size.
+// Effects work in layer pixels, which would then mean something else, so those layers stay at 1.
+void rasterAtDrawnSize(GpuLayer &layer, const QSize &canvas)
+{
+    if (!layer.vector || layer.screenSpace || !layer.effects.isEmpty())
+        return;
+    const QSize base = layer.vector->size();
+    if (base.isEmpty())
+        return;
+    const QSizeF drawn = GpuCompositor::drawnSize(layer, canvas);
+    const double wanted = qMax(drawn.width() / base.width(), drawn.height() / base.height());
+    if (!(wanted > 1.0))
+        return;
+    double k = std::exp2(std::round(4.0 * std::log2(wanted)) / 4.0);
+    k = qMin(k, qMin(double(canvas.width()) / base.width(), double(canvas.height()) / base.height()));
+    if (k > 1.0)
+        layer.vector = drift::skia::scaledPainter(layer.vector, k);
+}
+#endif
+
 GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, int width, int height,
                        double renderScale, const FrameCompositor::RenderOptions &options,
                        bool nested = false);
@@ -1908,6 +1933,9 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 continue;
             applyParent(item.layer, ti);
             applyCamera(item.layer);
+#ifdef DRIFT_WITH_SKIA
+            rasterAtDrawnSize(item.layer, QSize(width, height));
+#endif
             attachTrackInputs(item.layer);
             attachAudioInputs(item.layer);
             noteSelection(clip, item.layer);

@@ -407,6 +407,7 @@ private slots:
     void textClipCarriesGpuEffects();
     void textAnimationFadesAndSlides();
     void clipBodyAnimationFadeRampsOpacity();
+    void vectorLayerRasterFollowsItsDrawnScale();
     void maskApplierEllipseMasksCorners();
     void maskMediaTimeBaseIndexesHostOrAdjustment();
     void maskApplierFoldsAStackByItsOps();
@@ -11175,6 +11176,54 @@ void EngineTest::clipBodyAnimationFadeRampsOpacity()
     const double mid = meanLuminance(compositor.compositeAt(drift::secondsToUs(0.5)));
     const double settled = meanLuminance(compositor.compositeAt(drift::secondsToUs(1.5)));
     QVERIFY2(early < mid && mid < settled, "clip body fade-in did not ramp up");
+}
+
+void EngineTest::vectorLayerRasterFollowsItsDrawnScale()
+{
+#ifndef DRIFT_WITH_SKIA
+    QSKIP("needs Skia");
+#else
+    drift::Project project;
+    project.setResolution(400, 400);
+    project.tracks().clear();
+    project.tracks().append(drift::Track{.type = drift::TrackType::Shape});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("zoom");
+    clip.type = drift::ClipType::Shape;
+    clip.timelineStart = 0;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.transformX.setKeyframe(0, 150.0);
+    clip.transformY.setKeyframe(0, 150.0);
+    clip.transformW.setKeyframe(0, 100.0);
+    clip.transformH.setKeyframe(0, 100.0);
+    clip.shapeStyle.kind = drift::ShapeKind::Rectangle;
+    clip.shapeStyle.setSolidFill(Qt::white);
+    project.tracks()[0].clips.append(clip);
+
+    FrameCompositor compositor;
+    compositor.setProject(&project);
+    GpuScene rest;
+    QVERIFY(compositor.buildSceneAt(drift::secondsToUs(1.0), {}, &rest));
+    QCOMPARE(rest.items.size(), 1);
+    const QSize restSize = rest.items.at(0).layer.vector->size();
+
+    // ZoomOut enters at 1.4x, drawn by stretching the layout-sized raster; the raster follows.
+    project.tracks()[0].clips[0].animIn = {drift::ClipAnimKind::ZoomOut, drift::secondsToUs(1.0),
+                                           drift::ClipAnimEase::Linear, drift::FadeCurve::Linear};
+    GpuScene zoomed;
+    QVERIFY(compositor.buildSceneAt(0, {}, &zoomed));
+    const GpuLayer &layer = zoomed.items.at(0).layer;
+    QVERIFY(std::abs(layer.rect.width() / restSize.width() - 1.4) < 0.1);
+    QVERIFY(std::abs(double(layer.vector->size().width()) / restSize.width() - std::sqrt(2.0)) < 0.05);
+
+    // Past the canvas's own resolution there is nothing to gain.
+    project.tracks()[0].clips[0].transformW.setKeyframe(0, 380.0);
+    project.tracks()[0].clips[0].transformH.setKeyframe(0, 380.0);
+    GpuScene capped;
+    QVERIFY(compositor.buildSceneAt(0, {}, &capped));
+    QVERIFY(capped.items.at(0).layer.vector->size().width() <= 400);
+#endif
 }
 
 void EngineTest::maskMediaTimeBaseIndexesHostOrAdjustment()

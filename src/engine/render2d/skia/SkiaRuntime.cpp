@@ -1,5 +1,7 @@
 #include "engine/render2d/skia/SkiaRuntime.h"
 
+#include <QHash>
+#include <QtMath>
 #include <QOpenGLContext>
 #include <QtGui/qopenglcontext_platform.h>
 #include <QOpenGLExtraFunctions>
@@ -312,6 +314,51 @@ QImage SkiaRuntime::rasterize(const VectorPainter &painter)
 SkiaRuntime::Stats SkiaRuntime::stats() const
 {
     return d->stats;
+}
+
+namespace {
+
+class ScaledPainter final : public VectorPainter
+{
+public:
+    ScaledPainter(std::shared_ptr<const VectorPainter> inner, double scale)
+        : m_inner(std::move(inner))
+    {
+        const QSize base = m_inner->size();
+        m_size = QSize(qMax(1, qCeil(base.width() * scale)), qMax(1, qCeil(base.height() * scale)));
+        m_sx = float(m_size.width()) / float(qMax(1, base.width()));
+        m_sy = float(m_size.height()) / float(qMax(1, base.height()));
+    }
+
+    QSize size() const override { return m_size; }
+
+    quint64 cacheKey() const override
+    {
+        const quint64 key = m_inner->cacheKey();
+        return key == 0 ? 0 : (qHashMulti(key, m_size.width(), m_size.height()) | 1);
+    }
+
+    void paint(SkCanvas &canvas) const override
+    {
+        canvas.scale(m_sx, m_sy);
+        m_inner->paint(canvas);
+    }
+
+private:
+    std::shared_ptr<const VectorPainter> m_inner;
+    QSize m_size;
+    float m_sx = 1.f;
+    float m_sy = 1.f;
+};
+
+} // namespace
+
+std::shared_ptr<const VectorPainter> scaledPainter(std::shared_ptr<const VectorPainter> inner,
+                                                   double scale)
+{
+    if (!inner || scale <= 1.0)
+        return inner;
+    return std::make_shared<ScaledPainter>(std::move(inner), scale);
 }
 
 } // namespace drift::skia

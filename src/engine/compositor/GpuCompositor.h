@@ -238,6 +238,9 @@ bool finishExportNv12(int slot, uint8_t *y, int yStride, uint8_t *uv, int uvStri
 // is an AV_PIX_FMT_CUDA/NV12 frame from the encoder's frames context.
 bool finishExportNv12ToCuda(int slot, AVFrame *dst);
 
+// Where the layer's quad lands on the canvas, in canvas pixels, as the draw will place it.
+QSizeF drawnSize(const GpuLayer &layer, const QSize &canvas);
+
 bool isAvailable();
 
 // Why the compositor is unusable, for the preview's error state and the debug

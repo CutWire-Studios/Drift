@@ -3,6 +3,8 @@
 #include <QSize>
 #include <QtGlobal>
 
+#include <memory>
+
 class SkCanvas;
 
 namespace drift::skia {
@@ -30,5 +32,12 @@ public:
     // one unit per device pixel.
     virtual void paint(SkCanvas &canvas) const = 0;
 };
+
+// `inner` rasterized `scale` (> 1) times larger than its size() says, for a layer the GPU will draw
+// bigger than it was laid out. Draws the same picture through a scaled canvas, so geometry,
+// strokes, blurs and glyphs are all re-rendered at the finer grid rather than resampled.
+// Defined with the Skia sources; only callers built with DRIFT_WITH_SKIA may use it.
+std::shared_ptr<const VectorPainter> scaledPainter(std::shared_ptr<const VectorPainter> inner,
+                                                   double scale);
 
 } // namespace drift::skia
