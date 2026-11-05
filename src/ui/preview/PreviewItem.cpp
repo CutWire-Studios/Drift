@@ -37,7 +37,7 @@ void PreviewItem::setPlayback(PlaybackEngine *engine)
 
     m_playback = engine;
     if (m_playback) {
-        connect(m_playback, &PlaybackEngine::currentFrameChanged, this, &PreviewItem::pullFrame);
+        connect(m_playback, &PlaybackEngine::streamFrameChanged, this, &PreviewItem::onStreamFrameChanged);
         pullFrame();
     }
     // The engine may arrive after the window does, so bind from both ends.
@@ -45,9 +45,34 @@ void PreviewItem::setPlayback(PlaybackEngine *engine)
     emit playbackChanged();
 }
 
+void PreviewItem::setStream(int stream)
+{
+    stream = qBound(0, stream, kPreviewStreamCount - 1);
+    if (m_stream == stream)
+        return;
+    m_stream = stream;
+    bindDisplayCadence();
+    pullFrame();
+    emit streamChanged();
+}
+
+void PreviewItem::onStreamFrameChanged(int stream)
+{
+    if (stream == m_stream)
+        pullFrame();
+}
+
 void PreviewItem::bindDisplayCadence()
 {
     QQuickWindow *win = window();
+    if (m_stream != int(PreviewStream::Camera)) {
+        disconnect(m_afterAnimatingConn);
+        disconnect(m_frameSwappedConn);
+        disconnect(m_screenChangedConn);
+        disconnect(m_refreshRateConn);
+        m_cadenceWindow = nullptr;
+        return;
+    }
     if (m_cadenceWindow == win && m_afterAnimatingConn)
         return;
 
@@ -112,9 +137,10 @@ void PreviewItem::pullFrame()
 
     // Pull in C++: QML cannot reliably assign QImage between properties, which left
     // the Android preview permanently blank even when the compositor had frames.
-    setTextureSize(m_playback->previewTextureSize());
-    setTextureId(m_playback->previewTextureId());
-    setImage(m_playback->previewImage());
+    const GpuFrameTexture frame = m_playback->previewFrame(PreviewStream(m_stream));
+    setTextureSize(frame.size);
+    setTextureId(int(frame.textureId));
+    setImage(frame.image);
 }
 
 void PreviewItem::setTextureId(int id)

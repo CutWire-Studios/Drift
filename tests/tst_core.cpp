@@ -2056,7 +2056,7 @@ void CoreTest::sourceLabAnnotationsRoundTrip()
 
     const QJsonObject json = project.toJson();
     QCOMPARE(json.value(QStringLiteral("version")).toInt(), drift::Project::kCurrentVersion);
-    QCOMPARE(drift::Project::kCurrentVersion, 21);
+    QCOMPARE(drift::Project::kCurrentVersion, 22);
 
     QString error;
     const drift::Project loaded = drift::Project::fromJson(json, &error);
@@ -2095,7 +2095,7 @@ void CoreTest::maskFramePatchesRoundTripAndLookUpByMediaTime()
     project.tracks()[0].clips.append(clip);
 
     const QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 21);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 22);
     const QJsonArray patches = json.value(QStringLiteral("tracks")).toArray().at(0).toObject()
                                    .value(QStringLiteral("clips")).toArray().at(0).toObject()
                                    .value(QStringLiteral("mask")).toObject().value(QStringLiteral("patches")).toArray();
@@ -2716,8 +2716,8 @@ void CoreTest::model3dSourceSerialization()
 void CoreTest::model3dScalarClampsAndResolves()
 {
     drift::Model3dSource m;
-    // Ambient, then eight numbers for each of the four lights.
-    QCOMPARE(drift::model3dKeyframeProperties().size(), 1 + 4 * 8);
+    // Ambient and the two model scales, then eight numbers for each of the four lights.
+    QCOMPARE(drift::model3dKeyframeProperties().size(), 3 + 4 * 8);
     for (const QString &key : drift::model3dKeyframeProperties()) {
         double v = -1.0;
         QVERIFY2(drift::model3dScalar(m, key, &v), qPrintable(key));
@@ -2828,10 +2828,11 @@ void CoreTest::model3dPoseMigratesToTransform()
     QCOMPARE(c.transformH.evaluateAt(0), 270.0);
     QCOMPARE(c.transformX.evaluateAt(0) + 270.0, 760.0);
     QCOMPARE(c.transformY.evaluateAt(0) + 135.0, 640.0);
-    // glTF's up is the canvas's down: X and Z flip, Y keeps its keys.
-    QCOMPARE(c.rotationX.evaluateAt(0), -10.0);
+    // glTF's up is the canvas's down: X and Z flipped at format 13, and the format 22 world (z away
+    // from the viewer) flips X and Y again — so, from glTF, X keeps its sign and Y and Z turn.
+    QCOMPARE(c.rotationX.evaluateAt(0), 10.0);
     QCOMPARE(c.rotation.evaluateAt(0), -5.0);
-    QCOMPARE(c.rotationY.evaluateAt(drift::secondsToUs(1.0)), 45.0);
+    QCOMPARE(c.rotationY.evaluateAt(drift::secondsToUs(1.0)), -45.0);
     QCOMPARE(c.rotationY.keyframes().size(), 2);
     // The old lens put the eye height / (2 * depth) from the model.
     QCOMPARE(c.perspective.evaluateAt(0), 1080.0 / 0.5);

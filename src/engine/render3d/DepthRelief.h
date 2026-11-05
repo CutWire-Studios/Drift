@@ -19,7 +19,7 @@ namespace drift {
 struct DepthFrame;
 
 // Where a clip's relief sits in the world. Relief space maps onto the clip's unit quad
-// (clipQuadToWorld's local space) by one uniform scale, so the whole chain is a similarity as long
+// (clipQuadToWorld's local space, whose +z also points away) by one uniform scale, so the whole chain is a similarity as long
 // as the quad's own matrix is.
 struct ReliefPlacement
 {

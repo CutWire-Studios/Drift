@@ -537,6 +537,15 @@ QVariantMap McpController::compactClip(int trackIndex, int clipIndex, bool inclu
             const QString k = QLatin1String(key);
             out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
         }
+        // Absent while the anchor sits at the layer's centre.
+        const drift::KeyframeTrack<double> *const anchors[] = {&clip.anchorX, &clip.anchorY, &clip.anchorZ};
+        const char *const anchorKeys[] = {"anchorX", "anchorY", "anchorZ"};
+        for (int i = 0; i < 3; ++i) {
+            if (!anchors[i]->isEmpty()) {
+                const QString k = QLatin1String(anchorKeys[i]);
+                out.insert(k, m_app->propertyValueAt(trackIndex, clipIndex, k, at, 0));
+            }
+        }
     }
     return out;
 }
@@ -661,7 +670,8 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
                         const QVariantMap canvas = compactClip(t, c, true);
                         QVariantMap transform;
                         for (const char *key : {"x", "y", "w", "h", "rotation", "opacity", "layer3d",
-                                                "rotationX", "rotationY", "z", "perspective"}) {
+                                                "rotationX", "rotationY", "z", "perspective",
+                                                "anchorX", "anchorY", "anchorZ"}) {
                             if (canvas.contains(QLatin1String(key)))
                                 transform.insert(QLatin1String(key), canvas.value(QLatin1String(key)));
                         }
@@ -712,7 +722,8 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
         {QStringLiteral("dur"), drift::usToSeconds(m_app->m_project.durationUs())},
         {QStringLiteral("playhead"), m_app->playheadSeconds()},
         {QStringLiteral("playing"), m_app->playing()},
-        {QStringLiteral("preview_mode"), m_app->preview()->mode()},
+        {QStringLiteral("preview_mode"),
+         m_app->preview()->viewport3dOpen() ? QStringLiteral("3d") : QStringLiteral("2d")},
         {QStringLiteral("overlap"), m_app->m_allowClipOverlap},
         {QStringLiteral("clips"), clipCount},
         {QStringLiteral("tracks"), trackRows},
@@ -724,7 +735,7 @@ QJsonObject McpController::inspect(const InspectOptions &options) const
          QJsonObject{{QStringLiteral("active"), m_app->m_exportInProgress},
                      {QStringLiteral("progress"), m_app->m_exportProgress}}},
     };
-    if (m_app->preview()->mode() == QLatin1String("3d"))
+    if (m_app->preview()->viewport3dOpen())
         extra.insert(QStringLiteral("look_through"), m_app->preview()->lookThrough());
     if (detail) {
         QJsonArray marks;
@@ -916,6 +927,9 @@ bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantM
     write(QStringLiteral("rotationY"), QStringLiteral("rotationY"));
     write(QStringLiteral("z"), QStringLiteral("z"));
     write(QStringLiteral("perspective"), QStringLiteral("perspective"));
+    write(QStringLiteral("anchorX"), QStringLiteral("anchorX"));
+    write(QStringLiteral("anchorY"), QStringLiteral("anchorY"));
+    write(QStringLiteral("anchorZ"), QStringLiteral("anchorZ"));
     write(QStringLiteral("opacity"), QStringLiteral("opacity"));
     // After the value writes, so an explicit layer3d:false wins over their auto-enable.
     if (patch.contains(QStringLiteral("layer3d")) && clip.type != drift::ClipType::Model3d) {

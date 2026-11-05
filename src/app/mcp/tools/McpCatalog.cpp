@@ -70,7 +70,7 @@ QJsonObject effectKindProp()
 QJsonObject animPropProp()
 {
     return stringProp(QStringLiteral(
-        "Animated property: x, y, width, height, rotation, rotationX, rotationY, z, perspective, "
+        "Animated property: x, y, width, height, rotation, rotationX, rotationY, z, anchorX, anchorY, anchorZ, perspective, "
         "opacity, volume, fx.<effectIndex>.<paramKey>, afx.<audioEffectIndex>.<paramKey> "
         "(e.g. fx.0.amount), mask.<x|y|w|h|rotation|feather>, or on a text/subtitle clip text.<key> with "
         "key one of pixelSize, letterSpacing, lineHeight, boxPadding, pathBend, or a shading layer field "
@@ -83,10 +83,11 @@ QJsonObject animPropProp()
         "geometry knobs shape.<cornerRadius|points|innerRatio|headSize|thickness|tailX|tailSize>. On "
         "an SVG vector clip the svg.* overrides: vector.svg.<strokeWidth|opacity>, "
         "vector.svg.<fill|stroke>.<r|g|b|a>, or the same under vector.svg.<elementId>. On a 3D "
-        "model clip model3d.<ambient|light<n>_<x|y|z|intensity|radius|cone|aimX|aimY>> (n 1..4); a model is placed by its "
+        "model clip model3d.<ambient|modelScale|modelScaleZ|light<n>_<x|y|z|intensity|radius|cone|aimX|aimY>> (n 1..4); a model is placed by its "
         "transform like any 3D layer (x, y, width, height, z, rotationX, rotationY, rotation, "
         "perspective), and the older model3d.<scale|depth|rotX|rotY|rotZ> are still accepted as "
-        "shorthands that write those. On a PDF clip pdf.scrollX and pdf.scrollY (page units: 1 moves "
+        "shorthands that write those; model3d.modelScale and modelScaleZ resize the model about the clip's anchor "
+        "(modelScaleZ only its depth). On a PDF clip pdf.scrollX and pdf.scrollY (page units: 1 moves "
         "one page, or one grid row/column) and pdf.zoom (0.1..10). "
         "Note width/height here vs w/h in set_transform. Spellings live in this "
 "schema — list_animated_properties returns only properties that already have keys (empty on a "
@@ -576,7 +577,7 @@ const QList<Op> &ops()
         { "make_transform_layer", "timeline", "Move several tracks as one",
           "Add a transform layer directly above the topmost track holding one of `clips`, covering "
           "down to the lowest, with one clip over their time range (or [at, at+dur)). The clips keep "
-          "their own transforms; set_transform on the returned clip moves, scales, rotates, tilts "
+          "their own transforms; set_transform on the returned clip moves, scales, rotates, turns in 3D "
           "(layer3d) and fades the whole group. One undo step. Returns {clip, track, index, "
           "span:{end, covers}}.",
           objectSchema({{QStringLiteral("clips"), arrayProp({{QStringLiteral("type"), QStringLiteral("string")}},
@@ -586,14 +587,18 @@ const QList<Op> &ops()
                         {QStringLiteral("name"), stringProp(QStringLiteral("Name for the transform clip"))}},
                        {QStringLiteral("clips")}) },
         { "add_camera", "timeline", "Add the scene camera, or cut to a new framing",
-          "One viewpoint the whole timeline is seen through: pan, dolly, orbit, roll and lens, all "
-          "animatable. Adds the camera lane if it is missing. Without `at` the clip covers the "
-          "whole sequence (what a first camera wants); with `at` it is one clip starting there, so "
-          "two in a row read as a camera cut. A camera at rest looks exactly like no camera, so "
-          "adding one changes nothing until you move it. Frame it with set_keyframe on the returned "
-          "clip using x/y (pan), z (dolly), rotationX/rotationY (pitch/yaw), rotation (roll) and "
-          "perspective (lens); with no keys, set_transform moves it too. While a camera runs it "
-          "replaces each clip's own perspective, because a scene has one viewer. "
+          "One viewpoint the whole timeline is seen through: position, rotation, an optional point "
+          "of interest and zoom, all animatable. Adds the camera lane if it is missing. Without `at` "
+          "the clip covers the whole sequence (what a first camera wants); with `at` it is one clip "
+          "starting there, so two in a row read as a camera cut. A camera at rest looks exactly like "
+          "no camera, so adding one changes nothing until you move it. Frame it with set_keyframe on "
+          "the returned clip using x/y/z (the eye, world px: canvas top-left origin, y down, +z away "
+          "from the viewer; at rest [w/2, h/2, -zoom]), rotationX/rotationY/rotation (pitch, yaw, "
+          "roll, degrees; yaw is applied first, so the horizon stays level with zero roll), "
+          "anchorX/anchorY/anchorZ (the point of interest, used when camera_look_at is given "
+          "aimAtTarget:true) and perspective (zoom, px; real zoom, the eye does not move). With no "
+          "keys, set_transform moves it too. While a camera runs it replaces each clip's own "
+          "perspective, because a scene has one viewer. "
           "Returns {clip, track, index}.",
           objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Start in seconds (default: the whole sequence)"))},
                         {QStringLiteral("dur"), numberProp(QStringLiteral("Duration in seconds; only with `at`"))},
@@ -718,7 +723,8 @@ const QList<Op> &ops()
                        {QStringLiteral("enabled")}) },
 
         { "set_transform", "canvas", "Position, size, rotate, fade a clip",
-          "Set canvas transform in project-canvas pixels (0,0 = canvas top-left). Omitted fields are "
+          "Set canvas transform in project-canvas pixels (0,0 = canvas top-left). 3D follows After Effects: "
+          "x right, y down, z AWAY from the viewer (right-handed), and rotations pivot on the anchor point. Omitted fields are "
           "left unchanged. IMPORTANT: if the property is already animated (2+ keys), or autoKey is "
           "on, the write creates/updates a keyframe at the CURRENT PLAYHEAD instead of setting a "
           "constant value, so seek first; a property with 0 or 1 key just takes the value. Use set_property_keyframes_enabled(false) or "
@@ -730,14 +736,17 @@ const QList<Op> &ops()
                                    {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
                                    {QStringLiteral("rotation"), numberProp(QStringLiteral("Degrees clockwise"))},
                                    {QStringLiteral("layer3d"), boolProp(QStringLiteral("Make the clip a 3D layer (true) or flat (false). Writing any of the 3D fields below turns it on; false resets them to 0 and the default perspective"))},
-                                   {QStringLiteral("rotationX"), numberProp(QStringLiteral("3D tilt in degrees; + tips the top edge away"))},
-                                   {QStringLiteral("rotationY"), numberProp(QStringLiteral("3D tilt in degrees; + swings the right edge away"))},
-                                   {QStringLiteral("z"), numberProp(QStringLiteral("Depth in pixels; + toward the viewer, - away"))},
-                                   {QStringLiteral("perspective"), numberProp(QStringLiteral("Eye distance from the canvas centre in pixels (default 2000); smaller = stronger perspective"))},
+                                   {QStringLiteral("rotationX"), numberProp(QStringLiteral("Rotation about X in degrees (right-handed; + tips the top edge toward the viewer)"))},
+                                   {QStringLiteral("rotationY"), numberProp(QStringLiteral("Rotation about Y in degrees (right-handed; + swings the right edge toward the viewer)"))},
+                                   {QStringLiteral("z"), numberProp(QStringLiteral("Position Z in pixels; + away from the viewer, - toward it (After Effects' convention)"))},
+                                   {QStringLiteral("anchorX"), numberProp(QStringLiteral("Anchor point X in pixels from the clip's left edge: the pivot for rotation. Unset = the clip centre; setting it pins the anchor"))},
+                                   {QStringLiteral("anchorY"), numberProp(QStringLiteral("Anchor point Y in pixels from the clip's top edge. Unset = the clip centre"))},
+                                   {QStringLiteral("anchorZ"), numberProp(QStringLiteral("Anchor point Z in pixels out of the clip's plane (+ away from the viewer; default 0)"))},
+                                   {QStringLiteral("perspective"), numberProp(QStringLiteral("Eye distance from the canvas centre in pixels; smaller = stronger perspective. The default follows the project height (a 50 mm lens on a 36 mm film back: 2250 for a 1080 px canvas)"))},
                                    {QStringLiteral("opacity"), numberProp(QStringLiteral("Opacity"), 0, 1)}},
                                   clipRefProps())) },
         { "reset_transform", "canvas", "Reset a clip's position, size and rotation",
-          "Reset position, size, rotation, 3D tilt/depth/perspective (and the 3D layer switch), opacity, and flips to defaults. "
+          "Reset position, size, rotation, 3D rotation/position Z/anchor/perspective (and the 3D layer switch), opacity, and flips to defaults. "
           "Video, image and vector clips return to their own shape fitted and centred on the canvas; other clips fill the canvas.",
           objectSchema(clipRefProps()) },
 

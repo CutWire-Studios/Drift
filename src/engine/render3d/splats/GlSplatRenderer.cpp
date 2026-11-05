@@ -350,7 +350,8 @@ GlTarget drawSplatClip(GlRuntime &rt, QOpenGLExtraFunctions *gl, const model3d::
 
     const QSizeF canvas = request.canvas.isEmpty() ? QSizeF(canvasSize) : request.canvas;
     const QMatrix4x4 world = modelClipWorld(request.rect, request.rotation, request.pose3d, data.fitMin,
-                                            data.fitMax, canvas);
+                                            data.fitMax, canvas, request.params.scale,
+                                            request.params.scaleZ);
     QMatrix4x4 ndc;
     ndc.translate(-1.f, -1.f);
     ndc.scale(2.f / float(outW), 2.f / float(outH));

@@ -2086,6 +2086,9 @@ void AppController::pasteAttributes(const QVariantMap &options)
             targetClip.rotationY = rescaleKeyframeTrackTimes(sourceClip.rotationY, srcDurationUs, targetDurationUs);
             targetClip.positionZ = rescaleKeyframeTrackTimes(sourceClip.positionZ, srcDurationUs, targetDurationUs);
             targetClip.perspective = rescaleKeyframeTrackTimes(sourceClip.perspective, srcDurationUs, targetDurationUs);
+            targetClip.anchorX = rescaleKeyframeTrackTimes(sourceClip.anchorX, srcDurationUs, targetDurationUs);
+            targetClip.anchorY = rescaleKeyframeTrackTimes(sourceClip.anchorY, srcDurationUs, targetDurationUs);
+            targetClip.anchorZ = rescaleKeyframeTrackTimes(sourceClip.anchorZ, srcDurationUs, targetDurationUs);
             targetClip.layer3d = sourceClip.layer3d && targetClip.type != drift::ClipType::Model3d;
             targetClip.opacity = rescaleKeyframeTrackTimes(sourceClip.opacity, srcDurationUs, targetDurationUs);
             targetClip.blendMode = sourceClip.blendMode;

@@ -648,6 +648,9 @@ QJsonObject McpDispatcher::clipFeedback(const ClipRef &ref, const QJsonObject &e
     copyNum("rotationY", "rotationY");
     copyNum("z", "z");
     copyNum("perspective", "perspective");
+    copyNum("anchorX", "anchorX");
+    copyNum("anchorY", "anchorY");
+    copyNum("anchorZ", "anchorZ");
     return out;
 }
 
@@ -1487,7 +1490,8 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
         return clipRefError(args);
     QVariantMap patch;
     for (const char *key :
-         {"x", "y", "w", "h", "rotation", "rotationX", "rotationY", "z", "perspective", "opacity"}) {
+         {"x", "y", "w", "h", "rotation", "rotationX", "rotationY", "z", "perspective", "anchorX", "anchorY",
+          "anchorZ", "opacity"}) {
         const QString k = QString::fromUtf8(key);
         if (args.contains(k))
             patch.insert(k, jsonNumber(args.value(k), 0));

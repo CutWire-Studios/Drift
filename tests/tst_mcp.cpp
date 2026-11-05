@@ -4232,9 +4232,10 @@ void McpTest::model3dKeyframesAndOptions()
     const QPair<int, int> loc = state.mcp()->locateClip(id);
     const int track = loc.first;
     const int clip = loc.second;
-    // A model is a 3D layer: the old rotY shorthand lands on the clip's own rotation.
+    // A model is a 3D layer: the old rotY shorthand lands on the clip's own rotation, turned the
+    // other way because the world's z points away from the viewer.
     QVariantMap model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotationY"), 0.0, 0.0), 30.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotationY"), 0.0, 0.0), -30.0);
     QVERIFY(state.clipAt(track, clip).value(QStringLiteral("layer3d")).toBool());
     QCOMPARE(model.value(QStringLiteral("loop")).toString(), QStringLiteral("hold"));
     QCOMPARE(state.clipAt(track, clip).value(QStringLiteral("duration")).toDouble(), 4.0);
@@ -4254,7 +4255,7 @@ void McpTest::model3dKeyframesAndOptions()
                              {QStringLiteral("at"), 2.0}, {QStringLiteral("value"), 180.0}});
     QVERIFY(r.value(QStringLiteral("ok")).toBool());
     // The legacy key keyframes the clip's rotationY.
-    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotationY"), 1.0, 0.0), 90.0);
+    QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("rotationY"), 1.0, 0.0), -90.0);
     QVERIFY(state.clipAnimatedProperties(track, clip).contains(QStringLiteral("rotationY")));
     // And the light keys still live on the model.
     r = dispatcher.applyOne(QStringLiteral("set_keyframe"),
@@ -4288,6 +4289,17 @@ void McpTest::model3dKeyframesAndOptions()
              centreX);
     model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
     QCOMPARE(model.value(QStringLiteral("animation")).toInt(), 0);
+    // modelScale / modelScaleZ are plain options too, default 1, and clamp.
+    QCOMPARE(model.value(QStringLiteral("modelScale")).toDouble(), 1.0);
+    QCOMPARE(model.value(QStringLiteral("modelScaleZ")).toDouble(), 1.0);
+    r = dispatcher.applyOne(QStringLiteral("set_model3d_options"),
+                            {{QStringLiteral("clip"), id}, {QStringLiteral("modelScale"), 2.0},
+                             {QStringLiteral("modelScaleZ"), 0.5}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
+    model = state.clipAt(track, clip).value(QStringLiteral("model3d")).toMap();
+    QCOMPARE(model.value(QStringLiteral("modelScale")).toDouble(), 2.0);
+    QCOMPARE(model.value(QStringLiteral("modelScaleZ")).toDouble(), 0.5);
+    state.undo();
     // depth clamps to the old 0..1 and becomes the eye distance.
     QCOMPARE(state.setModel3dOptions(track, clip, {{QStringLiteral("depth"), 3.0}}), QString());
     QCOMPARE(state.propertyValueAt(track, clip, QStringLiteral("perspective"), 0.0, 0.0),
@@ -4349,26 +4361,46 @@ void McpTest::sceneCameraTools()
     QCOMPARE(cs.value(QStringLiteral("clip")).toString(), camera);
     QCOMPARE(cs.value(QStringLiteral("rotationY")).toDouble(), 0.0);
     QCOMPARE(cs.value(QStringLiteral("eye")).toArray().size(), 3);
-    QCOMPARE(cs.value(QStringLiteral("eye")).toArray().at(2).toDouble(), cs.value(QStringLiteral("perspective")).toDouble());
+    // The eye is in the 3D world: in front of the canvas centre, z away from the viewer.
+    QCOMPARE(cs.value(QStringLiteral("eye")).toArray().at(2).toDouble(), -cs.value(QStringLiteral("zoom")).toDouble());
+    const double halfWidth = state.project()->width() / 2.0;
+    const double halfHeight = state.project()->height() / 2.0;
+    QCOMPARE(cs.value(QStringLiteral("eye")).toArray().at(0).toDouble(), halfWidth);
+    QCOMPARE(cs.value(QStringLiteral("eye")).toArray().at(1).toDouble(), halfHeight);
+    // The same value in the other lens units: the default is a 50 mm lens.
+    QVERIFY(qAbs(cs.value(QStringLiteral("focalLength")).toDouble() - 50.0) < 1e-6);
+    QVERIFY(qAbs(cs.value(QStringLiteral("fov")).toDouble() - 26.99) < 0.01);
+    QVERIFY(!cs.value(QStringLiteral("aimAtTarget")).toBool());
 
-    // Off-centre point to the right and above: yaws right (negative), pitches up (negative).
-    QJsonObject look = call("camera_look_at", {{QStringLiteral("target"), QJsonObject{{QStringLiteral("x"), 400}, {QStringLiteral("y"), -200}}}});
+    // Off-centre point to the right and above: yaws right (positive), pitches up (positive), no roll.
+    QJsonObject look = call("camera_look_at", {{QStringLiteral("target"), QJsonObject{{QStringLiteral("x"), halfWidth + 400}, {QStringLiteral("y"), halfHeight - 200}}}});
     QVERIFY2(look.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(look).toJson(QJsonDocument::Compact)));
     cs = call("get_camera_state", {{QStringLiteral("at"), 0.0}});
-    QVERIFY(cs.value(QStringLiteral("rotationY")).toDouble() < -1.0);
-    QVERIFY(cs.value(QStringLiteral("rotationX")).toDouble() < -1.0);
-    QVERIFY(qAbs(cs.value(QStringLiteral("eye")).toArray().at(0).toDouble()) < 0.1);
+    QVERIFY(cs.value(QStringLiteral("rotationY")).toDouble() > 1.0);
+    QVERIFY(cs.value(QStringLiteral("rotationX")).toDouble() > 1.0);
+    QCOMPARE(cs.value(QStringLiteral("rotation")).toDouble(), 0.0);
+    QVERIFY(qAbs(cs.value(QStringLiteral("eye")).toArray().at(0).toDouble() - halfWidth) < 0.1);
     // A clip as target works and a camera cannot look at itself.
     QVERIFY(call("camera_look_at", {{QStringLiteral("target"), subject}}).value(QStringLiteral("ok")).toBool());
     QVERIFY(!call("camera_look_at", {{QStringLiteral("target"), camera}}).value(QStringLiteral("ok")).toBool());
     QVERIFY(!call("camera_look_at", {{QStringLiteral("target"), QJsonObject{{QStringLiteral("x"), 1}}}}).value(QStringLiteral("ok")).toBool());
     QVERIFY(!call("camera_look_at", {}).value(QStringLiteral("ok")).toBool());
 
-    // reset clears it (the lens stays).
+    // Locking on the target writes the point of interest and leaves the rotation offset at zero.
+    QVERIFY(call("camera_look_at", {{QStringLiteral("target"), QJsonObject{{QStringLiteral("x"), halfWidth + 400}, {QStringLiteral("y"), halfHeight}}},
+                                    {QStringLiteral("aimAtTarget"), true}}).value(QStringLiteral("ok")).toBool());
+    cs = call("get_camera_state", {{QStringLiteral("at"), 0.0}});
+    QVERIFY(cs.value(QStringLiteral("aimAtTarget")).toBool());
+    QCOMPARE(cs.value(QStringLiteral("poi")).toArray().at(0).toDouble(), halfWidth + 400);
+    QCOMPARE(cs.value(QStringLiteral("rotationY")).toDouble(), 0.0);
+
+    // reset clears it, the zoom and the aim included.
     QVERIFY(call("reset_camera", {}).value(QStringLiteral("ok")).toBool());
     cs = call("get_camera_state", {});
     QCOMPARE(cs.value(QStringLiteral("rotationY")).toDouble(), 0.0);
-    QCOMPARE(cs.value(QStringLiteral("x")).toDouble(), 0.0);
+    QCOMPARE(cs.value(QStringLiteral("x")).toDouble(), halfWidth);
+    QVERIFY(!cs.value(QStringLiteral("aimAtTarget")).toBool());
+    const double restZ = cs.value(QStringLiteral("z")).toDouble();
 
     // A move writes two keys; the middle sits between them; it is one undo step.
     const QJsonObject move = call("camera_move", {{QStringLiteral("move"), QStringLiteral("dolly_in")},
@@ -4380,9 +4412,9 @@ void McpTest::sceneCameraTools()
     const double z0 = call("get_camera_state", {{QStringLiteral("at"), 0.0}}).value(QStringLiteral("z")).toDouble();
     const double zm = call("get_camera_state", {{QStringLiteral("at"), 1.0}}).value(QStringLiteral("z")).toDouble();
     const double z1 = call("get_camera_state", {{QStringLiteral("at"), 2.0}}).value(QStringLiteral("z")).toDouble();
-    QCOMPARE(z0, 0.0);
-    QCOMPARE(z1, -400.0);
-    QVERIFY(zm < z0 && zm > z1);
+    QCOMPARE(z0, restZ);
+    QVERIFY(qAbs(z1 - (restZ + 400.0)) < 1e-6);
+    QVERIFY(zm > z0 && zm < z1);
     state.undo();
     QVERIFY(call("list_keyframes", {{QStringLiteral("clip"), camera}, {QStringLiteral("prop"), QStringLiteral("z")}}).value(QStringLiteral("keys")).toArray().isEmpty());
     state.redo();
@@ -4392,12 +4424,12 @@ void McpTest::sceneCameraTools()
     QVERIFY(call("camera_move", {{QStringLiteral("move"), QStringLiteral("pan_right")}, {QStringLiteral("start"), 3.0}, {QStringLiteral("end"), 4.0}})
                 .value(QStringLiteral("ok")).toBool());
     const QJsonObject panned = call("get_camera_state", {{QStringLiteral("at"), 4.0}});
-    QVERIFY(panned.value(QStringLiteral("rotationY")).toDouble() < -1.0);
+    QVERIFY(panned.value(QStringLiteral("rotationY")).toDouble() > 1.0);
     QVERIFY(qAbs(panned.value(QStringLiteral("eye")).toArray().at(0).toDouble() - eyeX) < 0.1);
     // Orbit around a point moves the eye.
     QVERIFY(call("camera_move", {{QStringLiteral("move"), QStringLiteral("orbit_right")}, {QStringLiteral("start"), 4.2}, {QStringLiteral("end"), 4.9}})
                 .value(QStringLiteral("ok")).toBool());
-    QVERIFY(call("get_camera_state", {{QStringLiteral("at"), 4.9}}).value(QStringLiteral("eye")).toArray().at(0).toDouble() > 100.0);
+    QVERIFY(call("get_camera_state", {{QStringLiteral("at"), 4.9}}).value(QStringLiteral("eye")).toArray().at(0).toDouble() > halfWidth + 100.0);
 
     // Bad arguments.
     QVERIFY(!call("camera_move", {{QStringLiteral("move"), QStringLiteral("zoom")}, {QStringLiteral("start"), 0}, {QStringLiteral("end"), 1}}).value(QStringLiteral("ok")).toBool());
@@ -5330,13 +5362,13 @@ void McpTest::setTransformWrites3dPose()
     QVERIFY(!clip.isEmpty());
 
     const QJsonObject r = dispatcher.applyOne(
-        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("rotationY"), 30.0}});
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("rotationY"), -30.0}});
     QVERIFY2(r.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(r).toJson(QJsonDocument::Compact)));
     // Writing a 3D value makes the clip a 3D layer, or the write would render nothing.
     QVERIFY(r.value(QStringLiteral("layer3d")).toBool());
-    QCOMPARE(r.value(QStringLiteral("rotationY")).toDouble(), 30.0);
+    QCOMPARE(r.value(QStringLiteral("rotationY")).toDouble(), -30.0);
     QCOMPARE(r.value(QStringLiteral("z")).toDouble(), 0.0);
-    QCOMPARE(r.value(QStringLiteral("perspective")).toDouble(), drift::kDefaultClipPerspective);
+    QCOMPARE(r.value(QStringLiteral("perspective")).toDouble(), drift::defaultClipPerspective(state.project()->height()));
 
     const QPair<int, int> loc = state.mcp()->locateClip(clip);
     QVariantMap box;
@@ -5346,18 +5378,34 @@ void McpTest::setTransformWrites3dPose()
             && m.value(QStringLiteral("clip")).toInt() == loc.second)
             box = m;
     }
-    QCOMPARE(box.value(QStringLiteral("rotationY")).toDouble(), 30.0);
+    QCOMPARE(box.value(QStringLiteral("rotationY")).toDouble(), -30.0);
 
-    // Hit-testing goes through the projection: the flat box's own edge is outside the tilted quad.
+    // Hit-testing goes through the projection (a negative Y rotation swings the right edge away): the flat box's own edge is outside the tilted quad.
     const double cx = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() / 2;
     const double cy = box.value(QStringLiteral("y")).toDouble() + box.value(QStringLiteral("height")).toDouble() / 2;
     QCOMPARE(state.preview()->clipAtCanvasPoint(cx, cy).value(QStringLiteral("clip")).toInt(), loc.second);
     const double flatRight = box.value(QStringLiteral("x")).toDouble() + box.value(QStringLiteral("width")).toDouble() - 1;
     QVERIFY(state.preview()->clipAtCanvasPoint(flatRight, cy).isEmpty());
 
+    // The anchor point is the pivot: unset until written, then reported with the other 3D fields.
+    QVERIFY(!r.contains(QStringLiteral("anchorX")));
+    const QJsonObject anchored = dispatcher.applyOne(
+        QStringLiteral("set_transform"),
+        {{QStringLiteral("clip"), clip}, {QStringLiteral("anchorX"), 12.0}, {QStringLiteral("anchorY"), 34.0},
+         {QStringLiteral("anchorZ"), -5.0}});
+    QVERIFY2(anchored.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(anchored).toJson(QJsonDocument::Compact)));
+    QCOMPARE(anchored.value(QStringLiteral("anchorX")).toDouble(), 12.0);
+    QCOMPARE(anchored.value(QStringLiteral("anchorY")).toDouble(), 34.0);
+    QCOMPARE(anchored.value(QStringLiteral("anchorZ")).toDouble(), -5.0);
+    QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("anchorX"), 0.0, 0.0), 12.0);
+    state.undo();
+    QVERIFY(state.clipAt(loc.first, loc.second).value(QStringLiteral("keyframes")).toMap()
+                .value(QStringLiteral("anchorX")).toMap().value(QStringLiteral("points")).toList().isEmpty());
+    state.redo();
+
     const QJsonObject pushed = dispatcher.applyOne(
-        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("z"), -500.0}});
-    QCOMPARE(pushed.value(QStringLiteral("z")).toDouble(), -500.0);
+        QStringLiteral("set_transform"), {{QStringLiteral("clip"), clip}, {QStringLiteral("z"), 500.0}});
+    QCOMPARE(pushed.value(QStringLiteral("z")).toDouble(), 500.0);
 
     // Switching 3D off flattens the clip: the pose goes back to zero.
     const QJsonObject flat = dispatcher.applyOne(
@@ -5405,7 +5453,7 @@ void McpTest::setTransformWrites3dPose()
     QVERIFY(reset.value(QStringLiteral("ok")).toBool());
     QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("rotationY"), 0.0, 0.0), 0.0);
     QCOMPARE(state.propertyValueAt(loc.first, loc.second, QStringLiteral("perspective"), 0.0, 0.0),
-             drift::kDefaultClipPerspective);
+             drift::defaultClipPerspective(state.project()->height()));
 }
 
 void McpTest::validateRejectsWrongType()
@@ -5958,7 +6006,7 @@ void McpTest::previewViewTools()
     const QJsonObject on = call({{QStringLiteral("mode"), QStringLiteral("3d")}});
     QVERIFY(on.value(QStringLiteral("ok")).toBool());
     QCOMPARE(on.value(QStringLiteral("mode")).toString(), QStringLiteral("3d"));
-    QCOMPARE(state.preview()->mode(), QStringLiteral("3d"));
+    QVERIFY(state.preview()->viewport3dOpen());
     QCOMPARE(state.mcp()->inspect(false).value(QStringLiteral("preview_mode")).toString(), QStringLiteral("3d"));
 
     const QJsonObject moved = call({{QStringLiteral("axis"), QStringLiteral("top")},
@@ -5973,7 +6021,7 @@ void McpTest::previewViewTools()
     QCOMPARE(state.mcp()->inspect(false).value(QStringLiteral("look_through")).toBool(), true);
 
     const QJsonObject back = call({{QStringLiteral("mode"), QStringLiteral("2d")}, {QStringLiteral("reset"), true}});
-    QCOMPARE(back.value(QStringLiteral("mode")).toString(), QStringLiteral("2d"));
+    QCOMPARE(back.value(QStringLiteral("mode")).toString(), QStringLiteral("3d"));
     QCOMPARE(back.value(QStringLiteral("look_through")).toBool(), false);
 
     for (const QJsonObject &bad : {QJsonObject{{QStringLiteral("mode"), QStringLiteral("4d")}},
@@ -5981,7 +6029,7 @@ void McpTest::previewViewTools()
                                    QJsonObject{{QStringLiteral("orbit"), QJsonArray{1}}},
                                    QJsonObject{{QStringLiteral("pan"), QJsonArray{1, 2, 3}}}})
         QCOMPARE(call(bad).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
-    QCOMPARE(state.preview()->mode(), QStringLiteral("2d"));
+    QVERIFY(state.preview()->viewport3dOpen());
 
     QVERIFY(dispatcher.capture({{QStringLiteral("view"), QStringLiteral("sideways")}})
                 .value(QStringLiteral("isError")).toBool());

@@ -627,6 +627,9 @@ QVariantMap keyframesToMap(const drift::Clip &clip)
         {QStringLiteral("rotationY"), keyframeTrackToMap(clip.rotationY, clip.timelineStart)},
         {QStringLiteral("z"), keyframeTrackToMap(clip.positionZ, clip.timelineStart)},
         {QStringLiteral("perspective"), keyframeTrackToMap(clip.perspective, clip.timelineStart)},
+        {QStringLiteral("anchorX"), keyframeTrackToMap(clip.anchorX, clip.timelineStart)},
+        {QStringLiteral("anchorY"), keyframeTrackToMap(clip.anchorY, clip.timelineStart)},
+        {QStringLiteral("anchorZ"), keyframeTrackToMap(clip.anchorZ, clip.timelineStart)},
         {QStringLiteral("volume"), keyframeTrackToMap(clip.volume, clip.timelineStart)},
     };
 }
@@ -736,6 +739,9 @@ void remapKeyframesForRetime(drift::Clip &dst, const drift::Clip &src)
     remapKeyframeTrack(dst.rotationY, src.rotationY, src, dst);
     remapKeyframeTrack(dst.positionZ, src.positionZ, src, dst);
     remapKeyframeTrack(dst.perspective, src.perspective, src, dst);
+    remapKeyframeTrack(dst.anchorX, src.anchorX, src, dst);
+    remapKeyframeTrack(dst.anchorY, src.anchorY, src, dst);
+    remapKeyframeTrack(dst.anchorZ, src.anchorZ, src, dst);
     remapKeyframeTrack(dst.volume, src.volume, src, dst);
 
     for (int i = 0; i < dst.effects.size() && i < src.effects.size(); ++i) {
@@ -895,6 +901,7 @@ QVariantMap AppController::clipToMap(const drift::Clip &clip, const drift::Clip 
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("layer3d"), clip.layer3d},
         {QStringLiteral("depthOcclude"), clip.depthOcclude},
+        {QStringLiteral("aimAtTarget"), clip.aimAtTarget},
         {QStringLiteral("flipV"), clip.flipV},
         // Discrete lossless orientation fix, distinct from the free "rotation" keyframe track
         // below. "orientation" is the absolute result (what the inspector shows), the correction
@@ -1668,7 +1675,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("gizmoMove"), tr("3D gizmo: move / Tracker tool")),
         action(QStringLiteral("gizmoRotate"), tr("3D gizmo: rotate / Rectangle mask")),
         action(QStringLiteral("gizmoScale"), tr("3D gizmo: scale / Ellipse mask")),
-        action(QStringLiteral("gizmoOrientation"), tr("3D gizmo: switch global/local axes")),
+        action(QStringLiteral("gizmoOrientation"), tr("3D gizmo: cycle world/local/view axes")),
         action(QStringLiteral("toggleBookmark"), tr("Add/remove bookmark at current time")),
         action(QStringLiteral("nextBookmark"), tr("Go to next bookmark")),
         action(QStringLiteral("previousBookmark"), tr("Go to previous bookmark")),

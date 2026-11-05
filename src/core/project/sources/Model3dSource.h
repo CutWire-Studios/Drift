@@ -29,8 +29,8 @@ struct Model3dAnimationRef
 };
 
 // One of a model clip's lights, placed the way 3D Relight places its own: x and y across the
-// clip's rect (0..1 spans it), z in clip heights from the model's centre (negative is nearer the
-// viewer), and its reach in clip heights. The frame follows the clip's position and size but not
+// clip's rect (0..1 spans it), z in clip heights from the clip's plane (positive is farther from
+// the viewer, like the world's z; negative is nearer), and its reach in clip heights. The frame follows the clip's position and size but not
 // its rotation, so turning the model moves the light across it. A spot (cone under 180 degrees)
 // points at (aimX, aimY) on the plane through the model's centre. See modelLightFrame.
 struct ModelLight
@@ -69,6 +69,11 @@ struct Model3dSource
     // plain values (setModel3dLightOption).
     std::array<ModelLight, kModelLightCount> lights = defaultModelLights();
     double ambient = 0.35;
+    // Keyed as "modelScale" and "modelScaleZ". Uniform size about the clip's anchor, and a further
+    // multiplier on the depth alone (the depth is otherwise the geometric mean of the width and
+    // height scales). 1 and 1 draws the model as fitted to the clip's rect.
+    double modelScale = 1.0;
+    double modelScaleZ = 1.0;
     QMap<QString, KeyframeTrack<double>> keyframes; // clip-relative times
 
     // The pose a project from before format 13 kept here, read so Project can move it onto the
@@ -96,7 +101,7 @@ struct Model3dSource
     static Model3dSource fromJson(const QJsonObject &o);
 };
 
-// Fixed order: ambient, then each light's x, y, z, intensity, radius, cone, aimX, aimY.
+// Fixed order: ambient, modelScale, modelScaleZ, then each light's x, y, z, intensity, radius, cone, aimX, aimY.
 const QStringList &model3dKeyframeProperties();
 bool model3dScalar(const Model3dSource &source, const QString &key, double *out);
 // Clamps into the value's valid range. False for an unknown key.

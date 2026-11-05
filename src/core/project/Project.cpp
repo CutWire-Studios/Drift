@@ -1,5 +1,6 @@
 #include "core/project/Project.h"
 
+#include "core/base/CameraEuler.h"
 #include "core/project/clip/Clip.h"
 #include "core/project/SubtitleCue.h"
 #include "core/edit/TimelineOps.h"
@@ -345,6 +346,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("layer3d"), true);
     if (clip.depthOcclude)
         json.insert(QStringLiteral("depthOcclude"), true);
+    if (clip.aimAtTarget)
+        json.insert(QStringLiteral("aimAtTarget"), true);
     if (!clip.rotationX.isEmpty())
         json.insert(QStringLiteral("rotationX"), keyframesToJson(clip.rotationX));
     if (!clip.rotationY.isEmpty())
@@ -353,6 +356,12 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("z"), keyframesToJson(clip.positionZ));
     if (!clip.perspective.isEmpty())
         json.insert(QStringLiteral("perspective"), keyframesToJson(clip.perspective));
+    if (!clip.anchorX.isEmpty())
+        json.insert(QStringLiteral("anchorX"), keyframesToJson(clip.anchorX));
+    if (!clip.anchorY.isEmpty())
+        json.insert(QStringLiteral("anchorY"), keyframesToJson(clip.anchorY));
+    if (!clip.anchorZ.isEmpty())
+        json.insert(QStringLiteral("anchorZ"), keyframesToJson(clip.anchorZ));
     return json;
 }
 
@@ -478,13 +487,18 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.rotationY = keyframesFromJson(object.value(QStringLiteral("rotationY")).toObject());
     clip.positionZ = keyframesFromJson(object.value(QStringLiteral("z")).toObject());
     clip.perspective = keyframesFromJson(object.value(QStringLiteral("perspective")).toObject());
+    clip.anchorX = keyframesFromJson(object.value(QStringLiteral("anchorX")).toObject());
+    clip.anchorY = keyframesFromJson(object.value(QStringLiteral("anchorY")).toObject());
+    clip.anchorZ = keyframesFromJson(object.value(QStringLiteral("anchorZ")).toObject());
     clip.layer3d = object.value(QStringLiteral("layer3d")).toBool(false) || !clip.rotationX.isEmpty()
                    || !clip.rotationY.isEmpty() || !clip.positionZ.isEmpty()
-                   || !clip.perspective.isEmpty();
+                   || !clip.perspective.isEmpty() || !clip.anchorX.isEmpty() || !clip.anchorY.isEmpty()
+                   || !clip.anchorZ.isEmpty();
     // Only meaningful with a 3D pose, so a file that somehow carries it without one is read as
     // off rather than trusted — the compositor enforces the same rule.
     clip.depthOcclude =
         clip.layer3d && object.value(QStringLiteral("depthOcclude")).toBool(false);
+    clip.aimAtTarget = object.value(QStringLiteral("aimAtTarget")).toBool(false);
     clip.rotationCorrection = object.value(QStringLiteral("rotationCorrection")).toInt(0);
     clip.effects = effectsFromJson(object.value(QStringLiteral("effects")).toArray());
     clip.audioEffects = effectsFromJson(object.value(QStringLiteral("audioEffects")).toArray());
@@ -801,6 +815,9 @@ void detachClip(Clip &clip)
     clip.rotationY.detachSharedData();
     clip.positionZ.detachSharedData();
     clip.perspective.detachSharedData();
+    clip.anchorX.detachSharedData();
+    clip.anchorY.detachSharedData();
+    clip.anchorZ.detachSharedData();
     clip.volume.detachSharedData();
     clip.speedCurve.detachSharedData();
     clip.mask.points.detach();
@@ -959,6 +976,8 @@ QString Project::binFolderIdAt(int index) const
 
 namespace {
 
+constexpr double kDefaultClipPerspectiveLegacy = 2000.0;
+
 // A legacy model track with one sign flipped, tangents included.
 KeyframeTrack<double> scaledTrack(const KeyframeTrack<double> &source, double sign)
 {
@@ -972,6 +991,125 @@ KeyframeTrack<double> scaledTrack(const KeyframeTrack<double> &source, double si
         out.setKeyframe(it.key(), key);
     }
     return out;
+}
+
+// Version 22 moved the 3D world from "origin at the canvas centre, +z toward the viewer" (left-
+// handed) to "origin at the canvas top-left, +z away" (right-handed), After Effects style. In
+// stored terms that is a conjugation by F = diag(1, 1, -1) plus the origin shift, which the
+// layout does not see (transformX/Y were already the rect's top-left corner):
+//  - positionZ changes sign;
+//  - F Rx(a) F = Rx(-a) and F Ry(b) F = Ry(-b), F Rz(c) F = Rz(c): rotationX and rotationY change
+//    sign (tangents too) and the in-plane rotation stays, in the unchanged X, Y, Z order;
+//  - model lights already ran z away from the viewer, so they now agree with the clips and stay;
+//  - an empty perspective track used to mean 2000 px and now means "derive from the project
+//    height", so a 3D layer that relied on it gets the old value written down.
+// Camera clips are skipped here; migrateCameraTo22 rewrites them.
+void migrateWorldTo22(QList<Track> &tracks)
+{
+    for (Track &track : tracks) {
+        for (Clip &clip : track.clips) {
+            if (isCameraClip(clip))
+                continue;
+            clip.rotationX = scaledTrack(clip.rotationX, -1.0);
+            clip.rotationY = scaledTrack(clip.rotationY, -1.0);
+            clip.positionZ = scaledTrack(clip.positionZ, -1.0);
+            if (clip.layer3d && clip.perspective.isEmpty())
+                clip.perspective.setKeyframe(0, kDefaultClipPerspectiveLegacy);
+        }
+    }
+}
+
+// Version 22 also reworked the camera. It used to be stored in a camera frame (canvas-centred, y
+// down, +z toward the viewer) as C = Rx·Ry·Rz·T(P) with the eye at C·(0, 0, d), d being the
+// "perspective" track. It is now stored as the eye itself in the world (x, y, positionZ), the yaw-
+// first rotation Ry·Rx·Rz (rotationY, rotationX, rotation) and the zoom (perspective). For every
+// time at which any of the old tracks has a key, and at the clip start, the old camera is
+// evaluated and written back as one key of each new track, so the image is identical at those
+// times. The keys are plain linear ones: the tangents and eases of the old tracks described paths
+// through the old parameters, and between keys the new tracks interpolate the eye and the angles
+// directly, so the in-between path can differ. Euler angles are unwrapped from key to key so
+// interpolation never spins the long way round.
+void migrateCameraTo22(QList<Track> &tracks, double width, double height)
+{
+    QHash<QString, double> lensAtStart;
+    for (Track &track : tracks) {
+        for (Clip &clip : track.clips) {
+            if (!isCameraClip(clip))
+                continue;
+            const KeyframeTrack<double> *sources[] = {&clip.transformX, &clip.transformY, &clip.positionZ,
+                                                      &clip.rotationX,  &clip.rotationY,  &clip.rotation,
+                                                      &clip.perspective};
+            lensAtStart.insert(clip.id, std::max(1.0, clip.perspective.isEmpty()
+                                                          ? kDefaultClipPerspectiveLegacy
+                                                          : clip.perspective.evaluateAt(0)));
+            QList<TimeUs> times{0};
+            for (const KeyframeTrack<double> *source : sources)
+                times.append(source->keyframes().keys());
+            std::sort(times.begin(), times.end());
+            times.erase(std::unique(times.begin(), times.end()), times.end());
+
+            const auto at = [](const KeyframeTrack<double> &t, TimeUs time, double fallback) {
+                return t.isEmpty() ? fallback : t.evaluateAt(time);
+            };
+            KeyframeTrack<double> x, y, z, rx, ry, rz, zoom;
+            double previous[3] = {0.0, 0.0, 0.0};
+            for (const TimeUs time : times) {
+                const double d = std::max(1.0, at(clip.perspective, time, kDefaultClipPerspectiveLegacy));
+                const double p[3] = {at(clip.transformX, time, 0.0), at(clip.transformY, time, 0.0),
+                                     at(clip.positionZ, time, 0.0)};
+                const double rot[3] = {at(clip.rotationX, time, 0.0), at(clip.rotationY, time, 0.0),
+                                       at(clip.rotation, time, 0.0)};
+                const QMatrix4x4 world = cameraWorldFromLegacy(p, rot, d, width, height);
+                const QVector3D eye = world.map(QVector3D(0.f, 0.f, 0.f));
+                QMatrix4x4 turn = world;
+                turn.setColumn(3, QVector4D(0.f, 0.f, 0.f, 1.f));
+                double angles[3];
+                cameraEulerFromMatrix(turn, previous, angles);
+                std::copy(angles, angles + 3, previous);
+                x.setKeyframe(time, double(eye.x()));
+                y.setKeyframe(time, double(eye.y()));
+                z.setKeyframe(time, double(eye.z()));
+                rx.setKeyframe(time, angles[0]);
+                ry.setKeyframe(time, angles[1]);
+                rz.setKeyframe(time, angles[2]);
+                zoom.setKeyframe(time, d);
+            }
+            clip.transformX = x;
+            clip.transformY = y;
+            clip.positionZ = z;
+            clip.rotationX = rx;
+            clip.rotationY = ry;
+            clip.rotation = rz;
+            clip.perspective = zoom;
+            clip.anchorX = {};
+            clip.anchorY = {};
+            clip.anchorZ = {};
+            clip.aimAtTarget = false;
+        }
+    }
+    // A stabilizing tracker target remembers the camera it replaced in the old numbers; read them
+    // again as the eye and the yaw-first angles. The lens is taken at the camera clip's start.
+    for (Track &track : tracks) {
+        for (Clip &clip : track.clips) {
+            for (MotionTracker &tracker : clip.motionTrackers) {
+                for (TrackerTarget &target : tracker.targets) {
+                    const auto lens = lensAtStart.constFind(target.clipId);
+                    if (target.restCamera.size() < 6 || lens == lensAtStart.constEnd())
+                        continue;
+                    const double p[3] = {target.restCamera.at(0), target.restCamera.at(1), target.restCamera.at(2)};
+                    const double rot[3] = {target.restCamera.at(3), target.restCamera.at(4), target.restCamera.at(5)};
+                    const QMatrix4x4 world = cameraWorldFromLegacy(p, rot, lens.value(), width, height);
+                    const QVector3D eye = world.map(QVector3D(0.f, 0.f, 0.f));
+                    QMatrix4x4 turn = world;
+                    turn.setColumn(3, QVector4D(0.f, 0.f, 0.f, 1.f));
+                    const double nearest[3] = {0.0, 0.0, 0.0};
+                    double angles[3];
+                    cameraEulerFromMatrix(turn, nearest, angles);
+                    target.restCamera = {double(eye.x()), double(eye.y()), double(eye.z()), angles[0], angles[1], angles[2]};
+                }
+            }
+        }
+    }
 }
 
 // Version 13 made a model clip a 3D layer like any other. Its pose used to live on the model: a
@@ -1218,6 +1356,14 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         project.forEachTrackList(
             [width, height](QList<Track> &tracks) { migrateModelPoseToTransform(tracks, width, height); });
     }
+    if (version < 22) {
+        const double width = project.width();
+        const double height = project.height();
+        project.forEachTrackList([width, height](QList<Track> &tracks) {
+            migrateWorldTo22(tracks);
+            migrateCameraTo22(tracks, width, height);
+        });
+    }
     // A dangling span end has no earlier state to recover from here, so it is cleared.
     project.forEachTrackList([](QList<Track> &tracks) {
         normalizeTransformLayers(tracks);
@@ -1253,6 +1399,7 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 21 added Mask::cropShape, the clip Shape picker's mask marker. Nothing to migrate; the
     // bump is a gate, as for versions 6 and 9. An older build would drop the marker and no longer
     // treat the mask as the clip's shape.
+    // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

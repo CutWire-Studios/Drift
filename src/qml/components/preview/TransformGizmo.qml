@@ -2,8 +2,8 @@ import QtQuick
 import Drift
 
 // The 3D transform gizmo for the selected clip when it is a 3D layer: arrows (move), rings
-// (rotate) or square-tipped handles (scale), per EditorState.preview.gizmoTool, along the camera's axes or
-// the clip's own per EditorState.preview.gizmoOrientation. Geometry, hit-testing and the drag maths all
+// (rotate) or square-tipped handles (scale), per EditorState.preview.gizmoTool, along the world's, the clip's
+// own or the screen's axes per EditorState.preview.gizmoOrientation. Geometry, hit-testing and the drag maths all
 // come from the engine (engine/ClipGizmo), so this only draws and forwards the pointer.
 //
 // Fills the overlay it sits in, whose coordinates are canvas px times sx. Presses anywhere off a
@@ -16,6 +16,8 @@ Item {
     // The members when box is the pivot frame of a multi-selection (groupGizmoPivot); empty otherwise.
     property var groupBoxes: []
     property real sx: 1
+    // 0 measures through the scene camera, 1 through the editor viewport.
+    property int viewport: 0
     // Touch: bigger handles and a wider hit radius.
     property bool touch: false
 
@@ -35,7 +37,7 @@ Item {
         void EditorState.preview.gizmoTool
         void EditorState.preview.gizmoOrientation
         void EditorState.preview.viewRevision
-        return pose ? EditorState.preview.gizmoGeometry(pose, sx, handleSize) : null
+        return pose ? EditorState.preview.gizmoGeometry(pose, sx, handleSize, viewport) : null
     }
 
     function pickAt(x, y) {
@@ -43,7 +45,7 @@ Item {
             return ""
         void EditorState.preview.gizmoTool
         void EditorState.preview.gizmoOrientation
-        return EditorState.preview.gizmoPick(pose, sx, handleSize, x, y, tolerance)
+        return EditorState.preview.gizmoPick(pose, sx, handleSize, x, y, tolerance, viewport)
     }
 
     function colorFor(id) {
@@ -99,9 +101,9 @@ Item {
             gizmo.livePose = startBoxes
                 ? EditorState.preview.applyGroupGizmoDrag(
                       startPose, startBoxes, gizmo.dragging, press.x, press.y, mouse.x, mouse.y,
-                      snap, gizmo.sx)
+                      snap, gizmo.sx, gizmo.viewport)
                 : EditorState.preview.applyGizmoDrag(
-                      startPose, gizmo.dragging, press.x, press.y, mouse.x, mouse.y, snap, gizmo.sx)
+                      startPose, gizmo.dragging, press.x, press.y, mouse.x, mouse.y, snap, gizmo.sx, gizmo.viewport)
         }
         onExited: if (!pressed) gizmo.hovered = ""
         onPressed: (mouse) => {

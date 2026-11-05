@@ -1378,11 +1378,7 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         // The model sits in the world like any 3D layer, its bounding box fitted to the clip rect.
         request.rect = layoutRect;
         request.rotation = rotation;
-        request.pose.rotationX = transformValue(clip.rotationX, clipTimeUs, 0.0);
-        request.pose.rotationY = transformValue(clip.rotationY, clipTimeUs, 0.0);
-        request.pose.positionZ = transformValue(clip.positionZ, clipTimeUs, 0.0) * renderScale;
-        request.pose.perspective =
-            transformValue(clip.perspective, clipTimeUs, drift::kDefaultClipPerspective) * renderScale;
+        request.pose = drift::clipPoseAt(clip, clipTimeUs, renderScale, projectHeight);
         request.canvas = QSizeF(canvasWidth, canvasHeight);
         layer.model3d = drift::model3d::makeDrawRequest(request);
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
@@ -1425,12 +1421,7 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
     layer.depthOcclude = clip.depthOcclude && clip.layer3d
                          && clip.blendMode == drift::BlendMode::Normal;
     if (clip.type != drift::ClipType::Model3d) {
-        layer.pose3d.rotationX = transformValue(clip.rotationX, clipTimeUs, 0.0);
-        layer.pose3d.rotationY = transformValue(clip.rotationY, clipTimeUs, 0.0);
-        layer.pose3d.positionZ = transformValue(clip.positionZ, clipTimeUs, 0.0) * renderScale;
-        layer.pose3d.perspective =
-            transformValue(clip.perspective, clipTimeUs, drift::kDefaultClipPerspective)
-            * renderScale;
+        layer.pose3d = drift::clipPoseAt(clip, clipTimeUs, renderScale, projectHeight);
     }
     layer.flipH = clip.flipH;
     layer.flipV = clip.flipV;
@@ -1513,12 +1504,13 @@ void liftNestedModels(GpuScene &scene, int compositeIndex, const QSizeF &canvas)
     if (!host.nested || !host.masks.isEmpty() || (host.hasParent && !host.parent.isAffine()))
         return;
 
-    // Nested world (canvas px about the centre) -> the composite's unit quad -> outer world. Depth
+    // Nested world (canvas px from the top-left) -> the composite's unit quad -> outer world. Depth
     // scales with the card, so a shrunken composite keeps its models' proportions.
     const double zScale = std::sqrt(std::abs(host.rect.width() * host.rect.height())
                                     / (canvas.width() * canvas.height()));
     QMatrix4x4 toQuad;
     toQuad.scale(float(2.0 / canvas.width()), float(2.0 / canvas.height()), float(zScale));
+    toQuad.translate(float(-canvas.width() * 0.5), float(-canvas.height() * 0.5));
     const QMatrix4x4 hostWorld =
         drift::clipQuadToWorld(host.rect, host.rotation, host.flipH, host.flipV, host.pose3d, canvas) * toQuad;
 
@@ -1587,6 +1579,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
 {
     GpuScene scene;
     scene.canvasSize = QSize(width, height);
+    scene.previewStream = options.stream;
     scene.cacheVideoSources = options.cacheVideoSources;
     scene.scopeReadbackWidth = options.scopeReadbackWidth;
 
@@ -1633,10 +1626,11 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
     // once per frame, then stamped onto each layer the way a transform parent is. With no camera
     // clip `cameraActive` stays false everywhere and every layer takes the per-clip path it always
     // has, which is what makes a project without a camera render identically.
-    drift::SceneCamera3d sceneCamera;
+    drift::SceneCamera3d sceneCamera = drift::defaultSceneCamera(QSizeF(width, height));
     bool sceneCameraActive = false;
     if (const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), timelineUs)) {
-        sceneCamera = drift::sceneCameraFromClip(*cameraClip, timelineUs, renderScale);
+        sceneCamera = drift::sceneCameraFromClip(*cameraClip, timelineUs, renderScale,
+                                                 QSizeF(projectWidth, projectHeight));
         sceneCameraActive = true;
     }
     QMatrix4x4 sceneView = drift::cameraViewProjection(sceneCamera, QSizeF(width, height));
@@ -1650,15 +1644,15 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
         const QSizeF projectCanvas(projectWidth, projectHeight);
         const QSize target = options.editor.target.isEmpty() ? QSize(width, height) : options.editor.target;
         const drift::EditorFrame frame = drift::editorFrame(projectCanvas, QSizeF(target));
-        drift::SceneCamera3d projectCamera;
+        drift::SceneCamera3d projectCamera = drift::defaultSceneCamera(projectCanvas);
         if (const drift::Clip *cameraClip = drift::cameraClipAt(project.tracks(), timelineUs))
-            projectCamera = drift::sceneCameraFromClip(*cameraClip, timelineUs, 1.0);
+            projectCamera = drift::sceneCameraFromClip(*cameraClip, timelineUs, 1.0, projectCanvas);
         QMatrix4x4 toTarget;
         toTarget.scale(float(target.width() / frame.size.width()), float(target.height() / frame.size.height()),
                        1.f);
         QMatrix4x4 fromRender;
         fromRender.scale(1.f / float(renderScale));
-        sceneView = toTarget * drift::editorViewProjection(options.editor.view, frame.size, projectCamera)
+        sceneView = toTarget * drift::editorViewProjection(options.editor.view, frame, projectCanvas, projectCamera)
                     * fromRender;
         scene.canvasSize = target;
         sceneViewActive = true;
@@ -1667,6 +1661,8 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
     }
     drift::EditorOverlayInput guides;
     guides.canvas = QSizeF(width, height);
+    guides.showGrid = options.editor.showGrid;
+    guides.gridSize = options.editor.gridSize;
     guides.cameraActive = sceneCameraActive;
     guides.camera = sceneCamera;
     if (editorView && !options.editor.selectedClipId.isEmpty()) {
@@ -1693,14 +1689,16 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
                 guides.selectedModelMax = model.asset->aabbMax;
                 guides.selectedModel = parent * drift::modelClipWorld(model.rect, model.rotation, model.pose3d,
                                                                       model.asset->aabbMin,
-                                                                      model.asset->aabbMax, canvas);
+                                                                      model.asset->aabbMax, canvas,
+                                                                      model.params.scale, model.params.scaleZ);
             } else if (model.splat) {
                 guides.hasSelectedModel = true;
                 guides.selectedModelMin = model.splat->fitMin;
                 guides.selectedModelMax = model.splat->fitMax;
                 guides.selectedModel = parent * drift::modelClipWorld(model.rect, model.rotation, model.pose3d,
                                                                       model.splat->fitMin,
-                                                                      model.splat->fitMax, canvas);
+                                                                      model.splat->fitMax, canvas,
+                                                                      model.params.scale, model.params.scaleZ);
             }
             return;
         }
@@ -1757,7 +1755,7 @@ GpuScene buildGpuScene(const drift::Project &project, drift::TimeUs timelineUs, 
             // Back to the plane through the model's centre.
             guide.hasDrop = true;
             guide.drop = parent.map(frame.toWorld(QVector3D(float(light.x), float(light.y), 0.f)));
-            guide.dropNormal = parent.mapVector(QVector3D(0.f, 0.f, 1.f)).normalized();
+            guide.dropNormal = parent.mapVector(QVector3D(0.f, 0.f, -1.f)).normalized();
             lights.append(guide);
         }
         drift::addLightGuides(reliefGuides, lights, editorEye, clip.id == options.editor.selectedClipId);

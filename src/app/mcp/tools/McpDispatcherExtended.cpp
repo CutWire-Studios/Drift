@@ -629,8 +629,17 @@ drift::SceneCamera3d cameraFromState(const QVariantMap &state)
     camera.rotationX = state.value(QStringLiteral("rotationX")).toDouble();
     camera.rotationY = state.value(QStringLiteral("rotationY")).toDouble();
     camera.rotationZ = state.value(QStringLiteral("rotation")).toDouble();
-    camera.perspective = state.value(QStringLiteral("perspective")).toDouble();
+    camera.aimAtTarget = state.value(QStringLiteral("aim")).toBool();
+    camera.targetX = state.value(QStringLiteral("poiX")).toDouble();
+    camera.targetY = state.value(QStringLiteral("poiY")).toDouble();
+    camera.targetZ = state.value(QStringLiteral("poiZ")).toDouble();
+    camera.zoom = state.value(QStringLiteral("zoom")).toDouble();
     return camera;
+}
+
+QSizeF canvasOf(AppController *controller)
+{
+    return QSizeF(controller->projectFile()->projectWidth(), controller->projectFile()->projectHeight());
 }
 
 QJsonArray eyeArray(const drift::SceneCamera3d &camera)
@@ -649,7 +658,9 @@ constexpr CameraProp kCameraProps[] = {
     {"x", &drift::SceneCamera3d::positionX},       {"y", &drift::SceneCamera3d::positionY},
     {"z", &drift::SceneCamera3d::positionZ},       {"rotationX", &drift::SceneCamera3d::rotationX},
     {"rotationY", &drift::SceneCamera3d::rotationY}, {"rotation", &drift::SceneCamera3d::rotationZ},
-    {"perspective", &drift::SceneCamera3d::perspective},
+    {"perspective", &drift::SceneCamera3d::zoom},
+    {"anchorX", &drift::SceneCamera3d::targetX},   {"anchorY", &drift::SceneCamera3d::targetY},
+    {"anchorZ", &drift::SceneCamera3d::targetZ},
 };
 
 } // namespace
@@ -680,7 +691,11 @@ QJsonObject McpDispatcher::opGetCameraState(const QJsonObject &args)
                {QStringLiteral("rotationX"), camera.rotationX},
                {QStringLiteral("rotationY"), camera.rotationY},
                {QStringLiteral("rotation"), camera.rotationZ},
-               {QStringLiteral("perspective"), camera.perspective},
+               {QStringLiteral("aimAtTarget"), camera.aimAtTarget},
+               {QStringLiteral("poi"), QJsonArray{camera.targetX, camera.targetY, camera.targetZ}},
+               {QStringLiteral("zoom"), camera.zoom},
+               {QStringLiteral("focalLength"), state.value(QStringLiteral("focalLength")).toDouble()},
+               {QStringLiteral("fov"), state.value(QStringLiteral("fov")).toDouble()},
                {QStringLiteral("eye"), eyeArray(camera)}});
 }
 
@@ -732,13 +747,20 @@ QJsonObject McpDispatcher::opCameraLookAt(const QJsonObject &args)
         return err("bad_args", QStringLiteral("target must be a clip id or {x,y,z}"));
     }
 
-    const drift::SceneCamera3d from = cameraFromState(state);
+    drift::SceneCamera3d from = cameraFromState(state);
+    const bool aimRequested = args.contains(QStringLiteral("aimAtTarget"));
+    if (aimRequested)
+        from.aimAtTarget = args.value(QStringLiteral("aimAtTarget")).toBool();
     const drift::SceneCamera3d aimed = drift::aimAt(from, target);
     const bool keyframe = args.value(QStringLiteral("keyframe")).toBool();
     QVariantMap plain;
     m_controller->mcp()->beginBatch();
-    for (const char *name : {"x", "y", "z", "rotationX", "rotationY"}) {
-        const QString prop = QString::fromLatin1(name);
+    if (aimRequested)
+        m_controller->setCameraAimAtTarget(track, index, from.aimAtTarget);
+    const QStringList written = aimed.aimAtTarget
+        ? QStringList{"x", "y", "z", "anchorX", "anchorY", "anchorZ", "rotation"}
+        : QStringList{"x", "y", "z", "rotationX", "rotationY", "rotation"};
+    for (const QString &prop : written) {
         double value = 0.0;
         for (const CameraProp &p : kCameraProps) {
             if (prop == QLatin1String(p.name))
@@ -766,6 +788,9 @@ QJsonObject McpDispatcher::opCameraLookAt(const QJsonObject &args)
                {QStringLiteral("z"), result.positionZ},
                {QStringLiteral("rotationX"), result.rotationX},
                {QStringLiteral("rotationY"), result.rotationY},
+               {QStringLiteral("rotation"), result.rotationZ},
+               {QStringLiteral("aimAtTarget"), result.aimAtTarget},
+               {QStringLiteral("poi"), QJsonArray{result.targetX, result.targetY, result.targetZ}},
                {QStringLiteral("eye"), eyeArray(result)}});
 }
 
@@ -810,23 +835,31 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
 
     const drift::SceneCamera3d from = cameraFromState(state);
     drift::SceneCamera3d to = from;
+    const QMatrix4x4 turn = drift::sceneCameraRotation(from);
+    const auto along = [&](const QVector3D &axis, double amount) {
+        const QVector3D step = turn.mapVector(axis) * float(amount);
+        to.positionX += step.x();
+        to.positionY += step.y();
+        to.positionZ += step.z();
+    };
     if (move == QLatin1String("dolly_in") || move == QLatin1String("dolly_out")) {
-        to.positionZ += (move == QLatin1String("dolly_in") ? -1.0 : 1.0) * amountOr(300.0);
+        along({0.f, 0.f, 1.f}, (move == QLatin1String("dolly_in") ? 1.0 : -1.0) * amountOr(300.0));
     } else if (move == QLatin1String("push_in") || move == QLatin1String("pull_out")) {
         const double fraction = qBound(0.0, amountOr(0.35), 0.9);
-        to.perspective = from.perspective * (move == QLatin1String("push_in") ? 1.0 - fraction : 1.0 + fraction);
+        to.zoom = from.zoom * (move == QLatin1String("push_in") ? 1.0 + fraction : 1.0 - fraction);
     } else if (move == QLatin1String("pan_left") || move == QLatin1String("pan_right")) {
         to = drift::rotatedKeepingEye(from, from.rotationX,
-                                      from.rotationY + (move == QLatin1String("pan_left") ? 1.0 : -1.0) * amountOr(20.0));
+                                      from.rotationY + (move == QLatin1String("pan_right") ? 1.0 : -1.0) * amountOr(20.0));
     } else if (move == QLatin1String("tilt_up") || move == QLatin1String("tilt_down")) {
-        to = drift::rotatedKeepingEye(from, from.rotationX + (move == QLatin1String("tilt_up") ? -1.0 : 1.0) * amountOr(15.0),
+        to = drift::rotatedKeepingEye(from, from.rotationX + (move == QLatin1String("tilt_up") ? 1.0 : -1.0) * amountOr(15.0),
                                       from.rotationY);
     } else if (move == QLatin1String("truck_left") || move == QLatin1String("truck_right")) {
-        to.positionX += (move == QLatin1String("truck_right") ? 1.0 : -1.0) * amountOr(200.0);
+        along({1.f, 0.f, 0.f}, (move == QLatin1String("truck_right") ? 1.0 : -1.0) * amountOr(200.0));
     } else if (move == QLatin1String("crane_up") || move == QLatin1String("crane_down")) {
-        to.positionY += (move == QLatin1String("crane_down") ? 1.0 : -1.0) * amountOr(200.0);
+        along({0.f, 1.f, 0.f}, (move == QLatin1String("crane_down") ? 1.0 : -1.0) * amountOr(200.0));
     } else {
-        QVector3D centre(0.f, 0.f, 0.f);
+        const QSizeF canvas = canvasOf(m_controller);
+        QVector3D centre(float(canvas.width() * 0.5), float(canvas.height() * 0.5), 0.f);
         const QJsonValue targetValue = args.value(QStringLiteral("target"));
         if (targetValue.isObject()) {
             const QJsonObject point = targetValue.toObject();
@@ -842,10 +875,11 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
         } else if (!targetValue.isUndefined()) {
             return err("bad_args", QStringLiteral("target must be a clip id or {x,y,z}"));
         }
-        // Circle the target about the vertical axis; + degrees swings the eye toward +x (right).
+        // Circle the target about the vertical axis; + degrees swings the eye toward +x (right). The
+        // eye sits at -z of its target and a right-handed turn about y takes -z toward -x, hence the sign.
         const double degrees = (move == QLatin1String("orbit_left") ? -1.0 : 1.0) * amountOr(45.0);
         QMatrix4x4 swing;
-        swing.rotate(float(degrees), 0.f, 1.f, 0.f);
+        swing.rotate(float(-degrees), 0.f, 1.f, 0.f);
         const QVector3D eye = centre + swing.map(drift::sceneCameraEye(from) - centre);
         to = drift::aimAt(from, eye, centre);
     }
@@ -878,11 +912,11 @@ QJsonObject McpDispatcher::opCameraMove(const QJsonObject &args)
                {QStringLiteral("from"), QJsonObject{{QStringLiteral("eye"), eyeArray(from)},
                                                     {QStringLiteral("rotationX"), from.rotationX},
                                                     {QStringLiteral("rotationY"), from.rotationY},
-                                                    {QStringLiteral("perspective"), from.perspective}}},
+                                                    {QStringLiteral("zoom"), from.zoom}}},
                {QStringLiteral("to"), QJsonObject{{QStringLiteral("eye"), eyeArray(to)},
                                                   {QStringLiteral("rotationX"), to.rotationX},
                                                   {QStringLiteral("rotationY"), to.rotationY},
-                                                  {QStringLiteral("perspective"), to.perspective}}}});
+                                                  {QStringLiteral("zoom"), to.zoom}}}});
 }
 
 QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObject &args)
@@ -1945,7 +1979,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                               : m_controller->playheadSeconds();
         QVariantMap opts;
         for (const char *key : {"duration", "animation", "loop", "offset", "name", "scale", "depth", "rotX",
-                                "rotY", "rotZ", "ambient"}) {
+                                "rotY", "rotZ", "ambient", "modelScale", "modelScaleZ"}) {
             if (args.contains(QLatin1String(key)))
                 opts.insert(QString::fromUtf8(key), args.value(QLatin1String(key)).toVariant());
         }
@@ -2001,7 +2035,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return clipRefError(args);
         QVariantMap opts;
         for (const char *key : {"animation", "loop", "offset", "name", "scale", "depth", "rotX", "rotY", "rotZ",
-                                "ambient"}) {
+                                "ambient", "modelScale", "modelScaleZ"}) {
             if (args.contains(QLatin1String(key)))
                 opts.insert(QString::fromUtf8(key), args.value(QLatin1String(key)).toVariant());
         }
@@ -3051,16 +3085,30 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
                                        .arg(hasOrbit < 0 ? QStringLiteral("orbit") : QStringLiteral("pan")));
         if (args.contains(QStringLiteral("dolly")) && !args.value(QStringLiteral("dolly")).isDouble())
             return err("bad_args", QStringLiteral("dolly must be a number"));
+        if (args.contains(QStringLiteral("fov")) && !args.value(QStringLiteral("fov")).isDouble())
+            return err("bad_args", QStringLiteral("fov must be a number"));
+        const QString orientation = args.value(QStringLiteral("orientation")).toString();
+        if (args.contains(QStringLiteral("orientation")) && orientation != QLatin1String("world")
+            && orientation != QLatin1String("local") && orientation != QLatin1String("view"))
+            return err("bad_args", QStringLiteral("orientation must be world|local|view"));
 
-        if (args.contains(QStringLiteral("mode")))
-            preview->setMode(mode);
+        if (mode == QLatin1String("3d"))
+            preview->requestViewport3d();
         preview->placeView();
         if (jsonBool(args.value(QStringLiteral("reset"))))
             preview->resetView();
         if (args.contains(QStringLiteral("axis")))
             preview->setAxisView(axis);
+        if (args.contains(QStringLiteral("ortho")))
+            preview->setOrthographic(jsonBool(args.value(QStringLiteral("ortho"))));
+        if (args.contains(QStringLiteral("fov")))
+            preview->setEditorFov(args.value(QStringLiteral("fov")).toDouble());
+        if (args.contains(QStringLiteral("orientation")))
+            preview->setGizmoOrientation(orientation);
         if (jsonBool(args.value(QStringLiteral("frame_selection"))))
             preview->frameSelection();
+        if (jsonBool(args.value(QStringLiteral("frame_all"))))
+            preview->frameAll();
         if (hasOrbit > 0)
             preview->orbit(orbit[0], orbit[1]);
         if (hasPan > 0)
@@ -3074,13 +3122,15 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const drift::EditorView3d view = preview->currentView();
         const QVector3D eye = drift::editorViewEye(view);
         return ok({
-            {QStringLiteral("mode"), preview->mode()},
+            {QStringLiteral("mode"), preview->viewport3dOpen() ? QStringLiteral("3d") : QStringLiteral("2d")},
             {QStringLiteral("look_through"), view.lookThrough},
             {QStringLiteral("target"), QJsonArray{view.target.x(), view.target.y(), view.target.z()}},
             {QStringLiteral("yaw"), view.yaw},
             {QStringLiteral("pitch"), view.pitch},
             {QStringLiteral("distance"), view.distance},
             {QStringLiteral("fov"), view.fovY},
+            {QStringLiteral("ortho"), view.ortho},
+            {QStringLiteral("orientation"), preview->gizmoOrientation()},
             {QStringLiteral("eye"), QJsonArray{eye.x(), eye.y(), eye.z()}},
         });
     }

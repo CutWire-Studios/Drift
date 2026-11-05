@@ -17,14 +17,16 @@
 // Everything is in overlay px: the preview's on-screen pixels, `scale` of them per canvas px.
 // Handle sizes are fixed in overlay px, so the gizmo reads the same at any zoom.
 //
-// The clip stores canvas-axis position (x, y, z) and three Euler angles (X, then Y, then the
-// in-plane spin). The gizmo's orientation only picks the axes the handles follow. Global uses the
-// camera's axes. Local uses the clip's own axes. A drag solves for whatever stored values produce
+// The clip stores world-axis position (x, y, z; see ClipTransform3d.h) and three Euler angles (X,
+// then Y, then the in-plane spin). The gizmo's orientation only picks the axes the handles follow.
+// World uses the world's axes (+x right, +y down, +z away from the viewer), through any parent;
+// View uses the screen's; Local uses the clip's own. Scale is always along the clip's own edges. A drag solves for whatever stored values produce
 // the motion: a local move changes x, y and z together, and any ring changes all three angles.
 namespace drift::gizmo {
 
 enum class Tool { Move, Rotate, Scale };
-enum class Orientation { Global, Local };
+// World: the scene's axes. Local: the object's own. View: the screen's (X right, Y down, Z into it).
+enum class Orientation { World, Local, View };
 
 Tool toolFromString(const QString &name);
 Orientation orientationFromString(const QString &name);
@@ -41,13 +43,20 @@ struct Pose
 };
 
 // A viewpoint other than the clip's own eye: the scene camera, or the preview's free 3D view.
-// `worldToCanvas` takes world space (canvas px about the canvas centre, y down, +z toward the
-// default viewer) to homogeneous canvas px, with GL's clip-space z, as cameraViewProjection does.
+// `worldToCanvas` takes world space (canvas px from the top-left, y down, +z away from the
+// viewer) to homogeneous canvas px, with GL's clip-space z, as cameraViewProjection does.
 // Without one, the clip is seen through its own `perspective`, with the eye at the canvas centre.
+//
+// An orthographic view has no w row (it projects with w = 1). `right`, `down` and `forward` are the
+// view's screen axes in world space, for the View orientation; without them View acts as World.
 struct View
 {
     bool valid = false;
     QMatrix4x4 worldToCanvas;
+    bool hasAxes = false;
+    QVector3D right;
+    QVector3D down;
+    QVector3D forward;
 };
 
 enum class HandleKind {
@@ -90,9 +99,10 @@ struct DragResult
 };
 
 // The pose after dragging `handle` from `press` to `now` (overlay px), starting from `start`.
-// `snap` steps rotations by 15°.
+// `snap` steps rotations by `rotateStep` degrees and, when `moveStep` is above zero, moves by that many px.
 DragResult drag(const Pose &start, Tool tool, Orientation orientation, const QString &handle,
-                QPointF press, QPointF now, bool snap, double scale, const View &view = {});
+                QPointF press, QPointF now, bool snap, double scale, const View &view = {},
+                double moveStep = 0.0, double rotateStep = 15.0);
 
 // Where a homogeneous projection's eye sits in the space it projects from: the point it maps to
 // w = 0 at the screen's centre lines. For a world -> canvas matrix that is the camera position.

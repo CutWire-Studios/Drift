@@ -27,51 +27,55 @@ ModelClipParams modelClipParamsFromSource(const Model3dSource &source)
     ModelClipParams p;
     p.lights = source.lights;
     p.ambient = source.ambient;
+    p.scale = source.modelScale;
+    p.scaleZ = source.modelScaleZ;
     return p;
 }
 
 QVector3D ModelLightFrame::toWorld(const QVector3D &light) const
 {
-    // z runs away from the viewer in clip heights; world z runs toward it.
-    return origin + QVector3D(float(light.x() * width), float(light.y() * height), float(-light.z() * height));
+    return origin + QVector3D(float(light.x() * width), float(light.y() * height), float(light.z() * height));
 }
 
 QVector3D ModelLightFrame::fromWorld(const QVector3D &world) const
 {
     const QVector3D d = world - origin;
     return QVector3D(float(d.x() / std::max(1e-6, width)), float(d.y() / std::max(1e-6, height)),
-                     float(-d.z() / std::max(1e-6, height)));
+                     float(d.z() / std::max(1e-6, height)));
 }
 
-ModelLightFrame modelLightFrame(const QRectF &rect, const ClipPose3d &pose, const QSizeF &canvas)
+ModelLightFrame modelLightFrame(const QRectF &rect, const ClipPose3d &pose, const QSizeF &)
 {
-    // modelClipWorld centres the box on the rect's centre at positionZ.
     ModelLightFrame frame;
-    frame.origin = QVector3D(float(rect.x() - canvas.width() * 0.5), float(rect.y() - canvas.height() * 0.5),
-                             float(pose.positionZ));
+    frame.origin = QVector3D(float(rect.x()), float(rect.y()), float(pose.positionZ));
     frame.width = rect.width();
     frame.height = rect.height();
     return frame;
 }
 
 QMatrix4x4 modelClipWorld(const QRectF &rect, double rotation, const ClipPose3d &pose,
-                          const QVector3D &aabbMin, const QVector3D &aabbMax, const QSizeF &canvas)
+                          const QVector3D &aabbMin, const QVector3D &aabbMax, const QSizeF &,
+                          double scale, double scaleZ)
 {
     const QVector3D extent = flooredExtent(aabbMin, aabbMax);
     const double sx = rect.width() / double(extent.x());
     const double sy = rect.height() / double(extent.y());
-    const QPointF centre = rect.center();
+    const QVector3D anchor = pose.anchorIn(rect);
+    const QVector3D centre(float(rect.width() * 0.5), float(rect.height() * 0.5), 0.f);
     QMatrix4x4 m;
     // The same placement clipQuadToWorld gives a flat clip, so the overlay's box, the gizmo and the
     // model all turn about one point.
-    m.translate(float(centre.x() - canvas.width() * 0.5), float(centre.y() - canvas.height() * 0.5),
-                float(pose.positionZ));
+    m.translate(pose.pivot(rect));
     m.rotate(float(pose.rotationX), 1.f, 0.f, 0.f);
     m.rotate(float(pose.rotationY), 0.f, 1.f, 0.f);
     m.rotate(float(rotation), 0.f, 0.f, 1.f);
-    m.scale(float(sx), float(sy), float(std::sqrt(sx * sy)));
-    // glTF is y-up; world is y-down. Flipping y keeps the model the right way up on screen.
-    m.scale(1.f, -1.f, 1.f);
+    if (scale != 1.0 || scaleZ != 1.0)
+        m.scale(float(scale), float(scale), float(scale * scaleZ));
+    if (anchor != centre)
+        m.translate(centre - anchor);
+    // glTF is y-up and z toward the viewer; world is y-down and z away. Flipping both keeps the
+    // model the right way up on screen, and is a half turn, so the winding is kept.
+    m.scale(float(sx), float(-sy), float(-std::sqrt(sx * sy)));
     m.translate(-(aabbMin + aabbMax) * 0.5f);
     return m;
 }

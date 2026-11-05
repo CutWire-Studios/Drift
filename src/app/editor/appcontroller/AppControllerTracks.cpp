@@ -1648,9 +1648,9 @@ void AppController::triggerAction(const QString &actionId)
     else if (actionId == QStringLiteral("gizmoScale"))
         m_preview->setGizmoTool(QStringLiteral("scale"));
     else if (actionId == QStringLiteral("gizmoOrientation"))
-        m_preview->setGizmoOrientation(m_preview->gizmoOrientation() == QLatin1String("local")
-                                           ? QStringLiteral("global")
-                                           : QStringLiteral("local"));
+        m_preview->setGizmoOrientation(m_preview->gizmoOrientation() == QLatin1String("world")   ? QStringLiteral("local")
+                                       : m_preview->gizmoOrientation() == QLatin1String("local") ? QStringLiteral("view")
+                                                                                                 : QStringLiteral("world"));
     else if (actionId == QStringLiteral("toggleBookmark"))
         toggleBookmarkAtPlayhead();
     else if (actionId == QStringLiteral("nextBookmark"))

@@ -1227,7 +1227,8 @@ GlTarget drawModelClip(GlRuntime &rt, QOpenGLExtraFunctions *gl,
         }
         const QMatrix4x4 world = modelClipWorld(request.rect, request.rotation, request.pose3d,
                                                 aabbMin, aabbMax,
-                                                request.canvas.isEmpty() ? QSizeF(canvasSize) : request.canvas);
+                                                request.canvas.isEmpty() ? QSizeF(canvasSize) : request.canvas,
+                                                request.params.scale, request.params.scaleZ);
         // Canvas px -> NDC with no row flip: the layer's v=0 is the canvas top, as everywhere in
         // the compositor (see modelMatrixFor).
         QMatrix4x4 ndc;

@@ -108,7 +108,23 @@ QVariantList KeyframeController::animatableProperties(int track, int clip) const
     const bool textual = target.type == drift::ClipType::Text || target.type == drift::ClipType::Subtitle;
 
     QList<PropRow> rows;
-    if (!audio) {
+    if (drift::isCameraClip(target)) {
+        const QString group = QStringLiteral("camera");
+        const QString groupLabel = tr("Camera");
+        const double w = project.width();
+        const double h = project.height();
+        const double reach = std::max(w, h) * 4;
+        rows << scalarRow(QStringLiteral("x"), tr("Position X"), group, groupLabel, -reach, reach, 0)
+             << scalarRow(QStringLiteral("y"), tr("Position Y"), group, groupLabel, -reach, reach, 0)
+             << scalarRow(QStringLiteral("z"), tr("Position Z"), group, groupLabel, -reach, reach, 0)
+             << scalarRow(QStringLiteral("rotationX"), tr("Rotation X"), group, groupLabel, -180, 180, 1)
+             << scalarRow(QStringLiteral("rotationY"), tr("Rotation Y"), group, groupLabel, -180, 180, 1)
+             << scalarRow(QStringLiteral("rotation"), tr("Rotation Z"), group, groupLabel, -180, 180, 1)
+             << scalarRow(QStringLiteral("anchorX"), tr("Point of Interest X"), group, groupLabel, -reach, reach, 0)
+             << scalarRow(QStringLiteral("anchorY"), tr("Point of Interest Y"), group, groupLabel, -reach, reach, 0)
+             << scalarRow(QStringLiteral("anchorZ"), tr("Point of Interest Z"), group, groupLabel, -reach, reach, 0)
+             << scalarRow(QStringLiteral("perspective"), tr("Zoom"), group, groupLabel, 200, 8000, 0);
+    } else     if (!audio) {
         const QString group = QStringLiteral("transform");
         const QString groupLabel = tr("Transform");
         const double w = project.width();
@@ -117,10 +133,14 @@ QVariantList KeyframeController::animatableProperties(int track, int clip) const
              << scalarRow(QStringLiteral("y"), QStringLiteral("Y"), group, groupLabel, -h, 2 * h, 0)
              << scalarRow(QStringLiteral("width"), tr("Width"), group, groupLabel, 1, std::max(2 * w, 2.0), 0)
              << scalarRow(QStringLiteral("height"), tr("Height"), group, groupLabel, 1, std::max(2 * h, 2.0), 0)
-             << scalarRow(QStringLiteral("rotation"), tr("Angle"), group, groupLabel, -180, 180, 1)
-             << scalarRow(QStringLiteral("rotationX"), tr("Tilt X"), group, groupLabel, -180, 180, 1)
-             << scalarRow(QStringLiteral("rotationY"), tr("Tilt Y"), group, groupLabel, -180, 180, 1)
-             << scalarRow(QStringLiteral("z"), tr("Depth"), group, groupLabel, -4000, 1500, 0)
+             << scalarRow(QStringLiteral("rotation"), target.layer3d ? tr("Rotation Z") : tr("Rotation"), group,
+                          groupLabel, -180, 180, 1)
+             << scalarRow(QStringLiteral("rotationX"), tr("Rotation X"), group, groupLabel, -180, 180, 1)
+             << scalarRow(QStringLiteral("rotationY"), tr("Rotation Y"), group, groupLabel, -180, 180, 1)
+             << scalarRow(QStringLiteral("z"), tr("Position Z"), group, groupLabel, -1500, 4000, 0)
+             << scalarRow(QStringLiteral("anchorX"), tr("Anchor X"), group, groupLabel, -w, 2 * w, 0)
+             << scalarRow(QStringLiteral("anchorY"), tr("Anchor Y"), group, groupLabel, -h, 2 * h, 0)
+             << scalarRow(QStringLiteral("anchorZ"), tr("Anchor Z"), group, groupLabel, -4000, 4000, 0)
              << scalarRow(QStringLiteral("perspective"), tr("Perspective"), group, groupLabel, 200, 8000, 0)
              << scalarRow(QStringLiteral("opacity"), tr("Opacity"), group, groupLabel, 0, 1, 2);
     }

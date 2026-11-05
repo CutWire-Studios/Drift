@@ -60,16 +60,32 @@ Item {
     }
 
     // Spelled-out names for the one-to-three character property chips.
+    readonly property bool cameraClip: !!clip && clip.kind === "adjustment" && clip.adjustmentKind === "camera"
+
     function propertyLabel(id) {
+        if (cameraClip) {
+            switch (id) {
+            case "x": return qsTr("Position X")
+            case "y": return qsTr("Position Y")
+            case "rotation": return qsTr("Rotation Z")
+            case "anchorX": return qsTr("Point of Interest X")
+            case "anchorY": return qsTr("Point of Interest Y")
+            case "anchorZ": return qsTr("Point of Interest Z")
+            case "perspective": return qsTr("Zoom")
+            }
+        }
         switch (id) {
         case "x": return qsTr("X position")
         case "y": return qsTr("Y position")
         case "width": return qsTr("Width")
         case "height": return qsTr("Height")
         case "rotation": return qsTr("Rotation")
-        case "rotationX": return qsTr("Tilt X")
-        case "rotationY": return qsTr("Tilt Y")
-        case "z": return qsTr("Depth")
+        case "rotationX": return qsTr("Rotation X")
+        case "rotationY": return qsTr("Rotation Y")
+        case "z": return qsTr("Position Z")
+        case "anchorX": return qsTr("Anchor X")
+        case "anchorY": return qsTr("Anchor Y")
+        case "anchorZ": return qsTr("Anchor Z")
         case "perspective": return qsTr("Perspective")
         case "opacity": return qsTr("Opacity")
         case "volume": return qsTr("Volume")
@@ -94,6 +110,8 @@ Item {
         return id
     }
     function chipLabel(id) {
+        if (cameraClip && id === "perspective")
+            return "Zm"
         switch (id) {
         case "x": return "X"
         case "y": return "Y"
@@ -103,6 +121,9 @@ Item {
         case "rotationX": return "X°"
         case "rotationY": return "Y°"
         case "z": return "Z"
+        case "anchorX": return "AX"
+        case "anchorY": return "AY"
+        case "anchorZ": return "AZ"
         case "perspective": return "Per"
         case "opacity": return "Op"
         case "volume": return "Vol"
@@ -121,6 +142,8 @@ Item {
     // Volume and audio effects only exist on clips that carry audio; the rest are visual.
     function supportsProperty(id) {
         if (!clip)
+            return false
+        if (cameraClip && (id === "width" || id === "height"))
             return false
         if (id === "volume")
             return clip.kind === "audio" || clip.kind === "video"

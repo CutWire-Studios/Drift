@@ -2285,6 +2285,31 @@
       "rowHover": "$semantic.panel.muted",
       "rowSelected": "$semantic.panel.accent"
     },
+    "viewport3dPanel": {
+      "divider": "$semantic.panel.border",
+      "dividerWidth": "$metrics.borderWidth",
+      "toolbarBackground": "$semantic.surface.panel"
+    },
+    "outliner3dPanel": {
+      "divider": "$semantic.panel.border",
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "rowHover": "$semantic.panel.muted",
+      "rowSelected": "$semantic.panel.accent"
+    },
+    "transform3dPanel": {
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
+    "camera3dPanel": {
+      "foreground": "$semantic.panel.foreground",
+      "foregroundMuted": "$semantic.mutedForeground",
+      "rowHover": "$semantic.panel.muted",
+      "rowSelected": "$semantic.panel.accent"
+    },
+    "view3dPanel": {
+      "foregroundMuted": "$semantic.mutedForeground"
+    },
     "masksInspector": {
       "foregroundMuted": "$semantic.mutedForeground"
     },
@@ -2995,16 +3020,6 @@
       "radius": "$metrics.radius.md",
       "foreground": "$semantic.foreground"
     },
-    "preview3DTools": {
-      "background": "$semantic.surface.panel",
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.md"
-    },
-    "preview3DToolsDivider": {
-      "background": "$semantic.panel.border",
-      "strokeWidth": "$metrics.borderWidth"
-    },
     "previewCompactGpuCaption": {
       "foreground": "$semantic.guide.medium"
     },
@@ -3023,21 +3038,6 @@
     },
     "previewGapCaption": {
       "foreground": "$semantic.guide.medium"
-    },
-    "previewModeSwitch": {
-      "background": "$semantic.panel.accent",
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth"
-    },
-    "previewModeSwitchPill": {
-      "background": "$semantic.panel.secondary.background",
-      "border": "$semantic.panel.secondary.border",
-      "borderWidth": "$metrics.borderWidth"
-    },
-    "previewModeSwitchSegment": {
-      "icon": "$semantic.mutedForeground",
-      "iconHover": "$semantic.panel.foreground",
-      "iconSelected": "$semantic.panel.secondary.foreground"
     },
     "previewOptionsDecodeWarning": {
       "icon": "$semantic.warning"
@@ -3182,12 +3182,6 @@
       "x": "$semantic.gizmo.x",
       "y": "$semantic.gizmo.y",
       "z": "$semantic.gizmo.z"
-    },
-    "viewNavPad": {
-      "background": "$semantic.surface.panel",
-      "border": "$semantic.panel.border",
-      "borderWidth": "$metrics.borderWidth",
-      "radius": "$metrics.radius.md"
     },
     "scrollStrip": {
       "fade": "$semantic.surface.panel"

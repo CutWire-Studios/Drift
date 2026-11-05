@@ -26,8 +26,9 @@ QColor colorParam(const QVariant &value)
 QVector3D ReliefPlacement::toQuad(const QVector3D &relief) const
 {
     // The quad spans [-1, 1] across the frame, so one clip height is 2 in y and 2 / aspect in x.
-    // Its z is left unscaled by clipQuadToWorld, so it is world px, and the quad faces +z.
-    return QVector3D(float(2.0 * relief.x() / aspect), 2.f * relief.y(), float(-relief.z() * heightPx));
+    // Its z is left unscaled by clipQuadToWorld, so it is world px; the quad's +z points away from
+    // the viewer, as relief space's does.
+    return QVector3D(float(2.0 * relief.x() / aspect), 2.f * relief.y(), float(relief.z() * heightPx));
 }
 
 QVector3D ReliefPlacement::toWorld(const QVector3D &relief) const
@@ -41,7 +42,7 @@ QVector3D ReliefPlacement::fromWorld(const QVector3D &world) const
     const QVector3D q = quadToWorld.inverted(&invertible).map(world);
     if (!invertible)
         return {};
-    return QVector3D(float(q.x() * aspect * 0.5), q.y() * 0.5f, float(-q.z() / std::max(1e-6, heightPx)));
+    return QVector3D(float(q.x() * aspect * 0.5), q.y() * 0.5f, float(q.z() / std::max(1e-6, heightPx)));
 }
 
 double reliefDepthRange(const QList<Effect> &effects)
@@ -192,7 +193,7 @@ void addReliefLightGuides(QList<EditorLine> &out, const QList<ReliefLight> &ligh
         if (uv.x() >= 0.0 && uv.x() <= 1.0 && uv.y() >= 0.0 && uv.y() <= 1.0) {
             guide.hasDrop = true;
             guide.drop = placement.toWorld(reliefSurfacePoint(frame, uv, placement.aspect, depthRange));
-            guide.dropNormal = placement.quadToWorld.mapVector(QVector3D(0.f, 0.f, 1.f)).normalized();
+            guide.dropNormal = placement.quadToWorld.mapVector(QVector3D(0.f, 0.f, -1.f)).normalized();
         }
         guides.append(guide);
     }

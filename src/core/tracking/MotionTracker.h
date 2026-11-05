@@ -52,7 +52,7 @@ struct TrackerTarget
     // Stabilize only: which clip's keys cancel the track, and the zoom about the locked point.
     Via via = Via::Clip;
     double zoom = 1.0;
-    // Stabilize via Camera: the camera clip's posX, posY, posZ, rotX, rotY, rotZ at the reference frame.
+    // Stabilize via Camera: the camera clip's eye x, y, z and rotation X, Y, Z at the reference frame.
     QVector<double> restCamera;
 };
 

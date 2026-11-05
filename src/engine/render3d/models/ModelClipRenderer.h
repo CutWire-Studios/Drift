@@ -39,7 +39,7 @@ struct ModelDrawRequest
     QString path;
     std::shared_ptr<const ModelAsset> asset;
     // A Gaussian splat scene instead of a mesh: exactly one of asset and splat is set. It has no
-    // animation or lights, so pose and params stay at their defaults.
+    // animation or lights, so only the params' scale applies.
     std::shared_ptr<const SplatData> splat;
     std::shared_ptr<const ModelPose> pose; // null → static (baked) draw
     ModelClipParams params;

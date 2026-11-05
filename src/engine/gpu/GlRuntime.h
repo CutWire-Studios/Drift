@@ -127,6 +127,9 @@ public:
     // GpuCompositor can static_assert the in-flight composite cap against it: every composite
     // that may be running at once needs a slot, plus one for the frame still on screen.
     static constexpr int kPresentRingSize = 3;
+    // Each preview stream rotates through its own ring, so one stream's published frame is
+    // never the slot another stream's composite picks next.
+    static constexpr int kPresentStreams = 2;
 
     std::unique_ptr<QOpenGLContext> context;
     std::unique_ptr<QOffscreenSurface> surface;
@@ -307,7 +310,7 @@ public:
     // it. Rotating through a few targets gives the scene graph time to finish
     // with one before it is drawn into again.
     // Waits on the slot's previous publish fence before returning it for redraw.
-    GlTarget &acquirePresentTarget(int width, int height);
+    GlTarget &acquirePresentTarget(int stream, int width, int height);
 
     // After composing into a present target: flush + fence. Call before publishing
     // the texture id so the scene graph never samples a half-drawn frame, without
@@ -415,12 +418,12 @@ private:
     size_t m_pooledTargets = 0;
     size_t m_pooledTargetBytes = 0;
 
-    GlTarget m_presentRing[kPresentRingSize];
-    GLsync m_presentFence[kPresentRingSize] = {};
-    int m_presentNext = 0;
+    GlTarget m_presentRing[kPresentStreams * kPresentRingSize];
+    GLsync m_presentFence[kPresentStreams * kPresentRingSize] = {};
+    int m_presentNext[kPresentStreams] = {};
     // Slot last handed to the scene graph. acquirePresentTarget never returns it,
     // so fillBackground cannot clear the texture still on screen.
-    int m_presentDisplayed = -1;
+    int m_presentDisplayed[kPresentStreams] = {-1, -1};
     GlTarget m_invalidPresent;
     // Publishes so far, and the FBOs a resize evicted from the ring paired with the count at
     // which each left. PreviewItem hands the scene graph the raw texture name out of a slot,
@@ -428,8 +431,14 @@ private:
     // from under a node that is still drawing it — which is a black frame. Retired FBOs are
     // freed kPresentRingSize publishes later instead, the same bound GpuCompositor already
     // static_asserts the in-flight composite cap against.
-    quint64 m_presentPublished = 0;
-    std::vector<std::pair<quint64, std::unique_ptr<QOpenGLFramebufferObject>>> m_retiredPresent;
+    quint64 m_presentPublished[kPresentStreams] = {};
+    struct RetiredPresent
+    {
+        int stream;
+        quint64 publishedAt;
+        std::unique_ptr<QOpenGLFramebufferObject> fbo;
+    };
+    std::vector<RetiredPresent> m_retiredPresent;
 
     // QImage::cacheKey() → uploaded texture. Stills/text/shapes and decoder cache
     // hits skip CPU→GPU upload; callers blit into a pooled FBO for exclusive use.

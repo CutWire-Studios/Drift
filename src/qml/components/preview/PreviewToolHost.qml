@@ -16,7 +16,10 @@ Item {
     property Component companion: null
     property var companionTools: ["transform"]
 
-    readonly property string tool: EditorState.preview.activeTool
+    // Pins the tool, for a viewport the masking and crop sessions do not reach.
+    property string forcedTool: ""
+
+    readonly property string tool: forcedTool || EditorState.preview.activeTool
     // Crop and guide editing work across the whole viewport, so a crop frame can be dragged past
     // the canvas edges to grow it. Transform spans it too and lays its content on the canvas rect
     // itself, so grips on a clip that runs past an edge stay inside the item that takes the pointer.

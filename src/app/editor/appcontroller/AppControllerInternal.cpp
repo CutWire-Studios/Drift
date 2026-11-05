@@ -707,11 +707,12 @@ QList<QPair<QString, double>> legacyModel3dPoseWrites(const drift::Clip &clip, c
 {
     if (clip.type != drift::ClipType::Model3d)
         return {};
-    // Old rotations were about glTF's y-up axes; the clip's are about the canvas's y-down ones.
+    // Old rotations were about glTF's y-up, z-toward-the-viewer axes; the clip's are about the world's
+    // y-down, z-away ones, a half turn about X from glTF's: X is shared, Y and Z turn the other way.
     if (key == QLatin1String("rotX"))
-        return {{QStringLiteral("rotationX"), -value}};
+        return {{QStringLiteral("rotationX"), value}};
     if (key == QLatin1String("rotY"))
-        return {{QStringLiteral("rotationY"), value}};
+        return {{QStringLiteral("rotationY"), -value}};
     if (key == QLatin1String("rotZ"))
         return {{QStringLiteral("rotation"), -value}};
     if (key == QLatin1String("depth"))
@@ -966,6 +967,9 @@ void clearClipPose3d(drift::Clip &clip)
     clip.rotationY = {};
     clip.positionZ = {};
     clip.perspective = {};
+    clip.anchorX = {};
+    clip.anchorY = {};
+    clip.anchorZ = {};
     clip.layer3d = false;
     // Depth sorting only means anything with a pose, so switching 3D off takes it with it.
     clip.depthOcclude = false;
@@ -993,6 +997,12 @@ drift::KeyframeTrack<double> *transformTrackForProp(drift::Clip &clip, const QSt
         return &clip.positionZ;
     if (prop == QStringLiteral("perspective"))
         return &clip.perspective;
+    if (prop == QStringLiteral("anchorX"))
+        return &clip.anchorX;
+    if (prop == QStringLiteral("anchorY"))
+        return &clip.anchorY;
+    if (prop == QStringLiteral("anchorZ"))
+        return &clip.anchorZ;
     if (prop == QStringLiteral("volume"))
         return &clip.volume;
     return nullptr;
@@ -1198,7 +1208,8 @@ bool writeClipPropValue(drift::Clip &clip, const QString &prop, drift::TimeUs re
             return false;
         // A 3D value written to a flat clip would do nothing, so writing one makes it a 3D layer.
         if (kt == &clip.rotationX || kt == &clip.rotationY || kt == &clip.positionZ
-            || kt == &clip.perspective) {
+            || kt == &clip.perspective || kt == &clip.anchorX || kt == &clip.anchorY
+            || kt == &clip.anchorZ) {
             clip.layer3d = true;
         }
         return true;

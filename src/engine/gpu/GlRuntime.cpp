@@ -1415,7 +1415,7 @@ void GlRuntime::shutdown()
             }
 #endif
             if (auto *gl = context->extraFunctions()) {
-                for (int i = 0; i < kPresentRingSize; ++i) {
+                for (int i = 0; i < kPresentStreams * kPresentRingSize; ++i) {
                     if (m_presentFence[i]) {
                         gl->glDeleteSync(m_presentFence[i]);
                         m_presentFence[i] = nullptr;
@@ -1427,7 +1427,8 @@ void GlRuntime::shutdown()
             }
             for (GlTarget &target : m_presentRing)
                 target.fbo.reset();
-            m_presentDisplayed = -1;
+            for (int &displayed : m_presentDisplayed)
+                displayed = -1;
             m_retiredPresent.clear();
             m_targetPool.clear();
             m_pooledTargets = 0;
@@ -1932,7 +1933,7 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
 
 bool GlRuntime::waitPresentFence(int slotIndex, GLuint64 timeoutNs)
 {
-    if (slotIndex < 0 || slotIndex >= kPresentRingSize)
+    if (slotIndex < 0 || slotIndex >= kPresentStreams * kPresentRingSize)
         return false;
     GLsync &fence = m_presentFence[slotIndex];
     if (!fence)
@@ -1957,7 +1958,8 @@ bool GlRuntime::waitPresentFence(int slotIndex, GLuint64 timeoutNs)
 GlTarget &GlRuntime::preparePresentSlot(int slotIndex, int width, int height)
 {
     GlTarget &slot = m_presentRing[slotIndex];
-    m_presentNext = (slotIndex + 1) % kPresentRingSize;
+    const int stream = slotIndex / kPresentRingSize;
+    m_presentNext[stream] = (slotIndex % kPresentRingSize + 1) % kPresentRingSize;
     if (!slot.isValid() || slot.width != width || slot.height != height) {
         QOpenGLFramebufferObjectFormat fmt;
         fmt.setAttachment(QOpenGLFramebufferObject::NoAttachment);
@@ -1965,7 +1967,7 @@ GlTarget &GlRuntime::preparePresentSlot(int slotIndex, int width, int height)
         // belongs to this FBO, and freeing the name here is what turns an adaptive-quality
         // rescale into a black frame. markPresentReady collects it once no node can hold it.
         if (slot.fbo)
-            m_retiredPresent.emplace_back(m_presentPublished, std::move(slot.fbo));
+            m_retiredPresent.push_back({stream, m_presentPublished[stream], std::move(slot.fbo)});
         slot.fbo = std::make_unique<QOpenGLFramebufferObject>(width, height, fmt);
         slot.width = width;
         slot.height = height;
@@ -2976,8 +2978,10 @@ AVFrame *GlRuntime::ensureSoftwareNv12(const AVFrame *src)
     return m_importNv12;
 }
 
-GlTarget &GlRuntime::acquirePresentTarget(int width, int height)
+GlTarget &GlRuntime::acquirePresentTarget(int stream, int width, int height)
 {
+    stream = qBound(0, stream, kPresentStreams - 1);
+    const int base = stream * kPresentRingSize;
     const int w = qMax(1, width);
     const int h = qMax(1, height);
 
@@ -2986,15 +2990,15 @@ GlTarget &GlRuntime::acquirePresentTarget(int width, int height)
     // wait a full second (the export path's budget) rather than the old 100 ms
     // that HD 2500-class GPUs miss. A timeout leaves the last good frame up.
     for (int i = 0; i < kPresentRingSize; ++i) {
-        const int slotIndex = (m_presentNext + i) % kPresentRingSize;
-        if (slotIndex == m_presentDisplayed)
+        const int slotIndex = base + (m_presentNext[stream] + i) % kPresentRingSize;
+        if (slotIndex == base + m_presentDisplayed[stream])
             continue;
         if (waitPresentFence(slotIndex, 0))
             return preparePresentSlot(slotIndex, w, h);
     }
     for (int i = 0; i < kPresentRingSize; ++i) {
-        const int slotIndex = (m_presentNext + i) % kPresentRingSize;
-        if (slotIndex == m_presentDisplayed)
+        const int slotIndex = base + (m_presentNext[stream] + i) % kPresentRingSize;
+        if (slotIndex == base + m_presentDisplayed[stream])
             continue;
         if (waitPresentFence(slotIndex, GLuint64(1'000'000'000)))
             return preparePresentSlot(slotIndex, w, h);
@@ -3009,7 +3013,7 @@ void GlRuntime::markPresentReady(GlTarget &presentTarget)
         return;
 
     int slotIndex = -1;
-    for (int i = 0; i < kPresentRingSize; ++i) {
+    for (int i = 0; i < kPresentStreams * kPresentRingSize; ++i) {
         if (&m_presentRing[i] == &presentTarget) {
             slotIndex = i;
             break;
@@ -3026,13 +3030,14 @@ void GlRuntime::markPresentReady(GlTarget &presentTarget)
     }
     gl->glFlush();
     m_presentFence[slotIndex] = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-    m_presentDisplayed = slotIndex;
+    const int stream = slotIndex / kPresentRingSize;
+    m_presentDisplayed[stream] = slotIndex % kPresentRingSize;
 
-    ++m_presentPublished;
+    ++m_presentPublished[stream];
     // Every slot has been published at least once since these left the ring, so no scene-graph
     // node can still name their textures.
-    std::erase_if(m_retiredPresent, [this](const auto &entry) {
-        return m_presentPublished - entry.first >= quint64(kPresentRingSize);
+    std::erase_if(m_retiredPresent, [this](const RetiredPresent &entry) {
+        return m_presentPublished[entry.stream] - entry.publishedAt >= quint64(kPresentRingSize);
     });
 }
 

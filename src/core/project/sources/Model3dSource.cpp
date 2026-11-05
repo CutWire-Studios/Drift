@@ -327,7 +327,7 @@ Model3dSource Model3dSource::fromJson(const QJsonObject &o)
 const QStringList &model3dKeyframeProperties()
 {
     static const QStringList keys = [] {
-        QStringList out{QStringLiteral("ambient")};
+        QStringList out{QStringLiteral("ambient"), QStringLiteral("modelScale"), QStringLiteral("modelScaleZ")};
         for (int n = 1; n <= kModelLightCount; ++n) {
             for (const QString &name : lightScalarNames())
                 out.append(QStringLiteral("light%1_%2").arg(n).arg(name));
@@ -344,6 +344,10 @@ bool model3dScalar(const Model3dSource &source, const QString &key, double *out)
     QString name;
     if (key == QLatin1String("ambient")) {
         v = source.ambient;
+    } else if (key == QLatin1String("modelScale")) {
+        v = source.modelScale;
+    } else if (key == QLatin1String("modelScaleZ")) {
+        v = source.modelScaleZ;
     } else if (parseLightKey(key, &index, &name)) {
         ModelLight light = source.lights[size_t(index)];
         const double *field = lightScalar(light, name);
@@ -364,6 +368,14 @@ bool setModel3dScalar(Model3dSource &source, const QString &key, double value)
     QString name;
     if (key == QLatin1String("ambient")) {
         source.ambient = std::clamp(value, 0.0, 1.0);
+        return true;
+    }
+    if (key == QLatin1String("modelScale")) {
+        source.modelScale = std::clamp(value, 0.01, 100.0);
+        return true;
+    }
+    if (key == QLatin1String("modelScaleZ")) {
+        source.modelScaleZ = std::clamp(value, 0.01, 100.0);
         return true;
     }
     if (!parseLightKey(key, &index, &name))
@@ -400,6 +412,10 @@ QString model3dKeyframeLabel(const QString &key)
 {
     if (key == QLatin1String("ambient"))
         return QCoreApplication::translate("Model3dSource", "Ambient light");
+    if (key == QLatin1String("modelScale"))
+        return QCoreApplication::translate("Model3dSource", "Model scale");
+    if (key == QLatin1String("modelScaleZ"))
+        return QCoreApplication::translate("Model3dSource", "Model depth scale");
     int index = 0;
     QString name;
     if (!parseLightKey(key, &index, &name))

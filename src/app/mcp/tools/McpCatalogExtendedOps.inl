@@ -656,18 +656,23 @@
         { "add_model3d", "model3d", "Place a 3D model (.glb) or Gaussian splat",
           "Add a glTF binary, or a Gaussian splat scene (.sog, a 3DGS .ply, a .zip or folder bundle holding meta.json/lod-meta.json, or that meta.json), as a model clip on a graphic track, creating one when needed. A model "
           "clip is a 3D layer like any other: its rect (x, y, w, h) is the front face of the "
-          "model's bounding box, z pushes it in depth, rotationX/rotationY/rotation turn it "
-          "(intrinsic, X then Y then the in-plane spin, the same as a tilted clip), and "
+          "model's bounding box, z pushes it in depth (+ away from the viewer), rotationX/rotationY/rotation "
+          "turn it about the clip's anchor (intrinsic, X then Y then the in-plane spin, the same as a "
+          "tilted clip; the world is right-handed, y down, z away), and "
           "perspective is the eye it is seen through when there is no scene camera — set them with "
           "set_transform or set_keyframe like any clip. It occludes and is occluded by other 3D "
           "layers when \"Occlude by depth\" is on in the editor. It starts centred with its largest extent half "
           "the canvas height. scale/depth/rotX/rotY/rotZ are older shorthands still accepted: scale "
           "resizes the box about its centre to that fraction of canvas height, depth sets the "
-          "perspective, rotX/rotY/rotZ set the rotations about the model's glTF axes (+y up). "
+          "perspective, rotX/rotY/rotZ set the rotations about the model's glTF axes (+y up, +z toward "
+          "the viewer; written as rotationX = rotX, rotationY = -rotY, rotation = -rotZ). "
+          "modelScale (default 1) resizes the model about the anchor and modelScaleZ (default 1) "
+          "multiplies its depth, which is otherwise the geometric mean of the box's width and height "
+          "scales. "
           "It is lit by ambient plus up to four point or spot lights (lights), placed like 3D "
           "Relight's across the clip's rect and near or far of the model's centre; they follow the "
           "clip's position and size but not its rotation. Their numbers are keyframable as "
-          "model3d.ambient and model3d.light<n>_<x|y|z|intensity|radius|cone|aimX|aimY>. An animated file plays its first animation at its own length unless "
+          "model3d.ambient, model3d.modelScale, model3d.modelScaleZ and model3d.light<n>_<x|y|z|intensity|radius|cone|aimX|aimY>. A light's z is in clip heights, + away from the viewer, like the world's. An animated file plays its first animation at its own length unless "
           "duration is given; loop decides what happens past the end. Returns {id, track, index, "
           "animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}. A splat has no animations or lights "
           "(those options have no effect) and reports splatCount instead of vertexCount.",
@@ -681,11 +686,13 @@
                         {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start (default 0)"))},
                         {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height (default 0.5); writes w/h"), 0.01, 10.0)},
                         {QStringLiteral("depth"), numberProp(QStringLiteral("Shorthand: perspective strength 0 (flat) .. 1 (strong); writes perspective"), 0.0, 1.0)},
-                        {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: degrees about the model's X axis; writes rotationX = -rotX"))},
-                        {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: degrees about the model's up axis; writes rotationY"))},
+                        {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: degrees about the model's X axis; writes rotationX = rotX"))},
+                        {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: degrees about the model's up axis; writes rotationY = -rotY"))},
                         {QStringLiteral("rotZ"), numberProp(QStringLiteral("Shorthand: degrees about the model's Z axis; writes rotation = -rotZ"))},
                         {QStringLiteral("lights"), model3dLightsProp()},
                         {QStringLiteral("ambient"), numberProp(QStringLiteral("Ambient light 0..1 (default 0.35)"), 0.0, 1.0)},
+                        {QStringLiteral("modelScale"), numberProp(QStringLiteral("Uniform size multiplier about the anchor (default 1)"), 0.01, 100.0)},
+                        {QStringLiteral("modelScaleZ"), numberProp(QStringLiteral("Extra multiplier on the model's depth only (default 1)"), 0.01, 100.0)},
                         {QStringLiteral("name"), stringProp(QStringLiteral("Clip name (default: the file name)"))}},
                        {QStringLiteral("path")}) },
         { "inspect_model3d", "model3d", "Check a .glb or splat before or after placing it",
@@ -714,11 +721,13 @@
                                    {QStringLiteral("offset"), numberProp(QStringLiteral("Seconds into the animation at the clip's start"))},
                                    {QStringLiteral("scale"), numberProp(QStringLiteral("Shorthand: largest extent as a fraction of canvas height; writes w/h"), 0.01, 10.0)},
                                    {QStringLiteral("depth"), numberProp(QStringLiteral("Shorthand: perspective strength 0..1; writes perspective"), 0.0, 1.0)},
-                                   {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: writes rotationX = -rotX"))},
-                                   {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: writes rotationY"))},
+                                   {QStringLiteral("rotX"), numberProp(QStringLiteral("Shorthand: writes rotationX = rotX"))},
+                                   {QStringLiteral("rotY"), numberProp(QStringLiteral("Shorthand: writes rotationY = -rotY"))},
                                    {QStringLiteral("rotZ"), numberProp(QStringLiteral("Shorthand: writes rotation = -rotZ"))},
                                    {QStringLiteral("lights"), model3dLightsProp()},
                                    {QStringLiteral("ambient"), numberProp(QStringLiteral("Ambient light 0..1"), 0.0, 1.0)},
+                                   {QStringLiteral("modelScale"), numberProp(QStringLiteral("Uniform size multiplier about the anchor"), 0.01, 100.0)},
+                                   {QStringLiteral("modelScaleZ"), numberProp(QStringLiteral("Extra multiplier on the model's depth only"), 0.01, 100.0)},
                                    {QStringLiteral("name"), stringProp(QStringLiteral("Clip name"))}},
                                   clipRefProps())) },
 
@@ -1332,35 +1341,44 @@
         { "get_camera_state", "timeline", "Read the scene camera's pose at a time",
           "The camera clip covering `at` (default the playhead), or `clip`, as it is posed then, "
           "keyframes included. Returns {active, at, clip, track, x, y, z, rotationX, rotationY, "
-          "rotation, perspective, eye:[x,y,z]}; active:false when no camera covers that time. Units: "
-          "x/y/z are camera translation in canvas px (+x moves the camera right so the picture goes "
-          "left, +y down, +z back from the scene); rotationX/Y pitch/yaw in degrees (+rotationX "
-          "tips the camera's top away from the scene, -rotationX looks up; +rotationY looks left); "
-          "rotation is roll in degrees, clockwise on screen; perspective is the eye distance in px "
-          "(the lens). eye is the viewpoint in world px about the canvas centre (y down, +z toward "
-          "the viewer). Read-only.",
+          "rotation, aimAtTarget, poi:[x,y,z], zoom, focalLength, fov, eye:[x,y,z]}; active:false when "
+          "no camera covers that time. Units: x/y/z (and eye) are the camera's position in the 3D "
+          "world: canvas px from the top-left, y down, +z away from the viewer, so a camera at rest "
+          "has eye [w/2, h/2, -zoom]. rotationX/Y/rotation are pitch/yaw/roll in degrees, right-handed "
+          "in that world and applied yaw first (+rotationX looks up, +rotationY looks toward +x, "
+          "+rotation rolls clockwise on screen); the horizon stays level when roll is 0. With "
+          "aimAtTarget the camera faces poi (a world point, level horizon) and the rotation is an "
+          "extra offset in the camera's own frame. zoom is the distance in px at which the canvas "
+          "fills the frame; focalLength is the same value in mm on a 36 x 24 mm film back and fov the "
+          "vertical field of view in degrees (set zoom, i.e. perspective, to change any of them). "
+          "Read-only.",
           objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds (default: the playhead)"))}},
                                   clipRefProps())),
           true, false, true },
         { "reset_camera", "timeline", "Return the scene camera to rest",
-          "Clears the camera clip's pan, dolly, pitch, yaw and roll, keyframes included, so it looks "
-          "exactly like no camera; the lens (perspective) is kept. One undo step. `clip` defaults to "
+          "Clears the camera clip's position, rotation and point of interest, keyframes included, and "
+          "switches aimAtTarget off, and clears the zoom (perspective) back to its default, so it "
+          "looks exactly like no camera. One undo step. `clip` defaults to "
           "the camera covering the playhead; not_found when there is no camera (add_camera).",
           objectSchema(clipRefProps()) },
         { "camera_look_at", "timeline", "Aim the scene camera at a clip or point",
-          "Turns the camera in place (its eye stays put) so `target` lands at the canvas centre, by "
-          "setting rotationX/rotationY and re-solving x/y/z to hold the eye; roll and lens are kept. "
+          "Turns the camera in place (its eye stays put) so `target` lands at the canvas centre with a "
+          "level horizon: rotationX/rotationY are set and the roll is reset to 0; zoom is kept. With "
+          "aimAtTarget:true the camera instead stays locked on the target (a two-node camera): the "
+          "point of interest is written (anchorX/Y/Z) and the rotation offset cleared; aimAtTarget:false "
+          "switches that off again. "
           "target is a clip id (its centre in the 3D world, including z; transform-layer parents "
-          "are ignored) or a world point {x,y,z} in canvas px about the canvas centre (y down, +z "
-          "toward the viewer; z defaults to 0). `at` (default the playhead) is where the aim is "
+          "are ignored) or a world point {x,y,z} in canvas px from the top-left (y down, +z away "
+          "from the viewer; z defaults to 0). `at` (default the playhead) is where the aim is "
           "computed and, with keyframe:true, where keys are written; a property that is already "
           "animated always takes a key, otherwise the plain value is written (like set_transform). "
           "One undo step. Returns the new pose and eye. Needs a camera: add_camera first.",
           objectSchema(mergeProps(
               {{QStringLiteral("target"), QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("string"), QStringLiteral("object")}},
-                                                      {QStringLiteral("description"), QStringLiteral("Clip id to look at, or a world point {x,y,z} in canvas px about the canvas centre")}}},
+                                                      {QStringLiteral("description"), QStringLiteral("Clip id to look at, or a world point {x,y,z} in canvas px from the canvas top-left (+z away)")}}},
                {QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds (default: the playhead)"))},
-               {QStringLiteral("keyframe"), boolProp(QStringLiteral("Write keyframes at `at` instead of plain values"))}},
+               {QStringLiteral("keyframe"), boolProp(QStringLiteral("Write keyframes at `at` instead of plain values"))},
+               {QStringLiteral("aimAtTarget"), boolProp(QStringLiteral("true = lock on the target via the point of interest; false = free rotation (default: unchanged)"))}},
               clipRefProps()),
                        {QStringLiteral("target")}) },
         { "camera_move", "timeline", "Animate a classic camera move",
@@ -1370,8 +1388,8 @@
           "(px, 200); pan_left/pan_right and tilt_up/tilt_down turn the camera in place (degrees, 20 and "
           "15); orbit_left/orbit_right circle `target` about the vertical axis while keeping it "
           "centred (degrees, 45; target is a clip id or {x,y,z} world point, default the canvas "
-          "centre); push_in/pull_out change the lens (perspective x(1-amount) or x(1+amount), a "
-          "fraction 0..0.9, default 0.35) — that is perspective strength, not framing; use dolly to "
+          "centre); push_in/pull_out zoom the lens in or out (zoom x(1+amount) or x(1-amount), a "
+          "fraction 0..0.9, default 0.35) without moving the eye; use dolly to "
           "move closer. Orbit keys interpolate pose linearly, so an orbit past ~90 degrees is a "
           "chord rather than an arc; split it. easing is ease (default) or linear. start..end must "
           "lie inside the camera clip (default: the one covering `start`). Needs add_camera first.",
@@ -1392,19 +1410,22 @@
               clipRefProps()),
                        {QStringLiteral("move"), QStringLiteral("start"), QStringLiteral("end")}) },
 
-        { "set_preview_view", "ui", "Move the preview's 2D/3D mode and free 3D viewpoint",
+        { "set_preview_view", "ui", "Move the 3D viewport's free viewpoint",
           "Drive the preview panel's view; only supplied keys act, in this order: mode, reset, axis, "
-          "frame_selection, orbit, pan, dolly, look_through. mode switches the preview between the "
-          "camera's picture (2d) and the world from a free viewpoint with the scene camera and stage "
-          "drawn in it (3d). reset returns to the overview. axis snaps to a standard view of the "
+          "ortho, fov, orientation, frame_selection, frame_all, orbit, pan, dolly, look_through. mode 3d shows the 3D "
+          "viewport (the world from a free viewpoint with the scene camera and stage drawn in it) by "
+          "opening a workspace that has one; 2d changes nothing, the Edit preview is always the "
+          "camera's picture. reset returns to the overview. axis snaps to a standard view of the "
           "current target (leaves look_through). frame_selection frames the selected clip, or the "
-          "whole stage when none. orbit [dx,dy] is degrees, pan [dx,dy] canvas px, dolly wheel steps "
+          "whole stage when none. frame_all frames every clip at the playhead, the stage and the camera. ortho "
+          "toggles the orthographic projection, fov is the editor lens in degrees (10-120), orientation is the "
+          "gizmo's axes (world|local|view). orbit [dx,dy] is degrees, pan [dx,dy] canvas px, dolly wheel steps "
           "(+ toward the target). look_through true views through the scene camera (what exports), "
-          "false returns to the free viewpoint. Navigation changes the viewpoint even in 2d mode but "
-          "is only seen in 3d. Editor state: not part of the project, not undoable. Returns {mode, "
-          "look_through, target:[x,y,z], yaw, pitch, distance, fov, eye:[x,y,z]} in world px about the "
-          "canvas centre. See it with capture({view:\"editor3d\"}).",
-          objectSchema({{QStringLiteral("mode"), enumProp(QStringLiteral("2d is the camera's picture, 3d the free viewpoint"),
+          "false returns to the free viewpoint. Navigation changes the viewpoint even while the 3D "
+          "viewport is closed but is only seen in it. Editor state: not part of the project, not undoable. Returns {mode, "
+          "look_through, target:[x,y,z], yaw, pitch, distance, fov, ortho, orientation, eye:[x,y,z]} in the 3D world (canvas "
+          "px from the top-left, y down, +z away from the viewer). See it with capture({view:\"editor3d\"}).",
+          objectSchema({{QStringLiteral("mode"), enumProp(QStringLiteral("3d shows the 3D viewport; 2d is accepted and does nothing"),
                                                          {QStringLiteral("2d"), QStringLiteral("3d")})},
                         {QStringLiteral("axis"), enumProp(QStringLiteral("Standard view of the current target"),
                                                          {QStringLiteral("front"), QStringLiteral("back"), QStringLiteral("left"),
@@ -1413,6 +1434,10 @@
                         {QStringLiteral("pan"), arrayProp(numberProp(QStringLiteral("Canvas px")), QStringLiteral("[dx, dy] canvas px the scene follows"))},
                         {QStringLiteral("dolly"), numberProp(QStringLiteral("Wheel steps; + moves toward the target"))},
                         {QStringLiteral("frame_selection"), boolProp(QStringLiteral("Frame the selected clip, or the whole stage"))},
+                        {QStringLiteral("ortho"), boolProp(QStringLiteral("Orthographic projection for the free viewpoint"))},
+                        {QStringLiteral("fov"), numberProp(QStringLiteral("Editor lens, vertical degrees (10-120, default 32)"))},
+                        {QStringLiteral("orientation"), enumProp(QStringLiteral("Gizmo axes"), {QStringLiteral("world"), QStringLiteral("local"), QStringLiteral("view")})},
+                        {QStringLiteral("frame_all"), boolProp(QStringLiteral("Frame every clip at the playhead, the stage and the camera"))},
                         {QStringLiteral("look_through"), boolProp(QStringLiteral("true = through the scene camera, false = free viewpoint"))},
                         {QStringLiteral("reset"), boolProp(QStringLiteral("Return to the overview viewpoint"))}}) },
 

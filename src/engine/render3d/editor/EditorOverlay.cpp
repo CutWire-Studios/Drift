@@ -11,6 +11,7 @@ namespace {
 
 const QColor kGrid(255, 255, 255, 18);
 const QColor kAxisX(235, 80, 80, 140);
+const QColor kAxisY(110, 205, 110, 140);
 const QColor kAxisZ(80, 130, 235, 140);
 const QColor kStage(255, 255, 255, 115);
 const QColor kCamera(225, 225, 225, 220);
@@ -83,31 +84,35 @@ QList<EditorLine> buildEditorOverlay(const EditorOverlayInput &input)
     if (w <= 0.0 || h <= 0.0)
         return out;
 
-    // The floor: the plane level with the canvas's bottom edge, reaching well past it either way.
-    const float floorY = float(h * 0.5);
-    const double step = gridStep(h);
+    // The floor: the plane level with the canvas's bottom edge, its lines on multiples of the step
+    // from the world origin and reaching well past the canvas either way.
+    const float floorY = float(h);
+    const double step = input.gridSize > 0.0 ? std::max(4.0, input.gridSize) : gridStep(h);
     const int count = int(std::ceil(std::max(w, h) * 2.0 / step));
     const float reach = float(count * step);
-    for (int i = -count; i <= count; ++i) {
+    for (int i = -count; input.showGrid && i <= count; ++i) {
         const float at = float(i * step);
-        addLine(out, {at, floorY, -reach}, {at, floorY, reach}, i == 0 ? kAxisZ : kGrid,
-                i == 0 ? 1.5f : 1.f, true);
-        addLine(out, {-reach, floorY, at}, {reach, floorY, at}, i == 0 ? kAxisX : kGrid,
-                i == 0 ? 1.5f : 1.f, true);
+        addLine(out, {at, floorY, -reach}, {at, floorY, reach}, kGrid, 1.f, true);
+        addLine(out, {-reach, floorY, at}, {reach, floorY, at}, kGrid, 1.f, true);
     }
+    // The world axes, through the origin at the canvas's top-left corner.
+    addLine(out, {-reach, 0.f, 0.f}, {reach, 0.f, 0.f}, kAxisX, 1.5f, true);
+    addLine(out, {0.f, -reach, 0.f}, {0.f, reach, 0.f}, kAxisY, 1.5f, true);
+    addLine(out, {0.f, 0.f, -reach}, {0.f, 0.f, reach}, kAxisZ, 1.5f, true);
 
     // The stage: what an unmoved camera frames, at z = 0.
     const float hw = float(w * 0.5);
     const float hh = float(h * 0.5);
-    addLoop(out, {{-hw, -hh, 0.f}, {hw, -hh, 0.f}, {hw, hh, 0.f}, {-hw, hh, 0.f}}, kStage, 1.5f);
+    addLoop(out, {{0.f, 0.f, 0.f}, {float(w), 0.f, 0.f}, {float(w), float(h), 0.f}, {0.f, float(h), 0.f}}, kStage,
+            1.5f);
 
     if (input.cameraActive) {
         const QMatrix4x4 c = sceneCameraWorld(input.camera);
-        const float d = float(std::max(1.0, input.camera.perspective));
-        const QVector3D eye = c.map(QVector3D(0.f, 0.f, d));
+        const float d = float(std::max(1.0, input.camera.zoom));
+        const QVector3D eye = sceneCameraEye(input.camera);
         // The frame it sees: its focal plane, which an unmoved camera lays exactly on the stage.
-        const QList<QVector3D> focal{c.map({-hw, -hh, 0.f}), c.map({hw, -hh, 0.f}),
-                                     c.map({hw, hh, 0.f}), c.map({-hw, hh, 0.f})};
+        const QList<QVector3D> focal{c.map({-hw, -hh, d}), c.map({hw, -hh, d}),
+                                     c.map({hw, hh, d}), c.map({-hw, hh, d})};
         const QColor body = input.cameraSelected ? kSelected : kCamera;
         for (const QVector3D &corner : focal)
             addLine(out, eye, corner, kCameraRays, 1.f);
@@ -115,7 +120,7 @@ QList<EditorLine> buildEditorOverlay(const EditorOverlayInput &input)
 
         // A Blender-style body: a short pyramid from the eye, with a triangle marking its top.
         const float t = 0.15f;
-        const float bz = d * (1.f - t);
+        const float bz = d * t;
         const QList<QVector3D> near{c.map({-hw * t, -hh * t, bz}), c.map({hw * t, -hh * t, bz}),
                                     c.map({hw * t, hh * t, bz}), c.map({-hw * t, hh * t, bz})};
         for (const QVector3D &corner : near)

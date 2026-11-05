@@ -88,6 +88,15 @@ QtObject {
         }
     }
 
+    property Connections viewport3dWatcher: Connections {
+        target: EditorState.preview
+        function onViewport3dRequested() {
+            const hosting = Workspaces.workspaceWithPanel("viewport3d")
+            if (hosting)
+                Workspaces.activeId = hosting
+        }
+    }
+
     property var subtitleActionHandler: null
     property var sourceLabActionHandler: null
     property var sourceLabRangesHandler: null

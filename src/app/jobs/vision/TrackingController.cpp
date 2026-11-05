@@ -10,6 +10,7 @@
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/render3d/editor/ClipGizmo.h"
+#include "core/base/CameraEuler.h"
 #include "engine/render3d/scene/SceneCamera3d.h"
 #include "engine/tracking/MotionTracking.h"
 
@@ -635,10 +636,13 @@ bool coversCanvas(const Pose &pose, QSizeF canvas)
 
 // ---- camera-mode stabilize --------------------------------------------------------------------
 //
-// The camera views the world plane z = 0 (canvas px about the canvas centre, y down) through
+// The solvers work in the camera's old parametrisation, which suits them: the camera views the
+// world plane z = 0 (canvas px about the canvas centre, y down) through
 //   screen = c + d * (Xc.x, Xc.y) / (d - Xc.z),  Xc = R^T X - P,  R = Rx(rotX) Ry(rotY) Rz(rotZ)
-// which is what cameraViewProjection builds. The solvers below work in doubles on that formula and
-// the tests check them against the real matrix.
+// with the eye at R(P + (0, 0, d)). That is the same camera cameraViewProjection builds, with the
+// eye and yaw-first angles the clip stores (SceneCamera3d.h) converted at the edges by
+// legacyFromCamera and cameraFromLegacy. The solvers work in doubles on that formula and the tests
+// check them against the real matrix.
 
 constexpr double kCameraRmsWarnPx = 2.0;
 
@@ -680,6 +684,43 @@ bool projectThroughCamera(const CameraParams &c, double d, QSizeF canvas, QPoint
         return false;
     *out = QPointF(canvas.width() / 2.0 + d * x / depth, canvas.height() / 2.0 + d * y / depth);
     return true;
+}
+
+// The clip's eye + yaw-first angles as the solvers' P and X-Y-Z angles, for a lens of `d` px.
+CameraParams legacyFromCamera(const std::array<double, 6> &n, double d, QSizeF canvas, const double nearest[3])
+{
+    drift::SceneCamera3d camera;
+    camera.positionX = n[0];
+    camera.positionY = n[1];
+    camera.positionZ = n[2];
+    camera.rotationX = n[3];
+    camera.rotationY = n[4];
+    camera.rotationZ = n[5];
+    QMatrix4x4 lens;
+    lens.translate(0.f, 0.f, float(d));
+    lens.scale(1.f, 1.f, -1.f);
+    const QMatrix4x4 old = drift::worldToCameraFrame(canvas) * drift::sceneCameraWorld(camera) * lens;
+    QMatrix4x4 turn = old;
+    turn.setColumn(3, QVector4D(0.f, 0.f, 0.f, 1.f));
+    double hint[3] = {nearest[0], nearest[1], nearest[2]};
+    double angles[3];
+    drift::gizmo::eulerFromMatrix(turn, hint, angles);
+    const QVector3D p = turn.transposed().mapVector(QVector3D(old(0, 3), old(1, 3), old(2, 3)));
+    return {p.x(), p.y(), p.z(), angles[0], angles[1], angles[2]};
+}
+
+// The solvers' P and angles as the clip's eye and yaw-first angles.
+std::array<double, 6> cameraFromLegacy(const CameraParams &c, double d, QSizeF canvas, const double nearest[3])
+{
+    const double p[3] = {c[0], c[1], c[2]};
+    const double rot[3] = {c[3], c[4], c[5]};
+    const QMatrix4x4 world = drift::cameraWorldFromLegacy(p, rot, d, canvas.width(), canvas.height());
+    QMatrix4x4 turn = world;
+    turn.setColumn(3, QVector4D(0.f, 0.f, 0.f, 1.f));
+    double angles[3];
+    drift::cameraEulerFromMatrix(turn, nearest, angles);
+    const QVector3D eye = world.map(QVector3D(0.f, 0.f, 0.f));
+    return {eye.x(), eye.y(), eye.z(), angles[0], angles[1], angles[2]};
 }
 
 bool solveLinear(QVector<double> a, QVector<double> b, QVector<double> *x)
@@ -873,10 +914,15 @@ std::optional<CameraSetup> cameraSetup(const drift::Project &project, const Clip
     zoomed.zoom = zoom;
     s.channels = cameraChannels(tracker, zoomed);
     s.full = usesFullCamera(tracker);
-    for (int i = 0; i < qMin<int>(6, target.restCamera.size()); ++i)
-        s.rest[i] = target.restCamera.at(i);
     const TimeUs at = camera.timelineStart + std::clamp<TimeUs>(refTimeline - camera.timelineStart, 0, camera.timelineDuration);
-    s.restPerspective = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0).perspective);
+    s.restPerspective = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0, s.canvas).zoom);
+    if (target.restCamera.size() >= 6) {
+        std::array<double, 6> rest{};
+        for (int i = 0; i < 6; ++i)
+            rest[i] = target.restCamera.at(i);
+        const double nearest[3] = {0.0, 0.0, 0.0};
+        s.rest = legacyFromCamera(rest, s.restPerspective, s.canvas, nearest);
+    }
 
     const std::optional<QPointF> anchor = trackAnchor(tracker, s.px);
     if (!anchor)
@@ -1034,21 +1080,24 @@ CameraSolution solveCamera(const drift::Project &project, const Clip &host, cons
     CameraParams previous = setup->rest;
     for (const QVector<int> &run : keyableRuns(frames, camera)) {
         PoseRun poses;
+        double angles[3] = {previous[3], previous[4], previous[5]};
         for (const int i : run) {
             const TimeUs at = frames[i].timelineUs;
-            const double d = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0).perspective);
+            const double d = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0, setup->canvas).zoom);
             const CameraFrame frame = solveCameraFrame(*setup, frames[i].h, hostFrameAt(project, host, at), d, previous);
             previous = frame.params;
             if (setup->full)
                 solution.worstRms = qMax(solution.worstRms, frame.rms);
+            const std::array<double, 6> placed = cameraFromLegacy(frame.params, d, setup->canvas, angles);
+            std::copy(placed.begin() + 3, placed.end(), angles);
             Pose pose;
             pose.t = at - camera.timelineStart;
-            pose.x = frame.params[0];
-            pose.y = frame.params[1];
-            pose.z = frame.params[2];
-            pose.pitch = frame.params[3];
-            pose.yaw = frame.params[4];
-            pose.rotation = frame.params[5];
+            pose.x = placed[0];
+            pose.y = placed[1];
+            pose.z = placed[2];
+            pose.pitch = placed[3];
+            pose.yaw = placed[4];
+            pose.rotation = placed[5];
             poses.append(pose);
         }
         unwrapRotation(&poses);
@@ -1065,17 +1114,19 @@ QString writeCameraKeys(const drift::Project &project, const Clip &host, const M
     if (solution.runs.isEmpty())
         return {};
     const CameraChannels channels = cameraChannels(tracker, target);
-    const double d = std::max(1.0, drift::sceneCameraFromClip(camera, camera.timelineStart, 1.0).perspective);
+    const double d = std::max(1.0, drift::sceneCameraFromClip(camera, camera.timelineStart, 1.0,
+                                                              QSizeF(project.width(), project.height())).zoom);
     const double radius = std::hypot(project.width(), project.height()) / 2.0;
-    writeChannel(camera.transformX, solution.runs, &Pose::x, kScalarTolerancePx);
-    writeChannel(camera.transformY, solution.runs, &Pose::y, kScalarTolerancePx);
-    if (channels.distance)
-        writeChannel(camera.positionZ, solution.runs, &Pose::z, kScalarTolerancePx);
-    if (channels.roll)
-        writeChannel(camera.rotation, solution.runs, &Pose::rotation, qRadiansToDegrees(kScalarTolerancePx / radius));
-    if (channels.tilt) {
-        writeChannel(camera.rotationX, solution.runs, &Pose::pitch, qRadiansToDegrees(kScalarTolerancePx / d));
-        writeChannel(camera.rotationY, solution.runs, &Pose::yaw, qRadiansToDegrees(kScalarTolerancePx / d));
+    // The eye and three angles all move the picture together, so each gets a quarter of the budget.
+    constexpr double kCameraTolerancePx = kScalarTolerancePx / 4.0;
+    writeChannel(camera.transformX, solution.runs, &Pose::x, kCameraTolerancePx);
+    writeChannel(camera.transformY, solution.runs, &Pose::y, kCameraTolerancePx);
+    writeChannel(camera.positionZ, solution.runs, &Pose::z, kCameraTolerancePx);
+    if (channels.roll || channels.tilt) {
+        const double tolerance = qRadiansToDegrees(kCameraTolerancePx / std::min(d, radius));
+        writeChannel(camera.rotation, solution.runs, &Pose::rotation, tolerance);
+        writeChannel(camera.rotationX, solution.runs, &Pose::pitch, tolerance);
+        writeChannel(camera.rotationY, solution.runs, &Pose::yaw, tolerance);
     }
     if (solution.worstRms > kCameraRmsWarnPx) {
         return TrackingController::tr("The camera can't match this surface exactly; some frames drift by up to %1 px")
@@ -1124,8 +1175,10 @@ double fillZoomForCamera(const drift::Project &project, const Clip &host, const 
         for (const PoseRun &run : solution.runs) {
             for (const Pose &pose : run) {
                 const TimeUs at = camera.timelineStart + pose.t;
-                const double d = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0).perspective);
-                const CameraParams params{pose.x, pose.y, pose.z, pose.pitch, pose.yaw, pose.rotation};
+                const double d = std::max(1.0, drift::sceneCameraFromClip(camera, at, 1.0, canvas).zoom);
+                const double nearest[3] = {0.0, 0.0, 0.0};
+                const CameraParams params = legacyFromCamera({pose.x, pose.y, pose.z, pose.pitch, pose.yaw, pose.rotation},
+                                                             d, canvas, nearest);
                 const HostFrame frame = hostFrameAt(project, host, at);
                 QPointF quad[4];
                 int k = 0;
@@ -2919,7 +2972,8 @@ bool TrackingController::addTarget(Clip &host, MotionTracker &tracker, const QSt
             if (!drift::isCameraClip(clip) || clip.timelineStart >= spanEnd || clip.timelineEnd() <= spanStart)
                 continue;
             const TimeUs at = clip.timelineStart + std::clamp<TimeUs>(refTimeline - clip.timelineStart, 0, clip.timelineDuration);
-            const drift::SceneCamera3d camera = drift::sceneCameraFromClip(clip, at, 1.0);
+            const drift::SceneCamera3d camera = drift::sceneCameraFromClip(
+                clip, at, 1.0, QSizeF(project.width(), project.height()));
             drift::TrackerTarget cameraTarget = target;
             cameraTarget.clipId = clip.id;
             cameraTarget.restCamera = {camera.positionX, camera.positionY, camera.positionZ,
@@ -3086,14 +3140,12 @@ void TrackingController::unapplyTarget(const Clip &host, const MotionTracker &tr
         };
         stripCamera(owner.transformX, 0);
         stripCamera(owner.transformY, 1);
-        if (channels.distance)
-            stripCamera(owner.positionZ, 2);
-        if (channels.tilt) {
+        stripCamera(owner.positionZ, 2);
+        if (channels.tilt || channels.roll) {
             stripCamera(owner.rotationX, 3);
             stripCamera(owner.rotationY, 4);
-        }
-        if (channels.roll)
             stripCamera(owner.rotation, 5);
+        }
         return;
     }
 

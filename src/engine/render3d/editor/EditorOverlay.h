@@ -9,8 +9,8 @@
 #include <QSizeF>
 #include <QVector3D>
 
-// The guides the preview's 3D view draws into the world: a ground grid, the stage (the canvas at
-// z = 0), the scene camera as a frustum with its projection rectangle, and the selection's box.
+// The guides the preview's 3D view draws into the world: a ground grid and the world axes through
+// the origin (the canvas's top-left corner), the stage (the canvas at z = 0), the scene camera as a frustum with its projection rectangle, and the selection's box.
 // Pure geometry in world space, so it is testable without GL; GlEditorOverlay draws it.
 namespace drift {
 
@@ -30,6 +30,8 @@ struct EditorOverlayInput
     bool cameraActive = false;
     SceneCamera3d camera; // likewise in render-scale px
     bool cameraSelected = false;
+    bool showGrid = true;
+    double gridSize = 0.0; // px; 0 picks a step from the canvas
     // The selected clip's unit quad ([-1, 1]^2) to world, when one is selected and placed in 3D.
     bool hasSelectedQuad = false;
     QMatrix4x4 selectedQuad;

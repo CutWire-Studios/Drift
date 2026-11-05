@@ -15,10 +15,6 @@ PanelFrame {
 
     readonly property real currentSeconds: EditorState.playheadSeconds
     readonly property real durationSeconds: EditorState.durationSeconds
-    // Only the desktop shell hosts this panel (phones use AndroidPreview), so 3D mode is always
-    // available here, including Android tablets and DeX.
-    readonly property bool mode3d: EditorState.preview.mode === "3d"
-
     // Driven by Main, which owns the window and the panels that hide around it.
     property bool previewFullscreen: false
     signal fullscreenRequested()
@@ -64,7 +60,6 @@ PanelFrame {
             // flush against a canvas edge — viewportOuter clips, so a zero margin would shear
             // the bottom handles in half. Fullscreen is for watching, so the frame fills it.
             anchors.margins: root.previewFullscreen ? 0 : Theme.spacingLg
-            mode3d: root.mode3d
 
             toolHost.tools: ({
                 transform: transformTool,
@@ -78,21 +73,12 @@ PanelFrame {
             })
             toolHost.companion: transformCompanion
 
-            // Key presses that bubble up from anything in the preview with focus.
-            Keys.onPressed: (event) => {
-                if (root.mode3d && modeView.view)
-                    modeView.view.handleKey(event)
-            }
-
             // Under the canvas, as navigation always was: it only takes the buttons and wheel
             // events the tools leave alone.
-            Loader {
-                id: modeView
-                // Typed loosely, so the 3D view's handleKey can be reached.
-                readonly property var view: item
+            Preview2DMode {
                 anchors.fill: parent
                 z: -1
-                sourceComponent: root.mode3d ? mode3dView : mode2dView
+                viewport: panelViewport
             }
         }
 
@@ -209,16 +195,6 @@ PanelFrame {
     }
 
     Component {
-        id: mode2dView
-        Preview2DMode { viewport: panelViewport }
-    }
-
-    Component {
-        id: mode3dView
-        Preview3DMode { viewport: panelViewport }
-    }
-
-    Component {
         id: transformTool
         TransformOverlay {
             canvas: panelViewport.canvas
@@ -280,16 +256,7 @@ PanelFrame {
                 y: panelViewport.canvas.y
                 width: panelViewport.canvas.width
                 height: panelViewport.canvas.height
-                visible: EditorState.preview.handlesVisible && !root.mode3d
-            }
-
-            // The same lights in the 3D view, standing over the clip's relief.
-            DepthLight3dOverlay {
-                x: panelViewport.canvas.x
-                y: panelViewport.canvas.y
-                width: panelViewport.canvas.width
-                height: panelViewport.canvas.height
-                visible: EditorState.preview.handlesVisible && root.mode3d
+                visible: EditorState.preview.handlesVisible
             }
 
             // Assets dragged from the browsers land here as overlays at the playhead, or onto the
@@ -301,7 +268,7 @@ PanelFrame {
                 y: panelViewport.canvas.y
                 width: panelViewport.canvas.width
                 height: panelViewport.canvas.height
-                enabled: EditorState.projectFile.projectWidth() > 0 && !root.mode3d
+                enabled: EditorState.projectFile.projectWidth() > 0
 
                 DropArea {
                     anchors.fill: parent

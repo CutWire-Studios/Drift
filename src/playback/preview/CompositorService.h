@@ -2,6 +2,7 @@
 
 #include "engine/compositor/FrameCompositor.h"
 #include "engine/compositor/GpuCompositor.h"
+#include "engine/compositor/PreviewStream.h"
 
 #include <QHash>
 #include <QObject>
@@ -44,7 +45,7 @@ public slots:
 
 signals:
     void frameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs, CompositeTiming timing,
-                    quint64 sequence);
+                    quint64 sequence, int stream);
 
 private:
     FrameCompositor m_compositor;
@@ -59,6 +60,8 @@ private:
 // Preview composites run sequentially on one worker. This keeps video decoder sessions
 // and their forward-read cursors stable across frames and across adjacent video clips.
 // New playback requests replace the pending timestamp while a composite is running.
+// Each PreviewStream has its own pending request; the worker serves the streams that have
+// something to draw in turn, so a busy stream cannot starve the other.
 class CompositorService : public QObject
 {
     Q_OBJECT
@@ -74,7 +77,17 @@ public:
     // Bumped each time snapshot() makes a new copy; never 0 for a real snapshot.
     quint64 snapshotSerial() const { return m_snapshotSerial; }
     void requestComposite(drift::TimeUs timeUs,
-                          FrameCompositor::RenderOptions options = FrameCompositor::RenderOptions{});
+                          FrameCompositor::RenderOptions options = FrameCompositor::RenderOptions{})
+    {
+        requestComposite(PreviewStream::Camera, timeUs, std::move(options));
+    }
+    void requestComposite(PreviewStream stream, drift::TimeUs timeUs,
+                          FrameCompositor::RenderOptions options);
+    // Forget the stream's pending request, so it is not drawn again until requested anew.
+    void cancelStream(PreviewStream stream);
+    // The stream to serve after `after`: the next one in round-robin order that has something to
+    // draw, or -1 when none does.
+    static int nextStreamToServe(int after, const bool (&wantsDraw)[kPreviewStreamCount]);
 
     // Fast playback (the default) drops frames that finish after the playhead has
     // moved on. Turn this off to present every rendered frame, however long it takes.
@@ -116,14 +129,15 @@ public:
     void setStats(PlaybackStats *stats) { m_stats = stats; }
 
 signals:
-    void frameReady(const GpuFrameTexture &frame);
+    void frameReady(int stream, const GpuFrameTexture &frame);
 
 private slots:
     void onWorkerFrameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs,
-                            CompositeTiming timing, quint64 sequence);
+                            CompositeTiming timing, quint64 sequence, int stream);
 
 private:
     void dispatch(drift::TimeUs timeUs, const FrameCompositor::RenderOptions &options);
+    bool wantsDraw(int stream) const;
     // Starts the newest pending request if it differs from the last one dispatched and there
     // is room in flight. Returns whether it dispatched.
     bool dispatchPending();
@@ -148,19 +162,25 @@ private:
     quint64 m_nextSequence = 1;
     // Highest sequence already put on screen. Completions older than this are overtaken;
     // playback also rejects frames lagging far behind the latest requested timestamp.
-    quint64 m_lastPresentedSequence = 0;
+    quint64 m_lastPresentedSequence[kPreviewStreamCount] = {};
     // Dispatch time per sequence, for request-to-screen latency. Filled only under perf logging.
     QHash<quint64, qint64> m_perfDispatchNs;
     // The newest request, whole. Both writers (requestComposite and the catch-up dispatch in
     // onWorkerFrameReady) run on the GUI thread. It used to be four atomics, which silently
     // dropped every option they did not name — proxies and the inline-edit skip never reached
     // the worker.
-    drift::TimeUs m_pendingTimeUs = 0;
-    FrameCompositor::RenderOptions m_pendingOptions;
-    drift::TimeUs m_lastDispatchedTimeUs = -1;
-    // The scale the caller asked for, before any adaptive multiplier — that is
-    // applied at dispatch, so a change takes effect on the very next frame.
-    FrameCompositor::RenderOptions m_lastDispatchedOptions;
+    struct StreamSlot
+    {
+        bool requested = false;
+        drift::TimeUs pendingTimeUs = 0;
+        FrameCompositor::RenderOptions pendingOptions;
+        drift::TimeUs lastDispatchedTimeUs = -1;
+        // The scale the caller asked for, before any adaptive multiplier — that is
+        // applied at dispatch, so a change takes effect on the very next frame.
+        FrameCompositor::RenderOptions lastDispatchedOptions;
+    };
+    StreamSlot m_slots[kPreviewStreamCount];
+    int m_lastServedStream = kPreviewStreamCount - 1;
     // Adaptive quality: consecutive on-time frames recover; late frames drop scale.
     int m_lateStreak = 0;
     int m_onTimeStreak = 0;

@@ -1,9 +1,9 @@
 import QtQuick
 import Drift
-// Navigating the 3D scene: middle- or right-drag orbits, with Shift it pans, and the wheel dollies.
+// Navigating the 3D scene. Blender scheme: middle- or right-drag orbits, with Shift it pans, Ctrl+middle dollies. Maya scheme:
+// Alt+left/middle/right orbits/pans/dollies. The wheel zooms toward the pointer.
 // A click on the camera's drawn body selects it, and the corner widget shows which way the world's
-// axes point. The pad under it steps the view. Sits under the tools, so a clip's box still wins
-// the pointer.
+// axes point. Sits under the tools, so a clip's box still wins the pointer.
 Item {
     id: mode
 
@@ -16,8 +16,7 @@ Item {
     // One numpad step, in degrees. Blender's default rotation angle.
     readonly property real orbitStep: 15
 
-    // "left"/"right"/"up"/"down" orbit, "in"/"out" dolly. Shared by the corner pad and the numpad,
-    // so the two cannot drift apart. Orbit walks the eye: left toward the left view, up toward the
+    // "left"/"right"/"up"/"down" orbit, "in"/"out" dolly, from the numpad. Orbit walks the eye: left toward the left view, up toward the
     // top view. A mouse drag grabs the scene instead, so it turns the other way.
     function applyNav(action) {
         if (action === "left")
@@ -34,7 +33,7 @@ Item {
             EditorState.preview.dolly(-1)
     }
 
-    // Blender's view keys: F frames the selection, Shift+F flies, Home resets, Numpad 0 looks through the camera,
+    // Blender's view keys: F frames the selection, Home frames everything, Shift+Home resets, Shift+F flies, Numpad 5 toggles orthographic, Numpad 0 looks through the camera,
     // Numpad 1/3/7 look from the front/right/top (Ctrl: the opposite side), Numpad 4/6/8/2 orbit
     // and Numpad +/− zoom. Shift+Numpad 4/6 rolls in Blender, which this view does not, so those
     // are left alone. The owner forwards key presses that bubble up to the viewport, so they work
@@ -47,8 +46,12 @@ Item {
             EditorState.preview.flying = !EditorState.preview.flying
         } else if (event.key === Qt.Key_F && !opposite) {
             EditorState.preview.frameSelection()
-        } else if (event.key === Qt.Key_Home) {
+        } else if (event.key === Qt.Key_Home && shifted) {
             EditorState.preview.resetView()
+        } else if (event.key === Qt.Key_Home) {
+            EditorState.preview.frameAll()
+        } else if (keypad && event.key === Qt.Key_5) {
+            EditorState.preview.toggleOrthographic()
         } else if (keypad && event.key === Qt.Key_0) {
             EditorState.preview.toggleLookThrough()
         } else if (keypad && event.key === Qt.Key_1) {
@@ -75,41 +78,80 @@ Item {
         event.accepted = true
     }
 
+    // Above the tools, so Alt-drag in the Maya scheme wins over a clip under the pointer. Presses that are
+    // not a navigation gesture are refused and fall through to them.
     MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.MiddleButton | Qt.RightButton
-        cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
+        id: navArea
 
+        // "orbit", "pan", "dolly" or "" for a press that is not navigation.
+        function gestureFor(button, modifiers) {
+            const shift = (modifiers & Qt.ShiftModifier) !== 0
+            const ctrl = (modifiers & Qt.ControlModifier) !== 0
+            const alt = (modifiers & Qt.AltModifier) !== 0
+            if (EditorState.preview.navigationScheme === "maya") {
+                if (!alt)
+                    return ""
+                return button === Qt.LeftButton ? "orbit" : button === Qt.MiddleButton ? "pan" : "dolly"
+            }
+            if (button === Qt.LeftButton)
+                return ""
+            if (shift)
+                return "pan"
+            return ctrl && button === Qt.MiddleButton ? "dolly" : "orbit"
+        }
+
+        parent: mode.viewport ? mode.viewport : mode
+        anchors.fill: parent
+        z: 150
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+        cursorShape: gesture !== "" ? Qt.ClosedHandCursor : Qt.ArrowCursor
+
+        property string gesture: ""
         property real lastX: 0
         property real lastY: 0
 
         onPressed: (mouse) => {
+            gesture = gestureFor(mouse.button, mouse.modifiers)
+            if (gesture === "") {
+                mouse.accepted = false
+                return
+            }
             lastX = mouse.x
             lastY = mouse.y
             mode.viewport.forceActiveFocus()
             EditorState.preview.setNavigating(true)
         }
-        onReleased: EditorState.preview.setNavigating(false)
-        onCanceled: EditorState.preview.setNavigating(false)
+        onReleased: finish()
+        onCanceled: finish()
         onPositionChanged: (mouse) => {
-            if (!pressed)
+            if (gesture === "")
                 return
             const dx = mouse.x - lastX
             const dy = mouse.y - lastY
             lastX = mouse.x
             lastY = mouse.y
-            if (mouse.modifiers & Qt.ShiftModifier)
+            if (gesture === "pan")
                 EditorState.preview.pan(dx / mode.perCanvas, dy / mode.perCanvas)
+            else if (gesture === "dolly")
+                EditorState.preview.dolly(EditorState.preview.navigationScheme === "maya" ? (dx - dy) / 30 : -dy / 30)
             else
                 EditorState.preview.orbit(dx * 0.4, dy * 0.4)
         }
         onWheel: (wheel) => {
-            if (wheel.angleDelta.y === 0) {
+            if (wheel.angleDelta.y === 0 || !mode.canvas || mode.canvas.width <= 0) {
                 wheel.accepted = false
                 return
             }
-            EditorState.preview.dolly(wheel.angleDelta.y / 120)
+            const p = mode.canvas.mapFromItem(navArea, wheel.x, wheel.y)
+            EditorState.preview.zoomAt(wheel.angleDelta.y / 120, p.x / mode.canvas.width * 2 - 1,
+                                       1 - p.y / mode.canvas.height * 2, mode.canvas.width / mode.canvas.height)
             wheel.accepted = true
+        }
+
+        function finish() {
+            if (gesture !== "")
+                EditorState.preview.setNavigating(false)
+            gesture = ""
         }
     }
 
@@ -315,13 +357,5 @@ Item {
         z: 160
         x: mode.canvas ? mode.canvas.x + mode.canvas.width - width - Theme.spacingLg : 0
         y: mode.canvas ? mode.canvas.y + Theme.spacingLg : 0
-    }
-
-    ViewNavPad {
-        parent: axes.parent
-        z: 160
-        x: axes.x + (axes.width - width) / 2
-        y: axes.y + axes.height + Theme.spacingXs
-        navigate: (action) => mode.applyNav(action)
     }
 }

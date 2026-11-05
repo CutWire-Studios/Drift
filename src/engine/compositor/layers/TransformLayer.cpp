@@ -70,12 +70,8 @@ QTransform transformLayerMatrix(const Clip &clip, TimeUs timelineUs, const QSize
     const double fy = clip.flipV ? -1.0 : 1.0;
 
     ClipPose3d pose;
-    if (clip.layer3d) {
-        pose.rotationX = valueAt(clip.rotationX, relative, 0.0);
-        pose.rotationY = valueAt(clip.rotationY, relative, 0.0);
-        pose.positionZ = valueAt(clip.positionZ, relative, 0.0) * renderScale;
-        pose.perspective = valueAt(clip.perspective, relative, kDefaultClipPerspective) * renderScale;
-    }
+    if (clip.layer3d)
+        pose = clipPoseAt(clip, relative, renderScale, projectSize.height());
     if (!pose.isActive()) {
         QTransform t;
         t.translate(box.center().x(), box.center().y());

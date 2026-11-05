@@ -1227,7 +1227,8 @@ QVariantMap AppController::cameraStateAt(double seconds, int trackIndex, int cli
     }
     if (!found)
         return QVariantMap{{QStringLiteral("active"), false}};
-    const drift::SceneCamera3d camera = drift::sceneCameraFromClip(*found, timeUs, 1.0);
+    const QSizeF project(m_project.width(), m_project.height());
+    const drift::SceneCamera3d camera = drift::sceneCameraFromClip(*found, timeUs, 1.0, project);
     const QVector3D eye = drift::sceneCameraEye(camera);
     return QVariantMap{
         {QStringLiteral("active"), true},
@@ -1241,9 +1242,38 @@ QVariantMap AppController::cameraStateAt(double seconds, int trackIndex, int cli
         {QStringLiteral("rotationX"), camera.rotationX},
         {QStringLiteral("rotationY"), camera.rotationY},
         {QStringLiteral("rotation"), camera.rotationZ},
-        {QStringLiteral("perspective"), camera.perspective},
+        {QStringLiteral("aim"), camera.aimAtTarget},
+        {QStringLiteral("poiX"), camera.targetX},
+        {QStringLiteral("poiY"), camera.targetY},
+        {QStringLiteral("poiZ"), camera.targetZ},
+        {QStringLiteral("zoom"), camera.zoom},
+        {QStringLiteral("focalLength"), drift::focalLengthFromZoom(camera.zoom, project.height())},
+        {QStringLiteral("fov"), drift::fovFromZoom(camera.zoom, project.height())},
         {QStringLiteral("eye"), QVariantList{eye.x(), eye.y(), eye.z()}},
     };
+}
+
+double AppController::cameraZoomFromFocalLength(double millimetres) const
+{
+    return drift::zoomFromFocalLength(millimetres, m_project.height());
+}
+
+double AppController::cameraZoomFromFov(double degrees) const
+{
+    return drift::zoomFromFov(degrees, m_project.height());
+}
+
+void AppController::setCameraAimAtTarget(int trackIndex, int clipIndex, bool enabled)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex)
+        || !drift::isCameraClip(m_project.tracks().at(trackIndex).clips.at(clipIndex))
+        || m_project.tracks().at(trackIndex).clips.at(clipIndex).aimAtTarget == enabled) {
+        return;
+    }
+    const drift::Project before = m_project;
+    m_project.tracks()[trackIndex].clips[clipIndex].aimAtTarget = enabled;
+    pushProjectEdit(before, enabled ? tr("Aim camera at target") : tr("Free camera"));
+    finishEdit(enabled ? tr("Camera aims at its point of interest") : tr("Camera uses its own rotation"));
 }
 
 QVariantList AppController::clipWorldCentreAt(int trackIndex, int clipIndex, double seconds) const
@@ -1258,8 +1288,7 @@ QVariantList AppController::clipWorldCentreAt(int trackIndex, int clipIndex, dou
     };
     const double w = value(clip.transformW, m_project.width());
     const double h = value(clip.transformH, m_project.height());
-    return QVariantList{value(clip.transformX, 0.0) + w / 2.0 - m_project.width() / 2.0,
-                        value(clip.transformY, 0.0) + h / 2.0 - m_project.height() / 2.0,
+    return QVariantList{value(clip.transformX, 0.0) + w / 2.0, value(clip.transformY, 0.0) + h / 2.0,
                         value(clip.positionZ, 0.0)};
 }
 

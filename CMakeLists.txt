@@ -563,6 +563,7 @@ add_library(driftcore STATIC
     src/core/project/clip/Stabilize.h
     src/core/project/clip/Stabilize.cpp
     src/core/base/Bezier.h
+    src/core/base/CameraEuler.h
     src/core/animation/SpeedCurve.h
     src/core/animation/SpeedCurve.cpp
     src/core/animation/FadeShape.h
@@ -1272,6 +1273,8 @@ target_sources(driftapp PRIVATE
     src/playback/stats/PlaybackDiagnostics.cpp
     src/playback/stats/PerfLog.h
     src/playback/stats/PerfLog.cpp
+    src/ui/preview/Outliner3dModel.h
+    src/ui/preview/Outliner3dModel.cpp
     src/ui/preview/PreviewController.h
     src/ui/preview/PreviewController.cpp
     src/ui/timeline/ClipThumbnailStore.h
@@ -1499,6 +1502,7 @@ qt_add_resources(drift "drift_workspaces"
         resources/workspaces/color.json
         resources/workspaces/keyframes.json
         resources/workspaces/masking-tracking.json
+        resources/workspaces/3d.json
 )
 
 qt_add_resources(drift "drift_marketplace"
@@ -1619,20 +1623,15 @@ qt_add_qml_module(drift
         src/qml/AssetsPanel.qml
         src/qml/PreviewPanel.qml
         src/qml/components/preview/ViewAxisWidget.qml
-        src/qml/components/preview/ViewNavPad.qml
         src/qml/components/preview/PreviewViewport.qml
         src/qml/components/preview/PreviewStatusLayer.qml
         src/qml/components/preview/PreviewToolHost.qml
         src/qml/components/preview/InlineTextEditor.qml
         src/qml/components/preview/PreviewOsd.qml
-        src/qml/components/preview/PreviewModeSwitch.qml
-        src/qml/components/preview/Preview3DTools.qml
         src/qml/components/preview/PreviewOptionsMenu.qml
         src/qml/components/preview/PreviewTransportBar.qml
         src/qml/components/preview/modes/Preview2DMode.qml
         src/qml/components/preview/modes/Preview3DMode.qml
-        src/qml/components/preview/modes/PreviewModeSwitchSegment.qml
-        src/qml/components/preview/modes/PreviewModeSwitchPill.qml
         src/qml/components/preview/modes/Preview3DFlyHint.qml
         src/qml/components/preview/modes/Preview3DFlyDeadZone.qml
         src/qml/components/preview/TransformGizmo.qml
@@ -1686,6 +1685,8 @@ qt_add_qml_module(drift
         src/qml/components/properties/VoiceoverDialog.qml
         src/qml/components/properties/VectorInspector.qml
         src/qml/components/properties/Model3DInspector.qml
+        src/qml/components/properties/Model3DLighting.qml
+        src/qml/components/properties/Transform3dInspector.qml
         src/qml/components/properties/PdfInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/EffectsInspector.qml
@@ -1869,6 +1870,11 @@ qt_add_qml_module(drift
         src/qml/components/panels/KeyframesPanel.qml
         src/qml/components/panels/MaskingPanel.qml
         src/qml/components/panels/TrackingPanel.qml
+        src/qml/components/panels/Viewport3dPanel.qml
+        src/qml/components/panels/Outliner3dPanel.qml
+        src/qml/components/panels/Transform3dPanel.qml
+        src/qml/components/panels/Camera3dPanel.qml
+        src/qml/components/panels/View3dPanel.qml
         src/qml/components/panels/SubtitleLanePanel.qml
         src/qml/components/panels/SubtitleTextPanel.qml
         src/qml/components/subtitles/SubtitleLaneToolbar.qml
@@ -2218,7 +2224,6 @@ qt_add_qml_module(drift
         src/qml/components/preview/PreviewFullscreenTransportScrim.qml
         src/qml/components/preview/PreviewDropClipFrame.qml
         src/qml/components/preview/PreviewDropCanvasFrame.qml
-        src/qml/components/preview/Preview3DToolsDivider.qml
         src/qml/components/preview/GuideLayerMark.qml
         src/qml/components/dialogs/ProjectSetupDialog.qml
         src/qml/components/dialogs/LayoutChooserDialog.qml

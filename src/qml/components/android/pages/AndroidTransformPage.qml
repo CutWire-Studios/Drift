@@ -13,7 +13,7 @@ Item {
         id: scroll
         anchors.fill: parent
         contentWidth: width
-        contentHeight: inspector.height + Theme.pagePadding * 2
+        contentHeight: inspector.height + (inspector3d.visible ? inspector3d.implicitHeight + Theme.spacingXl : 0) + Theme.pagePadding * 2
         clip: true
         boundsBehavior: Flickable.StopAtBounds
         ScrollBar.vertical: AppScrollBar { }
@@ -23,6 +23,14 @@ Item {
             x: Theme.pagePadding
             y: Theme.pagePadding
             width: scroll.width - Theme.pagePadding * 2
+        }
+
+        Transform3dInspector {
+            id: inspector3d
+            x: Theme.pagePadding
+            y: Theme.pagePadding + inspector.height + Theme.spacingXl
+            width: scroll.width - Theme.pagePadding * 2
+            visible: is3d
         }
     }
 }

@@ -86,6 +86,7 @@ std::shared_ptr<const ModelDrawRequest> makeDrawRequest(const RenderRequest &req
     out->pose3d = request.pose;
     out->canvas = request.canvas;
 
+    out->params = modelClipParamsFromSource(request.source);
     if (loadSplatCached(request.path, true, &out->splat)) {
         if (!out->splat)
             return nullptr;
@@ -96,7 +97,6 @@ std::shared_ptr<const ModelDrawRequest> makeDrawRequest(const RenderRequest &req
     if (!asset)
         return nullptr;
     out->asset = asset;
-    out->params = modelClipParamsFromSource(request.source);
 
     if (asset->rig && !asset->rig->animations.isEmpty()) {
         const int animIndex =

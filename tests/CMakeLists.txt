@@ -291,6 +291,7 @@ qt_add_executable(tst_mcp
     ../src/app/bin/SourceLabController.cpp
     ../src/app/jobs/audio/TtsController.cpp
     ../src/app/jobs/audio/VoiceLibrary.cpp
+    ../src/ui/preview/Outliner3dModel.cpp
     ../src/ui/preview/PreviewController.cpp
     ../src/app/online/addons/AddonCatalog.cpp
     ../src/app/online/addons/AddonManager.cpp
@@ -425,6 +426,7 @@ qt_add_resources(tst_workspacestore "workspace_presets"
         ../resources/workspaces/color.json
         ../resources/workspaces/keyframes.json
         ../resources/workspaces/masking-tracking.json
+        ../resources/workspaces/3d.json
 )
 add_test(NAME WorkspaceStore COMMAND tst_workspacestore)
 
@@ -438,3 +440,8 @@ qt_add_executable(tst_tracking tst_tracking.cpp ../src/engine/tracking/MotionTra
 target_include_directories(tst_tracking PRIVATE ../src)
 target_link_libraries(tst_tracking PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME Tracking COMMAND tst_tracking)
+
+qt_add_executable(tst_transform3d tst_transform3d.cpp)
+target_include_directories(tst_transform3d PRIVATE ../src)
+target_link_libraries(tst_transform3d PRIVATE Qt6::Test Qt6::Gui driftengine driftcore)
+add_test(NAME Transform3d COMMAND tst_transform3d)

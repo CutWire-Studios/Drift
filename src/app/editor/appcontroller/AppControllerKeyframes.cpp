@@ -1,4 +1,5 @@
 #include "app/editor/appcontroller/AppControllerInternal.h"
+#include "core/edit/TimelineOps.h"
 #include "engine/packages/effects/EffectCatalog.h"
 
 #include "core/animation/EasingPresetStore.h"
@@ -327,6 +328,18 @@ double AppController::propertyValueAt(int trackIndex, int clipIndex, const QStri
 double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QString &prop,
                                         double fallback) const
 {
+    if (trackIndex >= 0 && trackIndex < m_project.tracks().size()) {
+        const drift::Track &owner = m_project.tracks().at(trackIndex);
+        if (clipIndex >= 0 && clipIndex < owner.clips.size() && drift::isCameraClip(owner.clips.at(clipIndex))) {
+            // A camera at rest: the eye one default zoom in front of the canvas centre, aimed at it.
+            if (prop == QLatin1String("x") || prop == QLatin1String("anchorX"))
+                return m_project.width() / 2.0;
+            if (prop == QLatin1String("y") || prop == QLatin1String("anchorY"))
+                return m_project.height() / 2.0;
+            if (prop == QLatin1String("z"))
+                return -drift::defaultClipPerspective(m_project.height());
+        }
+    }
     if (prop == QLatin1String("width"))
         return m_project.width();
     if (prop == QLatin1String("height"))
@@ -339,7 +352,23 @@ double AppController::propertyBaseValue(int trackIndex, int clipIndex, const QSt
         return 0.0;
     }
     if (prop == QLatin1String("perspective"))
-        return drift::kDefaultClipPerspective;
+        return drift::defaultClipPerspective(m_project.height());
+    if (prop == QLatin1String("anchorZ"))
+        return 0.0;
+    if (prop == QLatin1String("anchorX") || prop == QLatin1String("anchorY")) {
+        const bool horizontal = prop == QLatin1String("anchorX");
+        double size = horizontal ? m_project.width() : m_project.height();
+        if (trackIndex >= 0 && trackIndex < m_project.tracks().size()) {
+            const drift::Track &track = m_project.tracks().at(trackIndex);
+            if (clipIndex >= 0 && clipIndex < track.clips.size()) {
+                const drift::KeyframeTrack<double> &extent =
+                    horizontal ? track.clips.at(clipIndex).transformW : track.clips.at(clipIndex).transformH;
+                if (!extent.isEmpty())
+                    size = extent.evaluateAt(0);
+            }
+        }
+        return size / 2.0;
+    }
 
     // Effect params fall back to the effect's own static value, which is what the compositor
     // reads for an unkeyed param — and that value now sits on the adjustment linked to the clip.
@@ -520,6 +549,7 @@ QStringList AppController::clipAnimatedProperties(int trackIndex, int clipIndex)
         QStringLiteral("x"),       QStringLiteral("y"),       QStringLiteral("width"),
         QStringLiteral("height"),  QStringLiteral("rotation"), QStringLiteral("rotationX"),
         QStringLiteral("rotationY"), QStringLiteral("z"),     QStringLiteral("perspective"),
+        QStringLiteral("anchorX"), QStringLiteral("anchorY"), QStringLiteral("anchorZ"),
         QStringLiteral("opacity"), QStringLiteral("volume"),
     };
     for (const QString &prop : transformProps) {

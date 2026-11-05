@@ -142,6 +142,7 @@ Item {
         readonly property bool is3d: (root.editorState.rotationX || 0) !== 0
                                      || (root.editorState.rotationY || 0) !== 0
                                      || (root.editorState.z || 0) !== 0
+                                     || root.editorState.anchorX !== undefined || root.editorState.anchorY !== undefined
         rotation: is3d ? 0 : (root.editorState.rotation || 0)
         transform: Matrix4x4 {
             matrix: clipFrame.is3d

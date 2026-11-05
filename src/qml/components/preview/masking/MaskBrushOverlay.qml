@@ -176,6 +176,7 @@ Item {
         readonly property bool is3d: (root.editorState.rotationX || 0) !== 0
                                      || (root.editorState.rotationY || 0) !== 0
                                      || (root.editorState.z || 0) !== 0
+                                     || root.editorState.anchorX !== undefined || root.editorState.anchorY !== undefined
         // Moved by a transform layer: composed through that parent as well, flat or not.
         readonly property bool hasParent: root.editorState.parentActive === true
         rotation: is3d || hasParent ? 0 : (root.editorState.rotation || 0)

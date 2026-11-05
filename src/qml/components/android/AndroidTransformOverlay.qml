@@ -76,6 +76,7 @@ Item {
                     || x.cameraActive !== y.cameraActive
                     || x.rotationX !== y.rotationX || x.rotationY !== y.rotationY
                     || x.z !== y.z || x.perspective !== y.perspective
+                    || x.anchorX !== y.anchorX || x.anchorY !== y.anchorY || x.anchorZ !== y.anchorZ
                     || x.canvasWidth !== y.canvasWidth
                     || x.canvasHeight !== y.canvasHeight
                     || x.parentSig !== y.parentSig)
@@ -230,7 +231,8 @@ Item {
                 readonly property var pose3d: gizmoPose || box
                 readonly property bool is3d: ((pose3d.rotationX || 0) !== 0
                                                              || (pose3d.rotationY || 0) !== 0
-                                                             || (pose3d.z || 0) !== 0)
+                                                             || (pose3d.z || 0) !== 0
+                                                             || box.anchorX !== undefined || box.anchorY !== undefined)
                 // A camera reframes every box, flat ones included.
                 readonly property bool viaCamera: box.cameraActive === true
 
@@ -277,6 +279,9 @@ Item {
                                                                     "rotationY": handle.pose3d.rotationY || 0,
                                                                     "z": handle.pose3d.z || 0,
                                                                     "perspective": handle.box.perspective || 2000,
+                                                                    "anchorX": handle.box.anchorX,
+                                                                    "anchorY": handle.box.anchorY,
+                                                                    "anchorZ": handle.box.anchorZ,
                                                                     "parentActive": handle.box.parentActive,
                                                                     "parent": handle.box.parent
                                                                 }, handle.layoutX, handle.layoutY,
@@ -310,7 +315,6 @@ Item {
                 // do not run along the screen axes.
                 // The 3D view's screen is not the canvas, so there is nothing there to snap to.
                 readonly property bool canSnap: Math.abs(handle.layoutRotation) < 0.01
-                                                && EditorState.preview.mode !== "3d"
 
                 // The box as it stood at the grab, in the shape the snapping calls take.
                 function grabBox() {

@@ -13,9 +13,8 @@ Item {
     // Controls outside this item that fade with it (the fullscreen transport), and are in use.
     property bool held: false
 
-    readonly property bool mode3d: EditorState.preview.mode === "3d"
     readonly property bool pinned: interacting || held || cluster.menuOpen || cluster.menuBusy
-                                   || topHover.hovered || cluster.hovered || toolsHover.hovered
+                                   || cluster.hovered
     property bool awake: false
     readonly property bool shown: awake || pinned
 
@@ -51,29 +50,12 @@ Item {
             }
         }
 
-        PreviewModeSwitch {
-            anchors.top: parent.top
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.topMargin: Theme.spacingLg
-
-            HoverHandler { id: topHover }
-        }
-
         PreviewOsdCluster {
             id: cluster
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: Theme.spacingLg
             viewport: osd.viewport
-        }
-
-        Preview3DTools {
-            visible: osd.mode3d
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: Theme.spacingLg
-
-            HoverHandler { id: toolsHover }
         }
     }
 }

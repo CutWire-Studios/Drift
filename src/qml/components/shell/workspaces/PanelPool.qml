@@ -87,6 +87,11 @@ Item {
         "keyframes": keyframesC,
         "masking": maskingC,
         "tracking": trackingC,
+        "viewport3d": viewport3dC,
+        "outliner3d": outliner3dC,
+        "transform3d": transform3dC,
+        "camera3d": camera3dC,
+        "view3d": view3dC,
         "undoHistory": historyC,
         "sourceViewer": sourceViewerC,
         "sourceLab.bin": sourceLabBinC,
@@ -117,6 +122,11 @@ Item {
     Component { id: keyframesC; LazyPanel { panel: KeyframesPanel {} } }
     Component { id: maskingC; LazyPanel { panel: MaskingPanel {} } }
     Component { id: trackingC; LazyPanel { panel: TrackingPanel {} } }
+    Component { id: viewport3dC; LazyPanel { panel: Viewport3dPanel {} } }
+    Component { id: outliner3dC; LazyPanel { panel: Outliner3dPanel {} } }
+    Component { id: transform3dC; LazyPanel { panel: Transform3dPanel {} } }
+    Component { id: camera3dC; LazyPanel { panel: Camera3dPanel {} } }
+    Component { id: view3dC; LazyPanel { panel: View3dPanel {} } }
     Component { id: historyC; LazyPanel { panel: HistoryPanel {} } }
     Component { id: sourceViewerC; LazyPanel { panel: SourceViewerPanel {} } }
     Component { id: sourceLabBinC; LazyPanel { panel: SourceLabBinPanel {} } }

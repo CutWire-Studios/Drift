@@ -665,8 +665,7 @@ PanelFrame {
             return false
         // These keys are shared with the timeline tools and the 3D gizmo, so they are only ours
         // while the user is working here. Escape cancels state that exists only mid-edit.
-        const engaged = !(EditorState.preview.mode === "3d")
-                        && (ShellBridge.previewHovered || root.activeFocus || panelHover.hovered)
+        const engaged = (ShellBridge.previewHovered || root.activeFocus || panelHover.hovered)
         if (!engaged && id !== "clearSelection")
             return false
         switch (id) {

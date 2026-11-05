@@ -369,7 +369,7 @@ void SkiaTest::splatClipDrawsAtCentre()
     QImage out;
     gl::runtime().exec([&] {
         gl::GlRuntime &rt = gl::runtime();
-        const QMatrix4x4 view = cameraViewProjection(SceneCamera3d(), QSizeF(64, 64));
+        const QMatrix4x4 view = cameraViewProjection(defaultSceneCamera(QSizeF(64, 64)), QSizeF(64, 64));
         gl::GlTarget target = gl::drawSplatClip(rt, rt.functions(), request, QSize(64, 64), view);
         QVERIFY(target.isValid());
         out = readStraight(rt.functions(), target);

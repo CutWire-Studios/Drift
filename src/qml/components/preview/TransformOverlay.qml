@@ -27,7 +27,9 @@ Item {
 
     // The two views edit differently: the camera output takes the flat grips (move, resize,
     // rotate) on every clip, the 3D scene only the 3D gizmo, and only on 3D layers and the camera.
-    readonly property bool mode3d: EditorState.preview.mode === "3d"
+    // The host says which viewport this overlay is on: 0 the camera's, 1 the editor's.
+    property int viewport: 0
+    readonly property bool mode3d: viewport === 1
 
     // The selected clip's gizmo, when it is a 3D layer, and its pose while a handle is dragged.
     readonly property var gizmoBox: {
@@ -64,7 +66,7 @@ Item {
         return out
     }
     readonly property var groupPivot: group3dBoxes.length >= 2
-        ? EditorState.preview.groupGizmoPivot(group3dBoxes) : null
+        ? EditorState.preview.groupGizmoPivot(group3dBoxes, viewport) : null
     readonly property bool groupDragging: !!gizmoLive && !!gizmoBox && gizmoBox.kind === "group"
 
     // A transform layer being moved: the clips under it are drawn from a model that is not
@@ -126,6 +128,7 @@ Item {
                     || x.cameraActive !== y.cameraActive
                     || x.rotationX !== y.rotationX || x.rotationY !== y.rotationY
                     || x.z !== y.z || x.perspective !== y.perspective
+                    || x.anchorX !== y.anchorX || x.anchorY !== y.anchorY || x.anchorZ !== y.anchorZ
                     || x.canvasWidth !== y.canvasWidth
                     || x.canvasHeight !== y.canvasHeight
                     || x.parentSig !== y.parentSig)
@@ -151,9 +154,9 @@ Item {
         // is wasted work and stalls the UI on long timelines.
         if (EditorState.playing)
             return
-        const camera = EditorState.preview.cameraBox()
+        const camera = EditorState.preview.cameraBox(viewport)
         cameraBox = camera && camera.kind === "camera" ? camera : null
-        const next = EditorState.preview.clipsAtPlayhead()
+        const next = EditorState.preview.clipsAtPlayhead(viewport)
         if (clipsOverlayEqual(overlayClips, next))
             return
         const sameClips = sameOverlayClips(overlayClips, next)
@@ -357,7 +360,7 @@ Item {
         DragHandler {
             id: marqueeDrag
             target: null
-            enabled: EditorState.preview.mode !== "3d" && !root.interacting
+            enabled: !root.mode3d && !root.interacting
             property point press: Qt.point(0, 0)
             property bool started: false
 
@@ -451,7 +454,8 @@ Item {
                 readonly property real posePerspective: box.perspective || 2000
                 // Tilted or pushed in depth: the box is drawn through the clip's perspective
                 // transform, so its outline and grips land on the rendered quad.
-                readonly property bool is3d: (poseRotX !== 0 || poseRotY !== 0 || poseZ !== 0)
+                readonly property bool is3d: (poseRotX !== 0 || poseRotY !== 0 || poseZ !== 0
+                                              || box.anchorX !== undefined || box.anchorY !== undefined)
                 // A camera reframes every box, flat ones included, so the outline and grips have to go
                 // through the pose matrix rather than straight onto the canvas.
                 readonly property bool viaCamera: box.cameraActive === true
@@ -500,11 +504,14 @@ Item {
                                                                     "rotationY": handle.poseRotY,
                                                                     "z": handle.poseZ,
                                                                     "perspective": handle.posePerspective,
+                                                                    "anchorX": handle.box.anchorX,
+                                                                    "anchorY": handle.box.anchorY,
+                                                                    "anchorZ": handle.box.anchorZ,
                                                                     "parentActive": handle.box.parentActive,
                                                                     "parent": handle.box.parent
                                                                 }, handle.layoutX, handle.layoutY,
                                                                 handle.layoutW, handle.layoutH,
-                                                                handle.layoutRotation, handle.sx, handle.sy)
+                                                                handle.layoutRotation, handle.sx, handle.sy, root.viewport)
                             : Qt.matrix4x4()
                 }
 
@@ -537,7 +544,7 @@ Item {
                 // do not run along the screen axes.
                 // The 3D view's screen is not the canvas, so there is nothing there to snap to.
                 readonly property bool canSnap: Math.abs(handle.layoutRotation) < 0.01
-                                                && EditorState.preview.mode !== "3d"
+                                                && !root.mode3d
 
                 // The box as it stood at the grab, in the shape the snapping calls take.
                 function grabBox() {
@@ -611,7 +618,7 @@ Item {
                         if (handle.isTransform) {
                             const p = stage.mapFromItem(null, eventPoint.scenePosition.x,
                                                        eventPoint.scenePosition.y)
-                            const hit = EditorState.preview.clipAtCanvasPoint(p.x / handle.sx, p.y / handle.sy)
+                            const hit = EditorState.preview.clipAtCanvasPoint(p.x / handle.sx, p.y / handle.sy, root.viewport)
                             if (hit && hit.track !== undefined) {
                                 EditorState.selectClip(hit.track, hit.clip)
                                 return
@@ -689,7 +696,7 @@ Item {
                         const snap = handle.canSnap && !(bodyDrag.centroid.modifiers & Qt.ControlModifier)
                         const moved = EditorState.preview.snapMove(bodyDrag.startBox, bodyDrag.pressPx, bodyDrag.pressPy,
                                                                   p.x / handle.sx, p.y / handle.sy,
-                                                                  root.snapTolPx / handle.sx, snap)
+                                                                  root.snapTolPx / handle.sx, snap, root.viewport)
                         // Seen edge-on, the plane has no point under the pointer: hold still.
                         if (!moved.valid)
                             return
@@ -795,6 +802,7 @@ Item {
 
         TransformGizmo {
             id: gizmo
+            viewport: root.viewport
             anchors.fill: parent
             z: 950
             sx: stage.width / Math.max(1, root.gizmoBox ? root.gizmoBox.canvasWidth : 1)

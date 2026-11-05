@@ -99,6 +99,8 @@ public:
     // graph (see GpuFrameTexture). Null whenever the texture path above is usable.
     QImage previewImage() const;
     bool hasFrame() const;
+    // The frame last published for a stream. previewTextureId/Size/Image above are the Camera's.
+    GpuFrameTexture previewFrame(PreviewStream stream) const;
     bool gpuCompositorReady() const { return m_gpuStatusId == QStringLiteral("ready"); }
     // "unknown" until the first probe runs, so the UI can hold off rather than
     // flash a failure during startup.
@@ -142,7 +144,13 @@ public:
     Q_INVOKABLE void play();
     Q_INVOKABLE void pause();
     Q_INVOKABLE void refreshFrame();
-    Q_INVOKABLE void setPreviewRenderSize(int width, int height);
+    // `stream` is a PreviewStream. The two-argument form sizes the Camera stream.
+    Q_INVOKABLE void setPreviewRenderSize(int width, int height) { setPreviewRenderSize(0, width, height); }
+    Q_INVOKABLE void setPreviewRenderSize(int stream, int width, int height);
+    // The Camera stream is always on. The Editor stream only renders while a 3D viewport shows
+    // it, so it costs nothing otherwise.
+    Q_INVOKABLE void setStreamEnabled(int stream, bool enabled);
+    bool streamEnabled(PreviewStream stream) const { return m_streams[int(stream)].enabled; }
     // Restart the composite tick from the current project fps and rate. Playback
     // samples `m_project` live, but the QTimer interval is snapped at play().
     void syncDisplayCadence();
@@ -164,10 +172,14 @@ public:
     void setTextEditDecor(const FrameCompositor::RenderOptions::TextEditDecor &decor, bool refresh = true);
     // The preview's mask view of one clip; an Off mode clears it.
     void setMaskView(const FrameCompositor::RenderOptions::MaskView &view);
-    // The preview's 3D mode and its free viewpoint; inactive renders the camera's picture.
-    void setEditorView(const FrameCompositor::RenderOptions::EditorView &view);
+    // The free viewpoint a stream renders from; inactive renders the camera's picture.
+    void setStreamEditorView(PreviewStream stream, const FrameCompositor::RenderOptions::EditorView &view);
     // The panel's size in device px, as the preview last reported it.
-    QSize previewRenderSize() const { return QSize(m_previewRenderWidth, m_previewRenderHeight); }
+    QSize previewRenderSize(PreviewStream stream = PreviewStream::Camera) const
+    {
+        const Stream &s = m_streams[int(stream)];
+        return QSize(s.renderWidth, s.renderHeight);
+    }
 
     // Empty id follows the system default. Applied to the sink immediately.
     void setAudioDeviceId(const QByteArray &id);
@@ -195,7 +207,10 @@ signals:
     void gpuCompositorUnavailable(const QString &statusId, const QString &detail);
 
     void gpuCompositorStatusChanged();
+    // The Camera stream's frame changed.
     void currentFrameChanged();
+    // Any stream's frame changed; `stream` is a PreviewStream.
+    void streamFrameChanged(int stream);
     void scopeFrame(const QImage &image);
     void playingChanged();
     void previewQualityChanged();
@@ -229,7 +244,9 @@ private:
     void requestFrameForPresentation();
     // Interval between refreshes, or 0 when the refresh rate is unknown.
     qint64 refreshIntervalNs() const;
-    void onFrameReady(const GpuFrameTexture &frame);
+    void onFrameReady(int stream, const GpuFrameTexture &frame);
+    // Asks for `timeUs` on every enabled stream.
+    void requestStreams(drift::TimeUs timeUs);
     void checkEndOfTimeline(drift::TimeUs timeUs);
     void checkHardwareFallback();
     void checkZeroCopyFallback();
@@ -237,7 +254,7 @@ private:
     bool isAutoQuality() const { return m_previewQuality == QStringLiteral("auto"); }
     bool shouldLoopWorkArea(drift::TimeUs *loopInOut, drift::TimeUs *loopOutOut) const;
     drift::TimeUs frameStepUs() const;
-    FrameCompositor::RenderOptions playbackRenderOptions() const;
+    FrameCompositor::RenderOptions playbackRenderOptions(PreviewStream stream = PreviewStream::Camera) const;
 
     drift::Project *m_project = nullptr;
     PlaybackClock m_clock;
@@ -255,7 +272,15 @@ private:
     bool m_gpuUnavailableNotified = false;
     QString m_gpuStatusId = QStringLiteral("unknown");
     QString m_gpuStatusDetail;
-    GpuFrameTexture m_currentFrame;
+    struct Stream
+    {
+        bool enabled = false;
+        GpuFrameTexture frame;
+        FrameCompositor::RenderOptions::EditorView editorView;
+        int renderWidth = 0;
+        int renderHeight = 0;
+    };
+    Stream m_streams[kPreviewStreamCount];
     mutable QMutex m_frameMutex;
     int m_scopeConsumers = 0;
     QElapsedTimer m_scopeTimer;
@@ -282,10 +307,7 @@ private:
     drift::ClipAudioRetimer m_rateRetimer;
     std::atomic<quint64> m_audioStreamGeneration{1};
     FrameCompositor::RenderOptions::TextEditDecor m_textEditDecor;
-    FrameCompositor::RenderOptions::EditorView m_editorView;
     FrameCompositor::RenderOptions::MaskView m_maskView;
-    int m_previewRenderWidth = 0;
-    int m_previewRenderHeight = 0;
     // Display cadence. The refresh rate comes from the window's screen and is 0 until one
     // exists; m_lastDisplayTickNs is what tells the watchdog timer whether the display is
     // still producing frames, and m_lastRequestedFrameUs quantises requests onto the

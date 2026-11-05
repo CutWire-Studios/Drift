@@ -175,7 +175,7 @@ All return `{started:true}` immediately. Every field below except `export` lives
 |---------|-------------|
 | `media` | Import (paths/bytes, optionally into a bin `folder`), list, rename, remove, replace, export still, bin folders (`list_folders`, `create_folder`, `move_asset_to_folder`, `rename_folder`, `delete_folder`), `set_asset_rotation` (lossless orientation override for a sideways video), PDF clips (`inspect_pdf`, `set_pdf_options`) — see [PDF documents](#pdf-documents) |
 | `timeline` | Tracks, clips, selection, ripple/gap, bookmarks, copy/paste, A/V link |
-| `canvas` | Transform (including 3D tilt, depth and perspective), flip, blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
+| `canvas` | Transform (including 3D rotation, position Z, anchor point and perspective), flip, blend, mask, fade, speed, reverse, animation, stabilisation, `set_clip_orientation` (lossless 0/90/180/270 for a video clip), shape styling (`set_shape_style`: the same shading-layer stack captions have — `layers` / `layer` patches, `add_shape_layer` … — plus geometry knobs; the legacy flat `fill`/`stroke` keys still land on the `fill`/`stroke` layers) — see [Shapes](#shapes) |
 | `playback` | Seek, play, pause, In/Out work area |
 | `text` | Title and caption clips, style packs (`list_text_presets`, user presets), fonts, shading layers (fill/stroke/shadow/glow/extrude), gradient presets and shader effects, looks, In/Out/Loop animation presets, Lottie preset import |
 | `shapes` | Builtin shapes, stickers, emoji |
@@ -439,32 +439,45 @@ asset and places as a vector clip.
 
 ### 3D clip transforms
 
-Every visual clip except a 3D model clip can be made a **3D layer**, then tilted and pushed in
+Every visual clip except a 3D model clip can be made a **3D layer**, then rotated and moved in
 depth. The switch is per clip (`layer3d`, off by default; the inspector's "3D layer" switch).
-Four more transform properties sit beside `x`/`y`/`w`/`h`/`rotation`. Writing any of them, through
+Several more transform properties sit beside `x`/`y`/`w`/`h`/`rotation`. Writing any of them, through
 `set_transform` or `set_keyframe`, turns the switch on, and a clip loaded with any of them set comes
-up switched on. `set_transform({layer3d:false})` flattens the clip: all four go back to their
+up switched on. `set_transform({layer3d:false})` flattens the clip: they all go back to their
 defaults (keys included; `undo` brings them back). `set_transform` writes them at the playhead (the same keyframe rules apply),
 `set_keyframe` animates them under the same names, and `reset_transform` clears them and switches
-3D off:
+3D off.
+
+**The world follows After Effects.** Units are project pixels with the origin at the canvas
+**top-left**, `+x` right, `+y` down and `+z` **away** from the viewer: a right-handed system.
+Rotations about an axis are right-handed (a positive turn about `z` is clockwise on screen). `x`/`y`
+keep their 2D meaning, the top-left corner of the clip's rect, so a flat project is unchanged.
+This replaced a left-handed world with its origin at the canvas centre and `+z` toward the viewer
+(project format 22 converts saved projects, so nothing moves); scripts written for the old signs
+need `z`, `rotationX` and `rotationY` negated.
 
 | Property | Default | Meaning |
 |---|---|---|
-| `rotationX` | 0 | Degrees; + tips the top edge away from the viewer |
-| `rotationY` | 0 | Degrees; + swings the right edge away from the viewer |
-| `z` | 0 | Project pixels; − pushes the clip away (smaller), + pulls it toward the viewer |
-| `perspective` | 2000 | Distance of the eye from the canvas, in project pixels; smaller = stronger foreshortening |
+| `rotationX` | 0 | Degrees about X; + tips the top edge toward the viewer |
+| `rotationY` | 0 | Degrees about Y; + swings the right edge toward the viewer |
+| `z` | 0 | Position Z in project pixels; + pushes the clip away (smaller), − pulls it toward the viewer |
+| `anchorX`, `anchorY` | the clip's centre | Anchor point in pixels from the rect's left / top edge: the pivot for the rotations. Absent until set (the pivot then follows the clip's size); setting one pins that axis |
+| `anchorZ` | 0 | The anchor's offset out of the clip's plane, + away from the viewer |
+| `perspective` | 2250 at 1080 px (project height ÷ 2 ÷ 0.24) | Distance of the eye from the canvas, in project pixels; smaller = stronger foreshortening. The default is a 50 mm lens on a 36 mm film back (about 27° vertically); a clip keeps the value it was saved with |
 
-The clip turns about its own centre. Rotations are intrinsic: X, then Y, then the existing
-`rotation`, so `rotation` spins the clip within its tilted plane. The eye sits `perspective` px in
-front of the **canvas centre**, so every clip is seen by the same virtual camera. As a result, a clip
-off-centre drifts toward the centre as `z` decreases. At `z = −perspective` it is half size, and at
-`z ≥ perspective` it is behind the eye and draws nothing.
+The clip turns about its anchor (its centre unless set). Rotations are intrinsic: X, then Y, then the
+existing `rotation`, so `rotation` spins the clip within its tilted plane. `x`/`y` still place the
+unrotated rect, so moving the anchor changes only the pivot, not where the clip sits. The eye sits
+`perspective` px in front of the **canvas centre**, so every clip is seen by the same virtual camera.
+As a result, a clip off-centre drifts toward the centre as `z` increases. At `z = perspective` it is
+half size, and at `z <= -perspective` it is behind the eye and draws nothing. While a scene camera
+runs, its lens replaces every clip's `perspective`.
 
-Masks and effects are applied in the clip's own frame before the tilt, so they follow it. Clip
-intro/outro animations and text animations stay flat, on top of the tilt. A clip whose 3D values
+Masks and effects are applied in the clip's own frame before the rotation, so they follow it. Clip
+intro/outro animations and text animations stay flat, on top of the rotation. A clip whose 3D values
 are all zero renders exactly as before. `inspect` and
-`set_transform` readouts include `layer3d` and the four fields only on a 3D layer.
+`set_transform` readouts include `layer3d` and the fields only on a 3D layer (the anchor fields only
+once set).
 
 ### Transform layers
 
@@ -509,27 +522,33 @@ it sorts by depth against the other occluding 3D layers.
 | Call | Effect |
 |---|---|
 | `import_media({paths})` | Also takes `.glb` files; the asset places with `place_clip` like any other (its duration is the first animation's length, 5 s for a static model) |
-| `add_model3d({path, at, track, duration, animation, loop, offset, scale, depth, rotX, rotY, rotZ, ambient, lights, name})` | Absolute `.glb` path. Returns `{id, track, index, animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}` |
+| `add_model3d({path, at, track, duration, animation, loop, offset, scale, depth, rotX, rotY, rotZ, ambient, modelScale, modelScaleZ, lights, name})` | Absolute `.glb` path. Returns `{id, track, index, animations:[{name, durationSec}], vertexCount, warning?, model3d:{…}}` |
 | `inspect_model3d({path \| clip})` | Read-only. `{animations, vertexCount, primitiveCount, materialCount, textureCount, warning}` — `warning` says what the loader skipped (Draco compression, extra material textures, morph targets) |
 | `set_model3d_source({clip, path})` | Swap the file; transform, length, lighting and keyframes stay, the animation index clamps to the new file |
-| `set_model3d_options({clip, animation, loop, offset, scale, depth, rotX, rotY, rotZ, ambient, lights, name})` | Plain (non-keyed) values; only supplied keys change |
+| `set_model3d_options({clip, animation, loop, offset, scale, depth, rotX, rotY, rotZ, ambient, modelScale, modelScaleZ, lights, name})` | Plain (non-keyed) values; only supplied keys change |
 
 Placement: the clip's rect (`x`, `y`, `w`, `h`) is the front face of the model's bounding box,
-`z` pushes it in depth, and `rotationX`/`rotationY`/`rotation` turn it about its centre exactly
-as they turn a tilted clip (intrinsic, X then Y then the in-plane spin, canvas axes: +y down).
+`z` pushes it in depth (+ away), and `rotationX`/`rotationY`/`rotation` turn it about its anchor exactly
+as they turn a tilted clip (intrinsic, X then Y then the in-plane spin, in the world above: +y down,
++z away), about the clip's anchor.
 `perspective` is the eye it is seen through when no scene camera is running. Set them with
 `set_transform` or keyframe them like any clip. A new model starts centred with its largest
 extent half the canvas height. `scale`, `depth` and `rotX`/`rotY`/`rotZ` are shorthands kept from
 before models were 3D layers: `scale` resizes the box about its centre to that fraction of the
 canvas height, `depth` 0..1 sets `perspective`, and `rotX`/`rotY`/`rotZ` (degrees about the
-model's glTF axes, +y up) write `rotationX = -rotX`, `rotationY = rotY`, `rotation = -rotZ`; as
-keyframes, `model3d.rotY` and friends key those clip properties. Lighting is `ambient` 0..1
+model's glTF axes, +y up, +z toward the viewer) write `rotationX = rotX`, `rotationY = -rotY`,
+`rotation = -rotZ` (glTF is the world turned half way about X); as keyframes, `model3d.rotY` and
+friends key those clip properties. `modelScale` (default 1) resizes the whole model about the
+anchor and `modelScaleZ` (default 1) multiplies its depth alone; the depth is otherwise the
+geometric mean of the box's width and height scales, so the depth is
+`sqrt(sx * sy) * modelScale * modelScaleZ`. Both are options on `add_model3d` /
+`set_model3d_options` and keyframe as `model3d.modelScale` / `model3d.modelScaleZ`. Lighting is `ambient` 0..1
 plus up to four point or spot lights, `lights: [{enabled, x, y, z, color, intensity, radius,
 cone, aimX, aimY}, …]` by index (give only the fields to change). They are placed like 3D
-Relight's: `x`/`y` across the clip's rect (0..1 spans it), `z` in clip heights from the model's
-centre (negative is nearer the viewer), `radius` the reach in clip heights, and a spot (`cone`
+Relight's: `x`/`y` across the clip's rect (0..1 spans it), `z` in clip heights from the clip's plane
+(+ away from the viewer like the world's `z`, negative is nearer), `radius` the reach in clip heights, and a spot (`cone`
 under 180) points at `aimX`/`aimY` on the plane through the model's centre. They follow the
-clip's position and size but not its rotation. The numbers keyframe as `model3d.ambient` and
+clip's position and size but not its rotation, anchor or model scale. The numbers keyframe as `model3d.ambient` and
 `model3d.light<n>_<field>`; the 3D preview draws the lights and drags them. Projects from before
 format 15 had one directional key light, which loads as light 1. Shading is a simple Blinn-Phong on the base colour — normal, roughness and
 occlusion maps are ignored, so a model reads flatter than in a PBR viewer.
@@ -542,23 +561,27 @@ else.
 
 ### 3D viewport
 
-The preview panel has a 2D mode (the camera's picture) and a 3D mode: the world from a free
-viewpoint, with the scene camera body and the stage drawn in it. The viewpoint is editor
+The Edit preview always shows the camera's picture. The 3D viewport panel shows the world from a
+free viewpoint, with the scene camera body and the stage drawn in it. The viewpoint is editor
 session state, never saved or exported, and its changes are not undoable. `set_preview_view`
 (ui toolbox) drives it; only supplied keys act, in this order:
 
 | Key | Effect |
 |---|---|
-| `mode` | `2d` or `3d` |
+| `mode` | `3d` opens a workspace with the 3D viewport; `2d` is accepted and does nothing |
 | `reset` | back to the overview viewpoint |
 | `axis` | `front`, `back`, `left`, `right`, `top` or `bottom` view of the current target (leaves look-through) |
+| `ortho` | `true` for the orthographic projection, `false` for perspective |
+| `fov` | editor lens, vertical degrees, 10 to 120 (default 32) |
+| `orientation` | gizmo axes: `world`, `local` or `view` |
 | `frame_selection` | frame the selected clip, or the whole stage when nothing is selected |
+| `frame_all` | frame every clip at the playhead, the stage and the camera |
 | `orbit` | `[dx, dy]` degrees |
 | `pan` | `[dx, dy]` canvas px |
 | `dolly` | wheel steps; + moves toward the target |
 | `look_through` | `true` views through the scene camera (what exports), `false` returns to the free viewpoint |
 
-It returns `{mode, look_through, target:[x,y,z], yaw, pitch, distance, fov, eye:[x,y,z]}`; a bad
+It returns `{mode, look_through, target:[x,y,z], yaw, pitch, distance, fov, ortho, orientation, eye:[x,y,z]}`; a bad
 `mode`, `axis` or array shape is `bad_args`. `inspect` reports `preview_mode` (and `look_through`
 while in 3d). `capture({view:"editor3d"})` renders that viewpoint, or the overview if the view was
 never placed, at the same size rules as a normal capture; the reply adds `view`. `frames` has no
@@ -567,28 +590,31 @@ never placed, at the same size rules as a normal capture; the reply adds `view`.
 ### Scene camera
 
 `add_camera` puts a Camera clip on the camera lane (the whole sequence, or one clip at `at` for a
-cut); a camera at rest looks exactly like no camera. It is posed by the clip's transform props, all
-keyframable: `x`/`y`/`z` translate it in its own frame (canvas px; +x right so the picture goes
-left, +y down, +z back from the scene), `rotationX`/`rotationY` pitch and yaw (degrees; -`rotationX`
-looks up, +`rotationY` looks left), `rotation` rolls (degrees, clockwise), `perspective` is the
-eye distance (px). A bare rotation orbits the eye about the canvas centre; the tools below turn
-the camera in place by re-solving `x`/`y`/`z` so the eye stays put. World space is canvas px about
-the canvas centre, y down, +z toward the viewer.
+cut); a camera at rest looks exactly like no camera. It lives in the 3D world of the clips (canvas
+top-left origin, px, +x right, +y down, +z away from the viewer) and is posed by the clip's props,
+all keyframable: `x`/`y`/`z` are the eye itself (at rest `[w/2, h/2, -zoom]`),
+`rotationX`/`rotationY`/`rotation` are pitch, yaw and roll in degrees (right-handed; +`rotationX`
+looks up, +`rotationY` looks toward +x, +`rotation` is clockwise on screen), applied yaw first about
+the eye, so the horizon stays level at zero roll. `anchorX`/`anchorY`/`anchorZ` are the point of
+interest; with `aimAtTarget` (see `camera_look_at`) the camera faces it and the rotation becomes an
+offset in the camera's own frame. `perspective` is the zoom in px (the distance at which the canvas
+fills the frame; the eye does not move when it changes). The same value is reported as
+`focalLength` (mm, 36 x 24 mm film back) and `fov` (vertical degrees; the default is 50 mm).
 
 | Call | Effect |
 |---|---|
-| `get_camera_state({at?, clip?})` | Read-only. `{active, at, clip, track, x, y, z, rotationX, rotationY, rotation, perspective, eye:[x,y,z]}`; `active:false` when no camera covers `at` (default the playhead) |
-| `reset_camera({clip?})` | Clears pan, dolly, pitch, yaw, roll and their keys; the lens stays. One undo step; `not_found` without a camera |
-| `camera_look_at({target, at?, keyframe?, clip?})` | Aims the camera at a clip id (its centre, with `z`; transform-layer parents ignored) or a world point `{x,y,z}`. Writes `rotationX`/`rotationY` and `x`/`y`/`z` (eye held); keys at `at` with `keyframe:true` or on properties that already animate |
+| `get_camera_state({at?, clip?})` | Read-only. `{active, at, clip, track, x, y, z, rotationX, rotationY, rotation, aimAtTarget, poi:[x,y,z], zoom, focalLength, fov, eye:[x,y,z]}`; `active:false` when no camera covers `at` (default the playhead) |
+| `reset_camera({clip?})` | Clears position, rotation, point of interest and zoom and their keys and turns `aimAtTarget` off. One undo step; `not_found` without a camera |
+| `camera_look_at({target, at?, keyframe?, aimAtTarget?, clip?})` | Aims the camera at a clip id (its centre, with `z`; transform-layer parents ignored) or a world point `{x,y,z}` (canvas px from the top-left, +z away), roll 0. Writes `rotationX`/`rotationY` (eye held), or with `aimAtTarget:true` the point of interest; keys at `at` with `keyframe:true` or on properties that already animate |
 | `camera_move({move, start, end, amount?, easing?, target?, clip?})` | Start and end keyframes from the pose at `start`; one undo step |
 
 `camera_move` moves and the default `amount`: `dolly_in`/`dolly_out` 300 px along the view;
 `truck_left`/`truck_right` 200 px; `crane_up`/`crane_down` 200 px; `pan_left`/`pan_right` 20 and
 `tilt_up`/`tilt_down` 15 degrees, in place; `orbit_left`/`orbit_right` 45 degrees around `target`
-(clip id or `{x,y,z}`, default the canvas centre) keeping it centred; `push_in`/`pull_out` scale
-`perspective` by `1-amount` / `1+amount` (fraction 0..0.9, default 0.35), which changes perspective
-strength, not framing. `easing` is `ease` (default) or `linear`. Orbit interpolates the pose
-linearly, so a sweep beyond about 90 degrees cuts a chord; split it into several moves. `start`..`end`
+(clip id or `{x,y,z}` world point, default the canvas centre) keeping it centred; `push_in`/`pull_out` scale
+the zoom by `1+amount` / `1-amount` (fraction 0..0.9, default 0.35) without moving the eye.
+`easing` is `ease` (default) or `linear`. Orbit interpolates the eye linearly, so a sweep beyond
+about 90 degrees cuts a chord; split it into several moves. `start`..`end`
 must lie inside the camera clip, and without a camera the tools fail `not_found` ("call add_camera").
 
 ### PDF documents
@@ -766,8 +792,8 @@ local fake) without rebuilding.
 - **`set_subtitle_cues` replaces every cue.** Read `inspect({clips:true, cues:true})` (or a detail row's `subtitleCues`), merge, send.
 - **`set_effect_param`, `set_audio_effect_param` and `set_transition_param` fail `not_found`** on a key the effect does not declare or a stack index that is not there. They used to accept anything and store it silently; a batch that relied on that now stops at the bad op.
 - **`set_speed_curve` returns a new clip id.** The old UUID stops resolving. End the apply batch after it — an ops array cannot reference an id produced earlier in the same batch.
-- **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height). The 3D names `rotationX`, `rotationY`, `z` and `perspective` are the same in both.
-- **A clip's `z` does not change stacking.** Track order alone decides what draws on top, and tilted clips never intersect. A clip tilted past 90° shows its mirror image; there is no back face.
+- **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height). The 3D names `rotationX`, `rotationY`, `z`, `anchorX`, `anchorY`, `anchorZ` and `perspective` are the same in both.
+- **A clip's `z` does not change stacking.** Track order alone decides what draws on top, and rotated clips never intersect. A clip turned past 90° shows its mirror image; there is no back face.
 - **`remove_keyframe` deletes the *nearest* key** with no distance limit. Confirm the exact time with `list_keyframes`.
 - **`set_keyframe_interpolation` moves the playhead** to `at`, changing the default time of later ops in the same batch.
 - **`add_track` shifts every track index** — index 0 is the new track.

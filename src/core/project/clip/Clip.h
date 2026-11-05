@@ -187,21 +187,35 @@ struct Clip
     KeyframeTrack<double> transformW;
     KeyframeTrack<double> transformH;
     KeyframeTrack<double> rotation;
-    // 3D pose on top of the layout (see engine/render3d/scene/ClipTransform3d.h). layer3d is the inspector's
-    // "3D layer" switch: on whenever any of the four tracks has data, and switching it off clears
-    // them, so a flat clip never carries a pose. It can also be on with all four empty. Empty
-    // tracks mean 0 for the tilts and depth, and kDefaultClipPerspective px for the eye distance.
+    // 3D pose on top of the layout (see engine/render3d/scene/ClipTransform3d.h for the world:
+    // After Effects style, origin at the canvas top-left, y down, +z away from the viewer).
+    // layer3d is the inspector's "3D layer" switch: on whenever any of the pose tracks has data, and
+    // switching it off clears them, so a flat clip never carries a pose. It can also be on with all
+    // of them empty. Empty tracks mean 0 for the rotations and depth, and the default for the
+    // project height (defaultClipPerspective) for the eye distance. transformX/Y stay the layout
+    // rect's top-left corner; positionZ is the layer's depth, + away from the viewer.
+    //
+    // The anchor point is where rotations pivot, in px from the layout rect's top-left corner
+    // (anchorZ out of its plane, + away). An empty anchorX/anchorY means that axis sits at the rect
+    // centre, so the default pivot follows width/height changes; setting a key pins it to a fixed
+    // offset from the corner.
     bool layer3d = false;
     KeyframeTrack<double> rotationX;
     KeyframeTrack<double> rotationY;
     KeyframeTrack<double> positionZ;
     KeyframeTrack<double> perspective;
+    KeyframeTrack<double> anchorX;
+    KeyframeTrack<double> anchorY;
+    KeyframeTrack<double> anchorZ;
     // Let depth decide what covers what, for this clip, instead of the track order that normally
     // does. Off by default, and ignored unless layer3d is on: without a 3D pose there is no depth
     // to sort by. Only clips that opt in take part — one at a depth behind an opted-in clip still
     // draws over it if its track is higher, which is what keeps the usual compositing rules
     // intact for everything else on the timeline.
     bool depthOcclude = false;
+    // Camera clips only (see engine/render3d/scene/SceneCamera3d.h): the camera turns to face its
+    // point of interest, which is stored in anchorX/Y/Z. The rotation tracks then offset that aim.
+    bool aimAtTarget = false;
     // Discrete pixel-orientation correction (0/90/180/270), applied losslessly at decode time —
     // distinct from `rotation` above, which is a free decorative spin effect. Relative, not
     // absolute: added on top of whatever display-matrix rotation the file actually being decoded

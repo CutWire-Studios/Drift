@@ -17,6 +17,14 @@
       "needs": []
     },
     {
+      "id": "camera3d-panel",
+      "target": "panel:camera3d#camera3d-panel",
+      "context": "Camera3dPanel",
+      "source": "Camera",
+      "keywords": "3d scene camera cameras list look through",
+      "needs": []
+    },
+    {
       "id": "color-grade",
       "target": "panel:color#color-grade",
       "context": "ColorPanel",
@@ -217,6 +225,14 @@
       "needs": []
     },
     {
+      "id": "outliner3d-panel",
+      "target": "panel:outliner3d#outliner3d-panel",
+      "context": "Outliner3dPanel",
+      "source": "3D Outliner",
+      "keywords": "3d scene list cameras models layers objects hierarchy visibility",
+      "needs": []
+    },
+    {
       "id": "color-scopes",
       "target": "panel:scopes#color-scopes",
       "context": "ScopesPanel",
@@ -278,6 +294,54 @@
       "context": "SubtitleTimingPanel",
       "source": "Bridge gaps",
       "keywords": "captions minimum gap lead in out duration overlap",
+      "needs": []
+    },
+    {
+      "id": "transform3d-panel",
+      "target": "panel:transform3d#transform3d-panel",
+      "context": "Transform3dPanel",
+      "source": "3D Transform",
+      "keywords": "3d position anchor rotation scale depth world local orientation",
+      "needs": []
+    },
+    {
+      "id": "view3d-panel",
+      "target": "panel:view3d#view3d-panel",
+      "context": "View3dPanel",
+      "source": "View & Lights",
+      "keywords": "3d viewport grid snap navigation lights",
+      "needs": []
+    },
+    {
+      "id": "view3d-grid",
+      "target": "panel:view3d#view3d-grid",
+      "context": "View3dPanel",
+      "source": "3D grid",
+      "keywords": "floor ground plane show hide size spacing",
+      "needs": []
+    },
+    {
+      "id": "view3d-snap",
+      "target": "panel:view3d#view3d-snap",
+      "context": "View3dPanel",
+      "source": "3D snapping",
+      "keywords": "snap step translate rotate rotation increment",
+      "needs": []
+    },
+    {
+      "id": "view3d-navigation",
+      "target": "panel:view3d#view3d-navigation",
+      "context": "View3dPanel",
+      "source": "3D navigation",
+      "keywords": "blender maya orbit pan dolly field of view fov orthographic lens",
+      "needs": []
+    },
+    {
+      "id": "view3d-lights",
+      "target": "panel:view3d#view3d-lights",
+      "context": "View3dPanel",
+      "source": "3D model lights",
+      "keywords": "light ambient spot brightness shading",
       "needs": []
     },
     {
@@ -441,7 +505,37 @@
       "target": "panel:properties.camera#camera-position",
       "context": "CameraInspector",
       "source": "Camera position",
-      "keywords": "3d",
+      "keywords": "3d eye",
+      "needs": [
+        "adj:camera"
+      ]
+    },
+    {
+      "id": "camera-rotation",
+      "target": "panel:properties.camera#camera-rotation",
+      "context": "CameraInspector",
+      "source": "Camera rotation",
+      "keywords": "3d pitch yaw roll orientation",
+      "needs": [
+        "adj:camera"
+      ]
+    },
+    {
+      "id": "camera-aim-at-target",
+      "target": "panel:properties.camera#camera-aim-at-target",
+      "context": "CameraInspector",
+      "source": "Aim at target",
+      "keywords": "3d point of interest look at two-node",
+      "needs": [
+        "adj:camera"
+      ]
+    },
+    {
+      "id": "camera-zoom",
+      "target": "panel:properties.camera#camera-zoom",
+      "context": "CameraInspector",
+      "source": "Camera zoom",
+      "keywords": "3d lens focal length fov field of view",
       "needs": [
         "adj:camera"
       ]
@@ -659,6 +753,62 @@
       ]
     },
     {
+      "id": "transform3d-readout",
+      "target": "panel:transform3d#transform3d-readout",
+      "context": "Transform3dInspector",
+      "source": "World and local position",
+      "keywords": "3d anchor point coordinates scene",
+      "needs": []
+    },
+    {
+      "id": "transform3d-position",
+      "target": "panel:transform3d#transform3d-position",
+      "context": "Transform3dInspector",
+      "source": "3D position",
+      "keywords": "move x y z depth",
+      "needs": []
+    },
+    {
+      "id": "transform3d-anchor",
+      "target": "panel:transform3d#transform3d-anchor",
+      "context": "Transform3dInspector",
+      "source": "3D anchor point",
+      "keywords": "pivot origin center rotate around",
+      "needs": []
+    },
+    {
+      "id": "transform3d-rotation",
+      "target": "panel:transform3d#transform3d-rotation",
+      "context": "Transform3dInspector",
+      "source": "3D rotation",
+      "keywords": "tilt pitch yaw roll orientation x y z",
+      "needs": []
+    },
+    {
+      "id": "transform3d-scale",
+      "target": "panel:transform3d#transform3d-scale",
+      "context": "Transform3dInspector",
+      "source": "3D scale",
+      "keywords": "size resize depth z model",
+      "needs": []
+    },
+    {
+      "id": "transform3d-occlude",
+      "target": "panel:transform3d#transform3d-occlude",
+      "context": "Transform3dInspector",
+      "source": "Occlude by depth",
+      "keywords": "3d depth sort cover",
+      "needs": []
+    },
+    {
+      "id": "transform3d-perspective",
+      "target": "panel:transform3d#transform3d-perspective",
+      "context": "Transform3dInspector",
+      "source": "Perspective",
+      "keywords": "lens fov focal length 3d",
+      "needs": []
+    },
+    {
       "id": "transform-position",
       "target": "panel:properties.transform#transform-position",
       "context": "TransformInspector",
@@ -693,7 +843,7 @@
       "target": "panel:properties.transform#transform-rotation",
       "context": "TransformInspector",
       "source": "Rotation",
-      "keywords": "angle rotate 90",
+      "keywords": "angle rotate 90 rotation z",
       "needs": [
         "transformable"
       ]

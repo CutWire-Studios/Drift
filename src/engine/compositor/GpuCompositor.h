@@ -181,6 +181,8 @@ struct GpuItem
 struct GpuScene
 {
     QSize canvasSize;
+    // Which preview stream's presentation ring a texture render draws into.
+    int previewStream = 0;
     QColor backgroundColor = Qt::black;
     bool backgroundBlur = false;
     double blurStrengthPx = 20.0;

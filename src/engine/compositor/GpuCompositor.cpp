@@ -61,7 +61,7 @@ out vec2 v_texCoord;
 void main() {
     v_texCoord = a_texCoord;
     float d = textureLod(u_relief, a_texCoord, 0.0).r;
-    gl_Position = u_model * vec4(a_position, -(1.0 - d) * u_reliefDepth, 1.0);
+    gl_Position = u_model * vec4(a_position, (1.0 - d) * u_reliefDepth, 1.0);
 }
 )";
 
@@ -616,9 +616,8 @@ QMatrix4x4 layerViewProjection(const GpuLayer &layer, const QSize &canvas)
     const QSizeF canvasF(canvas);
     QMatrix4x4 view = layer.viewProj;
     if (!layer.viewActive) {
-        drift::SceneCamera3d eye;
-        eye.perspective = layer.model3d ? layer.model3d->pose3d.perspective : layer.pose3d.perspective;
-        view = drift::cameraViewProjection(eye, canvasF);
+        view = drift::clipEyeView(layer.model3d ? layer.model3d->pose3d.perspective : layer.pose3d.perspective,
+                                  canvasF);
     }
     if (layer.hasParent && layer.parent.isAffine())
         view = view * drift::worldParentFromAffine(layer.parent,
@@ -1975,7 +1974,7 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
 
 namespace GpuCompositor {
 
-static_assert(GlRuntime::kPresentRingSize >= kMaxPreviewComposites + 1,
+static_assert(GlRuntime::kPresentRingSize >= kMaxPreviewComposites + 1 && GlRuntime::kPresentStreams == 2,
               "the presentation ring must hold every in-flight composite plus the one the "
               "scene graph is still sampling");
 
@@ -2128,7 +2127,7 @@ GpuFrameTexture renderToTexture(const GpuScene &scene)
     }
 
     rt.exec([&] {
-        GlTarget &canvas = rt.acquirePresentTarget(scene.canvasSize.width(), scene.canvasSize.height());
+        GlTarget &canvas = rt.acquirePresentTarget(scene.previewStream, scene.canvasSize.width(), scene.canvasSize.height());
         if (!canvas.isValid())
             return;
 

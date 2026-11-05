@@ -759,15 +759,18 @@ public:
     Q_INVOKABLE QVariantList builtinShapes() const;
     Q_INVOKABLE QVariantList builtinShapeCategories() const;
     // The scene camera as the preview's camera overlay needs it: {active, track, clip} plus the
-    // seven values, all at the playhead. Taken once when a drag starts, so the drag solves from a
+    // camera values (eye, rotation, point of interest, zoom), all at the playhead. Taken once when a drag starts, so the drag solves from a
     // fixed starting point instead of accumulating its own rounding.
     Q_INVOKABLE QVariantMap cameraStateAtPlayhead() const;
     // The same at any time. With trackIndex >= 0 it reads that camera clip even when it does not
     // cover `seconds` (its keys clamp to the clip's ends); otherwise the camera covering `seconds`.
     // Adds start/dur (the clip's span, seconds) and eye:[x,y,z], the viewpoint in world px.
     QVariantMap cameraStateAt(double seconds, int trackIndex = -1, int clipIndex = -1) const;
-    // Where a clip's centre sits in the camera's world (canvas px about the canvas centre, y down,
-    // +z toward the viewer) at `seconds`. Ignores any transform-layer parent.
+    Q_INVOKABLE double cameraZoomFromFocalLength(double millimetres) const;
+    Q_INVOKABLE double cameraZoomFromFov(double degrees) const;
+    Q_INVOKABLE void setCameraAimAtTarget(int trackIndex, int clipIndex, bool enabled);
+    // Where a clip's centre sits in the 3D world (canvas px from the top-left, y down, +z away from
+    // the viewer) at `seconds`. Ignores any transform-layer parent.
     QVariantList clipWorldCentreAt(int trackIndex, int clipIndex, double seconds) const;
 
     // Asset drag-and-drop. One resolver for every kind a browser can lift (AssetDrag.qml has

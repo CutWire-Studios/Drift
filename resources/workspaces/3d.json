@@ -1,0 +1,80 @@
+{
+  "id": "3d",
+  "name": "3D",
+  "builtin": true,
+  "order": 10,
+  "windows": [
+    {
+      "id": "main",
+      "root": {
+        "split": "v",
+        "sizes": [
+          0.66,
+          0.34
+        ],
+        "children": [
+          {
+            "split": "h",
+            "sizes": [
+              0.14,
+              0.26,
+              0.26,
+              0.34
+            ],
+            "children": [
+              {
+                "panels": [
+                  {
+                    "type": "outliner3d"
+                  }
+                ],
+                "active": 0
+              },
+              {
+                "panels": [
+                  {
+                    "type": "preview"
+                  }
+                ],
+                "active": 0
+              },
+              {
+                "panels": [
+                  {
+                    "type": "viewport3d"
+                  }
+                ],
+                "active": 0
+              },
+              {
+                "panels": [
+                  {
+                    "type": "transform3d"
+                  },
+                  {
+                    "type": "camera3d"
+                  },
+                  {
+                    "type": "view3d"
+                  },
+                  {
+                    "type": "properties.model3d"
+                  }
+                ],
+                "active": 0
+              }
+            ]
+          },
+          {
+            "panels": [
+              {
+                "type": "timeline"
+              }
+            ],
+            "active": 0
+          }
+        ]
+      }
+    }
+  ]
+}

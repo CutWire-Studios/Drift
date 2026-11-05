@@ -2,7 +2,9 @@ import QtQuick
 import Drift
 
 // The 3D view's orientation widget: the world axes as they point on screen, X red, Y green, Z blue.
-// Clicking an axis end looks along it at the scene, the way Blender's navigation gizmo does.
+// Clicking an axis end looks from it at the scene, the way Blender's navigation gizmo does. The world is
+// y down and z away from the viewer: the knob pointing up is -Y and opens Top, the lower one is +Y
+// (Bottom), and +Z is the far side (Back).
 Item {
     id: widget
 
@@ -14,7 +16,7 @@ Item {
     // Axis ends drawn back to front, so the ones toward the viewer sit on top.
     readonly property var ends: {
         const out = []
-        const views = { "x": ["right", "left"], "y": ["bottom", "top"], "z": ["front", "back"] }
+        const views = { "x": ["right", "left"], "y": ["bottom", "top"], "z": ["back", "front"] }
         for (const a of axes) {
             out.push({ axis: a.axis, sign: 1, x: a.x, y: a.y, depth: a.depth, view: views[a.axis][0] })
             out.push({ axis: a.axis, sign: -1, x: -a.x, y: -a.y, depth: -a.depth, view: views[a.axis][1] })

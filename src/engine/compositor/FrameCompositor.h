@@ -58,11 +58,16 @@ public:
             QString selectedClipId;
             // The view is being dragged: the preview drops its supersampling to keep up.
             bool navigating = false;
+            // The floor grid: drawn or not, and its spacing in project px (0 picks one from the canvas).
+            bool showGrid = true;
+            double gridSize = 0.0;
             // The size of the frame to render, in px: the panel's aspect rather than the
             // project's, supersampled while still. Empty renders the project's frame.
             QSize target;
         };
         EditorView editor;
+        // PreviewStream the frame is for; only picks the presentation ring it is drawn into.
+        int stream = 0;
 
         // The text clip being edited in place on the preview. It stays visible, at rest (no
         // in/out/loop animation), with a caret, a selection and a preedit underline drawn over

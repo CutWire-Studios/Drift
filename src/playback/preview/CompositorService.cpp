@@ -33,6 +33,7 @@ CompositorWorker::CompositorWorker(QObject *parent)
 void CompositorWorker::composite(drift::TimeUs timeUs, FrameCompositor::RenderOptions options,
                                  std::shared_ptr<const drift::Project> snapshot, quint64 sequence)
 {
+    const int stream = options.stream;
     // Keep the shared tree alive for the whole frame; setProject only borrows. Compared while the
     // old one is still held, so the two cannot share an address.
     if (snapshot != m_snapshot)
@@ -41,7 +42,7 @@ void CompositorWorker::composite(drift::TimeUs timeUs, FrameCompositor::RenderOp
     if (!m_snapshot) {
         // Still report completion: the service treats a request as in flight
         // until the worker answers, and the quality-mode play loop waits for it.
-        emit frameReady(GpuFrameTexture{}, timeUs, CompositeTiming{}, sequence);
+        emit frameReady(GpuFrameTexture{}, timeUs, CompositeTiming{}, sequence, stream);
         return;
     }
     m_compositor.setProject(m_snapshot.get());
@@ -57,7 +58,7 @@ void CompositorWorker::composite(drift::TimeUs timeUs, FrameCompositor::RenderOp
     CompositeTiming timing;
     timing.compositeMs = double(elapsed.nsecsElapsed()) / 1'000'000.0;
     timing.decodeWaitMs = double(ClipReaderPool::decodeWaitNs()) / 1'000'000.0;
-    emit frameReady(frame, timeUs, timing, sequence);
+    emit frameReady(frame, timeUs, timing, sequence, stream);
 }
 
 CompositorService::CompositorService(QObject *parent)
@@ -96,7 +97,8 @@ void CompositorService::invalidateSnapshot()
     // Forget what was last drawn. An edit changes the picture without moving the playhead, so
     // dispatchPending would otherwise recognise the incoming request as one it has already
     // served and decline to redraw — leaving the edit invisible until the playhead moved.
-    m_lastDispatchedTimeUs = -1;
+    for (StreamSlot &slot : m_slots)
+        slot.lastDispatchedTimeUs = -1;
 }
 
 void CompositorService::setDropLateFrames(bool drop)
@@ -273,29 +275,59 @@ bool CompositorService::isRedundantRequest(drift::TimeUs time,
            && (options.approximateSeek == last.approximateSeek || options.approximateSeek);
 }
 
+bool CompositorService::wantsDraw(int stream) const
+{
+    const StreamSlot &slot = m_slots[stream];
+    // Nothing new to draw means re-rendering the frame already requested would burn a worker on
+    // a picture identical to the one on screen.
+    return slot.requested
+           && !isRedundantRequest(slot.pendingTimeUs, slot.pendingOptions, slot.lastDispatchedTimeUs,
+                                  slot.lastDispatchedOptions);
+}
+
+int CompositorService::nextStreamToServe(int after, const bool (&wantsDraw)[kPreviewStreamCount])
+{
+    for (int i = 1; i <= kPreviewStreamCount; ++i) {
+        const int stream = (after + i) % kPreviewStreamCount;
+        if (wantsDraw[stream])
+            return stream;
+    }
+    return -1;
+}
+
+void CompositorService::cancelStream(PreviewStream stream)
+{
+    m_slots[int(stream)].requested = false;
+}
+
 bool CompositorService::dispatchPending()
 {
     if (m_inFlight >= maxInFlight())
         return false;
 
-    const drift::TimeUs latest = m_pendingTimeUs;
-    const FrameCompositor::RenderOptions latestOptions = m_pendingOptions;
-
-    // Nothing new to draw. Re-rendering the frame already requested would burn a worker on a
-    // picture identical to the one on screen.
-    if (isRedundantRequest(latest, latestOptions, m_lastDispatchedTimeUs, m_lastDispatchedOptions))
+    bool wants[kPreviewStreamCount];
+    for (int i = 0; i < kPreviewStreamCount; ++i)
+        wants[i] = wantsDraw(i);
+    const int stream = nextStreamToServe(m_lastServedStream, wants);
+    if (stream < 0)
         return false;
+    m_lastServedStream = stream;
 
-    m_lastDispatchedTimeUs = latest;
-    m_lastDispatchedOptions = latestOptions;
+    StreamSlot &slot = m_slots[stream];
+    const drift::TimeUs latest = slot.pendingTimeUs;
+    const FrameCompositor::RenderOptions latestOptions = slot.pendingOptions;
+    slot.lastDispatchedTimeUs = latest;
+    slot.lastDispatchedOptions = latestOptions;
     FrameCompositor::RenderOptions options = effectiveOptions(latestOptions);
     options.cacheVideoSources = !m_playbackActive;
     dispatch(latest, options);
     return true;
 }
 
-void CompositorService::requestComposite(drift::TimeUs timeUs, FrameCompositor::RenderOptions options)
+void CompositorService::requestComposite(PreviewStream stream, drift::TimeUs timeUs,
+                                         FrameCompositor::RenderOptions options)
 {
+    options.stream = int(stream);
     options.previewScale = qBound(kMinPreviewScale, options.previewScale, 1.0);
 
     // The pending scale is published as whole percent, and the catch-up dispatch in
@@ -311,8 +343,10 @@ void CompositorService::requestComposite(drift::TimeUs timeUs, FrameCompositor::
         qBound(kMinPreviewScalePercent, static_cast<int>(std::lround(options.previewScale * 100.0)), 100);
     options.previewScale = previewScalePercent / 100.0;
 
-    m_pendingTimeUs = timeUs;
-    m_pendingOptions = options;
+    StreamSlot &slot = m_slots[int(stream)];
+    slot.requested = true;
+    slot.pendingTimeUs = timeUs;
+    slot.pendingOptions = options;
 
     // Folded into work already running. Counted because a high rate here is the signal that
     // the pipeline cannot keep up with the cadence being asked of it.
@@ -321,8 +355,9 @@ void CompositorService::requestComposite(drift::TimeUs timeUs, FrameCompositor::
 }
 
 void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::TimeUs timeUs,
-                                           CompositeTiming timing, quint64 sequence)
+                                           CompositeTiming timing, quint64 sequence, int stream)
 {
+    const StreamSlot &slot = m_slots[stream];
     m_inFlight = qMax(0, m_inFlight - 1);
     if (m_stats)
         m_stats->noteComposite(timing.compositeMs, timing.decodeWaitMs);
@@ -332,20 +367,20 @@ void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::
     // work itself rather than of dispatch-to-delivery: with more than one composite in
     // flight, time spent queued behind another frame is normal and says nothing about
     // whether this machine can keep up.
-    if (m_adaptiveQuality && m_dropLateFrames && m_playbackActive)
+    if (stream == int(PreviewStream::Camera) && m_adaptiveQuality && m_dropLateFrames && m_playbackActive)
         noteFrameLate(timing.compositeMs > double(m_lateFrameBudgetMs));
 
     // Present unless something newer already got there. Optionally also drop a frame that finished
     // far behind the playhead (a slow decoder open at a cut can otherwise show the outgoing clip
     // in slow motion). Off by default: a late frame is usually better than none.
-    const bool overtaken = sequence <= m_lastPresentedSequence;
+    const bool overtaken = sequence <= m_lastPresentedSequence[stream];
     const drift::TimeUs allowedLagUs =
         drift::TimeUs(drift::tuning::staleFrameLagMs.load(std::memory_order_relaxed)) * 1000;
     const bool stale = allowedLagUs > 0 && m_playbackActive && m_dropLateFrames
-        && m_pendingTimeUs > timeUs && m_pendingTimeUs - timeUs > allowedLagUs;
+        && slot.pendingTimeUs > timeUs && slot.pendingTimeUs - timeUs > allowedLagUs;
     if (drift::perf::enabled()) {
         const qint64 dispatchedNs = m_perfDispatchNs.take(sequence);
-        drift::perf::record(m_pendingOptions.approximateSeek ? "composite.work.approx" : "composite.work",
+        drift::perf::record(slot.pendingOptions.approximateSeek ? "composite.work.approx" : "composite.work",
                             timing.compositeMs);
         drift::perf::record("decode.wait", timing.decodeWaitMs);
         if (!overtaken && !stale && dispatchedNs > 0)
@@ -353,10 +388,10 @@ void CompositorService::onWorkerFrameReady(const GpuFrameTexture &frame, drift::
                                 double(PlaybackClock::nowNs() - dispatchedNs) / 1'000'000.0);
     }
     if (!overtaken && !stale && frame.isValid()) {
-        m_lastPresentedSequence = sequence;
+        m_lastPresentedSequence[stream] = sequence;
         if (m_stats)
             m_stats->noteDelivered();
-        emit frameReady(frame);
+        emit frameReady(stream, frame);
     } else if ((overtaken || stale) && frame.isValid() && m_stats) {
         m_stats->noteDropped();
     }

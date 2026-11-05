@@ -12,84 +12,98 @@
 namespace drift {
 
 // The sequence's shared viewpoint: one eye every clip is seen through, in place of the per-clip
-// eye that ClipPose3d::perspective describes. World space is the space the clip poses already
-// live in — canvas pixels, origin at the canvas centre, y down, +z toward the viewer — so a
-// default camera reproduces the per-clip projection exactly and nothing moves.
+// eye that ClipPose3d::perspective describes.
 //
-// The camera's own transform in world space is
+// The camera lives in the same world as the clips (ClipTransform3d.h: canvas top-left origin, px,
+// +X right, +Y down, +Z away from the viewer), After Effects style. A camera at rest stands at
+// (W/2, H/2, -zoom) looking along +Z, which frames the canvas exactly as the per-clip eye does.
 //
-//     C = rotX · rotY · rotZ · translate(positionX, positionY, positionZ)
+// The camera's own transform is
 //
-// and the eye sits at C · (0, 0, perspective). Two consequences fall out of that order, and both
-// are what the UI wants:
+//     C = translate(eye) · Ry(rotationY) · Rx(rotationX) · Rz(rotationZ)
 //
-//  - With no translation, rotating the camera *orbits* it about the world origin (the canvas
-//    plane) at radius `perspective`, the way a turntable orbit behaves. It does not spin in place.
-//  - The translation is applied in the camera's own frame, so positionX/Y pan across the frame
-//    whatever way the camera is facing, and positionZ dollies along the direction it looks —
-//    which also changes the orbit radius.
+// Yaw comes first and turns about the eye, so for any pitch and yaw with zero roll the camera's
+// right vector has no Y component: the horizon stays level. Gimbal lock sits at pitch +-90
+// degrees. Turning never moves the eye, so two keys that differ only in rotation keep the eye
+// still between them. Local axes: +x right, +y down, +z ahead (right-handed, like the world).
 //
-// Rotations are intrinsic and applied X, then Y, then Z, the same order and the same sign
-// conventions as ClipPose3d and model clips, so drift::gizmo::eulerFromMatrix can solve for them.
+// With `aimAtTarget` the camera first faces (target - eye) with world up = -Y (zero roll), and the
+// rotation then acts as an offset in the camera's own frame: R = Look(eye -> target) · Ry · Rx · Rz,
+// the way After Effects combines a two-node camera's Orientation and Rotation.
+//
+// `zoom` is the distance in px from the eye at which the canvas fills the frame (After Effects'
+// Zoom). It is a real zoom: changing it never moves the eye. Focal length and field of view are
+// the same number in other units (see below).
 struct SceneCamera3d
 {
-    double positionX = 0.0; // px across the frame; + moves the camera right, so the image goes left
-    double positionY = 0.0; // px down the frame; + moves the camera down, so the image goes up
-    double positionZ = 0.0; // px along the view direction; + pulls the camera back from the scene
-    double rotationX = 0.0; // pitch, degrees; + tips the camera's top away from the scene
-    double rotationY = 0.0; // yaw, degrees
+    double positionX = 0.0; // the eye, world px
+    double positionY = 0.0;
+    double positionZ = 0.0;
+    double rotationX = 0.0; // pitch, degrees; + tips the view up (toward -Y)
+    double rotationY = 0.0; // yaw, degrees; + turns the view toward +X
     double rotationZ = 0.0; // roll, degrees, clockwise on screen
-    // Eye distance, and with it the strength of the perspective — the same quantity, and the same
-    // default, as ClipPose3d::perspective. A camera is one eye for the whole scene, so when one is
-    // active this value replaces every clip's own.
-    double perspective = kDefaultClipPerspective;
-
-    // True while the camera changes nothing, which is what lets callers keep the untouched
-    // per-clip path. `perspective` is deliberately not part of this: a scene whose only camera
-    // edit is the lens still has to go through the shared eye, or clips with differing
-    // per-clip perspective values would disagree about where the viewer is.
-    bool isIdentity() const
-    {
-        return qFuzzyIsNull(positionX) && qFuzzyIsNull(positionY) && qFuzzyIsNull(positionZ)
-               && qFuzzyIsNull(rotationX) && qFuzzyIsNull(rotationY) && qFuzzyIsNull(rotationZ);
-    }
+    bool aimAtTarget = false;
+    double targetX = 0.0; // point of interest, world px; used only with aimAtTarget
+    double targetY = 0.0;
+    double targetZ = 0.0;
+    // A camera is one eye for the whole scene, so when one is active this value replaces every
+    // clip's own perspective.
+    double zoom = kDefaultClipPerspective;
 };
 
-// The camera's own transform in world space, C = rotX · rotY · rotZ · translate(P), and the eye
-// it puts at C · (0, 0, perspective). What the 3D view draws the camera's body and frustum from.
+// The camera standing at rest for a project of this size: the default eye and zoom, aimed along +Z.
+SceneCamera3d defaultSceneCamera(const QSizeF &project);
+
+// Zoom <-> focal length on a 36 x 24 mm film back, and <-> vertical field of view, for a frame
+// `height` px tall. The default zoom (defaultClipPerspective) is a 50 mm lens.
+double zoomFromFocalLength(double millimetres, double height);
+double focalLengthFromZoom(double zoom, double height);
+double zoomFromFov(double degrees, double height);
+double fovFromZoom(double zoom, double height);
+
+// The camera's rotation: Ry · Rx · Rz, preceded by the look-at rotation when aimAtTarget is on.
+QMatrix4x4 sceneCameraRotation(const SceneCamera3d &camera);
+// The camera's own transform, C = translate(eye) · rotation: local points to world.
 QMatrix4x4 sceneCameraWorld(const SceneCamera3d &camera);
 QVector3D sceneCameraEye(const SceneCamera3d &camera);
 
-// The camera turned to rotationX/rotationY with its eye held where it was: positionX/Y/Z are
-// re-solved so the eye (sceneCameraEye) is unchanged. A bare rotation orbits the eye about the
-// canvas centre; this is the turn-in-place a pan or tilt means. Roll and lens are kept.
+// The camera turned to rotationX/rotationY with its eye held where it was. Roll, zoom and the
+// target are kept.
 SceneCamera3d rotatedKeepingEye(const SceneCamera3d &camera, double rotationX, double rotationY);
 
-// The camera standing at `eye` and turned so `target` lands on the canvas centre. Rotation is
-// pitch/yaw only (roll and lens are kept), and the position is solved so the eye really is `eye`.
-// Eye and target coinciding leaves the camera unchanged.
+// The camera standing at `eye` and facing `target` with a level horizon (roll 0). Without
+// aimAtTarget the pitch and yaw are written to the rotation; with it the target becomes the point
+// of interest and the rotation offset is cleared. Eye and target coinciding leaves the camera
+// unchanged. Zoom is kept.
 SceneCamera3d aimAt(const SceneCamera3d &camera, const QVector3D &eye, const QVector3D &target);
 // The same with the eye where the camera already has it: it turns to face `target` in place.
 SceneCamera3d aimAt(const SceneCamera3d &camera, const QVector3D &target);
 
 struct Clip;
 
-// The viewpoint a Camera clip describes at `timelineUs`, reading the clip's ordinary transform
-// tracks with camera meanings: pan from transformX/Y, dolly from positionZ, pitch/yaw from
-// rotationX/Y, roll from rotation and the lens from perspective.
+// The viewpoint a Camera clip describes at `timelineUs`, reading the clip's ordinary tracks with
+// camera meanings:
 //
-// Lengths are multiplied by `renderScale` so they track the canvas the way every other layout
-// value does; the angles are not, which is what keeps a preview at renderScale 0.5 framed exactly
-// like the export at 1.0. The compositor and the preview overlay both resolve the camera through
-// this, so the grips cannot be computed from different numbers than the pixels.
-SceneCamera3d sceneCameraFromClip(const Clip &clip, TimeUs timelineUs, double renderScale);
+//   transformX/Y, positionZ       the eye (default: the canvas centre, one default zoom back)
+//   rotationX, rotationY, rotation  pitch, yaw, roll
+//   perspective                   zoom (default: defaultClipPerspective of the project height)
+//   anchorX/Y/Z, Clip::aimAtTarget  the point of interest (default: the canvas centre) and whether
+//                                 the camera faces it
+//
+// `projectSize` is the project's size in px; lengths are multiplied by `renderScale` so they track
+// the canvas the way every other layout value does, while the angles are not, which keeps a preview
+// at renderScale 0.5 framed exactly like the export at 1.0. The compositor and the preview overlay
+// both resolve the camera through this, so the grips cannot be computed from different numbers
+// than the pixels.
+SceneCamera3d sceneCameraFromClip(const Clip &clip, TimeUs timelineUs, double renderScale,
+                                  const QSizeF &projectSize);
 
-// World (canvas px about the canvas centre) → homogeneous canvas pixels, top-left origin: divide
+// World → homogeneous canvas pixels, top-left origin: divide
 // x, y by w to get the pixel. This is the projection half of clipQuadToCanvas lifted out so one
 // eye can serve every clip, with the camera's inverse transform in front of it.
 //
-// For a camera that is `isIdentity()` and carries the clip's own `perspective`, this is exactly
-// the projection clipQuadToCanvas applies, so camera · clipQuadToWorld agrees with it.
+// For defaultSceneCamera with the clip's own `perspective` as its zoom, this is exactly the
+// projection clipQuadToCanvas applies, so camera · clipQuadToWorld agrees with it.
 QMatrix4x4 cameraViewProjection(const SceneCamera3d &camera, const QSizeF &canvas);
 
 // An *affine* transform-layer parent (canvas px -> canvas px) as the same map in world space, with

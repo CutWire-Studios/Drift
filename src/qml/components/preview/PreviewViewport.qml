@@ -8,8 +8,10 @@ import Drift
 Item {
     id: viewport
 
-    // In 3D the picture fills the whole viewport around the project frame. Desktop only.
-    property bool mode3d: false
+    // Which preview stream this shows: 0 the scene camera, 1 the editor's free viewpoint. The editor
+    // stream fills the whole viewport around the project frame. Desktop only.
+    property int stream: 0
+    property bool mode3d: stream === 1
     // Canvas size is derived from this, so it has to be real screen pixels: item geometry is in
     // logical units, and on a scaled display a canvas built from those is upscaled by the ratio
     // before it ever reaches the screen. The phone renders at item size and passes 1.
@@ -30,8 +32,8 @@ Item {
     // Crop mode pulls the canvas in so there is room around it to drag an edge outward and grow
     // the frame.
     property real cropZoom: EditorState.preview.canvasCropMode ? 0.72 : 1.0
-    // View navigation. Both reset when crop mode starts or ends and when the mode changes, so
-    // neither view is ever entered already scrolled off-centre.
+    // View navigation. Both reset when crop mode starts or ends, so the view is never entered already scrolled
+    // off-centre.
     property real userZoom: 1.0
     property real panX: 0
     property real panY: 0
@@ -70,10 +72,8 @@ Item {
         NumberAnimation { duration: Theme.durationBase; easing.type: Theme.easingInOut }
     }
 
-    // The 2D zoom and pan mean nothing to the 3D view.
     Connections {
         target: EditorState.preview
-        function onModeChanged() { viewport.resetView() }
         function onCanvasCropModeChanged() { viewport.resetView() }
     }
 
@@ -122,6 +122,7 @@ Item {
         }
 
         PreviewItem {
+            stream: viewport.stream
             x: viewport.mode3d ? -canvasRect.x : 0
             y: viewport.mode3d ? -canvasRect.y : 0
             width: viewport.mode3d ? viewport.width : canvasRect.width
@@ -134,9 +135,9 @@ Item {
             readonly property real pixelRatio: viewport.pixelRatio
 
             function updateRenderSize() {
-                EditorState.playback.setPreviewRenderSize(Math.round(width * pixelRatio),
+                EditorState.playback.setPreviewRenderSize(viewport.stream, Math.round(width * pixelRatio),
                                                           Math.round(height * pixelRatio))
-                EditorState.preview.notifyResized()
+                EditorState.preview.notifyResized(viewport.stream)
             }
 
             Component.onCompleted: updateRenderSize()
