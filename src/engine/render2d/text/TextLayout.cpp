@@ -317,11 +317,11 @@ TextLayoutResult layoutStyledText(const QString &text, const drift::TextStyle &s
     const QString emojiFamily = emojiFontFamily();
 
     const double letterSpacing = qFuzzyIsNull(style.letterSpacing) ? 0.0 : style.letterSpacing * renderScale;
-    const int basePx = qMax(4, qRound(style.pixelSize * renderScale));
-    int accentPx = basePx;
+    const double basePx = qMax(0.5, style.pixelSize * renderScale);
+    double accentPx = basePx;
     const double accentScale = style.accent.sizeScale;
     if (style.accent.rule != drift::WordAccentRule::None && accentScale > 0.0 && !qFuzzyCompare(accentScale, 1.0))
-        accentPx = qMax(1, qRound(style.pixelSize * accentScale * renderScale));
+        accentPx = qMax(0.5, style.pixelSize * accentScale * renderScale);
     const bool anyAccent = std::find(accentFlags.cbegin(), accentFlags.cend(), true) != accentFlags.cend();
     const bool mixedSizes = accentPx != basePx && anyAccent;
 
