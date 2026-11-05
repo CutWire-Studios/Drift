@@ -1016,6 +1016,7 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
     // Captured before applyProbedSource overwrites `current` in place — rebindClipsToAsset needs
     // to know what the bin's correction *was* to rebase each clip's own by how much it changed.
     const int oldBinCorrection = drift::rotationCorrectionOf(*current);
+    const bool relinkingMissing = !refresh && !fromEdit && m_app->m_assetLibrary->isMissing(assetId);
     // A refresh of unchanged media keeps the landmarks and depth maps, which were baked from it.
     const bool mediaChanged = !refresh || current->durationUs != replacement.durationUs
         || current->width != replacement.width || current->height != replacement.height
@@ -1031,6 +1032,13 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
         m_app->forgetChangedMediaSource(path, /*beforeReprobe=*/false);
 
     const int adjusted = rebindClipsToAsset(assetId, replacement, oldBinCorrection, mediaChanged);
+    // Clips not bound to this asset id, and masks, effects and transcripts, can still name the
+    // missing file; a relink should leave nothing pointing at it.
+    QHash<QString, QString> siblings;
+    if (relinkingMissing && replacement.path != path) {
+        ProjectFileController::remapPaths(m_app->m_project, {{path, replacement.path}});
+        siblings = findSiblingRelinks(assetId, path, replacement.path);
+    }
     const QString label = fromEdit ? tr("Media edited")
                                    : (refresh ? tr("Media refreshed") : tr("Media replaced"));
     m_app->pushProjectEdit(before, label);
@@ -1038,6 +1046,54 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
     finishEditJob(true, newName);
     if (!fromEdit && !refresh)
         emit replaceFinished(true, newName, adjusted);
+    m_siblingRelink = siblings;
+    if (!siblings.isEmpty())
+        emit siblingRelinkAvailable(int(siblings.size()),
+                                    QDir::toNativeSeparators(QFileInfo(replacement.path).absolutePath()));
+}
+
+QHash<QString, QString> MediaBinController::findSiblingRelinks(const QString &assetId,
+                                                               const QString &oldPath,
+                                                               const QString &newPath) const
+{
+    QHash<QString, QString> remap;
+    AssetLibrary *library = m_app->m_assetLibrary;
+    const QString oldDir = QFileInfo(oldPath).absolutePath();
+    const QDir newDir = QFileInfo(newPath).absoluteDir();
+    for (const QString &id : m_app->m_project.assetOrder()) {
+        if (id == assetId || !library->isMissing(id))
+            continue;
+        const drift::MediaAsset *asset = m_app->m_project.asset(id);
+        const QFileInfo old(asset->path);
+        if (old.absolutePath() != oldDir)
+            continue;
+        const QFileInfo candidate(newDir.filePath(old.fileName()));
+        if (!candidate.isFile() || library->indexOfPath(candidate.absoluteFilePath()) >= 0)
+            continue;
+        // Projects from before fingerprints have no size to compare; the user confirms anyway.
+        if (asset->sourceSize > 0 && candidate.size() != asset->sourceSize)
+            continue;
+        remap.insert(asset->path, candidate.absoluteFilePath());
+    }
+    return remap;
+}
+
+void MediaBinController::relinkSiblings()
+{
+    const QHash<QString, QString> remap = std::exchange(m_siblingRelink, {});
+    if (remap.isEmpty() || !m_app->m_assetLibrary)
+        return;
+    const drift::Project before = m_app->m_project;
+    m_app->projectFile()->remapProjectPaths(remap);
+    m_app->pushProjectEdit(before, tr("Relink media"));
+    m_app->settleUndoRefresh();
+    m_app->m_assetLibrary->setProject(&m_app->m_project);
+    m_folderModel.setProject(&m_app->m_project);
+    m_app->restoreFilmstripsAfterLoad();
+    m_app->notifyTracksChanged();
+    m_app->projectFile()->setDirty(true);
+    m_app->setLastMessage(tr("Relinked %n file(s)", nullptr, int(remap.size())),
+                          QStringLiteral("success"));
 }
 
 int MediaBinController::rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset,

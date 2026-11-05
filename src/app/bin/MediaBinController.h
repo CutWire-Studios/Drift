@@ -136,6 +136,8 @@ public:
     // frame rate and swaps it in, one at a time, the same undoable way a crop does, marking the
     // asset edit-friendly. The original file is left where it was.
     Q_INVOKABLE void convertToConstantFrameRate(const QStringList &assetIds);
+    // Applies the relinks offered by the last siblingRelinkAvailable, as one undoable edit.
+    Q_INVOKABLE void relinkSiblings();
 
 signals:
     void currentFolderIdChanged();
@@ -149,6 +151,9 @@ signals:
     // the replacement and was pulled back to it.
     void replaceFinished(bool ok, const QString &message, int adjustedClips);
     void replacingAssetIdChanged();
+    // A missing file was relinked, and `count` other missing files from its old folder sit under
+    // the same name and size in `folder`, its new one. relinkSiblings applies them.
+    void siblingRelinkAvailable(int count, const QString &folder);
     void saveFinished(bool ok, const QString &name);
     void editChanged();
     void editFinished(bool ok, const QString &message);
@@ -166,6 +171,10 @@ private:
     void startEditJob(const QString &assetId, const QString &name,
                       const drift::MediaEditSpec &spec, bool conversion);
     void startNextConversion();
+    // Old path -> new path for every other missing asset that lived in oldPath's folder and has a
+    // file of the same name and size in newPath's folder.
+    QHash<QString, QString> findSiblingRelinks(const QString &assetId, const QString &oldPath,
+                                               const QString &newPath) const;
 
     AppController *m_app = nullptr;
     BinFolderListModel m_folderModel;
@@ -177,6 +186,7 @@ private:
     QString m_replacingAssetSourceUri;
     std::function<void(drift::MediaAsset &)> m_replaceAdjust;
     QSet<QString> m_refreshFailed;
+    QHash<QString, QString> m_siblingRelink;
     bool m_editing = false;
     double m_editProgress = 0.0;
     QString m_editStatus;

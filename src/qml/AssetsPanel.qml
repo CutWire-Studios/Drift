@@ -513,6 +513,25 @@ PanelFrame {
     property int pendingProxyMatches: 0
 
     ThemedDialog {
+        id: siblingRelinkDialog
+        property int count: 0
+        property string folder: ""
+        title: qsTr("Relink other missing files?")
+        acceptText: qsTr("Relink")
+        preferredWidth: Theme.dialogWidthSm
+
+        contentItem: ThemedLabel {
+            width: parent ? parent.width : Theme.dialogWidthSm
+            wrapMode: Text.WordWrap
+            size: "sm"
+            text: qsTr("%n other missing files from the same folder were found in “%1” with the same name and size. Relink them too?", "", siblingRelinkDialog.count)
+                .arg(siblingRelinkDialog.folder)
+        }
+
+        onAccepted: EditorState.bin.relinkSiblings()
+    }
+
+    ThemedDialog {
         id: linkProxyPatternDialog
         title: qsTr("Link proxies by pattern?")
         acceptText: qsTr("Link")
@@ -660,6 +679,12 @@ PanelFrame {
             } else {
                 Toasts.success(qsTr("Replaced with “%1”.").arg(message))
             }
+        }
+
+        function onSiblingRelinkAvailable(count, folder) {
+            siblingRelinkDialog.count = count
+            siblingRelinkDialog.folder = folder
+            siblingRelinkDialog.open()
         }
 
         function onEditFinished(ok, message) {
