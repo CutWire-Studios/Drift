@@ -986,6 +986,15 @@
       "descriptionSource": "Turn agent access on automatically the next time you open Drift. Turning access off resets this."
     },
     {
+      "id": "ai-agent-notifications",
+      "target": "settings:ai#ai-agent-notifications",
+      "context": "SettingsAiPage",
+      "source": "Notifications for agent actions",
+      "keywords": "mcp agent toast notification quiet silence",
+      "needs": [],
+      "descriptionSource": "Which pop-ups an agent's own edits show you. Errors always show."
+    },
+    {
       "id": "ai-cloud-services",
       "target": "settings:ai#ai-cloud-services",
       "context": "SettingsAiPage",

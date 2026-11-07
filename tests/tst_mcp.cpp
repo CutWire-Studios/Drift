@@ -35,6 +35,7 @@
 
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/tools/McpDispatcher.h"
+#include "app/mcp/transport/McpServer.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/protocol/McpProtocol.h"
 #include "app/mcp/protocol/McpSession.h"
@@ -85,6 +86,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void agentNotificationsPreferenceOverMcp();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -422,6 +424,46 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// The agent can turn its own notifications down (a global, persisted preference) and read it back.
+void McpTest::agentNotificationsPreferenceOverMcp()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    const QString saved = state.preferences()->agentNotifications();
+    const auto restore = qScopeGuard([&] { state.preferences()->setAgentNotifications(saved); });
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    QJsonObject set = dispatcher.applyOne(QStringLiteral("set_ui_preferences"),
+                                          {{QStringLiteral("agentNotifications"), QStringLiteral("none")}});
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
+    QCOMPARE(set.value(QStringLiteral("agentNotifications")).toString(), QStringLiteral("none"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("get_ui_preferences"), {}).value(QStringLiteral("agentNotifications")).toString(),
+             QStringLiteral("none"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("agentNotifications"), QStringLiteral("loud")}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // Through the server (where the agent scope applies): with notifications off, an op whose
+    // error detail is the editor's message still returns that detail -- quiet only skips the toast.
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    drift::mcp::McpServer server(&state);
+    const QJsonObject request{{QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
+                              {QStringLiteral("id"), 1},
+                              {QStringLiteral("method"), QStringLiteral("tools/call")},
+                              {QStringLiteral("params"),
+                               QJsonObject{{QStringLiteral("name"), QStringLiteral("generate_subtitles")},
+                                           {QStringLiteral("arguments"),
+                                            QJsonObject{{QStringLiteral("track"), 0},
+                                                        {QStringLiteral("start"), 1.0},
+                                                        {QStringLiteral("end"), 1.0}}}}}};
+    const QJsonObject result = server.handleRpc(QString(), request).toObject().value(QStringLiteral("result")).toObject();
+    const QJsonObject payload = QJsonDocument::fromJson(result.value(QStringLiteral("content")).toArray().first().toObject()
+                                                            .value(QStringLiteral("text")).toString().toUtf8()).object();
+    QCOMPARE(payload.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY2(!payload.value(QStringLiteral("detail")).toString().isEmpty(), qPrintable(QJsonDocument(payload).toJson()));
+    QVERIFY(!state.mcp()->inAgentCall());
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()

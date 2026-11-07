@@ -3046,7 +3046,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             m_controller->preferences()->setReopenLastProject(jsonBool(args.value(QStringLiteral("reopenLastProject"))));
         if (args.contains(QStringLiteral("followSystem")) && jsonBool(args.value(QStringLiteral("followSystem"))))
             m_controller->preferences()->clearDarkModePreference();
+        if (args.contains(QStringLiteral("agentNotifications")))
+            m_controller->preferences()->setAgentNotifications(args.value(QStringLiteral("agentNotifications")).toString());
         return ok({
+            {QStringLiteral("agentNotifications"), m_controller->preferences()->agentNotifications()},
             {QStringLiteral("autoKey"), m_controller->autoKeyEnabled()},
             {QStringLiteral("mediaGrid"), m_controller->mediaGridMode()},
             {QStringLiteral("reopenLastProject"), m_controller->preferences()->reopenLastProject()},

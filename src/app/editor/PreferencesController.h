@@ -52,6 +52,10 @@ class PreferencesController : public QObject
                    NOTIFY proxyNamePatternsChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
+    // Which notifications raised during an agent's (MCP) call reach the screen: "all", "problems"
+    // (warnings and errors, the default) or "none" (errors only -- an error is never hidden).
+    // Applies to what a call raises while it runs; a result landing later (an export) still shows.
+    Q_PROPERTY(QString agentNotifications READ agentNotifications WRITE setAgentNotifications NOTIFY agentNotificationsChanged)
     // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
     // after restart; hidden when this machine has no decode backend for either.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
@@ -179,6 +183,9 @@ public:
 
     bool reopenLastProject() const { return m_reopenLastProject; }
     void setReopenLastProject(bool enabled);
+    QString agentNotifications() const { return m_agentNotifications; }
+    void setAgentNotifications(const QString &level);
+    static QStringList agentNotificationLevels();
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
     void setVaapiZeroCopy(bool enabled);
     bool vaapiZeroCopySupported() const;
@@ -304,6 +311,7 @@ signals:
     void proxyNamePatternsChanged();
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
+    void agentNotificationsChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
     void preferredGpuChanged();
@@ -340,6 +348,7 @@ private:
     QStringList m_proxyNamePatterns;
     QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
+    QString m_agentNotifications = QStringLiteral("problems");
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
     QString m_preferredGpu = QStringLiteral("auto");

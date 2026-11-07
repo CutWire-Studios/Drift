@@ -377,6 +377,7 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void agentCallNotificationsFollowThePreference();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
@@ -10893,6 +10894,79 @@ void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
     // And the clips themselves still report the stack, which is what the inspector and MCP read.
     QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
     QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
+// While an agent's MCP call runs, its notifications reach the screen as the preference allows;
+// errors always do, and the user's own actions are never filtered.
+void EditorStateTest::agentCallNotificationsFollowThePreference()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    PreferencesController *prefs = state.preferences();
+    const QString saved = prefs->agentNotifications();
+    const auto restore = qScopeGuard([&] { prefs->setAgentNotifications(saved); });
+
+    // Shown = stored and not marked quiet. A quiet message is still stored (MCP replies read it).
+    const auto shown = [&](const QString &severity) {
+        state.setLastMessage(QString());
+        state.setLastMessage(QStringLiteral("hello %1").arg(severity), severity);
+        if (state.lastMessage() != QStringLiteral("hello %1").arg(severity))
+            return false;
+        return !state.lastMessageQuiet();
+    };
+
+    // Outside an agent call nothing is filtered.
+    prefs->setAgentNotifications(QStringLiteral("none"));
+    QVERIFY(shown(QStringLiteral("success")));
+
+    state.mcp()->beginAgentCall();
+    prefs->setAgentNotifications(QStringLiteral("all"));
+    QVERIFY(shown(QStringLiteral("success")));
+    QVERIFY(shown(QStringLiteral("warning")));
+    prefs->setAgentNotifications(QStringLiteral("problems"));
+    QVERIFY(!shown(QStringLiteral("success")));
+    QVERIFY(!shown(QStringLiteral("info")));
+    QVERIFY(shown(QStringLiteral("warning")));
+    QVERIFY(shown(QStringLiteral("error")));
+    prefs->setAgentNotifications(QStringLiteral("none"));
+    QVERIFY(!shown(QStringLiteral("warning")));
+    QVERIFY(shown(QStringLiteral("error")));
+    // The text of a quiet message is still there for whoever reads it back.
+    state.setLastMessage(QStringLiteral("The caption range is empty"), QStringLiteral("warning"));
+    QCOMPARE(state.lastMessage(), QStringLiteral("The caption range is empty"));
+    QVERIFY(state.lastMessageQuiet());
+
+    // A nested event loop the agent's call waits in delivers the user's own actions: those are
+    // not filtered.
+    bool userShown = false;
+    QEventLoop loop;
+    QTimer::singleShot(0, &loop, [&] {
+        state.setLastMessage(QString());
+        state.setLastMessage(QStringLiteral("user action"), QStringLiteral("info"));
+        userShown = state.lastMessage() == QStringLiteral("user action") && !state.lastMessageQuiet();
+        loop.quit();
+    });
+    loop.exec();
+    QVERIFY(userShown);
+    // Nor through a manual event pump (waitForBrushSaves' processEvents), which keeps the loop
+    // level: it pauses the agent scope.
+    state.mcp()->pauseAgentCalls();
+    QVERIFY(shown(QStringLiteral("info")));
+    state.mcp()->resumeAgentCalls();
+    QVERIFY(!shown(QStringLiteral("info")));
+    // An agent call that starts inside a paused pump is still filtered.
+    state.mcp()->pauseAgentCalls();
+    state.mcp()->beginAgentCall();
+    QVERIFY(!shown(QStringLiteral("info")));
+    state.mcp()->endAgentCall();
+    QVERIFY(shown(QStringLiteral("info")));
+    state.mcp()->resumeAgentCalls();
+    state.mcp()->endAgentCall();
+    QVERIFY(shown(QStringLiteral("success")));
+
+    // Unknown levels are ignored.
+    prefs->setAgentNotifications(QStringLiteral("loud"));
+    QCOMPARE(prefs->agentNotifications(), QStringLiteral("none"));
 }
 
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()

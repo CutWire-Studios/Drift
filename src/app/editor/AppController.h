@@ -335,6 +335,9 @@ class AppController : public QObject
     // to regex the prose, and none of the real failure strings matched, so a
     // corrupt-project open rendered as a neutral info toast.
     Q_PROPERTY(QString lastMessageSeverity READ lastMessageSeverity NOTIFY lastMessageChanged)
+    // True when lastMessage came from an agent's own call and the agentNotifications preference
+    // says not to show it: the text stays readable (MCP replies use it), only the toast is skipped.
+    Q_PROPERTY(bool lastMessageQuiet READ lastMessageQuiet NOTIFY lastMessageChanged)
     Q_PROPERTY(int draggingAssetIndex READ draggingAssetIndex WRITE setDraggingAssetIndex NOTIFY draggingAssetIndexChanged)
     Q_PROPERTY(bool separateAudioAvailable READ canSeparateAudioSelection NOTIFY editCapabilitiesChanged)
     Q_PROPERTY(bool makeCompositeAvailable READ canMakeCompositeFromSelection NOTIFY editCapabilitiesChanged)
@@ -535,6 +538,7 @@ public:
     void setLoopWorkAreaEnabled(bool enabled);
     QString lastMessage() const { return m_lastMessage; }
     QString lastMessageSeverity() const { return m_lastMessageSeverity; }
+    bool lastMessageQuiet() const { return m_lastMessageQuiet; }
     int draggingAssetIndex() const { return m_draggingAssetIndex; }
     void setDraggingAssetIndex(int index);
 
@@ -2251,6 +2255,7 @@ protected:
     int m_draggingAssetIndex = -1;
     QString m_lastMessage;
     QString m_lastMessageSeverity = QStringLiteral("info");
+    bool m_lastMessageQuiet = false;
     bool m_inlineTextEditing = false;
     struct InlineTextEdit
     {
