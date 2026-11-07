@@ -150,6 +150,9 @@ signals:
     // media's name on success. `adjustedClips` counts clips whose source range no longer fitted
     // the replacement and was pulled back to it.
     void replaceFinished(bool ok, const QString &message, int adjustedClips);
+    // The same outcome tagged with the asset it belongs to, for a caller (the MCP) that waits on
+    // one particular replace while others may finish around it.
+    void replaceFinishedFor(const QString &assetId, bool ok, const QString &message);
     void replacingAssetIdChanged();
     // A missing file was relinked, and `count` other missing files from its old folder sit under
     // the same name and size in `folder`, its new one. relinkSiblings applies them.
@@ -160,6 +163,8 @@ signals:
     void copyRendered(const QString &assetId);
 
 private:
+    // Every replace outcome goes out on both signals; one place so no outcome misses one.
+    void reportReplace(const QString &assetId, bool ok, const QString &message, int adjustedClips);
     // Applies a finished replace probe as one undoable transaction, or reports why it cannot be.
     void finalizeReplace(const QString &assetId, const drift::MediaAsset &filled, bool ok);
     // Moves every clip bound to `assetId` onto the replacement media. Returns how many had a
