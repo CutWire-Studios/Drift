@@ -58,6 +58,7 @@ private slots:
     void transcriptSavedWithAssetNotHashed();
     void transcriptSurvivesUndoRedo();
     void splitClipClearsInnerFades();
+    void subtitleNamesFollowCuesOnlyWhenGenerated();
     void splitThenMergeRestoresFades();
     void audioEdgeMultiplierRamps();
     void audioFadesRoundTripAndLeaveOpacity();
@@ -6819,6 +6820,47 @@ void CoreTest::transcriptSurvivesUndoRedo()
     cmd.redo();
     QCOMPARE(project.name(), QStringLiteral("Edited"));
     QVERIFY(project.transcript(QStringLiteral("a1")));
+}
+
+// A subtitle clip's generated "Subtitles (N)" follows its cue count; a name someone chose stays.
+void CoreTest::subtitleNamesFollowCuesOnlyWhenGenerated()
+{
+    QList<drift::SubtitleCue> cues{{0, 1000, QStringLiteral("a")}, {1000, 2000, QStringLiteral("b")}};
+    QVERIFY(drift::isGeneratedSubtitleClipName(QString()));
+    QVERIFY(drift::isGeneratedSubtitleClipName(QStringLiteral("Subtitles")));
+    QVERIFY(drift::isGeneratedSubtitleClipName(QStringLiteral("Subtitles (12)")));
+    QVERIFY(!drift::isGeneratedSubtitleClipName(QStringLiteral("VO script")));
+    QVERIFY(!drift::isGeneratedSubtitleClipName(QStringLiteral("Subtitles (draft)")));
+    // Only the exact form the generator makes counts as generated.
+    for (const char *chosen : {"Subtitles (-1)", "Subtitles (+2)", "Subtitles (002)", "Subtitles (0)",
+                               "Subtitles ( 2)", "Subtitles (2) ", "Subtitles ()"})
+        QVERIFY2(!drift::isGeneratedSubtitleClipName(QString::fromLatin1(chosen)), chosen);
+
+    // Through the real operations: a chosen name on the second clip survives a merge, and both
+    // halves of a split keep it.
+    drift::Clip first;
+    first.type = drift::ClipType::Subtitle;
+    first.timelineDuration = drift::secondsToUs(2.0);
+    first.srcOut = first.timelineDuration;
+    first.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("one")}};
+    first.name = drift::subtitleClipName(first.subtitleCues);
+    drift::Clip second = first;
+    second.timelineStart = drift::secondsToUs(2.0);
+    second.name = QStringLiteral("VO script");
+    drift::Clip merged = drift::mergeSubtitleClips({first, second});
+    QCOMPARE(merged.name, QStringLiteral("VO script"));
+    drift::Clip head = merged;
+    drift::Clip tail;
+    QVERIFY(drift::splitClipAtOffset(head, tail, drift::secondsToUs(2.0)));
+    QCOMPARE(head.name, QStringLiteral("VO script"));
+    QCOMPARE(tail.name, QStringLiteral("VO script"));
+
+    QString name = QStringLiteral("Subtitles (5)");
+    drift::refreshSubtitleClipName(name, cues);
+    QCOMPARE(name, QStringLiteral("Subtitles (2)"));
+    name = QStringLiteral("VO script");
+    drift::refreshSubtitleClipName(name, cues);
+    QCOMPARE(name, QStringLiteral("VO script"));
 }
 
 void CoreTest::splitClipClearsInnerFades()

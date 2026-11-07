@@ -99,7 +99,8 @@ void AppController::addSubtitleClip(double atSeconds)
     drift::Clip clip;
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     clip.type = drift::ClipType::Subtitle;
-    clip.name = tr("Subtitles");
+    // The same string the generated-name check knows, so later cue edits recount it.
+    clip.name = drift::subtitleClipName({});
     clip.timelineStart = start;
     clip.timelineDuration = drift::kSubtitleClipDurationUs;
     clip.srcIn = 0;
@@ -215,7 +216,7 @@ bool AppController::importSubtitleFileIntoClip(int trackIndex, int clipIndex, co
     const drift::TimeUs duration = subtitleClipDurationForCues(cues);
     const drift::Project before = m_project;
     clip.subtitleCues = cues;
-    clip.name = drift::subtitleClipName(cues);
+    drift::refreshSubtitleClipName(clip.name, cues);
     if (duration > clip.timelineDuration) {
         clip.timelineDuration = duration;
         clip.srcOut = duration;

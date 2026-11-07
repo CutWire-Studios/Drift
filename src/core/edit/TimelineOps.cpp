@@ -1390,8 +1390,8 @@ bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeU
         head.subtitleCues = headCues;
         tail.subtitleCues = tailCues;
         if (head.type == ClipType::Subtitle) {
-            head.name = subtitleClipName(head.subtitleCues);
-            tail.name = subtitleClipName(tail.subtitleCues);
+            refreshSubtitleClipName(head.name, head.subtitleCues);
+            refreshSubtitleClipName(tail.name, tail.subtitleCues);
         }
     }
 
@@ -1547,7 +1547,17 @@ Clip mergeSubtitleClips(QList<Clip> clips)
     }
     sortSubtitleCues(cues);
     out.subtitleCues = cues;
-    out.name = subtitleClipName(out.subtitleCues);
+    // A name someone chose survives the merge whichever clip it was on: the earliest name that is
+    // not recognisably generated wins; with none, the merged clip gets the generated count. A
+    // generated name from another UI language isn't recognisable (see
+    // isGeneratedSubtitleClipName), so it is kept like a chosen one and can win over a later one.
+    for (const Clip &clip : std::as_const(clips)) {
+        if (!isGeneratedSubtitleClipName(clip.name)) {
+            out.name = clip.name;
+            break;
+        }
+    }
+    refreshSubtitleClipName(out.name, out.subtitleCues);
     return out;
 }
 
@@ -1679,7 +1689,7 @@ void retimeLinkedSubtitles(const Project &before, Project &project, const QHash<
             out.srcIn = 0;
             out.srcOut = out.timelineDuration;
             out.subtitleCues = rebased;
-            out.name = subtitleClipName(rebased);
+            refreshSubtitleClipName(out.name, rebased);
         }
     }
 }
