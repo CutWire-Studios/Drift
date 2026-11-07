@@ -858,6 +858,9 @@ bool McpController::setWorkArea(double inSeconds, double outSeconds)
     const drift::TimeUs outUs = drift::secondsToUs(outSeconds);
     if (outUs <= inUs)
         return false;
+    // Already there: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (m_app->m_project.workAreaInUs() == inUs && m_app->m_project.workAreaOutUs() == outUs)
+        return true;
 
     const drift::Project before = m_app->m_project;
     m_app->m_project.setWorkAreaInUs(inUs);
@@ -1028,8 +1031,18 @@ void McpController::beginBatch()
 {
     if (m_batchDepth++ == 0) {
         m_batchBefore = m_app->m_project.detachedCopy();
+        m_batchRevision = m_editRevision;
         m_undoSuspended = true;
     }
+}
+
+bool McpController::batchChangedProject() const
+{
+    // Only meaningful between beginBatch and endBatch; outside one it answers true, the safe way.
+    // The revision first: it is free, and it also covers state the saved form leaves out. So this
+    // only ever reports "unchanged" for ops that returned before reaching finishEdit.
+    return m_editRevision != m_batchRevision
+           || m_batchBefore.contentHash() != m_app->m_project.contentHash();
 }
 
 void McpController::endBatch(const QString &text, bool pushUndo)

@@ -142,6 +142,7 @@ private slots:
     void captureBeyondEndFlags();
     void previewViewTools();
     void applyBatchStopsAndUndoRevertsPrefix();
+    void applyBatchOfNoOpsAddsNoUndoStep();
     void inspectIsCompact();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
@@ -1311,6 +1312,78 @@ void McpTest::depthToolsSampleAndClear()
     // A text clip has no pixels to estimate, and the test environment has no model either way.
     QVERIFY(!dispatcher.applyOne(QStringLiteral("estimate_depth"), {{QStringLiteral("clip"), id}})
                  .value(QStringLiteral("ok")).toBool());
+}
+
+// A batch whose ops all succeed without changing anything used to push an undo step anyway.
+void McpTest::applyBatchOfNoOpsAddsNoUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    QVERIFY(track >= 0);
+    const QString id = state.mcp()->compactClip(track, clip).value(QStringLiteral("id")).toString();
+    QVERIFY(!id.isEmpty());
+    const QString name = state.project()->tracks().at(track).clips.at(clip).name;
+    QVERIFY(!name.isEmpty());
+    const int steps = state.undoHistory().size();
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto rename = [&](const QString &to) {
+        return dispatcher.apply(QJsonObject{
+            {QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                    {QStringLiteral("args"),
+                                     QJsonObject{{QStringLiteral("clip"), id}, {QStringLiteral("name"), to}}}}}}});
+    };
+    QJsonObject batch = rename(name);
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    QCOMPARE(state.undoHistory().size(), steps);
+
+    batch = rename(QStringLiteral("Renamed"));
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+
+    // A real change the saved form leaves out still gets its step: an In-only work-area marker is
+    // not written to the project file, so clearing it looks like nothing by content alone. The
+    // edit revision (bumped by finishEdit) is what catches it.
+    state.setPlayheadSeconds(1.0);
+    state.markWorkAreaIn();
+    QVERIFY(!state.project()->hasWorkArea());
+    QVERIFY(state.project()->workAreaInUs() >= 0);
+    const int beforeClear = state.undoHistory().size();
+    batch = dispatcher.apply(QJsonObject{
+        {QStringLiteral("ops"),
+         QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("clear_work_area")},
+                                {QStringLiteral("args"), QJsonObject{}}}}}});
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    QVERIFY(state.project()->workAreaInUs() < 0);
+    QCOMPARE(state.undoHistory().size(), beforeClear + 1);
+
+    // Setters that used to write unconditionally: repeating the current value is a no-op now.
+    const auto applyOp = [&](const QString &tool, const QJsonObject &opArgs) {
+        return dispatcher.apply(QJsonObject{
+            {QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), tool}, {QStringLiteral("args"), opArgs}}}}});
+    };
+    const QJsonObject area{{QStringLiteral("in"), 0.0}, {QStringLiteral("out"), 1.0}};
+    QVERIFY(applyOp(QStringLiteral("set_work_area"), area).value(QStringLiteral("ok")).toBool());
+    const int afterArea = state.undoHistory().size();
+    QVERIFY(applyOp(QStringLiteral("set_work_area"), area).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), afterArea);
+
+    QVERIFY(applyOp(QStringLiteral("add_effect"),
+                    {{QStringLiteral("clip"), id}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject param{{QStringLiteral("clip"), id}, {QStringLiteral("index"), 0},
+                            {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.5}};
+    QJsonObject set = applyOp(QStringLiteral("set_effect_param"), param);
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
+    const int afterParam = state.undoHistory().size();
+    set = applyOp(QStringLiteral("set_effect_param"), param);
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
+    QCOMPARE(state.undoHistory().size(), afterParam);
 }
 
 void McpTest::applyBatchStopsAndUndoRevertsPrefix()

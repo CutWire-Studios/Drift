@@ -885,7 +885,6 @@ bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
     if (!def || !declaresParam(def->meta, key))
         return false;
 
-    const drift::Project before = m_project;
     bool asBoolean = false;
     for (const drift::EffectParamSpec &param : def->meta.parameters) {
         if (param.key == key) {
@@ -893,10 +892,13 @@ bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
             break;
         }
     }
-    if (asBoolean)
-        clip.effects[effectIndex].parameters.insert(key, value > 0.5);
-    else
-        clip.effects[effectIndex].parameters.insert(key, value);
+    const QVariant newValue = asBoolean ? QVariant(value > 0.5) : QVariant(value);
+    // Already set: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (clip.effects[effectIndex].parameters.value(key) == newValue)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.effects[effectIndex].parameters.insert(key, newValue);
     pushProjectEdit(before, tr("Edit effect"));
     finishEdit(tr("Effect updated"));
     return true;
