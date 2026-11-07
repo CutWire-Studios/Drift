@@ -1469,6 +1469,8 @@ public:
     Q_INVOKABLE void clearWorkArea();
     Q_INVOKABLE void toggleLoopWorkArea();
     Q_INVOKABLE void freezeFrameAtPlayhead();
+    // The project's own media folder (created if needed): files here are bundled on save.
+    static QString projectMediaDir(const QString &projectId);
     Q_INVOKABLE void previewClipRange(int trackIndex, int clipIndex);
     Q_INVOKABLE void clearPreviewRange();
     Q_INVOKABLE QVariantMap clipTimelineRange(int track, int clip) const;
@@ -2364,7 +2366,6 @@ protected:
     static drift::TimeUs keyframeWriteSnapUs();
     static drift::EasingSpec easingSpecFromMap(const QVariantMap &spec);
     void clearPose3d(drift::Clip &clip);
-    // Freeze frames and full-size MCP captures share one media path.
     static QString newFreezeFramePath(const QString &projectId);
 
     void setProjectLayoutChosen(bool chosen);
