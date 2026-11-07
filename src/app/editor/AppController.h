@@ -848,7 +848,10 @@ public:
     Q_INVOKABLE void deleteSelectedClip();
     // Same, and also removes the adjustments pinned to the deleted clips (their effect stacks and
     // masks) in the same undo step, instead of leaving them unlinked on the timeline.
-    void deleteSelectedClipWithEffects();
+    Q_INVOKABLE void deleteSelectedClipWithEffects();
+    // Whether deleteSelectedClipWithEffects would remove anything beyond plain Delete: an effect
+    // stack or mask pinned to a selected clip or one of its linked A/V partners.
+    Q_INVOKABLE bool selectionHasPinnedAdjustments() const;
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE void moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart);

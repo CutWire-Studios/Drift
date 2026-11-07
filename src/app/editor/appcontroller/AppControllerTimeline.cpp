@@ -1395,6 +1395,30 @@ void AppController::deleteSelectedClipWithEffects()
     deleteSelection(/*withPinnedAdjustments=*/true);
 }
 
+bool AppController::selectionHasPinnedAdjustments() const
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && isValidClipIndex(m_selectedTrack, m_selectedClip))
+        pairs = {qMakePair(m_selectedTrack, m_selectedClip)};
+    if (pairs.isEmpty())
+        return false;
+    expandSelectionWithLinkedPartners(m_project, pairs);
+    QSet<QString> hostIds;
+    for (const QPair<int, int> &pair : std::as_const(pairs)) {
+        if (isValidClipIndex(pair.first, pair.second))
+            hostIds.insert(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+    }
+    for (const drift::Track &track : m_project.tracks()) {
+        if (!track.isAdjustment())
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            if (!clip.linkedClipId.isEmpty() && hostIds.contains(clip.linkedClipId))
+                return true;
+        }
+    }
+    return false;
+}
+
 void AppController::deleteSelection(bool withPinnedAdjustments)
 {
     if (m_selection.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)

@@ -380,6 +380,7 @@ private slots:
     void deletingWithEffectsAlsoHandlesASelectedAdjustment();
     void deletingWithEffectsDoesNotRippleTheLane();
     void deletingAGradedClipWithEffectsRemovesThem();
+    void deleteWithEffectsIsOfferedForWhatItWouldRemove();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
@@ -10916,6 +10917,28 @@ void EditorStateTest::deletingWithEffectsDoesNotRippleTheLane()
 
 // The opt-in path the MCP uses: the clip's pinned adjustments go with it, in one undo step, and a
 // nested lane left empty by that is dropped. Other clips' grades on the same lane are untouched.
+// "Delete with effects" is offered (context menu, Android sheet) when the selection has anything
+// pinned to it -- an effect stack or a mask -- and its action can be bound to a key.
+void EditorStateTest::deleteWithEffectsIsOfferedForWhatItWouldRemove()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.selectClip(0, 0);
+    QVERIFY(!state.selectionHasPinnedAdjustments());
+    state.addMaskToClip(0, 0, QStringLiteral("ellipse"));
+    state.selectClip(0, 0);
+    QVERIFY(state.selectionHasPinnedAdjustments()); // a mask alone counts
+    state.selectClip(0, 1);
+    QVERIFY(!state.selectionHasPinnedAdjustments());
+
+    const QString saved = state.shortcutFor(QStringLiteral("deleteWithEffects"));
+    QVERIFY(state.setShortcut(QStringLiteral("deleteWithEffects"), QStringLiteral("Ctrl+Alt+Shift+D")).isEmpty());
+    QCOMPARE(state.shortcutFor(QStringLiteral("deleteWithEffects")), QStringLiteral("Ctrl+Alt+Shift+D"));
+    state.setShortcut(QStringLiteral("deleteWithEffects"), saved);
+}
+
 void EditorStateTest::deletingAGradedClipWithEffectsRemovesThem()
 {
     AssetLibrary library;
@@ -10945,11 +10968,13 @@ void EditorStateTest::deletingAGradedClipWithEffectsRemovesThem()
     QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
     QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
 
-    // Deleting the last graded clip empties the lane, which goes with it.
+    // Deleting the last graded clip empties the lane, which goes with it. The second goes through
+    // the "deleteWithEffects" action the UI and keymap use.
     state.selectClip(0, 1);
+    QVERIFY(state.selectionHasPinnedAdjustments());
     state.deleteSelectedClipWithEffects();
     state.selectClip(0, 0);
-    state.deleteSelectedClipWithEffects();
+    state.triggerAction(QStringLiteral("deleteWithEffects"));
     QCOMPARE(state.project()->tracks().size(), 1);
     QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
 }
