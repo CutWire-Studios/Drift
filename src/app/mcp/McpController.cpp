@@ -2549,8 +2549,13 @@ QJsonObject McpController::setClipVolume(int trackIndex, int clipIndex, double v
                        QStringLiteral("Clip volume is animated and no key sits at the playhead — "
                                       "pass `at` to write one, or seek to an existing key"));
         }
-        m_app->pushProjectEdit(before, QStringLiteral("Set volume"));
-        m_app->finishEdit(QStringLiteral("Set volume"));
+        // Already at that level: no edit, so a batch repeating it leaves no empty undo step.
+        const drift::KeyframeTrack<double> &was =
+            before.tracks().at(trackIndex).clips.at(clipIndex).volume;
+        if (clip.volume.keyframes() != was.keyframes() || clip.volume.enabled() != was.enabled()) {
+            m_app->pushProjectEdit(before, QStringLiteral("Set volume"));
+            m_app->finishEdit(QStringLiteral("Set volume"));
+        }
     }
 
     const drift::Clip &after = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);

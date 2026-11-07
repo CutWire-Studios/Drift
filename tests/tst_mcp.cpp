@@ -1384,6 +1384,21 @@ void McpTest::applyBatchOfNoOpsAddsNoUndoStep()
     set = applyOp(QStringLiteral("set_effect_param"), param);
     QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
     QCOMPARE(state.undoHistory().size(), afterParam);
+
+    // The same for the other setters an agent repeats most: blend mode and text content.
+    const QJsonObject blend{{QStringLiteral("clip"), id}, {QStringLiteral("mode"), QStringLiteral("multiply")}};
+    QVERIFY(applyOp(QStringLiteral("set_blend_mode"), blend).value(QStringLiteral("ok")).toBool());
+    const int afterBlend = state.undoHistory().size();
+    QCOMPARE(afterBlend, afterParam + 1);
+    QVERIFY(applyOp(QStringLiteral("set_blend_mode"), blend).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), afterBlend);
+
+    const QJsonObject text{{QStringLiteral("clip"), id}, {QStringLiteral("text"), QStringLiteral("Goodbye")}};
+    QVERIFY(applyOp(QStringLiteral("set_text"), text).value(QStringLiteral("ok")).toBool());
+    const int afterText = state.undoHistory().size();
+    QCOMPARE(afterText, afterBlend + 1);
+    QVERIFY(applyOp(QStringLiteral("set_text"), text).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), afterText);
 }
 
 void McpTest::applyBatchStopsAndUndoRevertsPrefix()

@@ -1025,6 +1025,11 @@ bool AppController::setEffectColorParam(int trackIndex, int clipIndex, int effec
         }
     }
 
+    const QVariantMap &params = clip.effects[effectIndex].parameters;
+    if (params.value(key).toString() == stored
+        && (specIt->enables.isEmpty() || params.value(specIt->enables).toBool()))
+        return true; // already set: no edit, so a repeating batch leaves no empty undo step
+
     const drift::Project before = m_project;
     clip.effects[effectIndex].parameters.insert(key, stored);
     // One undo step: a picked shade that left its "custom colour" switch off would change nothing.
@@ -1662,6 +1667,10 @@ bool AppController::setAudioEffectParam(int trackIndex, int clipIndex, int effec
     const AudioEffectEntry *def = audioEffectDefForId(clip.audioEffects[effectIndex].catalogId);
     if (!def || !declaresParam(def->parameters, key))
         return false;
+
+    // Already set: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (clip.audioEffects[effectIndex].parameters.value(key) == QVariant(value))
+        return true;
 
     const drift::Project before = m_project;
     clip.audioEffects[effectIndex].parameters.insert(key, value);
