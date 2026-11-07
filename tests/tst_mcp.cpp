@@ -85,6 +85,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void deleteClipWithEffectsRemovesPinnedAdjustments();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -422,6 +423,63 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// delete_clip leaves a graded clip's adjustments behind by default (unlinked, still grading
+// whatever moves under them); with_effects:true removes them with the clip.
+void McpTest::deleteClipWithEffectsRemovesPinnedAdjustments()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Video;
+        clip.timelineStart = drift::secondsToUs(2.0 * i);
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcIn = 0;
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (const QString id : {QStringLiteral("clip-0"), QStringLiteral("clip-1")}) {
+        const QJsonObject added = dispatcher.applyOne(
+            QStringLiteral("add_effect"),
+            {{QStringLiteral("clip"), id}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}});
+        QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson()));
+    }
+    const auto adjustmentsLinkedTo = [&](const QString &id) {
+        int n = 0;
+        for (const drift::Track &track : state.project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                n += clip.type == drift::ClipType::Adjustment && clip.linkedClipId == id;
+        return n;
+    };
+    const auto unlinkedAdjustments = [&]() {
+        int n = 0;
+        for (const drift::Track &track : state.project()->tracks())
+            for (const drift::Clip &clip : track.clips)
+                n += clip.type == drift::ClipType::Adjustment && clip.linkedClipId.isEmpty();
+        return n;
+    };
+    QCOMPARE(adjustmentsLinkedTo(QStringLiteral("clip-0")), 1);
+    QCOMPARE(adjustmentsLinkedTo(QStringLiteral("clip-1")), 1);
+
+    QJsonObject removed = dispatcher.applyOne(
+        QStringLiteral("delete_clip"),
+        {{QStringLiteral("clip"), QStringLiteral("clip-1")}, {QStringLiteral("with_effects"), true}});
+    QVERIFY2(removed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(removed).toJson()));
+    QCOMPARE(adjustmentsLinkedTo(QStringLiteral("clip-1")), 0);
+    QCOMPARE(unlinkedAdjustments(), 0);
+    QCOMPARE(adjustmentsLinkedTo(QStringLiteral("clip-0")), 1);
+
+    removed = dispatcher.applyOne(QStringLiteral("delete_clip"), {{QStringLiteral("clip"), QStringLiteral("clip-0")}});
+    QVERIFY2(removed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(removed).toJson()));
+    QCOMPARE(unlinkedAdjustments(), 1);
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()

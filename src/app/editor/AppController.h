@@ -846,6 +846,9 @@ public:
     // playhead is outside it. Honours trim, speed, reverse and speed curves.
     Q_INVOKABLE double sourceTimeAtPlayheadForClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void deleteSelectedClip();
+    // Same, and also removes the adjustments pinned to the deleted clips (their effect stacks and
+    // masks) in the same undo step, instead of leaving them unlinked on the timeline.
+    void deleteSelectedClipWithEffects();
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE void moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart);
@@ -2023,6 +2026,7 @@ protected:
                                       bool ripple, SegmentReplaceResult *out, QString *error);
     void trimClipGroupAt(int trackIndex, int clipIndex, drift::TimeUs atUs, bool dropLeft);
     void autoCrossfadeNewOverlaps(const drift::Project &before);
+    void deleteSelection(bool withPinnedAdjustments);
     void applyRippleShift(drift::Track &track, int fromClipIndex, drift::TimeUs delta);
     void restoreFilmstripsAfterLoad();
     void normalizeSelection();

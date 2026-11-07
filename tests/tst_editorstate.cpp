@@ -377,6 +377,9 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void deletingWithEffectsAlsoHandlesASelectedAdjustment();
+    void deletingWithEffectsDoesNotRippleTheLane();
+    void deletingAGradedClipWithEffectsRemovesThem();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
@@ -10840,6 +10843,115 @@ void EditorStateTest::transitionPartnerIsTheNearestClipNotTheEarliest()
     const drift::Transition &transition = state.project()->tracks().at(0).transitions.first();
     QCOMPARE(transition.fromClipId, QStringLiteral("a"));
     QCOMPARE(transition.toClipId, QStringLiteral("c"));
+}
+
+// The host and its adjustment selected together (select all, then delete with effects): the
+// adjustment is still removed as a pinned one, so with ripple on it doesn't shift its lane, and
+// the lane it leaves empty is dropped rather than left as a dead row.
+void EditorStateTest::deletingWithEffectsAlsoHandlesASelectedAdjustment()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->ensureTrackIds();
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    QCOMPARE(state.project()->tracks().size(), 2);
+
+    state.setRippleEnabled(true);
+    state.selectAllClips();
+    state.deleteSelectedClipWithEffects();
+
+    QCOMPARE(state.project()->tracks().size(), 1);
+    QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
+}
+
+// With ripple on, the host's track closes up, but a selected pinned adjustment is not a free clip:
+// removing it must not ripple its lane, which would drag a later unlinked adjustment out from
+// over the footage it was placed on.
+void EditorStateTest::deletingWithEffectsDoesNotRippleTheLane()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // clip-0 at 0-2s, clip-1 at 2-6s
+    state.project()->ensureTrackIds();
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    QCOMPARE(state.project()->tracks().size(), 2);
+
+    const auto laneIndexOf = [&](const QString &linkedId) {
+        const QList<drift::Clip> &clips = state.project()->tracks().at(1).clips;
+        for (int i = 0; i < clips.size(); ++i)
+            if (clips.at(i).linkedClipId == linkedId)
+                return i;
+        return -1;
+    };
+    // clip-1's grade becomes a free adjustment the user placed at 2-6s.
+    state.unlinkAdjustment(1, laneIndexOf(QStringLiteral("clip-1")));
+    const int freeIndex = laneIndexOf(QString());
+    QVERIFY(freeIndex >= 0);
+    const QString freeId = state.project()->tracks().at(1).clips.at(freeIndex).id;
+
+    state.setRippleEnabled(true);
+    state.selectClip(0, 0);
+    state.addToSelection(1, laneIndexOf(QStringLiteral("clip-0")));
+    state.deleteSelectedClipWithEffects();
+
+    // The media track rippled: clip-1 now starts at 0.
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs(0));
+    // The lane kept the free adjustment where it was.
+    QCOMPARE(state.project()->tracks().size(), 2);
+    const QList<drift::Clip> &lane = state.project()->tracks().at(1).clips;
+    QCOMPARE(lane.size(), 1);
+    QCOMPARE(lane.at(0).id, freeId);
+    QCOMPARE(lane.at(0).timelineStart, drift::secondsToUs(2.0));
+}
+
+// The opt-in path the MCP uses: the clip's pinned adjustments go with it, in one undo step, and a
+// nested lane left empty by that is dropped. Other clips' grades on the same lane are untouched.
+void EditorStateTest::deletingAGradedClipWithEffectsRemovesThem()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.project()->ensureTrackIds();
+
+    // Grade both clips, so the lane survives the first delete.
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+    const QString keptId = state.project()->tracks().at(0).clips.at(0).id;
+
+    state.selectClip(0, 1);
+    state.deleteSelectedClipWithEffects();
+
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).linkedClipId, keptId);
+
+    // Undo brings the clip and its grade back together.
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(1).clips.size(), 2);
+
+    // Deleting the last graded clip empties the lane, which goes with it.
+    state.selectClip(0, 1);
+    state.deleteSelectedClipWithEffects();
+    state.selectClip(0, 0);
+    state.deleteSelectedClipWithEffects();
+    QCOMPARE(state.project()->tracks().size(), 1);
+    QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
 }
 
 void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
