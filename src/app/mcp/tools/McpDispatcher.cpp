@@ -834,6 +834,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opAddEffect(args);
     if (tool == QLatin1String("remove_effect"))
         return opRemoveEffect(args);
+    if (tool == QLatin1String("remove_all_effects"))
+        return opRemoveAllEffects(args);
     if (tool == QLatin1String("set_effect_param"))
         return opSetEffectParam(args);
     if (tool == QLatin1String("add_audio_effect"))
@@ -1678,6 +1680,27 @@ QJsonObject McpDispatcher::opRemoveEffect(const QJsonObject &args)
     if (after >= before)
         return err("not_found", QStringLiteral("No such effect index"));
     return ok(clipFeedback(ref, {{QStringLiteral("removed"), index}}));
+}
+
+QJsonObject McpDispatcher::opRemoveAllEffects(const QJsonObject &args)
+{
+    const ClipRef ref = resolveClip(args);
+    if (!ref.valid())
+        return clipRefError(args);
+    // An effect host id (what add_effect reports as host) stands for the clip it is pinned to,
+    // and is itself among what gets deleted, so the reply is about the clip.
+    const drift::Clip &target = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+    if (target.type == drift::ClipType::Adjustment && target.linkedClipId.isEmpty())
+        return err("type_mismatch", QStringLiteral("A free adjustment is not a clip's effect stack; "
+                                                   "use delete_clip to remove it"));
+    const QString clipId = target.type == drift::ClipType::Adjustment && !target.linkedClipId.isEmpty()
+                               ? target.linkedClipId
+                               : ref.id;
+    const int removed = m_controller->removeAllEffects(ref.track, ref.clip,
+                                                       jsonBool(args.value(QStringLiteral("masks"))));
+    // Removing a lane can shift track indices; report the clip where it is now.
+    const QPair<int, int> loc = m_controller->mcp()->locateClip(clipId);
+    return ok(clipFeedback({loc.first, loc.second, clipId}, {{QStringLiteral("removed"), removed}}));
 }
 
 QJsonObject McpDispatcher::opSetEffectParam(const QJsonObject &args)

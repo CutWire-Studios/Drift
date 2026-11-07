@@ -85,6 +85,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void removeAllEffectsOp();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -422,6 +423,59 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+void McpTest::removeAllEffectsOp()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("graded");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 2; ++i) {
+        const QJsonObject added = dispatcher.applyOne(
+            QStringLiteral("add_effect"),
+            {{QStringLiteral("clip"), QStringLiteral("graded")}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}});
+        QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson()));
+    }
+    QCOMPARE(state.project()->tracks().size(), 2);
+
+    const QJsonObject audio = dispatcher.applyOne(
+        QStringLiteral("add_audio_effect"),
+        {{QStringLiteral("clip"), QStringLiteral("graded")}, {QStringLiteral("effect"), QStringLiteral("space.autopan")}});
+    QVERIFY2(audio.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(audio).toJson()));
+
+    // The effect host id that add_effect reported stands for the clip.
+    QString hostId;
+    for (const drift::Track &track : state.project()->tracks())
+        for (const drift::Clip &c : track.clips)
+            if (c.type == drift::ClipType::Adjustment && c.adjustmentKind == drift::AdjustmentKind::VideoEffects)
+                hostId = c.id;
+    QVERIFY(!hostId.isEmpty());
+
+    QJsonObject result = dispatcher.applyOne(QStringLiteral("remove_all_effects"),
+                                             {{QStringLiteral("clip"), hostId}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(result.value(QStringLiteral("removed")).toInt(), 2);
+    QCOMPARE(result.value(QStringLiteral("id")).toString(), QStringLiteral("graded"));
+    QCOMPARE(result.value(QStringLiteral("track")).toInt(), 0);
+    QCOMPARE(result.value(QStringLiteral("index")).toInt(), 0);
+    QCOMPARE(state.project()->tracks().size(), 1);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+
+    result = dispatcher.applyOne(QStringLiteral("remove_all_effects"), {{QStringLiteral("clip"), QStringLiteral("graded")}});
+    QVERIFY(result.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(result.value(QStringLiteral("removed")).toInt(), 0);
+
+    result = dispatcher.applyOne(QStringLiteral("remove_all_effects"), {{QStringLiteral("clip"), QStringLiteral("nope")}});
+    QVERIFY(!result.value(QStringLiteral("ok")).toBool());
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()

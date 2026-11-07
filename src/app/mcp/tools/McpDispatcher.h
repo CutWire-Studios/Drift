@@ -92,6 +92,7 @@ private:
     QJsonObject opListTransitions(const QJsonObject &args) const;
     QJsonObject opAddEffect(const QJsonObject &args);
     QJsonObject opRemoveEffect(const QJsonObject &args);
+    QJsonObject opRemoveAllEffects(const QJsonObject &args);
     QJsonObject opSetEffectParam(const QJsonObject &args);
     QJsonObject opAddAudioEffect(const QJsonObject &args);
     QJsonObject opRemoveAudioEffect(const QJsonObject &args);

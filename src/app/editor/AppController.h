@@ -1301,6 +1301,11 @@ public:
     Q_INVOKABLE void addEffect(int trackIndex, int clipIndex, const QString &effectId);
     Q_INVOKABLE void applyEffectTemplate(int trackIndex, int clipIndex, const QString &templateId);
     Q_INVOKABLE void removeEffect(int trackIndex, int clipIndex, int effectIndex);
+    // Removes every video and audio effect on the clip (and its masks when `includeMasks`) in one
+    // undo step: the adjustments pinned to it go, and a nested lane left empty goes with them. A
+    // pinned adjustment stands for its clip. Only this clip's stacks: a linked A/V partner keeps
+    // its own. Returns how many adjustment clips were deleted; 0 changes nothing and pushes no undo.
+    int removeAllEffects(int trackIndex, int clipIndex, bool includeMasks = false);
     Q_INVOKABLE void setEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled);
     Q_INVOKABLE void moveEffect(int trackIndex, int clipIndex, int fromIndex, int toIndex);
     Q_INVOKABLE bool setEffectParam(int trackIndex, int clipIndex, int effectIndex, const QString &key,
