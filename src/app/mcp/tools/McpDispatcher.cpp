@@ -1,4 +1,6 @@
 #include "app/mcp/tools/McpDispatcher.h"
+#include "engine/packages/audio/AudioEffectCatalog.h"
+#include "engine/packages/effects/EffectCatalog.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "app/mcp/McpController.h"
@@ -834,6 +836,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opAddEffect(args);
     if (tool == QLatin1String("remove_effect"))
         return opRemoveEffect(args);
+    if (tool == QLatin1String("copy_effects"))
+        return opCopyEffects(args);
     if (tool == QLatin1String("set_effect_param"))
         return opSetEffectParam(args);
     if (tool == QLatin1String("add_audio_effect"))
@@ -1678,6 +1682,97 @@ QJsonObject McpDispatcher::opRemoveEffect(const QJsonObject &args)
     if (after >= before)
         return err("not_found", QStringLiteral("No such effect index"));
     return ok(clipFeedback(ref, {{QStringLiteral("removed"), index}}));
+}
+
+QJsonObject McpDispatcher::opCopyEffects(const QJsonObject &args)
+{
+    McpController *mcp = m_controller->mcp();
+    const QString fromId = args.value(QStringLiteral("from")).toString().trimmed();
+    const QPair<int, int> from = mcp->locateClip(fromId);
+    if (fromId.isEmpty() || from.first < 0)
+        return err("not_found", QStringLiteral("Unknown source clip %1").arg(fromId));
+    // Each target once, in the order given: a repeated id would get the stack twice.
+    QStringList targets;
+    for (const QString &id : jsonStringList(args.value(QStringLiteral("to")))) {
+        if (!targets.contains(id.trimmed()))
+            targets.append(id.trimmed());
+    }
+    if (targets.isEmpty())
+        return err("bad_args", QStringLiteral("to needs at least one clip id"));
+    // Everything checked before anything changes, so a bad target never leaves a half-done copy.
+    for (const QString &id : std::as_const(targets)) {
+        const QPair<int, int> at = mcp->locateClip(id);
+        if (at.first < 0)
+            return err("not_found", QStringLiteral("Unknown target clip %1").arg(id));
+        if (id == fromId)
+            return err("bad_args", QStringLiteral("A clip can't be its own target"));
+        if (m_controller->project()->tracks().at(at.first).clips.at(at.second).type == drift::ClipType::Adjustment)
+            return err("bad_args", QStringLiteral("%1 is an adjustment, not a clip; copy onto the clip it grades").arg(id));
+    }
+    const drift::EffectStackPreset stack = mcp->effectStackOf(from.first, from.second);
+    if (stack.isEmpty())
+        return err("not_found", QStringLiteral("Clip %1 has no effects to copy").arg(fromId));
+    // The same check add_effect makes: some effects (face, depth, masks) can't live on a track.
+    for (const QString &id : std::as_const(targets)) {
+        const int track = mcp->locateClip(id).first;
+        for (const drift::Effect &effect : stack.effects) {
+            QString why;
+            if (!m_controller->effectFitsTrack(track, effect.catalogId, &why))
+                return err("bad_args", QStringLiteral("%1 can't take %2: %3").arg(id, effect.catalogId, why));
+        }
+    }
+
+    const auto counts = [&](const QString &id) {
+        const QPair<int, int> at = mcp->locateClip(id);
+        const QVariantMap clip = m_controller->clipAt(at.first, at.second);
+        return qMakePair(int(clip.value(QStringLiteral("effects")).toList().size()),
+                         int(clip.value(QStringLiteral("audioEffects")).toList().size()));
+    };
+    // One undo step for all targets. Each is located again by id: applying a stack can add an
+    // effect lane, which shifts the track indices after it.
+    QJsonArray results;
+    mcp->beginBatch();
+    for (const QString &id : std::as_const(targets)) {
+        const QPair<int, int> before = counts(id);
+        const QPair<int, int> at = mcp->locateClip(id);
+        mcp->appendEffectStack(at.first, at.second, stack);
+        const QPair<int, int> after = counts(id);
+        // What actually landed: audio effects only go onto clips that have audio, and a clip
+        // kind that can't hold video effects takes none.
+        results.append(QJsonObject{{QStringLiteral("id"), id},
+                                   {QStringLiteral("effects"), after.first - before.first},
+                                   {QStringLiteral("audioEffects"), after.second - before.second}});
+    }
+    mcp->endBatch(QStringLiteral("Copy effects"), true);
+
+    // Copied effects whose addon isn't installed are carried over but won't show; say which,
+    // resolved the way the paste itself resolves ids, and only for the halves that landed.
+    bool videoLanded = false;
+    bool audioLanded = false;
+    for (const QJsonValue &r : std::as_const(results)) {
+        videoLanded |= r.toObject().value(QStringLiteral("effects")).toInt() > 0;
+        audioLanded |= r.toObject().value(QStringLiteral("audioEffects")).toInt() > 0;
+    }
+    QStringList missing;
+    if (videoLanded) {
+        for (const drift::Effect &effect : stack.effects)
+            if (!effect.catalogId.isEmpty() && !effectDefForId(effect.catalogId) && !missing.contains(effect.catalogId))
+                missing.append(effect.catalogId);
+    }
+    if (audioLanded) {
+        for (const drift::Effect &effect : stack.audioEffects)
+            if (!effect.catalogId.isEmpty() && !audioEffectDefForId(effect.catalogId) && !missing.contains(effect.catalogId))
+                missing.append(effect.catalogId);
+    }
+    if (!missing.isEmpty()) {
+        // endBatch's finishEdit cleared the warning applyEffectStack raised; raise it again.
+        mcp->warn(QStringLiteral("Copied effects include %1, which isn't installed — open Extras to install it.")
+                      .arg(missing.join(QStringLiteral(", "))));
+    }
+    QJsonObject reply{{QStringLiteral("from"), fromId}, {QStringLiteral("to"), results}};
+    if (!missing.isEmpty())
+        reply.insert(QStringLiteral("not_installed"), QJsonArray::fromStringList(missing));
+    return ok(reply);
 }
 
 QJsonObject McpDispatcher::opSetEffectParam(const QJsonObject &args)

@@ -85,6 +85,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void copyEffectsGradesSeveralClipsInOneStep();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -422,6 +423,133 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// copy_effects copies a clip's grade onto several clips in one undo step, appending, and refuses
+// before changing anything when a target is unknown or the source has no effects.
+void McpTest::copyEffectsGradesSeveralClipsInOneStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 3; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Video;
+        clip.timelineStart = drift::secondsToUs(2.0 * i);
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    }
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (const QString &effect : {QStringLiteral("adjust.contrast"), QStringLiteral("film_grain")})
+        QVERIFY(dispatcher.applyOne(QStringLiteral("add_effect"),
+                                    {{QStringLiteral("clip"), QStringLiteral("clip-0")}, {QStringLiteral("effect"), effect}})
+                    .value(QStringLiteral("ok")).toBool());
+    const auto stackOf = [&](const QString &id) {
+        QStringList ids;
+        const QPair<int, int> at = state.mcp()->locateClip(id);
+        for (const QVariant &e : state.clipAt(at.first, at.second).value(QStringLiteral("effects")).toList())
+            ids.append(e.toMap().value(QStringLiteral("catalogId")).toString());
+        return ids;
+    };
+    const QStringList grade = stackOf(QStringLiteral("clip-0"));
+    QCOMPARE(grade.size(), 2);
+
+    // Unknown target or an empty source: refused, nothing changed.
+    const int steps = state.undoHistory().size();
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("copy_effects"),
+                                 {{QStringLiteral("from"), QStringLiteral("clip-0")},
+                                  {QStringLiteral("to"), QJsonArray{QStringLiteral("clip-1"), QStringLiteral("nope")}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QVERIFY(stackOf(QStringLiteral("clip-1")).isEmpty());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("copy_effects"),
+                                 {{QStringLiteral("from"), QStringLiteral("clip-2")},
+                                  {QStringLiteral("to"), QJsonArray{QStringLiteral("clip-1")}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(state.undoHistory().size(), steps);
+
+    // Two targets, one undo step; clip-2 already has an effect, which stays first.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("add_effect"),
+                                {{QStringLiteral("clip"), QStringLiteral("clip-2")}, {QStringLiteral("effect"), QStringLiteral("adjust.hue")}})
+                .value(QStringLiteral("ok")).toBool());
+    const int before = state.undoHistory().size();
+    const QJsonObject copied = dispatcher.applyOne(QStringLiteral("copy_effects"),
+                                                   {{QStringLiteral("from"), QStringLiteral("clip-0")},
+                                                    {QStringLiteral("to"), QJsonArray{QStringLiteral("clip-1"), QStringLiteral("clip-2")}}});
+    QVERIFY2(copied.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(copied).toJson()));
+    const QJsonArray perTarget = copied.value(QStringLiteral("to")).toArray();
+    QCOMPARE(perTarget.size(), 2);
+    QCOMPARE(perTarget.at(0).toObject().value(QStringLiteral("effects")).toInt(), 2);
+    QCOMPARE(perTarget.at(1).toObject().value(QStringLiteral("effects")).toInt(), 2);
+    QCOMPARE(stackOf(QStringLiteral("clip-1")), grade);
+    QCOMPARE(stackOf(QStringLiteral("clip-2")), QStringList{QStringLiteral("adjust.hue")} + grade);
+    QCOMPARE(state.undoHistory().size(), before + 1);
+
+    state.undo();
+    QVERIFY(stackOf(QStringLiteral("clip-1")).isEmpty());
+    QCOMPARE(stackOf(QStringLiteral("clip-2")), QStringList{QStringLiteral("adjust.hue")});
+
+    // A repeated target gets one copy; an adjustment target is refused up front.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("copy_effects"),
+                                {{QStringLiteral("from"), QStringLiteral("clip-0")},
+                                 {QStringLiteral("to"), QJsonArray{QStringLiteral("clip-1"), QStringLiteral("clip-1")}}})
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(stackOf(QStringLiteral("clip-1")), grade);
+    QString host;
+    for (const drift::Track &track : state.project()->tracks())
+        for (const drift::Clip &c : track.clips)
+            if (c.type == drift::ClipType::Adjustment)
+                host = c.id;
+    QVERIFY(!host.isEmpty());
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("copy_effects"),
+                                 {{QStringLiteral("from"), QStringLiteral("clip-0")},
+                                  {QStringLiteral("to"), QJsonArray{QStringLiteral("clip-2"), host}}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(stackOf(QStringLiteral("clip-2")), QStringList{QStringLiteral("adjust.hue")});
+
+    // Targets on two tracks, the first on the top track with no effect lane yet: minting its lane
+    // shifts the second target's track, which is why targets are located again by id.
+    state.project()->tracks().prepend(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip top;
+    top.id = QStringLiteral("top");
+    top.type = drift::ClipType::Video;
+    top.timelineDuration = drift::secondsToUs(2.0);
+    top.srcOut = top.timelineDuration;
+    state.project()->tracks()[0].clips.append(top);
+    state.project()->ensureTrackIds();
+    state.mcp()->bumpEditRevision(); // edited behind the controller's back: refresh its clip index
+    const QJsonObject spread = dispatcher.applyOne(QStringLiteral("copy_effects"),
+                                                   {{QStringLiteral("from"), QStringLiteral("clip-0")},
+                                                    {QStringLiteral("to"), QJsonArray{QStringLiteral("top"), QStringLiteral("clip-2")}}});
+    QVERIFY2(spread.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(spread).toJson()));
+    QCOMPARE(stackOf(QStringLiteral("top")), grade);
+    QCOMPARE(stackOf(QStringLiteral("clip-2")), QStringList{QStringLiteral("adjust.hue")} + grade);
+
+    // An effect whose addon isn't installed is copied, named in the reply, and its warning is
+    // still on the status line after an outer apply batch has finished.
+    for (drift::Track &track : state.project()->tracks())
+        for (drift::Clip &c : track.clips)
+            if (c.type == drift::ClipType::Adjustment && c.linkedClipId == QStringLiteral("clip-0")) {
+                drift::Effect ghost;
+                ghost.catalogId = QStringLiteral("addon.not_installed_here");
+                c.effects.append(ghost);
+            }
+    state.mcp()->bumpEditRevision();
+    const QJsonObject batch = dispatcher.apply(QJsonObject{
+        {QStringLiteral("ops"),
+         QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("copy_effects")},
+                                {QStringLiteral("args"), QJsonObject{{QStringLiteral("from"), QStringLiteral("clip-0")},
+                                                                     {QStringLiteral("to"), QJsonArray{QStringLiteral("clip-1")}}}}}}}});
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    const QJsonObject inner = batch.value(QStringLiteral("done")).toArray().first().toObject().value(QStringLiteral("result")).toObject();
+    QCOMPARE(inner.value(QStringLiteral("not_installed")).toArray(), QJsonArray{QStringLiteral("addon.not_installed_here")});
+    QCOMPARE(state.lastMessageSeverity(), QStringLiteral("warning"));
+    QVERIFY2(state.lastMessage().contains(QStringLiteral("addon.not_installed_here")), qPrintable(state.lastMessage()));
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()
