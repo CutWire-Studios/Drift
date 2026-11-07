@@ -85,6 +85,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void setEffectEnabledTargetsOneEffect();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -422,6 +423,150 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// set_effect_enabled bypasses exactly one effect, picked by stack position or catalog id, and the
+// effect ops document `index` as the effect's position rather than the clip's.
+void McpTest::setEffectEnabledTargetsOneEffect()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("graded");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (const QString effect : {QStringLiteral("adjust.contrast"), QStringLiteral("film_grain"), QStringLiteral("adjust.contrast")}) {
+        const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_effect"),
+                                                      {{QStringLiteral("clip"), QStringLiteral("graded")}, {QStringLiteral("effect"), effect}});
+        QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson()));
+    }
+    // add_effect reports where the effect landed in the stack, apart from the clip's own index.
+    const QJsonObject fourth = dispatcher.applyOne(QStringLiteral("add_effect"),
+                                                   {{QStringLiteral("clip"), QStringLiteral("graded")}, {QStringLiteral("effect"), QStringLiteral("adjust.hue")}});
+    QCOMPARE(fourth.value(QStringLiteral("effectIndex")).toInt(), 3);
+    QCOMPARE(fourth.value(QStringLiteral("index")).toInt(), 0);
+    const auto enabledFlags = [&]() {
+        QList<bool> flags;
+        const QPair<int, int> at = state.mcp()->locateClip(QStringLiteral("graded"));
+        for (const QVariant &e : state.clipAt(at.first, at.second).value(QStringLiteral("effects")).toList())
+            flags.append(e.toMap().value(QStringLiteral("enabled")).toBool());
+        return flags;
+    };
+    QCOMPARE(enabledFlags(), (QList<bool>{true, true, true, true}));
+
+    // By catalog id: only the grain goes off.
+    QJsonObject result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                             {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                              {QStringLiteral("effect"), QStringLiteral("film_grain")},
+                                              {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(result.value(QStringLiteral("effectIndex")).toInt(), 1);
+    QCOMPARE(enabledFlags(), (QList<bool>{true, false, true, true}));
+
+    // An id the clip holds twice is ambiguous; a stack position settles it.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("adjust.contrast")},
+                                  {QStringLiteral("enabled"), false}});
+    QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), 2},
+                                  {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(enabledFlags(), (QList<bool>{true, false, false, true}));
+
+    // The old index argument still works; unknown ids and positions are errors, not silent no-ops.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("index"), 1},
+                                  {QStringLiteral("enabled"), true}});
+    QVERIFY(result.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(enabledFlags(), (QList<bool>{true, true, false, true}));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("blur.gaussian")},
+                                  {QStringLiteral("enabled"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("index"), 7},
+                                  {QStringLiteral("enabled"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    // Catalog ids match like add_effect's: '.' and '_' interchangeable.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("film.grain")},
+                                  {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(result.value(QStringLiteral("effectIndex")).toInt(), 1);
+    // A numeric string or a whole double is a stack position; a fraction is rejected.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("3")},
+                                  {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(result.value(QStringLiteral("effectIndex")).toInt(), 3);
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), 3.0},
+                                  {QStringLiteral("enabled"), true}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), 1.5},
+                                  {QStringLiteral("enabled"), true}})
+                 .value(QStringLiteral("ok")).toBool());
+    // Without a clip id the effect ops refuse, rather than reading index as the clip's position.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 1},
+                                  {QStringLiteral("enabled"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // A blank clip id is no way around it either; nothing changes.
+    for (const QString blank : {QString(), QStringLiteral("  ")}) {
+        QCOMPARE(dispatcher.applyOne(QStringLiteral("remove_effect"),
+                                     {{QStringLiteral("clip"), blank}, {QStringLiteral("track"), 0},
+                                      {QStringLiteral("index"), 1}})
+                     .value(QStringLiteral("error")).toString(),
+                 QStringLiteral("bad_args"));
+    }
+    QCOMPARE(enabledFlags().size(), 4);
+
+    // Every op whose index is an effect position says so, requires the clip id and offers no
+    // positional track (the clip-ref props used to override the effect index's description).
+    const QSet<QString> effectIndexOps{
+        QStringLiteral("remove_effect"),          QStringLiteral("set_effect_param"),
+        QStringLiteral("remove_audio_effect"),    QStringLiteral("set_audio_effect_param"),
+        QStringLiteral("set_effect_enabled"),     QStringLiteral("set_effect_color_param"),
+        QStringLiteral("set_audio_effect_enabled"), QStringLiteral("set_effect_string_param")};
+    QSet<QString> seen;
+    const QJsonObject payload = drift::mcp::toolboxPayload(QStringLiteral("effects"));
+    for (const QJsonValue &tool : payload.value(QStringLiteral("tools")).toArray()) {
+        const QJsonObject op = tool.toObject();
+        const QString name = op.value(QStringLiteral("name")).toString();
+        if (!effectIndexOps.contains(name))
+            continue;
+        seen.insert(name);
+        const QJsonObject schema = op.value(QStringLiteral("inputSchema")).toObject();
+        const QJsonObject props = schema.value(QStringLiteral("properties")).toObject();
+        QVERIFY2(props.value(QStringLiteral("index")).toObject().value(QStringLiteral("description"))
+                     .toString().contains(QStringLiteral("effect stack")),
+                 qPrintable(name));
+        QVERIFY2(schema.value(QStringLiteral("required")).toArray().contains(QStringLiteral("clip")), qPrintable(name));
+        QVERIFY2(!props.contains(QStringLiteral("track")), qPrintable(name));
+    }
+    QCOMPARE(seen, effectIndexOps);
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()
@@ -5719,11 +5864,13 @@ void McpTest::effectParamWritesRejectUnknownKeys()
          {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}});
     QVERIFY2(added.value(QStringLiteral("ok")).toBool(),
              qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
+    // Effect ops address the clip by id: their index is the effect's stack position.
+    const QString clipId = added.value(QStringLiteral("id")).toString();
 
     // A real parameter still works.
     const QJsonObject good = dispatcher.applyOne(
         QStringLiteral("set_effect_param"),
-        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+        {{QStringLiteral("clip"), clipId}, {QStringLiteral("index"), 0},
          {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.4}});
     QVERIFY2(good.value(QStringLiteral("ok")).toBool(),
              qPrintable(QJsonDocument(good).toJson(QJsonDocument::Compact)));
@@ -5731,7 +5878,7 @@ void McpTest::effectParamWritesRejectUnknownKeys()
     // A misspelt one does not.
     const QJsonObject typo = dispatcher.applyOne(
         QStringLiteral("set_effect_param"),
-        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+        {{QStringLiteral("clip"), clipId}, {QStringLiteral("index"), 0},
          {QStringLiteral("key"), QStringLiteral("contrastt")}, {QStringLiteral("value"), 1.4}});
     QCOMPARE(typo.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
     QVERIFY2(typo.value(QStringLiteral("detail")).toString().contains(QStringLiteral("contrastt")),
@@ -5740,7 +5887,7 @@ void McpTest::effectParamWritesRejectUnknownKeys()
     // Neither does a stack index that is not there.
     const QJsonObject badIndex = dispatcher.applyOne(
         QStringLiteral("set_effect_param"),
-        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 7},
+        {{QStringLiteral("clip"), clipId}, {QStringLiteral("index"), 7},
          {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.4}});
     QCOMPARE(badIndex.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
 
