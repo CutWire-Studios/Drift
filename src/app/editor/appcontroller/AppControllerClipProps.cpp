@@ -492,6 +492,9 @@ void AppController::commitPreviewDrag()
     };
     const QString before = selectedId(m_previewDragBefore);
     const QScopedValueRollback quietSelection(m_quietSelection, !before.isEmpty() && before == selectedId(m_project));
+    // Same reason as pushProjectEdit: a drag that moved or resized a graded clip must record its
+    // pinned adjustments on the clip, or a redo restores them at the old span.
+    syncLinkedAdjustments(m_project);
     if (!m_mcpController->undoSuspended()) {
         const QScopedValueRollback quietPush(m_quietUndoPush, true);
         m_undoStack.push(new drift::ProjectSnapshotCommand(&m_project, m_previewDragBefore, m_project, text));
