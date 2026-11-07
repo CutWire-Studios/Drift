@@ -2499,6 +2499,16 @@ void McpTest::splitOnBeatsCutsAndUndoesAsOneStep()
         QVERIFY(state.mcp()->locateClip(v.toString()).first >= 0);
     QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(),
              clipsBefore + produced.size() - 1);
+    // The pieces are numbered left to right: "x", "x (2)", "x (3)", ...
+    {
+        const QPair<int, int> first = state.mcp()->locateClip(produced.at(0).toString());
+        const QString base = state.project()->tracks().at(first.first).clips.at(first.second).name;
+        for (int i = 1; i < produced.size(); ++i) {
+            const QPair<int, int> loc = state.mcp()->locateClip(produced.at(i).toString());
+            QCOMPARE(state.project()->tracks().at(loc.first).clips.at(loc.second).name,
+                     QStringLiteral("%1 (%2)").arg(base).arg(i + 1));
+        }
+    }
 
     // However many cuts it made, it is one step.
     QVERIFY(state.undoAvailable());

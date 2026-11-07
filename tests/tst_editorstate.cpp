@@ -370,6 +370,7 @@ private slots:
     void multicamCancelIsIdentity();
     void multicamSaveSeparateWritesGappedClips();
     void multicamSaveCombinedFlattensOntoTopmost();
+    void multicamSlicesOfOneAngleGetDistinctNames();
     void multicamSessionEndsWithTheProject();
     void multicamSessionPublishesADecodedTilePerAngle();
     void multicamProviderServesTilesByAngleIdWithRevisionQuery();
@@ -9774,6 +9775,30 @@ void EditorStateTest::multicamSaveCombinedFlattensOntoTopmost()
 
     QCOMPARE(state.project()->tracks().at(1).clips.size(), 0);
     QCOMPARE(state.project()->tracks().at(2).clips.size(), 0);
+}
+
+void EditorStateTest::multicamSlicesOfOneAngleGetDistinctNames()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendStackedCameras(*state.project());
+    selectStackedCameras(state);
+    QVERIFY(state.beginMulticamSession());
+
+    // cam1 -> cam2 at 3s -> back to cam1 at 6s: cam1 is cut into two slices.
+    state.setPlayheadSeconds(3.0);
+    state.switchMulticamAngle(1);
+    state.setPlayheadSeconds(6.0);
+    state.switchMulticamAngle(0);
+    state.saveMulticamCombined();
+
+    const drift::Track &top = state.project()->tracks().at(0);
+    QCOMPARE(top.clips.size(), 3);
+    const QString first = top.clips.at(0).name;
+    QVERIFY(!first.isEmpty());
+    QCOMPARE(top.clips.at(2).path, top.clips.at(0).path);
+    QCOMPARE(top.clips.at(2).name, first + QStringLiteral(" (2)"));
+    QVERIFY(top.clips.at(1).name != first);
 }
 
 void EditorStateTest::multicamSessionEndsWithTheProject()

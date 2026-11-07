@@ -413,17 +413,19 @@ QJsonObject McpDispatcher::opSplitOnBeats(const QJsonObject &args)
     m_controller->mcp()->beginBatch();
     QJsonArray at;
     QStringList newIds;
-    for (int i = cuts.size() - 1; i >= 0; --i) {
-        const ClipRef here = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+    // Front to back, each cut on the newest piece: the id the caller passed keeps naming the
+    // first piece, and the pieces are numbered in timeline order ("(2)", "(3)", ...).
+    for (const double cut : std::as_const(cuts)) {
+        const ClipRef here = resolveClip(QJsonObject{{QStringLiteral("clip"), newIds.isEmpty() ? ref.id : newIds.last()}});
         if (!here.valid())
             break;
         const QSet<QString> idsBefore = clipIdSet(m_controller);
-        m_controller->splitClipAt(here.track, here.clip, cuts.at(i));
+        m_controller->splitClipAt(here.track, here.clip, cut);
         const QString minted = findNewClipId(idsBefore, clipIdSet(m_controller));
         if (minted.isEmpty())
             continue; // refused (locked track, or the time landed on an edge after rounding)
-        newIds.prepend(minted);
-        at.prepend(cuts.at(i));
+        newIds.append(minted);
+        at.append(cut);
     }
     m_controller->mcp()->endBatch(QStringLiteral("Split on beats"), !newIds.isEmpty());
 
@@ -474,19 +476,19 @@ QJsonObject McpDispatcher::opSplitOnScenes(const QJsonObject &args)
     m_controller->mcp()->beginBatch();
     QJsonArray at;
     QStringList newIds;
-    // Back to front, so the id the caller passed keeps naming a real clip throughout and ends
-    // up on the first piece.
-    for (int i = cuts.size() - 1; i >= 0; --i) {
-        const ClipRef here = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
+    // Front to back, each cut on the newest piece: the id the caller passed keeps naming the
+    // first piece, and the pieces are numbered in timeline order ("(2)", "(3)", ...).
+    for (const double cut : std::as_const(cuts)) {
+        const ClipRef here = resolveClip(QJsonObject{{QStringLiteral("clip"), newIds.isEmpty() ? ref.id : newIds.last()}});
         if (!here.valid())
             break;
         const QSet<QString> idsBefore = clipIdSet(m_controller);
-        m_controller->splitClipAt(here.track, here.clip, cuts.at(i));
+        m_controller->splitClipAt(here.track, here.clip, cut);
         const QString minted = findNewClipId(idsBefore, clipIdSet(m_controller));
         if (minted.isEmpty())
             continue; // refused (locked track, or the time landed on an edge after rounding)
-        newIds.prepend(minted);
-        at.prepend(cuts.at(i));
+        newIds.append(minted);
+        at.append(cut);
     }
     m_controller->mcp()->endBatch(QStringLiteral("Split on scenes"), !newIds.isEmpty());
 
