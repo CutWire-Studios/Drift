@@ -1603,7 +1603,11 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     }
     if (target < 0 || target > m_app->m_undoStack.count())
         return err("bad_args", QStringLiteral("index out of range"));
+    // Same as AppController::undo()/redo(): the selection is carried across by clip id, or the
+    // jump leaves it on whatever clip now sits at the old indices.
+    m_app->captureSelectionClipIds();
     m_app->m_undoStack.setIndex(target);
+    m_app->m_undoSelectionCaptured = false;
     ++m_editRevision;
     const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
     return ok({{QStringLiteral("index"), m_app->m_undoStack.index()},

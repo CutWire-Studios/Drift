@@ -142,6 +142,7 @@ private slots:
     void captureBeyondEndFlags();
     void previewViewTools();
     void applyBatchStopsAndUndoRevertsPrefix();
+    void undoToCarriesTheSelectionById();
     void inspectIsCompact();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
@@ -1311,6 +1312,40 @@ void McpTest::depthToolsSampleAndClear()
     // A text clip has no pixels to estimate, and the test environment has no model either way.
     QVERIFY(!dispatcher.applyOne(QStringLiteral("estimate_depth"), {{QStringLiteral("clip"), id}})
                  .value(QStringLiteral("ok")).toBool());
+}
+
+// undo_to jumps the undo stack directly; it has to carry the selection across like undo/redo do,
+// or a selected clip that the jump removes leaves its index selecting the neighbour.
+void McpTest::undoToCarriesTheSelectionById()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Video;
+        clip.timelineStart = drift::secondsToUs(2.0 * i);
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+
+    state.selectClip(0, 0);
+    state.deleteSelectedClip(); // history: [delete]
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-1"));
+    state.undo();
+    state.selectClip(0, 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-0"));
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject jumped = dispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 1}});
+    QVERIFY2(jumped.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(jumped).toJson()));
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.selectionCount(), 0);
+    QCOMPARE(state.selectedTrack(), -1);
 }
 
 void McpTest::applyBatchStopsAndUndoRevertsPrefix()
