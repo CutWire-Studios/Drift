@@ -377,6 +377,7 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void splitPiecesGetDistinctNames();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
@@ -10893,6 +10894,50 @@ void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
     // And the clips themselves still report the stack, which is what the inspector and MCP read.
     QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
     QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
+// Splitting used to give both halves the same name, so anything matching clips by name (an
+// agent, a script) could not tell them apart.
+void EditorStateTest::splitPiecesGetDistinctNames()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // "Shot 1" runs 2-6s
+
+    state.splitClipAt(0, 1, 4.0);
+    const QList<drift::Clip> &clips = state.project()->tracks().at(0).clips;
+    QCOMPARE(clips.size(), 3);
+    QCOMPARE(clips.at(1).name, QStringLiteral("Shot 1"));
+    QCOMPARE(clips.at(2).name, QStringLiteral("Shot 1 (2)"));
+
+    // Split the head again at the playhead: the new piece takes the next number.
+    state.setPlayheadSeconds(3.0);
+    state.splitAtPlayhead();
+    const QList<drift::Clip> &again = state.project()->tracks().at(0).clips;
+    QCOMPARE(again.size(), 4);
+    QCOMPARE(again.at(1).name, QStringLiteral("Shot 1"));
+    QCOMPARE(again.at(2).name, QStringLiteral("Shot 1 (3)"));
+    QCOMPARE(again.at(3).name, QStringLiteral("Shot 1 (2)"));
+
+    // Subtitle halves keep the names the split derives from their own cues.
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    const int subs = state.project()->tracks().size() - 1;
+    drift::Clip sub;
+    sub.id = QStringLiteral("subs");
+    sub.type = drift::ClipType::Subtitle;
+    sub.timelineDuration = drift::secondsToUs(5.0);
+    sub.srcOut = sub.timelineDuration;
+    for (int i = 0; i < 5; ++i)
+        sub.subtitleCues.append(drift::SubtitleCue{drift::secondsToUs(i), drift::secondsToUs(i + 0.9),
+                                                   QStringLiteral("cue %1").arg(i)});
+    sub.name = drift::subtitleClipName(sub.subtitleCues);
+    state.project()->tracks()[subs].clips.append(sub);
+    state.splitClipAt(subs, 0, 1.0); // one cue | four cues
+    const QList<drift::Clip> &halves = state.project()->tracks().at(subs).clips;
+    QCOMPARE(halves.size(), 2);
+    QCOMPARE(halves.at(0).name, drift::subtitleClipName(halves.at(0).subtitleCues));
+    QCOMPARE(halves.at(1).name, drift::subtitleClipName(halves.at(1).subtitleCues));
+    QVERIFY(halves.at(0).name != halves.at(1).name);
 }
 
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()

@@ -1324,6 +1324,51 @@ TimeUs minClipDurationUs(double fps)
     return static_cast<TimeUs>(std::ceil(static_cast<double>(kUsPerSecond) / fps));
 }
 
+namespace {
+
+// Splits "Base (N)" into its base and N, when N is a plausible piece number.
+bool splitPieceNumber(const QString &name, QString *base, int *number)
+{
+    if (!name.endsWith(QLatin1Char(')')))
+        return false;
+    const int open = name.lastIndexOf(QStringLiteral(" ("));
+    if (open <= 0)
+        return false;
+    bool ok = false;
+    const int n = QStringView(name).mid(open + 2, name.size() - open - 3).toInt(&ok);
+    if (!ok || n < 1 || n >= 1000)
+        return false;
+    *base = name.left(open);
+    *number = n;
+    return true;
+}
+
+} // namespace
+
+QString nextSplitPieceName(const Track &track, const QString &name)
+{
+    if (name.isEmpty())
+        return name;
+    QString base = name;
+    int ignored = 0;
+    splitPieceNumber(name, &base, &ignored);
+
+    int highest = 1;
+    QSet<QString> taken;
+    for (const Clip &clip : track.clips) {
+        taken.insert(clip.name);
+        QString otherBase;
+        int n = 0;
+        if (splitPieceNumber(clip.name, &otherBase, &n) && otherBase == base)
+            highest = qMax(highest, n);
+    }
+    // Past 999 the parser no longer reads the number as a piece number, so check the whole name.
+    int next = highest + 1;
+    while (taken.contains(QStringLiteral("%1 (%2)").arg(base).arg(next)))
+        ++next;
+    return QStringLiteral("%1 (%2)").arg(base).arg(next);
+}
+
 bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset, double fps)
 {
     return splitClipAtOffsetMin(head, tail, offset, minClipDurationUs(fps));

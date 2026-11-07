@@ -58,6 +58,7 @@ private slots:
     void transcriptSavedWithAssetNotHashed();
     void transcriptSurvivesUndoRedo();
     void splitClipClearsInnerFades();
+    void splitPieceNamesAreNumberedPerTrack();
     void splitThenMergeRestoresFades();
     void audioEdgeMultiplierRamps();
     void audioFadesRoundTripAndLeaveOpacity();
@@ -6819,6 +6820,38 @@ void CoreTest::transcriptSurvivesUndoRedo()
     cmd.redo();
     QCOMPARE(project.name(), QStringLiteral("Edited"));
     QVERIFY(project.transcript(QStringLiteral("a1")));
+}
+
+// The new piece of a split gets the next free " (N)" for its base name on the track, so the
+// halves can be told apart. A year in parentheses is part of the name, not a piece number.
+void CoreTest::splitPieceNamesAreNumberedPerTrack()
+{
+    drift::Track track;
+    const auto add = [&track](const QString &name) {
+        drift::Clip clip;
+        clip.name = name;
+        track.clips.append(clip);
+    };
+    add(QStringLiteral("80 shot.mp4"));
+    QCOMPARE(drift::nextSplitPieceName(track, QStringLiteral("80 shot.mp4")), QStringLiteral("80 shot.mp4 (2)"));
+    add(QStringLiteral("80 shot.mp4 (2)"));
+    QCOMPARE(drift::nextSplitPieceName(track, QStringLiteral("80 shot.mp4")), QStringLiteral("80 shot.mp4 (3)"));
+    // Splitting a numbered piece continues the same sequence.
+    QCOMPARE(drift::nextSplitPieceName(track, QStringLiteral("80 shot.mp4 (2)")), QStringLiteral("80 shot.mp4 (3)"));
+
+    add(QStringLiteral("Trip (2018)"));
+    QCOMPARE(drift::nextSplitPieceName(track, QStringLiteral("Trip (2018)")), QStringLiteral("Trip (2018) (2)"));
+    QCOMPARE(drift::nextSplitPieceName(track, QString()), QString());
+    // A name past the piece-number range is still taken.
+    drift::Track crowded;
+    for (const QString &name : {QStringLiteral("Shot"), QStringLiteral("Shot (999)"), QStringLiteral("Shot (1000)")}) {
+        drift::Clip clip;
+        clip.name = name;
+        crowded.clips.append(clip);
+    }
+    QCOMPARE(drift::nextSplitPieceName(crowded, QStringLiteral("Shot")), QStringLiteral("Shot (1001)"));
+    // Another track numbers independently.
+    QCOMPARE(drift::nextSplitPieceName(drift::Track{}, QStringLiteral("80 shot.mp4")), QStringLiteral("80 shot.mp4 (2)"));
 }
 
 void CoreTest::splitClipClearsInnerFades()
