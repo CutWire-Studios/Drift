@@ -241,6 +241,9 @@ PreferencesController::PreferencesController(QObject *parent)
 {
     QSettings settings;
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
+    m_proxySuggestion = settings.value(QStringLiteral("proxy/suggestion"), QStringLiteral("ask")).toString();
+    if (!proxySuggestionModes().contains(m_proxySuggestion))
+        m_proxySuggestion = QStringLiteral("ask");
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
     m_audioMixerVisible =
@@ -462,6 +465,20 @@ void PreferencesController::setReopenLastProject(bool enabled)
     QSettings settings;
     settings.setValue(QStringLiteral("editor/reopenLastProject"), m_reopenLastProject);
     emit reopenLastProjectChanged();
+}
+
+QStringList PreferencesController::proxySuggestionModes()
+{
+    return {QStringLiteral("ask"), QStringLiteral("always"), QStringLiteral("never")};
+}
+
+void PreferencesController::setProxySuggestion(const QString &mode)
+{
+    if (!proxySuggestionModes().contains(mode) || m_proxySuggestion == mode)
+        return;
+    m_proxySuggestion = mode;
+    QSettings().setValue(QStringLiteral("proxy/suggestion"), m_proxySuggestion);
+    emit proxySuggestionChanged();
 }
 
 void PreferencesController::setVaapiZeroCopy(bool enabled)

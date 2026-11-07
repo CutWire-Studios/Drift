@@ -52,6 +52,9 @@ class PreferencesController : public QObject
                    NOTIFY proxyNamePatternsChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
+    // What an import does with footage that would preview slowly: "ask" (offer proxies in a
+    // notification, the default), "always" (create them straight away) or "never".
+    Q_PROPERTY(QString proxySuggestion READ proxySuggestion WRITE setProxySuggestion NOTIFY proxySuggestionChanged)
     // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
     // after restart; hidden when this machine has no decode backend for either.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
@@ -179,6 +182,9 @@ public:
 
     bool reopenLastProject() const { return m_reopenLastProject; }
     void setReopenLastProject(bool enabled);
+    QString proxySuggestion() const { return m_proxySuggestion; }
+    void setProxySuggestion(const QString &mode);
+    static QStringList proxySuggestionModes();
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
     void setVaapiZeroCopy(bool enabled);
     bool vaapiZeroCopySupported() const;
@@ -304,6 +310,7 @@ signals:
     void proxyNamePatternsChanged();
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
+    void proxySuggestionChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
     void preferredGpuChanged();
@@ -340,6 +347,7 @@ private:
     QStringList m_proxyNamePatterns;
     QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
+    QString m_proxySuggestion = QStringLiteral("ask");
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
     QString m_preferredGpu = QStringLiteral("auto");

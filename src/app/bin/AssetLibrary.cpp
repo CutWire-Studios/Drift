@@ -913,6 +913,7 @@ void AssetLibrary::setProject(drift::Project *project, bool newDocument)
     if (newDocument || m_project != project) {
         m_probeToken.clear();
         m_refreshPending.clear();
+        m_autoProxyPending.clear();
     }
     m_project = project;
     m_importPending.clear();
@@ -1298,9 +1299,21 @@ void AssetLibrary::applyImportResult(const QString &assetId, const drift::MediaA
         if (!m_importPending.isEmpty()
             || (m_suggestProxyIds.isEmpty() && m_suggestVfrIds.isEmpty()))
             return;
-        emit importSuggestions(m_suggestProxyIds, m_suggestVfrIds);
-        m_suggestProxyIds.clear();
-        m_suggestVfrIds.clear();
+        // Here, not in the UI, so "always" also works for an import nobody is watching (an agent's).
+        QStringList proxyIds = std::exchange(m_suggestProxyIds, {});
+        if (m_proxySuggestionMode == QLatin1String("always")) {
+            // Queued once a fresh sidecar scan has landed (see refreshSidecars), which finds a proxy
+            // already on disk; this scan is the one guaranteed to finish after this point.
+            for (const QString &id : std::as_const(proxyIds))
+                m_autoProxyPending.insert(id);
+            refreshSidecars(proxyIds);
+            proxyIds.clear();
+        } else if (m_proxySuggestionMode == QLatin1String("never")) {
+            proxyIds.clear();
+        }
+        const QStringList vfrIds = std::exchange(m_suggestVfrIds, {});
+        if (!proxyIds.isEmpty() || !vfrIds.isEmpty())
+            emit importSuggestions(proxyIds, vfrIds);
     });
     if (!m_project)
         return;
@@ -1493,6 +1506,7 @@ void AssetLibrary::removeProxies(const QStringList &assetIds)
 {
     bool removedAny = false;
     for (const QString &id : assetIds) {
+        m_autoProxyPending.remove(id);
         if (m_proxyQueue.removeAll(id) > 0)
             emit proxyStateChanged(id);
         if (id == m_proxyBuilding)
@@ -1519,6 +1533,8 @@ void AssetLibrary::removeProxies(const QStringList &assetIds)
 
 void AssetLibrary::cancelProxies()
 {
+    // Also the automatic ones still waiting for their sidecar scan, or they'd start after this.
+    m_autoProxyPending.clear();
     const QStringList queued = m_proxyQueue;
     m_proxyQueue.clear();
     for (const QString &id : queued)
@@ -1729,6 +1745,25 @@ void AssetLibrary::refreshSidecars(const QStringList &assetIds)
                         }))
                         changed.append(id);
                 }
+                // Imports set to create proxies automatically, now that any proxy already on disk
+                // is known: only the ones still without one.
+                QStringList autoCreate;
+                for (const auto &[id, path] : targets) {
+                    // A scan of a file the asset no longer points at says nothing about its
+                    // current source: leave it pending for that source's own scan.
+                    const drift::MediaAsset *asset = m_project->asset(id);
+                    if (!asset) {
+                        m_autoProxyPending.remove(id); // deleted meanwhile: nothing to create
+                        continue;
+                    }
+                    if (asset->path != path || !m_autoProxyPending.contains(id))
+                        continue;
+                    m_autoProxyPending.remove(id);
+                    if (proxyState(id) == QLatin1String("none"))
+                        autoCreate.append(id);
+                }
+                if (!autoCreate.isEmpty())
+                    createProxies(autoCreate);
                 if (changed.isEmpty())
                     return;
                 bumpBadges();
@@ -2152,6 +2187,7 @@ bool AssetLibrary::removeAssetAt(int index)
     m_importPending.remove(assetId);
     m_thumbPending.remove(assetId);
     m_audioProbePending.remove(assetId);
+    m_autoProxyPending.remove(assetId);
     return true;
 }
 
@@ -2164,6 +2200,7 @@ void AssetLibrary::clear()
     m_project->assets().clear();
     m_project->assetOrder().clear();
     m_importPending.clear();
+    m_autoProxyPending.clear();
     m_probeToken.clear();
     m_refreshPending.clear();
     m_thumbPending.clear();
@@ -2220,6 +2257,7 @@ void AssetLibrary::loadFromJsonArray(const QJsonArray &assets)
     m_project->assets().clear();
     m_project->assetOrder().clear();
     m_importPending.clear();
+    m_autoProxyPending.clear();
     m_probeToken.clear();
     m_refreshPending.clear();
     m_thumbPending.clear();
