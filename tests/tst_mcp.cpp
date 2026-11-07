@@ -85,6 +85,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void setTransformKeysOnlyInsideTheClip();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -422,6 +423,74 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
+// (earlier still, outside it). It now refuses and writes nothing; `at` names the time instead.
+void McpTest::setTransformKeysOnlyInsideTheClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    // Auto-key is a persisted setting: put it back so later tests (and runs) start with it off.
+    const auto restoreAutoKey = qScopeGuard([&] { state.setAutoKeyEnabled(false); });
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("shot");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = drift::secondsToUs(2.0);
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto xKeys = [&]() {
+        return state.project()->tracks().at(0).clips.at(0).transformX.keyframes();
+    };
+
+    // A constant write doesn't care where the playhead is.
+    state.setAutoKeyEnabled(false);
+    state.setPlayheadSeconds(1.0); // before the clip (2-6 s)
+    QJsonObject result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                             {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 10.0}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QVERIFY(xKeys().size() <= 1);
+
+    // With auto-key on the write keys, so the playhead outside the clip is refused.
+    state.setAutoKeyEnabled(true);
+    const auto keysBefore = xKeys();
+    result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 50.0}});
+    QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY2(result.value(QStringLiteral("detail")).toString().contains(QStringLiteral("outside the clip")),
+             qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(xKeys(), keysBefore);
+
+    // at names the time: the key lands 1 s into the clip.
+    result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 50.0},
+                                  {QStringLiteral("at"), 3.0}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QVERIFY(xKeys().contains(drift::secondsToUs(1.0)));
+    QCOMPARE(xKeys().value(drift::secondsToUs(1.0)).value, 50.0);
+    // A switched-off animation takes the value on its first key whatever the time, so it isn't
+    // refused even with auto-key on and the playhead outside the clip.
+    state.setClipKeyframe(0, 0, QStringLiteral("x"), 4.0, 70.0); // a second key: animated
+    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("x"), false);
+    state.setPlayheadSeconds(1.0);
+    result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 80.0}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(xKeys().first().value, 80.0);
+    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("x"), true);
+
+    // and at outside the clip is refused too.
+    const auto keysBeforeAt = xKeys();
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 60.0},
+                                  {QStringLiteral("at"), 7.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(xKeys(), keysBeforeAt);
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()

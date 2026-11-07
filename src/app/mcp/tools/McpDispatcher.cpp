@@ -1500,8 +1500,12 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
         patch.insert(QStringLiteral("layer3d"), args.value(QStringLiteral("layer3d")).toBool());
     if (patch.isEmpty())
         return err("bad_args", QStringLiteral("No transform fields"));
-    if (!m_controller->mcp()->setClipCanvas(ref.track, ref.clip, patch))
-        return err("bad_args", QStringLiteral("Transform refused"));
+    const double at = args.contains(QStringLiteral("at")) ? jsonNumber(args.value(QStringLiteral("at")), -1.0) : -1.0;
+    if (args.contains(QStringLiteral("at")) && at < 0.0)
+        return err("bad_args", QStringLiteral("at must be >= 0 timeline seconds"));
+    QString why;
+    if (!m_controller->mcp()->setClipCanvas(ref.track, ref.clip, patch, at, &why))
+        return err("bad_args", why.isEmpty() ? QStringLiteral("Transform refused") : why);
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     QJsonObject extra;
     const QJsonArray parented = transformedBy(after.track);
