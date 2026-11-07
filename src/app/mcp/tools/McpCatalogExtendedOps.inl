@@ -936,7 +936,8 @@
                        {QStringLiteral("from"), QStringLiteral("to")}) },
         { "set_effect_color_param", "effects", "Color effect param",
           "Set a color-typed effect parameter. Use this instead of set_effect_param for params whose "
-          "type is color in list_effects. Not validated — an unknown key or bad index still returns ok.",
+          "type is color in list_effects. Fails not_found on a key the effect has no colour parameter "
+          "for, or a stack index that isn't there.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
                                    {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB; alpha is not carried, effect colours bind as vec3"))}},
@@ -977,9 +978,9 @@
                         {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds"))}},
                        {QStringLiteral("track"), QStringLiteral("id"), QStringLiteral("duration")}) },
         { "set_transition_param", "effects", "Tweak one numeric setting of a transition",
-          "Set one numeric transition parameter. Not validated — an unknown key or id still returns "
-          "ok. Take keys from the transition's params in list_transitions and verify with "
-          "inspect({clips:true,detail:true}).",
+          "Set one numeric transition parameter. Fails not_found on an unknown transition id or a "
+          "key the transition doesn't declare; take keys from the transition's params in "
+          "list_transitions.",
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                         {QStringLiteral("id"), transitionIdProp()},
                         {QStringLiteral("key"), stringProp(QStringLiteral("Param key from list_transitions"))},
@@ -1478,7 +1479,8 @@
           objectSchema(clipRefProps()) },
         { "set_effect_string_param", "effects", "File/string effect param",
           "Set a file- or string-typed effect parameter (e.g. face_swap's sourceImage). Value is an "
-          "absolute path or file:// URL. Not validated — confirm with inspect({clips:true,detail:true}).",
+          "absolute path or file:// URL. Fails bad_args without index or key, and not_found on a key "
+          "the effect doesn't declare.",
           objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
                                    {QStringLiteral("value"), stringProp(QStringLiteral("Absolute path, file:// URL, or string value"))}},

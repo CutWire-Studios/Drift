@@ -1,4 +1,5 @@
 #include "app/mcp/tools/McpCatalog.h"
+#include "app/mcp/protocol/McpValidate.h"
 #include "app/mcp/protocol/McpJson.h"
 
 #include "core/shapes/ShapeStyle.h"
@@ -1327,8 +1328,10 @@ QString agentGuideText()
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
-        "  type_mismatch; unknown keys come back as ignored:[…]. inspect, capture, frames and\n"
-        "  activity are not schema-checked. Numbers are rounded to 3 dp except fps/pos.\n"
+        "  type_mismatch; unknown keys come back as ignored:[…]. The homepage tools (catalog,\n"
+        "  toolbox, search, inspect, apply, capture, frames, activity) are checked too and reject\n"
+        "  their own unknown keys with bad_args.\n"
+        "  Numbers are rounded to 3 dp except fps/pos.\n"
         "\n"
         "Selection-based ops take no clip argument and act on the current selection — call\n"
         "select_clip or select_clips first: separate_audio, unlink_audio, link_clips, merge_clips,\n"
@@ -1544,6 +1547,43 @@ QJsonObject toolboxPayload(const QString &name, const QStringList &only)
     if (!unknown.isEmpty())
         out.insert(QStringLiteral("unknown"), unknown);
     return out;
+}
+
+QJsonObject homepageToolSchema(const QString &name)
+{
+    // Built once: the schemas are fixed for the life of the process, and this runs on every call.
+    static const QHash<QString, QJsonObject> schemas = [] {
+        QHash<QString, QJsonObject> map;
+        for (const QJsonValue &tool : homepageTools())
+            map.insert(tool.toObject().value(QStringLiteral("name")).toString(),
+                       tool.toObject().value(QStringLiteral("inputSchema")).toObject());
+        return map;
+    }();
+    return schemas.value(name);
+}
+
+QJsonObject checkHomepageArgs(const QString &name, QJsonObject &args)
+{
+    const QJsonObject schema = homepageToolSchema(name);
+    if (schema.isEmpty())
+        return {};
+    QStringList ignored;
+    const QJsonObject invalid = validateArgs(name, schema, args, &ignored);
+    if (!invalid.isEmpty())
+        return invalid;
+    // Only the tool's own top-level keys are refused. Extra keys nested in its structures (a note
+    // on an apply op item) stay ignored, as they always were.
+    ignored.erase(std::remove_if(ignored.begin(), ignored.end(),
+                                 [](const QString &key) {
+                                     return key.contains(QLatin1Char('.')) || key.contains(QLatin1Char('['));
+                                 }),
+                  ignored.end());
+    if (ignored.isEmpty())
+        return {};
+    QStringList valid = schema.value(QStringLiteral("properties")).toObject().keys();
+    valid.sort();
+    return err("bad_args", QStringLiteral("%1 does not take %2; valid: %3")
+                               .arg(name, ignored.join(QStringLiteral(", ")), valid.join(QStringLiteral(", "))));
 }
 
 QJsonArray homepageTools()
