@@ -3422,14 +3422,17 @@ void McpTest::memoryStatsAndClearCache()
     QVERIFY(cache.value(QStringLiteral("budget_bytes")).toDouble() > 0);
     QVERIFY(cache.value(QStringLiteral("frames")).toInt() > 0);
     QVERIFY(cache.value(QStringLiteral("bytes")).toDouble() > 0);
-    QVERIFY(stats.value(QStringLiteral("decoders")).toObject().value(QStringLiteral("video")).toInt() > 0);
+    const QJsonObject decoders = stats.value(QStringLiteral("decoders")).toObject();
+    QVERIFY(decoders.value(QStringLiteral("readers")).toInt() > 0);
+    QVERIFY(decoders.value(QStringLiteral("video_workers")).toInt() > 0);
     QVERIFY(stats.value(QStringLiteral("undo_history")).toObject().contains(QStringLiteral("steps")));
 
     // Nothing is mid-decode now, so every decoder closes and its frames go with it.
     const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("clear_cache"), {});
     QVERIFY2(cleared.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(cleared).toJson()));
     const QJsonObject after = cleared.value(QStringLiteral("after")).toObject();
-    QCOMPARE(after.value(QStringLiteral("decoders")).toObject().value(QStringLiteral("video")).toInt(), 0);
+    QCOMPARE(after.value(QStringLiteral("decoders")).toObject().value(QStringLiteral("video_workers")).toInt(), 0);
+    QCOMPARE(after.value(QStringLiteral("decoders")).toObject().value(QStringLiteral("readers")).toInt(), 0);
     QCOMPARE(after.value(QStringLiteral("frame_cache")).toObject().value(QStringLiteral("frames")).toInt(), 0);
     QCOMPARE(after.value(QStringLiteral("frame_cache")).toObject().value(QStringLiteral("bytes")).toDouble(), 0.0);
     QVERIFY(cleared.value(QStringLiteral("before")).toObject().value(QStringLiteral("frame_cache")).toObject()

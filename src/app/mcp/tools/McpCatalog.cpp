@@ -928,7 +928,9 @@ const QList<Op> &ops()
           "Returns {process:{rss_bytes, peak_rss_bytes} (-1 where the platform does not say), "
           "frame_cache:{bytes, frames, gpu_frames, budget_bytes, setting_mib} (decoded frames the "
           "readers cache; GPU surfaces are counted in frames, not bytes; setting_mib 0 = automatic, "
-          "an eighth of RAM), decoders:{video, audio} (open readers), undo_history:{steps, undoable} "
+          "an eighth of RAM), decoders:{readers (files open for decoding, each with its own decoders), "
+          "video_workers, audio_workers (decode threads; one can run several readers)}, "
+          "undo_history:{steps, undoable} "
           "(each step holds full project snapshots)}.",
           objectSchema({}), true, false, true },
         { "clear_cache", "project", "Free decoded frames and decoders",

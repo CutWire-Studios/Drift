@@ -107,6 +107,9 @@ public:
         qint64 budgetBytes = 0; // the preview frame budget shared by every reader
     };
     static CacheStats cacheStats();
+    // Readers with a media file open across the process (each holds its own demuxer and
+    // decoders), for memory_stats.
+    static int openReaderCount();
     // Codec actually opened for video, empty until the first decode. Distinguishes libdav1d
     // (software AV1) from the native `av1` decoder that can drive hardware.
     QString videoDecoderName() const;
@@ -363,6 +366,9 @@ private:
     QList<CachedPreview> m_previewCache;
     // This reader's share of the process-wide cache figures, re-counted after each change.
     void syncCacheAccounting();
+    // Keeps this reader's share of openReaderCount() in step with isOpen().
+    void syncOpenCount();
+    bool m_countedOpen = false;
     qint64 m_accountedBytes = 0;
     int m_accountedFrames = 0;
     int m_accountedGpuFrames = 0;

@@ -1631,7 +1631,10 @@ QJsonObject frameCacheJson()
 QJsonObject decodersJson()
 {
     const ClipReaderPool::Stats pool = ClipReaderPool::instance().stats();
-    return {{QStringLiteral("video"), pool.videoDecoders}, {QStringLiteral("audio"), pool.audioDecoders}};
+    // Readers are what hold files, demuxers and decoders open; a worker thread can run several.
+    return {{QStringLiteral("readers"), ClipReader::openReaderCount()},
+            {QStringLiteral("video_workers"), pool.videoWorkers},
+            {QStringLiteral("audio_workers"), pool.audioWorkers}};
 }
 
 } // namespace

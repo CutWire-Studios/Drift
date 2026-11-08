@@ -670,6 +670,7 @@ std::atomic<int> g_readAheadReaders{0};
 std::atomic<qint64> g_cachedFrameBytes{0};
 std::atomic<int> g_cachedFrames{0};
 std::atomic<int> g_cachedGpuFrames{0};
+std::atomic<int> g_openReaders{0};
 std::atomic<int> g_activeVideoStreams{1};
 
 qint64 physicalMemoryBytes()
@@ -725,6 +726,20 @@ ClipReader::CacheStats ClipReader::cacheStats()
     stats.gpuFrames = g_cachedGpuFrames.load(std::memory_order_relaxed);
     stats.budgetBytes = previewCacheBudgetBytes();
     return stats;
+}
+
+int ClipReader::openReaderCount()
+{
+    return g_openReaders.load(std::memory_order_relaxed);
+}
+
+void ClipReader::syncOpenCount()
+{
+    const bool open = isOpen();
+    if (open == m_countedOpen)
+        return;
+    m_countedOpen = open;
+    g_openReaders.fetch_add(open ? 1 : -1, std::memory_order_relaxed);
 }
 
 void ClipReader::syncCacheAccounting()
@@ -895,10 +910,13 @@ void ClipReader::close()
     m_audioNextPtsUs = 0;
     m_audioLeftover.clear();
     m_path.clear();
+    syncOpenCount();
 }
 
 bool ClipReader::open(const QString &path, int audioStreamOrdinal)
 {
+    // Whichever way it returns, the open-reader count follows.
+    const auto counted = qScopeGuard([this] { syncOpenCount(); });
     if (path.isEmpty())
         return false;
     if (m_path == path && m_audioStreamOrdinal == audioStreamOrdinal && isOpen())
