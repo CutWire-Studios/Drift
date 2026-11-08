@@ -848,6 +848,20 @@ const QList<Op> &ops()
           objectSchema(mergeProps({{QStringLiteral("effect"), stringProp(QStringLiteral("Effect catalog id from list_effects"))}},
                                   clipRefProps()),
                        {QStringLiteral("effect")}) },
+        { "copy_effects", "effects", "Give other clips the same grade",
+          "Copy a clip's whole effect stack (video and audio effects, with their keyframes rescaled "
+          "to each target's length) onto other clips, appended after any effects they already have, "
+          "in one undo step. Audio effects only land on clips with audio. Clears nothing: remove a "
+          "target's effects first for a replacement. Repeated target ids count once. "
+          "Fails before anything is changed: not_found when the source has no effects or a target "
+          "id is unknown, bad_args for an adjustment target or an effect the target's track can't take. Returns to:[{id, effects, "
+          "audioEffects}] with what each target actually received, and not_installed:[ids] for "
+          "copied effects whose addon is missing.",
+          objectSchema({{QStringLiteral("from"), stringProp(QStringLiteral("Source clip id"))},
+                        {QStringLiteral("to"), arrayProp(stringProp(QStringLiteral("Target clip id")),
+                                                         QStringLiteral("Target clip ids"))}},
+                       {QStringLiteral("from"), QStringLiteral("to")}),
+          false, false },
         { "remove_effect", "effects", "Remove a video effect",
           "Remove a video effect by stack index. Later effects shift down one position.",
           objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()}}),

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/mcp/AgentImageLog.h"
+#include "core/effects/EffectStackStore.h"
 #include "core/project/Project.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
 
@@ -160,6 +161,13 @@ public:
     bool setWorkArea(double inSeconds, double outSeconds);
     void rememberExportSettings(const QVariantMap &settings);
     QVariantMap lastExportSettings() const;
+    // The whole effect stack (video and audio) of a clip, as copy/paste carries it, and appending
+    // one to another clip the way paste does (rebuilt from the catalog, keyframes rescaled).
+    drift::EffectStackPreset effectStackOf(int trackIndex, int clipIndex) const;
+    void appendEffectStack(int trackIndex, int clipIndex, const drift::EffectStackPreset &stack);
+    // A warning on the editor's status line, as the app raises its own. Inside a batch it waits for
+    // the outermost endBatch: that batch's finishEdit would clear it otherwise.
+    void warn(const QString &message);
     void beginBatch();
     void endBatch(const QString &text, bool pushUndo);
     // Whether the open batch has changed the project: an edit went through finishEdit, or the
@@ -371,6 +379,7 @@ private:
     bool m_mcpStartOnLaunch = false;
     bool m_undoSuspended = false;
     int m_batchDepth = 0;
+    QString m_pendingWarning;
     drift::Project m_batchBefore;
     int m_batchRevision = 0;
     int m_editRevision = 0;
