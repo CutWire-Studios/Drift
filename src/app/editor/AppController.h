@@ -625,6 +625,10 @@ public:
     // Clips per asset id over the whole project, composites included, in one pass (the same
     // count clipCountForAsset gives one asset). Assets no clip uses are absent.
     QHash<QString, int> clipCountsByAsset() const;
+    // Assets other assets were made from (a stabilized render's original, by its generator's
+    // sourceAssetId), with how many each: re-making the render needs the original in the bin,
+    // so these are in use even with no clips.
+    QHash<QString, int> derivedAssetCounts() const;
     Q_INVOKABLE bool removeAsset(int assetIndex);
     // Multi-select bulk removal, one undo step for the whole batch. Like removeAsset, refuses
     // the whole batch if any id is still referenced by a clip (see clipCountForAsset) — the

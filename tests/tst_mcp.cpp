@@ -3424,6 +3424,28 @@ void McpTest::unusedAssetsAreListedAndRemoved()
     // Without usage the rows stay as they were.
     QCOMPARE(clipsFor(dispatcher.applyOne(QStringLiteral("list_assets"), {}), QStringLiteral("used.wav")), -1);
 
+    // An asset made from another (a stabilized render points at its original) keeps that
+    // original in use with no clips: it is reported and kept.
+    {
+        const QString spareId = library.assetAt(1).value(QStringLiteral("id")).toString();
+        const QString usedId = library.assetAt(0).value(QStringLiteral("id")).toString();
+        drift::MediaAsset *render = state.project()->asset(usedId);
+        QVERIFY(render);
+        render->generator = QJsonObject{{QStringLiteral("sourceAssetId"), spareId}};
+        const QJsonObject listed = dispatcher.applyOne(QStringLiteral("list_assets"), {{QStringLiteral("usage"), true}});
+        int derived = -1;
+        for (const QJsonValue &v : listed.value(QStringLiteral("assets")).toArray()) {
+            if (v.toObject().value(QStringLiteral("id")).toString() == spareId)
+                derived = v.toObject().value(QStringLiteral("derived")).toInt();
+        }
+        QCOMPARE(derived, 1);
+        const QJsonObject kept = dispatcher.applyOne(QStringLiteral("remove_unused_assets"), {});
+        QCOMPARE(kept.value(QStringLiteral("removed")).toInt(), 0);
+        QCOMPARE(kept.value(QStringLiteral("kept_sources")).toInt(), 1);
+        QCOMPARE(library.count(), 2);
+        render->generator = QJsonObject();
+    }
+
     const QJsonObject dry = dispatcher.applyOne(QStringLiteral("remove_unused_assets"), {{QStringLiteral("dry_run"), true}});
     QVERIFY(dry.value(QStringLiteral("ok")).toBool());
     QCOMPARE(dry.value(QStringLiteral("assets")).toArray().size(), 1);

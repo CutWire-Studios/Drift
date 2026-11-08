@@ -1094,6 +1094,7 @@ QJsonObject McpDispatcher::opListAssets(const QJsonObject &args) const
     AssetLibrary *lib = m_controller->assetLibrary();
     const bool usage = jsonBool(args.value(QStringLiteral("usage")), false);
     const QHash<QString, int> counts = usage ? m_controller->clipCountsByAsset() : QHash<QString, int>();
+    const QHash<QString, int> derived = usage ? m_controller->derivedAssetCounts() : QHash<QString, int>();
     QJsonArray assets;
     if (lib) {
         for (int i = 0; i < lib->count(); ++i) {
@@ -1108,8 +1109,13 @@ QJsonObject McpDispatcher::opListAssets(const QJsonObject &args) const
                 {QStringLiteral("h"), a.value(QStringLiteral("height")).toInt()},
                 {QStringLiteral("folderId"), a.value(QStringLiteral("folderId")).toString()},
             };
-            if (usage)
-                row.insert(QStringLiteral("clips"), counts.value(a.value(QStringLiteral("id")).toString()));
+            if (usage) {
+                const QString id = a.value(QStringLiteral("id")).toString();
+                row.insert(QStringLiteral("clips"), counts.value(id));
+                // Assets made from this one (a stabilized render): it is in use with no clips.
+                if (const int made = derived.value(id); made > 0)
+                    row.insert(QStringLiteral("derived"), made);
+            }
             assets.append(row);
         }
     }
@@ -1123,9 +1129,11 @@ QJsonObject McpDispatcher::opRemoveUnusedAssets(const QJsonObject &args)
         return err("unsupported", QStringLiteral("No media library"));
     const bool dryRun = jsonBool(args.value(QStringLiteral("dry_run")), false);
     const QHash<QString, int> counts = m_controller->clipCountsByAsset();
+    const QHash<QString, int> derived = m_controller->derivedAssetCounts();
     QStringList ids;
     QJsonArray listed;
     int composites = 0;
+    int sources = 0;
     for (int i = 0; i < lib->count(); ++i) {
         const QVariantMap a = lib->assetAt(i);
         const QString id = a.value(QStringLiteral("id")).toString();
@@ -1137,6 +1145,12 @@ QJsonObject McpDispatcher::opRemoveUnusedAssets(const QJsonObject &args)
             ++composites;
             continue;
         }
+        // The original of a stabilized render: re-stabilizing reads it, and a re-import would
+        // not reconnect it (it gets a new id).
+        if (derived.value(id) > 0) {
+            ++sources;
+            continue;
+        }
         ids.append(id);
         listed.append(QJsonObject{{QStringLiteral("id"), id},
                                   {QStringLiteral("name"), a.value(QStringLiteral("name")).toString()},
@@ -1144,7 +1158,8 @@ QJsonObject McpDispatcher::opRemoveUnusedAssets(const QJsonObject &args)
     }
     QJsonObject reply{{QStringLiteral("assets"), listed},
                       {QStringLiteral("dry_run"), dryRun},
-                      {QStringLiteral("kept_composites"), composites}};
+                      {QStringLiteral("kept_composites"), composites},
+                      {QStringLiteral("kept_sources"), sources}};
     if (dryRun || ids.isEmpty()) {
         reply.insert(QStringLiteral("removed"), 0);
         return ok(reply);
