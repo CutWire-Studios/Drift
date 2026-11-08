@@ -2568,12 +2568,42 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
-        const int index = jsonInt(args.value(QStringLiteral("index")));
-        if (index < 0 || !args.contains(QStringLiteral("enabled")))
-            return err("bad_args", QStringLiteral("index and enabled required"));
+        if (!args.contains(QStringLiteral("enabled")))
+            return err("bad_args", QStringLiteral("enabled required"));
+        const QVariantList stack = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
+        int index = -1;
+        const QJsonValue effect = args.value(QStringLiteral("effect"));
+        bool numeric = false;
+        const int asNumber = effect.isString() ? effect.toString().trimmed().toInt(&numeric) : -1;
+        if (effect.isString() && !numeric) {
+            // Matched like add_effect matches ids: case-insensitive, '.' and '_' interchangeable.
+            const QString catalogId = effect.toString().trimmed();
+            const QString key = effectCatalogKey(catalogId);
+            QJsonArray matches;
+            for (int i = 0; i < stack.size(); ++i) {
+                if (effectCatalogKey(stack.at(i).toMap().value(QStringLiteral("catalogId")).toString()) == key)
+                    matches.append(i);
+            }
+            if (matches.isEmpty())
+                return err("not_found", QStringLiteral("The clip has no %1 effect").arg(catalogId));
+            if (matches.size() > 1)
+                return err("bad_args", QStringLiteral("The clip has %1 %2 effects, at positions %3; pass one as effect or index")
+                                           .arg(matches.size())
+                                           .arg(catalogId, QString::fromUtf8(QJsonDocument(matches).toJson(QJsonDocument::Compact))));
+            index = matches.first().toInt();
+        } else if (numeric) {
+            index = asNumber; // "1" is a stack position, not a catalog id
+        } else {
+            index = jsonInt(effect.isUndefined() ? args.value(QStringLiteral("index")) : effect);
+        }
+        if (index < 0)
+            return err("bad_args", QStringLiteral("index or effect required"));
+        if (index >= stack.size())
+            return err("not_found", QStringLiteral("No such effect index"));
         const bool enabled = jsonBool(args.value(QStringLiteral("enabled")));
         m_controller->setEffectEnabled(ref.track, ref.clip, index, enabled);
-        return ok(clipFeedback(ref, {{QStringLiteral("index"), index}, {QStringLiteral("enabled"), enabled}}));
+        // effectIndex, not index: clipFeedback reports the clip's own position as index.
+        return ok(clipFeedback(ref, {{QStringLiteral("effectIndex"), index}, {QStringLiteral("enabled"), enabled}}));
     }
 
     if (tool == QLatin1String("move_effect")) {
@@ -2606,7 +2636,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         }
         // Alpha is dropped on purpose: effect colours bind as vec3. Echo what was stored so a
         // caller can see it rather than assuming the value it sent survived intact.
-        return ok(clipFeedback(ref, {{QStringLiteral("index"), index},
+        return ok(clipFeedback(ref, {{QStringLiteral("effectIndex"), index},
                                      {QStringLiteral("key"), key},
                                      {QStringLiteral("value"), QColor(value).name(QColor::HexRgb)}}));
     }
@@ -2620,7 +2650,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return err("bad_args", QStringLiteral("index and enabled required"));
         const bool enabled = jsonBool(args.value(QStringLiteral("enabled")));
         m_controller->setAudioEffectEnabled(ref.track, ref.clip, index, enabled);
-        return ok(clipFeedback(ref, {{QStringLiteral("index"), index}, {QStringLiteral("enabled"), enabled}}));
+        return ok(clipFeedback(ref, {{QStringLiteral("effectIndex"), index}, {QStringLiteral("enabled"), enabled}}));
     }
 
     if (tool == QLatin1String("move_audio_effect")) {
