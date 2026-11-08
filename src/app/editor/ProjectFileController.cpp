@@ -1984,14 +1984,22 @@ QString writeRecoveryTemp(const drift::Project &project, QJsonObject session,
     return tmpPath;
 }
 
-void promoteRecoveryTemp(const QString &tmpPath, const QString &path)
+// True once `path` holds the new snapshot: callers record what it holds only then, so a failed
+// write is retried rather than taken as current.
+bool promoteRecoveryTemp(const QString &tmpPath, const QString &path)
 {
     // Never remove the current file for a temp that is not there to replace it.
     if (tmpPath.isEmpty() || !QFile::exists(tmpPath))
-        return;
-    if (QFile::exists(path))
-        QFile::remove(path);
-    QFile::rename(tmpPath, path);
+        return false;
+    if (QFile::exists(path) && !QFile::remove(path)) {
+        QFile::remove(tmpPath);
+        return false;
+    }
+    if (!QFile::rename(tmpPath, path)) {
+        QFile::remove(tmpPath);
+        return false;
+    }
+    return true;
 }
 
 } // namespace
@@ -2017,8 +2025,7 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
         ++m_recoveryGeneration;
         const QString tmpPath = writeRecoveryTemp(m_app->m_project, session,
                                                   drift::captureHistory(m_app->m_undoStack), meta, path);
-        promoteRecoveryTemp(tmpPath, path);
-        if (!tmpPath.isEmpty())
+        if (promoteRecoveryTemp(tmpPath, path))
             m_recoveryRevision = m_dirtyRevision;
         return;
     }
@@ -2044,8 +2051,7 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
                 QFile::remove(tmpPath);
             return;
         }
-        promoteRecoveryTemp(tmpPath, path);
-        if (!tmpPath.isEmpty())
+        if (promoteRecoveryTemp(tmpPath, path))
             m_recoveryRevision = revision;
     });
 }
