@@ -456,14 +456,20 @@ void McpTest::agentNotificationsPreferenceOverMcp()
     drift::mcp::McpDispatcher dispatcher(&state);
 
     QJsonObject set = dispatcher.applyOne(QStringLiteral("set_ui_preferences"),
-                                          {{QStringLiteral("agentNotifications"), QStringLiteral("none")}});
+                                          {{QStringLiteral("agentNotifications"), QStringLiteral("all")}});
     QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
-    QCOMPARE(set.value(QStringLiteral("agentNotifications")).toString(), QStringLiteral("none"));
+    QCOMPARE(set.value(QStringLiteral("agentNotifications")).toString(), QStringLiteral("all"));
     QCOMPARE(dispatcher.applyOne(QStringLiteral("get_ui_preferences"), {}).value(QStringLiteral("agentNotifications")).toString(),
-             QStringLiteral("none"));
+             QStringLiteral("all"));
     QCOMPARE(dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("agentNotifications"), QStringLiteral("loud")}})
                  .value(QStringLiteral("error")).toString(),
              QStringLiteral("bad_args"));
+    // none would hide the agent's own warnings, so only the user can pick it.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("agentNotifications"), QStringLiteral("none")}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(state.preferences()->agentNotifications(), QStringLiteral("all"));
+    state.preferences()->setAgentNotifications(QStringLiteral("none"));
 
     // Through the server (where the agent scope applies): with notifications off, an op whose
     // error detail is the editor's message still returns that detail -- quiet only skips the toast.
