@@ -17373,6 +17373,26 @@ If playback stutters, try another.</source>
         <translation>Автоматически включать доступ агента при следующем открытии Drift. Отключение доступа сбрасывает этот параметр.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Все</translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">Облако</translation>
     </message>

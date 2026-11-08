@@ -52,6 +52,10 @@ class PreferencesController : public QObject
                    NOTIFY proxyNamePatternsChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
+    // Which notifications raised during an agent's (MCP) call reach the screen: "all", "problems"
+    // (warnings and errors, the default) or "none" (errors only -- an error is never hidden).
+    // Applies to what a call raises while it runs; a result landing later (an export) still shows.
+    Q_PROPERTY(QString agentNotifications READ agentNotifications WRITE setAgentNotifications NOTIFY agentNotificationsChanged)
     // What an import does with footage that would preview slowly: "ask" (offer proxies in a
     // notification, the default), "always" (create them straight away) or "never".
     Q_PROPERTY(QString proxySuggestion READ proxySuggestion WRITE setProxySuggestion NOTIFY proxySuggestionChanged)
@@ -187,6 +191,9 @@ public:
 
     bool reopenLastProject() const { return m_reopenLastProject; }
     void setReopenLastProject(bool enabled);
+    QString agentNotifications() const { return m_agentNotifications; }
+    void setAgentNotifications(const QString &level);
+    static QStringList agentNotificationLevels();
     QString proxySuggestion() const { return m_proxySuggestion; }
     void setProxySuggestion(const QString &mode);
     static QStringList proxySuggestionModes();
@@ -320,6 +327,7 @@ signals:
     void proxyNamePatternsChanged();
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
+    void agentNotificationsChanged();
     void proxySuggestionChanged();
     void undoHistoryModeChanged();
     void undoHistoryLimitChanged();
@@ -359,6 +367,7 @@ private:
     QStringList m_proxyNamePatterns;
     QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
+    QString m_agentNotifications = QStringLiteral("problems");
     QString m_proxySuggestion = QStringLiteral("ask");
     QString m_undoHistoryMode = QStringLiteral("project");
     int m_undoHistoryLimit = 0;

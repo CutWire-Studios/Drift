@@ -119,6 +119,36 @@ SettingsPage {
         }
     }
 
+    SettingsRow {
+        title: qsTr("Notifications for agent actions")
+        searchId: "ai-agent-notifications"
+        description: qsTr("Which pop-ups an agent's own edits show you. Errors always show.")
+        keywords: "mcp agent toast notification quiet silence"
+        query: page.query
+
+        ThemedComboBox {
+            width: Theme.c.settingsRow.controlWidth
+            textRole: "label"
+            valueRole: "id"
+            model: [
+                { id: "all", label: qsTr("All") },
+                { id: "problems", label: qsTr("Problems only") },
+                { id: "none", label: qsTr("None (errors still show)") }
+            ]
+            currentIndex: {
+                for (var i = 0; i < model.length; ++i) {
+                    if (model[i].id === EditorState.preferences.agentNotifications)
+                        return i
+                }
+                return 1
+            }
+            onActivated: {
+                if (currentIndex >= 0 && currentIndex < model.length)
+                    EditorState.preferences.agentNotifications = model[currentIndex].id
+            }
+        }
+    }
+
     SettingsGroupHeader {
         text: qsTr("Cloud")
         query: page.query

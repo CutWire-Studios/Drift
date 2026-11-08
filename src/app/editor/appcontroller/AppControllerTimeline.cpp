@@ -510,8 +510,17 @@ void AppController::cancelAudioRecording()
 
 void AppController::setLastMessage(const QString &message, const QString &severity)
 {
-    if (m_lastMessage == message && m_lastMessageSeverity == severity)
+    // An agent's own actions don't toast at the user beyond what the preference allows; an error
+    // always gets through, whatever it is set to. The message is still stored: MCP replies read it.
+    bool quiet = false;
+    if (!message.isEmpty() && severity != QLatin1String("error") && m_mcpController
+        && m_mcpController->inAgentCall() && m_preferences) {
+        const QString level = m_preferences->agentNotifications();
+        quiet = level == QLatin1String("none") || (level == QLatin1String("problems") && severity != QLatin1String("warning"));
+    }
+    if (m_lastMessage == message && m_lastMessageSeverity == severity && m_lastMessageQuiet == quiet)
         return;
+    m_lastMessageQuiet = quiet;
 
     m_lastMessage = message;
     m_lastMessageSeverity = severity;

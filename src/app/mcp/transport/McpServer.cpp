@@ -1,6 +1,7 @@
 #include "app/mcp/transport/McpServer.h"
 #include "app/editor/AppController.h"
 #include "app/editor/ProjectFileController.h"
+#include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/tools/McpDispatcher.h"
 #include "app/mcp/transport/McpHttp.h"
@@ -10,6 +11,7 @@
 #include "app/mcp/protocol/McpSession.h"
 
 #include <QDateTime>
+#include <QScopeGuard>
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QMetaObject>
@@ -268,6 +270,15 @@ QJsonValue McpServer::handleRpc(const QString &toolbox, const QJsonValue &body)
 
 QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &argsIn)
 {
+    // Notifications raised while the agent's call runs are filtered by the agentNotifications
+    // preference (AppController::setLastMessage).
+    McpController *mcp = m_controller ? m_controller->mcp() : nullptr;
+    if (mcp)
+        mcp->beginAgentCall();
+    const auto endCall = qScopeGuard([mcp] {
+        if (mcp)
+            mcp->endAgentCall();
+    });
     // Homepage tools are checked against their own schemas and refuse unknown keys.
     QJsonObject args = argsIn;
     if (const QJsonObject invalid = checkHomepageArgs(name, args); !invalid.isEmpty())

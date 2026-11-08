@@ -161,6 +161,17 @@ public:
     bool setWorkArea(double inSeconds, double outSeconds);
     void rememberExportSettings(const QVariantMap &settings);
     QVariantMap lastExportSettings() const;
+    // Marks an agent's tool call in progress (nests). While one runs, the editor's notifications
+    // are filtered by the agentNotifications preference: the user didn't trigger them.
+    // Only code running directly in the call counts: a nested event loop the call waits in (an
+    // import probe, a capture) also delivers the user's own clicks, which are never filtered.
+    void beginAgentCall();
+    void endAgentCall();
+    bool inAgentCall() const;
+    // Around a manual event pump (processEvents), which delivers the user's input without raising
+    // the loop level: nothing handled inside it counts as the agent's.
+    void pauseAgentCalls() { ++m_agentCallsPaused; }
+    void resumeAgentCalls() { m_agentCallsPaused = qMax(0, m_agentCallsPaused - 1); }
     // The whole effect stack (video and audio) of a clip, as copy/paste carries it, and appending
     // one to another clip the way paste does (rebuilt from the catalog, keyframes rescaled).
     drift::EffectStackPreset effectStackOf(int trackIndex, int clipIndex) const;
@@ -379,6 +390,15 @@ private:
     bool m_mcpStartOnLaunch = false;
     bool m_undoSuspended = false;
     int m_batchDepth = 0;
+    // Each running call's event-loop level and pause count at its start: a second call can arrive
+    // while the first waits in a nested loop (one level deeper) or a paused pump.
+    struct AgentCallFrame
+    {
+        int loopLevel = 0;
+        int pausedAtStart = 0; // a call that starts inside a paused pump is still the agent's
+    };
+    QList<AgentCallFrame> m_agentCalls;
+    int m_agentCallsPaused = 0;
     QString m_pendingWarning;
     drift::Project m_batchBefore;
     int m_batchRevision = 0;

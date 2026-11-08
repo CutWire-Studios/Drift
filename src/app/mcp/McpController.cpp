@@ -54,6 +54,7 @@
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
+#include <QThread>
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QTemporaryFile>
@@ -1109,6 +1110,25 @@ QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor
         {QStringLiteral("data"), QString::fromLatin1(jpeg.toBase64())},
     });
     return {{QStringLiteral("content"), content}, {QStringLiteral("isError"), false}};
+}
+
+void McpController::beginAgentCall()
+{
+    m_agentCalls.append({QThread::currentThread()->loopLevel(), m_agentCallsPaused});
+}
+
+void McpController::endAgentCall()
+{
+    if (!m_agentCalls.isEmpty())
+        m_agentCalls.removeLast();
+}
+
+bool McpController::inAgentCall() const
+{
+    if (m_agentCalls.isEmpty())
+        return false;
+    const AgentCallFrame &call = m_agentCalls.last();
+    return QThread::currentThread()->loopLevel() == call.loopLevel && m_agentCallsPaused == call.pausedAtStart;
 }
 
 drift::EffectStackPreset McpController::effectStackOf(int trackIndex, int clipIndex) const
