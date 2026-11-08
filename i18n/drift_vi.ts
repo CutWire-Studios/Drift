@@ -5976,7 +5976,7 @@
     <name>Camera3dPanel</name>
     <message>
         <source>Camera</source>
-        <translation type="unfinished">Camera</translation>
+        <translation>Camera</translation>
     </message>
     <message>
         <source>Add camera</source>
@@ -6732,7 +6732,7 @@
     </message>
     <message>
         <source>Bezier</source>
-        <translation type="unfinished">Bezier</translation>
+        <translation>Bezier</translation>
     </message>
 </context>
 <context>
@@ -10222,7 +10222,7 @@
     </message>
     <message>
         <source>Camera</source>
-        <translation type="unfinished">Camera</translation>
+        <translation>Camera</translation>
     </message>
     <message>
         <source>Position X</source>
