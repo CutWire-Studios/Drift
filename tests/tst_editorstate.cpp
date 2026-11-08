@@ -384,6 +384,8 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void removeAllEffectsStripsTheClipAndKeepsMasks();
+    void removeAllEffectsKeepsTheSelectionOnItsClips();
     void splitPiecesGetDistinctNames();
     void redoDoesNotLeaveTheSelectionOnANeighbour();
     void undoRedoKeepsASelectedTransition();
@@ -11165,6 +11167,120 @@ void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
     // And the clips themselves still report the stack, which is what the inspector and MCP read.
     QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
     QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
+// remove_all_effects: the clip's video effects go, its mask stays unless asked for, the
+// neighbour's grade on the same lane is untouched, and the whole thing is one undo step.
+void EditorStateTest::removeAllEffectsStripsTheClipAndKeepsMasks()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    state.addMaskToClip(0, 1, QStringLiteral("ellipse"));
+    state.addAudioEffect(0, 1, QStringLiteral("space.autopan"));
+    const QString keptId = mediaClip(*state.project(), 0, 0).id;
+    const QString strippedId = mediaClip(*state.project(), 0, 1).id;
+    QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 2);
+    QVERIFY(adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::Mask));
+    const int tracksBefore = state.project()->tracks().size();
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("x"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.1.contrast"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("afx.0.amount"));
+    QCOMPARE(state.keyframeGraphHiddenProperties().size(), 3);
+
+    QCOMPARE(state.removeAllEffects(0, 1), 2);
+    // Hidden graph entries address effects by stack index; with both stacks gone they go too.
+    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList{QStringLiteral("x")});
+    QVERIFY(!adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::VideoEffects));
+    QVERIFY(!adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::AudioEffects));
+    QVERIFY(adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::Mask));
+    QVERIFY(adjustmentFor(*state.project(), keptId, drift::AdjustmentKind::VideoEffects));
+    // The audio-effects lane held only this clip's stack, so it goes; the video lane keeps the
+    // neighbour's grade and the mask lane keeps the mask.
+    QCOMPARE(state.project()->tracks().size(), tracksBefore - 1);
+
+    // Nothing left to strip: no change, no undo step.
+    QCOMPARE(state.removeAllEffects(0, 1), 0);
+
+    state.undo();
+    QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 2);
+
+    // With masks, and on the other clip too, every lane ends up empty and is dropped.
+    QCOMPARE(state.removeAllEffects(0, 1, /*includeMasks=*/true), 3);
+    QCOMPARE(state.removeAllEffects(0, 0), 1);
+    QCOMPARE(state.project()->tracks().size(), 1);
+}
+
+// Removing adjustments and a lane shifts clip and track indices; the selection has to stay on the
+// same clips rather than on the same numbers.
+void EditorStateTest::removeAllEffectsKeepsTheSelectionOnItsClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    drift::Track second{.type = drift::TrackType::Video};
+    drift::Clip other;
+    other.id = QStringLiteral("other");
+    other.type = drift::ClipType::Video;
+    other.timelineDuration = drift::secondsToUs(2.0);
+    other.srcOut = other.timelineDuration;
+    second.clips.append(other);
+    state.project()->tracks().append(second);
+
+    // A selected clip on a track below the lane that goes away.
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    QCOMPARE(state.project()->tracks().size(), 3);
+    state.selectClip(2, 0);
+    QCOMPARE(state.removeAllEffects(0, 0), 1);
+    QCOMPARE(state.project()->tracks().size(), 2);
+    QCOMPARE(state.selectedTrack(), 1);
+    QCOMPARE(state.selectedClip(), 0);
+    QCOMPARE(state.project()->tracks().at(1).clips.at(0).id, QStringLiteral("other"));
+
+    // A selected adjustment later in the same lane, behind the one that goes away.
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+    const QString keptHost = mediaClip(*state.project(), 0, 1).id;
+    const drift::Clip *kept = adjustmentFor(*state.project(), keptHost, drift::AdjustmentKind::VideoEffects);
+    QVERIFY(kept);
+    const QString keptId = kept->id;
+    int lane = -1, index = -1;
+    for (int t = 0; t < state.project()->tracks().size() && lane < 0; ++t)
+        for (int c = 0; c < state.project()->tracks().at(t).clips.size(); ++c)
+            if (state.project()->tracks().at(t).clips.at(c).id == keptId) {
+                lane = t;
+                index = c;
+            }
+    QCOMPARE(index, 1);
+    state.selectClip(lane, index);
+    QCOMPARE(state.removeAllEffects(0, 0), 1);
+    QVERIFY(state.selectedTrack() >= 0);
+    QCOMPARE(state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip()).id, keptId);
+
+    // The stripped clip's own adjustment selected (where addEffect leaves the selection): it must
+    // not slide onto the neighbour's grade that takes its index.
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    const drift::Clip *own = adjustmentFor(*state.project(), mediaClip(*state.project(), 0, 0).id,
+                                           drift::AdjustmentKind::VideoEffects);
+    QVERIFY(own);
+    const QString ownId = own->id;
+    // The lane is now [clip-1's grade, clip-0's grade]. Select clip-1's (index 0) and strip clip-1:
+    // by index, the selection would slide onto clip-0's grade.
+    state.selectClip(lane, 0);
+    QCOMPARE(state.project()->tracks().at(lane).clips.at(0).id, keptId);
+    QCOMPARE(state.removeAllEffects(0, 1), 1);
+    QVERIFY(state.selectedTrack() < 0
+            || state.project()->tracks().at(state.selectedTrack()).clips.at(state.selectedClip()).id != ownId);
 }
 
 // Splitting used to give both halves the same name, so anything matching clips by name (an
