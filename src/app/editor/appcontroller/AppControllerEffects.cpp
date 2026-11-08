@@ -985,7 +985,6 @@ bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
     if (!def || !declaresParam(def->meta, key))
         return false;
 
-    const drift::Project before = m_project;
     bool asBoolean = false;
     for (const drift::EffectParamSpec &param : def->meta.parameters) {
         if (param.key == key) {
@@ -993,10 +992,13 @@ bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
             break;
         }
     }
-    if (asBoolean)
-        clip.effects[effectIndex].parameters.insert(key, value > 0.5);
-    else
-        clip.effects[effectIndex].parameters.insert(key, value);
+    const QVariant newValue = asBoolean ? QVariant(value > 0.5) : QVariant(value);
+    // Already set: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (clip.effects[effectIndex].parameters.value(key) == newValue)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.effects[effectIndex].parameters.insert(key, newValue);
     pushProjectEdit(before, tr("Edit effect"));
     finishEdit(tr("Effect updated"));
     return true;
@@ -1122,6 +1124,11 @@ bool AppController::setEffectColorParam(int trackIndex, int clipIndex, int effec
             stored += old.size() == 9 ? old.right(2) : QStringLiteral("ff");
         }
     }
+
+    const QVariantMap &params = clip.effects[effectIndex].parameters;
+    if (params.value(key).toString() == stored
+        && (specIt->enables.isEmpty() || params.value(specIt->enables).toBool()))
+        return true; // already set: no edit, so a repeating batch leaves no empty undo step
 
     const drift::Project before = m_project;
     clip.effects[effectIndex].parameters.insert(key, stored);
@@ -1760,6 +1767,10 @@ bool AppController::setAudioEffectParam(int trackIndex, int clipIndex, int effec
     const AudioEffectEntry *def = audioEffectDefForId(clip.audioEffects[effectIndex].catalogId);
     if (!def || !declaresParam(def->parameters, key))
         return false;
+
+    // Already set: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (clip.audioEffects[effectIndex].parameters.value(key) == QVariant(value))
+        return true;
 
     const drift::Project before = m_project;
     clip.audioEffects[effectIndex].parameters.insert(key, value);

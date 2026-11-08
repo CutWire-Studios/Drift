@@ -1,4 +1,5 @@
 #include "app/mcp/tools/McpCatalog.h"
+#include "app/mcp/protocol/McpValidate.h"
 #include "app/mcp/protocol/McpJson.h"
 
 #include "core/shapes/ShapeStyle.h"
@@ -44,7 +45,7 @@ QJsonObject effectIndexProp()
 {
     return integerProp(QStringLiteral(
         "0-based position in this clip's effect stack — NOT a catalog id. Read the stack from "
-        "inspect({clips:true,detail:true}), or use the index returned by add_effect/add_audio_effect."));
+        "inspect({clips:true,detail:true}), or use the effectIndex returned by add_effect/add_audio_effect."));
 }
 
 QJsonObject bookmarkIndexProp()
@@ -149,6 +150,22 @@ QJsonObject mergeProps(QJsonObject a, const QJsonObject &b)
     for (auto it = b.begin(); it != b.end(); ++it)
         a.insert(it.key(), it.value());
     return a;
+}
+
+// Schema props for ops that take an effect stack position as `index`. clipRefProps() also has an
+// `index` (the clip's position on a track), and merged after the effect props it used to replace
+// their description, so agents read `index` as a clip index. On these ops `index` is the effect,
+// so the clip is addressed by id only.
+QJsonObject effectOpProps(const QJsonObject &props)
+{
+    QJsonObject merged{
+        {QStringLiteral("clip"),
+         stringProp(QStringLiteral("Clip UUID from inspect({clips:true}) — required: on effect ops "
+                                   "`index` is the effect's stack position, not the clip's"))},
+    };
+    for (auto it = props.begin(); it != props.end(); ++it)
+        merged.insert(it.key(), it.value());
+    return merged;
 }
 
 QJsonObject textHighlightSchema(const QString &description)
@@ -691,7 +708,8 @@ const QList<Op> &ops()
           "first, current, hash, short, total, linear:true}. index 0 is Origin (empty/loaded project); "
           "each later entry is one undo step. short is the first 12 chars of that version's SHA-256 "
           "(undo_to takes any ≥8-char prefix); hash is the full HEAD hash — the same bytes "
-          "take_snapshot writes to <hash>.json. Read-only.",
+          "take_snapshot writes to <hash>.json. With an undo step limit set, each new step can drop the "
+          "oldest and renumber the rest: keep the hash, not the index, across edits. Read-only.",
           objectSchema({{QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Newest entries to return"), 1, 10000), 20)}}),
           true, false, true },
         { "undo_to", "timeline", "Jump to a history version",
@@ -726,11 +744,13 @@ const QList<Op> &ops()
           "Set canvas transform in project-canvas pixels (0,0 = canvas top-left). 3D follows After Effects: "
           "x right, y down, z AWAY from the viewer (right-handed), and rotations pivot on the anchor point. Omitted fields are "
           "left unchanged. IMPORTANT: if the property is already animated (2+ keys), or autoKey is "
-          "on, the write creates/updates a keyframe at the CURRENT PLAYHEAD instead of setting a "
-          "constant value, so seek first; a property with 0 or 1 key just takes the value. Use set_property_keyframes_enabled(false) or "
+          "on, the write creates/updates a keyframe at the CURRENT PLAYHEAD (or at `at`, timeline "
+          "seconds) instead of setting a constant value; that time must be inside the clip, else "
+          "bad_args and nothing is written. A property with 0 or 1 key just takes the value. Use set_property_keyframes_enabled(false) or "
           "remove the keys for an unconditional value. Fails bad_args on audio clips and when no "
           "transform field is supplied.",
-          objectSchema(mergeProps({{QStringLiteral("x"), numberProp(QStringLiteral("Left edge, canvas pixels"))},
+          objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds for the keyframe when the write keys (default: playhead); must be inside the clip"))},
+                                   {QStringLiteral("x"), numberProp(QStringLiteral("Left edge, canvas pixels"))},
                                    {QStringLiteral("y"), numberProp(QStringLiteral("Top edge, canvas pixels"))},
                                    {QStringLiteral("w"), numberProp(QStringLiteral("On-canvas width in pixels (not source resolution)"))},
                                    {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
@@ -818,8 +838,9 @@ const QList<Op> &ops()
                         {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows for q"), 1, 500), 50)}}),
           true, false, true },
         { "add_effect", "effects", "Put a video effect on a clip",
-          "Append a video effect to the end of the clip's stack. Returns index — its stack position, "
-          "which is what every other effect op takes. Ids are matched case-insensitively with '.' and "
+          "Append a video effect to the end of the clip's stack. Returns effectIndex — its stack "
+          "position, which is what every other effect op takes as index (the reply's own index is "
+          "the clip's position on its track). Ids are matched case-insensitively with '.' and "
           "'_' interchangeable; an unknown id fails not_found with the nearest ids. The stack is "
           "stored on an adjustment clip linked to the target (created on its own lane the first "
           "time, and reported as host:{track,index,clip}); keep addressing the original clip in "
@@ -829,9 +850,8 @@ const QList<Op> &ops()
                        {QStringLiteral("effect")}) },
         { "remove_effect", "effects", "Remove a video effect",
           "Remove a video effect by stack index. Later effects shift down one position.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()}},
-                                  clipRefProps()),
-                       {QStringLiteral("index")}),
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()}}),
+                       {QStringLiteral("clip"), QStringLiteral("index")}),
           false, true },
         { "remove_all_effects", "effects", "Strip every effect from a clip",
           "Remove all of a clip's video and audio effects in one undo step: the adjustments pinned "
@@ -848,15 +868,14 @@ const QList<Op> &ops()
           "depth.occlude's target) to a clip id string — \"\" leaves the choice to the effect. Fails "
           "not_found on a key the effect does not declare or a stack index that is not there. Take "
           "keys from list_effects({id}). Use set_effect_color_param for colors.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from the effect's params in list_effects"))},
                                    {QStringLiteral("value"),
                                     QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("number"), QStringLiteral("string")}},
-                                                {QStringLiteral("description"), QStringLiteral("Value (booleans as 0/1; a clip id for clip params); range from list_effects({id})")}}}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                                {QStringLiteral("description"), QStringLiteral("Value (booleans as 0/1; a clip id for clip params); range from list_effects({id})")}}}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_audio_effect", "effects", "Put an audio effect on a clip",
-          "Append an audio effect to the clip's audio stack. Returns index — its stack position. The "
+          "Append an audio effect to the clip's audio stack. Returns effectIndex — its stack position. The "
           "audio stack is numbered separately from the video effect stack. Fails not_found on an "
           "unknown id. Like add_effect, the stack lives on a linked adjustment clip reported as "
           "host; keep addressing the original clip.",
@@ -865,18 +884,16 @@ const QList<Op> &ops()
                        {QStringLiteral("effect")}) },
         { "remove_audio_effect", "effects", "Remove an audio effect",
           "Remove an audio effect by stack index. Later effects shift down one position.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()}},
-                                  clipRefProps()),
-                       {QStringLiteral("index")}),
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()}}),
+                       {QStringLiteral("clip"), QStringLiteral("index")}),
           false, true },
         { "set_audio_effect_param", "effects", "Tweak an audio effect",
           "Set one audio effect parameter (booleans as 0/1). Fails not_found on a key the effect does "
           "not declare or a stack index that is not there. Take keys from list_audio_effects({id}).",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_audio_effects"))},
-                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_audio_effects({id})"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_audio_effects({id})"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_transition", "effects", "Bridge two adjacent clips",
           "Add or replace a transition between this clip and the next eligible clip on the same track "
           "(the neighbour with the earliest start after it); fails bad_args when there is none. Video, "
@@ -1087,8 +1104,8 @@ const QList<Op> &ops()
           objectSchema(clipRefProps()), false, true },
 
         { "get_ui_preferences", "ui", "Read editor UI settings",
-          "Returns {theme:{overridden, dark}, autoKey, mediaGrid, reopenLastProject}. autoKey matters "
-          "for set_transform: when true, transform writes become keyframes at the playhead.",
+          "Returns {theme:{overridden, dark}, autoKey, mediaGrid, reopenLastProject, proxySuggestion}. autoKey matters "
+          "for set_transform: when true, transform writes become keyframes at the playhead (or its `at`), which must be inside the clip.",
           objectSchema({}), true, false, true },
         { "set_theme", "ui", "Set dark or light theme",
           "Set an explicit dark-mode preference. This overrides the OS theme; clear it with "
@@ -1337,8 +1354,10 @@ QString agentGuideText()
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
-        "  type_mismatch; unknown keys come back as ignored:[…]. inspect, capture, frames and\n"
-        "  activity are not schema-checked. Numbers are rounded to 3 dp except fps/pos.\n"
+        "  type_mismatch; unknown keys come back as ignored:[…]. The homepage tools (catalog,\n"
+        "  toolbox, search, inspect, apply, capture, frames, activity) are checked too and reject\n"
+        "  their own unknown keys with bad_args.\n"
+        "  Numbers are rounded to 3 dp except fps/pos.\n"
         "\n"
         "Selection-based ops take no clip argument and act on the current selection — call\n"
         "select_clip or select_clips first: separate_audio, unlink_audio, link_clips, merge_clips,\n"
@@ -1506,7 +1525,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
              QStringLiteral("apply cannot run catalog, toolbox, search, inspect, capture, frames, activity, or apply; call those directly."),
              QStringLiteral("Clip-ref ops need clip (uuid) or track+index; they never fall back to the selection (read it from inspect.selection)."),
              QStringLiteral("Effect and transition parameter writes fail not_found on an unknown key or a stack index that is not there."),
-             QStringLiteral("set_transform writes at the playhead and becomes a keyframe when the property is animated or autoKey is on."),
+             QStringLiteral("set_transform keys at the playhead (or at, inside the clip) when the property is animated or autoKey is on."),
              QStringLiteral("set_mask and set_subtitle_cues replace the whole mask / cue list; read the current one from inspect first."),
              QStringLiteral("Segmentation, denoise and face detection expose no progress field; diff inspect to detect completion."),
              QStringLiteral("Outside the undo stack (as are all read-only ops): %1. set_beat_layers changes the user's own snapping and cannot be undone.")
@@ -1554,6 +1573,43 @@ QJsonObject toolboxPayload(const QString &name, const QStringList &only)
     if (!unknown.isEmpty())
         out.insert(QStringLiteral("unknown"), unknown);
     return out;
+}
+
+QJsonObject homepageToolSchema(const QString &name)
+{
+    // Built once: the schemas are fixed for the life of the process, and this runs on every call.
+    static const QHash<QString, QJsonObject> schemas = [] {
+        QHash<QString, QJsonObject> map;
+        for (const QJsonValue &tool : homepageTools())
+            map.insert(tool.toObject().value(QStringLiteral("name")).toString(),
+                       tool.toObject().value(QStringLiteral("inputSchema")).toObject());
+        return map;
+    }();
+    return schemas.value(name);
+}
+
+QJsonObject checkHomepageArgs(const QString &name, QJsonObject &args)
+{
+    const QJsonObject schema = homepageToolSchema(name);
+    if (schema.isEmpty())
+        return {};
+    QStringList ignored;
+    const QJsonObject invalid = validateArgs(name, schema, args, &ignored);
+    if (!invalid.isEmpty())
+        return invalid;
+    // Only the tool's own top-level keys are refused. Extra keys nested in its structures (a note
+    // on an apply op item) stay ignored, as they always were.
+    ignored.erase(std::remove_if(ignored.begin(), ignored.end(),
+                                 [](const QString &key) {
+                                     return key.contains(QLatin1Char('.')) || key.contains(QLatin1Char('['));
+                                 }),
+                  ignored.end());
+    if (ignored.isEmpty())
+        return {};
+    QStringList valid = schema.value(QStringLiteral("properties")).toObject().keys();
+    valid.sort();
+    return err("bad_args", QStringLiteral("%1 does not take %2; valid: %3")
+                               .arg(name, ignored.join(QStringLiteral(", ")), valid.join(QStringLiteral(", "))));
 }
 
 QJsonArray homepageTools()
@@ -1621,9 +1677,11 @@ QJsonArray homepageTools()
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),
-        QStringLiteral("When: Verify visually. Still of the composition at `at`, defaulting to the playhead. Pauses playback first. By default returns an inline JPEG scaled to a 1280px long edge plus {at, w, h, full}; full=true instead writes a full-resolution PNG next to the project's frame captures and returns its path in the reply. beyond_end:true and dur are added when `at` is past the end of the timeline. view:\"editor3d\" instead renders the preview's free 3D viewpoint (the one set_preview_view moves; the overview if never placed) with the scene camera and stage drawn in it, and adds view to the reply. Cannot be used inside apply."),
+        QStringLiteral("When: Verify visually. Still of the composition at `at`, defaulting to the playhead. Pauses playback first. By default returns an inline JPEG scaled to a 1280px long edge plus {at, w, h, full}; full=true instead writes a full-resolution PNG to this session's agent-image cache folder (not the project; deleted when Drift quits, or swept after a day if it crashed; import_media copies such a file into the project) and returns its path in the reply; path:\"/abs/file.png\" writes it there instead, refusing an existing file unless overwrite:true. beyond_end:true and dur are added when `at` is past the end of the timeline. view:\"editor3d\" instead renders the preview's free 3D viewpoint (the one set_preview_view moves; the overview if never placed) with the scene camera and stage drawn in it, and adds view to the reply. Cannot be used inside apply."),
         objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds (default: playhead)"))},
                       {QStringLiteral("full"), boolProp(QStringLiteral("Full-res PNG on disk instead of inline JPEG"))},
+                      {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .png path to write to (its folder must exist; not a symlink); a file instead of inline JPEG, full-res only with full:true (else 1280px long edge)"))},
+                      {QStringLiteral("overwrite"), boolProp(QStringLiteral("Replace an existing file at path (default false: fails with exists)"))},
                       {QStringLiteral("view"), propWithDefault(enumProp(QStringLiteral("program is the composition; editor3d is the preview's free 3D viewpoint"),
                                                                    {QStringLiteral("program"), QStringLiteral("editor3d")}),
                                                           QStringLiteral("program"))}}),
@@ -1653,7 +1711,7 @@ QJsonArray homepageTools()
              {QStringLiteral("tile"), integerProp(QStringLiteral("Tile width in pixels; 0 = auto so the sheet fits one vision image"), 0, 720)},
              {QStringLiteral("label"), propWithDefault(boolProp(QStringLiteral("Burn the time into each tile")), true)},
              {QStringLiteral("return"),
-              propWithDefault(enumProp(QStringLiteral("inline JPEG in the reply, or path to a JPEG next to the project's frame captures"),
+              propWithDefault(enumProp(QStringLiteral("inline JPEG in the reply, or path to a JPEG in this session's agent-image cache folder (deleted when Drift quits, or swept after a day if it crashed)"),
                                        {QStringLiteral("inline"), QStringLiteral("path")}),
                               QStringLiteral("inline"))}},
             clipRefProps())),

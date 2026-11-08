@@ -347,7 +347,7 @@ bool SubtitleController::applyText(int track, int clip, const QString &text, con
     const drift::Project before = m_app->m_project;
     drift::Clip &target = m_app->m_project.tracks()[track].clips[clip];
     target.subtitleCues = std::move(cues);
-    target.name = drift::subtitleClipName(target.subtitleCues);
+    drift::refreshSubtitleClipName(target.name, target.subtitleCues);
     target.timelineDuration = duration;
     target.srcOut = duration;
     m_app->pushProjectEdit(before, tr("Edit subtitle text"));

@@ -1091,6 +1091,24 @@
       "descriptionSource": "How often unsaved work is snapshotted for crash recovery."
     },
     {
+      "id": "general-undo-history",
+      "target": "settings:general#general-undo-history",
+      "context": "SettingsGeneralPage",
+      "source": "Undo history",
+      "keywords": "undo redo history memory steps",
+      "needs": [],
+      "descriptionSource": "Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way."
+    },
+    {
+      "id": "general-undo-steps",
+      "target": "settings:general#general-undo-steps",
+      "context": "SettingsGeneralPage",
+      "source": "Undo steps kept",
+      "keywords": "undo redo history memory limit",
+      "needs": [],
+      "descriptionSource": "Older steps are dropped, and media only they used is no longer kept for them."
+    },
+    {
       "id": "general-remind-essential-packs",
       "target": "settings:general#general-remind-essential-packs",
       "context": "SettingsGeneralPage",
@@ -1383,6 +1401,15 @@
       "keywords": "proxy low resolution optimized",
       "needs": [],
       "descriptionSource": "Play clips from their low-resolution proxies where one exists. Export always uses the original media."
+    },
+    {
+      "id": "preview-proxy-suggestion",
+      "target": "settings:preview#preview-proxy-suggestion",
+      "context": "SettingsPreviewPage",
+      "source": "Suggest proxies on import",
+      "keywords": "proxy import suggest notification automatic",
+      "needs": [],
+      "descriptionSource": "What to do when imported footage may preview slowly."
     },
     {
       "id": "preview-proxy-resolution",
