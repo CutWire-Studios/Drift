@@ -99,6 +99,7 @@ private slots:
     void proxySuggestionFollowsThePreference();
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
+    void splittingANamedSubtitleClipNumbersThePieces();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -901,6 +902,46 @@ void McpTest::subtitleClipKeepsItsChosenName()
     cues.removeLast();
     state.setSubtitleCues(0, 0, cues);
     QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
+}
+
+// A subtitle clip with a chosen name is split like any other clip: the new piece gets the next
+// " (N)". One whose name is generated keeps naming each half from its own cues.
+void McpTest::splittingANamedSubtitleClipNumbersThePieces()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    const auto subtitleClip = [](const QString &id) {
+        drift::Clip clip;
+        clip.id = id;
+        clip.type = drift::ClipType::Subtitle;
+        clip.timelineDuration = drift::secondsToUs(4.0);
+        clip.srcOut = clip.timelineDuration;
+        clip.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("one")},
+                             drift::SubtitleCue{drift::secondsToUs(2.5), drift::secondsToUs(3.5),
+                                                QStringLiteral("two")}};
+        clip.name = drift::subtitleClipName(clip.subtitleCues);
+        return clip;
+    };
+    drift::Clip named = subtitleClip(QStringLiteral("named"));
+    named.name = QStringLiteral("VO script");
+    state.project()->tracks()[0].clips.append(named);
+
+    state.splitClipAt(0, 0, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("VO script"));
+    QCOMPARE(state.project()->tracks().at(0).clips.at(1).name, QStringLiteral("VO script (2)"));
+
+    // Generated: each half is named from the cues it keeps, never with a piece number.
+    state.project()->tracks()[0].clips.clear();
+    state.project()->tracks()[0].clips.append(subtitleClip(QStringLiteral("generated")));
+    state.splitClipAt(0, 0, 2.0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 2);
+    for (const drift::Clip &half : state.project()->tracks().at(0).clips) {
+        QVERIFY2(drift::isGeneratedSubtitleClipName(half.name), qPrintable(half.name));
+        QVERIFY2(!half.name.endsWith(QStringLiteral(" (2)")), qPrintable(half.name));
+    }
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
