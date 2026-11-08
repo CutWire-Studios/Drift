@@ -13654,8 +13654,8 @@
         <translation>تعذر قراءة هذا الملف — التنسيق غير مدعوم في هذا الإصدار.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>قد يتم تشغيل %n مقطع ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
             <numerusform>قد يتم تشغيل %n مقطع ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
             <numerusform>قد يتم تشغيل %n مقطعان ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
@@ -18565,6 +18565,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>تشغيل المقاطع من ملفاتها الوكيلة منخفضة الدقة عند توفرها. يستخدم التصدير دائمًا الوسائط الأصلية.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

@@ -13430,8 +13430,8 @@
         <translation>Não foi possível ler esse arquivo — o formato não é compatível com esta versão.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n clipe pode ter reprodução lenta. Um proxy torna a pré-visualização mais suave; a exportação ainda usa o original.</numerusform>
             <numerusform>%n clipes podem ter reprodução lenta. Um proxy torna a pré-visualização mais suave; a exportação ainda usa o original.</numerusform>
         </translation>
@@ -18285,6 +18285,26 @@ Se a reprodução travar, experimente outro.</translation>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>Reproduz clipes a partir de seus proxies de baixa resolução onde houver um. A exportação sempre usa a mídia original.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

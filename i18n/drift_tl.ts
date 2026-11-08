@@ -13430,8 +13430,8 @@
         <translation>Hindi mabasa ang file na iyon — hindi suportado ang format sa build na ito.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>Maaaring mabagal mag-playback ang %n clip. Ginagawang mas makinis ng proxy ang pag-preview; ginagamit pa rin ng export ang orihinal.</numerusform>
             <numerusform>Maaaring mabagal mag-playback ang %n mga clip. Ginagawang mas makinis ng proxy ang pag-preview; ginagamit pa rin ng export ang orihinal.</numerusform>
         </translation>
@@ -18286,6 +18286,26 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>I-play ang mga clip mula sa kanilang mga proxy na may mababang resolusyon kung saan mayroon. Palaging ginagamit ng pag-export ang orihinal na media.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

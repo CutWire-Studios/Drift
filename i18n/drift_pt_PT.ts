@@ -13430,8 +13430,8 @@
         <translation>Não foi possível ler esse ficheiro — o formato não é suportado por esta versão.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n clipe pode ser reproduzido lentamente. Um proxy torna a pré-visualização mais fluida; a exportação continua a usar o original.</numerusform>
             <numerusform>%n clipes podem ser reproduzidos lentamente. Um proxy torna a pré-visualização mais fluida; a exportação continua a usar o original.</numerusform>
         </translation>
@@ -18286,6 +18286,26 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>Reproduz clipes a partir dos respetivos proxies de baixa resolução, quando existirem. A exportação usa sempre a multimédia original.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

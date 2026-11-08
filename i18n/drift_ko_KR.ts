@@ -13374,8 +13374,8 @@
         <translation>해당 파일을 읽을 수 없습니다 — 이 빌드에서 해당 형식을 지원하지 않습니다.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>클립 %n개는 재생이 느릴 수 있습니다. 프록시를 사용하면 미리보기가 더 부드러워지며, 내보낼 때는 원본을 사용합니다.</numerusform>
         </translation>
     </message>
@@ -18208,6 +18208,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>가능한 경우 저해상도 프록시에서 클립을 재생합니다. 내보내기에는 항상 원본 미디어가 사용됩니다.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

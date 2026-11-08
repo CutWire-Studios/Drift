@@ -13486,8 +13486,8 @@
         <translation>Не удалось прочитать файл: его формат не поддерживается в этой сборке.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n клип может воспроизводиться медленно. Прокси сделает предпросмотр плавнее; при экспорте будет использован оригинал.</numerusform>
             <numerusform>%n клипа могут воспроизводиться медленно. Прокси сделают предпросмотр плавнее; при экспорте будут использованы оригиналы.</numerusform>
             <numerusform>%n клипов могут воспроизводиться медленно. Прокси сделают предпросмотр плавнее; при экспорте будут использованы оригиналы.</numerusform>
@@ -18355,6 +18355,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>Воспроизводить клипы из прокси-файлов низкого разрешения, если они есть. При экспорте всегда используются исходные медиафайлы.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

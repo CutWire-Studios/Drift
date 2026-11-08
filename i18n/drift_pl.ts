@@ -13486,8 +13486,8 @@
         <translation>Nie udało się odczytać tego pliku — format nie jest obsługiwany w tej wersji.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n klip może odtwarzać się z opóźnieniem. Plik proxy usprawnia podgląd; eksport nadal korzysta z oryginału.</numerusform>
             <numerusform>%n klipy mogą odtwarzać się z opóźnieniem. Pliki proxy usprawniają podgląd; eksport nadal korzysta z oryginałów.</numerusform>
             <numerusform>%n klipów może odtwarzać się z opóźnieniem. Pliki proxy usprawniają podgląd; eksport nadal korzysta z oryginałów.</numerusform>
@@ -18356,6 +18356,26 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>Odtwarzaj klipy z ich proxy o niskiej rozdzielczości, jeśli istnieją. Eksport zawsze używa oryginalnych mediów.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

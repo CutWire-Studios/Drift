@@ -13432,8 +13432,8 @@
         <translation>Impossible de lire ce fichier — le format n&apos;est pas pris en charge par cette version.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n clip peut être lu lentement. Un proxy rend l&apos;aperçu plus fluide; l&apos;exportation utilise toujours l&apos;original.</numerusform>
             <numerusform>%n clips peuvent être lus lentement. Un proxy rend l&apos;aperçu plus fluide; l&apos;exportation utilise toujours l&apos;original.</numerusform>
         </translation>
@@ -18287,6 +18287,26 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>Lit les clips à partir de leurs proxys basse résolution lorsqu&apos;il en existe un. L&apos;exportation utilise toujours le média original.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
