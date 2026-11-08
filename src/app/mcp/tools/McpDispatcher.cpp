@@ -731,7 +731,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
                      : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
             m_controller->mcp()->endBatch(batchLabel(i),
-                                      hadUndoable && i > 0);
+                                      hadUndoable && i > 0 && m_controller->mcp()->batchChangedProject());
             return {{QStringLiteral("ok"), false},
                     {QStringLiteral("error"), QStringLiteral("apply_failed")},
                     {QStringLiteral("stopped"), i},
@@ -745,7 +745,8 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         if (isUndoable(tool) || refreshed)
             hadUndoable = true;
     }
-    m_controller->mcp()->endBatch(batchLabel(ops.size()), hadUndoable);
+    m_controller->mcp()->endBatch(batchLabel(ops.size()),
+                                  hadUndoable && m_controller->mcp()->batchChangedProject());
     return ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}});
 }
 
