@@ -4731,6 +4731,10 @@ void McpTest::applyWithoutHistoryJoinsTheNewestStep()
     QVERIFY(!dispatcher.apply(failing).value(QStringLiteral("ok")).toBool());
     QCOMPARE(clips(), 5);
     QCOMPARE(state.undoHistory().size(), 1);
+    state.undo(); // the folded op goes with the step it joined
+    QCOMPARE(clips(), 1);
+    state.redo();
+    QCOMPARE(clips(), 5);
 
     // Unsaved afterwards, like any edit: nothing was pushed, so this is set explicitly.
     {
@@ -4744,6 +4748,29 @@ void McpTest::applyWithoutHistoryJoinsTheNewestStep()
         QVERIFY(quiet(6).value(QStringLiteral("ok")).toBool());
         QVERIFY(state.projectFile()->hasUnsavedChanges());
         QVERIFY(dispatcher.inspect({}).value(QStringLiteral("dirty")).toBool());
+
+        // A batch that changes nothing leaves history and the saved state alone: redo survives
+        // and a clean project stays clean.
+        state.undo();
+        QVERIFY(state.redoAvailable());
+        state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("quiet.drift"))));
+        state.projectFile()->waitForSave();
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+        const QString anyClip = dispatcher.inspect({{QStringLiteral("clips"), true}})
+                                    .value(QStringLiteral("tracks")).toArray().at(0).toObject()
+                                    .value(QStringLiteral("items")).toArray().at(0).toObject()
+                                    .value(QStringLiteral("id")).toString();
+        QVERIFY(!anyClip.isEmpty());
+        const QString sameName = state.project()->tracks().at(0).clips.at(0).name;
+        QJsonObject noop{{QStringLiteral("history"), false},
+                         {QStringLiteral("ops"),
+                          QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                                 {QStringLiteral("args"),
+                                                  QJsonObject{{QStringLiteral("clip"), anyClip},
+                                                              {QStringLiteral("name"), sameName}}}}}}};
+        QVERIFY(dispatcher.apply(noop).value(QStringLiteral("ok")).toBool());
+        QVERIFY(state.redoAvailable());
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
     }
 }
 

@@ -729,8 +729,9 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
     // history:false — no undo step of its own: the batch is folded into the newest one.
     const bool ownStep = jsonBool(args.value(QStringLiteral("history")), true);
     const auto endBatch = [&](const QString &label, bool changed) {
-        // A batch whose ops changed nothing adds no step (jmn8718/Drift#46). Asked before
-        // endBatch, whose finishEdit moves the edit revision either way.
+        // A batch whose ops changed nothing adds no step (jmn8718/Drift#46) and, without its own
+        // step, must not touch history (the fold would drop redo) or mark a clean project
+        // unsaved. Asked before endBatch, whose finishEdit moves the edit revision either way.
         if (changed)
             changed = m_controller->mcp()->batchChangedProject();
         m_controller->mcp()->endBatch(label, ownStep && changed);
