@@ -1963,6 +1963,24 @@ void AppController::dropKeyframeGraphPropertiesForEffect(int removedIndex, bool 
     emit keyframeGraphVisibilityChanged();
 }
 
+void AppController::dropKeyframeGraphEffectProperties(bool video, bool audio)
+{
+    QStringList next;
+    for (const QString &prop : std::as_const(m_keyframeGraphHiddenProperties)) {
+        int effectIndex = -1;
+        QString paramKey;
+        if ((video && parseEffectProp(prop, &effectIndex, &paramKey))
+            || (audio && parseAudioEffectProp(prop, &effectIndex, &paramKey))) {
+            continue;
+        }
+        next.append(prop);
+    }
+    if (next == m_keyframeGraphHiddenProperties)
+        return;
+    m_keyframeGraphHiddenProperties = next;
+    emit keyframeGraphVisibilityChanged();
+}
+
 // Moving an effect between slots is the same addressing problem as remove: rewrite every
 // fx.N.* entry so the hidden set still points at the same parameters after the swap.
 void AppController::remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int toIndex, bool audio)

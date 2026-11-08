@@ -29,6 +29,11 @@ void sortSubtitleCues(QList<SubtitleCue> &cues);
 
 // Timeline label for a subtitle clip, e.g. "Subtitles (12)".
 QString subtitleClipName(const QList<SubtitleCue> &cues);
+// Whether `name` is one subtitleClipName() made (or empty), as opposed to one the user or an
+// agent chose. Only a generated name follows the cue count as cues change.
+bool isGeneratedSubtitleClipName(const QString &name);
+// Recount a subtitle clip's name from its cues, unless it carries a chosen name.
+void refreshSubtitleClipName(QString &name, const QList<SubtitleCue> &cues);
 
 // Re-pack Whisper (or other) segment cues into shorter display lines, matching openai-whisper's
 // VTT writer with word_timestamps + max_line_width / max_line_count. Words inside a segment get

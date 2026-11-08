@@ -14,6 +14,13 @@ QJsonObject catalogPayload(const QJsonObject &args = {});
 // name selects one toolbox; only (op names, any toolbox) narrows or replaces it.
 QJsonObject toolboxPayload(const QString &name, const QStringList &only = {});
 QJsonArray homepageTools();
+// The inputSchema of one homepage tool (inspect, capture, frames, …); empty if there is none.
+QJsonObject homepageToolSchema(const QString &name);
+// Validates a homepage tool's args against its schema (coercing them in place, like toolbox ops)
+// and refuses unknown keys with bad_args naming the valid ones: capture({time: 3}) used to capture
+// at the playhead without a word. Toolbox ops keep reporting unknown keys as ignored:[...].
+// Returns the error object, or {} when the args are fine (or the name has no schema).
+QJsonObject checkHomepageArgs(const QString &name, QJsonObject &args);
 QJsonArray toolboxDirectTools(const QString &name);
 bool isHomepageTool(const QString &name);
 bool isKnownOp(const QString &name);

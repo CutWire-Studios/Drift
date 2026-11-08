@@ -1,6 +1,7 @@
 #include "app/mcp/tools/McpDispatcher.h"
 #include "engine/packages/audio/AudioEffectCatalog.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "core/base/CacheRoot.h"
 #include "app/editor/PreferencesController.h"
 #include "app/editor/sessions/SpeedCurveController.h"
 #include "app/mcp/McpController.h"
@@ -30,6 +31,16 @@
 #include <QVariantMap>
 
 namespace drift::mcp {
+
+QString effectCatalogKey(const QString &id)
+{
+    QString k = id.trimmed().toLower();
+    if (k.startsWith(QLatin1String("builtin.effects.")))
+        k.remove(0, 16);
+    k.replace(QLatin1Char('.'), QLatin1Char('_'));
+    return k;
+}
+
 namespace {
 
 QSet<QString> clipIdSet(AppController *c)
@@ -156,11 +167,7 @@ QString findNewClipId(const QSet<QString> &before, const QSet<QString> &after)
 
 QString catalogKey(const QString &id)
 {
-    QString k = id.trimmed().toLower();
-    if (k.startsWith(QLatin1String("builtin.effects.")))
-        k.remove(0, 16);
-    k.replace(QLatin1Char('.'), QLatin1Char('_'));
-    return k;
+    return effectCatalogKey(id);
 }
 
 QStringList catalogIds(const QVariantList &catalog)
@@ -702,6 +709,9 @@ const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLite
 
 QJsonObject McpDispatcher::apply(const QJsonObject &args)
 {
+    // A history-limit trim still queued from the last edit runs before any op reads or moves
+    // through history (undo, redo, list_history, undo_to).
+    m_controller->flushUndoHistoryTrim();
     const QJsonArray ops = args.value(QStringLiteral("ops")).toArray();
     if (ops.isEmpty())
         return err("bad_args", QStringLiteral("ops must be a non-empty array"));
@@ -733,7 +743,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
                      : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
             m_controller->mcp()->endBatch(batchLabel(i),
-                                      hadUndoable && i > 0);
+                                      hadUndoable && i > 0 && m_controller->mcp()->batchChangedProject());
             return {{QStringLiteral("ok"), false},
                     {QStringLiteral("error"), QStringLiteral("apply_failed")},
                     {QStringLiteral("stopped"), i},
@@ -747,12 +757,14 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         if (isUndoable(tool) || refreshed)
             hadUndoable = true;
     }
-    m_controller->mcp()->endBatch(batchLabel(ops.size()), hadUndoable);
+    m_controller->mcp()->endBatch(batchLabel(ops.size()),
+                                  hadUndoable && m_controller->mcp()->batchChangedProject());
     return ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}});
 }
 
 QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args)
 {
+    m_controller->flushUndoHistoryTrim(); // see apply()
     if (!isKnownOp(tool))
         return unknownOpError(tool);
     QJsonObject checked = args;
@@ -760,6 +772,16 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     const QJsonObject invalid = validateArgs(tool, opInputSchema(tool), checked, &ignored);
     if (!invalid.isEmpty())
         return invalid;
+    // Ops whose index is an effect's stack position address the clip by id only: with the id
+    // blank, resolveClip would fall back to track+index and read the effect index as the clip's.
+    static const QSet<QString> kEffectIndexOps{
+        QStringLiteral("remove_effect"),           QStringLiteral("set_effect_param"),
+        QStringLiteral("remove_audio_effect"),     QStringLiteral("set_audio_effect_param"),
+        QStringLiteral("set_effect_enabled"),      QStringLiteral("set_effect_color_param"),
+        QStringLiteral("set_audio_effect_enabled"), QStringLiteral("set_effect_string_param")};
+    if (kEffectIndexOps.contains(tool) && checked.value(QStringLiteral("clip")).toString().trimmed().isEmpty())
+        return err("bad_args", QStringLiteral("clip required: a clip id from inspect({clips:true}); on %1, index is "
+                                              "the effect's stack position, not the clip's").arg(tool));
     QJsonObject result = applyOneUnchecked(tool, checked);
     if (!ignored.isEmpty() && result.value(QStringLiteral("ok")).toBool())
         result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));
@@ -838,6 +860,8 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
         return opRemoveEffect(args);
     if (tool == QLatin1String("copy_effects"))
         return opCopyEffects(args);
+    if (tool == QLatin1String("remove_all_effects"))
+        return opRemoveAllEffects(args);
     if (tool == QLatin1String("set_effect_param"))
         return opSetEffectParam(args);
     if (tool == QLatin1String("add_audio_effect"))
@@ -917,7 +941,28 @@ QJsonObject McpDispatcher::capture(const QJsonObject &args)
     const QString view = args.value(QStringLiteral("view")).toString(QStringLiteral("program"));
     if (view != QLatin1String("program") && view != QLatin1String("editor3d"))
         return textResult(err("bad_args", QStringLiteral("view must be program or editor3d")), true);
-    return m_controller->mcp()->captureFrame(at, full, view == QLatin1String("editor3d"));
+    QString path = args.value(QStringLiteral("path")).toString().trimmed();
+    if (!path.isEmpty()) {
+        if (path.startsWith(QLatin1String("file://")))
+            path = QUrl(path).toLocalFile();
+        const QFileInfo info(path);
+        if (info.fileName().isEmpty())
+            return textResult(err("bad_args", QStringLiteral("path must name a file")), true);
+        if (!info.isAbsolute())
+            return textResult(err("bad_args", QStringLiteral("path must be absolute")), true);
+        if (!info.dir().exists())
+            return textResult(err("bad_args", QStringLiteral("path's folder does not exist: %1").arg(info.dir().path())), true);
+        if (!path.endsWith(QLatin1String(".png"), Qt::CaseInsensitive))
+            path += QStringLiteral(".png");
+        // Never write through a symlink, and never replace a file unless asked to.
+        const QFileInfo target(path);
+        if (target.isSymLink())
+            return textResult(err("bad_args", QStringLiteral("path is a symlink: %1").arg(path)), true);
+        if (target.exists() && !jsonBool(args.value(QStringLiteral("overwrite"))))
+            return textResult(err("exists", QStringLiteral("%1 already exists; pass overwrite:true to replace it").arg(path)), true);
+    }
+    return m_controller->mcp()->captureFrame(at, full, view == QLatin1String("editor3d"), path,
+                                             !path.isEmpty() && jsonBool(args.value(QStringLiteral("overwrite"))));
 }
 
 QJsonObject McpDispatcher::frames(const QJsonObject &args)
@@ -1027,9 +1072,72 @@ QJsonObject McpDispatcher::opImportMedia(const QJsonObject &args)
     AssetLibrary *lib = m_controller->assetLibrary();
     if (!lib)
         return err("not_found", QStringLiteral("No media bin"));
-    const QStringList paths = jsonStringList(args.value(QStringLiteral("paths")));
+    QStringList paths = jsonStringList(args.value(QStringLiteral("paths")));
     if (paths.isEmpty())
         return err("bad_args", QStringLiteral("paths required"));
+
+    // An agent capture lives in the session's image cache, which is swept; importing one copies it
+    // into the project's media folder first, so the project never points into the cache.
+    // Any session's folder counts (the agent-images root): another instance's, or a crashed
+    // one's, is swept just the same. Resolved from the cache root itself, not by creating this
+    // session's folder, so a failure there can't let a cache file be imported in place.
+    QStringList adopted;
+    QStringList uncopied;
+    const QString cacheBase = drift::cacheRoot();
+    const QString cacheRoot = cacheBase.isEmpty()
+        ? QString()
+        : QFileInfo(QDir(cacheBase).filePath(QStringLiteral("agent-images"))).canonicalFilePath();
+    if (!cacheRoot.isEmpty()) {
+        const QString mediaDir = AppController::projectMediaDir(m_controller->project()->id());
+        for (QString &path : paths) {
+            const QString canonical = QFileInfo(path).canonicalFilePath();
+            if (!canonical.startsWith(cacheRoot + QLatin1Char('/')))
+                continue;
+            // A fresh name every time, reserved by creating it exclusively (NewOnly fails on any
+            // existing entry, a symlink included): an existing file is never taken as the copy, so
+            // two captures called look.png stay two images.
+            QString copy;
+            if (!mediaDir.isEmpty()) {
+                const QFileInfo source(canonical);
+                const QString stem = source.completeBaseName();
+                const QString suffix = source.suffix().isEmpty() ? QString() : QLatin1Char('.') + source.suffix();
+                QFile in(canonical);
+                if (in.open(QIODevice::ReadOnly)) {
+                    for (int n = 1; n < 1000 && copy.isEmpty(); ++n) {
+                        const QString candidate = QDir(mediaDir).filePath(
+                            n == 1 ? stem + suffix : QStringLiteral("%1-%2%3").arg(stem).arg(n).arg(suffix));
+                        QFile out(candidate);
+                        if (!out.open(QIODevice::WriteOnly | QIODevice::NewOnly))
+                            continue; // taken (or not creatable): try the next name
+                        bool ok = in.seek(0);
+                        while (ok && !in.atEnd()) {
+                            const QByteArray chunk = in.read(1 << 20);
+                            ok = !chunk.isEmpty() && out.write(chunk) == chunk.size();
+                        }
+                        ok = ok && out.flush();
+                        out.close();
+                        if (ok)
+                            copy = candidate;
+                        else {
+                            out.remove();
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!copy.isEmpty()) {
+                adopted.append(copy);
+                path = copy;
+            } else {
+                uncopied.append(path); // never import it in place: the project would point into the cache
+            }
+        }
+        for (const QString &path : std::as_const(uncopied))
+            paths.removeAll(path);
+        if (paths.isEmpty())
+            return err("import_failed", QStringLiteral("Could not copy %1 into the project's media folder")
+                                            .arg(uncopied.join(QStringLiteral(", "))));
+    }
 
     QStringList missing;
     QStringList existing;
@@ -1052,6 +1160,10 @@ QJsonObject McpDispatcher::opImportMedia(const QJsonObject &args)
     QJsonObject result = waitImport(ids);
     if (!missing.isEmpty())
         result.insert(QStringLiteral("missing"), QJsonArray::fromStringList(missing));
+    if (!adopted.isEmpty())
+        result.insert(QStringLiteral("copied_into_project"), QJsonArray::fromStringList(adopted));
+    if (!uncopied.isEmpty())
+        result.insert(QStringLiteral("not_copied"), QJsonArray::fromStringList(uncopied));
     if (!existing.isEmpty())
         result.insert(QStringLiteral("refreshed"), QJsonArray::fromStringList(existing));
     addRefreshOutcome(result, refreshing);
@@ -1504,8 +1616,12 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
         patch.insert(QStringLiteral("layer3d"), args.value(QStringLiteral("layer3d")).toBool());
     if (patch.isEmpty())
         return err("bad_args", QStringLiteral("No transform fields"));
-    if (!m_controller->mcp()->setClipCanvas(ref.track, ref.clip, patch))
-        return err("bad_args", QStringLiteral("Transform refused"));
+    const double at = args.contains(QStringLiteral("at")) ? jsonNumber(args.value(QStringLiteral("at")), -1.0) : -1.0;
+    if (args.contains(QStringLiteral("at")) && at < 0.0)
+        return err("bad_args", QStringLiteral("at must be >= 0 timeline seconds"));
+    QString why;
+    if (!m_controller->mcp()->setClipCanvas(ref.track, ref.clip, patch, at, &why))
+        return err("bad_args", why.isEmpty() ? QStringLiteral("Transform refused") : why);
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     QJsonObject extra;
     const QJsonArray parented = transformedBy(after.track);
@@ -1666,7 +1782,8 @@ QJsonObject McpDispatcher::opAddEffect(const QJsonObject &args)
     const QVariantList after = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
     if (after.size() <= before.size())
         return err("not_found", QStringLiteral("Unknown effect id"));
-    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("index"), after.size() - 1},
+    // effectIndex, not only index: clipFeedback overwrites index with the clip's own position.
+    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("effectIndex"), after.size() - 1},
                                                  {QStringLiteral("effect"), effect}})));
 }
 
@@ -1775,6 +1892,27 @@ QJsonObject McpDispatcher::opCopyEffects(const QJsonObject &args)
     return ok(reply);
 }
 
+QJsonObject McpDispatcher::opRemoveAllEffects(const QJsonObject &args)
+{
+    const ClipRef ref = resolveClip(args);
+    if (!ref.valid())
+        return clipRefError(args);
+    // An effect host id (what add_effect reports as host) stands for the clip it is pinned to,
+    // and is itself among what gets deleted, so the reply is about the clip.
+    const drift::Clip &target = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip);
+    if (target.type == drift::ClipType::Adjustment && target.linkedClipId.isEmpty())
+        return err("type_mismatch", QStringLiteral("A free adjustment is not a clip's effect stack; "
+                                                   "use delete_clip to remove it"));
+    const QString clipId = target.type == drift::ClipType::Adjustment && !target.linkedClipId.isEmpty()
+                               ? target.linkedClipId
+                               : ref.id;
+    const int removed = m_controller->removeAllEffects(ref.track, ref.clip,
+                                                       jsonBool(args.value(QStringLiteral("masks"))));
+    // Removing a lane can shift track indices; report the clip where it is now.
+    const QPair<int, int> loc = m_controller->mcp()->locateClip(clipId);
+    return ok(clipFeedback({loc.first, loc.second, clipId}, {{QStringLiteral("removed"), removed}}));
+}
+
 QJsonObject McpDispatcher::opSetEffectParam(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
@@ -1817,7 +1955,7 @@ QJsonObject McpDispatcher::opAddAudioEffect(const QJsonObject &args)
         m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("audioEffects")).toList().size();
     if (after <= before)
         return err("not_found", QStringLiteral("Unknown audio effect id"));
-    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("index"), after - 1},
+    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("effectIndex"), after - 1},
                                                  {QStringLiteral("effect"), effect}})));
 }
 
@@ -2490,6 +2628,7 @@ QJsonObject McpDispatcher::opGetUiPreferences() const
         {QStringLiteral("autoKey"), m_controller->autoKeyEnabled()},
         {QStringLiteral("mediaGrid"), m_controller->mediaGridMode()},
         {QStringLiteral("reopenLastProject"), m_controller->preferences()->reopenLastProject()},
+        {QStringLiteral("proxySuggestion"), m_controller->preferences()->proxySuggestion()},
     });
 }
 
