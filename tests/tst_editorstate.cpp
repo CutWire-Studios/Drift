@@ -371,6 +371,7 @@ private slots:
     void multicamCancelIsIdentity();
     void multicamSaveSeparateWritesGappedClips();
     void multicamSaveCombinedFlattensOntoTopmost();
+    void multicamSlicesOfOneAngleGetDistinctNames();
     void multicamSessionEndsWithTheProject();
     void multicamSessionPublishesADecodedTilePerAngle();
     void multicamProviderServesTilesByAngleIdWithRevisionQuery();
@@ -378,6 +379,7 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void splitPiecesGetDistinctNames();
     void redoDoesNotLeaveTheSelectionOnANeighbour();
     void undoRedoKeepsASelectedTransition();
     void redoKeepsPinnedAdjustmentsOnTheirClips();
@@ -9828,6 +9830,30 @@ void EditorStateTest::multicamSaveCombinedFlattensOntoTopmost()
     QCOMPARE(state.project()->tracks().at(2).clips.size(), 0);
 }
 
+void EditorStateTest::multicamSlicesOfOneAngleGetDistinctNames()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendStackedCameras(*state.project());
+    selectStackedCameras(state);
+    QVERIFY(state.beginMulticamSession());
+
+    // cam1 -> cam2 at 3s -> back to cam1 at 6s: cam1 is cut into two slices.
+    state.setPlayheadSeconds(3.0);
+    state.switchMulticamAngle(1);
+    state.setPlayheadSeconds(6.0);
+    state.switchMulticamAngle(0);
+    state.saveMulticamCombined();
+
+    const drift::Track &top = state.project()->tracks().at(0);
+    QCOMPARE(top.clips.size(), 3);
+    const QString first = top.clips.at(0).name;
+    QVERIFY(!first.isEmpty());
+    QCOMPARE(top.clips.at(2).path, top.clips.at(0).path);
+    QCOMPARE(top.clips.at(2).name, first + QStringLiteral(" (2)"));
+    QVERIFY(top.clips.at(1).name != first);
+}
+
 void EditorStateTest::multicamSessionEndsWithTheProject()
 {
     AssetLibrary library;
@@ -10946,6 +10972,50 @@ void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
     // And the clips themselves still report the stack, which is what the inspector and MCP read.
     QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
     QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
+// Splitting used to give both halves the same name, so anything matching clips by name (an
+// agent, a script) could not tell them apart.
+void EditorStateTest::splitPiecesGetDistinctNames()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // "Shot 1" runs 2-6s
+
+    state.splitClipAt(0, 1, 4.0);
+    const QList<drift::Clip> &clips = state.project()->tracks().at(0).clips;
+    QCOMPARE(clips.size(), 3);
+    QCOMPARE(clips.at(1).name, QStringLiteral("Shot 1"));
+    QCOMPARE(clips.at(2).name, QStringLiteral("Shot 1 (2)"));
+
+    // Split the head again at the playhead: the new piece takes the next number.
+    state.setPlayheadSeconds(3.0);
+    state.splitAtPlayhead();
+    const QList<drift::Clip> &again = state.project()->tracks().at(0).clips;
+    QCOMPARE(again.size(), 4);
+    QCOMPARE(again.at(1).name, QStringLiteral("Shot 1"));
+    QCOMPARE(again.at(2).name, QStringLiteral("Shot 1 (3)"));
+    QCOMPARE(again.at(3).name, QStringLiteral("Shot 1 (2)"));
+
+    // Subtitle halves keep the names the split derives from their own cues.
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    const int subs = state.project()->tracks().size() - 1;
+    drift::Clip sub;
+    sub.id = QStringLiteral("subs");
+    sub.type = drift::ClipType::Subtitle;
+    sub.timelineDuration = drift::secondsToUs(5.0);
+    sub.srcOut = sub.timelineDuration;
+    for (int i = 0; i < 5; ++i)
+        sub.subtitleCues.append(drift::SubtitleCue{drift::secondsToUs(i), drift::secondsToUs(i + 0.9),
+                                                   QStringLiteral("cue %1").arg(i)});
+    sub.name = drift::subtitleClipName(sub.subtitleCues);
+    state.project()->tracks()[subs].clips.append(sub);
+    state.splitClipAt(subs, 0, 1.0); // one cue | four cues
+    const QList<drift::Clip> &halves = state.project()->tracks().at(subs).clips;
+    QCOMPARE(halves.size(), 2);
+    QCOMPARE(halves.at(0).name, drift::subtitleClipName(halves.at(0).subtitleCues));
+    QCOMPARE(halves.at(1).name, drift::subtitleClipName(halves.at(1).subtitleCues));
+    QVERIFY(halves.at(0).name != halves.at(1).name);
 }
 
 // Undo/redo carries the selection by clip id. When none of the selected clips exists after the
