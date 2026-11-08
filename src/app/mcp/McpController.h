@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/mcp/AgentImageLog.h"
+#include "core/effects/EffectStackStore.h"
 #include "core/project/Project.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
 
@@ -115,10 +116,18 @@ public:
     void bumpEditRevision() { ++m_editRevision; }
     bool undoSuspended() const { return m_undoSuspended; }
     const drift::Project &batchBefore() const { return m_batchBefore; }
-    bool setClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch);
+    // A keyed write (the property already animates, or auto-key is on) lands at `atSeconds` on the
+    // timeline, or at the playhead when it is negative. Either has to fall inside the clip, else
+    // nothing is written and *error says why: a key at the clip's edge is not what was asked for.
+    bool setClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch, double atSeconds = -1.0,
+                       QString *error = nullptr);
     // editor3d: the preview's free 3D viewpoint (or the overview when never placed) instead of the
     // composition.
-    QJsonObject captureFrame(double atSeconds, bool full, bool editor3d = false);
+    // `outPath`, when given, is where the PNG goes (the agent's choice); otherwise full=true
+    // writes one to the session's agent-image cache folder.
+    // An existing outPath is refused (the file is created exclusively) unless `overwrite`.
+    QJsonObject captureFrame(double atSeconds, bool full, bool editor3d = false, const QString &outPath = {},
+                             bool overwrite = false);
 
     // Perception for agents: a labelled contact sheet and a text profile of change over time.
     // Both block on the captureFrame pattern.
@@ -152,8 +161,30 @@ public:
     bool setWorkArea(double inSeconds, double outSeconds);
     void rememberExportSettings(const QVariantMap &settings);
     QVariantMap lastExportSettings() const;
+    // Marks an agent's tool call in progress (nests). While one runs, the editor's notifications
+    // are filtered by the agentNotifications preference: the user didn't trigger them.
+    // Only code running directly in the call counts: a nested event loop the call waits in (an
+    // import probe, a capture) also delivers the user's own clicks, which are never filtered.
+    void beginAgentCall();
+    void endAgentCall();
+    bool inAgentCall() const;
+    // Around a manual event pump (processEvents), which delivers the user's input without raising
+    // the loop level: nothing handled inside it counts as the agent's.
+    void pauseAgentCalls() { ++m_agentCallsPaused; }
+    void resumeAgentCalls() { m_agentCallsPaused = qMax(0, m_agentCallsPaused - 1); }
+    // The whole effect stack (video and audio) of a clip, as copy/paste carries it, and appending
+    // one to another clip the way paste does (rebuilt from the catalog, keyframes rescaled).
+    drift::EffectStackPreset effectStackOf(int trackIndex, int clipIndex) const;
+    void appendEffectStack(int trackIndex, int clipIndex, const drift::EffectStackPreset &stack);
+    // A warning on the editor's status line, as the app raises its own. Inside a batch it waits for
+    // the outermost endBatch: that batch's finishEdit would clear it otherwise.
+    void warn(const QString &message);
     void beginBatch();
     void endBatch(const QString &text, bool pushUndo);
+    // Whether the open batch has changed the project: an edit went through finishEdit, or the
+    // saved content differs from the batch's start. Ops can succeed without either (renaming a
+    // clip to its own name), and such a batch should not leave an undo step that undoes nothing.
+    bool batchChangedProject() const;
     QJsonObject listHistory(int limit = 20) const;
     QJsonObject undoTo(int index, const QString &hash);
     QJsonObject takeSnapshot(const QString &label);
@@ -362,7 +393,18 @@ private:
     bool m_mcpStartOnLaunch = false;
     bool m_undoSuspended = false;
     int m_batchDepth = 0;
+    // Each running call's event-loop level and pause count at its start: a second call can arrive
+    // while the first waits in a nested loop (one level deeper) or a paused pump.
+    struct AgentCallFrame
+    {
+        int loopLevel = 0;
+        int pausedAtStart = 0; // a call that starts inside a paused pump is still the agent's
+    };
+    QList<AgentCallFrame> m_agentCalls;
+    int m_agentCallsPaused = 0;
+    QString m_pendingWarning;
     drift::Project m_batchBefore;
+    int m_batchRevision = 0;
     int m_editRevision = 0;
     mutable QHash<QString, QPair<int, int>> m_clipIndex;
     mutable int m_clipIndexRevision = -1;

@@ -1637,6 +1637,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("saveAs"), tr("Save project as…")),
         action(QStringLiteral("playPause"), tr("Play/Pause")),
         action(QStringLiteral("delete"), tr("Delete selection")),
+        action(QStringLiteral("deleteWithEffects"), tr("Delete selection with its effects")),
         action(QStringLiteral("undo"), tr("Undo")),
         action(QStringLiteral("redo"), tr("Redo")),
         action(QStringLiteral("copy"), tr("Copy selection")),
@@ -1956,6 +1957,24 @@ void AppController::dropKeyframeGraphPropertiesForEffect(int removedIndex, bool 
         if (effectIndex == removedIndex)
             continue;
         next.append(effectIndex > removedIndex ? format.arg(effectIndex - 1).arg(paramKey) : prop);
+    }
+    if (next == m_keyframeGraphHiddenProperties)
+        return;
+    m_keyframeGraphHiddenProperties = next;
+    emit keyframeGraphVisibilityChanged();
+}
+
+void AppController::dropKeyframeGraphEffectProperties(bool video, bool audio)
+{
+    QStringList next;
+    for (const QString &prop : std::as_const(m_keyframeGraphHiddenProperties)) {
+        int effectIndex = -1;
+        QString paramKey;
+        if ((video && parseEffectProp(prop, &effectIndex, &paramKey))
+            || (audio && parseAudioEffectProp(prop, &effectIndex, &paramKey))) {
+            continue;
+        }
+        next.append(prop);
     }
     if (next == m_keyframeGraphHiddenProperties)
         return;

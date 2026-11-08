@@ -807,6 +807,106 @@ void AppController::removeEffect(int trackIndex, int clipIndex, int effectIndex)
     finishEdit(tr("Effect removed"));
 }
 
+int AppController::removeAllEffects(int trackIndex, int clipIndex, bool includeMasks)
+{
+    if (!isValidClipIndex(trackIndex, clipIndex))
+        return 0;
+    // add_effect reports the adjustment as the stack's host, so an agent may well pass that id:
+    // a pinned adjustment stands for the clip it is pinned to.
+    const drift::ClipRef source = sourceClipRef(trackIndex, clipIndex);
+    if (source.trackIndex < 0)
+        return 0;
+    const drift::Clip &host = m_project.tracks().at(source.trackIndex).clips.at(source.clipIndex);
+    if (host.type == drift::ClipType::Adjustment)
+        return 0;
+    const QString hostId = host.id;
+
+    const auto removable = [includeMasks](const drift::Clip &clip) {
+        switch (clip.adjustmentKind) {
+        case drift::AdjustmentKind::VideoEffects:
+        case drift::AdjustmentKind::AudioEffects:
+            return true;
+        case drift::AdjustmentKind::Mask:
+            return includeMasks;
+        default:
+            return false;
+        }
+    };
+
+    const drift::Project before = m_project;
+    // Removing adjustments and lanes shifts both clip and track indices, so the selection is
+    // carried across by clip id; a selected adjustment that is removed simply drops out of it.
+    const auto clipIdAt = [this](int t, int c) {
+        return isValidClipIndex(t, c) ? m_project.tracks().at(t).clips.at(c).id : QString();
+    };
+    QStringList selectedIds;
+    for (const QPair<int, int> &pair : std::as_const(m_selection))
+        selectedIds.append(clipIdAt(pair.first, pair.second));
+    const QString primaryId = clipIdAt(m_selectedTrack, m_selectedClip);
+    const QString transitionTrackId = trackIdAt(m_selectedTransitionTrack);
+
+    int removed = 0;
+    bool removedVideo = false;
+    bool removedAudio = false;
+    QSet<QString> touchedLaneIds;
+    for (drift::Track &track : m_project.tracks()) {
+        if (!track.isAdjustment())
+            continue;
+        for (int c = track.clips.size() - 1; c >= 0; --c) {
+            const drift::Clip &clip = track.clips.at(c);
+            if (clip.type != drift::ClipType::Adjustment || clip.linkedClipId != hostId || !removable(clip))
+                continue;
+            removedVideo = removedVideo || clip.adjustmentKind == drift::AdjustmentKind::VideoEffects;
+            removedAudio = removedAudio || clip.adjustmentKind == drift::AdjustmentKind::AudioEffects;
+            track.clips.removeAt(c);
+            touchedLaneIds.insert(track.id);
+            ++removed;
+        }
+    }
+    if (removed == 0)
+        return 0;
+
+    // A nested lane emptied here existed only to hold these effects.
+    for (int t = m_project.tracks().size() - 1; t >= 0; --t) {
+        const drift::Track &track = m_project.tracks().at(t);
+        if (track.isAdjustmentLane() && track.clips.isEmpty() && !track.id.isEmpty()
+            && touchedLaneIds.contains(track.id)) {
+            m_project.tracks().removeAt(t);
+        }
+    }
+
+    const auto locate = [this](const QString &id) {
+        int t = -1;
+        int c = -1;
+        return findClipById(m_project, id, &t, &c) ? qMakePair(t, c) : qMakePair(-1, -1);
+    };
+    m_selection.clear();
+    for (const QString &id : std::as_const(selectedIds)) {
+        const QPair<int, int> at = id.isEmpty() ? qMakePair(-1, -1) : locate(id);
+        if (at.first >= 0)
+            m_selection.append(at);
+    }
+    const QPair<int, int> primary = primaryId.isEmpty() ? qMakePair(-1, -1) : locate(primaryId);
+    if (primary.first >= 0) {
+        m_selectedTrack = primary.first;
+        m_selectedClip = primary.second;
+    } else if (!m_selection.isEmpty()) {
+        m_selectedTrack = m_selection.constFirst().first;
+        m_selectedClip = m_selection.constFirst().second;
+    } else {
+        m_selectedTrack = -1;
+        m_selectedClip = -1;
+    }
+    m_selectedTransitionTrack = m_project.trackIndexById(transitionTrackId);
+
+    // The graph's hidden entries address effects by stack index; with the stack gone they would
+    // hide parameters of whatever effect lands in that slot next.
+    dropKeyframeGraphEffectProperties(removedVideo, removedAudio);
+    pushProjectEdit(before, tr("Remove all effects"));
+    finishEdit(tr("All effects removed"));
+    return removed;
+}
+
 void AppController::setEffectEnabled(int trackIndex, int clipIndex, int effectIndex, bool enabled)
 {
     if (trackIndex < 0 || trackIndex >= m_project.tracks().size())
@@ -885,7 +985,6 @@ bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
     if (!def || !declaresParam(def->meta, key))
         return false;
 
-    const drift::Project before = m_project;
     bool asBoolean = false;
     for (const drift::EffectParamSpec &param : def->meta.parameters) {
         if (param.key == key) {
@@ -893,10 +992,13 @@ bool AppController::setEffectParam(int trackIndex, int clipIndex, int effectInde
             break;
         }
     }
-    if (asBoolean)
-        clip.effects[effectIndex].parameters.insert(key, value > 0.5);
-    else
-        clip.effects[effectIndex].parameters.insert(key, value);
+    const QVariant newValue = asBoolean ? QVariant(value > 0.5) : QVariant(value);
+    // Already set: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (clip.effects[effectIndex].parameters.value(key) == newValue)
+        return true;
+
+    const drift::Project before = m_project;
+    clip.effects[effectIndex].parameters.insert(key, newValue);
     pushProjectEdit(before, tr("Edit effect"));
     finishEdit(tr("Effect updated"));
     return true;
@@ -1022,6 +1124,11 @@ bool AppController::setEffectColorParam(int trackIndex, int clipIndex, int effec
             stored += old.size() == 9 ? old.right(2) : QStringLiteral("ff");
         }
     }
+
+    const QVariantMap &params = clip.effects[effectIndex].parameters;
+    if (params.value(key).toString() == stored
+        && (specIt->enables.isEmpty() || params.value(specIt->enables).toBool()))
+        return true; // already set: no edit, so a repeating batch leaves no empty undo step
 
     const drift::Project before = m_project;
     clip.effects[effectIndex].parameters.insert(key, stored);
@@ -1660,6 +1767,10 @@ bool AppController::setAudioEffectParam(int trackIndex, int clipIndex, int effec
     const AudioEffectEntry *def = audioEffectDefForId(clip.audioEffects[effectIndex].catalogId);
     if (!def || !declaresParam(def->parameters, key))
         return false;
+
+    // Already set: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (clip.audioEffects[effectIndex].parameters.value(key) == QVariant(value))
+        return true;
 
     const drift::Project before = m_project;
     clip.audioEffects[effectIndex].parameters.insert(key, value);

@@ -1294,7 +1294,8 @@ ApplicationWindow {
         // overwrote; it now goes through the toast queue like everything else.
         function onLastMessageChanged() {
             const message = EditorState.lastMessage
-            if (message.length === 0)
+            // An agent's own notification the "Notifications for agent actions" setting hides.
+            if (message.length === 0 || EditorState.lastMessageQuiet)
                 return
             // Severity comes from the backend. This used to infer it by regexing the
             // message prose, which matched none of the real failure strings — a

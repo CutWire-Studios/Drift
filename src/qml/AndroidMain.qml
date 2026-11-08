@@ -1128,7 +1128,8 @@ ApplicationWindow {
         // info toast that auto-dismissed like "Project saved".
         function onLastMessageChanged() {
             const message = EditorState.lastMessage
-            if (message.length === 0)
+            // An agent's own notification the "Notifications for agent actions" setting hides.
+            if (message.length === 0 || EditorState.lastMessageQuiet)
                 return
             switch (EditorState.lastMessageSeverity) {
             case "error":   Toasts.error(message); break

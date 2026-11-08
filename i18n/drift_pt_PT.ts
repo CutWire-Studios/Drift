@@ -1569,6 +1569,14 @@
         <translation>Reutilize este visual noutros clipes</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>Aparo e tempo</translation>
     </message>
@@ -2519,6 +2527,10 @@
         <translation>Eliminar seleção</translation>
     </message>
     <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Undo</source>
         <translation>Desfazer</translation>
     </message>
@@ -2745,10 +2757,6 @@
     <message>
         <source>Text clip added</source>
         <translation>Clipe de texto adicionado</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>Legendas</translation>
     </message>
     <message>
         <source>Subtitle clip added</source>
@@ -4212,6 +4220,14 @@
     <message>
         <source>Effect removed</source>
         <translation>Efeito removido</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -13430,8 +13446,8 @@
         <translation>Não foi possível ler esse ficheiro — o formato não é suportado por esta versão.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n clipe pode ser reproduzido lentamente. Um proxy torna a pré-visualização mais fluida; a exportação continua a usar o original.</numerusform>
             <numerusform>%n clipes podem ser reproduzidos lentamente. Um proxy torna a pré-visualização mais fluida; a exportação continua a usar o original.</numerusform>
         </translation>
@@ -17288,6 +17304,26 @@ Se a reprodução engasgar, experimente outro.</translation>
         <translation>Ativar o acesso de agente automaticamente da próxima vez que abrir o Drift. Desativar o acesso redefine esta opção.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Todos</translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation>Nuvem</translation>
     </message>
@@ -17723,6 +17759,50 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Every 5 minutes</source>
         <translation>A cada 5 minutos</translation>
+    </message>
+    <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">Ilimitado</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -18286,6 +18366,26 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>Reproduz clipes a partir dos respetivos proxies de baixa resolução, quando existirem. A exportação usa sempre a multimédia original.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -23176,6 +23276,10 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Delete</source>
         <translation>Eliminar</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

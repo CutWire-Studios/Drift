@@ -274,6 +274,36 @@ SettingsPage {
     }
 
     SettingsRow {
+        title: qsTr("Suggest proxies on import")
+        searchId: "preview-proxy-suggestion"
+        description: qsTr("What to do when imported footage may preview slowly.")
+        keywords: "proxy import suggest notification automatic"
+        query: page.query
+
+        ThemedComboBox {
+            width: Theme.c.settingsRow.controlWidth
+            textRole: "label"
+            valueRole: "id"
+            model: [
+                { id: "ask", label: qsTr("Ask") },
+                { id: "always", label: qsTr("Always create proxies") },
+                { id: "never", label: qsTr("Never ask") }
+            ]
+            currentIndex: {
+                for (var i = 0; i < model.length; ++i) {
+                    if (model[i].id === EditorState.preferences.proxySuggestion)
+                        return i
+                }
+                return 0
+            }
+            onActivated: {
+                if (currentIndex >= 0 && currentIndex < model.length)
+                    EditorState.preferences.proxySuggestion = model[currentIndex].id
+            }
+        }
+    }
+
+    SettingsRow {
         title: qsTr("Proxy resolution")
         searchId: "preview-proxy-resolution"
         description: qsTr("Size of new proxies. Proxies made at another size are not used until you create them again.")

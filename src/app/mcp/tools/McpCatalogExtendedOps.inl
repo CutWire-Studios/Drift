@@ -8,7 +8,9 @@
         { "replace_asset", "media", "Swap source file",
           "Point an existing bin row at a different file. Every clip using the asset switches to the "
           "new media, keeping its trim and timeline position — trims past the new file's duration are "
-          "clamped downstream.",
+          "clamped downstream. The file is always re-read, also when it is the same path with new "
+          "content; the call waits for that (15s cap) and returns the asset as now probed (dur, kind) "
+          "with reprobed:[id], or replace_failed; past the cap import_timeout, with pending:true to poll.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
                         {QStringLiteral("path"), stringProp(QStringLiteral("Absolute path or file:// URL; must exist"))}},
                        {QStringLiteral("asset"), QStringLiteral("path")}) },
@@ -921,12 +923,16 @@
           objectSchema({}) },
 
         { "set_effect_enabled", "effects", "Bypass a video effect without losing its settings",
-          "Bypass or re-enable a video effect without removing it. The effect keeps its stack position "
-          "and parameters.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
-                                   {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("enabled")}) },
+          "Bypass or re-enable one video effect without removing it; it keeps its stack position and "
+          "parameters. Pick it by index (stack position) or by effect: a stack position, or a catalog "
+          "id such as \"film.grain\" when the clip has exactly one effect of that id (bad_args lists "
+          "the positions when it has several; not_found when there is no such effect). The reply's effectIndex is the stack position it changed.",
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
+                                      {QStringLiteral("effect"),
+                                       QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("integer"), QStringLiteral("string")}},
+                                                   {QStringLiteral("description"), QStringLiteral("The effect: stack position, or catalog id from list_effects")}}},
+                                      {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("enabled")}) },
         { "move_effect", "effects", "Change the order a clip's effects render in",
           "Move a video effect to a different stack position. Effects render in stack order, so this "
           "changes the result. All indices between from and to shift.",
@@ -936,18 +942,17 @@
                        {QStringLiteral("from"), QStringLiteral("to")}) },
         { "set_effect_color_param", "effects", "Color effect param",
           "Set a color-typed effect parameter. Use this instead of set_effect_param for params whose "
-          "type is color in list_effects. Not validated — an unknown key or bad index still returns ok.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          "type is color in list_effects. Fails not_found on a key the effect has no colour parameter "
+          "for, or a stack index that isn't there.",
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
-                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB; alpha is not carried, effect colours bind as vec3"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB; alpha is not carried, effect colours bind as vec3"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "set_audio_effect_enabled", "effects", "Toggle audio effect",
           "Bypass or re-enable an audio effect without removing it.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
-                                   {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("enabled")}) },
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
+                                   {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("enabled")}) },
         { "move_audio_effect", "effects", "Reorder audio effect",
           "Move an audio effect to a different stack position. Audio effects process in stack order.",
           objectSchema(mergeProps({{QStringLiteral("from"), effectIndexProp()},
@@ -977,9 +982,9 @@
                         {QStringLiteral("duration"), numberProp(QStringLiteral("Seconds"))}},
                        {QStringLiteral("track"), QStringLiteral("id"), QStringLiteral("duration")}) },
         { "set_transition_param", "effects", "Tweak one numeric setting of a transition",
-          "Set one numeric transition parameter. Not validated — an unknown key or id still returns "
-          "ok. Take keys from the transition's params in list_transitions and verify with "
-          "inspect({clips:true,detail:true}).",
+          "Set one numeric transition parameter. Fails not_found on an unknown transition id or a "
+          "key the transition doesn't declare; take keys from the transition's params in "
+          "list_transitions.",
           objectSchema({{QStringLiteral("track"), integerProp(QStringLiteral("Track index"))},
                         {QStringLiteral("id"), transitionIdProp()},
                         {QStringLiteral("key"), stringProp(QStringLiteral("Param key from list_transitions"))},
@@ -1328,15 +1333,23 @@
                {QStringLiteral("prefix"), propWithDefault(stringProp(QStringLiteral("Bookmark label prefix; the shot number is appended")), QStringLiteral("Scene"))}},
               clipRefProps())) },
 
-        { "set_ui_preferences", "ui", "Change autoKey, media grid or reopen-last-project",
+        { "set_ui_preferences", "ui", "Change UI preferences",
           "Set editor preferences; only supplied keys change. Note followSystem only acts when TRUE "
           "(it clears the dark-mode override); passing false does nothing — use set_theme to pin a "
           "theme. autoKey matters for set_transform: when on, transform writes become keyframes at the "
-          "playhead. Returns the resulting flags plus theme {overridden, dark}.",
+          "playhead. proxySuggestion sets what import_media does with slow-to-preview footage; only the "
+          "user can choose always (Settings › Preview), since it transcodes every later import. "
+          "Returns the resulting flags plus theme {overridden, dark}.",
           objectSchema({{QStringLiteral("autoKey"), boolProp(QStringLiteral("Auto-keyframe: transform edits create keyframes at the playhead"))},
                         {QStringLiteral("mediaGrid"), boolProp(QStringLiteral("Media bin grid mode"))},
                         {QStringLiteral("reopenLastProject"), boolProp(QStringLiteral("Reopen last project on launch"))},
-                        {QStringLiteral("followSystem"), boolProp(QStringLiteral("true clears the theme override so the OS theme wins; false is a no-op"))}}) },
+                        {QStringLiteral("followSystem"), boolProp(QStringLiteral("true clears the theme override so the OS theme wins; false is a no-op"))},
+                        {QStringLiteral("agentNotifications"),
+                         enumProp(QStringLiteral("Which notifications your own calls raise on the user's screen while they run: all or problems (warnings and errors; default). none is user-only. Results that finish later (an export, a probe) still show. Global, kept across sessions"),
+                                  {QStringLiteral("all"), QStringLiteral("problems")})},
+                        {QStringLiteral("proxySuggestion"),
+                         enumProp(QStringLiteral("What imports do with footage that would preview slowly: ask (a notification offers proxies; default) or never. always is user-only. Global, kept across sessions"),
+                                  {QStringLiteral("ask"), QStringLiteral("never")})}}) },
 
         { "get_camera_state", "timeline", "Read the scene camera's pose at a time",
           "The camera clip covering `at` (default the playhead), or `clip`, as it is posed then, "
@@ -1478,12 +1491,12 @@
           objectSchema(clipRefProps()) },
         { "set_effect_string_param", "effects", "File/string effect param",
           "Set a file- or string-typed effect parameter (e.g. face_swap's sourceImage). Value is an "
-          "absolute path or file:// URL. Not validated — confirm with inspect({clips:true,detail:true}).",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          "absolute path or file:// URL. Fails bad_args without index or key, and not_found on a key "
+          "the effect doesn't declare.",
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
-                                   {QStringLiteral("value"), stringProp(QStringLiteral("Absolute path, file:// URL, or string value"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                   {QStringLiteral("value"), stringProp(QStringLiteral("Absolute path, file:// URL, or string value"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "apply_text_preset", "text", "Restyle an existing title",
           "Apply a text style pack (builtin from list_text_presets, or a user: id from "
           "list_user_text_presets) to a text or subtitle clip. Replaces the whole style — font, "
@@ -2035,8 +2048,8 @@
           "— where the sound dies, what clips, whether hits land on the cuts. Same clip / asset / timeline modes "
           "as audio_measure; range capped at 600 s (zoom with start+duration). BLOCKS. Returns a summary, the "
           "measure numbers, events, cuts, sync stats and items (as audio_measure / audio_sync) and an inline "
-          "JPEG (long edge <= 1600 px); return:\"path\" writes the full-width PNG next to the project's frame "
-          "captures and returns its path instead. Asset mode draws frames only for video files and only at the "
+          "JPEG (long edge <= 1600 px); return:\"path\" writes the full-width PNG to this session's agent-image cache "
+          "folder (deleted when Drift quits, or swept after a day if it crashed; import_media copies it into the project) and returns its path instead. Asset mode draws frames only for video files and only at the "
           "at times. With the audio.clap / audio.ast addons installed the sheet also gets a sections lane, sound "
           "names on the hits and a speech / music lane (tags:false skips that and its model time; the reply then "
           "carries sections, tagged_events and presence, or tags_missing naming the addons to install). image "

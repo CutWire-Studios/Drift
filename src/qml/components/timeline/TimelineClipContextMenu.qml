@@ -14,12 +14,15 @@ ThemedContextMenu {
     property bool canRemoveSilence: false
     property bool canSyncByAudio: false
     property bool canReplaceMedia: false
+    property bool canDeleteWithEffects: false
     onAboutToShow: {
         canRemoveSilence = EditorState.audioAlign.canRemoveSilence(owner.trackIndex, owner.clipIndex)
         canSyncByAudio = EditorState.audioAlign.canSyncByAudio()
         canReplaceMedia = typeof owner.panel.requestReplaceClip === "function"
                 && EditorState.replaceCandidatesForClip(owner.trackIndex, owner.clipIndex).length > 0
         canPasteEffects = EditorState.clipboardHasEffects()
+        // Over what the delete acts on (the selection, linked partners included), masks included.
+        canDeleteWithEffects = EditorState.selectionHasPinnedAdjustments()
         canPasteAttributes = EditorState.canPasteAttributes()
         canMergeTrackSubtitles = owner.trackType === "subtitle"
                 && EditorState.canMergeAllSubtitlesOnTrack(owner.trackIndex)
@@ -387,5 +390,13 @@ ThemedContextMenu {
         text: qsTr("Delete")
         icon.name: Theme.icons.trash
         onTriggered: EditorState.deleteSelectedClip()
+    }
+    ThemedMenuItem {
+        // Plain Delete leaves a graded clip's effects on the timeline, unlinked; this takes them
+        // (and its masks) with it, in the same undo step.
+        text: qsTr("Delete with effects")
+        icon.name: Theme.icons.trash
+        visible: clipContextMenu.canDeleteWithEffects
+        onTriggered: EditorState.deleteSelectedClipWithEffects()
     }
 }

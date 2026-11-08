@@ -278,6 +278,13 @@ bool splitClipAtOffset(Clip &head, Clip &tail, TimeUs offset, double fps = 0);
 // one frame). Word-level cutting needs pieces shorter than an interactive split allows.
 bool splitClipAtOffsetMin(Clip &head, Clip &tail, TimeUs offset, TimeUs minEdgeUs);
 
+// The name for the new piece of an interactive split of a clip named `name` on `track`: the
+// base name (without a trailing " (N)") plus the next free " (N)" on that track, starting at 2,
+// so the two halves can be told apart. A trailing number of 1000 or more is part of the name
+// ("Trip (2018)"), not a piece number. An empty name stays empty. Not for subtitle clips: the
+// split itself names each half from its cues.
+QString nextSplitPieceName(const Track &track, const QString &name);
+
 // Repoint `dst` at the media `src` carries while keeping dst's timeline placement. The source
 // time is read from `src` at dst's timeline start, so the two stay in timeline sync — which is
 // what makes a multicam switch land on the frame the angle was showing at that moment.

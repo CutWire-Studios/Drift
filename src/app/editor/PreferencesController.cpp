@@ -241,6 +241,16 @@ PreferencesController::PreferencesController(QObject *parent)
 {
     QSettings settings;
     m_reopenLastProject = settings.value(QStringLiteral("editor/reopenLastProject"), false).toBool();
+    m_agentNotifications = settings.value(QStringLiteral("agent/notifications"), QStringLiteral("problems")).toString();
+    if (!agentNotificationLevels().contains(m_agentNotifications))
+        m_agentNotifications = QStringLiteral("problems");
+    m_proxySuggestion = settings.value(QStringLiteral("proxy/suggestion"), QStringLiteral("ask")).toString();
+    if (!proxySuggestionModes().contains(m_proxySuggestion))
+        m_proxySuggestion = QStringLiteral("ask");
+    m_undoHistoryMode = settings.value(QStringLiteral("editor/undoHistoryMode"), QStringLiteral("project")).toString();
+    if (!undoHistoryModes().contains(m_undoHistoryMode))
+        m_undoHistoryMode = QStringLiteral("project");
+    m_undoHistoryLimit = qMax(0, settings.value(QStringLiteral("editor/undoHistoryLimit"), 0).toInt());
     m_timelineOverviewVisible =
         settings.value(QStringLiteral("ui/timelineOverviewVisible"), false).toBool();
     m_audioMixerVisible =
@@ -462,6 +472,58 @@ void PreferencesController::setReopenLastProject(bool enabled)
     QSettings settings;
     settings.setValue(QStringLiteral("editor/reopenLastProject"), m_reopenLastProject);
     emit reopenLastProjectChanged();
+}
+
+QStringList PreferencesController::agentNotificationLevels()
+{
+    return {QStringLiteral("all"), QStringLiteral("problems"), QStringLiteral("none")};
+}
+
+void PreferencesController::setAgentNotifications(const QString &level)
+{
+    if (!agentNotificationLevels().contains(level) || m_agentNotifications == level)
+        return;
+    m_agentNotifications = level;
+    QSettings().setValue(QStringLiteral("agent/notifications"), m_agentNotifications);
+    emit agentNotificationsChanged();
+}
+
+QStringList PreferencesController::proxySuggestionModes()
+{
+    return {QStringLiteral("ask"), QStringLiteral("always"), QStringLiteral("never")};
+}
+
+void PreferencesController::setProxySuggestion(const QString &mode)
+{
+    if (!proxySuggestionModes().contains(mode) || m_proxySuggestion == mode)
+        return;
+    m_proxySuggestion = mode;
+    QSettings().setValue(QStringLiteral("proxy/suggestion"), m_proxySuggestion);
+    emit proxySuggestionChanged();
+}
+
+QStringList PreferencesController::undoHistoryModes()
+{
+    return {QStringLiteral("project"), QStringLiteral("session"), QStringLiteral("off")};
+}
+
+void PreferencesController::setUndoHistoryMode(const QString &mode)
+{
+    if (!undoHistoryModes().contains(mode) || m_undoHistoryMode == mode)
+        return;
+    m_undoHistoryMode = mode;
+    QSettings().setValue(QStringLiteral("editor/undoHistoryMode"), m_undoHistoryMode);
+    emit undoHistoryModeChanged();
+}
+
+void PreferencesController::setUndoHistoryLimit(int steps)
+{
+    steps = qMax(0, steps);
+    if (m_undoHistoryLimit == steps)
+        return;
+    m_undoHistoryLimit = steps;
+    QSettings().setValue(QStringLiteral("editor/undoHistoryLimit"), m_undoHistoryLimit);
+    emit undoHistoryLimitChanged();
 }
 
 void PreferencesController::setVaapiZeroCopy(bool enabled)

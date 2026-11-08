@@ -102,6 +102,69 @@ SettingsPage {
         }
     }
 
+    SettingsRow {
+        title: qsTr("Undo history")
+        searchId: "general-undo-history"
+        description: qsTr("Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.")
+        keywords: "undo redo history memory steps"
+        query: page.query
+
+        ThemedComboBox {
+            width: Theme.c.settingsRow.controlWidth
+            textRole: "label"
+            valueRole: "id"
+            model: [
+                { id: "project", label: qsTr("Saved with the project") },
+                { id: "session", label: qsTr("This session only") },
+                { id: "off",     label: qsTr("Off") }
+            ]
+            currentIndex: {
+                for (var i = 0; i < model.length; ++i) {
+                    if (model[i].id === EditorState.preferences.undoHistoryMode)
+                        return i
+                }
+                return 0
+            }
+            onActivated: {
+                if (currentIndex >= 0 && currentIndex < model.length)
+                    EditorState.preferences.undoHistoryMode = model[currentIndex].id
+            }
+        }
+    }
+
+    SettingsRow {
+        title: qsTr("Undo steps kept")
+        searchId: "general-undo-steps"
+        description: qsTr("Older steps are dropped, and media only they used is no longer kept for them.")
+        keywords: "undo redo history memory limit"
+        query: page.query
+        enabled: EditorState.preferences.undoHistoryMode !== "off"
+
+        ThemedComboBox {
+            width: Theme.c.settingsRow.controlWidth
+            textRole: "label"
+            valueRole: "id"
+            model: [
+                { id: 0,   label: qsTr("Unlimited") },
+                { id: 500, label: qsTr("500 steps") },
+                { id: 200, label: qsTr("200 steps") },
+                { id: 100, label: qsTr("100 steps") },
+                { id: 50,  label: qsTr("50 steps") }
+            ]
+            currentIndex: {
+                for (var i = 0; i < model.length; ++i) {
+                    if (model[i].id === EditorState.preferences.undoHistoryLimit)
+                        return i
+                }
+                return 0
+            }
+            onActivated: {
+                if (currentIndex >= 0 && currentIndex < model.length)
+                    EditorState.preferences.undoHistoryLimit = model[currentIndex].id
+            }
+        }
+    }
+
     SettingsGroupHeader {
         text: qsTr("Extras")
         query: page.query

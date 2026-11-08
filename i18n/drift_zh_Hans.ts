@@ -1568,6 +1568,14 @@
         <translation>在其他片段上重复使用此效果</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>修剪与时间</translation>
     </message>
@@ -2516,6 +2524,10 @@
         <translation>删除所选内容</translation>
     </message>
     <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
@@ -2742,10 +2754,6 @@
     <message>
         <source>Text clip added</source>
         <translation>已添加文字片段</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>子标题</translation>
     </message>
     <message>
         <source>Subtitle clip added</source>
@@ -4204,6 +4212,14 @@
     <message>
         <source>Effect removed</source>
         <translation>效果已移除</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -13374,8 +13390,8 @@
         <translation>无法读取该文件——此版本不支持该格式</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n 个片段可能播放缓慢。创建代理可让预览更流畅；导出仍使用原始文件</numerusform>
         </translation>
     </message>
@@ -17218,6 +17234,26 @@ If playback stutters, try another.</source>
         <translation>下次打开 Drift 时自动开启智能体访问。关闭访问会重置此设置</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">云朵</translation>
     </message>
@@ -17653,6 +17689,50 @@ If playback stutters, try another.</source>
     <message>
         <source>Every 5 minutes</source>
         <translation>每 5 分钟</translation>
+    </message>
+    <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">无限制</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -18216,6 +18296,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>存在代理时，从其低分辨率代理播放片段。导出始终使用原始媒体。</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -23098,6 +23198,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>删除</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

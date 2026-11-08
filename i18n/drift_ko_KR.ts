@@ -1568,6 +1568,14 @@
         <translation>이 모양을 다른 클립에서 재사용</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>자르기 및 타이밍</translation>
     </message>
@@ -2516,6 +2524,10 @@
         <translation>선택 항목 삭제</translation>
     </message>
     <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Undo</source>
         <translation>실행 취소</translation>
     </message>
@@ -2742,10 +2754,6 @@
     <message>
         <source>Text clip added</source>
         <translation>텍스트 클립이 추가됨</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>자막</translation>
     </message>
     <message>
         <source>Subtitle clip added</source>
@@ -4204,6 +4212,14 @@
     <message>
         <source>Effect removed</source>
         <translation>효과가 제거됨</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -13374,8 +13390,8 @@
         <translation>해당 파일을 읽을 수 없습니다 — 이 빌드에서 해당 형식을 지원하지 않습니다.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>클립 %n개는 재생이 느릴 수 있습니다. 프록시를 사용하면 미리보기가 더 부드러워지며, 내보낼 때는 원본을 사용합니다.</numerusform>
         </translation>
     </message>
@@ -17210,6 +17226,26 @@ If playback stutters, try another.</source>
         <translation>다음에 Drift를 열 때 에이전트 접근을 자동으로 켭니다. 접근을 끄면 이 설정이 초기화됩니다.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">모두</translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">구름</translation>
     </message>
@@ -17645,6 +17681,50 @@ If playback stutters, try another.</source>
     <message>
         <source>Every 5 minutes</source>
         <translation>5분마다</translation>
+    </message>
+    <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">무제한</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>
@@ -18208,6 +18288,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>가능한 경우 저해상도 프록시에서 클립을 재생합니다. 내보내기에는 항상 원본 미디어가 사용됩니다.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -23089,6 +23189,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
