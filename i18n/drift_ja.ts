@@ -922,7 +922,7 @@
     <name>AndroidExtrasPage</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">拡張機能</translation>
+        <translation>拡張機能</translation>
     </message>
 </context>
 <context>
@@ -2696,10 +2696,6 @@
         <translation>テキストクリップを追加しました</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>字幕</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>字幕クリップを追加しました</translation>
     </message>
@@ -4115,7 +4111,7 @@
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">カスタム</translation>
+        <translation>カスタム</translation>
     </message>
     <message>
         <source>Snappy</source>
@@ -4123,7 +4119,7 @@
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">戻る</translation>
+        <translation>戻る</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -4778,7 +4774,7 @@
     <name>AppSettingsMenu</name>
     <message>
         <source>Help…</source>
-        <translation type="unfinished"></translation>
+        <translation>ヘルプ…</translation>
     </message>
     <message>
         <source>Settings…</source>
@@ -6712,7 +6708,7 @@
     <name>CurveField</name>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">カスタム</translation>
+        <translation>カスタム</translation>
     </message>
     <message>
         <source>Bezier</source>
@@ -7207,7 +7203,7 @@
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">待機中…</translation>
+        <translation>待機中…</translation>
     </message>
     <message>
         <source>Downloading…</source>
@@ -8742,333 +8738,333 @@
     <name>ExtrasCard</name>
     <message>
         <source>Select</source>
-        <translation type="unfinished">選択</translation>
+        <translation>選択</translation>
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">待機中…</translation>
+        <translation>待機中…</translation>
     </message>
     <message>
         <source>%1 %2%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 %2%</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">インストール中…</translation>
+        <translation>インストール中…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">ダウンロード中…</translation>
+        <translation>ダウンロード中…</translation>
     </message>
     <message>
         <source>Failed · open to retry</source>
-        <translation type="unfinished"></translation>
+        <translation>失敗 · 開いて再試行</translation>
     </message>
     <message>
         <source>Needs Drift %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift %1 が必要</translation>
     </message>
     <message>
         <source>Installed from file</source>
-        <translation type="unfinished">ファイルからインストール済み</translation>
+        <translation>ファイルからインストール済み</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished">インストール済み</translation>
+        <translation>インストール済み</translation>
     </message>
     <message>
         <source>Update · %1</source>
-        <translation type="unfinished"></translation>
+        <translation>更新 · %1</translation>
     </message>
 </context>
 <context>
     <name>ExtrasDetail</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished">戻る</translation>
+        <translation>戻る</translation>
     </message>
     <message>
         <source>Unofficial</source>
-        <translation type="unfinished">非公式</translation>
+        <translation>非公式</translation>
     </message>
     <message>
         <source>%1 → %2</source>
-        <translation type="unfinished">%1 → %2</translation>
+        <translation>%1 → %2</translation>
     </message>
     <message>
         <source>Needs a newer Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>より新しい Drift が必要です</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">キャンセル</translation>
+        <translation>キャンセル</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished">アップデート</translation>
+        <translation>アップデート</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">再試行</translation>
+        <translation>再試行</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">インストール</translation>
+        <translation>インストール</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished">インストール済み</translation>
+        <translation>インストール済み</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">削除</translation>
+        <translation>削除</translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>
-        <translation type="unfinished">このパックのダウンロードデータを削除</translation>
+        <translation>このパックのダウンロードデータを削除</translation>
     </message>
     <message>
         <source>Waiting for other downloads to finish…</source>
-        <translation type="unfinished"></translation>
+        <translation>他のダウンロードの完了を待っています…</translation>
     </message>
     <message>
         <source>%1… %2%</source>
-        <translation type="unfinished">%1… %2%</translation>
+        <translation>%1… %2%</translation>
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation type="unfinished">Drift %1 以降が必要です</translation>
+        <translation>Drift %1 以降が必要です</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>同時にインストール: %1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished">Drift について</translation>
+        <translation>Drift について</translation>
     </message>
     <message>
         <source>Images</source>
-        <translation type="unfinished">画像</translation>
+        <translation>画像</translation>
     </message>
     <message>
         <source>What it&apos;s for</source>
-        <translation type="unfinished"></translation>
+        <translation>用途</translation>
     </message>
     <message>
         <source>How to use</source>
-        <translation type="unfinished"></translation>
+        <translation>使い方</translation>
     </message>
     <message>
         <source>Unlocks</source>
-        <translation type="unfinished"></translation>
+        <translation>アンロックされる機能</translation>
     </message>
     <message>
         <source>%1 — %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — %2</translation>
     </message>
     <message>
         <source>How AI runs</source>
-        <translation type="unfinished">AI の実行方法</translation>
+        <translation>AI の実行方法</translation>
     </message>
     <message>
         <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">自動では、インストールされている中で最速のオプションを選択し、グラフィックスカードが使用できない場合はこのコンピューターを使用します。</translation>
+        <translation>自動では、インストールされている中で最速のオプションを選択し、グラフィックスカードが使用できない場合はこのコンピューターを使用します。</translation>
     </message>
     <message>
         <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished"></translation>
+        <translation>AI エンジンをインストールして、自動キャプション、被写体切り抜き、おもしろ顔エフェクト、ノイズ除去をアンロックします。</translation>
     </message>
     <message>
         <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">この変更を有効にするには、Drift を再起動してください。</translation>
+        <translation>この変更を有効にするには、Drift を再起動してください。</translation>
     </message>
     <message>
         <source>Needs</source>
-        <translation type="unfinished"></translation>
+        <translation>必要</translation>
     </message>
     <message>
         <source>%1 · Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · インストール済み</translation>
     </message>
     <message>
         <source>%1 · Will be installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · インストール予定</translation>
     </message>
     <message>
         <source>Works well with</source>
-        <translation type="unfinished"></translation>
+        <translation>相性の良いもの</translation>
     </message>
     <message>
         <source>Technical details</source>
-        <translation type="unfinished">技術詳細</translation>
+        <translation>技術詳細</translation>
     </message>
 </context>
 <context>
     <name>ExtrasInstallBar</name>
     <message numerus="yes">
         <source>Install %n extra(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>エクストラを %n 個インストール</numerusform>
         </translation>
     </message>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished">%1 · %2</translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Installing %1 of %2 · %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 / %2 をインストール中 · %3</translation>
     </message>
     <message>
         <source>Installing %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 をインストール中</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>同時にインストール: %1</translation>
     </message>
     <message>
         <source>%1 needs %2, which isn&apos;t available for this device</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 は %2 を必要としますが、このデバイスでは利用できません</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">クリア</translation>
+        <translation>クリア</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">インストール</translation>
+        <translation>インストール</translation>
     </message>
 </context>
 <context>
     <name>ExtrasStore</name>
     <message>
         <source>Discover</source>
-        <translation type="unfinished"></translation>
+        <translation>見つける</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished">インストール済み</translation>
+        <translation>インストール済み</translation>
     </message>
     <message>
         <source>Updates</source>
-        <translation type="unfinished">アップデート</translation>
+        <translation>アップデート</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished">カスタム</translation>
+        <translation>カスタム</translation>
     </message>
     <message>
         <source>Results for “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>「%1」の検索結果</translation>
     </message>
     <message>
         <source>Add-ons that make Drift do more.</source>
-        <translation type="unfinished"></translation>
+        <translation>Drift の機能を拡張するアドオン。</translation>
     </message>
     <message>
         <source>Everything you have downloaded.</source>
-        <translation type="unfinished"></translation>
+        <translation>ダウンロード済みのすべて。</translation>
     </message>
     <message>
         <source>Newer versions of what you have installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>インストール済みのものの新しいバージョン。</translation>
     </message>
     <message>
         <source>Packs you installed from a file.</source>
-        <translation type="unfinished"></translation>
+        <translation>ファイルからインストールしたパック。</translation>
     </message>
     <message>
         <source>Remove this pack?</source>
-        <translation type="unfinished">このパックを削除しますか?</translation>
+        <translation>このパックを削除しますか?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">削除</translation>
+        <translation>削除</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
+        <translation>「%1」とそのダウンロードデータが削除されます。後で再度インストールできます。</translation>
     </message>
     <message>
         <source>Search extras</source>
-        <translation type="unfinished"></translation>
+        <translation>エクストラを検索</translation>
     </message>
     <message>
         <source>Clear search</source>
-        <translation type="unfinished"></translation>
+        <translation>検索をクリア</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">ファイルからインストール…</translation>
+        <translation>ファイルからインストール…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation type="unfinished">アドオンフォルダーを開く</translation>
+        <translation>アドオンフォルダーを開く</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">ここにアドオンフォルダーを配置し、「エクストラ」を開き直してください</translation>
+        <translation>ここにアドオンフォルダーを配置し、「エクストラ」を開き直してください</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Select all</source>
-        <translation type="unfinished">すべて選択</translation>
+        <translation>すべて選択</translation>
     </message>
     <message>
         <source>Checking for extras…</source>
-        <translation type="unfinished">拡張機能を確認中…</translation>
+        <translation>拡張機能を確認中…</translation>
     </message>
     <message>
         <source>All extras</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのエクストラ</translation>
     </message>
     <message>
         <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">ダウンロードストアに接続できません</translation>
+        <translation>ダウンロードストアに接続できません</translation>
     </message>
     <message>
         <source>No extras yet</source>
-        <translation type="unfinished"></translation>
+        <translation>エクストラはまだありません</translation>
     </message>
     <message>
         <source>Nothing matches your search</source>
-        <translation type="unfinished"></translation>
+        <translation>検索に一致するものがありません</translation>
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished">まだ何もありません</translation>
+        <translation>まだ何もありません</translation>
     </message>
     <message>
         <source>Check your connection and try again.</source>
-        <translation type="unfinished">接続を確認して、もう一度試してください。</translation>
+        <translation>接続を確認して、もう一度試してください。</translation>
     </message>
     <message>
         <source>Try a different word.</source>
-        <translation type="unfinished"></translation>
+        <translation>別の言葉をお試しください。</translation>
     </message>
     <message>
         <source>Pick another section.</source>
-        <translation type="unfinished"></translation>
+        <translation>別のセクションを選択してください。</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">再試行</translation>
+        <translation>再試行</translation>
     </message>
 </context>
 <context>
     <name>ExtrasWindow</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">拡張機能</translation>
+        <translation>拡張機能</translation>
     </message>
 </context>
 <context>
@@ -9990,31 +9986,31 @@
     <name>HelpDialog</name>
     <message>
         <source>Help</source>
-        <translation type="unfinished">ヘルプ</translation>
+        <translation>ヘルプ</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">閉じる</translation>
+        <translation>閉じる</translation>
     </message>
     <message>
         <source>Open an issue on GitHub</source>
-        <translation type="unfinished"></translation>
+        <translation>GitHub で Issue を作成</translation>
     </message>
     <message>
         <source>Join our Discord server</source>
-        <translation type="unfinished"></translation>
+        <translation>Discord サーバーに参加</translation>
     </message>
     <message>
         <source>Read the docs</source>
-        <translation type="unfinished"></translation>
+        <translation>ドキュメントを読む</translation>
     </message>
     <message>
         <source>Contact us via email</source>
-        <translation type="unfinished"></translation>
+        <translation>メールでお問い合わせ</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">開く</translation>
+        <translation>開く</translation>
     </message>
 </context>
 <context>
@@ -11399,11 +11395,11 @@
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">ファイルからインストール…</translation>
+        <translation>ファイルからインストール…</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">削除</translation>
+        <translation>削除</translation>
     </message>
     <message>
         <source>Remove “%1”?</source>
@@ -11816,7 +11812,7 @@
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">ファイルからインストール…</translation>
+        <translation>ファイルからインストール…</translation>
     </message>
     <message>
         <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
@@ -11852,7 +11848,7 @@
     </message>
     <message>
         <source>Browse more online</source>
-        <translation type="unfinished"></translation>
+        <translation>オンラインでさらに見る</translation>
     </message>
     <message>
         <source>You’re offline. Showing what was saved last time.</source>
@@ -17655,6 +17651,50 @@ If playback stutters, try another.</source>
         <translation>5分ごと</translation>
     </message>
     <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">無制限</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation>拡張機能</translation>
     </message>
@@ -23281,7 +23321,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">キャンセル</translation>
+        <translation>キャンセル</translation>
     </message>
     <message>
         <source>Search media</source>
@@ -25410,7 +25450,7 @@ If playback stutters, try another.</source>
     <name>UserPackageImporter</name>
     <message>
         <source>Install Addon</source>
-        <translation type="unfinished">アドオンをインストール</translation>
+        <translation>アドオンをインストール</translation>
     </message>
     <message>
         <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
@@ -25426,55 +25466,55 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Installed “%1”</source>
-        <translation type="unfinished">「%1」をインストールしました</translation>
+        <translation>「%1」をインストールしました</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation type="unfinished">非公式のアドオンをインストールしますか？</translation>
+        <translation>非公式のアドオンをインストールしますか？</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation type="unfinished">それでもインストール</translation>
+        <translation>それでもインストール</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished">「%1」(%2 作)</translation>
+        <translation>「%1」(%2 作)</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished">「%1」</translation>
+        <translation>「%1」</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 は Drift チームによる署名がありません。信頼できるファイルのみインストールしてください。</translation>
+        <translation>%1 は Drift チームによる署名がありません。信頼できるファイルのみインストールしてください。</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">お使いのコンピューター上で実行されるコードが含まれています。</translation>
+        <translation>お使いのコンピューター上で実行されるコードが含まれています。</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation type="unfinished">「%1」を置き換えます。</translation>
+        <translation>「%1」を置き換えます。</translation>
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished">このトランジションをインストールしますか?</translation>
+        <translation>このトランジションをインストールしますか?</translation>
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation type="unfinished">このオーディオエフェクトをインストールしますか？</translation>
+        <translation>このオーディオエフェクトをインストールしますか？</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished">このエフェクトをインストールしますか?</translation>
+        <translation>このエフェクトをインストールしますか?</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">インストール</translation>
+        <translation>インストール</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 は Drift チームではなく、ユーザーによって作成されたものです。内容は確認されていません。信頼できるファイルのみインストールしてください。</translation>
+        <translation>%1 は Drift チームではなく、ユーザーによって作成されたものです。内容は確認されていません。信頼できるファイルのみインストールしてください。</translation>
     </message>
     <message>
         <source>OK</source>
@@ -25893,7 +25933,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">戻る</translation>
+        <translation>戻る</translation>
     </message>
     <message>
         <source>Left</source>
@@ -25917,7 +25957,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>View</source>

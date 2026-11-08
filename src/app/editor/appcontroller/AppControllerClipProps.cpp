@@ -492,6 +492,9 @@ void AppController::commitPreviewDrag()
     };
     const QString before = selectedId(m_previewDragBefore);
     const QScopedValueRollback quietSelection(m_quietSelection, !before.isEmpty() && before == selectedId(m_project));
+    // Same reason as pushProjectEdit: a drag that moved or resized a graded clip must record its
+    // pinned adjustments on the clip, or a redo restores them at the old span.
+    syncLinkedAdjustments(m_project);
     if (!m_mcpController->undoSuspended()) {
         const QScopedValueRollback quietPush(m_quietUndoPush, true);
         m_undoStack.push(new drift::ProjectSnapshotCommand(&m_project, m_previewDragBefore, m_project, text));
@@ -607,9 +610,12 @@ void AppController::setClipTextContent(int trackIndex, int clipIndex, const QStr
     drift::Clip &clip = track.clips[clipIndex];
     if (clip.type != drift::ClipType::Text)
         return;
+    const QString trimmed = text.trimmed();
+    if (clip.textContent == trimmed && clip.name == trimmed.left(32))
+        return;
 
     const drift::Project before = m_project;
-    clip.textContent = text.trimmed();
+    clip.textContent = trimmed;
     clip.name = clip.textContent.left(32);
     pushProjectEdit(before, tr("Text updated"));
     finishEdit(tr("Text updated"));
@@ -961,7 +967,7 @@ void AppController::commitSubtitleCues(int trackIndex, int clipIndex, QList<drif
 
     const drift::Project before = m_project;
     clip.subtitleCues = std::move(cues);
-    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    drift::refreshSubtitleClipName(clip.name, clip.subtitleCues);
     pushProjectEdit(before, undoText);
     finishEdit(undoText);
 }
@@ -983,7 +989,7 @@ void AppController::previewSetSubtitleCues(int trackIndex, int clipIndex, const 
         beginPreviewDrag(tr("Adjust subtitle timing"));
 
     clip.subtitleCues = subtitleCuesFromMap(cues);
-    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    drift::refreshSubtitleClipName(clip.name, clip.subtitleCues);
     emitPreviewFrame();
 }
 
@@ -1045,7 +1051,7 @@ void AppController::upsertSubtitleCueAtPlayhead(int trackIndex, int clipIndex, c
         drift::sortSubtitleCues(clip.subtitleCues);
     }
 
-    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    drift::refreshSubtitleClipName(clip.name, clip.subtitleCues);
     pushProjectEdit(before, tr("Subtitle cue updated"));
     finishEdit(tr("Subtitle cue updated"));
 }
@@ -1574,8 +1580,12 @@ void AppController::setClipBlendMode(int trackIndex, int clipIndex, const QStrin
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return;
 
+    const drift::BlendMode next = drift::blendModeFromString(mode);
+    if (track.clips[clipIndex].blendMode == next)
+        return;
+
     const drift::Project before = m_project;
-    track.clips[clipIndex].blendMode = drift::blendModeFromString(mode);
+    track.clips[clipIndex].blendMode = next;
     pushProjectEdit(before, tr("Blend mode changed"));
     finishEdit(tr("Blend mode updated"));
 }

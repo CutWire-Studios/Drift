@@ -22,6 +22,7 @@
 #endif
 
 #include <QDateTime>
+#include <QScopedValueRollback>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -1228,6 +1229,7 @@ bool AssetLibrary::startReplaceProbe(int index, const QString &absolutePath)
                     return;
                 m_probeToken.remove(assetId);
                 m_importPending.remove(assetId);
+                const QScopedValueRollback delivering(m_completingProbeToken, token);
                 emit assetSourceProbed(assetId, filled, ok);
             },
             Qt::QueuedConnection);

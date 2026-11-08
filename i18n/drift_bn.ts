@@ -2747,10 +2747,6 @@
         <translation>টেক্সট ক্লিপ যোগ করা হয়েছে।</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>সাবটাইটেল</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>সাবটাইটেল ক্লিপ যোগ করা হয়েছে</translation>
     </message>
@@ -17722,6 +17718,50 @@ If playback stutters, try another.</source>
     <message>
         <source>Every 5 minutes</source>
         <translation>প্রতি ৫ মিনিট পর পর</translation>
+    </message>
+    <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">আনলিমিটেড</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Extras</source>

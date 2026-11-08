@@ -1019,15 +1019,19 @@ void AppController::removeBookmarkNearPlayhead()
 
 // Freeze frames are project media, not cache: they live under the project's own media dir so a
 // save bundles them and a cache sweep can't delete the file a saved clip points at.
-// Full-size MCP captures use the same folder.
-QString AppController::newFreezeFramePath(const QString &projectId)
+QString AppController::projectMediaDir(const QString &projectId)
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (base.isEmpty())
         return {};
-
     const QString dir = QDir(base).filePath(QStringLiteral("projects/%1/media").arg(projectId));
-    if (!QDir().mkpath(dir))
+    return QDir().mkpath(dir) ? dir : QString();
+}
+
+QString AppController::newFreezeFramePath(const QString &projectId)
+{
+    const QString dir = projectMediaDir(projectId);
+    if (dir.isEmpty())
         return {};
 
     return QDir(dir).filePath(QStringLiteral("freeze-%1.png")
@@ -2394,6 +2398,10 @@ void AppController::captureSelectionClipIds()
     m_undoPrimaryId = isValidClipIndex(m_selectedTrack, m_selectedClip)
         ? m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).id
         : QString();
+    const bool transition = isValidClipIndex(m_selectedTransitionTrack, m_selectedTransitionLeftClip);
+    m_undoTransitionLeftClipId = transition
+        ? m_project.tracks().at(m_selectedTransitionTrack).clips.at(m_selectedTransitionLeftClip).id
+        : QString();
     m_undoSelectionCaptured = true;
 }
 
@@ -2408,17 +2416,33 @@ void AppController::restoreSelectionClipIds()
         if (findClipById(m_project, id, &t, &c))
             restored.append(qMakePair(t, c));
     }
-    if (restored.isEmpty())
-        return;
-    m_selection = restored;
     int t = -1;
     int c = -1;
-    if (!m_undoPrimaryId.isEmpty() && findClipById(m_project, m_undoPrimaryId, &t, &c)) {
+    const bool primaryFound = !m_undoPrimaryId.isEmpty() && findClipById(m_project, m_undoPrimaryId, &t, &c);
+    if (restored.isEmpty() && primaryFound)
+        restored.append(qMakePair(t, c));
+    // Nothing selected survives: clear it. Keeping the old indices would leave them pointing at
+    // whatever clip now sits there -- a neighbour's grade, say, after undoing a removal before it.
+    m_selection = restored;
+    if (primaryFound) {
         m_selectedTrack = t;
         m_selectedClip = c;
-    } else {
+    } else if (!restored.isEmpty()) {
         m_selectedTrack = restored.constLast().first;
         m_selectedClip = restored.constLast().second;
+    } else {
+        m_selectedTrack = -1;
+        m_selectedClip = -1;
+    }
+
+    // Before normalizeSelection, which would otherwise judge the transition by stale indices.
+    if (!m_undoTransitionLeftClipId.isEmpty()) {
+        int track = -1;
+        int left = -1;
+        if (!findClipById(m_project, m_undoTransitionLeftClipId, &track, &left))
+            track = left = -1;
+        m_selectedTransitionTrack = track;
+        m_selectedTransitionLeftClip = left;
     }
 }
 

@@ -15,6 +15,44 @@ QString subtitleClipName(const QList<SubtitleCue> &cues)
     return QCoreApplication::translate("SubtitleCue", "Subtitles (%1)").arg(cues.size());
 }
 
+bool isGeneratedSubtitleClipName(const QString &name)
+{
+    if (name.isEmpty())
+        return true;
+    // Exactly what subtitleClipName() emits for a count: a positive decimal, no sign, padding or
+    // leading zero -- so "Subtitles (-1)" or "Subtitles (002)", which it never makes, stay chosen.
+    const auto countedForm = [&name](const QString &pattern) {
+        const int at = pattern.indexOf(QStringLiteral("%1"));
+        if (at < 0)
+            return false;
+        const QString prefix = pattern.left(at);
+        const QString suffix = pattern.mid(at + 2);
+        if (!name.startsWith(prefix) || !name.endsWith(suffix) || name.size() <= prefix.size() + suffix.size())
+            return false;
+        const QStringView digits = QStringView(name).mid(prefix.size(), name.size() - prefix.size() - suffix.size());
+        if (digits.front() == QLatin1Char('0'))
+            return false;
+        return std::all_of(digits.begin(), digits.end(),
+                           [](QChar c) { return c >= QLatin1Char('0') && c <= QLatin1Char('9'); });
+    };
+    // In the current UI language and in the untranslated English source form. That covers names
+    // generated in English and read under any language, and names generated and read in the same
+    // language. A name generated in another language than the current one (Korean, then read in
+    // English or Spanish) is not recognised: its count goes stale, and in a merge it is treated as
+    // chosen. Recognising every translation would need the generated flag stored with the clip.
+    const char *bare = "Subtitles";
+    const char *counted = "Subtitles (%1)";
+    return name == QString::fromLatin1(bare) || name == QCoreApplication::translate("SubtitleCue", bare)
+           || countedForm(QString::fromLatin1(counted))
+           || countedForm(QCoreApplication::translate("SubtitleCue", counted));
+}
+
+void refreshSubtitleClipName(QString &name, const QList<SubtitleCue> &cues)
+{
+    if (isGeneratedSubtitleClipName(name))
+        name = subtitleClipName(cues);
+}
+
 namespace {
 
 struct TimedWord

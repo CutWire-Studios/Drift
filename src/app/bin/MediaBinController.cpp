@@ -356,7 +356,7 @@ bool MediaBinController::replaceSource(int assetIndex, const QUrl &url)
 #endif
     const QFileInfo fileInfo(path);
     if (path.isEmpty() || !fileInfo.isFile()) {
-        emit replaceFinished(false, tr("That file could not be read."), 0);
+        reportReplace(assetId, false, tr("That file could not be read."), 0);
         return false;
     }
 
@@ -365,12 +365,12 @@ bool MediaBinController::replaceSource(int assetIndex, const QUrl &url)
     const QString absolutePath = fileInfo.absoluteFilePath();
     const int existing = m_app->m_assetLibrary->indexOfPath(absolutePath);
     if (existing >= 0 && existing != assetIndex) {
-        emit replaceFinished(false, tr("That file is already in this project."), 0);
+        reportReplace(assetId, false, tr("That file is already in this project."), 0);
         return false;
     }
 
     if (!m_app->m_assetLibrary->startReplaceProbe(assetIndex, absolutePath)) {
-        emit replaceFinished(false, tr("That file could not be read."), 0);
+        reportReplace(assetId, false, tr("That file could not be read."), 0);
         return false;
     }
 
@@ -382,6 +382,13 @@ bool MediaBinController::replaceSource(int assetIndex, const QUrl &url)
     m_replacingAssetSourceUri = sourceUri;
     emit replacingAssetIdChanged();
     return true;
+}
+
+void MediaBinController::reportReplace(const QString &assetId, bool ok, const QString &message,
+                                      int adjustedClips)
+{
+    emit replaceFinished(ok, message, adjustedClips);
+    emit replaceFinishedFor(assetId, ok, message);
 }
 
 bool MediaBinController::replaceSourceWith(int assetIndex, const QUrl &url,
@@ -953,8 +960,9 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
             m_refreshFailed.insert(assetId);
             m_app->setLastMessage(tr("Could not refresh “%1”: %2").arg(currentName, message),
                                   QStringLiteral("warning"));
-        } else if (!fromEdit)
-            emit replaceFinished(false, message, 0);
+        } else if (!fromEdit) {
+            reportReplace(assetId, false, message, 0);
+        }
     };
 
     const drift::MediaAsset *current = m_app->m_project.asset(assetId);
@@ -1045,7 +1053,7 @@ void MediaBinController::finalizeReplace(const QString &assetId, const drift::Me
     m_app->finishEdit(label);
     finishEditJob(true, newName);
     if (!fromEdit && !refresh)
-        emit replaceFinished(true, newName, adjusted);
+        reportReplace(assetId, true, newName, adjusted);
     m_siblingRelink = siblings;
     if (!siblings.isEmpty())
         emit siblingRelinkAvailable(int(siblings.size()),

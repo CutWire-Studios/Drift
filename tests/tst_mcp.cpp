@@ -30,6 +30,8 @@
 #include "engine/encode/proxies/ProxyNaming.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
 #include <QSignalSpy>
+
+#include <filesystem>
 #include <QTimer>
 #include <QUrlQuery>
 
@@ -38,6 +40,7 @@
 
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/tools/McpDispatcher.h"
+#include "app/mcp/transport/McpServer.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/protocol/McpProtocol.h"
 #include "app/mcp/protocol/McpSession.h"
@@ -89,6 +92,12 @@ private slots:
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
     void proxySuggestionFollowsThePreference();
+    void captureFilesStayOutOfTheProject();
+    void subtitleClipKeepsItsChosenName();
+    void setTransformKeysOnlyInsideTheClip();
+    void homepageToolsRejectUnknownArgs();
+    void setEffectEnabledTargetsOneEffect();
+    void replaceAssetWaitsForTheReprobe();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -146,6 +155,8 @@ private slots:
     void captureBeyondEndFlags();
     void previewViewTools();
     void applyBatchStopsAndUndoRevertsPrefix();
+    void undoToCarriesTheSelectionById();
+    void applyBatchOfNoOpsAddsNoUndoStep();
     void inspectIsCompact();
     void inspectDetailRowIsCompact();
     void inspectClipAndTrackFilters();
@@ -209,6 +220,8 @@ private slots:
     void selectionBasedOpsExcludePlayheadOps();
     void inspectReportsSelectionAndUndo();
     void listHistoryLabelsApplyBatch();
+    void listHistoryReflectsTheHistoryLimit();
+    void historyOpsSeeTheTrimmedStack();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -426,6 +439,467 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// capture({full:true}) used to write freeze-*.png into the project's media folder, where they
+// piled up and a save bundled them. They go to the session's agent-image cache now, and path
+// lets the agent pick the file.
+void McpTest::captureFilesStayOutOfTheProject()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpCaptureTest"));
+    const auto restore = qScopeGuard([&] {
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString cache = state.mcp()->imageLog()->sessionDir();
+    QVERIFY(!cache.isEmpty());
+
+    // Importing a file from the agent-image cache copies it into the project's media, so the
+    // project never points at a file the cache sweep deletes. Two captures with the same name
+    // stay two images. (No compositor needed.)
+    QTemporaryDir otherSession(QDir(cache).absoluteFilePath(QStringLiteral("../import-test-XXXXXX")));
+    QVERIFY(otherSession.isValid());
+    const QString first = QDir(cache).filePath(QStringLiteral("look.png"));
+    const QString second = otherSession.filePath(QStringLiteral("look.png"));
+    QImage red(16, 16, QImage::Format_RGB32);
+    red.fill(Qt::red);
+    QImage blue(16, 16, QImage::Format_RGB32);
+    blue.fill(Qt::blue);
+    QVERIFY(red.save(first, "PNG"));
+    QVERIFY(blue.save(second, "PNG"));
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{first, second}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson()));
+    const QJsonArray copied = imported.value(QStringLiteral("copied_into_project")).toArray();
+    QCOMPARE(copied.size(), 2);
+    const QString redCopy = copied.at(0).toString();
+    const QString blueCopy = copied.at(1).toString();
+    QVERIFY(redCopy != blueCopy);
+    for (const QString &path : {redCopy, blueCopy})
+        QVERIFY2(path.contains(QStringLiteral("projects/%1/media").arg(state.project()->id())), qPrintable(path));
+    QVERIFY(QFile::remove(first));
+    QVERIFY(QFile::remove(second));
+    QCOMPARE(QImage(redCopy).pixelColor(0, 0), QColor(Qt::red));
+    QCOMPARE(QImage(blueCopy).pixelColor(0, 0), QColor(Qt::blue));
+    QStringList assetPaths;
+    for (const drift::MediaAsset &asset : state.project()->assets())
+        assetPaths.append(asset.path);
+    QVERIFY2(assetPaths.contains(redCopy) && assetPaths.contains(blueCopy), qPrintable(assetPaths.join(u',')));
+    for (const QString &path : std::as_const(assetPaths))
+        QVERIFY2(!path.startsWith(QFileInfo(cache).absolutePath()), qPrintable(path));
+    QFile::remove(redCopy);
+    QFile::remove(blueCopy);
+
+    const auto textOf = [](const QJsonObject &result) {
+        const QJsonArray content = result.value(QStringLiteral("content")).toArray();
+        return content.isEmpty() ? QJsonObject()
+                                 : QJsonDocument::fromJson(content.first().toObject().value(QStringLiteral("text")).toString().toUtf8()).object();
+    };
+    const QJsonObject full = dispatcher.capture({{QStringLiteral("at"), 0.5}, {QStringLiteral("full"), true}});
+    if (full.value(QStringLiteral("isError")).toBool()
+        && textOf(full).value(QStringLiteral("detail")).toString().contains(QStringLiteral("Compositor returned no frame")))
+        QSKIP("Compositor could not produce a frame in this environment");
+    QVERIFY2(!full.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(full).toJson()));
+    const QString written = textOf(full).value(QStringLiteral("path")).toString();
+    QVERIFY2(QFileInfo::exists(written), qPrintable(written));
+    QVERIFY2(written.startsWith(cache), qPrintable(written));
+
+    // frames({return:"path"}) goes to the same cache folder.
+    const QJsonObject sheet = dispatcher.frames({{QStringLiteral("at"), QJsonArray{0.5}}, {QStringLiteral("return"), QStringLiteral("path")}});
+    const QString sheetPath = sheet.value(QStringLiteral("path")).toString().isEmpty()
+                                  ? textOf(sheet).value(QStringLiteral("path")).toString()
+                                  : sheet.value(QStringLiteral("path")).toString();
+    QVERIFY2(sheetPath.startsWith(cache), qPrintable(QJsonDocument(sheet).toJson()));
+
+    QTemporaryDir out;
+    QVERIFY(out.isValid());
+    const QString chosen = out.filePath(QStringLiteral("look"));
+    const QJsonObject atPath = dispatcher.capture({{QStringLiteral("at"), 0.5}, {QStringLiteral("path"), chosen}});
+    QVERIFY2(!atPath.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(atPath).toJson()));
+    QCOMPARE(textOf(atPath).value(QStringLiteral("path")).toString(), chosen + QStringLiteral(".png"));
+    QVERIFY(QFileInfo::exists(chosen + QStringLiteral(".png")));
+
+    // An existing file is not replaced unless asked; a symlink never is.
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), chosen + QStringLiteral(".png")}})
+                .value(QStringLiteral("isError")).toBool());
+    QVERIFY(QFile::setPermissions(chosen + QStringLiteral(".png"),
+                                  QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadUser
+                                      | QFileDevice::WriteUser | QFileDevice::ReadGroup | QFileDevice::ReadOther));
+    QVERIFY(!dispatcher.capture({{QStringLiteral("path"), chosen + QStringLiteral(".png")}, {QStringLiteral("overwrite"), true}})
+                 .value(QStringLiteral("isError")).toBool());
+    // The replaced file keeps its permissions (the temp file it is written through is 0600).
+    QVERIFY(QFileInfo(chosen + QStringLiteral(".png")).permissions().testFlag(QFileDevice::ReadOther));
+    QVERIFY(QDir(out.path()).entryList({QStringLiteral(".capture-*")}, QDir::Files | QDir::Hidden).isEmpty());
+    const QString victim = out.filePath(QStringLiteral("victim.txt"));
+    {
+        QFile f(victim);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("keep me");
+    }
+    const QString link = out.filePath(QStringLiteral("link.png"));
+    std::error_code linkError;
+    std::filesystem::create_symlink(victim.toStdString(), link.toStdString(), linkError);
+    if (!linkError) {
+        QVERIFY(dispatcher.capture({{QStringLiteral("path"), link}, {QStringLiteral("overwrite"), true}})
+                    .value(QStringLiteral("isError")).toBool());
+        // Below the dispatcher's check (a symlink swapped in while the frame renders): the
+        // overwrite replaces the link itself and never writes through it.
+        const QJsonObject raced = state.mcp()->captureFrame(0.5, false, false, link, /*overwrite=*/true);
+        QVERIFY2(!raced.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(raced).toJson()));
+        QVERIFY(!QFileInfo(link).isSymLink());
+        QVERIFY(!QImage(link).isNull());
+    } else {
+        qWarning("symlinks unavailable here; skipping the symlink checks");
+    }
+    {
+        QFile f(victim);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), QByteArray("keep me"));
+    }
+
+    // A path-only capture still shows up in the agent image log.
+    const int logged = state.mcp()->imageLog()->rowCount();
+    const QJsonObject args{{QStringLiteral("at"), 0.5}, {QStringLiteral("path"), out.filePath(QStringLiteral("logged.png"))}};
+    state.mcp()->imageLog()->recordResult(1, QStringLiteral("capture"), args, dispatcher.capture(args));
+    QCOMPARE(state.mcp()->imageLog()->rowCount(), logged + 1);
+
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), QStringLiteral("relative.png")}})
+                .value(QStringLiteral("isError")).toBool());
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), out.filePath(QStringLiteral("missing/dir/x.png"))}})
+                .value(QStringLiteral("isError")).toBool());
+}
+
+// set_clip_name on a subtitle clip used to be overwritten with "Subtitles (N)" by the next cue edit.
+void McpTest::subtitleClipKeepsItsChosenName()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    drift::Clip clip;
+    clip.id = QStringLiteral("subs");
+    clip.type = drift::ClipType::Subtitle;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    clip.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("one")}};
+    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    state.project()->tracks()[0].clips.append(clip);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject named = dispatcher.applyOne(QStringLiteral("set_clip_name"),
+                                                  {{QStringLiteral("clip"), QStringLiteral("subs")},
+                                                   {QStringLiteral("name"), QStringLiteral("VO script")}});
+    QVERIFY2(named.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(named).toJson()));
+    QVariantList cues;
+    cues.append(QVariantMap{{QStringLiteral("start"), 0.0}, {QStringLiteral("end"), 1.0}, {QStringLiteral("text"), QStringLiteral("one")}});
+    cues.append(QVariantMap{{QStringLiteral("start"), 1.5}, {QStringLiteral("end"), 2.5}, {QStringLiteral("text"), QStringLiteral("two")}});
+    state.setSubtitleCues(0, 0, cues);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).subtitleCues.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("VO script"));
+
+    // A chosen name that only looks generated stays too.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_name"),
+                                {{QStringLiteral("clip"), QStringLiteral("subs")},
+                                 {QStringLiteral("name"), QStringLiteral("Subtitles (002)")}})
+                .value(QStringLiteral("ok")).toBool());
+    cues.removeLast();
+    state.setSubtitleCues(0, 0, cues);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
+}
+
+// A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
+// (earlier still, outside it). It now refuses and writes nothing; `at` names the time instead.
+void McpTest::setTransformKeysOnlyInsideTheClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    // Auto-key is a persisted setting: put it back so later tests (and runs) start with it off.
+    const auto restoreAutoKey = qScopeGuard([&] { state.setAutoKeyEnabled(false); });
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("shot");
+    clip.type = drift::ClipType::Video;
+    clip.timelineStart = drift::secondsToUs(2.0);
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto xKeys = [&]() {
+        return state.project()->tracks().at(0).clips.at(0).transformX.keyframes();
+    };
+
+    // A constant write doesn't care where the playhead is.
+    state.setAutoKeyEnabled(false);
+    state.setPlayheadSeconds(1.0); // before the clip (2-6 s)
+    QJsonObject result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                             {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 10.0}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QVERIFY(xKeys().size() <= 1);
+
+    // With auto-key on the write keys, so the playhead outside the clip is refused.
+    state.setAutoKeyEnabled(true);
+    const auto keysBefore = xKeys();
+    result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 50.0}});
+    QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    QVERIFY2(result.value(QStringLiteral("detail")).toString().contains(QStringLiteral("outside the clip")),
+             qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(xKeys(), keysBefore);
+
+    // at names the time: the key lands 1 s into the clip.
+    result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 50.0},
+                                  {QStringLiteral("at"), 3.0}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QVERIFY(xKeys().contains(drift::secondsToUs(1.0)));
+    QCOMPARE(xKeys().value(drift::secondsToUs(1.0)).value, 50.0);
+    // A switched-off animation takes the value on its first key whatever the time, so it isn't
+    // refused even with auto-key on and the playhead outside the clip.
+    state.setClipKeyframe(0, 0, QStringLiteral("x"), 4.0, 70.0); // a second key: animated
+    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("x"), false);
+    state.setPlayheadSeconds(1.0);
+    result = dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 80.0}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(xKeys().first().value, 80.0);
+    state.setClipPropertyKeyframesEnabled(0, 0, QStringLiteral("x"), true);
+
+    // and at outside the clip is refused too.
+    const auto keysBeforeAt = xKeys();
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_transform"),
+                                 {{QStringLiteral("clip"), QStringLiteral("shot")}, {QStringLiteral("x"), 60.0},
+                                  {QStringLiteral("at"), 7.0}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    QCOMPARE(xKeys(), keysBeforeAt);
+}
+
+// capture({time: 3}) (the key is `at`) used to capture at the playhead without a word: the
+// homepage tools skipped validation. They now check their schema and refuse unknown keys.
+void McpTest::homepageToolsRejectUnknownArgs()
+{
+    QJsonObject args{{QStringLiteral("time"), 3.0}};
+    QJsonObject error = drift::mcp::checkHomepageArgs(QStringLiteral("capture"), args);
+    QCOMPARE(error.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    const QString detail = error.value(QStringLiteral("detail")).toString();
+    QVERIFY2(detail.contains(QStringLiteral("time")) && detail.contains(QStringLiteral("at")), qPrintable(detail));
+
+    // Wrong types are refused too, and good args pass untouched.
+    args = {{QStringLiteral("at"), QStringLiteral("soon")}};
+    QVERIFY(!drift::mcp::checkHomepageArgs(QStringLiteral("capture"), args).isEmpty());
+    args = {{QStringLiteral("at"), 1.5}, {QStringLiteral("full"), true}};
+    QVERIFY(drift::mcp::checkHomepageArgs(QStringLiteral("capture"), args).isEmpty());
+    // Each tool with otherwise valid args: only the unknown key can be what's refused.
+    const QList<QPair<QString, QJsonObject>> valid{
+        {QStringLiteral("inspect"), {}},
+        {QStringLiteral("frames"), {}},
+        {QStringLiteral("activity"), {}},
+        {QStringLiteral("catalog"), {}},
+        {QStringLiteral("toolbox"), {{QStringLiteral("name"), QStringLiteral("effects")}}},
+        {QStringLiteral("search"), {{QStringLiteral("q"), QStringLiteral("crop")}}},
+    };
+    for (const auto &[tool, base] : valid) {
+        QJsonObject good = base;
+        QVERIFY2(drift::mcp::checkHomepageArgs(tool, good).isEmpty(), qPrintable(tool));
+        QJsonObject bogus = base;
+        bogus.insert(QStringLiteral("not_an_arg"), 1);
+        const QJsonObject refused = drift::mcp::checkHomepageArgs(tool, bogus);
+        QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY2(refused.value(QStringLiteral("detail")).toString().contains(QStringLiteral("not_an_arg")),
+                 qPrintable(tool + QStringLiteral(": ") + QJsonDocument(refused).toJson(QJsonDocument::Compact)));
+    }
+
+    // apply: its own unknown key is refused, a key nested in an op item is not.
+    QJsonObject applyArgs{{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("undo")}}}},
+                          {QStringLiteral("atomic"), true}};
+    QCOMPARE(drift::mcp::checkHomepageArgs(QStringLiteral("apply"), applyArgs).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    applyArgs = {{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("undo")},
+                                                                {QStringLiteral("note"), QStringLiteral("x")}}}}};
+    QVERIFY(drift::mcp::checkHomepageArgs(QStringLiteral("apply"), applyArgs).isEmpty());
+
+    // Through the real server path: the refusal is an error result, and an apply batch whose
+    // toolbox op carries an unknown key still runs and reports it as ignored.
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    const QString id = state.mcp()->compactClip(state.selectedTrack(), state.selectedClip()).value(QStringLiteral("id")).toString();
+    drift::mcp::McpServer server(&state);
+    const auto call = [&](const QString &tool, const QJsonObject &arguments) {
+        const QJsonObject request{{QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
+                                  {QStringLiteral("id"), 1},
+                                  {QStringLiteral("method"), QStringLiteral("tools/call")},
+                                  {QStringLiteral("params"), QJsonObject{{QStringLiteral("name"), tool},
+                                                                         {QStringLiteral("arguments"), arguments}}}};
+        return server.handleRpc(QString(), request).toObject().value(QStringLiteral("result")).toObject();
+    };
+    const auto textOf = [](const QJsonObject &result) {
+        return QJsonDocument::fromJson(result.value(QStringLiteral("content")).toArray().first().toObject()
+                                           .value(QStringLiteral("text")).toString().toUtf8()).object();
+    };
+    const QJsonObject captured = call(QStringLiteral("capture"), {{QStringLiteral("time"), 3.0}});
+    QVERIFY(captured.value(QStringLiteral("isError")).toBool());
+    QCOMPARE(textOf(captured).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    const QJsonObject batch = call(QStringLiteral("apply"),
+                                   {{QStringLiteral("ops"),
+                                     QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                                            {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), id},
+                                                                                                 {QStringLiteral("name"), QStringLiteral("Renamed")},
+                                                                                                 {QStringLiteral("bogus"), 1}}}}}}});
+    QVERIFY2(!batch.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    const QJsonObject done = textOf(batch).value(QStringLiteral("done")).toArray().first().toObject().value(QStringLiteral("result")).toObject();
+    QCOMPARE(done.value(QStringLiteral("ignored")).toArray(), QJsonArray{QStringLiteral("bogus")});
+}
+
+// set_effect_enabled bypasses exactly one effect, picked by stack position or catalog id, and the
+// effect ops document `index` as the effect's position rather than the clip's.
+void McpTest::setEffectEnabledTargetsOneEffect()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip clip;
+    clip.id = QStringLiteral("graded");
+    clip.type = drift::ClipType::Video;
+    clip.timelineDuration = drift::secondsToUs(2.0);
+    clip.srcOut = clip.timelineDuration;
+    state.project()->tracks()[0].clips.append(clip);
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (const QString effect : {QStringLiteral("adjust.contrast"), QStringLiteral("film_grain"), QStringLiteral("adjust.contrast")}) {
+        const QJsonObject added = dispatcher.applyOne(QStringLiteral("add_effect"),
+                                                      {{QStringLiteral("clip"), QStringLiteral("graded")}, {QStringLiteral("effect"), effect}});
+        QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(added).toJson()));
+    }
+    // add_effect reports where the effect landed in the stack, apart from the clip's own index.
+    const QJsonObject fourth = dispatcher.applyOne(QStringLiteral("add_effect"),
+                                                   {{QStringLiteral("clip"), QStringLiteral("graded")}, {QStringLiteral("effect"), QStringLiteral("adjust.hue")}});
+    QCOMPARE(fourth.value(QStringLiteral("effectIndex")).toInt(), 3);
+    QCOMPARE(fourth.value(QStringLiteral("index")).toInt(), 0);
+    const auto enabledFlags = [&]() {
+        QList<bool> flags;
+        const QPair<int, int> at = state.mcp()->locateClip(QStringLiteral("graded"));
+        for (const QVariant &e : state.clipAt(at.first, at.second).value(QStringLiteral("effects")).toList())
+            flags.append(e.toMap().value(QStringLiteral("enabled")).toBool());
+        return flags;
+    };
+    QCOMPARE(enabledFlags(), (QList<bool>{true, true, true, true}));
+
+    // By catalog id: only the grain goes off.
+    QJsonObject result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                             {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                              {QStringLiteral("effect"), QStringLiteral("film_grain")},
+                                              {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(result.value(QStringLiteral("effectIndex")).toInt(), 1);
+    QCOMPARE(enabledFlags(), (QList<bool>{true, false, true, true}));
+
+    // An id the clip holds twice is ambiguous; a stack position settles it.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("adjust.contrast")},
+                                  {QStringLiteral("enabled"), false}});
+    QCOMPARE(result.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), 2},
+                                  {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(enabledFlags(), (QList<bool>{true, false, false, true}));
+
+    // The old index argument still works; unknown ids and positions are errors, not silent no-ops.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("index"), 1},
+                                  {QStringLiteral("enabled"), true}});
+    QVERIFY(result.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(enabledFlags(), (QList<bool>{true, true, false, true}));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("blur.gaussian")},
+                                  {QStringLiteral("enabled"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("index"), 7},
+                                  {QStringLiteral("enabled"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("not_found"));
+
+    // Catalog ids match like add_effect's: '.' and '_' interchangeable.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("film.grain")},
+                                  {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(result.value(QStringLiteral("effectIndex")).toInt(), 1);
+    // A numeric string or a whole double is a stack position; a fraction is rejected.
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), QStringLiteral("3")},
+                                  {QStringLiteral("enabled"), false}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QCOMPARE(result.value(QStringLiteral("effectIndex")).toInt(), 3);
+    result = dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), 3.0},
+                                  {QStringLiteral("enabled"), true}});
+    QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(result).toJson()));
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("clip"), QStringLiteral("graded")},
+                                  {QStringLiteral("effect"), 1.5},
+                                  {QStringLiteral("enabled"), true}})
+                 .value(QStringLiteral("ok")).toBool());
+    // Without a clip id the effect ops refuse, rather than reading index as the clip's position.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_effect_enabled"),
+                                 {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 1},
+                                  {QStringLiteral("enabled"), false}})
+                 .value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+
+    // A blank clip id is no way around it either; nothing changes.
+    for (const QString blank : {QString(), QStringLiteral("  ")}) {
+        QCOMPARE(dispatcher.applyOne(QStringLiteral("remove_effect"),
+                                     {{QStringLiteral("clip"), blank}, {QStringLiteral("track"), 0},
+                                      {QStringLiteral("index"), 1}})
+                     .value(QStringLiteral("error")).toString(),
+                 QStringLiteral("bad_args"));
+    }
+    QCOMPARE(enabledFlags().size(), 4);
+
+    // Every op whose index is an effect position says so, requires the clip id and offers no
+    // positional track (the clip-ref props used to override the effect index's description).
+    const QSet<QString> effectIndexOps{
+        QStringLiteral("remove_effect"),          QStringLiteral("set_effect_param"),
+        QStringLiteral("remove_audio_effect"),    QStringLiteral("set_audio_effect_param"),
+        QStringLiteral("set_effect_enabled"),     QStringLiteral("set_effect_color_param"),
+        QStringLiteral("set_audio_effect_enabled"), QStringLiteral("set_effect_string_param")};
+    QSet<QString> seen;
+    const QJsonObject payload = drift::mcp::toolboxPayload(QStringLiteral("effects"));
+    for (const QJsonValue &tool : payload.value(QStringLiteral("tools")).toArray()) {
+        const QJsonObject op = tool.toObject();
+        const QString name = op.value(QStringLiteral("name")).toString();
+        if (!effectIndexOps.contains(name))
+            continue;
+        seen.insert(name);
+        const QJsonObject schema = op.value(QStringLiteral("inputSchema")).toObject();
+        const QJsonObject props = schema.value(QStringLiteral("properties")).toObject();
+        QVERIFY2(props.value(QStringLiteral("index")).toObject().value(QStringLiteral("description"))
+                     .toString().contains(QStringLiteral("effect stack")),
+                 qPrintable(name));
+        QVERIFY2(schema.value(QStringLiteral("required")).toArray().contains(QStringLiteral("clip")), qPrintable(name));
+        QVERIFY2(!props.contains(QStringLiteral("track")), qPrintable(name));
+    }
+    QCOMPARE(seen, effectIndexOps);
 }
 
 void McpTest::toolboxDescriptionsIncludeWhen()
@@ -1315,6 +1789,127 @@ void McpTest::depthToolsSampleAndClear()
     // A text clip has no pixels to estimate, and the test environment has no model either way.
     QVERIFY(!dispatcher.applyOne(QStringLiteral("estimate_depth"), {{QStringLiteral("clip"), id}})
                  .value(QStringLiteral("ok")).toBool());
+}
+
+// undo_to jumps the undo stack directly; it has to carry the selection across like undo/redo do,
+// or a selected clip that the jump removes leaves its index selecting the neighbour.
+void McpTest::undoToCarriesTheSelectionById()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    for (int i = 0; i < 2; ++i) {
+        drift::Clip clip;
+        clip.id = QStringLiteral("clip-%1").arg(i);
+        clip.type = drift::ClipType::Video;
+        clip.timelineStart = drift::secondsToUs(2.0 * i);
+        clip.timelineDuration = drift::secondsToUs(2.0);
+        clip.srcOut = clip.timelineDuration;
+        state.project()->tracks()[0].clips.append(clip);
+    }
+    state.project()->ensureTrackIds();
+
+    state.selectClip(0, 0);
+    state.deleteSelectedClip(); // history: [delete]
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-1"));
+    state.undo();
+    state.selectClip(0, 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-0"));
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QJsonObject jumped = dispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 1}});
+    QVERIFY2(jumped.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(jumped).toJson()));
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+    QCOMPARE(state.selectionCount(), 0);
+    QCOMPARE(state.selectedTrack(), -1);
+}
+
+// A batch whose ops all succeed without changing anything used to push an undo step anyway.
+void McpTest::applyBatchOfNoOpsAddsNoUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    const int track = state.selectedTrack();
+    const int clip = state.selectedClip();
+    QVERIFY(track >= 0);
+    const QString id = state.mcp()->compactClip(track, clip).value(QStringLiteral("id")).toString();
+    QVERIFY(!id.isEmpty());
+    const QString name = state.project()->tracks().at(track).clips.at(clip).name;
+    QVERIFY(!name.isEmpty());
+    const int steps = state.undoHistory().size();
+
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto rename = [&](const QString &to) {
+        return dispatcher.apply(QJsonObject{
+            {QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                    {QStringLiteral("args"),
+                                     QJsonObject{{QStringLiteral("clip"), id}, {QStringLiteral("name"), to}}}}}}});
+    };
+    QJsonObject batch = rename(name);
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    QCOMPARE(state.undoHistory().size(), steps);
+
+    batch = rename(QStringLiteral("Renamed"));
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    QCOMPARE(state.undoHistory().size(), steps + 1);
+
+    // A real change the saved form leaves out still gets its step: an In-only work-area marker is
+    // not written to the project file, so clearing it looks like nothing by content alone. The
+    // edit revision (bumped by finishEdit) is what catches it.
+    state.setPlayheadSeconds(1.0);
+    state.markWorkAreaIn();
+    QVERIFY(!state.project()->hasWorkArea());
+    QVERIFY(state.project()->workAreaInUs() >= 0);
+    const int beforeClear = state.undoHistory().size();
+    batch = dispatcher.apply(QJsonObject{
+        {QStringLiteral("ops"),
+         QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("clear_work_area")},
+                                {QStringLiteral("args"), QJsonObject{}}}}}});
+    QVERIFY2(batch.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    QVERIFY(state.project()->workAreaInUs() < 0);
+    QCOMPARE(state.undoHistory().size(), beforeClear + 1);
+
+    // Setters that used to write unconditionally: repeating the current value is a no-op now.
+    const auto applyOp = [&](const QString &tool, const QJsonObject &opArgs) {
+        return dispatcher.apply(QJsonObject{
+            {QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), tool}, {QStringLiteral("args"), opArgs}}}}});
+    };
+    const QJsonObject area{{QStringLiteral("in"), 0.0}, {QStringLiteral("out"), 1.0}};
+    QVERIFY(applyOp(QStringLiteral("set_work_area"), area).value(QStringLiteral("ok")).toBool());
+    const int afterArea = state.undoHistory().size();
+    QVERIFY(applyOp(QStringLiteral("set_work_area"), area).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), afterArea);
+
+    QVERIFY(applyOp(QStringLiteral("add_effect"),
+                    {{QStringLiteral("clip"), id}, {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}})
+                .value(QStringLiteral("ok")).toBool());
+    const QJsonObject param{{QStringLiteral("clip"), id}, {QStringLiteral("index"), 0},
+                            {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.5}};
+    QJsonObject set = applyOp(QStringLiteral("set_effect_param"), param);
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
+    const int afterParam = state.undoHistory().size();
+    set = applyOp(QStringLiteral("set_effect_param"), param);
+    QVERIFY2(set.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(set).toJson()));
+    QCOMPARE(state.undoHistory().size(), afterParam);
+
+    // The same for the other setters an agent repeats most: blend mode and text content.
+    const QJsonObject blend{{QStringLiteral("clip"), id}, {QStringLiteral("mode"), QStringLiteral("multiply")}};
+    QVERIFY(applyOp(QStringLiteral("set_blend_mode"), blend).value(QStringLiteral("ok")).toBool());
+    const int afterBlend = state.undoHistory().size();
+    QCOMPARE(afterBlend, afterParam + 1);
+    QVERIFY(applyOp(QStringLiteral("set_blend_mode"), blend).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), afterBlend);
+
+    const QJsonObject text{{QStringLiteral("clip"), id}, {QStringLiteral("text"), QStringLiteral("Goodbye")}};
+    QVERIFY(applyOp(QStringLiteral("set_text"), text).value(QStringLiteral("ok")).toBool());
+    const int afterText = state.undoHistory().size();
+    QCOMPARE(afterText, afterBlend + 1);
+    QVERIFY(applyOp(QStringLiteral("set_text"), text).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), afterText);
 }
 
 void McpTest::applyBatchStopsAndUndoRevertsPrefix()
@@ -2488,6 +3083,12 @@ void McpTest::splitOnBeatsCutsAndUndoesAsOneStep()
     if (beats.value(QStringLiteral("beats")).toArray().isEmpty())
         QSKIP("no tempo found in the generated click track");
 
+    // Graded: each cut also splits the pinned adjustment, minting ids on another track that the
+    // next cut must not follow.
+    {
+        const QPair<int, int> loc = state.mcp()->locateClip(clip);
+        state.addAudioEffect(loc.first, loc.second, QStringLiteral("space.autopan"));
+    }
     const int clipsBefore = dispatcher.inspect({}).value(QStringLiteral("clips")).toInt();
 
     const QJsonObject split = dispatcher.applyOne(
@@ -2499,10 +3100,19 @@ void McpTest::splitOnBeatsCutsAndUndoesAsOneStep()
     const QJsonArray produced = split.value(QStringLiteral("clips")).toArray();
     QVERIFY(produced.size() > 1);
     QCOMPARE(produced.at(0).toString(), clip); // the original id names the first piece
+    const int clipTrack = state.mcp()->locateClip(clip).first;
     for (const QJsonValue &v : produced)
-        QVERIFY(state.mcp()->locateClip(v.toString()).first >= 0);
-    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(),
-             clipsBefore + produced.size() - 1);
+        QCOMPARE(state.mcp()->locateClip(v.toString()).first, clipTrack); // pieces, not adjustments
+    // The pieces are numbered left to right: "x", "x (2)", "x (3)", ...
+    {
+        const QPair<int, int> first = state.mcp()->locateClip(produced.at(0).toString());
+        const QString base = state.project()->tracks().at(first.first).clips.at(first.second).name;
+        for (int i = 1; i < produced.size(); ++i) {
+            const QPair<int, int> loc = state.mcp()->locateClip(produced.at(i).toString());
+            QCOMPARE(state.project()->tracks().at(loc.first).clips.at(loc.second).name,
+                     QStringLiteral("%1 (%2)").arg(base).arg(i + 1));
+        }
+    }
 
     // However many cuts it made, it is one step.
     QVERIFY(state.undoAvailable());
@@ -3422,6 +4032,122 @@ void McpTest::listHistoryLabelsApplyBatch()
     QCOMPARE(history.value(QStringLiteral("hash")).toString().size(), 64);
     QCOMPARE(history.value(QStringLiteral("short")).toString(), shortHash);
     QVERIFY(history.value(QStringLiteral("hash")).toString().startsWith(shortHash));
+}
+
+namespace {
+// The history settings live in QSettings: isolated from the host's store and removed afterwards.
+auto isolateUndoHistorySettings()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestMcpUndoHistory"));
+    const auto clear = [] {
+        QSettings settings;
+        settings.remove(QStringLiteral("editor/undoHistoryMode"));
+        settings.remove(QStringLiteral("editor/undoHistoryLimit"));
+    };
+    clear();
+    return qScopeGuard([org, app, clear] {
+        clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+}
+
+QJsonObject addTextOp(int i)
+{
+    return {{QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("add_text")},
+                                    {QStringLiteral("args"),
+                                     QJsonObject{{QStringLiteral("text"), QStringLiteral("T%1").arg(i)},
+                                                 {QStringLiteral("at"), i * 2.0}}}}}}};
+}
+} // namespace
+
+// With a step limit, the trim runs after each edit; history read over MCP straight after the
+// edits (no event loop in between) must already be the trimmed one, or its indices go stale.
+void McpTest::listHistoryReflectsTheHistoryLimit()
+{
+    const auto restore = isolateUndoHistorySettings();
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.preferences()->setUndoHistoryLimit(2);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 4; ++i) {
+        const QJsonObject batch = dispatcher.apply(
+            {{QStringLiteral("ops"),
+              QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("add_text")},
+                                     {QStringLiteral("args"),
+                                      QJsonObject{{QStringLiteral("text"), QStringLiteral("T%1").arg(i)},
+                                                  {QStringLiteral("at"), i * 2.0}}}}}}});
+        QVERIFY(batch.value(QStringLiteral("ok")).toBool());
+    }
+
+    const QJsonObject history = dispatcher.applyOne(QStringLiteral("list_history"), {});
+    QVERIFY(history.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(history.value(QStringLiteral("entries")).toArray().size(), 3); // two steps + origin
+    QCOMPARE(history.value(QStringLiteral("current")).toInt(), 2);
+}
+
+// No event loop runs between these calls, so a trim queued by one is still pending at the next:
+// every history op has to see the stack as the limit leaves it.
+void McpTest::historyOpsSeeTheTrimmedStack()
+{
+    const auto restore = isolateUndoHistorySettings();
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 5; ++i)
+        QVERIFY(dispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+
+    // restore_snapshot by a hash read before the limit: the trim renumbers the stack, and the
+    // hash must still land on its own state.
+    const QJsonObject before = dispatcher.applyOne(QStringLiteral("list_history"), {{QStringLiteral("limit"), 10}});
+    QString hashAt3;
+    for (const QJsonValue &v : before.value(QStringLiteral("entries")).toArray()) {
+        if (v.toObject().value(QStringLiteral("index")).toInt() == 3)
+            hashAt3 = v.toObject().value(QStringLiteral("short")).toString();
+    }
+    QVERIFY(!hashAt3.isEmpty());
+    state.preferences()->setUndoHistoryLimit(2);
+    const QJsonObject restored = dispatcher.applyOne(QStringLiteral("restore_snapshot"), {{QStringLiteral("hash"), hashAt3}});
+    QVERIFY2(restored.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(restored).toJson()));
+    QCOMPARE(restored.value(QStringLiteral("short")).toString(), hashAt3);
+    QCOMPARE(state.undoHistory().size(), 2);
+    QCOMPARE(restored.value(QStringLiteral("index")).toInt(), 0);
+
+    // undo_to forward through redo steps takes the applied steps past the limit: the reply carries
+    // the index after the trim that move causes, on the state that was asked for. Built on a fresh
+    // controller with no limit first, so five redo steps are waiting when the limit arrives.
+    {
+        AppController fresh(&library);
+        fresh.preferences()->setUndoHistoryLimit(0);
+        drift::mcp::McpDispatcher freshDispatcher(&fresh);
+        for (int i = 0; i < 5; ++i)
+            QVERIFY(freshDispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+        const QJsonObject newest = freshDispatcher.applyOne(QStringLiteral("list_history"), {});
+        const QString newestHash = newest.value(QStringLiteral("short")).toString();
+        QVERIFY(freshDispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 0}})
+                    .value(QStringLiteral("ok")).toBool());
+        fresh.preferences()->setUndoHistoryLimit(2); // index 0: nothing to trim yet
+        QCOMPARE(fresh.undoHistory().size(), 5);
+        const QJsonObject forward =
+            freshDispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 5}});
+        QVERIFY(forward.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(forward.value(QStringLiteral("index")).toInt(), 2);
+        QCOMPARE(forward.value(QStringLiteral("short")).toString(), newestHash);
+        QCOMPARE(fresh.undoIndex(), 2);
+        QCOMPARE(fresh.undoHistory().size(), 2);
+        state.preferences()->setUndoHistoryLimit(2); // shared store; keep the outer test's value
+    }
+
+    // Off, then undo straight away: the steps waiting to be dropped are not undone.
+    state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
+    const QJsonObject undo = dispatcher.applyOne(QStringLiteral("undo"), {});
+    QVERIFY(!undo.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), 0);
 }
 
 void McpTest::undoToRestoresSnapshot()
@@ -5723,11 +6449,13 @@ void McpTest::effectParamWritesRejectUnknownKeys()
          {QStringLiteral("effect"), QStringLiteral("adjust.contrast")}});
     QVERIFY2(added.value(QStringLiteral("ok")).toBool(),
              qPrintable(QJsonDocument(added).toJson(QJsonDocument::Compact)));
+    // Effect ops address the clip by id: their index is the effect's stack position.
+    const QString clipId = added.value(QStringLiteral("id")).toString();
 
     // A real parameter still works.
     const QJsonObject good = dispatcher.applyOne(
         QStringLiteral("set_effect_param"),
-        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+        {{QStringLiteral("clip"), clipId}, {QStringLiteral("index"), 0},
          {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.4}});
     QVERIFY2(good.value(QStringLiteral("ok")).toBool(),
              qPrintable(QJsonDocument(good).toJson(QJsonDocument::Compact)));
@@ -5735,7 +6463,7 @@ void McpTest::effectParamWritesRejectUnknownKeys()
     // A misspelt one does not.
     const QJsonObject typo = dispatcher.applyOne(
         QStringLiteral("set_effect_param"),
-        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 0},
+        {{QStringLiteral("clip"), clipId}, {QStringLiteral("index"), 0},
          {QStringLiteral("key"), QStringLiteral("contrastt")}, {QStringLiteral("value"), 1.4}});
     QCOMPARE(typo.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
     QVERIFY2(typo.value(QStringLiteral("detail")).toString().contains(QStringLiteral("contrastt")),
@@ -5744,7 +6472,7 @@ void McpTest::effectParamWritesRejectUnknownKeys()
     // Neither does a stack index that is not there.
     const QJsonObject badIndex = dispatcher.applyOne(
         QStringLiteral("set_effect_param"),
-        {{QStringLiteral("track"), 0}, {QStringLiteral("index"), 7},
+        {{QStringLiteral("clip"), clipId}, {QStringLiteral("index"), 7},
          {QStringLiteral("key"), QStringLiteral("contrast")}, {QStringLiteral("value"), 1.4}});
     QCOMPARE(badIndex.value(QStringLiteral("error")).toString(), QStringLiteral("not_found"));
 
@@ -8266,6 +8994,59 @@ void McpTest::proxySuggestionFollowsThePreference()
     QVERIFY(!dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("proxySuggestion"), QStringLiteral("always")}})
                  .value(QStringLiteral("ok")).toBool());
     QCOMPARE(state.preferences()->proxySuggestion(), QStringLiteral("never"));
+}
+
+// replace_asset re-reads the file, also at the same path with new content, and the reply carries
+// the asset as now probed -- it used to return before the probe, with no duration at all.
+void McpTest::replaceAssetWaitsForTheReprobe()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate audio fixtures");
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("vo.wav"));
+    QVERIFY(writeClickTrack(path, 4));
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{path}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson()));
+    const QString assetId = state.project()->assetOrder().first();
+
+    // Same path, shorter content.
+    const QString staged = dir.filePath(QStringLiteral("staged.wav"));
+    QVERIFY(writeClickTrack(staged, 2) && QFile::remove(path) && QFile::rename(staged, path));
+    QJsonObject replaced = dispatcher.applyOne(QStringLiteral("replace_asset"),
+                                               {{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), path}});
+    QVERIFY2(replaced.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(replaced).toJson()));
+    QCOMPARE(replaced.value(QStringLiteral("reprobed")).toArray(), QJsonArray{assetId});
+    const QJsonArray assets = replaced.value(QStringLiteral("assets")).toArray();
+    QCOMPARE(assets.size(), 1);
+    QCOMPARE(qRound(assets.first().toObject().value(QStringLiteral("dur")).toDouble()), 2);
+    QCOMPARE(qRound(drift::usToSeconds(state.project()->asset(assetId)->durationUs)), 2);
+
+    // A different file, longer.
+    const QString other = dir.filePath(QStringLiteral("other.wav"));
+    QVERIFY(writeClickTrack(other, 3));
+    replaced = dispatcher.applyOne(QStringLiteral("replace_asset"),
+                                   {{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), other}});
+    QVERIFY2(replaced.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(replaced).toJson()));
+    QCOMPARE(qRound(replaced.value(QStringLiteral("assets")).toArray().first().toObject().value(QStringLiteral("dur")).toDouble()), 3);
+
+    // A file that can't be read fails the replace, reported as such, and the asset keeps its media.
+    const QString bad = dir.filePath(QStringLiteral("bad.wav"));
+    {
+        QFile f(bad);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("not audio");
+    }
+    replaced = dispatcher.applyOne(QStringLiteral("replace_asset"),
+                                   {{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), bad}});
+    QCOMPARE(replaced.value(QStringLiteral("error")).toString(), QStringLiteral("replace_failed"));
+    QVERIFY(!replaced.value(QStringLiteral("detail")).toString().isEmpty());
+    QVERIFY(!library.isImportPending(assetId));
+    QCOMPARE(state.project()->asset(assetId)->path, QFileInfo(other).absoluteFilePath());
 }
 
 QTEST_MAIN(McpTest)
