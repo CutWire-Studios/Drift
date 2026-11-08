@@ -968,13 +968,15 @@ void AppController::applyMulticamSlicesToProject(drift::Project &project, bool c
         track.clips.removeAt(index);
         // Slices arrive in timeline order. The first slice of each clip keeps its name; the
         // later ones are numbered like split pieces ("Cam A (2)", "Cam A (3)", ...), so they
-        // can be told apart. A linked audio slice gets the same number on its own track.
+        // can be told apart. Linked audio slices are numbered the same way on their own track.
+        // Keyed by source as well: two angles that happen to share a name are not pieces of one clip.
         QSet<QString> named;
         for (drift::Clip slice : slices) {
-            if (!slice.name.isEmpty() && named.contains(slice.name))
+            const QString key = slice.name + QLatin1Char('\n') + slice.path;
+            if (!slice.name.isEmpty() && named.contains(key))
                 slice.name = drift::nextSplitPieceName(track, slice.name);
             else
-                named.insert(slice.name);
+                named.insert(key);
             const int at = sortedInsertIndex(track, slice.timelineStart);
             track.clips.insert(at, slice);
         }

@@ -373,12 +373,27 @@ QVariantList subtitleCuesFromJson(const QJsonArray &cues)
     return out;
 }
 
+// The id of the right-hand piece a split minted on the track `trackId`. A split also mints
+// tails for linked partners and pinned adjustments on other tracks, so "any new id" is not
+// enough: the next cut has to follow this clip's own piece.
+QString newPieceOnTrack(const drift::Project &project, const QString &trackId, int trackIndex,
+                        const QSet<QString> &before)
+{
+    // By id when the track has one (an edit can renumber tracks); else by its index.
+    const int t = trackId.isEmpty() ? trackIndex : project.trackIndexById(trackId);
+    if (t < 0 || t >= project.tracks().size())
+        return {};
+    for (const drift::Clip &clip : project.tracks().at(t).clips) {
+        if (!before.contains(clip.id))
+            return clip.id;
+    }
+    return {};
+}
+
 } // namespace
 
-// Splits back to front. Every cut mints a new clip for the right-hand side and shifts the
-// indices after it, but the piece before a cut keeps both its position and its id — so working
-// from the last time backwards, re-resolving by UUID each pass, needs no index bookkeeping. The
-// id the caller passed ends up naming the first piece.
+// Splits front to back, each cut on the newest piece, re-resolving by UUID each pass. The id the
+// caller passed keeps naming the first piece, and the pieces are numbered left to right.
 QJsonObject McpDispatcher::opSplitOnBeats(const QJsonObject &args)
 {
     const ClipRef ref = resolveClip(args);
@@ -420,8 +435,9 @@ QJsonObject McpDispatcher::opSplitOnBeats(const QJsonObject &args)
         if (!here.valid())
             break;
         const QSet<QString> idsBefore = clipIdSet(m_controller);
+        const QString trackId = m_controller->project()->tracks().at(here.track).id;
         m_controller->splitClipAt(here.track, here.clip, cut);
-        const QString minted = findNewClipId(idsBefore, clipIdSet(m_controller));
+        const QString minted = newPieceOnTrack(*m_controller->project(), trackId, here.track, idsBefore);
         if (minted.isEmpty())
             continue; // refused (locked track, or the time landed on an edge after rounding)
         newIds.append(minted);
@@ -483,8 +499,9 @@ QJsonObject McpDispatcher::opSplitOnScenes(const QJsonObject &args)
         if (!here.valid())
             break;
         const QSet<QString> idsBefore = clipIdSet(m_controller);
+        const QString trackId = m_controller->project()->tracks().at(here.track).id;
         m_controller->splitClipAt(here.track, here.clip, cut);
-        const QString minted = findNewClipId(idsBefore, clipIdSet(m_controller));
+        const QString minted = newPieceOnTrack(*m_controller->project(), trackId, here.track, idsBefore);
         if (minted.isEmpty())
             continue; // refused (locked track, or the time landed on an edge after rounding)
         newIds.append(minted);

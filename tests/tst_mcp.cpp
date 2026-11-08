@@ -2484,6 +2484,12 @@ void McpTest::splitOnBeatsCutsAndUndoesAsOneStep()
     if (beats.value(QStringLiteral("beats")).toArray().isEmpty())
         QSKIP("no tempo found in the generated click track");
 
+    // Graded: each cut also splits the pinned adjustment, minting ids on another track that the
+    // next cut must not follow.
+    {
+        const QPair<int, int> loc = state.mcp()->locateClip(clip);
+        state.addAudioEffect(loc.first, loc.second, QStringLiteral("space.autopan"));
+    }
     const int clipsBefore = dispatcher.inspect({}).value(QStringLiteral("clips")).toInt();
 
     const QJsonObject split = dispatcher.applyOne(
@@ -2495,10 +2501,9 @@ void McpTest::splitOnBeatsCutsAndUndoesAsOneStep()
     const QJsonArray produced = split.value(QStringLiteral("clips")).toArray();
     QVERIFY(produced.size() > 1);
     QCOMPARE(produced.at(0).toString(), clip); // the original id names the first piece
+    const int clipTrack = state.mcp()->locateClip(clip).first;
     for (const QJsonValue &v : produced)
-        QVERIFY(state.mcp()->locateClip(v.toString()).first >= 0);
-    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(),
-             clipsBefore + produced.size() - 1);
+        QCOMPARE(state.mcp()->locateClip(v.toString()).first, clipTrack); // pieces, not adjustments
     // The pieces are numbered left to right: "x", "x (2)", "x (3)", ...
     {
         const QPair<int, int> first = state.mcp()->locateClip(produced.at(0).toString());
