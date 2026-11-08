@@ -8,7 +8,9 @@
         { "replace_asset", "media", "Swap source file",
           "Point an existing bin row at a different file. Every clip using the asset switches to the "
           "new media, keeping its trim and timeline position — trims past the new file's duration are "
-          "clamped downstream.",
+          "clamped downstream. The file is always re-read, also when it is the same path with new "
+          "content; the call waits for that (15s cap) and returns the asset as now probed (dur, kind) "
+          "with reprobed:[id], or replace_failed; past the cap import_timeout, with pending:true to poll.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
                         {QStringLiteral("path"), stringProp(QStringLiteral("Absolute path or file:// URL; must exist"))}},
                        {QStringLiteral("asset"), QStringLiteral("path")}) },
