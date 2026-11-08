@@ -377,6 +377,8 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void redoKeepsPinnedAdjustmentsOnTheirClips();
+    void redoAfterASpeedDragKeepsTheGradeOnTheClip();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
@@ -10893,6 +10895,74 @@ void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
     // And the clips themselves still report the stack, which is what the inspector and MCP read.
     QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
     QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
+// A pinned adjustment's span follows its clip, but the sync used to run after the undo snapshot
+// was taken: redoing a ripple delete restored the surviving clip's grade at its old position.
+void EditorStateTest::redoKeepsPinnedAdjustmentsOnTheirClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // clip-0 at 0-2s, clip-1 at 2-6s
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+
+    const auto checkGradeFollowsClip1 = [&]() {
+        const drift::Clip *host = nullptr;
+        for (const drift::Clip &clip : state.project()->tracks().at(0).clips)
+            if (clip.id == QStringLiteral("clip-1"))
+                host = &clip;
+        QVERIFY(host);
+        const drift::Clip *grade =
+            adjustmentFor(*state.project(), host->id, drift::AdjustmentKind::VideoEffects);
+        QVERIFY(grade);
+        QCOMPARE(grade->timelineStart, host->timelineStart);
+        QCOMPARE(grade->timelineDuration, host->timelineDuration);
+    };
+
+    state.setRippleEnabled(true);
+    state.selectClip(0, 0);
+    state.deleteSelectedClip();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs(0));
+    checkGradeFollowsClip1();
+
+    state.undo();
+    checkGradeFollowsClip1();
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs(0));
+    checkGradeFollowsClip1();
+}
+
+// The same, through a preview drag: dragging the speed changes the clip's length, and the drag's
+// commit pushes its own snapshot rather than going through pushProjectEdit.
+void EditorStateTest::redoAfterASpeedDragKeepsTheGradeOnTheClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // clip-1 at 2-6s
+
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+
+    state.selectClip(0, 1);
+    state.beginPreviewDrag(QStringLiteral("Speed"));
+    state.previewSetClipSpeed(0, 1, 2.0);
+    state.commitPreviewDrag();
+    const drift::TimeUs dragged = state.project()->tracks().at(0).clips.at(1).timelineDuration;
+    QVERIFY(dragged != drift::secondsToUs(4.0));
+
+    state.undo();
+    state.redo();
+    const drift::Clip &host = state.project()->tracks().at(0).clips.at(1);
+    QCOMPARE(host.timelineDuration, dragged);
+    const drift::Clip *grade =
+        adjustmentFor(*state.project(), host.id, drift::AdjustmentKind::VideoEffects);
+    QVERIFY(grade);
+    QCOMPARE(grade->timelineStart, host.timelineStart);
+    QCOMPARE(grade->timelineDuration, host.timelineDuration);
 }
 
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
