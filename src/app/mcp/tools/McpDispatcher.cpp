@@ -28,6 +28,16 @@
 #include <QVariantMap>
 
 namespace drift::mcp {
+
+QString effectCatalogKey(const QString &id)
+{
+    QString k = id.trimmed().toLower();
+    if (k.startsWith(QLatin1String("builtin.effects.")))
+        k.remove(0, 16);
+    k.replace(QLatin1Char('.'), QLatin1Char('_'));
+    return k;
+}
+
 namespace {
 
 QSet<QString> clipIdSet(AppController *c)
@@ -154,11 +164,7 @@ QString findNewClipId(const QSet<QString> &before, const QSet<QString> &after)
 
 QString catalogKey(const QString &id)
 {
-    QString k = id.trimmed().toLower();
-    if (k.startsWith(QLatin1String("builtin.effects.")))
-        k.remove(0, 16);
-    k.replace(QLatin1Char('.'), QLatin1Char('_'));
-    return k;
+    return effectCatalogKey(id);
 }
 
 QStringList catalogIds(const QVariantList &catalog)
@@ -731,7 +737,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
                      : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
             m_controller->mcp()->endBatch(batchLabel(i),
-                                      hadUndoable && i > 0);
+                                      hadUndoable && i > 0 && m_controller->mcp()->batchChangedProject());
             return {{QStringLiteral("ok"), false},
                     {QStringLiteral("error"), QStringLiteral("apply_failed")},
                     {QStringLiteral("stopped"), i},
@@ -745,7 +751,8 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         if (isUndoable(tool) || refreshed)
             hadUndoable = true;
     }
-    m_controller->mcp()->endBatch(batchLabel(ops.size()), hadUndoable);
+    m_controller->mcp()->endBatch(batchLabel(ops.size()),
+                                  hadUndoable && m_controller->mcp()->batchChangedProject());
     return ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}});
 }
 
@@ -758,6 +765,16 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     const QJsonObject invalid = validateArgs(tool, opInputSchema(tool), checked, &ignored);
     if (!invalid.isEmpty())
         return invalid;
+    // Ops whose index is an effect's stack position address the clip by id only: with the id
+    // blank, resolveClip would fall back to track+index and read the effect index as the clip's.
+    static const QSet<QString> kEffectIndexOps{
+        QStringLiteral("remove_effect"),           QStringLiteral("set_effect_param"),
+        QStringLiteral("remove_audio_effect"),     QStringLiteral("set_audio_effect_param"),
+        QStringLiteral("set_effect_enabled"),      QStringLiteral("set_effect_color_param"),
+        QStringLiteral("set_audio_effect_enabled"), QStringLiteral("set_effect_string_param")};
+    if (kEffectIndexOps.contains(tool) && checked.value(QStringLiteral("clip")).toString().trimmed().isEmpty())
+        return err("bad_args", QStringLiteral("clip required: a clip id from inspect({clips:true}); on %1, index is "
+                                              "the effect's stack position, not the clip's").arg(tool));
     QJsonObject result = applyOneUnchecked(tool, checked);
     if (!ignored.isEmpty() && result.value(QStringLiteral("ok")).toBool())
         result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));
@@ -1500,8 +1517,12 @@ QJsonObject McpDispatcher::opSetTransform(const QJsonObject &args)
         patch.insert(QStringLiteral("layer3d"), args.value(QStringLiteral("layer3d")).toBool());
     if (patch.isEmpty())
         return err("bad_args", QStringLiteral("No transform fields"));
-    if (!m_controller->mcp()->setClipCanvas(ref.track, ref.clip, patch))
-        return err("bad_args", QStringLiteral("Transform refused"));
+    const double at = args.contains(QStringLiteral("at")) ? jsonNumber(args.value(QStringLiteral("at")), -1.0) : -1.0;
+    if (args.contains(QStringLiteral("at")) && at < 0.0)
+        return err("bad_args", QStringLiteral("at must be >= 0 timeline seconds"));
+    QString why;
+    if (!m_controller->mcp()->setClipCanvas(ref.track, ref.clip, patch, at, &why))
+        return err("bad_args", why.isEmpty() ? QStringLiteral("Transform refused") : why);
     const ClipRef after = resolveClip(QJsonObject{{QStringLiteral("clip"), ref.id}});
     QJsonObject extra;
     const QJsonArray parented = transformedBy(after.track);
@@ -1662,7 +1683,8 @@ QJsonObject McpDispatcher::opAddEffect(const QJsonObject &args)
     const QVariantList after = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
     if (after.size() <= before.size())
         return err("not_found", QStringLiteral("Unknown effect id"));
-    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("index"), after.size() - 1},
+    // effectIndex, not only index: clipFeedback overwrites index with the clip's own position.
+    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("effectIndex"), after.size() - 1},
                                                  {QStringLiteral("effect"), effect}})));
 }
 
@@ -1722,7 +1744,7 @@ QJsonObject McpDispatcher::opAddAudioEffect(const QJsonObject &args)
         m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("audioEffects")).toList().size();
     if (after <= before)
         return err("not_found", QStringLiteral("Unknown audio effect id"));
-    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("index"), after - 1},
+    return ok(clipFeedback(ref, effectHost(ref, {{QStringLiteral("effectIndex"), after - 1},
                                                  {QStringLiteral("effect"), effect}})));
 }
 

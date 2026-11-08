@@ -8,6 +8,10 @@ class AppController;
 
 namespace drift::mcp {
 
+// An effect catalog id reduced for matching: lower case, '.' and '_' interchangeable, the
+// builtin.effects. prefix dropped — the same leniency add_effect applies to ids.
+QString effectCatalogKey(const QString &id);
+
 class McpDispatcher
 {
 public:

@@ -115,7 +115,11 @@ public:
     void bumpEditRevision() { ++m_editRevision; }
     bool undoSuspended() const { return m_undoSuspended; }
     const drift::Project &batchBefore() const { return m_batchBefore; }
-    bool setClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch);
+    // A keyed write (the property already animates, or auto-key is on) lands at `atSeconds` on the
+    // timeline, or at the playhead when it is negative. Either has to fall inside the clip, else
+    // nothing is written and *error says why: a key at the clip's edge is not what was asked for.
+    bool setClipCanvas(int trackIndex, int clipIndex, const QVariantMap &patch, double atSeconds = -1.0,
+                       QString *error = nullptr);
     // editor3d: the preview's free 3D viewpoint (or the overview when never placed) instead of the
     // composition.
     QJsonObject captureFrame(double atSeconds, bool full, bool editor3d = false);
@@ -154,6 +158,10 @@ public:
     QVariantMap lastExportSettings() const;
     void beginBatch();
     void endBatch(const QString &text, bool pushUndo);
+    // Whether the open batch has changed the project: an edit went through finishEdit, or the
+    // saved content differs from the batch's start. Ops can succeed without either (renaming a
+    // clip to its own name), and such a batch should not leave an undo step that undoes nothing.
+    bool batchChangedProject() const;
     QJsonObject listHistory(int limit = 20) const;
     QJsonObject undoTo(int index, const QString &hash);
     QJsonObject takeSnapshot(const QString &label);
@@ -360,6 +368,7 @@ private:
     bool m_undoSuspended = false;
     int m_batchDepth = 0;
     drift::Project m_batchBefore;
+    int m_batchRevision = 0;
     int m_editRevision = 0;
     mutable QHash<QString, QPair<int, int>> m_clipIndex;
     mutable int m_clipIndexRevision = -1;

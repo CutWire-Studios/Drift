@@ -740,6 +740,9 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure(&before);
+    // Pinned adjustments take their span from their clip. finishEdit re-spans them too, but only
+    // after this snapshot -- a redo would then restore every effect at its clip's old position.
+    syncLinkedAdjustments(m_project);
     syncCompositeAssetDurations();
     // Belt and braces for the tracks cache: normalizeProjectStructure() rewrites the project, and
     // every edit in the app reaches this function or finishEdit(). One bool write buys immunity
@@ -775,9 +778,9 @@ void AppController::finishEdit(const QString &message)
     // suspended). Idempotent, and pushProjectEdit has normally already done the work.
     normalizeProjectStructure();
 
-    // Pinned adjustments follow their clip from here rather than from each of the dozens of
-    // paths that can move one, so a drag, trim, split, ripple delete or multicam retarget all
-    // keep the link true for free.
+    // Pinned adjustments follow their clip from one place rather than from each of the dozens of
+    // paths that can move one. pushProjectEdit has normally re-spanned them already (before its
+    // snapshot); this catches the paths that bypass it.
     syncLinkedAdjustments(m_project);
     normalizeSelection();
     if (m_selectedTransitionTrack >= 0) {
