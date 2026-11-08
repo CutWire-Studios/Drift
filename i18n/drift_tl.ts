@@ -17288,6 +17288,26 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
         <translation>Awtomatikong i-on ang access ng agent sa susunod na buksan mo ang Drift. Ang pag-off sa access ay nagre-reset nito.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">Ulap</translation>
     </message>

@@ -17287,6 +17287,26 @@ If playback stutters, try another.</source>
         <translation>ඔබ ඊළඟ වතාවේ Drift විවෘත කරන විට සහායක ප්‍රවේශය ස්වයංක්‍රීයව සක්‍රිය කරන්න. ප්‍රවේශය අක්‍රිය කිරීමෙන් මෙය යළි සකසයි.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">වලාකුළ</translation>
     </message>

@@ -17218,6 +17218,26 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
         <translation>Tự động bật quyền truy cập trợ lý vào lần tiếp theo bạn mở Drift. Việc tắt quyền truy cập sẽ đặt lại tùy chọn này.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">Đám mây</translation>
     </message>
