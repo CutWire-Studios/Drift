@@ -689,9 +689,19 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         });
         connect(m_assetLibrary, &AssetLibrary::proxyRuleLearned, m_preferences,
                 &PreferencesController::addProxyNamePattern);
+        m_assetLibrary->setProxySuggestionMode(m_preferences->proxySuggestion());
+        connect(m_preferences, &PreferencesController::proxySuggestionChanged, this, [this] {
+            m_assetLibrary->setProxySuggestionMode(m_preferences->proxySuggestion());
+        });
     }
 
     m_mcpController = new McpController(this, this);
+    // A new step can take the stack past the history limit; so can a lower limit.
+    connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::scheduleUndoHistoryTrim);
+    connect(m_preferences, &PreferencesController::undoHistoryModeChanged, this,
+            &AppController::scheduleUndoHistoryTrim);
+    connect(m_preferences, &PreferencesController::undoHistoryLimitChanged, this,
+            &AppController::scheduleUndoHistoryTrim);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoStackChanged);
     connect(&m_undoStack, &QUndoStack::indexChanged, this, &AppController::undoHistoryChanged);
     connect(&m_undoStack, &QUndoStack::undoTextChanged, this, &AppController::undoHistoryChanged);

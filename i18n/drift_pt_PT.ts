@@ -923,7 +923,7 @@
     <name>AndroidExtrasPage</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">Extras</translation>
+        <translation>Extras</translation>
     </message>
 </context>
 <context>
@@ -2759,10 +2759,6 @@
         <translation>Clipe de texto adicionado</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Legendas</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Clipe de legenda adicionado</translation>
     </message>
@@ -4135,7 +4131,7 @@
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>Personalização</translation>
     </message>
     <message>
         <source>Snappy</source>
@@ -4143,7 +4139,7 @@
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">Voltar</translation>
+        <translation>Voltar</translation>
     </message>
     <message>
         <source>Bounce</source>
@@ -4224,6 +4220,14 @@
     <message>
         <source>Effect removed</source>
         <translation>Efeito removido</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -4804,7 +4808,7 @@
     <name>AppSettingsMenu</name>
     <message>
         <source>Help…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajuda…</translation>
     </message>
     <message>
         <source>Settings…</source>
@@ -6751,7 +6755,7 @@
     <name>CurveField</name>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>Personalização</translation>
     </message>
     <message>
         <source>Bezier</source>
@@ -7246,7 +7250,7 @@
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">A aguardar…</translation>
+        <translation>A aguardar…</translation>
     </message>
     <message>
         <source>Downloading…</source>
@@ -8787,334 +8791,334 @@
     <name>ExtrasCard</name>
     <message>
         <source>Select</source>
-        <translation type="unfinished">Selecionar</translation>
+        <translation>Selecionar</translation>
     </message>
     <message>
         <source>Waiting…</source>
-        <translation type="unfinished">A aguardar…</translation>
+        <translation>A aguardar…</translation>
     </message>
     <message>
         <source>%1 %2%</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 %2%</translation>
     </message>
     <message>
         <source>Installing…</source>
-        <translation type="unfinished">A instalar…</translation>
+        <translation>A instalar…</translation>
     </message>
     <message>
         <source>Downloading…</source>
-        <translation type="unfinished">A transferir…</translation>
+        <translation>A transferir…</translation>
     </message>
     <message>
         <source>Failed · open to retry</source>
-        <translation type="unfinished"></translation>
+        <translation>Falhou · abrir para tentar novamente</translation>
     </message>
     <message>
         <source>Needs Drift %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Necessita do Drift %1</translation>
     </message>
     <message>
         <source>Installed from file</source>
-        <translation type="unfinished">Instalado a partir de ficheiro</translation>
+        <translation>Instalado a partir de ficheiro</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished">Instalado</translation>
+        <translation>Instalado</translation>
     </message>
     <message>
         <source>Update · %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Atualizar · %1</translation>
     </message>
 </context>
 <context>
     <name>ExtrasDetail</name>
     <message>
         <source>Back</source>
-        <translation type="unfinished">Voltar</translation>
+        <translation>Voltar</translation>
     </message>
     <message>
         <source>Unofficial</source>
-        <translation type="unfinished">Não oficial</translation>
+        <translation>Não oficial</translation>
     </message>
     <message>
         <source>%1 → %2</source>
-        <translation type="unfinished">%1 → %2</translation>
+        <translation>%1 → %2</translation>
     </message>
     <message>
         <source>Needs a newer Drift</source>
-        <translation type="unfinished"></translation>
+        <translation>Necessita de um Drift mais recente</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Cancelar</translation>
+        <translation>Cancelar</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished">Atualizar</translation>
+        <translation>Atualizar</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">Tentar novamente</translation>
+        <translation>Tentar novamente</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">Instalar</translation>
+        <translation>Instalar</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished">Instalado</translation>
+        <translation>Instalado</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Remover</translation>
+        <translation>Remover</translation>
     </message>
     <message>
         <source>Delete this pack&apos;s downloaded data</source>
-        <translation type="unfinished">Eliminar os dados transferidos deste pacote</translation>
+        <translation>Eliminar os dados transferidos deste pacote</translation>
     </message>
     <message>
         <source>Waiting for other downloads to finish…</source>
-        <translation type="unfinished"></translation>
+        <translation>A aguardar que outras transferências terminem…</translation>
     </message>
     <message>
         <source>%1… %2%</source>
-        <translation type="unfinished">%1… %2%</translation>
+        <translation>%1… %2%</translation>
     </message>
     <message>
         <source>Requires Drift %1 or newer</source>
-        <translation type="unfinished">Requer o Drift %1 ou superior</translation>
+        <translation>Requer o Drift %1 ou superior</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Também instala: %1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished">Acerca de</translation>
+        <translation>Acerca de</translation>
     </message>
     <message>
         <source>Images</source>
-        <translation type="unfinished">Imagens</translation>
+        <translation>Imagens</translation>
     </message>
     <message>
         <source>What it&apos;s for</source>
-        <translation type="unfinished"></translation>
+        <translation>Para que serve</translation>
     </message>
     <message>
         <source>How to use</source>
-        <translation type="unfinished"></translation>
+        <translation>Como usar</translation>
     </message>
     <message>
         <source>Unlocks</source>
-        <translation type="unfinished"></translation>
+        <translation>Desbloqueia</translation>
     </message>
     <message>
         <source>%1 — %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 — %2</translation>
     </message>
     <message>
         <source>How AI runs</source>
-        <translation type="unfinished">Como a IA é executada</translation>
+        <translation>Como a IA é executada</translation>
     </message>
     <message>
         <source>Automatic picks the fastest option you have installed, and uses this computer if the graphics card can&apos;t help.</source>
-        <translation type="unfinished">Automático escolhe a opção mais rápida que tiver instalada e usa este computador se a placa de vídeo não puder ajudar.</translation>
+        <translation>Automático escolhe a opção mais rápida que tiver instalada e usa este computador se a placa de vídeo não puder ajudar.</translation>
     </message>
     <message>
         <source>Install an AI engine to unlock auto captions, subject cutout, funny face effects, and noise removal.</source>
-        <translation type="unfinished"></translation>
+        <translation>Instale um motor de IA para desbloquear legendas automáticas, recorte de objetos, efeitos de caras engraçadas, e remoção de ruído.</translation>
     </message>
     <message>
         <source>Restart Drift for this to take effect.</source>
-        <translation type="unfinished">Reinicie o Drift para aplicar a alteração.</translation>
+        <translation>Reinicie o Drift para aplicar a alteração.</translation>
     </message>
     <message>
         <source>Needs</source>
-        <translation type="unfinished"></translation>
+        <translation>Necessita</translation>
     </message>
     <message>
         <source>%1 · Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · Instalado</translation>
     </message>
     <message>
         <source>%1 · Will be installed</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 · Será instalado</translation>
     </message>
     <message>
         <source>Works well with</source>
-        <translation type="unfinished"></translation>
+        <translation>Funciona bem com</translation>
     </message>
     <message>
         <source>Technical details</source>
-        <translation type="unfinished">Detalhes técnicos</translation>
+        <translation>Detalhes técnicos</translation>
     </message>
 </context>
 <context>
     <name>ExtrasInstallBar</name>
     <message numerus="yes">
         <source>Install %n extra(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Instalar %n extra</numerusform>
+            <numerusform>Instalar %n extras</numerusform>
         </translation>
     </message>
     <message>
         <source>%1 · %2</source>
-        <translation type="unfinished">%1 · %2</translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Installing %1 of %2 · %3</source>
-        <translation type="unfinished"></translation>
+        <translation>A instalar %1 de %2 · %3</translation>
     </message>
     <message>
         <source>Installing %1</source>
-        <translation type="unfinished"></translation>
+        <translation>A instalar %1</translation>
     </message>
     <message>
         <source>Also installs: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Também instala: %1</translation>
     </message>
     <message>
         <source>%1 needs %2, which isn&apos;t available for this device</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 necessita de %2, que não está disponível para este dispositivo</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">Limpar</translation>
+        <translation>Limpar</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">Instalar</translation>
+        <translation>Instalar</translation>
     </message>
 </context>
 <context>
     <name>ExtrasStore</name>
     <message>
         <source>Discover</source>
-        <translation type="unfinished"></translation>
+        <translation>Descobrir</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished">Instalado</translation>
+        <translation>Instalado</translation>
     </message>
     <message>
         <source>Updates</source>
-        <translation type="unfinished">Atualizações</translation>
+        <translation>Atualizações</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>Personalização</translation>
     </message>
     <message>
         <source>Results for “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Resultados para “%1”</translation>
     </message>
     <message>
         <source>Add-ons that make Drift do more.</source>
-        <translation type="unfinished"></translation>
+        <translation>Complementos que ampliam as funcionalidades do Drift.</translation>
     </message>
     <message>
         <source>Everything you have downloaded.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tudo o que transferiu.</translation>
     </message>
     <message>
         <source>Newer versions of what you have installed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Novas versões do que tem instalado.</translation>
     </message>
     <message>
         <source>Packs you installed from a file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pacotes que instalou a partir de um ficheiro.</translation>
     </message>
     <message>
         <source>Remove this pack?</source>
-        <translation type="unfinished">Remover este pacote?</translation>
+        <translation>Remover este pacote?</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Remover</translation>
+        <translation>Remover</translation>
     </message>
     <message>
         <source>“%1” and its downloaded data will be deleted. You can install it again later.</source>
-        <translation type="unfinished">“%1” e os respetivos dados transferidos serão eliminados. Pode instalá-lo novamente mais tarde.</translation>
+        <translation>“%1” e os respetivos dados transferidos serão eliminados. Pode instalá-lo novamente mais tarde.</translation>
     </message>
     <message>
         <source>Search extras</source>
-        <translation type="unfinished"></translation>
+        <translation>Pesquisar extras</translation>
     </message>
     <message>
         <source>Clear search</source>
-        <translation type="unfinished"></translation>
+        <translation>Limpar pesquisa</translation>
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">Instalar a partir de um ficheiro…</translation>
+        <translation>Instalar a partir de um ficheiro…</translation>
     </message>
     <message>
         <source>Open addons folder</source>
-        <translation type="unfinished">Abrir pasta de complementos</translation>
+        <translation>Abrir pasta de complementos</translation>
     </message>
     <message>
         <source>Put addon folders here, then reopen Extras</source>
-        <translation type="unfinished">Coloque aqui as pastas de complementos e volte a abrir Extras</translation>
+        <translation>Coloque aqui as pastas de complementos e volte a abrir Extras</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Select all</source>
-        <translation type="unfinished">Selecionar tudo</translation>
+        <translation>Selecionar tudo</translation>
     </message>
     <message>
         <source>Checking for extras…</source>
-        <translation type="unfinished">A verificar extras…</translation>
+        <translation>A verificar extras…</translation>
     </message>
     <message>
         <source>All extras</source>
-        <translation type="unfinished"></translation>
+        <translation>Todos os extras</translation>
     </message>
     <message>
         <source>Can&apos;t reach the download store</source>
-        <translation type="unfinished">Não foi possível aceder à loja de transferências</translation>
+        <translation>Não foi possível aceder à loja de transferências</translation>
     </message>
     <message>
         <source>No extras yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Ainda sem extras</translation>
     </message>
     <message>
         <source>Nothing matches your search</source>
-        <translation type="unfinished"></translation>
+        <translation>Nada corresponde à sua pesquisa</translation>
     </message>
     <message>
         <source>Nothing here yet</source>
-        <translation type="unfinished">Ainda não há nada aqui</translation>
+        <translation>Ainda não há nada aqui</translation>
     </message>
     <message>
         <source>Check your connection and try again.</source>
-        <translation type="unfinished">Verifique a sua ligação e tente de novo.</translation>
+        <translation>Verifique a sua ligação e tente de novo.</translation>
     </message>
     <message>
         <source>Try a different word.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tente uma palavra diferente.</translation>
     </message>
     <message>
         <source>Pick another section.</source>
-        <translation type="unfinished"></translation>
+        <translation>Escolha outra secção.</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished">Tentar novamente</translation>
+        <translation>Tentar novamente</translation>
     </message>
 </context>
 <context>
     <name>ExtrasWindow</name>
     <message>
         <source>Extras</source>
-        <translation type="unfinished">Extras</translation>
+        <translation>Extras</translation>
     </message>
 </context>
 <context>
@@ -10036,31 +10040,31 @@
     <name>HelpDialog</name>
     <message>
         <source>Help</source>
-        <translation type="unfinished">Ajuda</translation>
+        <translation>Ajuda</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Fechar</translation>
+        <translation>Fechar</translation>
     </message>
     <message>
         <source>Open an issue on GitHub</source>
-        <translation type="unfinished"></translation>
+        <translation>Abra um issue no GitHub</translation>
     </message>
     <message>
         <source>Join our Discord server</source>
-        <translation type="unfinished"></translation>
+        <translation>Junte-se ao nosso servidor do Discord</translation>
     </message>
     <message>
         <source>Read the docs</source>
-        <translation type="unfinished"></translation>
+        <translation>Leia a documentação</translation>
     </message>
     <message>
         <source>Contact us via email</source>
-        <translation type="unfinished"></translation>
+        <translation>Contacte-nos via e-mail</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished">Abrir</translation>
+        <translation>Abrir</translation>
     </message>
 </context>
 <context>
@@ -11453,11 +11457,11 @@
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">Instalar a partir de um ficheiro…</translation>
+        <translation>Instalar a partir de um ficheiro…</translation>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished">Remover</translation>
+        <translation>Remover</translation>
     </message>
     <message>
         <source>Remove “%1”?</source>
@@ -11874,7 +11878,7 @@
     </message>
     <message>
         <source>Install from file…</source>
-        <translation type="unfinished">Instalar a partir de um ficheiro…</translation>
+        <translation>Instalar a partir de um ficheiro…</translation>
     </message>
     <message>
         <source>Install a .driftfx or a zip made in Drift Forge, or an addon</source>
@@ -11910,7 +11914,7 @@
     </message>
     <message>
         <source>Browse more online</source>
-        <translation type="unfinished"></translation>
+        <translation>Ver mais online</translation>
     </message>
     <message>
         <source>You’re offline. Showing what was saved last time.</source>
@@ -13442,8 +13446,8 @@
         <translation>Não foi possível ler esse ficheiro — o formato não é suportado por esta versão.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%n clipe pode ser reproduzido lentamente. Um proxy torna a pré-visualização mais fluida; a exportação continua a usar o original.</numerusform>
             <numerusform>%n clipes podem ser reproduzidos lentamente. Um proxy torna a pré-visualização mais fluida; a exportação continua a usar o original.</numerusform>
         </translation>
@@ -17737,6 +17741,50 @@ Se a reprodução engasgar, experimente outro.</translation>
         <translation>A cada 5 minutos</translation>
     </message>
     <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">Ilimitado</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation>Extras</translation>
     </message>
@@ -18298,6 +18346,26 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>Reproduz clipes a partir dos respetivos proxies de baixa resolução, quando existirem. A exportação usa sempre a multimédia original.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -23355,7 +23423,7 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Cancelar</translation>
+        <translation>Cancelar</translation>
     </message>
     <message>
         <source>Search media</source>
@@ -25493,7 +25561,7 @@ Se a reprodução engasgar, experimente outro.</translation>
     <name>UserPackageImporter</name>
     <message>
         <source>Install Addon</source>
-        <translation type="unfinished">Instalar Complemento</translation>
+        <translation>Instalar Complemento</translation>
     </message>
     <message>
         <source>Drift addons and effects (*.driftpkg *.driftfx *.zip)</source>
@@ -25509,55 +25577,55 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
     <message>
         <source>Installed “%1”</source>
-        <translation type="unfinished">“%1” instalado</translation>
+        <translation>“%1” instalado</translation>
     </message>
     <message>
         <source>Install an unofficial addon?</source>
-        <translation type="unfinished">Instalar um complemento não oficial?</translation>
+        <translation>Instalar um complemento não oficial?</translation>
     </message>
     <message>
         <source>Install anyway</source>
-        <translation type="unfinished">Instalar mesmo assim</translation>
+        <translation>Instalar mesmo assim</translation>
     </message>
     <message>
         <source>“%1” by %2</source>
-        <translation type="unfinished">“%1” por %2</translation>
+        <translation>“%1” por %2</translation>
     </message>
     <message>
         <source>“%1”</source>
-        <translation type="unfinished">“%1”</translation>
+        <translation>“%1”</translation>
     </message>
     <message>
         <source>%1 is not signed by the Drift team. Only install files you trust.</source>
-        <translation type="unfinished">%1 não está assinado pela equipa do Drift. Instale apenas ficheiros em que confie.</translation>
+        <translation>%1 não está assinado pela equipa do Drift. Instale apenas ficheiros em que confie.</translation>
     </message>
     <message>
         <source>It contains code that runs on your computer.</source>
-        <translation type="unfinished">Contém código que é executado no seu computador.</translation>
+        <translation>Contém código que é executado no seu computador.</translation>
     </message>
     <message>
         <source>It will replace “%1”.</source>
-        <translation type="unfinished">Vai substituir “%1”.</translation>
+        <translation>Vai substituir “%1”.</translation>
     </message>
     <message>
         <source>Install this transition?</source>
-        <translation type="unfinished">Instalar esta transição?</translation>
+        <translation>Instalar esta transição?</translation>
     </message>
     <message>
         <source>Install this audio effect?</source>
-        <translation type="unfinished">Instalar este efeito de áudio?</translation>
+        <translation>Instalar este efeito de áudio?</translation>
     </message>
     <message>
         <source>Install this effect?</source>
-        <translation type="unfinished">Instalar este efeito?</translation>
+        <translation>Instalar este efeito?</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished">Instalar</translation>
+        <translation>Instalar</translation>
     </message>
     <message>
         <source>%1 was made by a user, not the Drift team, and nothing has checked it. Only install files you trust.</source>
-        <translation type="unfinished">%1 foi criado por um utilizador, não pela equipa do Drift, e não foi verificado. Instale apenas ficheiros em que confie.</translation>
+        <translation>%1 foi criado por um utilizador, não pela equipa do Drift, e não foi verificado. Instale apenas ficheiros em que confie.</translation>
     </message>
     <message>
         <source>OK</source>
@@ -25976,7 +26044,7 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished">Voltar</translation>
+        <translation>Voltar</translation>
     </message>
     <message>
         <source>Left</source>
@@ -26000,7 +26068,7 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished">%1 (%2)</translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>View</source>

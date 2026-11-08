@@ -2791,10 +2791,6 @@
         <translation>تمت إضافة مقطع النص</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>الترجمة</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>تمت إضافة مقطع الترجمة</translation>
     </message>
@@ -4204,6 +4200,14 @@
     <message>
         <source>Effect removed</source>
         <translation>تمت إزالة التأثير</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -13666,8 +13670,8 @@
         <translation>تعذر قراءة هذا الملف — التنسيق غير مدعوم في هذا الإصدار.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>قد يتم تشغيل %n مقطع ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
             <numerusform>قد يتم تشغيل %n مقطع ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
             <numerusform>قد يتم تشغيل %n مقطعان ببطء. ملف الوكيل يجعل المعاينة أكثر سلاسة؛ لا يزال التصدير يستخدم الملف الأصلي.</numerusform>
@@ -18016,6 +18020,50 @@ If playback stutters, try another.</source>
         <translation>كل 5 دقائق</translation>
     </message>
     <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">غير محدود</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation>الإضافات</translation>
     </message>
@@ -18577,6 +18625,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>تشغيل المقاطع من ملفاتها الوكيلة منخفضة الدقة عند توفرها. يستخدم التصدير دائمًا الوسائط الأصلية.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

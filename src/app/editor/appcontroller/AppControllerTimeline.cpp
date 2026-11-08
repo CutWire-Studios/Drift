@@ -132,6 +132,8 @@ void splitLinkedPartnerAt(drift::Project &project, const drift::Clip &sourceHead
             continue;
 
         partnerTail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        if (partnerTail.type != drift::ClipType::Subtitle)
+            partnerTail.name = drift::nextSplitPieceName(track, partner.name);
         if (!tailLinkId.isEmpty())
             partnerTail.linkId = tailLinkId;
         else
@@ -738,6 +740,9 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure(&before);
+    // Pinned adjustments take their span from their clip. finishEdit re-spans them too, but only
+    // after this snapshot -- a redo would then restore every effect at its clip's old position.
+    syncLinkedAdjustments(m_project);
     syncCompositeAssetDurations();
     // Belt and braces for the tracks cache: normalizeProjectStructure() rewrites the project, and
     // every edit in the app reaches this function or finishEdit(). One bool write buys immunity
@@ -773,9 +778,9 @@ void AppController::finishEdit(const QString &message)
     // suspended). Idempotent, and pushProjectEdit has normally already done the work.
     normalizeProjectStructure();
 
-    // Pinned adjustments follow their clip from here rather than from each of the dozens of
-    // paths that can move one, so a drag, trim, split, ripple delete or multicam retarget all
-    // keep the link true for free.
+    // Pinned adjustments follow their clip from one place rather than from each of the dozens of
+    // paths that can move one. pushProjectEdit has normally re-spanned them already (before its
+    // snapshot); this catches the paths that bypass it.
     syncLinkedAdjustments(m_project);
     normalizeSelection();
     if (m_selectedTransitionTrack >= 0) {
@@ -1721,6 +1726,8 @@ void AppController::splitAtPlayhead()
                 continue;
 
             tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            if (tail.type != drift::ClipType::Subtitle)
+                tail.name = drift::nextSplitPieceName(track, clip.name);
             const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
             if (!clip.linkId.isEmpty())
                 handledLinkIds.insert(clip.linkId);
@@ -1767,6 +1774,9 @@ void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)
         return;
 
     tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    // Subtitle halves are already named from their cues by the split.
+    if (tail.type != drift::ClipType::Subtitle)
+        tail.name = drift::nextSplitPieceName(track, clip.name);
     const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
     const QString headId = clip.id;
     splitLinkedPartnerAt(m_project, clip, atUs, tailLinkId);
