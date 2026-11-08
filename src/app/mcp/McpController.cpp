@@ -1608,6 +1608,8 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
         return err("bad_args", QStringLiteral("index out of range"));
     m_app->m_undoStack.setIndex(target);
     ++m_editRevision;
+    // Redoing forward can take the applied steps past the limit again; settle it before replying.
+    m_app->flushUndoHistoryTrim();
     const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
     return ok({{QStringLiteral("index"), m_app->m_undoStack.index()},
                {QStringLiteral("hash"), at},
@@ -1680,6 +1682,7 @@ QJsonObject McpController::restoreSnapshot(const QString &hash)
     if (needle.size() < 8)
         return err("bad_args", QStringLiteral("hash required"));
 
+    m_app->flushUndoHistoryTrim(); // resolve against the stack as it will stay
     const int onStack = m_app->historyIndexForHash(needle);
     if (onStack >= 0)
         return undoTo(onStack, {});

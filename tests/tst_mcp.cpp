@@ -206,6 +206,7 @@ private slots:
     void inspectReportsSelectionAndUndo();
     void listHistoryLabelsApplyBatch();
     void listHistoryReflectsTheHistoryLimit();
+    void historyOpsSeeTheTrimmedStack();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -3421,9 +3422,9 @@ void McpTest::listHistoryLabelsApplyBatch()
     QVERIFY(history.value(QStringLiteral("hash")).toString().startsWith(shortHash));
 }
 
-// With a step limit, the trim runs after each edit; history read over MCP straight after the
-// edits (no event loop in between) must already be the trimmed one, or its indices go stale.
-void McpTest::listHistoryReflectsTheHistoryLimit()
+namespace {
+// The history settings live in QSettings: isolated from the host's store and removed afterwards.
+auto isolateUndoHistorySettings()
 {
     const QString org = QCoreApplication::organizationName();
     const QString app = QCoreApplication::applicationName();
@@ -3435,11 +3436,28 @@ void McpTest::listHistoryReflectsTheHistoryLimit()
         settings.remove(QStringLiteral("editor/undoHistoryLimit"));
     };
     clear();
-    const auto restore = qScopeGuard([org, app, clear] {
+    return qScopeGuard([org, app, clear] {
         clear();
         QCoreApplication::setOrganizationName(org);
         QCoreApplication::setApplicationName(app);
     });
+}
+
+QJsonObject addTextOp(int i)
+{
+    return {{QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("add_text")},
+                                    {QStringLiteral("args"),
+                                     QJsonObject{{QStringLiteral("text"), QStringLiteral("T%1").arg(i)},
+                                                 {QStringLiteral("at"), i * 2.0}}}}}}};
+}
+} // namespace
+
+// With a step limit, the trim runs after each edit; history read over MCP straight after the
+// edits (no event loop in between) must already be the trimmed one, or its indices go stale.
+void McpTest::listHistoryReflectsTheHistoryLimit()
+{
+    const auto restore = isolateUndoHistorySettings();
 
     AssetLibrary library;
     AppController state(&library);
@@ -3459,6 +3477,46 @@ void McpTest::listHistoryReflectsTheHistoryLimit()
     QVERIFY(history.value(QStringLiteral("ok")).toBool());
     QCOMPARE(history.value(QStringLiteral("entries")).toArray().size(), 3); // two steps + origin
     QCOMPARE(history.value(QStringLiteral("current")).toInt(), 2);
+}
+
+// No event loop runs between these calls, so a trim queued by one is still pending at the next:
+// every history op has to see the stack as the limit leaves it.
+void McpTest::historyOpsSeeTheTrimmedStack()
+{
+    const auto restore = isolateUndoHistorySettings();
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 5; ++i)
+        QVERIFY(dispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+
+    // restore_snapshot by a hash read before the limit: the trim renumbers the stack, and the
+    // hash must still land on its own state.
+    const QJsonObject before = dispatcher.applyOne(QStringLiteral("list_history"), {{QStringLiteral("limit"), 10}});
+    QString hashAt3;
+    for (const QJsonValue &v : before.value(QStringLiteral("entries")).toArray()) {
+        if (v.toObject().value(QStringLiteral("index")).toInt() == 3)
+            hashAt3 = v.toObject().value(QStringLiteral("short")).toString();
+    }
+    QVERIFY(!hashAt3.isEmpty());
+    state.preferences()->setUndoHistoryLimit(2);
+    const QJsonObject restored = dispatcher.applyOne(QStringLiteral("restore_snapshot"), {{QStringLiteral("hash"), hashAt3}});
+    QVERIFY2(restored.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(restored).toJson()));
+    QCOMPARE(restored.value(QStringLiteral("short")).toString(), hashAt3);
+    QCOMPARE(state.undoHistory().size(), 2);
+    QCOMPARE(restored.value(QStringLiteral("index")).toInt(), 0);
+
+    // undo_to forward through redo steps goes past the limit; the reply has the settled index.
+    const QJsonObject forward = dispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 2}});
+    QVERIFY(forward.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(forward.value(QStringLiteral("index")).toInt(), state.undoIndex());
+    QCOMPARE(state.undoIndex(), 2);
+
+    // Off, then undo straight away: the steps waiting to be dropped are not undone.
+    state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
+    const QJsonObject undo = dispatcher.applyOne(QStringLiteral("undo"), {});
+    QVERIFY(!undo.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), 0);
 }
 
 void McpTest::undoToRestoresSnapshot()

@@ -1129,7 +1129,6 @@ void AppController::trimUndoHistory()
     // non-empty stack, so the kept steps are rebuilt the way a loaded history is. The states are
     // shared, so this copies pointers, not projects; the dropped ones are freed with the last
     // command holding them, and the media only they referenced stops being kept for them.
-    const drift::Project current = m_project;
     if (cap == 0) {
         // History off: nothing is kept, redo included. clear() deletes the commands without
         // running them, and the project stays as it is.
@@ -1137,7 +1136,6 @@ void AppController::trimUndoHistory()
             const QSignalBlocker blocker(&m_undoStack);
             m_undoStack.clear();
         }
-        m_project = current;
         emit undoHistoryChanged();
         emit undoStackChanged();
         return;
@@ -1148,6 +1146,7 @@ void AppController::trimUndoHistory()
     const int drop = capture.index - cap;
     if (drop <= 0)
         return;
+    const drift::Project current = m_project;
     {
         const QSignalBlocker blocker(&m_undoStack);
         m_undoStack.clear();

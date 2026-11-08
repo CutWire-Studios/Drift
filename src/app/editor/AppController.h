@@ -849,6 +849,9 @@ public:
     // playhead is outside it. Honours trim, speed, reverse and speed curves.
     Q_INVOKABLE double sourceTimeAtPlayheadForClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void deleteSelectedClip();
+    // Runs a history-limit trim that is still queued, for readers of history indices (MCP
+    // list_history, undo_to, inspect) that must not see the stack before and then after it.
+    void flushUndoHistoryTrim();
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE void moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart);
@@ -2070,11 +2073,8 @@ protected:
     int undoHistoryCap() const;
     // Coalesced: the trim runs once the current edit has finished, never in the middle of one.
     void scheduleUndoHistoryTrim();
-    // Drops the oldest undo steps past undoHistoryCap(). Steps that are undone (redo) are kept.
+    // Drops the oldest applied undo steps past undoHistoryCap(); with history off, every step.
     void trimUndoHistory();
-    // Runs a trim that is still queued, for readers of history indices (MCP list_history,
-    // undo_to, inspect) that must not see the stack before and then after it.
-    void flushUndoHistoryTrim();
 public:
     // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
     // media they reference. Reads only the capture, so a worker can run it. `states` receives one
