@@ -8261,6 +8261,11 @@ void McpTest::proxySuggestionFollowsThePreference()
              QStringLiteral("never"));
     QCOMPARE(dispatcher.applyOne(QStringLiteral("get_ui_preferences"), {}).value(QStringLiteral("proxySuggestion")).toString(),
              QStringLiteral("never"));
+
+    // always starts transcodes on every later import, so it is the user's to choose.
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("proxySuggestion"), QStringLiteral("always")}})
+                 .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.preferences()->proxySuggestion(), QStringLiteral("never"));
 }
 
 QTEST_MAIN(McpTest)
