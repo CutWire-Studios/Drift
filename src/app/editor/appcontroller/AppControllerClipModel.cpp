@@ -1261,6 +1261,20 @@ int AppController::clipCountForAsset(int assetIndex) const
     return count;
 }
 
+QHash<QString, int> AppController::clipCountsByAsset() const
+{
+    QHash<QString, int> counts;
+    m_project.forEachTrackList([&](const QList<drift::Track> &tracks) {
+        for (const drift::Track &track : tracks) {
+            for (const drift::Clip &clip : track.clips) {
+                if (!clip.assetId.isEmpty())
+                    ++counts[clip.assetId];
+            }
+        }
+    });
+    return counts;
+}
+
 bool AppController::removeAsset(int assetIndex)
 {
     // Clips keep their own copy of the source path, so an orphaned assetId

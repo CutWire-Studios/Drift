@@ -205,6 +205,7 @@ private slots:
     void selectionBasedOpsExcludePlayheadOps();
     void inspectReportsSelectionAndUndo();
     void listHistoryLabelsApplyBatch();
+    void unusedAssetsAreListedAndRemoved();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -3388,6 +3389,58 @@ void McpTest::inspectReportsSelectionAndUndo()
 
     QVERIFY(dispatcher.applyOne(QStringLiteral("clear_selection"), {}).value(QStringLiteral("ok")).toBool());
     QVERIFY(!dispatcher.inspect({}).contains(QStringLiteral("selection")));
+}
+
+void McpTest::unusedAssetsAreListedAndRemoved()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate test media");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString used = dir.filePath(QStringLiteral("used.wav"));
+    const QString spare = dir.filePath(QStringLiteral("spare.wav"));
+    QVERIFY(writeClickTrack(used, 2));
+    QVERIFY(writeClickTrack(spare, 2));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QVERIFY(!importAndPlace(dispatcher, used, 0.0).isEmpty());
+    const QJsonObject imported = dispatcher.applyOne(
+        QStringLiteral("import_media"), {{QStringLiteral("paths"), QJsonArray{spare}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson()));
+    QTRY_COMPARE(library.count(), 2);
+
+    const auto clipsFor = [&](const QJsonObject &list, const QString &name) {
+        for (const QJsonValue &v : list.value(QStringLiteral("assets")).toArray()) {
+            if (v.toObject().value(QStringLiteral("name")).toString() == name)
+                return v.toObject().value(QStringLiteral("clips")).toInt(-1);
+        }
+        return -2;
+    };
+    const QJsonObject withUsage = dispatcher.applyOne(QStringLiteral("list_assets"), {{QStringLiteral("usage"), true}});
+    QCOMPARE(clipsFor(withUsage, QStringLiteral("used.wav")), 1);
+    QCOMPARE(clipsFor(withUsage, QStringLiteral("spare.wav")), 0);
+    // Without usage the rows stay as they were.
+    QCOMPARE(clipsFor(dispatcher.applyOne(QStringLiteral("list_assets"), {}), QStringLiteral("used.wav")), -1);
+
+    const QJsonObject dry = dispatcher.applyOne(QStringLiteral("remove_unused_assets"), {{QStringLiteral("dry_run"), true}});
+    QVERIFY(dry.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dry.value(QStringLiteral("assets")).toArray().size(), 1);
+    QCOMPARE(dry.value(QStringLiteral("removed")).toInt(), 0);
+    QCOMPARE(library.count(), 2);
+
+    const QJsonObject removed = dispatcher.applyOne(QStringLiteral("remove_unused_assets"), {});
+    QVERIFY2(removed.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(removed).toJson()));
+    QCOMPARE(removed.value(QStringLiteral("removed")).toInt(), 1);
+    QCOMPARE(library.count(), 1);
+    QCOMPARE(library.assetAt(0).value(QStringLiteral("name")).toString(), QStringLiteral("used.wav"));
+
+    // One undo step brings it back; nothing left to remove after that is a no-op.
+    state.undo();
+    QCOMPARE(library.count(), 2);
+    state.redo();
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("remove_unused_assets"), {}).value(QStringLiteral("removed")).toInt(), 0);
 }
 
 void McpTest::listHistoryLabelsApplyBatch()

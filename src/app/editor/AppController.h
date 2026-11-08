@@ -622,6 +622,9 @@ public:
     // a timeline drop can create a lane below the tracks as well as above them.
     Q_INVOKABLE void addClipFromAssetOnNewTrackAt(int assetIndex, int insertIndex, double atSeconds);
     Q_INVOKABLE int clipCountForAsset(int assetIndex) const;
+    // Clips per asset id over the whole project, composites included, in one pass (the same
+    // count clipCountForAsset gives one asset). Assets no clip uses are absent.
+    QHash<QString, int> clipCountsByAsset() const;
     Q_INVOKABLE bool removeAsset(int assetIndex);
     // Multi-select bulk removal, one undo step for the whole batch. Like removeAsset, refuses
     // the whole batch if any id is still referenced by a clip (see clipCountForAsset) — the

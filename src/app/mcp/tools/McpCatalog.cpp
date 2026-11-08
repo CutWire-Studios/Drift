@@ -525,10 +525,21 @@ const QList<Op> &ops()
                        {QStringLiteral("paths")}) },
         { "list_assets", "media", "See what is in the bin",
           "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId}]}; "
-          "folderId \"\" is the bin root (see list_folders). There is no "
+          "folderId \"\" is the bin root (see list_folders). usage:true adds clips, how many clips use "
+          "each asset (inside composites too; 0 = unused). There is no "
           "recording timestamp — \"in the order I shot them\" cannot be recovered from this list; "
           "sort by name or by the order they were imported.",
-          objectSchema({}), true, false, true },
+          objectSchema({{QStringLiteral("usage"),
+                         boolProp(QStringLiteral("Add each asset's clip count"))}}),
+          true, false, true },
+        { "remove_unused_assets", "media", "Clear media no clip uses",
+          "Remove every asset no clip uses (inside composites too), in one undo step. Composite "
+          "assets are kept: each is a whole nested timeline (kept_composites counts them; "
+          "remove_asset takes one explicitly). dry_run:true only lists them. Returns {assets:[{id, "
+          "name, kind}], removed, dry_run, kept_composites}. The files on disk are untouched.",
+          objectSchema({{QStringLiteral("dry_run"),
+                         boolProp(QStringLiteral("List what would go without removing it"))}}),
+          false, true },
         { "rename_asset", "media", "Rename a bin row",
           "Rename an asset in the bin. Does not rename the file on disk.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()},

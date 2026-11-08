@@ -769,7 +769,9 @@ QJsonObject McpDispatcher::applyOneUnchecked(const QString &tool, const QJsonObj
     if (tool == QLatin1String("import_media"))
         return opImportMedia(args);
     if (tool == QLatin1String("list_assets"))
-        return opListAssets();
+        return opListAssets(args);
+    if (tool == QLatin1String("remove_unused_assets"))
+        return opRemoveUnusedAssets(args);
     if (tool == QLatin1String("rename_asset"))
         return opRenameAsset(args);
     if (tool == QLatin1String("add_track"))
@@ -1087,14 +1089,16 @@ void McpDispatcher::addRefreshOutcome(QJsonObject &result, const QStringList &re
         result.insert(QStringLiteral("stale"), stale);
 }
 
-QJsonObject McpDispatcher::opListAssets() const
+QJsonObject McpDispatcher::opListAssets(const QJsonObject &args) const
 {
     AssetLibrary *lib = m_controller->assetLibrary();
+    const bool usage = jsonBool(args.value(QStringLiteral("usage")), false);
+    const QHash<QString, int> counts = usage ? m_controller->clipCountsByAsset() : QHash<QString, int>();
     QJsonArray assets;
     if (lib) {
         for (int i = 0; i < lib->count(); ++i) {
             const QVariantMap a = lib->assetAt(i);
-            assets.append(QJsonObject{
+            QJsonObject row{
                 {QStringLiteral("index"), i},
                 {QStringLiteral("id"), a.value(QStringLiteral("id")).toString()},
                 {QStringLiteral("name"), a.value(QStringLiteral("name")).toString()},
@@ -1103,10 +1107,54 @@ QJsonObject McpDispatcher::opListAssets() const
                 {QStringLiteral("w"), a.value(QStringLiteral("width")).toInt()},
                 {QStringLiteral("h"), a.value(QStringLiteral("height")).toInt()},
                 {QStringLiteral("folderId"), a.value(QStringLiteral("folderId")).toString()},
-            });
+            };
+            if (usage)
+                row.insert(QStringLiteral("clips"), counts.value(a.value(QStringLiteral("id")).toString()));
+            assets.append(row);
         }
     }
     return ok({{QStringLiteral("assets"), assets}});
+}
+
+QJsonObject McpDispatcher::opRemoveUnusedAssets(const QJsonObject &args)
+{
+    AssetLibrary *lib = m_controller->assetLibrary();
+    if (!lib)
+        return err("unsupported", QStringLiteral("No media library"));
+    const bool dryRun = jsonBool(args.value(QStringLiteral("dry_run")), false);
+    const QHash<QString, int> counts = m_controller->clipCountsByAsset();
+    QStringList ids;
+    QJsonArray listed;
+    int composites = 0;
+    for (int i = 0; i < lib->count(); ++i) {
+        const QVariantMap a = lib->assetAt(i);
+        const QString id = a.value(QStringLiteral("id")).toString();
+        if (id.isEmpty() || counts.value(id) > 0)
+            continue;
+        // A composite is a whole nested timeline, not media: removing an unplaced one would
+        // delete that timeline, so it stays (remove_asset takes it explicitly).
+        if (a.value(QStringLiteral("kind")).toString() == QLatin1String("composite")) {
+            ++composites;
+            continue;
+        }
+        ids.append(id);
+        listed.append(QJsonObject{{QStringLiteral("id"), id},
+                                  {QStringLiteral("name"), a.value(QStringLiteral("name")).toString()},
+                                  {QStringLiteral("kind"), a.value(QStringLiteral("kind")).toString()}});
+    }
+    QJsonObject reply{{QStringLiteral("assets"), listed},
+                      {QStringLiteral("dry_run"), dryRun},
+                      {QStringLiteral("kept_composites"), composites}};
+    if (dryRun || ids.isEmpty()) {
+        reply.insert(QStringLiteral("removed"), 0);
+        return ok(reply);
+    }
+    // One undo step for the lot; refused as a whole if a clip started using one meanwhile.
+    const int removed = m_controller->removeAssets(ids);
+    if (removed == 0)
+        return err("conflict", QStringLiteral("An asset came into use; list again"));
+    reply.insert(QStringLiteral("removed"), removed);
+    return ok(reply);
 }
 
 QJsonObject McpDispatcher::opRenameAsset(const QJsonObject &args)
