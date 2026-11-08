@@ -755,11 +755,10 @@ QJsonObject McpDispatcher::opCameraLookAt(const QJsonObject &args)
     const bool keyframe = args.value(QStringLiteral("keyframe")).toBool();
     QVariantMap plain;
     m_controller->mcp()->beginBatch();
-    if (aimRequested)
-        m_controller->setCameraAimAtTarget(track, index, from.aimAtTarget);
     const QStringList written = aimed.aimAtTarget
         ? QStringList{"x", "y", "z", "anchorX", "anchorY", "anchorZ", "rotation"}
         : QStringList{"x", "y", "z", "rotationX", "rotationY", "rotation"};
+    QList<QPair<QString, double>> keyed;
     for (const QString &prop : written) {
         double value = 0.0;
         for (const CameraProp &p : kCameraProps) {
@@ -770,12 +769,22 @@ QJsonObject McpDispatcher::opCameraLookAt(const QJsonObject &args)
         const bool animated = m_controller->clipPropertyKeyframesEnabled(track, index, prop)
                               && m_controller->clipKeyframes(track, index, prop).size() > 1;
         if (keyframe || animated)
-            m_controller->setClipKeyframe(track, index, prop, at, value);
+            keyed.append({prop, value});
         else
             plain.insert(prop, value);
     }
-    if (!plain.isEmpty())
-        m_controller->mcp()->setClipCanvas(track, index, plain);
+    // The plain writes go first, at the same time as the keys: setClipCanvas refuses before writing
+    // anything (auto-key on and `at` outside the clip), and then nothing of the move has landed.
+    // Nothing else is touched before this point either, the aim mode included.
+    QString refused;
+    if (!plain.isEmpty() && !m_controller->mcp()->setClipCanvas(track, index, plain, at, &refused)) {
+        m_controller->mcp()->endBatch(QStringLiteral("Camera look at"), false);
+        return err("bad_args", refused.isEmpty() ? QStringLiteral("Camera move refused") : refused);
+    }
+    if (aimRequested)
+        m_controller->setCameraAimAtTarget(track, index, from.aimAtTarget);
+    for (const auto &[prop, value] : std::as_const(keyed))
+        m_controller->setClipKeyframe(track, index, prop, at, value);
     m_controller->mcp()->endBatch(QStringLiteral("Camera look at"), true);
 
     const QVariantMap after = m_controller->cameraStateAt(at, track, index);
