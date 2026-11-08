@@ -2394,6 +2394,10 @@ void AppController::captureSelectionClipIds()
     m_undoPrimaryId = isValidClipIndex(m_selectedTrack, m_selectedClip)
         ? m_project.tracks().at(m_selectedTrack).clips.at(m_selectedClip).id
         : QString();
+    const bool transition = isValidClipIndex(m_selectedTransitionTrack, m_selectedTransitionLeftClip);
+    m_undoTransitionLeftClipId = transition
+        ? m_project.tracks().at(m_selectedTransitionTrack).clips.at(m_selectedTransitionLeftClip).id
+        : QString();
     m_undoSelectionCaptured = true;
 }
 
@@ -2408,17 +2412,33 @@ void AppController::restoreSelectionClipIds()
         if (findClipById(m_project, id, &t, &c))
             restored.append(qMakePair(t, c));
     }
-    if (restored.isEmpty())
-        return;
-    m_selection = restored;
     int t = -1;
     int c = -1;
-    if (!m_undoPrimaryId.isEmpty() && findClipById(m_project, m_undoPrimaryId, &t, &c)) {
+    const bool primaryFound = !m_undoPrimaryId.isEmpty() && findClipById(m_project, m_undoPrimaryId, &t, &c);
+    if (restored.isEmpty() && primaryFound)
+        restored.append(qMakePair(t, c));
+    // Nothing selected survives: clear it. Keeping the old indices would leave them pointing at
+    // whatever clip now sits there -- a neighbour's grade, say, after undoing a removal before it.
+    m_selection = restored;
+    if (primaryFound) {
         m_selectedTrack = t;
         m_selectedClip = c;
-    } else {
+    } else if (!restored.isEmpty()) {
         m_selectedTrack = restored.constLast().first;
         m_selectedClip = restored.constLast().second;
+    } else {
+        m_selectedTrack = -1;
+        m_selectedClip = -1;
+    }
+
+    // Before normalizeSelection, which would otherwise judge the transition by stale indices.
+    if (!m_undoTransitionLeftClipId.isEmpty()) {
+        int track = -1;
+        int left = -1;
+        if (!findClipById(m_project, m_undoTransitionLeftClipId, &track, &left))
+            track = left = -1;
+        m_selectedTransitionTrack = track;
+        m_selectedTransitionLeftClip = left;
     }
 }
 

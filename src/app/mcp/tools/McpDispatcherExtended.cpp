@@ -1040,9 +1040,52 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return err("bad_args", QStringLiteral("path required"));
         if (!QFileInfo::exists(path))
             return err("not_found", QStringLiteral("File not found"));
-        if (!m_controller->bin()->replaceSource(index, QUrl::fromLocalFile(path)))
-            return err("bad_args", QStringLiteral("Replace refused"));
-        return ok({{QStringLiteral("index"), index}, {QStringLiteral("path"), path}});
+        // The replace re-probes the file (same path or not, with the same cache invalidation as
+        // refresh_asset), but asynchronously: wait for it, like import_media does, so the reply
+        // carries the new duration rather than the old one.
+        const QString id = m_controller->assetLibrary()->assetIdAt(index);
+        if (m_controller->assetLibrary()->isImportPending(id))
+            return err("busy", QStringLiteral("The asset is already being re-read; try again when it lands"));
+        AssetLibrary *lib = m_controller->assetLibrary();
+        bool finished = false;
+        bool replaced = false;
+        bool starting = true;
+        quint64 ourProbe = 0;
+        QString message;
+        // Only this replace's outcome: its own synchronous refusal while replaceSource runs, then
+        // the result of the probe it started. Other replaces -- of other assets, or of this one
+        // once ours has landed -- can finish during the wait below and are not ours.
+        const QMetaObject::Connection watch = QObject::connect(
+            m_controller->bin(), &MediaBinController::replaceFinishedFor, m_controller->bin(),
+            [&](const QString &assetId, bool succeeded, const QString &detail) {
+                if (assetId != id || finished)
+                    return;
+                if (!starting && (ourProbe == 0 || lib->completingProbeToken() != ourProbe))
+                    return;
+                finished = true;
+                replaced = succeeded;
+                message = detail;
+            });
+        const bool started = m_controller->bin()->replaceSource(index, QUrl::fromLocalFile(path));
+        starting = false;
+        if (!started) {
+            QObject::disconnect(watch);
+            return err("bad_args", message.isEmpty() ? QStringLiteral("Replace refused") : message);
+        }
+        ourProbe = lib->probeTokenFor(id);
+        QJsonObject result = waitImport({id});
+        QObject::disconnect(watch);
+        if (!result.value(QStringLiteral("ok")).toBool())
+            return result; // still probing (import_timeout) or no bin
+        // Success only on this replace's own confirmation: a probe cancelled underneath (the
+        // project replaced during the wait) ends without one.
+        if (!finished || !replaced)
+            return err("replace_failed", !message.isEmpty() ? message
+                                                            : QStringLiteral("The replace did not complete"));
+        result.insert(QStringLiteral("index"), m_controller->assetLibrary()->indexOfId(id));
+        result.insert(QStringLiteral("path"), path);
+        result.insert(QStringLiteral("reprobed"), QJsonArray{id});
+        return result;
     }
 
     if (tool == QLatin1String("refresh_asset")) {
