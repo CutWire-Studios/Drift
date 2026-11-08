@@ -610,9 +610,12 @@ void AppController::setClipTextContent(int trackIndex, int clipIndex, const QStr
     drift::Clip &clip = track.clips[clipIndex];
     if (clip.type != drift::ClipType::Text)
         return;
+    const QString trimmed = text.trimmed();
+    if (clip.textContent == trimmed && clip.name == trimmed.left(32))
+        return;
 
     const drift::Project before = m_project;
-    clip.textContent = text.trimmed();
+    clip.textContent = trimmed;
     clip.name = clip.textContent.left(32);
     pushProjectEdit(before, tr("Text updated"));
     finishEdit(tr("Text updated"));
@@ -1577,8 +1580,12 @@ void AppController::setClipBlendMode(int trackIndex, int clipIndex, const QStrin
     if (clipIndex < 0 || clipIndex >= track.clips.size())
         return;
 
+    const drift::BlendMode next = drift::blendModeFromString(mode);
+    if (track.clips[clipIndex].blendMode == next)
+        return;
+
     const drift::Project before = m_project;
-    track.clips[clipIndex].blendMode = drift::blendModeFromString(mode);
+    track.clips[clipIndex].blendMode = next;
     pushProjectEdit(before, tr("Blend mode changed"));
     finishEdit(tr("Blend mode updated"));
 }
