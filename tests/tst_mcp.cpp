@@ -230,6 +230,7 @@ private slots:
     void listHistoryReflectsTheHistoryLimit();
     void historyOpsSeeTheTrimmedStack();
     void historyHousekeepingOps();
+    void applyWithoutHistoryJoinsTheNewestStep();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -4679,6 +4680,57 @@ void McpTest::historyHousekeepingOps()
     QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("project"));
     QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), -1);
     QVERIFY(!dispatcher.applyOne(QStringLiteral("set_history_limit"), {}).value(QStringLiteral("ok")).toBool());
+}
+
+void McpTest::applyWithoutHistoryJoinsTheNewestStep()
+{
+    const auto restore = isolateUndoHistorySettings();
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const auto clips = [&] { return dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(); };
+    const auto quiet = [&](int i) {
+        QJsonObject args = addTextOp(i);
+        args.insert(QStringLiteral("history"), QStringLiteral("false")); // string form, as agents send it
+        return dispatcher.apply(args);
+    };
+
+    // No step yet: the edit becomes part of the starting state, with nothing to undo.
+    QVERIFY(quiet(0).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clips(), 1);
+    QVERIFY(!state.undoAvailable());
+
+    // One step, then a batch without its own: undo takes both back, redo brings both.
+    QVERIFY(dispatcher.apply(addTextOp(1)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(quiet(2).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), 1);
+    QCOMPARE(clips(), 3);
+    state.undo();
+    QCOMPARE(clips(), 1);
+    state.redo();
+    QCOMPARE(clips(), 3);
+
+    // Undone steps are dropped: their states no longer follow from the project.
+    QVERIFY(dispatcher.apply(addTextOp(3)).value(QStringLiteral("ok")).toBool());
+    state.undo();
+    QVERIFY(state.redoAvailable());
+    QVERIFY(quiet(4).value(QStringLiteral("ok")).toBool());
+    QVERIFY(!state.redoAvailable());
+    QCOMPARE(clips(), 4);
+    state.undo();
+    QCOMPARE(clips(), 1);
+
+    // A batch that fails part-way still folds what ran.
+    state.redo();
+    QJsonObject failing = addTextOp(5);
+    QJsonArray ops = failing.value(QStringLiteral("ops")).toArray();
+    ops.append(QJsonObject{{QStringLiteral("tool"), QStringLiteral("delete_clip")},
+                           {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), QStringLiteral("nope")}}}});
+    failing.insert(QStringLiteral("ops"), ops);
+    failing.insert(QStringLiteral("history"), false);
+    QVERIFY(!dispatcher.apply(failing).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(clips(), 5);
+    QCOMPARE(state.undoHistory().size(), 1);
 }
 
 void McpTest::undoToRestoresSnapshot()

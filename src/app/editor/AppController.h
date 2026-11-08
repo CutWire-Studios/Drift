@@ -869,6 +869,11 @@ public:
     // Runs a history-limit trim that is still queued, for readers of history indices (MCP
     // list_history, undo_to, inspect) that must not see the stack before and then after it.
     void flushUndoHistoryTrim();
+    // Makes the project as it is now the result of the newest applied step, so an edit made
+    // without its own undo step is undone together with that step (and redone with it), and
+    // drops undone (redo) steps, whose states no longer follow from it. With no applied step the
+    // edit becomes part of the starting state.
+    void foldEditIntoHistory();
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE void moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart);

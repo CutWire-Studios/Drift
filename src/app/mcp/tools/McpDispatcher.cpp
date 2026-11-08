@@ -726,6 +726,18 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         return label;
     };
 
+    // history:false — no undo step of its own: the batch is folded into the newest one.
+    const bool ownStep = jsonBool(args.value(QStringLiteral("history")), true);
+    const auto endBatch = [&](const QString &label, bool changed) {
+        // A batch whose ops changed nothing adds no step (jmn8718/Drift#46). Asked before
+        // endBatch, whose finishEdit moves the edit revision either way.
+        if (changed)
+            changed = m_controller->mcp()->batchChangedProject();
+        m_controller->mcp()->endBatch(label, ownStep && changed);
+        if (!ownStep && changed)
+            m_controller->foldEditIntoHistory();
+    };
+
     m_controller->mcp()->beginBatch();
     bool hadUndoable = false;
     QJsonArray results;
@@ -742,8 +754,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
             rawImage ? err("bad_args", QStringLiteral("%1 returns an image and cannot be batched — call it directly").arg(tool))
                      : applyOne(tool, opArgs);
         if (!one.value(QStringLiteral("ok")).toBool()) {
-            m_controller->mcp()->endBatch(batchLabel(i),
-                                      hadUndoable && i > 0 && m_controller->mcp()->batchChangedProject());
+            endBatch(batchLabel(i), hadUndoable && i > 0);
             return {{QStringLiteral("ok"), false},
                     {QStringLiteral("error"), QStringLiteral("apply_failed")},
                     {QStringLiteral("stopped"), i},
@@ -757,8 +768,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         if (isUndoable(tool) || refreshed)
             hadUndoable = true;
     }
-    m_controller->mcp()->endBatch(batchLabel(ops.size()),
-                                  hadUndoable && m_controller->mcp()->batchChangedProject());
+    endBatch(batchLabel(ops.size()), hadUndoable);
     return ok({{QStringLiteral("n"), ops.size()}, {QStringLiteral("done"), results}});
 }
 

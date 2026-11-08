@@ -1755,7 +1755,11 @@ QJsonArray homepageTools()
                                                 QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
                                                             {QStringLiteral("description"), QStringLiteral("That op's arguments, per its inputSchema from toolbox")}}}},
                                               {QStringLiteral("tool")}),
-                                 QStringLiteral("Sequential operations"))}},
+                                 QStringLiteral("Sequential operations"))},
+                      {QStringLiteral("history"),
+                       propWithDefault(boolProp(QStringLiteral(
+                           "false: no undo step of its own, for scripted batches. The changes join the newest "
+                           "undo step (undone and redone with it), and undone steps are dropped")), true)}},
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),
