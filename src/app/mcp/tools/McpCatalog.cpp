@@ -689,8 +689,15 @@ const QList<Op> &ops()
           objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline time seconds"))}},
                                   clipRefProps())) },
         { "delete_clip", "timeline", "Remove a clip",
-          "Delete a clip and its linked A/V partner. Reversible with undo.",
-          objectSchema(clipRefProps()), false, true },
+          "Delete a clip and its linked A/V partner. Reversible with undo. The clip's effects and "
+          "masks live on adjustments pinned to it; by default they stay on the timeline, unlinked, "
+          "and keep applying to whatever sits under them. with_effects:true deletes them too, in "
+          "the same undo step.",
+          objectSchema(mergeProps({{QStringLiteral("with_effects"),
+                                    boolProp(QStringLiteral("Also delete the adjustments pinned to the "
+                                                            "clip (its effects and masks). Default false"))}},
+                                  clipRefProps())),
+          false, true },
         { "duplicate_clip", "timeline", "Copy a clip after itself",
           "Duplicate a clip immediately after it on the same track. Returns the new clip's id.",
           objectSchema(clipRefProps()) },

@@ -1573,6 +1573,14 @@
         <translation>إعادة استخدام هذا المظهر على مقاطع أخرى</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>القص والتوقيت</translation>
     </message>
@@ -2529,6 +2537,10 @@
     <message>
         <source>Delete selection</source>
         <translation>حذف التحديد</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23555,6 +23567,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>حذف</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

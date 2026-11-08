@@ -1568,6 +1568,14 @@
         <translation>在其他片段上重複使用此效果</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>修剪與時間</translation>
     </message>
@@ -2514,6 +2522,10 @@
     <message>
         <source>Delete selection</source>
         <translation>刪除所選內容</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23166,6 +23178,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>刪除</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

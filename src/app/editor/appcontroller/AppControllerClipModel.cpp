@@ -1637,6 +1637,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("saveAs"), tr("Save project as…")),
         action(QStringLiteral("playPause"), tr("Play/Pause")),
         action(QStringLiteral("delete"), tr("Delete selection")),
+        action(QStringLiteral("deleteWithEffects"), tr("Delete selection with its effects")),
         action(QStringLiteral("undo"), tr("Undo")),
         action(QStringLiteral("redo"), tr("Redo")),
         action(QStringLiteral("copy"), tr("Copy selection")),

@@ -112,6 +112,8 @@ QHash<QString, QString> defaultShortcuts()
         {QStringLiteral("saveAs"), QStringLiteral("Ctrl+Alt+S")},
         {QStringLiteral("playPause"), QStringLiteral("Space")},
         {QStringLiteral("delete"), QStringLiteral("Delete")},
+        // No default: Shift+Delete is ripple delete in many editors. Listed so it can be bound.
+        {QStringLiteral("deleteWithEffects"), QString()},
         {QStringLiteral("undo"), QStringLiteral("Ctrl+Z")},
         {QStringLiteral("redo"), QStringLiteral("Ctrl+Shift+Z")},
         {QStringLiteral("clearSelection"), QStringLiteral("Escape")},
@@ -1665,6 +1667,8 @@ void AppController::triggerAction(const QString &actionId)
         emit openMulticamWindowRequested();
     else if (actionId == QStringLiteral("delete"))
         deleteSelectedClip();
+    else if (actionId == QStringLiteral("deleteWithEffects"))
+        deleteSelectedClipWithEffects();
     else if (actionId == QStringLiteral("undo"))
         undo();
     else if (actionId == QStringLiteral("redo"))

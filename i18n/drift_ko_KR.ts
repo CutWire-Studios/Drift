@@ -1568,6 +1568,14 @@
         <translation>이 모양을 다른 클립에서 재사용</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>자르기 및 타이밍</translation>
     </message>
@@ -2514,6 +2522,10 @@
     <message>
         <source>Delete selection</source>
         <translation>선택 항목 삭제</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23157,6 +23169,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

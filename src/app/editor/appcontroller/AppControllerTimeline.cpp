@@ -1392,6 +1392,40 @@ void AppController::clearSelection()
 
 void AppController::deleteSelectedClip()
 {
+    deleteSelection(/*withPinnedAdjustments=*/false);
+}
+
+void AppController::deleteSelectedClipWithEffects()
+{
+    deleteSelection(/*withPinnedAdjustments=*/true);
+}
+
+bool AppController::selectionHasPinnedAdjustments() const
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && isValidClipIndex(m_selectedTrack, m_selectedClip))
+        pairs = {qMakePair(m_selectedTrack, m_selectedClip)};
+    if (pairs.isEmpty())
+        return false;
+    expandSelectionWithLinkedPartners(m_project, pairs);
+    QSet<QString> hostIds;
+    for (const QPair<int, int> &pair : std::as_const(pairs)) {
+        if (isValidClipIndex(pair.first, pair.second))
+            hostIds.insert(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+    }
+    for (const drift::Track &track : m_project.tracks()) {
+        if (!track.isAdjustment())
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            if (!clip.linkedClipId.isEmpty() && hostIds.contains(clip.linkedClipId))
+                return true;
+        }
+    }
+    return false;
+}
+
+void AppController::deleteSelection(bool withPinnedAdjustments)
+{
     if (m_selection.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
         m_selection = {qMakePair(m_selectedTrack, m_selectedClip)};
     if (m_selection.isEmpty())
@@ -1400,6 +1434,31 @@ void AppController::deleteSelectedClip()
     const drift::Project before = m_project;
     QList<QPair<int, int>> pairs = m_selection;
     expandSelectionWithLinkedPartners(m_project, pairs);
+    // Pinned adjustments are removed without rippling their lane: the lane follows its parent
+    // track, and syncLinkedAdjustments re-spans the remaining ones onto their clips afterwards.
+    QSet<QPair<int, int>> pinnedAdjustments;
+    if (withPinnedAdjustments) {
+        QSet<QString> hostIds;
+        for (const QPair<int, int> &pair : std::as_const(pairs)) {
+            if (isValidClipIndex(pair.first, pair.second))
+                hostIds.insert(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+        }
+        for (int t = 0; t < m_project.tracks().size(); ++t) {
+            const drift::Track &track = m_project.tracks().at(t);
+            if (!track.isAdjustment())
+                continue;
+            for (int c = 0; c < track.clips.size(); ++c) {
+                const drift::Clip &clip = track.clips.at(c);
+                if (clip.linkedClipId.isEmpty() || !hostIds.contains(clip.linkedClipId))
+                    continue;
+                // Also when the user selected it alongside its host: it is still removed as a
+                // pinned adjustment, not as a free clip that would ripple its lane.
+                pinnedAdjustments.insert(qMakePair(t, c));
+                if (!pairs.contains(qMakePair(t, c)))
+                    pairs.append(qMakePair(t, c));
+            }
+        }
+    }
     QSet<QString> removedClipIds;
     struct RemovedRange { int track; drift::TimeUs start; drift::TimeUs duration; };
     QList<RemovedRange> removedRanges;
@@ -1413,7 +1472,8 @@ void AppController::deleteSelectedClip()
             continue;
         const drift::Clip &clip = m_project.tracks().at(pair.first).clips.at(pair.second);
         removedClipIds.insert(clip.id);
-        removedRanges.append({pair.first, clip.timelineStart, clip.timelineDuration});
+        if (!pinnedAdjustments.contains(pair))
+            removedRanges.append({pair.first, clip.timelineStart, clip.timelineDuration});
         m_project.tracks()[pair.first].clips.removeAt(pair.second);
     }
     if (m_rippleEnabled) {
@@ -1428,6 +1488,28 @@ void AppController::deleteSelectedClip()
             const drift::Transition &transition = track.transitions.at(i);
             if (removedClipIds.contains(transition.fromClipId) || removedClipIds.contains(transition.toClipId))
                 track.transitions.removeAt(i);
+        }
+    }
+    // A nested lane this delete emptied existed only to hold those effects; leaving it would
+    // add a dead row under the parent track every time a graded clip is deleted.
+    if (!pinnedAdjustments.isEmpty()) {
+        QSet<QString> touchedLaneIds;
+        bool removedVideo = false;
+        bool removedAudio = false;
+        for (const QPair<int, int> &pair : std::as_const(pinnedAdjustments)) {
+            touchedLaneIds.insert(before.tracks().at(pair.first).id);
+            const drift::AdjustmentKind kind = before.tracks().at(pair.first).clips.at(pair.second).adjustmentKind;
+            removedVideo = removedVideo || kind == drift::AdjustmentKind::VideoEffects;
+            removedAudio = removedAudio || kind == drift::AdjustmentKind::AudioEffects;
+        }
+        // The graph's hidden entries address effects by stack index; with the stack gone they
+        // would hide parameters of whatever effect lands in that slot next.
+        dropKeyframeGraphEffectProperties(removedVideo, removedAudio);
+        for (int t = m_project.tracks().size() - 1; t >= 0; --t) {
+            const drift::Track &track = m_project.tracks().at(t);
+            if (track.isAdjustmentLane() && track.clips.isEmpty() && !track.id.isEmpty()
+                && touchedLaneIds.contains(track.id))
+                m_project.tracks().removeAt(t);
         }
     }
     pushProjectEdit(before, tr("Clip deleted"));
