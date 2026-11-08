@@ -13426,8 +13426,8 @@
         <translation>ফাইলটি পড়া যায়নি — এই বিল্ড দ্বারা বিন্যাসটি সমর্থিত নয়.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%nটি ক্লিপ ধীরে চলতে পারে। প্রক্সি ব্যবহার করলে প্রিভিউ মসৃণ হয়; এক্সপোর্টে মূল ফাইলই ব্যবহৃত হয়.</numerusform>
             <numerusform>%nটি ক্লিপ ধীরে চলতে পারে। প্রক্সি ব্যবহার করলে প্রিভিউ মসৃণ হয়; এক্সপোর্টে মূল ফাইলই ব্যবহৃত হয়.</numerusform>
         </translation>
@@ -18325,6 +18325,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>তাদের কম-রেজোলিউশনের প্রক্সি থেকে ক্লিপ চালান যেখানে একটি বিদ্যমান। এক্সপোর্ট সবসময় মূল মিডিয়া ব্যবহার করে.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>

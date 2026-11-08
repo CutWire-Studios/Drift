@@ -2510,6 +2510,7 @@ QJsonObject McpDispatcher::opGetUiPreferences() const
         {QStringLiteral("autoKey"), m_controller->autoKeyEnabled()},
         {QStringLiteral("mediaGrid"), m_controller->mediaGridMode()},
         {QStringLiteral("reopenLastProject"), m_controller->preferences()->reopenLastProject()},
+        {QStringLiteral("proxySuggestion"), m_controller->preferences()->proxySuggestion()},
     });
 }
 

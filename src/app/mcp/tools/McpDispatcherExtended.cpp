@@ -3147,7 +3147,10 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             m_controller->preferences()->setReopenLastProject(jsonBool(args.value(QStringLiteral("reopenLastProject"))));
         if (args.contains(QStringLiteral("followSystem")) && jsonBool(args.value(QStringLiteral("followSystem"))))
             m_controller->preferences()->clearDarkModePreference();
+        if (args.contains(QStringLiteral("proxySuggestion")))
+            m_controller->preferences()->setProxySuggestion(args.value(QStringLiteral("proxySuggestion")).toString());
         return ok({
+            {QStringLiteral("proxySuggestion"), m_controller->preferences()->proxySuggestion()},
             {QStringLiteral("autoKey"), m_controller->autoKeyEnabled()},
             {QStringLiteral("mediaGrid"), m_controller->mediaGridMode()},
             {QStringLiteral("reopenLastProject"), m_controller->preferences()->reopenLastProject()},

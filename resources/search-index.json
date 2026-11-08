@@ -1403,6 +1403,15 @@
       "descriptionSource": "Play clips from their low-resolution proxies where one exists. Export always uses the original media."
     },
     {
+      "id": "preview-proxy-suggestion",
+      "target": "settings:preview#preview-proxy-suggestion",
+      "context": "SettingsPreviewPage",
+      "source": "Suggest proxies on import",
+      "keywords": "proxy import suggest notification automatic",
+      "needs": [],
+      "descriptionSource": "What to do when imported footage may preview slowly."
+    },
+    {
       "id": "preview-proxy-resolution",
       "target": "settings:preview#preview-proxy-resolution",
       "context": "SettingsPreviewPage",

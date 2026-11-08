@@ -689,6 +689,10 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
         });
         connect(m_assetLibrary, &AssetLibrary::proxyRuleLearned, m_preferences,
                 &PreferencesController::addProxyNamePattern);
+        m_assetLibrary->setProxySuggestionMode(m_preferences->proxySuggestion());
+        connect(m_preferences, &PreferencesController::proxySuggestionChanged, this, [this] {
+            m_assetLibrary->setProxySuggestionMode(m_preferences->proxySuggestion());
+        });
     }
 
     m_mcpController = new McpController(this, this);
