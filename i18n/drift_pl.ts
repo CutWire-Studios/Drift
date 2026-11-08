@@ -17816,7 +17816,7 @@ Jeśli odtwarzanie się zacina, spróbuj innego.</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Bez limitu</translation>
     </message>
     <message>
         <source>500 steps</source>

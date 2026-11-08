@@ -17676,7 +17676,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">无限制</translation>
     </message>
     <message>
         <source>500 steps</source>

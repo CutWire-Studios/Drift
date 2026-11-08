@@ -17746,7 +17746,7 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Walang limitasyon</translation>
     </message>
     <message>
         <source>500 steps</source>

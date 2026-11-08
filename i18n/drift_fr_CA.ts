@@ -17747,7 +17747,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Illimité</translation>
     </message>
     <message>
         <source>500 steps</source>

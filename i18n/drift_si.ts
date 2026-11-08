@@ -17745,7 +17745,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">සීමා රහිත</translation>
     </message>
     <message>
         <source>500 steps</source>

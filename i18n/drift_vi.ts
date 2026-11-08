@@ -17676,7 +17676,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Không giới hạn</translation>
     </message>
     <message>
         <source>500 steps</source>

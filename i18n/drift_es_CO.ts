@@ -17745,7 +17745,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sin límite</translation>
     </message>
     <message>
         <source>500 steps</source>

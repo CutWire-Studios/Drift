@@ -17745,7 +17745,7 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
     </message>
     <message>
         <source>Unlimited</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Illimitato</translation>
     </message>
     <message>
         <source>500 steps</source>
