@@ -85,6 +85,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void replaceAssetWaitsForTheReprobe();
     void toolboxAnnotationsPresent();
     void toolboxUnknownIsError();
     void toolboxReturnsSchemas();
@@ -8162,6 +8163,59 @@ void McpTest::getWaveformImageReportsWords()
     QCOMPARE(words.size(), 6);
     QCOMPARE(words.at(3).toObject().value(QStringLiteral("i")).toInt(), 3);
     QVERIFY(r.value(QStringLiteral("image")).toObject().value(QStringLiteral("lanes")).toArray().contains(QStringLiteral("words")));
+}
+
+// replace_asset re-reads the file, also at the same path with new content, and the reply carries
+// the asset as now probed -- it used to return before the probe, with no duration at all.
+void McpTest::replaceAssetWaitsForTheReprobe()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate audio fixtures");
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("vo.wav"));
+    QVERIFY(writeClickTrack(path, 4));
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{path}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson()));
+    const QString assetId = state.project()->assetOrder().first();
+
+    // Same path, shorter content.
+    const QString staged = dir.filePath(QStringLiteral("staged.wav"));
+    QVERIFY(writeClickTrack(staged, 2) && QFile::remove(path) && QFile::rename(staged, path));
+    QJsonObject replaced = dispatcher.applyOne(QStringLiteral("replace_asset"),
+                                               {{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), path}});
+    QVERIFY2(replaced.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(replaced).toJson()));
+    QCOMPARE(replaced.value(QStringLiteral("reprobed")).toArray(), QJsonArray{assetId});
+    const QJsonArray assets = replaced.value(QStringLiteral("assets")).toArray();
+    QCOMPARE(assets.size(), 1);
+    QCOMPARE(qRound(assets.first().toObject().value(QStringLiteral("dur")).toDouble()), 2);
+    QCOMPARE(qRound(drift::usToSeconds(state.project()->asset(assetId)->durationUs)), 2);
+
+    // A different file, longer.
+    const QString other = dir.filePath(QStringLiteral("other.wav"));
+    QVERIFY(writeClickTrack(other, 3));
+    replaced = dispatcher.applyOne(QStringLiteral("replace_asset"),
+                                   {{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), other}});
+    QVERIFY2(replaced.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(replaced).toJson()));
+    QCOMPARE(qRound(replaced.value(QStringLiteral("assets")).toArray().first().toObject().value(QStringLiteral("dur")).toDouble()), 3);
+
+    // A file that can't be read fails the replace, reported as such, and the asset keeps its media.
+    const QString bad = dir.filePath(QStringLiteral("bad.wav"));
+    {
+        QFile f(bad);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("not audio");
+    }
+    replaced = dispatcher.applyOne(QStringLiteral("replace_asset"),
+                                   {{QStringLiteral("asset"), assetId}, {QStringLiteral("path"), bad}});
+    QCOMPARE(replaced.value(QStringLiteral("error")).toString(), QStringLiteral("replace_failed"));
+    QVERIFY(!replaced.value(QStringLiteral("detail")).toString().isEmpty());
+    QVERIFY(!library.isImportPending(assetId));
+    QCOMPARE(state.project()->asset(assetId)->path, QFileInfo(other).absoluteFilePath());
 }
 
 QTEST_MAIN(McpTest)
