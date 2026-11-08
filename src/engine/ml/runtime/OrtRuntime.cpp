@@ -321,12 +321,14 @@ Ort::Env &env()
     // Function-local so it is constructed on first use — which, by the contract above, is after
     // ensureLoaded() succeeded. Plugin EPs are registered against it here because registering the
     // same library twice is an error, and this is the only place that can happen once.
-    static Ort::Env instance = [] {
-        Ort::Env created{ORT_LOGGING_LEVEL_ERROR, "drift"};
-        registerPluginEps(created);
+    // Leaked on purpose: destroying the env at exit unloads plugin EP libraries while their own
+    // threads (Dawn's, for WebGPU EP 0.5.0) may still be running, which segfaults on quit.
+    static Ort::Env *instance = [] {
+        auto *created = new Ort::Env{ORT_LOGGING_LEVEL_ERROR, "drift"};
+        registerPluginEps(*created);
         return created;
     }();
-    return instance;
+    return *instance;
 }
 
 const Ort::MemoryInfo &cpuMemory()

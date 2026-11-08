@@ -1,4 +1,5 @@
 #include "app/mcp/tools/McpCatalog.h"
+#include "app/mcp/protocol/McpValidate.h"
 #include "app/mcp/protocol/McpJson.h"
 
 #include "core/shapes/ShapeStyle.h"
@@ -44,7 +45,7 @@ QJsonObject effectIndexProp()
 {
     return integerProp(QStringLiteral(
         "0-based position in this clip's effect stack — NOT a catalog id. Read the stack from "
-        "inspect({clips:true,detail:true}), or use the index returned by add_effect/add_audio_effect."));
+        "inspect({clips:true,detail:true}), or use the effectIndex returned by add_effect/add_audio_effect."));
 }
 
 QJsonObject bookmarkIndexProp()
@@ -149,6 +150,22 @@ QJsonObject mergeProps(QJsonObject a, const QJsonObject &b)
     for (auto it = b.begin(); it != b.end(); ++it)
         a.insert(it.key(), it.value());
     return a;
+}
+
+// Schema props for ops that take an effect stack position as `index`. clipRefProps() also has an
+// `index` (the clip's position on a track), and merged after the effect props it used to replace
+// their description, so agents read `index` as a clip index. On these ops `index` is the effect,
+// so the clip is addressed by id only.
+QJsonObject effectOpProps(const QJsonObject &props)
+{
+    QJsonObject merged{
+        {QStringLiteral("clip"),
+         stringProp(QStringLiteral("Clip UUID from inspect({clips:true}) — required: on effect ops "
+                                   "`index` is the effect's stack position, not the clip's"))},
+    };
+    for (auto it = props.begin(); it != props.end(); ++it)
+        merged.insert(it.key(), it.value());
+    return merged;
 }
 
 QJsonObject textHighlightSchema(const QString &description)
@@ -820,8 +837,9 @@ const QList<Op> &ops()
                         {QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Max rows for q"), 1, 500), 50)}}),
           true, false, true },
         { "add_effect", "effects", "Put a video effect on a clip",
-          "Append a video effect to the end of the clip's stack. Returns index — its stack position, "
-          "which is what every other effect op takes. Ids are matched case-insensitively with '.' and "
+          "Append a video effect to the end of the clip's stack. Returns effectIndex — its stack "
+          "position, which is what every other effect op takes as index (the reply's own index is "
+          "the clip's position on its track). Ids are matched case-insensitively with '.' and "
           "'_' interchangeable; an unknown id fails not_found with the nearest ids. The stack is "
           "stored on an adjustment clip linked to the target (created on its own lane the first "
           "time, and reported as host:{track,index,clip}); keep addressing the original clip in "
@@ -831,24 +849,22 @@ const QList<Op> &ops()
                        {QStringLiteral("effect")}) },
         { "remove_effect", "effects", "Remove a video effect",
           "Remove a video effect by stack index. Later effects shift down one position.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()}},
-                                  clipRefProps()),
-                       {QStringLiteral("index")}),
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()}}),
+                       {QStringLiteral("clip"), QStringLiteral("index")}),
           false, true },
         { "set_effect_param", "effects", "Tweak a video effect",
           "Set one numeric/boolean video effect parameter, or a clip param (type \"clip\", e.g. "
           "depth.occlude's target) to a clip id string — \"\" leaves the choice to the effect. Fails "
           "not_found on a key the effect does not declare or a stack index that is not there. Take "
           "keys from list_effects({id}). Use set_effect_color_param for colors.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from the effect's params in list_effects"))},
                                    {QStringLiteral("value"),
                                     QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("number"), QStringLiteral("string")}},
-                                                {QStringLiteral("description"), QStringLiteral("Value (booleans as 0/1; a clip id for clip params); range from list_effects({id})")}}}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                                {QStringLiteral("description"), QStringLiteral("Value (booleans as 0/1; a clip id for clip params); range from list_effects({id})")}}}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_audio_effect", "effects", "Put an audio effect on a clip",
-          "Append an audio effect to the clip's audio stack. Returns index — its stack position. The "
+          "Append an audio effect to the clip's audio stack. Returns effectIndex — its stack position. The "
           "audio stack is numbered separately from the video effect stack. Fails not_found on an "
           "unknown id. Like add_effect, the stack lives on a linked adjustment clip reported as "
           "host; keep addressing the original clip.",
@@ -857,18 +873,16 @@ const QList<Op> &ops()
                        {QStringLiteral("effect")}) },
         { "remove_audio_effect", "effects", "Remove an audio effect",
           "Remove an audio effect by stack index. Later effects shift down one position.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()}},
-                                  clipRefProps()),
-                       {QStringLiteral("index")}),
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()}}),
+                       {QStringLiteral("clip"), QStringLiteral("index")}),
           false, true },
         { "set_audio_effect_param", "effects", "Tweak an audio effect",
           "Set one audio effect parameter (booleans as 0/1). Fails not_found on a key the effect does "
           "not declare or a stack index that is not there. Take keys from list_audio_effects({id}).",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_audio_effects"))},
-                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_audio_effects({id})"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                   {QStringLiteral("value"), numberProp(QStringLiteral("Value (booleans as 0/1); range from list_audio_effects({id})"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "add_transition", "effects", "Bridge two adjacent clips",
           "Add or replace a transition between this clip and the next eligible clip on the same track "
           "(the neighbour with the earliest start after it); fails bad_args when there is none. Video, "
@@ -1329,8 +1343,10 @@ QString agentGuideText()
         "  exists, in_use, not_user_effect, bad_manifest, shader_compile_failed, io_error.\n"
         "- apply is not atomic: on failure the ops before it stay applied; done lists only those.\n"
         "- Toolbox op args are validated against the schema: bad_args (missing/enum/range),\n"
-        "  type_mismatch; unknown keys come back as ignored:[…]. inspect, capture, frames and\n"
-        "  activity are not schema-checked. Numbers are rounded to 3 dp except fps/pos.\n"
+        "  type_mismatch; unknown keys come back as ignored:[…]. The homepage tools (catalog,\n"
+        "  toolbox, search, inspect, apply, capture, frames, activity) are checked too and reject\n"
+        "  their own unknown keys with bad_args.\n"
+        "  Numbers are rounded to 3 dp except fps/pos.\n"
         "\n"
         "Selection-based ops take no clip argument and act on the current selection — call\n"
         "select_clip or select_clips first: separate_audio, unlink_audio, link_clips, merge_clips,\n"
@@ -1546,6 +1562,43 @@ QJsonObject toolboxPayload(const QString &name, const QStringList &only)
     if (!unknown.isEmpty())
         out.insert(QStringLiteral("unknown"), unknown);
     return out;
+}
+
+QJsonObject homepageToolSchema(const QString &name)
+{
+    // Built once: the schemas are fixed for the life of the process, and this runs on every call.
+    static const QHash<QString, QJsonObject> schemas = [] {
+        QHash<QString, QJsonObject> map;
+        for (const QJsonValue &tool : homepageTools())
+            map.insert(tool.toObject().value(QStringLiteral("name")).toString(),
+                       tool.toObject().value(QStringLiteral("inputSchema")).toObject());
+        return map;
+    }();
+    return schemas.value(name);
+}
+
+QJsonObject checkHomepageArgs(const QString &name, QJsonObject &args)
+{
+    const QJsonObject schema = homepageToolSchema(name);
+    if (schema.isEmpty())
+        return {};
+    QStringList ignored;
+    const QJsonObject invalid = validateArgs(name, schema, args, &ignored);
+    if (!invalid.isEmpty())
+        return invalid;
+    // Only the tool's own top-level keys are refused. Extra keys nested in its structures (a note
+    // on an apply op item) stay ignored, as they always were.
+    ignored.erase(std::remove_if(ignored.begin(), ignored.end(),
+                                 [](const QString &key) {
+                                     return key.contains(QLatin1Char('.')) || key.contains(QLatin1Char('['));
+                                 }),
+                  ignored.end());
+    if (ignored.isEmpty())
+        return {};
+    QStringList valid = schema.value(QStringLiteral("properties")).toObject().keys();
+    valid.sort();
+    return err("bad_args", QStringLiteral("%1 does not take %2; valid: %3")
+                               .arg(name, ignored.join(QStringLiteral(", ")), valid.join(QStringLiteral(", "))));
 }
 
 QJsonArray homepageTools()

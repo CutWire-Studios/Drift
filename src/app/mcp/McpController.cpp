@@ -858,6 +858,9 @@ bool McpController::setWorkArea(double inSeconds, double outSeconds)
     const drift::TimeUs outUs = drift::secondsToUs(outSeconds);
     if (outUs <= inUs)
         return false;
+    // Already there: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (m_app->m_project.workAreaInUs() == inUs && m_app->m_project.workAreaOutUs() == outUs)
+        return true;
 
     const drift::Project before = m_app->m_project;
     m_app->m_project.setWorkAreaInUs(inUs);
@@ -1057,8 +1060,18 @@ void McpController::beginBatch()
 {
     if (m_batchDepth++ == 0) {
         m_batchBefore = m_app->m_project.detachedCopy();
+        m_batchRevision = m_editRevision;
         m_undoSuspended = true;
     }
+}
+
+bool McpController::batchChangedProject() const
+{
+    // Only meaningful between beginBatch and endBatch; outside one it answers true, the safe way.
+    // The revision first: it is free, and it also covers state the saved form leaves out. So this
+    // only ever reports "unchanged" for ops that returned before reaching finishEdit.
+    return m_editRevision != m_batchRevision
+           || m_batchBefore.contentHash() != m_app->m_project.contentHash();
 }
 
 void McpController::endBatch(const QString &text, bool pushUndo)
@@ -1632,7 +1645,11 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     }
     if (target < 0 || target > m_app->m_undoStack.count())
         return err("bad_args", QStringLiteral("index out of range"));
+    // Same as AppController::undo()/redo(): the selection is carried across by clip id, or the
+    // jump leaves it on whatever clip now sits at the old indices.
+    m_app->captureSelectionClipIds();
     m_app->m_undoStack.setIndex(target);
+    m_app->m_undoSelectionCaptured = false;
     ++m_editRevision;
     const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
     return ok({{QStringLiteral("index"), m_app->m_undoStack.index()},
@@ -2565,8 +2582,13 @@ QJsonObject McpController::setClipVolume(int trackIndex, int clipIndex, double v
                        QStringLiteral("Clip volume is animated and no key sits at the playhead — "
                                       "pass `at` to write one, or seek to an existing key"));
         }
-        m_app->pushProjectEdit(before, QStringLiteral("Set volume"));
-        m_app->finishEdit(QStringLiteral("Set volume"));
+        // Already at that level: no edit, so a batch repeating it leaves no empty undo step.
+        const drift::KeyframeTrack<double> &was =
+            before.tracks().at(trackIndex).clips.at(clipIndex).volume;
+        if (clip.volume.keyframes() != was.keyframes() || clip.volume.enabled() != was.enabled()) {
+            m_app->pushProjectEdit(before, QStringLiteral("Set volume"));
+            m_app->finishEdit(QStringLiteral("Set volume"));
+        }
     }
 
     const drift::Clip &after = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);

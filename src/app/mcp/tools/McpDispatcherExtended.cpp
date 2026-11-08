@@ -1049,9 +1049,52 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return err("bad_args", QStringLiteral("path required"));
         if (!QFileInfo::exists(path))
             return err("not_found", QStringLiteral("File not found"));
-        if (!m_controller->bin()->replaceSource(index, QUrl::fromLocalFile(path)))
-            return err("bad_args", QStringLiteral("Replace refused"));
-        return ok({{QStringLiteral("index"), index}, {QStringLiteral("path"), path}});
+        // The replace re-probes the file (same path or not, with the same cache invalidation as
+        // refresh_asset), but asynchronously: wait for it, like import_media does, so the reply
+        // carries the new duration rather than the old one.
+        const QString id = m_controller->assetLibrary()->assetIdAt(index);
+        if (m_controller->assetLibrary()->isImportPending(id))
+            return err("busy", QStringLiteral("The asset is already being re-read; try again when it lands"));
+        AssetLibrary *lib = m_controller->assetLibrary();
+        bool finished = false;
+        bool replaced = false;
+        bool starting = true;
+        quint64 ourProbe = 0;
+        QString message;
+        // Only this replace's outcome: its own synchronous refusal while replaceSource runs, then
+        // the result of the probe it started. Other replaces -- of other assets, or of this one
+        // once ours has landed -- can finish during the wait below and are not ours.
+        const QMetaObject::Connection watch = QObject::connect(
+            m_controller->bin(), &MediaBinController::replaceFinishedFor, m_controller->bin(),
+            [&](const QString &assetId, bool succeeded, const QString &detail) {
+                if (assetId != id || finished)
+                    return;
+                if (!starting && (ourProbe == 0 || lib->completingProbeToken() != ourProbe))
+                    return;
+                finished = true;
+                replaced = succeeded;
+                message = detail;
+            });
+        const bool started = m_controller->bin()->replaceSource(index, QUrl::fromLocalFile(path));
+        starting = false;
+        if (!started) {
+            QObject::disconnect(watch);
+            return err("bad_args", message.isEmpty() ? QStringLiteral("Replace refused") : message);
+        }
+        ourProbe = lib->probeTokenFor(id);
+        QJsonObject result = waitImport({id});
+        QObject::disconnect(watch);
+        if (!result.value(QStringLiteral("ok")).toBool())
+            return result; // still probing (import_timeout) or no bin
+        // Success only on this replace's own confirmation: a probe cancelled underneath (the
+        // project replaced during the wait) ends without one.
+        if (!finished || !replaced)
+            return err("replace_failed", !message.isEmpty() ? message
+                                                            : QStringLiteral("The replace did not complete"));
+        result.insert(QStringLiteral("index"), m_controller->assetLibrary()->indexOfId(id));
+        result.insert(QStringLiteral("path"), path);
+        result.insert(QStringLiteral("reprobed"), QJsonArray{id});
+        return result;
     }
 
     if (tool == QLatin1String("refresh_asset")) {
@@ -2534,12 +2577,42 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())
             return clipRefError(args);
-        const int index = jsonInt(args.value(QStringLiteral("index")));
-        if (index < 0 || !args.contains(QStringLiteral("enabled")))
-            return err("bad_args", QStringLiteral("index and enabled required"));
+        if (!args.contains(QStringLiteral("enabled")))
+            return err("bad_args", QStringLiteral("enabled required"));
+        const QVariantList stack = m_controller->clipAt(ref.track, ref.clip).value(QStringLiteral("effects")).toList();
+        int index = -1;
+        const QJsonValue effect = args.value(QStringLiteral("effect"));
+        bool numeric = false;
+        const int asNumber = effect.isString() ? effect.toString().trimmed().toInt(&numeric) : -1;
+        if (effect.isString() && !numeric) {
+            // Matched like add_effect matches ids: case-insensitive, '.' and '_' interchangeable.
+            const QString catalogId = effect.toString().trimmed();
+            const QString key = effectCatalogKey(catalogId);
+            QJsonArray matches;
+            for (int i = 0; i < stack.size(); ++i) {
+                if (effectCatalogKey(stack.at(i).toMap().value(QStringLiteral("catalogId")).toString()) == key)
+                    matches.append(i);
+            }
+            if (matches.isEmpty())
+                return err("not_found", QStringLiteral("The clip has no %1 effect").arg(catalogId));
+            if (matches.size() > 1)
+                return err("bad_args", QStringLiteral("The clip has %1 %2 effects, at positions %3; pass one as effect or index")
+                                           .arg(matches.size())
+                                           .arg(catalogId, QString::fromUtf8(QJsonDocument(matches).toJson(QJsonDocument::Compact))));
+            index = matches.first().toInt();
+        } else if (numeric) {
+            index = asNumber; // "1" is a stack position, not a catalog id
+        } else {
+            index = jsonInt(effect.isUndefined() ? args.value(QStringLiteral("index")) : effect);
+        }
+        if (index < 0)
+            return err("bad_args", QStringLiteral("index or effect required"));
+        if (index >= stack.size())
+            return err("not_found", QStringLiteral("No such effect index"));
         const bool enabled = jsonBool(args.value(QStringLiteral("enabled")));
         m_controller->setEffectEnabled(ref.track, ref.clip, index, enabled);
-        return ok(clipFeedback(ref, {{QStringLiteral("index"), index}, {QStringLiteral("enabled"), enabled}}));
+        // effectIndex, not index: clipFeedback reports the clip's own position as index.
+        return ok(clipFeedback(ref, {{QStringLiteral("effectIndex"), index}, {QStringLiteral("enabled"), enabled}}));
     }
 
     if (tool == QLatin1String("move_effect")) {
@@ -2572,7 +2645,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         }
         // Alpha is dropped on purpose: effect colours bind as vec3. Echo what was stored so a
         // caller can see it rather than assuming the value it sent survived intact.
-        return ok(clipFeedback(ref, {{QStringLiteral("index"), index},
+        return ok(clipFeedback(ref, {{QStringLiteral("effectIndex"), index},
                                      {QStringLiteral("key"), key},
                                      {QStringLiteral("value"), QColor(value).name(QColor::HexRgb)}}));
     }
@@ -2586,7 +2659,7 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
             return err("bad_args", QStringLiteral("index and enabled required"));
         const bool enabled = jsonBool(args.value(QStringLiteral("enabled")));
         m_controller->setAudioEffectEnabled(ref.track, ref.clip, index, enabled);
-        return ok(clipFeedback(ref, {{QStringLiteral("index"), index}, {QStringLiteral("enabled"), enabled}}));
+        return ok(clipFeedback(ref, {{QStringLiteral("effectIndex"), index}, {QStringLiteral("enabled"), enabled}}));
     }
 
     if (tool == QLatin1String("move_audio_effect")) {
