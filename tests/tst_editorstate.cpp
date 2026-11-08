@@ -378,6 +378,8 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void redoDoesNotLeaveTheSelectionOnANeighbour();
+    void undoRedoKeepsASelectedTransition();
     void redoKeepsPinnedAdjustmentsOnTheirClips();
     void redoAfterASpeedDragKeepsTheGradeOnTheClip();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
@@ -10944,6 +10946,52 @@ void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
     // And the clips themselves still report the stack, which is what the inspector and MCP read.
     QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
     QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
+// Undo/redo carries the selection by clip id. When none of the selected clips exists after the
+// step, the old indices used to stay, pointing at whatever clip now sits there.
+void EditorStateTest::redoDoesNotLeaveTheSelectionOnANeighbour()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // clip-0, clip-1
+
+    state.selectClip(0, 0);
+    state.deleteSelectedClip();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-1"));
+
+    state.undo();
+    state.selectClip(0, 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-0"));
+    state.redo();
+
+    // clip-0 is gone again; clip-1 now sits at index 0 and must not have inherited the selection.
+    QCOMPARE(state.selectedTrack(), -1);
+    QCOMPARE(state.selectedClip(), -1);
+    QCOMPARE(state.selectionCount(), 0);
+}
+
+// A selected transition is carried by track and clip id, so a track inserted or removed above it
+// by undo/redo doesn't drop it (normalizeSelection used to judge it by the old indices).
+void EditorStateTest::undoRedoKeepsASelectedTransition()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
+
+    state.addTrack(QStringLiteral("video")); // prepends: the clips' track is now 1
+    state.selectTransition(1, 0);
+    QCOMPARE(state.selectedTransitionTrack(), 1);
+
+    state.undo(); // the added track goes; the clips' track is 0 again
+    QCOMPARE(state.selectedTransitionTrack(), 0);
+    QCOMPARE(state.selectedTransitionLeftClip(), 0);
+
+    state.redo();
+    QCOMPARE(state.selectedTransitionTrack(), 1);
+    QCOMPARE(state.selectedTransitionLeftClip(), 0);
 }
 
 // A pinned adjustment's span follows its clip, but the sync used to run after the undo snapshot
