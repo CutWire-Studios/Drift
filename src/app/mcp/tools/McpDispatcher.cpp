@@ -734,8 +734,12 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
         if (changed)
             changed = m_controller->mcp()->batchChangedProject();
         m_controller->mcp()->endBatch(label, ownStep && changed);
-        if (!ownStep && changed)
+        if (!ownStep && changed) {
             m_controller->foldEditIntoHistory();
+            // Nothing was pushed, and pushing is what marks an edit unsaved, so say it here: a save
+            // in flight, autosave and the close prompt all go by it.
+            m_controller->projectFile()->setDirty(true);
+        }
     };
 
     m_controller->mcp()->beginBatch();

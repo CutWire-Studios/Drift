@@ -4731,6 +4731,20 @@ void McpTest::applyWithoutHistoryJoinsTheNewestStep()
     QVERIFY(!dispatcher.apply(failing).value(QStringLiteral("ok")).toBool());
     QCOMPARE(clips(), 5);
     QCOMPARE(state.undoHistory().size(), 1);
+
+    // Unsaved afterwards, like any edit: nothing was pushed, so this is set explicitly.
+    {
+        QStandardPaths::setTestModeEnabled(true);
+        const auto testMode = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        state.projectFile()->saveProject(QUrl::fromLocalFile(dir.filePath(QStringLiteral("quiet.drift"))));
+        state.projectFile()->waitForSave();
+        QVERIFY(!state.projectFile()->hasUnsavedChanges());
+        QVERIFY(quiet(6).value(QStringLiteral("ok")).toBool());
+        QVERIFY(state.projectFile()->hasUnsavedChanges());
+        QVERIFY(dispatcher.inspect({}).value(QStringLiteral("dirty")).toBool());
+    }
 }
 
 void McpTest::undoToRestoresSnapshot()
