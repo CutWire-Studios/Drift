@@ -1817,6 +1817,9 @@ protected:
     void finishEdit(const QString &message);
     // Keeps the keyframe strip's index-addressed hidden series in sync after an effect is removed.
     void dropKeyframeGraphPropertiesForEffect(int removedIndex, bool audio = false);
+    // Drop every hidden-graph entry of a whole stack ("fx.*" and/or "afx.*"), for edits that remove
+    // all of a stack's effects at once.
+    void dropKeyframeGraphEffectProperties(bool video, bool audio);
     // Same idea after a reorder: fx.N.* indices move with the effect.
     void remapKeyframeGraphPropertiesForEffectMove(int fromIndex, int toIndex, bool audio = false);
     // Publishes a finished beat analysis into m_beatAnalysis / m_beatSnapTargets.

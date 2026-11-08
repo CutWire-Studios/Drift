@@ -846,6 +846,8 @@ int AppController::removeAllEffects(int trackIndex, int clipIndex, bool includeM
     const QString transitionTrackId = trackIdAt(m_selectedTransitionTrack);
 
     int removed = 0;
+    bool removedVideo = false;
+    bool removedAudio = false;
     QSet<QString> touchedLaneIds;
     for (drift::Track &track : m_project.tracks()) {
         if (!track.isAdjustment())
@@ -854,6 +856,8 @@ int AppController::removeAllEffects(int trackIndex, int clipIndex, bool includeM
             const drift::Clip &clip = track.clips.at(c);
             if (clip.type != drift::ClipType::Adjustment || clip.linkedClipId != hostId || !removable(clip))
                 continue;
+            removedVideo = removedVideo || clip.adjustmentKind == drift::AdjustmentKind::VideoEffects;
+            removedAudio = removedAudio || clip.adjustmentKind == drift::AdjustmentKind::AudioEffects;
             track.clips.removeAt(c);
             touchedLaneIds.insert(track.id);
             ++removed;
@@ -895,6 +899,9 @@ int AppController::removeAllEffects(int trackIndex, int clipIndex, bool includeM
     }
     m_selectedTransitionTrack = m_project.trackIndexById(transitionTrackId);
 
+    // The graph's hidden entries address effects by stack index; with the stack gone they would
+    // hide parameters of whatever effect lands in that slot next.
+    dropKeyframeGraphEffectProperties(removedVideo, removedAudio);
     pushProjectEdit(before, tr("Remove all effects"));
     finishEdit(tr("All effects removed"));
     return removed;

@@ -10917,8 +10917,14 @@ void EditorStateTest::removeAllEffectsStripsTheClipAndKeepsMasks()
     QCOMPARE(videoEffectsOf(*state.project(), mediaClip(*state.project(), 0, 1)).size(), 2);
     QVERIFY(adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::Mask));
     const int tracksBefore = state.project()->tracks().size();
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("x"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.1.contrast"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("afx.0.amount"));
+    QCOMPARE(state.keyframeGraphHiddenProperties().size(), 3);
 
     QCOMPARE(state.removeAllEffects(0, 1), 2);
+    // Hidden graph entries address effects by stack index; with both stacks gone they go too.
+    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList{QStringLiteral("x")});
     QVERIFY(!adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::VideoEffects));
     QVERIFY(!adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::AudioEffects));
     QVERIFY(adjustmentFor(*state.project(), strippedId, drift::AdjustmentKind::Mask));
