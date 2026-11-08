@@ -2054,8 +2054,14 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
     const quint64 generation = m_recoveryGeneration;
     const quint64 revision = m_dirtyRevision;
     m_recoveryPromotePending = true;
-    m_recoveryWrite = QtConcurrent::run([snapshot, session, history, meta, path] {
-        return writeRecoveryTemp(*snapshot, session, history, meta, path);
+    m_recoveryWrite = QtConcurrent::run([snapshot, session, history, meta, path]() -> QString {
+        // An exception would skip the continuation below and leave the pending flag set, which
+        // would stop every later snapshot: report it as a failed write instead.
+        try {
+            return writeRecoveryTemp(*snapshot, session, history, meta, path);
+        } catch (...) {
+            return {};
+        }
     });
     m_recoveryWrite.then(this, [this, generation, revision, path](const QString &tmpPath) {
         m_recoveryPromotePending = false;

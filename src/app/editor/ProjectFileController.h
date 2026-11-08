@@ -30,6 +30,7 @@ class AppController;
 class ProjectFileController : public QObject
 {
     Q_OBJECT
+    friend class EditorStateTest;
 
     Q_PROPERTY(QVariantMap background READ background NOTIFY backgroundChanged)
     Q_PROPERTY(QString projectName READ projectName WRITE setProjectName NOTIFY projectNameChanged)
