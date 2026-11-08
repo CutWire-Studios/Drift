@@ -197,6 +197,12 @@ std::vector<std::unique_ptr<ClipReaderPool::WorkerEntry>> ClipReaderPool::detach
     return evicted;
 }
 
+ClipReaderPool::Stats ClipReaderPool::stats()
+{
+    QMutexLocker lock(&m_mutex);
+    return {int(m_videoWorkers.size()), int(m_audioWorkers.size())};
+}
+
 void ClipReaderPool::releaseAll()
 {
     std::vector<std::unique_ptr<WorkerEntry>> evicted;

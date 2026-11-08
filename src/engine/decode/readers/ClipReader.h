@@ -87,12 +87,26 @@ public:
         // every rotation change is covered, not just the ones that also happen to resize.
         m_videoCache.clear();
         m_previewCache.clear();
+        syncCacheAccounting();
     }
 
     // Diagnostics, summed over every reader in this process. A reader asked for a position its
     // cursor is not near has to decode its way there from the preceding keyframe, so this is what
     // a badly shared decoder costs. Tests read the delta.
     static quint64 videoFramesDecoded();
+
+    // Decoded frames held in readers' caches across the process, for memory_stats. Bytes count
+    // CPU-side frames only; hardware frames are GPU surfaces and are counted as frames. A cached
+    // frame may also be held elsewhere at the moment (the compositor), so this is what the caches
+    // keep alive, not what they own alone.
+    struct CacheStats
+    {
+        qint64 bytes = 0;
+        int frames = 0;
+        int gpuFrames = 0;
+        qint64 budgetBytes = 0; // the preview frame budget shared by every reader
+    };
+    static CacheStats cacheStats();
     // Codec actually opened for video, empty until the first decode. Distinguishes libdav1d
     // (software AV1) from the native `av1` decoder that can drive hardware.
     QString videoDecoderName() const;
@@ -347,6 +361,11 @@ private:
         PreviewVideoFrame frame;
     };
     QList<CachedPreview> m_previewCache;
+    // This reader's share of the process-wide cache figures, re-counted after each change.
+    void syncCacheAccounting();
+    qint64 m_accountedBytes = 0;
+    int m_accountedFrames = 0;
+    int m_accountedGpuFrames = 0;
     static constexpr int kMaxCachedFrames = 16;
     // Hardware surfaces live in FFmpeg's decoder pool. Holding 2 s of them would
     // exhaust extra_hw_frames and stall decode, so the GPU ring is short. Cover

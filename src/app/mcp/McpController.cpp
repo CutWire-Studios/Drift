@@ -35,6 +35,15 @@
 #include "engine/audio/analysis/LoudnessMeter.h"
 #include "engine/media/waveforms/MediaWaveform.h"
 #include "engine/ml/runtime/OrtRuntime.h"
+#include "engine/EngineTuning.h"
+#include "engine/decode/readers/ClipReader.h"
+#include "engine/decode/readers/ClipReaderPool.h"
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#include <psapi.h>
+#elif defined(Q_OS_MACOS)
+#include <mach/mach.h>
+#endif
 #include "engine/ml/vision/segmentation/RvmMatter.h"
 #include "engine/ml/vision/segmentation/Sam2Segmenter.h"
 #include "engine/ml/speech/transcription/SileroVad.h"
@@ -1609,6 +1618,94 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     return ok({{QStringLiteral("index"), m_app->m_undoStack.index()},
                {QStringLiteral("hash"), at},
                {QStringLiteral("short"), shortHash(at)}});
+}
+
+namespace {
+
+// Resident and peak memory of this process, or -1 where the platform does not say.
+QPair<qint64, qint64> processMemoryBytes()
+{
+#if defined(Q_OS_WIN)
+    PROCESS_MEMORY_COUNTERS counters{};
+    if (K32GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters)))
+        return {qint64(counters.WorkingSetSize), qint64(counters.PeakWorkingSetSize)};
+#elif defined(Q_OS_MACOS)
+    mach_task_basic_info info{};
+    mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info), &count)
+        == KERN_SUCCESS)
+        return {qint64(info.resident_size), qint64(info.resident_size_max)};
+#elif defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
+    QFile status(QStringLiteral("/proc/self/status"));
+    if (status.open(QIODevice::ReadOnly)) {
+        qint64 rss = -1;
+        qint64 peak = -1;
+        const auto kib = [](const QByteArray &line) {
+            const QList<QByteArray> parts = line.simplified().split(' ');
+            return parts.size() >= 2 ? parts.at(1).toLongLong() * 1024 : -1;
+        };
+        // /proc files report a size of 0, so atEnd() is true before anything is read.
+        const QList<QByteArray> lines = status.readAll().split('\n');
+        for (const QByteArray &line : lines) {
+            if (line.startsWith("VmRSS:"))
+                rss = kib(line);
+            else if (line.startsWith("VmHWM:"))
+                peak = kib(line);
+        }
+        return {rss, peak};
+    }
+#endif
+    return {-1, -1};
+}
+
+QJsonObject frameCacheJson()
+{
+    const ClipReader::CacheStats cache = ClipReader::cacheStats();
+    return {{QStringLiteral("bytes"), double(cache.bytes)},
+            {QStringLiteral("frames"), cache.frames},
+            {QStringLiteral("gpu_frames"), cache.gpuFrames},
+            {QStringLiteral("budget_bytes"), double(cache.budgetBytes)},
+            // Settings › Performance › Decoded frame cache; 0 = automatic (an eighth of RAM).
+            {QStringLiteral("setting_mib"), drift::tuning::frameCacheMiB.load(std::memory_order_relaxed)}};
+}
+
+QJsonObject decodersJson()
+{
+    const ClipReaderPool::Stats pool = ClipReaderPool::instance().stats();
+    return {{QStringLiteral("video"), pool.videoDecoders}, {QStringLiteral("audio"), pool.audioDecoders}};
+}
+
+} // namespace
+
+QJsonObject McpController::memoryStats() const
+{
+    using namespace drift::mcp;
+    const QPair<qint64, qint64> process = processMemoryBytes();
+    return ok({
+        {QStringLiteral("process"),
+         QJsonObject{{QStringLiteral("rss_bytes"), double(process.first)},
+                     {QStringLiteral("peak_rss_bytes"), double(process.second)}}},
+        {QStringLiteral("frame_cache"), frameCacheJson()},
+        {QStringLiteral("decoders"), decodersJson()},
+        // Each step holds full project snapshots; the step count is the lever.
+        {QStringLiteral("undo_history"),
+         QJsonObject{{QStringLiteral("steps"), m_app->m_undoStack.count()},
+                     {QStringLiteral("undoable"), m_app->m_undoStack.index()}}},
+    });
+}
+
+QJsonObject McpController::clearCache()
+{
+    using namespace drift::mcp;
+    const QJsonObject before{{QStringLiteral("frame_cache"), frameCacheJson()},
+                             {QStringLiteral("decoders"), decodersJson()}};
+    // Closes every decoder not mid-decode, and with it the frames it cached; the next frame
+    // reopens what it needs. The project and undo history are untouched.
+    ClipReaderPool::instance().releaseAll();
+    return ok({{QStringLiteral("before"), before},
+               {QStringLiteral("after"),
+                QJsonObject{{QStringLiteral("frame_cache"), frameCacheJson()},
+                            {QStringLiteral("decoders"), decodersJson()}}}});
 }
 
 QJsonObject McpController::takeSnapshot(const QString &label)

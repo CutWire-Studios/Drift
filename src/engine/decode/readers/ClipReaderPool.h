@@ -123,6 +123,14 @@ public:
     // the file afresh, and is stopped by whichever reader finishes with it last.
     void releasePath(const QString &path);
 
+    // Open decoders, for memory_stats.
+    struct Stats
+    {
+        int videoDecoders = 0;
+        int audioDecoders = 0;
+    };
+    Stats stats();
+
 private:
     ClipReaderPool();
     ~ClipReaderPool();

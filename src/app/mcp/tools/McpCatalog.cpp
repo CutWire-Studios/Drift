@@ -924,6 +924,18 @@ const QList<Op> &ops()
           objectSchema({{QStringLiteral("discard"),
                          boolProp(QStringLiteral("Quit even with unsaved changes, losing them"))}}),
           false, true },
+        { "memory_stats", "project", "Where Drift's memory goes",
+          "Returns {process:{rss_bytes, peak_rss_bytes} (-1 where the platform does not say), "
+          "frame_cache:{bytes, frames, gpu_frames, budget_bytes, setting_mib} (decoded frames the "
+          "readers cache; bytes are CPU frames, GPU surfaces only counted; setting_mib 0 = automatic, "
+          "an eighth of RAM), decoders:{video, audio} (open readers), undo_history:{steps, undoable} "
+          "(each step holds full project snapshots)}.",
+          objectSchema({}), true, false, true },
+        { "clear_cache", "project", "Free decoded frames and decoders",
+          "Close every decoder not in the middle of a read, and the frames it cached; the next frame "
+          "reopens what it needs (a brief stutter). The project and undo history are untouched. "
+          "Returns {before, after}, each {frame_cache, decoders} as in memory_stats. Not undoable.",
+          objectSchema({}), false, false, true },
         { "save_project", "project", "Save the project file",
           "Save the open project. With path omitted, saves to the current project path (inspect.path); "
           "fails bad_args when the project has never been saved. With path given, writes a .drift "
@@ -1248,6 +1260,7 @@ QStringList undoExemptOps()
         QStringLiteral("set_snap"),            QStringLiteral("set_loop_work_area"),
         QStringLiteral("export_video"),
         QStringLiteral("save_project"),        QStringLiteral("quit_instance"),
+        QStringLiteral("clear_cache"),
         QStringLiteral("set_theme"),        QStringLiteral("set_preview_view"),
         QStringLiteral("set_shortcut"),        QStringLiteral("reset_shortcuts"),
         QStringLiteral("export_theme"),        QStringLiteral("import_theme"),
