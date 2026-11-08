@@ -17312,7 +17312,7 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Todo</translation>
     </message>
     <message>
         <source>Problems only</source>

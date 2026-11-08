@@ -17312,7 +17312,7 @@ Se a reprodução travar, experimente outro.</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Todos</translation>
     </message>
     <message>
         <source>Problems only</source>

@@ -17243,7 +17243,7 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tất cả</translation>
     </message>
     <message>
         <source>Problems only</source>

@@ -17313,7 +17313,7 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Lahat</translation>
     </message>
     <message>
         <source>Problems only</source>

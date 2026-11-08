@@ -17312,7 +17312,7 @@ If playback stutters, try another.</source>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">සියල්ල</translation>
     </message>
     <message>
         <source>Problems only</source>

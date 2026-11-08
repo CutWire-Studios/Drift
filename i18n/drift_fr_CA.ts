@@ -17314,7 +17314,7 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tous</translation>
     </message>
     <message>
         <source>Problems only</source>
