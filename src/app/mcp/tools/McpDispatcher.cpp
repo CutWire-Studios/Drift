@@ -1553,8 +1553,12 @@ QJsonObject McpDispatcher::opDeleteClip(const QJsonObject &args)
     const ClipRef ref = resolveClip(args);
     if (!ref.valid())
         return clipRefError(args);
+    const bool withEffects = jsonBool(args.value(QStringLiteral("with_effects")));
     m_controller->selectClip(ref.track, ref.clip);
-    m_controller->deleteSelectedClip();
+    if (withEffects)
+        m_controller->deleteSelectedClipWithEffects();
+    else
+        m_controller->deleteSelectedClip();
     if (m_controller->mcp()->locateClip(ref.id).first >= 0)
         return err("bad_args", QStringLiteral("Delete refused"));
     return ok({{QStringLiteral("removed"), ref.id}});

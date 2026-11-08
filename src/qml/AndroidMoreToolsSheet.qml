@@ -138,7 +138,10 @@ AndroidBottomSheet {
                   icon: Theme.icons.clipboardPaste },
                 { id: "saveEffectsPreset", label: qsTr("Save effects as preset…"),
                   detail: qsTr("Reuse this look on other clips"),
-                  icon: Theme.icons.save }
+                  icon: Theme.icons.save },
+                { id: "deleteWithEffects", label: qsTr("Delete with effects"),
+                  detail: qsTr("Remove the clip and its effects together"),
+                  icon: Theme.icons.trash }
             ]
         },
         {
@@ -270,6 +273,10 @@ AndroidBottomSheet {
         case "copyEffects":
         case "saveEffectsPreset":
             return root.clipHasEffects
+        case "deleteWithEffects":
+            // selectionRevision makes the binding re-ask when the selection changes.
+            return root.hasSelection && EditorState.selectionRevision >= 0
+                   && EditorState.selectionHasPinnedAdjustments()
         case "pasteEffects":
             return root.hasSelection && !root.isTransformClip
         case "trimStart":
@@ -340,6 +347,9 @@ AndroidBottomSheet {
             break
         case "cut":
             EditorState.cutSelection()
+            break
+        case "deleteWithEffects":
+            EditorState.deleteSelectedClipWithEffects()
             break
         case "copy":
             EditorState.copySelection()

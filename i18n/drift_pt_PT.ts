@@ -1569,6 +1569,14 @@
         <translation>Reutilize este visual noutros clipes</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>Aparo e tempo</translation>
     </message>
@@ -2517,6 +2525,10 @@
     <message>
         <source>Delete selection</source>
         <translation>Eliminar seleção</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23244,6 +23256,10 @@ Se a reprodução engasgar, experimente outro.</translation>
     <message>
         <source>Delete</source>
         <translation>Eliminar</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

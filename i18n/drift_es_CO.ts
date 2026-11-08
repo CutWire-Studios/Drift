@@ -1569,6 +1569,14 @@
         <translation>Reutiliza este aspecto en otros clips</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>Recorte y sincronización</translation>
     </message>
@@ -2517,6 +2525,10 @@
     <message>
         <source>Delete selection</source>
         <translation>Eliminar selección</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23243,6 +23255,10 @@ Si la reproducción se corta, prueba con otra opción.</translation>
     <message>
         <source>Delete</source>
         <translation>Eliminar</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
