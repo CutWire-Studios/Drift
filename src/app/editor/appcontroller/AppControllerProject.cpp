@@ -73,12 +73,12 @@ QJsonObject AppController::sessionJson() const
     // predate the tree mode.
     root.insert(QStringLiteral("mediaGridMode"), mediaGridMode());
     root.insert(QStringLiteral("loopWorkArea"), m_loopWorkAreaEnabled);
-    if (!m_projectHistoryMode.isEmpty() || m_projectHistoryLimit >= 0) {
+    if (hasProjectHistorySettings()) {
         QJsonObject history;
-        if (!m_projectHistoryMode.isEmpty())
-            history.insert(QStringLiteral("mode"), m_projectHistoryMode);
-        if (m_projectHistoryLimit >= 0)
-            history.insert(QStringLiteral("limit"), m_projectHistoryLimit);
+        if (m_projectHistorySteps != kProjectHistoryUnset)
+            history.insert(QStringLiteral("steps"), m_projectHistorySteps);
+        if (m_projectHistoryPersist >= 0)
+            history.insert(QStringLiteral("persist"), m_projectHistoryPersist == 1);
         root.insert(QStringLiteral("undoHistorySettings"), history);
     }
     QJsonArray guideSets;
@@ -97,8 +97,8 @@ QJsonObject AppController::sessionJson() const
 
 void AppController::resetSessionState()
 {
-    m_projectHistoryMode.clear();
-    m_projectHistoryLimit = -1;
+    m_projectHistorySteps = kProjectHistoryUnset;
+    m_projectHistoryPersist = -1;
     // These end up editing the project, so they have to run while it is still the one they were
     // opened against.
     m_speedCurve->end();
@@ -295,11 +295,12 @@ void AppController::applyParsedProject(ParsedProject parsed)
     {
         // Before the history itself: the project's own setting decides whether it is restored.
         const QJsonObject history = root.value(QStringLiteral("undoHistorySettings")).toObject();
-        const QString mode = history.value(QStringLiteral("mode")).toString();
-        m_projectHistoryMode = PreferencesController::undoHistoryModes().contains(mode) ? mode : QString();
-        m_projectHistoryLimit = history.contains(QStringLiteral("limit"))
-                                    ? qMax(0, history.value(QStringLiteral("limit")).toInt())
-                                    : -1;
+        m_projectHistorySteps = history.contains(QStringLiteral("steps"))
+                                    ? qMax(-1, history.value(QStringLiteral("steps")).toInt())
+                                    : kProjectHistoryUnset;
+        m_projectHistoryPersist = history.contains(QStringLiteral("persist"))
+                                      ? (history.value(QStringLiteral("persist")).toBool() ? 1 : 0)
+                                      : -1;
     }
     const bool restoreHistory =
         parsed.fromRecovery ? undoHistoryCap() != 0 : persistsUndoHistory();
@@ -1100,9 +1101,15 @@ QSet<QString> AppController::historyMediaPaths() const
 
 QString AppController::effectiveUndoHistoryMode() const
 {
-    if (!m_projectHistoryMode.isEmpty())
-        return m_projectHistoryMode;
-    return m_preferences ? m_preferences->undoHistoryMode() : QStringLiteral("project");
+    const QString global = m_preferences ? m_preferences->undoHistoryMode() : QStringLiteral("project");
+    if (m_projectHistorySteps == 0
+        || (m_projectHistorySteps == kProjectHistoryUnset && global == QLatin1String("off")))
+        return QStringLiteral("off");
+    // A project that turns history on while the app has it off keeps it for the session unless
+    // it asked to save it.
+    const bool persist = m_projectHistoryPersist >= 0 ? m_projectHistoryPersist == 1
+                                                      : global == QLatin1String("project");
+    return persist ? QStringLiteral("project") : QStringLiteral("session");
 }
 
 QSet<QString> AppController::historyOnlyMediaPaths() const
@@ -1122,9 +1129,9 @@ int AppController::undoHistoryCap() const
 {
     if (effectiveUndoHistoryMode() == QLatin1String("off"))
         return 0;
-    const int limit = m_projectHistoryLimit >= 0 ? m_projectHistoryLimit
-                      : m_preferences             ? m_preferences->undoHistoryLimit()
-                                                  : 0;
+    if (m_projectHistorySteps != kProjectHistoryUnset)
+        return m_projectHistorySteps; // -1 (no limit) or N; 0 is "off", handled above
+    const int limit = m_preferences ? m_preferences->undoHistoryLimit() : 0;
     return limit > 0 ? limit : -1;
 }
 

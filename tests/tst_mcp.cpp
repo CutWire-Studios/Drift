@@ -4588,8 +4588,10 @@ void McpTest::historyHousekeepingOps()
     QCOMPARE(stats.value(QStringLiteral("steps")).toInt(), 5);
     QCOMPARE(stats.value(QStringLiteral("undoable")).toInt(), 4);
     QCOMPARE(stats.value(QStringLiteral("redoable")).toInt(), 1);
-    QCOMPARE(stats.value(QStringLiteral("states")).toInt(), 6);
-    QVERIFY(stats.value(QStringLiteral("json_bytes")).toDouble() > 0);
+    QCOMPARE(stats.value(QStringLiteral("snapshots")).toInt(), 10); // a before and an after per step
+    QVERIFY(!stats.contains(QStringLiteral("json_bytes"))); // only on request: it serialises every state
+    QVERIFY(dispatcher.applyOne(QStringLiteral("history_stats"), {{QStringLiteral("size"), true}})
+                .value(QStringLiteral("json_bytes")).toDouble() > 0);
     QVERIFY(stats.value(QStringLiteral("saved_with_project")).toBool());
     QCOMPARE(stats.value(QStringLiteral("history_only_media")).toInt(), 0);
     QJsonObject settings = stats.value(QStringLiteral("settings")).toObject();
@@ -4605,6 +4607,13 @@ void McpTest::historyHousekeepingOps()
     QCOMPARE(cleared.value(QStringLiteral("index")).toInt(), 2);
     QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore);
     QVERIFY(!state.redoAvailable());
+    // A saved history is part of the file, so clearing it is a change to save.
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    // The kept steps still undo and redo.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore - 1);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("redo"), {}).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(dispatcher.inspect({}).value(QStringLiteral("clips")).toInt(), clipsBefore);
 
     // This project's own limit, saved with it.
     QJsonObject limit = dispatcher.applyOne(QStringLiteral("set_history_limit"),
@@ -4630,10 +4639,37 @@ void McpTest::historyHousekeepingOps()
     QCOMPARE(settings.value(QStringLiteral("steps")).toInt(), 1);
     QCOMPARE(reopened.undoHistory().size(), 0); // session mode: nothing was saved to load
 
-    // 0 turns history off for this project; reset goes back to the app setting.
-    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), 0}});
+    // 0 turns history off for this project without losing its persist choice: a limit again
+    // brings back "session". Numbers and booleans as strings are read as such.
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), QStringLiteral("0")}});
     QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("off"));
     QCOMPARE(limit.value(QStringLiteral("steps_kept")).toInt(), 0);
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), QStringLiteral("5")}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), 5);
+
+    // The same setting again is not a change to the project.
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+    dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), 5}});
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
+
+    // With the app's history off, a project limit turns it on (for the session, unless asked).
+    state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("settings")).toObject().value(QStringLiteral("mode")).toString(),
+             QStringLiteral("session"));
+    dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("reset"), true}});
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("history_stats"), {})
+                 .value(QStringLiteral("settings")).toObject().value(QStringLiteral("mode")).toString(),
+             QStringLiteral("off"));
+    limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("steps"), -1}});
+    QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("session"));
+    QCOMPARE(limit.value(QStringLiteral("steps")).toInt(), -1);
+    QVERIFY(dispatcher.apply(addTextOp(9)).value(QStringLiteral("ok")).toBool());
+    QVERIFY(state.undoAvailable());
+    state.preferences()->setUndoHistoryMode(QStringLiteral("project"));
     limit = dispatcher.applyOne(QStringLiteral("set_history_limit"), {{QStringLiteral("reset"), true}});
     QCOMPARE(limit.value(QStringLiteral("source")).toString(), QStringLiteral("global"));
     QCOMPARE(limit.value(QStringLiteral("mode")).toString(), QStringLiteral("project"));

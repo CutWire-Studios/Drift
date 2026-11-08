@@ -8,6 +8,7 @@
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <optional>
 #include <QJsonValue>
 #include <QList>
 #include <QObject>
@@ -193,8 +194,9 @@ public:
     QJsonObject clearCache();
     // Undo history housekeeping (jmn8718/Drift#30).
     QJsonObject clearHistory(int keepLast);
-    QJsonObject setHistoryLimit(const QJsonObject &args);
-    QJsonObject historyStats() const;
+    // Unset optionals leave that part of the project's setting as it is.
+    QJsonObject setHistoryLimit(bool reset, std::optional<int> steps, std::optional<bool> persist);
+    QJsonObject historyStats(bool size) const;
     QJsonObject historySettings() const;
     QJsonObject listSnapshots() const;
     QJsonObject restoreSnapshot(const QString &hash);
