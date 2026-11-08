@@ -10862,12 +10862,18 @@ void EditorStateTest::deletingWithEffectsAlsoHandlesASelectedAdjustment()
     state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
     QCOMPARE(state.project()->tracks().size(), 2);
 
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("x"));
+    state.toggleKeyframeGraphPropertyVisible(QStringLiteral("fx.0.contrast"));
+    QCOMPARE(state.keyframeGraphHiddenProperties().size(), 2);
+
     state.setRippleEnabled(true);
     state.selectAllClips();
     state.deleteSelectedClipWithEffects();
 
     QCOMPARE(state.project()->tracks().size(), 1);
     QVERIFY(state.project()->tracks().at(0).clips.isEmpty());
+    // Hidden graph entries address effects by stack index; the deleted stacks take theirs along.
+    QCOMPARE(state.keyframeGraphHiddenProperties(), QStringList{QStringLiteral("x")});
 }
 
 // With ripple on, the host's track closes up, but a selected pinned adjustment is not a free clip:

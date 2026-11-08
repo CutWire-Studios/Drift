@@ -1489,8 +1489,17 @@ void AppController::deleteSelection(bool withPinnedAdjustments)
     // add a dead row under the parent track every time a graded clip is deleted.
     if (!pinnedAdjustments.isEmpty()) {
         QSet<QString> touchedLaneIds;
-        for (const QPair<int, int> &pair : std::as_const(pinnedAdjustments))
+        bool removedVideo = false;
+        bool removedAudio = false;
+        for (const QPair<int, int> &pair : std::as_const(pinnedAdjustments)) {
             touchedLaneIds.insert(before.tracks().at(pair.first).id);
+            const drift::AdjustmentKind kind = before.tracks().at(pair.first).clips.at(pair.second).adjustmentKind;
+            removedVideo = removedVideo || kind == drift::AdjustmentKind::VideoEffects;
+            removedAudio = removedAudio || kind == drift::AdjustmentKind::AudioEffects;
+        }
+        // The graph's hidden entries address effects by stack index; with the stack gone they
+        // would hide parameters of whatever effect lands in that slot next.
+        dropKeyframeGraphEffectProperties(removedVideo, removedAudio);
         for (int t = m_project.tracks().size() - 1; t >= 0; --t) {
             const drift::Track &track = m_project.tracks().at(t);
             if (track.isAdjustmentLane() && track.clips.isEmpty() && !track.id.isEmpty()
