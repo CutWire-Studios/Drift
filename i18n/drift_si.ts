@@ -1569,6 +1569,14 @@
         <translation>මෙම විලාසය වෙනත් ක්ලිප් මත නැවත භාවිත කරන්න</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>කප්පාදු කිරීම සහ කාලය</translation>
     </message>
@@ -2517,6 +2525,10 @@
     <message>
         <source>Delete selection</source>
         <translation>තෝරාගැනීම මකන්න</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23175,6 +23187,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>මකන්න</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

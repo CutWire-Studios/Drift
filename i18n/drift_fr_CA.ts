@@ -1569,6 +1569,14 @@
         <translation>Réutiliser ce style sur d&apos;autres clips</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>Rogner &amp; rognage</translation>
     </message>
@@ -2518,6 +2526,10 @@
     <message>
         <source>Delete selection</source>
         <translation>Supprimer la sélection</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23179,6 +23191,10 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
     <message>
         <source>Delete</source>
         <translation>Supprimer</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

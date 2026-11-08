@@ -1569,6 +1569,14 @@
         <translation>Muling gamitin ang itsurang ito sa iba pang mga clip</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>Pag-trim at tiyempo</translation>
     </message>
@@ -2517,6 +2525,10 @@
     <message>
         <source>Delete selection</source>
         <translation>Tanggalin ang napili</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23176,6 +23188,10 @@ Kung nag-i-stutter ang playback, subukan ang isa pa.</translation>
     <message>
         <source>Delete</source>
         <translation>Burahin</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

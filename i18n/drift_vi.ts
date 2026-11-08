@@ -1568,6 +1568,14 @@
         <translation>Sử dụng lại giao diện này trên các clip khác</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>Cắt ngắn &amp; căn thời gian</translation>
     </message>
@@ -2514,6 +2522,10 @@
     <message>
         <source>Delete selection</source>
         <translation>Xóa lựa chọn</translation>
+    </message>
+    <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undo</source>
@@ -23098,6 +23110,10 @@ Nếu phát lại bị giật, hãy thử cách khác.</translation>
     <message>
         <source>Delete</source>
         <translation>Xóa</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
