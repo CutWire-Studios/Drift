@@ -2747,10 +2747,6 @@
         <translation>Clipe de texto adicionado</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Legendas</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Clipe de legenda adicionado</translation>
     </message>

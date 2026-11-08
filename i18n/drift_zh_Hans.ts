@@ -2744,10 +2744,6 @@
         <translation>已添加文字片段</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>子标题</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>已添加字幕片段</translation>
     </message>
