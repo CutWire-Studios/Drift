@@ -1973,6 +1973,18 @@ void EditorStateTest::recoverySnapshotSkipsAnUnchangedProject()
     state.undo();
     state.projectFile()->flushRecoverySnapshot();
     QTRY_VERIFY(QFileInfo::exists(recovery));
+
+    // A snapshot that did not reach the file is not taken as current: with a directory in the
+    // way the promote fails, and once it is gone the same unchanged project is written.
+    QVERIFY(QFile::remove(recovery));
+    state.addBookmark(3.0, QStringLiteral("Blocked"));
+    QVERIFY(QDir().mkpath(recovery));
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(!QFileInfo::exists(recovery + QStringLiteral(".tmp")));
+    QVERIFY(QFileInfo(recovery).isDir());
+    QVERIFY(QDir(recovery).removeRecursively());
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo(recovery).isFile());
 }
 
 void EditorStateTest::legacyPlainRecoveryFileStillRestores()

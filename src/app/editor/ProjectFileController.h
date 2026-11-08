@@ -309,6 +309,8 @@ private:
     // project and every history state each interval kept a core busy while Drift sat idle.
     quint64 m_recoveryRevision = std::numeric_limits<quint64>::max();
     bool recoveryUpToDate() const { return m_recoveryRevision == m_dirtyRevision; }
+    // From dispatching a background snapshot until its continuation has run on this thread.
+    bool m_recoveryPromotePending = false;
     // The Save / Save As write running on a worker. Further saves wait here, in order, and each
     // captures the document when it starts.
     struct QueuedSave

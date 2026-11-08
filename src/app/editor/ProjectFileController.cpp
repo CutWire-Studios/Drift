@@ -1979,8 +1979,18 @@ QString writeRecoveryTemp(const drift::Project &project, QJsonObject session,
     QFile file(tmpPath);
     if (!file.open(QIODevice::WriteOnly))
         return {};
-    file.write(packed);
+    // A short write or a failed flush (a full disk) is a failed snapshot: a truncated file would
+    // be promoted and recorded as current, and the next snapshot skipped.
+    if (file.write(packed) != packed.size() || !file.flush()) {
+        file.close();
+        QFile::remove(tmpPath);
+        return {};
+    }
     file.close();
+    if (file.error() != QFileDevice::NoError) {
+        QFile::remove(tmpPath);
+        return {};
+    }
     return tmpPath;
 }
 
@@ -2033,7 +2043,9 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
     // Serializing a large project took tens of milliseconds on the GUI thread every 15 seconds,
     // playing or not. The snapshot playback already keeps is reused when it is current, so the
     // only GUI-thread cost left is the session fields above.
-    if (m_recoveryWrite.isRunning())
+    // Also while a finished write's continuation is still queued: both use the same temp path,
+    // so a new write would race its promote or its stale-generation cleanup.
+    if (m_recoveryWrite.isRunning() || m_recoveryPromotePending)
         return;
     std::shared_ptr<const drift::Project> snapshot = m_app->m_playback.projectSnapshot(&m_app->m_project);
     if (!snapshot)
@@ -2041,10 +2053,12 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
     const drift::HistoryCapture history = drift::captureHistory(m_app->m_undoStack);
     const quint64 generation = m_recoveryGeneration;
     const quint64 revision = m_dirtyRevision;
+    m_recoveryPromotePending = true;
     m_recoveryWrite = QtConcurrent::run([snapshot, session, history, meta, path] {
         return writeRecoveryTemp(*snapshot, session, history, meta, path);
     });
     m_recoveryWrite.then(this, [this, generation, revision, path](const QString &tmpPath) {
+        m_recoveryPromotePending = false;
         // The file was deleted (a save, a new project) while this was being written.
         if (generation != m_recoveryGeneration) {
             if (!tmpPath.isEmpty())
