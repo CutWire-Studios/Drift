@@ -2699,10 +2699,6 @@
         <translation>Naidagdag ang text clip</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Mga Subtitle</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Naidagdag ang subtitle clip</translation>
     </message>

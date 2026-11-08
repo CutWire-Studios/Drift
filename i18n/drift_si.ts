@@ -2747,10 +2747,6 @@
         <translation>පෙළ ක්ලිපය එක් කරන ලදී</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>උපසිරැසි</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>උපසිරැසි ක්ලිපය එක් කරන ලදී</translation>
     </message>

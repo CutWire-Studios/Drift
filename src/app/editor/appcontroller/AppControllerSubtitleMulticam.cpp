@@ -99,7 +99,8 @@ void AppController::addSubtitleClip(double atSeconds)
     drift::Clip clip;
     clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     clip.type = drift::ClipType::Subtitle;
-    clip.name = tr("Subtitles");
+    // The same string the generated-name check knows, so later cue edits recount it.
+    clip.name = drift::subtitleClipName({});
     clip.timelineStart = start;
     clip.timelineDuration = drift::kSubtitleClipDurationUs;
     clip.srcIn = 0;
@@ -215,7 +216,7 @@ bool AppController::importSubtitleFileIntoClip(int trackIndex, int clipIndex, co
     const drift::TimeUs duration = subtitleClipDurationForCues(cues);
     const drift::Project before = m_project;
     clip.subtitleCues = cues;
-    clip.name = drift::subtitleClipName(cues);
+    drift::refreshSubtitleClipName(clip.name, cues);
     if (duration > clip.timelineDuration) {
         clip.timelineDuration = duration;
         clip.srcOut = duration;
@@ -966,7 +967,17 @@ void AppController::applyMulticamSlicesToProject(drift::Project &project, bool c
         if (index < 0)
             return;
         track.clips.removeAt(index);
-        for (const drift::Clip &slice : slices) {
+        // Slices arrive in timeline order. The first slice of each clip keeps its name; the
+        // later ones are numbered like split pieces ("Cam A (2)", "Cam A (3)", ...), so they
+        // can be told apart. Linked audio slices are numbered the same way on their own track.
+        // Keyed by source as well: two angles that happen to share a name are not pieces of one clip.
+        QSet<QString> named;
+        for (drift::Clip slice : slices) {
+            const QString key = slice.name + QLatin1Char('\n') + slice.path;
+            if (!slice.name.isEmpty() && named.contains(key))
+                slice.name = drift::nextSplitPieceName(track, slice.name);
+            else
+                named.insert(key);
             const int at = sortedInsertIndex(track, slice.timelineStart);
             track.clips.insert(at, slice);
         }

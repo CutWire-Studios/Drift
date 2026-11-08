@@ -2748,10 +2748,6 @@
         <translation>Clip de texte ajouté</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Sous-titres</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Clip de sous‑titres ajouté</translation>
     </message>

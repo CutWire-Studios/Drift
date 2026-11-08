@@ -2696,10 +2696,6 @@
         <translation>テキストクリップを追加しました</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>字幕</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>字幕クリップを追加しました</translation>
     </message>

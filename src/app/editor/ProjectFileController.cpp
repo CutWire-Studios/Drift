@@ -73,7 +73,7 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
     // starts fresh, or discards recovery.
     m_autosaveTimer = new QTimer(this);
     connect(m_autosaveTimer, &QTimer::timeout, this, [this] {
-        if (m_dirty)
+        if (m_dirty && !recoveryUpToDate())
             writeRecoveryFile();
     });
     m_autosaveTimer->start(kAutosaveIntervalMs);
@@ -84,7 +84,7 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
         // A save already writing is let finish; one still waiting its turn is dropped.
         m_queuedSaves.clear();
         m_saveWrite.waitForFinished();
-        if (m_dirty)
+        if (m_dirty && !recoveryUpToDate())
             writeRecoveryFile(true);
         else
             m_recoveryWrite.waitForFinished();
@@ -1952,7 +1952,7 @@ void ProjectFileController::flushRecoverySnapshot()
     // write, "reopen last project at startup" also silently never has a path to reopen.
     if (!m_isolatedSession)
         QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
-    if (m_dirty)
+    if (m_dirty && !recoveryUpToDate())
         writeRecoveryFile();
 }
 namespace {
@@ -1983,19 +1983,37 @@ QString writeRecoveryTemp(const drift::Project &project, QJsonObject session,
     QFile file(tmpPath);
     if (!file.open(QIODevice::WriteOnly))
         return {};
-    file.write(packed);
+    // A short write or a failed flush (a full disk) is a failed snapshot: a truncated file would
+    // be promoted and recorded as current, and the next snapshot skipped.
+    if (file.write(packed) != packed.size() || !file.flush()) {
+        file.close();
+        QFile::remove(tmpPath);
+        return {};
+    }
     file.close();
+    if (file.error() != QFileDevice::NoError) {
+        QFile::remove(tmpPath);
+        return {};
+    }
     return tmpPath;
 }
 
-void promoteRecoveryTemp(const QString &tmpPath, const QString &path)
+// True once `path` holds the new snapshot: callers record what it holds only then, so a failed
+// write is retried rather than taken as current.
+bool promoteRecoveryTemp(const QString &tmpPath, const QString &path)
 {
     // Never remove the current file for a temp that is not there to replace it.
     if (tmpPath.isEmpty() || !QFile::exists(tmpPath))
-        return;
-    if (QFile::exists(path))
-        QFile::remove(path);
-    QFile::rename(tmpPath, path);
+        return false;
+    if (QFile::exists(path) && !QFile::remove(path)) {
+        QFile::remove(tmpPath);
+        return false;
+    }
+    if (!QFile::rename(tmpPath, path)) {
+        QFile::remove(tmpPath);
+        return false;
+    }
+    return true;
 }
 
 } // namespace
@@ -2019,39 +2037,53 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
         // Waits on the worker only: its continuation needs this thread's event loop.
         m_recoveryWrite.waitForFinished();
         ++m_recoveryGeneration;
-        promoteRecoveryTemp(writeRecoveryTemp(m_app->m_project, session,
-                                              drift::captureHistory(m_app->m_undoStack), meta, path),
-                            path);
+        const QString tmpPath = writeRecoveryTemp(m_app->m_project, session,
+                                                  drift::captureHistory(m_app->m_undoStack), meta, path);
+        if (promoteRecoveryTemp(tmpPath, path))
+            m_recoveryRevision = m_dirtyRevision;
         return;
     }
 
     // Serializing a large project took tens of milliseconds on the GUI thread every 15 seconds,
     // playing or not. The snapshot playback already keeps is reused when it is current, so the
     // only GUI-thread cost left is the session fields above.
-    if (m_recoveryWrite.isRunning())
+    // Also while a finished write's continuation is still queued: both use the same temp path,
+    // so a new write would race its promote or its stale-generation cleanup.
+    if (m_recoveryWrite.isRunning() || m_recoveryPromotePending)
         return;
     std::shared_ptr<const drift::Project> snapshot = m_app->m_playback.projectSnapshot(&m_app->m_project);
     if (!snapshot)
         snapshot = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
     const drift::HistoryCapture history = drift::captureHistory(m_app->m_undoStack);
     const quint64 generation = m_recoveryGeneration;
-    m_recoveryWrite = QtConcurrent::run([snapshot, session, history, meta, path] {
-        return writeRecoveryTemp(*snapshot, session, history, meta, path);
+    const quint64 revision = m_dirtyRevision;
+    m_recoveryPromotePending = true;
+    m_recoveryWrite = QtConcurrent::run([snapshot, session, history, meta, path]() -> QString {
+        // An exception would skip the continuation below and leave the pending flag set, which
+        // would stop every later snapshot: report it as a failed write instead.
+        try {
+            return writeRecoveryTemp(*snapshot, session, history, meta, path);
+        } catch (...) {
+            return {};
+        }
     });
-    m_recoveryWrite.then(this, [this, generation, path](const QString &tmpPath) {
+    m_recoveryWrite.then(this, [this, generation, revision, path](const QString &tmpPath) {
+        m_recoveryPromotePending = false;
         // The file was deleted (a save, a new project) while this was being written.
         if (generation != m_recoveryGeneration) {
             if (!tmpPath.isEmpty())
                 QFile::remove(tmpPath);
             return;
         }
-        promoteRecoveryTemp(tmpPath, path);
+        if (promoteRecoveryTemp(tmpPath, path))
+            m_recoveryRevision = revision;
     });
 }
 
 void ProjectFileController::deleteRecoveryFile()
 {
     ++m_recoveryGeneration;
+    m_recoveryRevision = std::numeric_limits<quint64>::max();
     const QString path = recoveryFilePath();
     if (!m_isolatedSession && QFile::exists(path))
         QFile::remove(path);

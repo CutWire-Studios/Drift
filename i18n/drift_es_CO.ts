@@ -2747,10 +2747,6 @@
         <translation>Clip de texto añadido</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Subtítulos</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Clip de subtítulos añadido</translation>
     </message>

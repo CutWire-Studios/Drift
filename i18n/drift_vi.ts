@@ -2744,10 +2744,6 @@
         <translation>Đã thêm văn bản clip</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Phụ đề</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Đã thêm phụ đề clip</translation>
     </message>

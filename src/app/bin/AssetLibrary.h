@@ -118,6 +118,11 @@ public:
     // importFinished fires before the off-thread probe fills width/height/fps/duration, so
     // anything sizing a canvas or a clip from a new asset must wait on this.
     Q_INVOKABLE bool isImportPending(const QString &assetId) const;
+    // The token of the probe running for an asset (0 when none), and of the probe whose result is
+    // being delivered right now (0 outside that delivery): lets a caller tell its own probe's
+    // outcome from another probe of the same asset.
+    quint64 probeTokenFor(const QString &assetId) const { return m_probeToken.value(assetId); }
+    quint64 completingProbeToken() const { return m_completingProbeToken; }
     // Registers media the app rendered itself (freeze frames and the like). The asset is already
     // complete, so this skips the probe and thumbnail jobs the import path runs. Returns its id.
     QString addGeneratedAsset(drift::MediaAsset asset);
@@ -335,6 +340,7 @@ private:
     // which also runs for a mere model refresh (template import, collect media) with the asset
     // still there and its probe still the one to wait for.
     QHash<QString, quint64> m_probeToken;
+    quint64 m_completingProbeToken = 0;
     quint64 m_lastProbeToken = 0;
     QSet<QString> m_thumbPending;
     // Asset ids whose settings (rotation/trim) changed again while a thumbnail job for them was
