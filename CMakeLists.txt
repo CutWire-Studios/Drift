@@ -1300,6 +1300,8 @@ target_sources(driftapp PRIVATE
     src/app/mcp/protocol/McpSession.cpp
     src/app/platform/RunningInstances.h
     src/app/platform/RunningInstances.cpp
+    src/app/platform/ProcessMemory.h
+    src/app/platform/ProcessMemory.cpp
     src/app/mcp/tools/McpCatalog.h
     src/app/mcp/tools/McpCatalog.cpp
     src/app/mcp/tools/McpDispatcher.h

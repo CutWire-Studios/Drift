@@ -225,6 +225,7 @@ private slots:
     void selectionBasedOpsExcludePlayheadOps();
     void inspectReportsSelectionAndUndo();
     void listHistoryLabelsApplyBatch();
+    void memoryStatsAndClearCache();
     void listHistoryReflectsTheHistoryLimit();
     void historyOpsSeeTheTrimmedStack();
     void undoToRestoresSnapshot();
@@ -376,9 +377,9 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
     // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 22800);
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 23000);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 11400);
+                .toJson(QJsonDocument::Compact).size() < 11500);
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});
@@ -4290,6 +4291,58 @@ void McpTest::inspectReportsSelectionAndUndo()
 
     QVERIFY(dispatcher.applyOne(QStringLiteral("clear_selection"), {}).value(QStringLiteral("ok")).toBool());
     QVERIFY(!dispatcher.inspect({}).contains(QStringLiteral("selection")));
+}
+
+void McpTest::memoryStatsAndClearCache()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString source = dir.filePath(QStringLiteral("video.mp4"));
+    QVERIFY(writeVideoToneGapTone(source));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString clip = importAndPlace(dispatcher, source, 0.0);
+    QVERIFY(!clip.isEmpty());
+    // Reading frames opens a decoder and fills its cache.
+    const QJsonObject read = dispatcher.frames({{QStringLiteral("clip"), clip}, {QStringLiteral("n"), 4}});
+    if (read.value(QStringLiteral("isError")).toBool())
+        QSKIP("Compositor could not produce a frame in this environment");
+
+    const QJsonObject stats = dispatcher.applyOne(QStringLiteral("memory_stats"), {});
+    QVERIFY2(stats.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(stats).toJson()));
+#if defined(Q_OS_LINUX)
+    const QJsonObject process = stats.value(QStringLiteral("process")).toObject();
+    QVERIFY(process.value(QStringLiteral("rss_bytes")).toDouble() > 0);
+    QVERIFY(process.value(QStringLiteral("peak_rss_bytes")).toDouble()
+            >= process.value(QStringLiteral("rss_bytes")).toDouble());
+#endif
+    const QJsonObject cache = stats.value(QStringLiteral("frame_cache")).toObject();
+    QVERIFY(cache.value(QStringLiteral("budget_bytes")).toDouble() > 0);
+    QVERIFY(cache.value(QStringLiteral("frames")).toInt() > 0);
+    QVERIFY(cache.value(QStringLiteral("bytes")).toDouble() > 0);
+    const QJsonObject decoders = stats.value(QStringLiteral("decoders")).toObject();
+    QVERIFY(decoders.value(QStringLiteral("readers")).toInt() > 0);
+    QVERIFY(decoders.value(QStringLiteral("video_workers")).toInt() > 0);
+    QVERIFY(stats.value(QStringLiteral("undo_history")).toObject().contains(QStringLiteral("steps")));
+
+    // Nothing is mid-decode now, so every decoder closes and its frames go with it.
+    const QJsonObject cleared = dispatcher.applyOne(QStringLiteral("clear_cache"), {});
+    QVERIFY2(cleared.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(cleared).toJson()));
+    const QJsonObject after = cleared.value(QStringLiteral("after")).toObject();
+    QCOMPARE(after.value(QStringLiteral("decoders")).toObject().value(QStringLiteral("video_workers")).toInt(), 0);
+    QCOMPARE(after.value(QStringLiteral("decoders")).toObject().value(QStringLiteral("readers")).toInt(), 0);
+    QCOMPARE(after.value(QStringLiteral("frame_cache")).toObject().value(QStringLiteral("frames")).toInt(), 0);
+    QCOMPARE(after.value(QStringLiteral("frame_cache")).toObject().value(QStringLiteral("bytes")).toDouble(), 0.0);
+    QVERIFY(cleared.value(QStringLiteral("before")).toObject().value(QStringLiteral("frame_cache")).toObject()
+                .value(QStringLiteral("frames")).toInt() > 0);
+
+    // And the clip still renders afterwards.
+    QVERIFY(!dispatcher.frames({{QStringLiteral("clip"), clip}, {QStringLiteral("n"), 2}})
+                 .value(QStringLiteral("isError")).toBool());
 }
 
 void McpTest::listHistoryLabelsApplyBatch()
