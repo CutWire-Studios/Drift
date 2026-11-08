@@ -35,6 +35,7 @@
 
 #include "app/mcp/tools/McpCatalog.h"
 #include "app/mcp/tools/McpDispatcher.h"
+#include "app/mcp/transport/McpServer.h"
 #include "app/mcp/protocol/McpJson.h"
 #include "app/mcp/protocol/McpProtocol.h"
 #include "app/mcp/protocol/McpSession.h"
@@ -85,6 +86,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
     void replaceAssetWaitsForTheReprobe();
     void toolboxAnnotationsPresent();
@@ -426,6 +428,83 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// capture({time: 3}) (the key is `at`) used to capture at the playhead without a word: the
+// homepage tools skipped validation. They now check their schema and refuse unknown keys.
+void McpTest::homepageToolsRejectUnknownArgs()
+{
+    QJsonObject args{{QStringLiteral("time"), 3.0}};
+    QJsonObject error = drift::mcp::checkHomepageArgs(QStringLiteral("capture"), args);
+    QCOMPARE(error.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    const QString detail = error.value(QStringLiteral("detail")).toString();
+    QVERIFY2(detail.contains(QStringLiteral("time")) && detail.contains(QStringLiteral("at")), qPrintable(detail));
+
+    // Wrong types are refused too, and good args pass untouched.
+    args = {{QStringLiteral("at"), QStringLiteral("soon")}};
+    QVERIFY(!drift::mcp::checkHomepageArgs(QStringLiteral("capture"), args).isEmpty());
+    args = {{QStringLiteral("at"), 1.5}, {QStringLiteral("full"), true}};
+    QVERIFY(drift::mcp::checkHomepageArgs(QStringLiteral("capture"), args).isEmpty());
+    // Each tool with otherwise valid args: only the unknown key can be what's refused.
+    const QList<QPair<QString, QJsonObject>> valid{
+        {QStringLiteral("inspect"), {}},
+        {QStringLiteral("frames"), {}},
+        {QStringLiteral("activity"), {}},
+        {QStringLiteral("catalog"), {}},
+        {QStringLiteral("toolbox"), {{QStringLiteral("name"), QStringLiteral("effects")}}},
+        {QStringLiteral("search"), {{QStringLiteral("q"), QStringLiteral("crop")}}},
+    };
+    for (const auto &[tool, base] : valid) {
+        QJsonObject good = base;
+        QVERIFY2(drift::mcp::checkHomepageArgs(tool, good).isEmpty(), qPrintable(tool));
+        QJsonObject bogus = base;
+        bogus.insert(QStringLiteral("not_an_arg"), 1);
+        const QJsonObject refused = drift::mcp::checkHomepageArgs(tool, bogus);
+        QCOMPARE(refused.value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+        QVERIFY2(refused.value(QStringLiteral("detail")).toString().contains(QStringLiteral("not_an_arg")),
+                 qPrintable(tool + QStringLiteral(": ") + QJsonDocument(refused).toJson(QJsonDocument::Compact)));
+    }
+
+    // apply: its own unknown key is refused, a key nested in an op item is not.
+    QJsonObject applyArgs{{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("undo")}}}},
+                          {QStringLiteral("atomic"), true}};
+    QCOMPARE(drift::mcp::checkHomepageArgs(QStringLiteral("apply"), applyArgs).value(QStringLiteral("error")).toString(),
+             QStringLiteral("bad_args"));
+    applyArgs = {{QStringLiteral("ops"), QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("undo")},
+                                                                {QStringLiteral("note"), QStringLiteral("x")}}}}};
+    QVERIFY(drift::mcp::checkHomepageArgs(QStringLiteral("apply"), applyArgs).isEmpty());
+
+    // Through the real server path: the refusal is an error result, and an apply batch whose
+    // toolbox op carries an unknown key still runs and reports it as ignored.
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    const QString id = state.mcp()->compactClip(state.selectedTrack(), state.selectedClip()).value(QStringLiteral("id")).toString();
+    drift::mcp::McpServer server(&state);
+    const auto call = [&](const QString &tool, const QJsonObject &arguments) {
+        const QJsonObject request{{QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
+                                  {QStringLiteral("id"), 1},
+                                  {QStringLiteral("method"), QStringLiteral("tools/call")},
+                                  {QStringLiteral("params"), QJsonObject{{QStringLiteral("name"), tool},
+                                                                         {QStringLiteral("arguments"), arguments}}}};
+        return server.handleRpc(QString(), request).toObject().value(QStringLiteral("result")).toObject();
+    };
+    const auto textOf = [](const QJsonObject &result) {
+        return QJsonDocument::fromJson(result.value(QStringLiteral("content")).toArray().first().toObject()
+                                           .value(QStringLiteral("text")).toString().toUtf8()).object();
+    };
+    const QJsonObject captured = call(QStringLiteral("capture"), {{QStringLiteral("time"), 3.0}});
+    QVERIFY(captured.value(QStringLiteral("isError")).toBool());
+    QCOMPARE(textOf(captured).value(QStringLiteral("error")).toString(), QStringLiteral("bad_args"));
+    const QJsonObject batch = call(QStringLiteral("apply"),
+                                   {{QStringLiteral("ops"),
+                                     QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_clip_name")},
+                                                            {QStringLiteral("args"), QJsonObject{{QStringLiteral("clip"), id},
+                                                                                                 {QStringLiteral("name"), QStringLiteral("Renamed")},
+                                                                                                 {QStringLiteral("bogus"), 1}}}}}}});
+    QVERIFY2(!batch.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(batch).toJson()));
+    const QJsonObject done = textOf(batch).value(QStringLiteral("done")).toArray().first().toObject().value(QStringLiteral("result")).toObject();
+    QCOMPARE(done.value(QStringLiteral("ignored")).toArray(), QJsonArray{QStringLiteral("bogus")});
 }
 
 // set_effect_enabled bypasses exactly one effect, picked by stack position or catalog id, and the
