@@ -2779,10 +2779,6 @@
         <translation>تمت إضافة مقطع النص</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>الترجمة</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>تمت إضافة مقطع الترجمة</translation>
     </message>

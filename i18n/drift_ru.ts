@@ -2750,10 +2750,6 @@
         <translation>Текстовый клип добавлен</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Субтитры</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Клип субтитров добавлен</translation>
     </message>

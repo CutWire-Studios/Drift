@@ -2750,10 +2750,6 @@
         <translation>Dodano klip tekstowy</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>Napisy</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>Dodano klip napisów</translation>
     </message>
