@@ -191,6 +191,7 @@ private slots:
     void packagedProjectCarriesDerivedArtifacts();
     void undoBookmarkAdd();
     void undoHistorySurvivesSaveAndLoad();
+    void recoverySnapshotSkipsAnUnchangedProject();
     void savedBundleKeepsHistoryAndShrinksIt();
     void editDuringSaveKeepsProjectModified();
     void overlappingSavesRunInOrder();
@@ -1940,6 +1941,54 @@ void EditorStateTest::recoveryFileIsCompressedAndRestores()
     QCOMPARE(reopened.m_undoStack.count(), 20);
     QCOMPARE(reopened.undoIndex(), 19);
     QVERIFY(reopened.redoAvailable());
+}
+
+// An idle session with unsaved work used to rewrite the whole project and every history state
+// into the recovery file on every autosave tick, keeping a core busy with nothing changing.
+void EditorStateTest::recoverySnapshotSkipsAnUnchangedProject()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QFile::remove(recovery);
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addBookmark(1.0, QStringLiteral("Unsaved"));
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+
+    // Nothing changed since: no rewrite. (The file is removed behind its back to see that.)
+    QVERIFY(QFile::remove(recovery));
+    state.projectFile()->flushRecoverySnapshot();
+    QTest::qWait(200);
+    QVERIFY(!QFileInfo::exists(recovery));
+
+    // An edit, or an undo, is a change again.
+    state.addBookmark(2.0, QStringLiteral("Another"));
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+    QVERIFY(QFile::remove(recovery));
+    state.undo();
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+
+    // A snapshot that did not reach the file is not taken as current: with a directory in the
+    // way the promote fails, and once it is gone the same unchanged project is written.
+    QVERIFY(QFile::remove(recovery));
+    state.addBookmark(3.0, QStringLiteral("Blocked"));
+    QVERIFY(QDir().mkpath(recovery));
+    state.projectFile()->flushRecoverySnapshot();
+    // Until the blocked attempt has run its promote: the directory goes only after it failed.
+    QTRY_VERIFY(!state.projectFile()->m_recoveryPromotePending);
+    QVERIFY(!QFileInfo::exists(recovery + QStringLiteral(".tmp")));
+    QVERIFY(QFileInfo(recovery).isDir());
+    QVERIFY(QDir(recovery).removeRecursively());
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo(recovery).isFile());
 }
 
 void EditorStateTest::legacyPlainRecoveryFileStillRestores()
