@@ -35,6 +35,10 @@
 #include "engine/audio/analysis/LoudnessMeter.h"
 #include "engine/media/waveforms/MediaWaveform.h"
 #include "engine/ml/runtime/OrtRuntime.h"
+#include "engine/EngineTuning.h"
+#include "engine/decode/readers/ClipReader.h"
+#include "engine/decode/readers/ClipReaderPool.h"
+#include "app/platform/ProcessMemory.h"
 #include "engine/ml/vision/segmentation/RvmMatter.h"
 #include "engine/ml/vision/segmentation/Sam2Segmenter.h"
 #include "engine/ml/speech/transcription/SileroVad.h"
@@ -1754,6 +1758,61 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     return ok({{QStringLiteral("index"), m_app->m_undoStack.index()},
                {QStringLiteral("hash"), at},
                {QStringLiteral("short"), shortHash(at)}});
+}
+
+namespace {
+
+QJsonObject frameCacheJson()
+{
+    const ClipReader::CacheStats cache = ClipReader::cacheStats();
+    return {{QStringLiteral("bytes"), double(cache.bytes)},
+            {QStringLiteral("frames"), cache.frames},
+            {QStringLiteral("gpu_frames"), cache.gpuFrames},
+            {QStringLiteral("budget_bytes"), double(cache.budgetBytes)},
+            // Settings › Performance › Decoded frame cache; 0 = automatic (an eighth of RAM).
+            {QStringLiteral("setting_mib"), drift::tuning::frameCacheMiB.load(std::memory_order_relaxed)}};
+}
+
+QJsonObject decodersJson()
+{
+    const ClipReaderPool::Stats pool = ClipReaderPool::instance().stats();
+    // Readers are what hold files, demuxers and decoders open; a worker thread can run several.
+    return {{QStringLiteral("readers"), ClipReader::openReaderCount()},
+            {QStringLiteral("video_workers"), pool.videoWorkers},
+            {QStringLiteral("audio_workers"), pool.audioWorkers}};
+}
+
+} // namespace
+
+QJsonObject McpController::memoryStats() const
+{
+    using namespace drift::mcp;
+    const drift::platform::ProcessMemory process = drift::platform::processMemory();
+    return ok({
+        {QStringLiteral("process"),
+         QJsonObject{{QStringLiteral("rss_bytes"), double(process.residentBytes)},
+                     {QStringLiteral("peak_rss_bytes"), double(process.peakResidentBytes)}}},
+        {QStringLiteral("frame_cache"), frameCacheJson()},
+        {QStringLiteral("decoders"), decodersJson()},
+        // Each step holds full project snapshots; the step count is the lever.
+        {QStringLiteral("undo_history"),
+         QJsonObject{{QStringLiteral("steps"), m_app->m_undoStack.count()},
+                     {QStringLiteral("undoable"), m_app->m_undoStack.index()}}},
+    });
+}
+
+QJsonObject McpController::clearCache()
+{
+    using namespace drift::mcp;
+    const QJsonObject before{{QStringLiteral("frame_cache"), frameCacheJson()},
+                             {QStringLiteral("decoders"), decodersJson()}};
+    // Closes every decoder not mid-decode, and with it the frames it cached; the next frame
+    // reopens what it needs. The project and undo history are untouched.
+    ClipReaderPool::instance().releaseAll();
+    return ok({{QStringLiteral("before"), before},
+               {QStringLiteral("after"),
+                QJsonObject{{QStringLiteral("frame_cache"), frameCacheJson()},
+                            {QStringLiteral("decoders"), decodersJson()}}}});
 }
 
 QJsonObject McpController::takeSnapshot(const QString &label)

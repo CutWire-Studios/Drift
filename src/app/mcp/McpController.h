@@ -188,6 +188,9 @@ public:
     QJsonObject listHistory(int limit = 20) const;
     QJsonObject undoTo(int index, const QString &hash);
     QJsonObject takeSnapshot(const QString &label);
+    // jmn8718/Drift#32: where the memory goes, and dropping what can be rebuilt.
+    QJsonObject memoryStats() const;
+    QJsonObject clearCache();
     QJsonObject listSnapshots() const;
     QJsonObject restoreSnapshot(const QString &hash);
 
