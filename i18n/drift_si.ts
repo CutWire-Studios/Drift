@@ -1569,6 +1569,14 @@
         <translation>මෙම විලාසය වෙනත් ක්ලිප් මත නැවත භාවිත කරන්න</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>කප්පාදු කිරීම සහ කාලය</translation>
     </message>
@@ -2519,6 +2527,10 @@
         <translation>තෝරාගැනීම මකන්න</translation>
     </message>
     <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Undo</source>
         <translation>අහෝසි කරන්න</translation>
     </message>
@@ -2745,10 +2757,6 @@
     <message>
         <source>Text clip added</source>
         <translation>පෙළ ක්ලිපය එක් කරන ලදී</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>උපසිරැසි</translation>
     </message>
     <message>
         <source>Subtitle clip added</source>
@@ -4212,6 +4220,14 @@
     <message>
         <source>Effect removed</source>
         <translation>ප්‍රයෝගය ඉවත් කරන ලදී</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -13430,8 +13446,8 @@
         <translation>එම ගොනුව කියවිය නොහැකි විය — එම ආකෘතියට මෙම අනුවාදය සහය නොදක්වයි.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>ක්ලිප් %nක් සෙමින් ධාවනය විය හැක. ප්‍රොක්සි මඟින් පෙරදසුන වඩාත් සුමට කරයි; නිර්යාත කිරීමේදී තවමත් මුල් ගොනුව භාවිත වේ.</numerusform>
             <numerusform>ක්ලිප් %nක් සෙමින් ධාවනය විය හැක. ප්‍රොක්සි මඟින් පෙරදසුන වඩාත් සුමට කරයි; නිර්යාත කිරීමේදී තවමත් මුල් ගොනුව භාවිත වේ.</numerusform>
         </translation>
@@ -17744,6 +17760,50 @@ If playback stutters, try another.</source>
         <translation>සෑම මිනිත්තු 5කට වරක්</translation>
     </message>
     <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">සීමා රහිත</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation>අමතර අංග</translation>
     </message>
@@ -18305,6 +18365,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>පවතින විට අඩු විභේදනයක් සහිත ප්‍රොක්සිවලින් ක්ලිප් ධාවනය කරන්න. නිර්යාත කිරීමේදී සැමවිටම මුල් මාධ්‍ය භාවිත වේ.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -23195,6 +23275,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>මකන්න</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

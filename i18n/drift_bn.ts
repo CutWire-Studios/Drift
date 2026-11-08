@@ -1569,6 +1569,14 @@
         <translation>অন্যান্য ক্লিপগুলিতে এই চেহারাটি পুনরায় ব্যবহার করুন।</translation>
     </message>
     <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the clip and its effects together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Trim &amp; timing</source>
         <translation>ট্রিম ও সময় নির্ধারণ</translation>
     </message>
@@ -2519,6 +2527,10 @@
         <translation>নির্বাচিত অংশ মুছুন</translation>
     </message>
     <message>
+        <source>Delete selection with its effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Undo</source>
         <translation>পূর্বাবস্থায় ফেরান</translation>
     </message>
@@ -2745,10 +2757,6 @@
     <message>
         <source>Text clip added</source>
         <translation>টেক্সট ক্লিপ যোগ করা হয়েছে।</translation>
-    </message>
-    <message>
-        <source>Subtitles</source>
-        <translation>সাবটাইটেল</translation>
     </message>
     <message>
         <source>Subtitle clip added</source>
@@ -4212,6 +4220,14 @@
     <message>
         <source>Effect removed</source>
         <translation>ইফেক্ট সরানো হয়েছে</translation>
+    </message>
+    <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Enable effect</source>
@@ -13430,8 +13446,8 @@
         <translation>ফাইলটি পড়া যায়নি — এই বিল্ড দ্বারা বিন্যাসটি সমর্থিত নয়.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>%nটি ক্লিপ ধীরে চলতে পারে। প্রক্সি ব্যবহার করলে প্রিভিউ মসৃণ হয়; এক্সপোর্টে মূল ফাইলই ব্যবহৃত হয়.</numerusform>
             <numerusform>%nটি ক্লিপ ধীরে চলতে পারে। প্রক্সি ব্যবহার করলে প্রিভিউ মসৃণ হয়; এক্সপোর্টে মূল ফাইলই ব্যবহৃত হয়.</numerusform>
         </translation>
@@ -17744,6 +17760,50 @@ If playback stutters, try another.</source>
         <translation>প্রতি ৫ মিনিট পর পর</translation>
     </message>
     <message>
+        <source>Undo history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where undo steps are kept. Saved with the project, they come back when you reopen it; long sessions use a lot of memory either way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved with the project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo steps kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Older steps are dropped, and media only they used is no longer kept for them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlimited</source>
+        <translation type="unfinished">আনলিমিটেড</translation>
+    </message>
+    <message>
+        <source>500 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>200 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>100 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>50 steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Extras</source>
         <translation>অতিরিক্ত প্যাক</translation>
     </message>
@@ -18305,6 +18365,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>তাদের কম-রেজোলিউশনের প্রক্সি থেকে ক্লিপ চালান যেখানে একটি বিদ্যমান। এক্সপোর্ট সবসময় মূল মিডিয়া ব্যবহার করে.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
@@ -23195,6 +23275,10 @@ If playback stutters, try another.</source>
     <message>
         <source>Delete</source>
         <translation>মুছুন</translation>
+    </message>
+    <message>
+        <source>Delete with effects</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

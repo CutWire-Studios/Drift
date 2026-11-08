@@ -56,6 +56,14 @@ class PreferencesController : public QObject
     // (warnings and errors, the default) or "none" (errors only -- an error is never hidden).
     // Applies to what a call raises while it runs; a result landing later (an export) still shows.
     Q_PROPERTY(QString agentNotifications READ agentNotifications WRITE setAgentNotifications NOTIFY agentNotificationsChanged)
+    // What an import does with footage that would preview slowly: "ask" (offer proxies in a
+    // notification, the default), "always" (create them straight away) or "never".
+    Q_PROPERTY(QString proxySuggestion READ proxySuggestion WRITE setProxySuggestion NOTIFY proxySuggestionChanged)
+    // Undo history: "project" (saved into the project file, the default), "session" (kept until
+    // the project closes, never saved) or "off" (no undo steps at all).
+    Q_PROPERTY(QString undoHistoryMode READ undoHistoryMode WRITE setUndoHistoryMode NOTIFY undoHistoryModeChanged)
+    // Most undo steps kept; older ones are dropped, with the media only they referenced. 0 = no limit.
+    Q_PROPERTY(int undoHistoryLimit READ undoHistoryLimit WRITE setUndoHistoryLimit NOTIFY undoHistoryLimitChanged)
     // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
     // after restart; hidden when this machine has no decode backend for either.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
@@ -186,6 +194,14 @@ public:
     QString agentNotifications() const { return m_agentNotifications; }
     void setAgentNotifications(const QString &level);
     static QStringList agentNotificationLevels();
+    QString proxySuggestion() const { return m_proxySuggestion; }
+    void setProxySuggestion(const QString &mode);
+    static QStringList proxySuggestionModes();
+    QString undoHistoryMode() const { return m_undoHistoryMode; }
+    void setUndoHistoryMode(const QString &mode);
+    static QStringList undoHistoryModes();
+    int undoHistoryLimit() const { return m_undoHistoryLimit; }
+    void setUndoHistoryLimit(int steps);
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
     void setVaapiZeroCopy(bool enabled);
     bool vaapiZeroCopySupported() const;
@@ -312,6 +328,9 @@ signals:
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
     void agentNotificationsChanged();
+    void proxySuggestionChanged();
+    void undoHistoryModeChanged();
+    void undoHistoryLimitChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
     void preferredGpuChanged();
@@ -349,6 +368,9 @@ private:
     QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
     QString m_agentNotifications = QStringLiteral("problems");
+    QString m_proxySuggestion = QStringLiteral("ask");
+    QString m_undoHistoryMode = QStringLiteral("project");
+    int m_undoHistoryLimit = 0;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
     QString m_preferredGpu = QStringLiteral("auto");

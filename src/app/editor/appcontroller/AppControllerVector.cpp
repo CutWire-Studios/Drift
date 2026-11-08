@@ -1275,9 +1275,13 @@ bool AppController::setTransitionParam(int trackIndex, const QString &transition
     if (!def || !declaresParam(def->meta, key))
         return false;
 
+    const QVariant coerced = coerceTransitionParam(def, key, value);
+    // Already set: succeed without an edit, so a batch repeating it leaves no empty undo step.
+    if (transition->parameters.value(key) == coerced)
+        return true;
+
     const drift::Project before = m_project;
-    transition->parameters.insert(
-        key, coerceTransitionParam(transitionDefForId(transition->kindId), key, value));
+    transition->parameters.insert(key, coerced);
     pushProjectEdit(before, tr("Edit transition"));
     finishEdit(tr("Transition updated"));
     emit selectedTransitionDataChanged();

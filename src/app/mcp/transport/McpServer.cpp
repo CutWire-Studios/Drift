@@ -268,7 +268,7 @@ QJsonValue McpServer::handleRpc(const QString &toolbox, const QJsonValue &body)
     });
 }
 
-QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &args)
+QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &argsIn)
 {
     // Notifications raised while the agent's call runs are filtered by the agentNotifications
     // preference (AppController::setLastMessage).
@@ -279,6 +279,10 @@ QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &args
         if (mcp)
             mcp->endAgentCall();
     });
+    // Homepage tools are checked against their own schemas and refuse unknown keys.
+    QJsonObject args = argsIn;
+    if (const QJsonObject invalid = checkHomepageArgs(name, args); !invalid.isEmpty())
+        return textResult(invalid, true);
     if (name == QLatin1String("catalog"))
         return textResult(catalogPayload(args));
     if (name == QLatin1String("toolbox")) {

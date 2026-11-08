@@ -205,7 +205,9 @@ void AgentImageLog::recordResult(int callId, const QString &tool, const QJsonObj
 
     const QString path = meta.value(QStringLiteral("path")).toString();
     const bool returnedPath = args.value(QStringLiteral("return")).toString() == QLatin1String("path")
-                              || args.value(QStringLiteral("full")).toBool();
+                              || args.value(QStringLiteral("full")).toBool()
+                              || (tool == QLatin1String("capture")
+                                  && !args.value(QStringLiteral("path")).toString().trimmed().isEmpty());
     if (returnedPath && isImagePath(path) && QFileInfo::exists(path)) {
         Entry entry = base;
         entry.path = path;
