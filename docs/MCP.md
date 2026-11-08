@@ -792,6 +792,7 @@ local fake) without rebuilding.
 - **`set_subtitle_cues` replaces every cue.** Read `inspect({clips:true, cues:true})` (or a detail row's `subtitleCues`), merge, send.
 - **`set_effect_param`, `set_audio_effect_param` and `set_transition_param` fail `not_found`** on a key the effect does not declare or a stack index that is not there. They used to accept anything and store it silently; a batch that relied on that now stops at the bad op.
 - **`set_speed_curve` returns a new clip id.** The old UUID stops resolving. End the apply batch after it — an ops array cannot reference an id produced earlier in the same batch.
+- **`copy_effects` appends.** `copy_effects({from, to:[…]})` adds the source's whole stack after whatever each target already has; clear a target first (`remove_effect`) for a replacement. Audio effects only land on clips with audio; read `to[]` in the reply for what each target actually got.
 - **Keyframe property names are not the transform names**: `width`/`height`, not `w`/`h` (`set_transform` uses w/h, `set_keyframe` uses width/height). The 3D names `rotationX`, `rotationY`, `z`, `anchorX`, `anchorY`, `anchorZ` and `perspective` are the same in both.
 - **A clip's `z` does not change stacking.** Track order alone decides what draws on top, and rotated clips never intersect. A clip turned past 90° shows its mirror image; there is no back face.
 - **`remove_keyframe` deletes the *nearest* key** with no distance limit. Confirm the exact time with `list_keyframes`.
