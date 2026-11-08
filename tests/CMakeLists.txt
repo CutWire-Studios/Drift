@@ -232,6 +232,7 @@ qt_add_executable(tst_mcp
     tst_mcp.cpp
     ../src/app/mcp/protocol/McpSession.cpp
     ../src/app/platform/RunningInstances.cpp
+    ../src/app/platform/ProcessMemory.cpp
     ../src/app/mcp/tools/McpCatalog.cpp
     ../src/app/mcp/protocol/McpProtocol.cpp
     ../src/app/mcp/transport/McpHttp.cpp

@@ -796,7 +796,7 @@ local fake) without rebuilding.
 - **A clip's `z` does not change stacking.** Track order alone decides what draws on top, and rotated clips never intersect. A clip turned past 90° shows its mirror image; there is no back face.
 - **`remove_keyframe` deletes the *nearest* key** with no distance limit. Confirm the exact time with `list_keyframes`.
 - **`set_keyframe_interpolation` moves the playhead** to `at`, changing the default time of later ops in the same batch.
-- **Long sessions grow.** `memory_stats` shows the process size, the decoded-frame caches (up to an eighth of RAM by default, Settings › Performance), the open decoders and the undo step count. `clear_cache` closes idle decoders and drops their frames (the next frame reopens what it needs); undo history is freed separately.
+- **Long sessions grow.** `memory_stats` shows the process size, the decoded-frame caches (up to an eighth of RAM by default, Settings › Performance), the open decoders and the undo step count. `clear_cache` closes idle decoders and drops their frames (the next frame reopens what it needs). It does not touch undo history, which holds full project snapshots per step.
 - **`add_track` shifts every track index** — index 0 is the new track.
 - **`import_media_bytes` without `path`** writes to a temp dir that is deleted when the call returns, leaving a broken asset. Always pass `path`.
 - **`get_waveform` reads two different things.** With `clip` or `asset` it reads the *source file*, so clip speed, reverse and volume are not applied. Only the timeline form (`start` + `duration`, no clip or asset) is what you would actually hear.

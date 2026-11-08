@@ -782,7 +782,6 @@ void ClipReader::storeCachedPreview(drift::TimeUs ptsUs, const PreviewVideoFrame
 
     m_previewCache.prepend(CachedPreview{ptsUs, frame});
     trimPreviewCache();
-    syncCacheAccounting();
 }
 
 int ClipReader::previewCacheCapacity() const
@@ -857,6 +856,8 @@ void ClipReader::trimPreviewCache()
         }
         m_previewCache.removeAt(worst);
     }
+    // Every caller, the read-ahead change in prefetchNextPreviewVideoFrame included.
+    syncCacheAccounting();
 }
 
 bool ClipReader::wantsMorePreviewReadAhead() const

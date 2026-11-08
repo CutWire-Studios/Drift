@@ -927,7 +927,7 @@ const QList<Op> &ops()
         { "memory_stats", "project", "Where Drift's memory goes",
           "Returns {process:{rss_bytes, peak_rss_bytes} (-1 where the platform does not say), "
           "frame_cache:{bytes, frames, gpu_frames, budget_bytes, setting_mib} (decoded frames the "
-          "readers cache; bytes are CPU frames, GPU surfaces only counted; setting_mib 0 = automatic, "
+          "readers cache; GPU surfaces are counted in frames, not bytes; setting_mib 0 = automatic, "
           "an eighth of RAM), decoders:{video, audio} (open readers), undo_history:{steps, undoable} "
           "(each step holds full project snapshots)}.",
           objectSchema({}), true, false, true },
