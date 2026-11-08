@@ -802,7 +802,7 @@ local fake) without rebuilding.
 - **`bpm: 0` from `detect_beats` is not an error** — it means no trustworthy tempo, so `beats` is empty. The `onsets` are still valid; pass `unit:"onset"` anywhere a grid is accepted.
 - **Beat analysis dies on the next edit.** Read the whole grid out of `detect_beats` before mutating anything, or re-detect. `split_on_beats` and `snap_clips_to_beats` already snapshot it internally.
 - **`snap_clips_to_beats` may not land on the beat.** With overlap off, a clip is pushed to the next free gap. Read the `to` values back rather than assuming they equal the beat time.
-- **`split_on_beats` keeps your clip id for the *first* piece.** The other pieces are new UUIDs, returned in `clips` in timeline order.
+- **`split_on_beats` keeps your clip id for the *first* piece.** The other pieces are new UUIDs, returned in `clips` in timeline order. Every split names the new piece after the clip plus the next free number on its track (`Shot.mp4 (2)`, `Shot.mp4 (3)`, … left to right), so match pieces by id, not by name.
 - **There is no track volume.** `set_volume` is per clip; mute a whole lane with `set_track({muted:true})`.
 - **`generate_subtitles` makes a caption clip with fixed times.** Cut first, caption last. From a transcribed asset it is instant and word-exact.
 - **Word indices belong to the asset, not the clip.** `cut_words({words})` takes indices from `get_transcript` (any view) and they stay valid across cuts; a word the clip no longer plays is skipped.
