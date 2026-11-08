@@ -26148,7 +26148,7 @@ Se a reprodução engasgar, experimente outro.</translation>
     </message>
     <message>
         <source>Numpad 0</source>
-        <translation type="unfinished">Numpad 0</translation>
+        <translation>Teclado numérico 0</translation>
     </message>
     <message>
         <source>Lock camera to view: navigating while looking through the camera moves the camera</source>
