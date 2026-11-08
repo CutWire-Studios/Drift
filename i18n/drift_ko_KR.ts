@@ -2744,10 +2744,6 @@
         <translation>텍스트 클립이 추가됨</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>자막</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>자막 클립이 추가됨</translation>
     </message>

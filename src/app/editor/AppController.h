@@ -2205,6 +2205,9 @@ protected:
     mutable QString m_capturedPrimaryClipId;
     QStringList m_undoSelectionIds;
     QString m_undoPrimaryId;
+    // The selected transition, by its left clip's id (a transition lives on its left clip's
+    // track): undo/redo can insert or remove tracks and clips ahead of it, so indices don't survive.
+    QString m_undoTransitionLeftClipId;
     bool m_undoSelectionCaptured = false;
     int m_selectionRevision = 0;
     int m_timelineTrimCursorSide = 0;

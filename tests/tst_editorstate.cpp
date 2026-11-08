@@ -191,6 +191,7 @@ private slots:
     void packagedProjectCarriesDerivedArtifacts();
     void undoBookmarkAdd();
     void undoHistorySurvivesSaveAndLoad();
+    void recoverySnapshotSkipsAnUnchangedProject();
     void savedBundleKeepsHistoryAndShrinksIt();
     void editDuringSaveKeepsProjectModified();
     void overlappingSavesRunInOrder();
@@ -370,6 +371,7 @@ private slots:
     void multicamCancelIsIdentity();
     void multicamSaveSeparateWritesGappedClips();
     void multicamSaveCombinedFlattensOntoTopmost();
+    void multicamSlicesOfOneAngleGetDistinctNames();
     void multicamSessionEndsWithTheProject();
     void multicamSessionPublishesADecodedTilePerAngle();
     void multicamProviderServesTilesByAngleIdWithRevisionQuery();
@@ -377,6 +379,11 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
+    void splitPiecesGetDistinctNames();
+    void redoDoesNotLeaveTheSelectionOnANeighbour();
+    void undoRedoKeepsASelectedTransition();
+    void redoKeepsPinnedAdjustmentsOnTheirClips();
+    void redoAfterASpeedDragKeepsTheGradeOnTheClip();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
     void linkedAdjustmentFollowsItsClip();
     void deletingAClipUnlinksRatherThanStrandsItsAdjustment();
@@ -1938,6 +1945,54 @@ void EditorStateTest::recoveryFileIsCompressedAndRestores()
     QCOMPARE(reopened.m_undoStack.count(), 20);
     QCOMPARE(reopened.undoIndex(), 19);
     QVERIFY(reopened.redoAvailable());
+}
+
+// An idle session with unsaved work used to rewrite the whole project and every history state
+// into the recovery file on every autosave tick, keeping a core busy with nothing changing.
+void EditorStateTest::recoverySnapshotSkipsAnUnchangedProject()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QFile::remove(recovery);
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addBookmark(1.0, QStringLiteral("Unsaved"));
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+
+    // Nothing changed since: no rewrite. (The file is removed behind its back to see that.)
+    QVERIFY(QFile::remove(recovery));
+    state.projectFile()->flushRecoverySnapshot();
+    QTest::qWait(200);
+    QVERIFY(!QFileInfo::exists(recovery));
+
+    // An edit, or an undo, is a change again.
+    state.addBookmark(2.0, QStringLiteral("Another"));
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+    QVERIFY(QFile::remove(recovery));
+    state.undo();
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+
+    // A snapshot that did not reach the file is not taken as current: with a directory in the
+    // way the promote fails, and once it is gone the same unchanged project is written.
+    QVERIFY(QFile::remove(recovery));
+    state.addBookmark(3.0, QStringLiteral("Blocked"));
+    QVERIFY(QDir().mkpath(recovery));
+    state.projectFile()->flushRecoverySnapshot();
+    // Until the blocked attempt has run its promote: the directory goes only after it failed.
+    QTRY_VERIFY(!state.projectFile()->m_recoveryPromotePending);
+    QVERIFY(!QFileInfo::exists(recovery + QStringLiteral(".tmp")));
+    QVERIFY(QFileInfo(recovery).isDir());
+    QVERIFY(QDir(recovery).removeRecursively());
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo(recovery).isFile());
 }
 
 void EditorStateTest::legacyPlainRecoveryFileStillRestores()
@@ -9775,6 +9830,30 @@ void EditorStateTest::multicamSaveCombinedFlattensOntoTopmost()
     QCOMPARE(state.project()->tracks().at(2).clips.size(), 0);
 }
 
+void EditorStateTest::multicamSlicesOfOneAngleGetDistinctNames()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendStackedCameras(*state.project());
+    selectStackedCameras(state);
+    QVERIFY(state.beginMulticamSession());
+
+    // cam1 -> cam2 at 3s -> back to cam1 at 6s: cam1 is cut into two slices.
+    state.setPlayheadSeconds(3.0);
+    state.switchMulticamAngle(1);
+    state.setPlayheadSeconds(6.0);
+    state.switchMulticamAngle(0);
+    state.saveMulticamCombined();
+
+    const drift::Track &top = state.project()->tracks().at(0);
+    QCOMPARE(top.clips.size(), 3);
+    const QString first = top.clips.at(0).name;
+    QVERIFY(!first.isEmpty());
+    QCOMPARE(top.clips.at(2).path, top.clips.at(0).path);
+    QCOMPARE(top.clips.at(2).name, first + QStringLiteral(" (2)"));
+    QVERIFY(top.clips.at(1).name != first);
+}
+
 void EditorStateTest::multicamSessionEndsWithTheProject()
 {
     AssetLibrary library;
@@ -10893,6 +10972,164 @@ void EditorStateTest::splittingAGradedClipKeepsEffectsOnBothHalves()
     // And the clips themselves still report the stack, which is what the inspector and MCP read.
     QCOMPARE(state.clipAt(0, 1).value(QStringLiteral("effects")).toList().size(), 1);
     QCOMPARE(state.clipAt(0, 2).value(QStringLiteral("effects")).toList().size(), 1);
+}
+
+// Splitting used to give both halves the same name, so anything matching clips by name (an
+// agent, a script) could not tell them apart.
+void EditorStateTest::splitPiecesGetDistinctNames()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // "Shot 1" runs 2-6s
+
+    state.splitClipAt(0, 1, 4.0);
+    const QList<drift::Clip> &clips = state.project()->tracks().at(0).clips;
+    QCOMPARE(clips.size(), 3);
+    QCOMPARE(clips.at(1).name, QStringLiteral("Shot 1"));
+    QCOMPARE(clips.at(2).name, QStringLiteral("Shot 1 (2)"));
+
+    // Split the head again at the playhead: the new piece takes the next number.
+    state.setPlayheadSeconds(3.0);
+    state.splitAtPlayhead();
+    const QList<drift::Clip> &again = state.project()->tracks().at(0).clips;
+    QCOMPARE(again.size(), 4);
+    QCOMPARE(again.at(1).name, QStringLiteral("Shot 1"));
+    QCOMPARE(again.at(2).name, QStringLiteral("Shot 1 (3)"));
+    QCOMPARE(again.at(3).name, QStringLiteral("Shot 1 (2)"));
+
+    // Subtitle halves keep the names the split derives from their own cues.
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    const int subs = state.project()->tracks().size() - 1;
+    drift::Clip sub;
+    sub.id = QStringLiteral("subs");
+    sub.type = drift::ClipType::Subtitle;
+    sub.timelineDuration = drift::secondsToUs(5.0);
+    sub.srcOut = sub.timelineDuration;
+    for (int i = 0; i < 5; ++i)
+        sub.subtitleCues.append(drift::SubtitleCue{drift::secondsToUs(i), drift::secondsToUs(i + 0.9),
+                                                   QStringLiteral("cue %1").arg(i)});
+    sub.name = drift::subtitleClipName(sub.subtitleCues);
+    state.project()->tracks()[subs].clips.append(sub);
+    state.splitClipAt(subs, 0, 1.0); // one cue | four cues
+    const QList<drift::Clip> &halves = state.project()->tracks().at(subs).clips;
+    QCOMPARE(halves.size(), 2);
+    QCOMPARE(halves.at(0).name, drift::subtitleClipName(halves.at(0).subtitleCues));
+    QCOMPARE(halves.at(1).name, drift::subtitleClipName(halves.at(1).subtitleCues));
+    QVERIFY(halves.at(0).name != halves.at(1).name);
+}
+
+// Undo/redo carries the selection by clip id. When none of the selected clips exists after the
+// step, the old indices used to stay, pointing at whatever clip now sits there.
+void EditorStateTest::redoDoesNotLeaveTheSelectionOnANeighbour()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // clip-0, clip-1
+
+    state.selectClip(0, 0);
+    state.deleteSelectedClip();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-1"));
+
+    state.undo();
+    state.selectClip(0, 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, QStringLiteral("clip-0"));
+    state.redo();
+
+    // clip-0 is gone again; clip-1 now sits at index 0 and must not have inherited the selection.
+    QCOMPARE(state.selectedTrack(), -1);
+    QCOMPARE(state.selectedClip(), -1);
+    QCOMPARE(state.selectionCount(), 0);
+}
+
+// A selected transition is carried by track and clip id, so a track inserted or removed above it
+// by undo/redo doesn't drop it (normalizeSelection used to judge it by the old indices).
+void EditorStateTest::undoRedoKeepsASelectedTransition()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    state.addTransition(0, 0, QStringLiteral("crossfade"), 0.5);
+    QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
+
+    state.addTrack(QStringLiteral("video")); // prepends: the clips' track is now 1
+    state.selectTransition(1, 0);
+    QCOMPARE(state.selectedTransitionTrack(), 1);
+
+    state.undo(); // the added track goes; the clips' track is 0 again
+    QCOMPARE(state.selectedTransitionTrack(), 0);
+    QCOMPARE(state.selectedTransitionLeftClip(), 0);
+
+    state.redo();
+    QCOMPARE(state.selectedTransitionTrack(), 1);
+    QCOMPARE(state.selectedTransitionLeftClip(), 0);
+}
+
+// A pinned adjustment's span follows its clip, but the sync used to run after the undo snapshot
+// was taken: redoing a ripple delete restored the surviving clip's grade at its old position.
+void EditorStateTest::redoKeepsPinnedAdjustmentsOnTheirClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // clip-0 at 0-2s, clip-1 at 2-6s
+
+    state.selectClip(0, 0);
+    state.addEffect(0, 0, QStringLiteral("adjust.contrast"));
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+
+    const auto checkGradeFollowsClip1 = [&]() {
+        const drift::Clip *host = nullptr;
+        for (const drift::Clip &clip : state.project()->tracks().at(0).clips)
+            if (clip.id == QStringLiteral("clip-1"))
+                host = &clip;
+        QVERIFY(host);
+        const drift::Clip *grade =
+            adjustmentFor(*state.project(), host->id, drift::AdjustmentKind::VideoEffects);
+        QVERIFY(grade);
+        QCOMPARE(grade->timelineStart, host->timelineStart);
+        QCOMPARE(grade->timelineDuration, host->timelineDuration);
+    };
+
+    state.setRippleEnabled(true);
+    state.selectClip(0, 0);
+    state.deleteSelectedClip();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs(0));
+    checkGradeFollowsClip1();
+
+    state.undo();
+    checkGradeFollowsClip1();
+    state.redo();
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).timelineStart, drift::TimeUs(0));
+    checkGradeFollowsClip1();
+}
+
+// The same, through a preview drag: dragging the speed changes the clip's length, and the drag's
+// commit pushes its own snapshot rather than going through pushProjectEdit.
+void EditorStateTest::redoAfterASpeedDragKeepsTheGradeOnTheClip()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project()); // clip-1 at 2-6s
+
+    state.selectClip(0, 1);
+    state.addEffect(0, 1, QStringLiteral("adjust.contrast"));
+
+    state.selectClip(0, 1);
+    state.beginPreviewDrag(QStringLiteral("Speed"));
+    state.previewSetClipSpeed(0, 1, 2.0);
+    state.commitPreviewDrag();
+    const drift::TimeUs dragged = state.project()->tracks().at(0).clips.at(1).timelineDuration;
+    QVERIFY(dragged != drift::secondsToUs(4.0));
+
+    state.undo();
+    state.redo();
+    const drift::Clip &host = state.project()->tracks().at(0).clips.at(1);
+    QCOMPARE(host.timelineDuration, dragged);
+    const drift::Clip *grade =
+        adjustmentFor(*state.project(), host.id, drift::AdjustmentKind::VideoEffects);
+    QVERIFY(grade);
+    QCOMPARE(grade->timelineStart, host.timelineStart);
+    QCOMPARE(grade->timelineDuration, host.timelineDuration);
 }
 
 void EditorStateTest::clipEffectsLiveOnALinkedAdjustmentLane()
