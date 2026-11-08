@@ -1333,15 +1333,20 @@
                {QStringLiteral("prefix"), propWithDefault(stringProp(QStringLiteral("Bookmark label prefix; the shot number is appended")), QStringLiteral("Scene"))}},
               clipRefProps())) },
 
-        { "set_ui_preferences", "ui", "Change autoKey, media grid or reopen-last-project",
+        { "set_ui_preferences", "ui", "Change autoKey, media grid, proxy suggestion",
           "Set editor preferences; only supplied keys change. Note followSystem only acts when TRUE "
           "(it clears the dark-mode override); passing false does nothing — use set_theme to pin a "
           "theme. autoKey matters for set_transform: when on, transform writes become keyframes at the "
-          "playhead. Returns the resulting flags plus theme {overridden, dark}.",
+          "playhead. proxySuggestion sets what import_media does with slow-to-preview footage; only the "
+          "user can choose always (Settings › Preview), since it transcodes every later import. "
+          "Returns the resulting flags plus theme {overridden, dark}.",
           objectSchema({{QStringLiteral("autoKey"), boolProp(QStringLiteral("Auto-keyframe: transform edits create keyframes at the playhead"))},
                         {QStringLiteral("mediaGrid"), boolProp(QStringLiteral("Media bin grid mode"))},
                         {QStringLiteral("reopenLastProject"), boolProp(QStringLiteral("Reopen last project on launch"))},
-                        {QStringLiteral("followSystem"), boolProp(QStringLiteral("true clears the theme override so the OS theme wins; false is a no-op"))}}) },
+                        {QStringLiteral("followSystem"), boolProp(QStringLiteral("true clears the theme override so the OS theme wins; false is a no-op"))},
+                        {QStringLiteral("proxySuggestion"),
+                         enumProp(QStringLiteral("What imports do with footage that would preview slowly: ask (a notification offers proxies; default) or never. always is user-only. Global, kept across sessions"),
+                                  {QStringLiteral("ask"), QStringLiteral("never")})}}) },
 
         { "get_camera_state", "timeline", "Read the scene camera's pose at a time",
           "The camera clip covering `at` (default the playhead), or `clip`, as it is posed then, "

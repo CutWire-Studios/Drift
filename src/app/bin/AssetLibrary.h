@@ -218,6 +218,9 @@ public:
     Q_INVOKABLE bool isMissing(const QString &assetId) const;
     int missingCount() const { return int(m_missing.size()); }
     Q_INVOKABLE void createProxies(const QStringList &assetIds);
+    // What the end of an import does with footage that would preview slowly: "ask" emits it in
+    // importSuggestions, "always" queues proxies for it, "never" drops it (the preference).
+    void setProxySuggestionMode(const QString &mode) { m_proxySuggestionMode = mode; }
     // Drops queued jobs and deletes built proxies. Not undoable, and doesn't need to be: a
     // proxy is a cache, not project content.
     Q_INVOKABLE void removeProxies(const QStringList &assetIds);
@@ -363,6 +366,10 @@ private:
     // Asset ids, FIFO. The building one is not in the queue.
     QStringList m_proxyQueue;
     QStringList m_proxyNamePatterns;
+    QString m_proxySuggestionMode = QStringLiteral("ask");
+    // "always": imported assets waiting for a sidecar scan before a proxy is queued for them, so
+    // an existing proxy (generated or external) is found first and never re-encoded or overwritten.
+    QSet<QString> m_autoProxyPending;
     // Unwritable source folders met since the queue last drained.
     QStringList m_proxyFallbackFolders;
     QString m_proxyBuilding;

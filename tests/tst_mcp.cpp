@@ -27,6 +27,9 @@
 #include <QHostAddress>
 #include <QImage>
 #include <QTemporaryDir>
+#include "engine/encode/proxies/ProxyNaming.h"
+#include "engine/encode/proxies/ReverseProxyCache.h"
+#include <QSignalSpy>
 
 #include <filesystem>
 #include <QTimer>
@@ -88,6 +91,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void proxySuggestionFollowsThePreference();
     void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
     void setTransformKeysOnlyInsideTheClip();
@@ -8890,6 +8894,106 @@ void McpTest::getWaveformImageReportsWords()
     QCOMPARE(words.size(), 6);
     QCOMPARE(words.at(3).toObject().value(QStringLiteral("i")).toInt(), 3);
     QVERIFY(r.value(QStringLiteral("image")).toObject().value(QStringLiteral("lanes")).toArray().contains(QStringLiteral("words")));
+}
+
+// The proxy suggestion on import follows the preference, decided in the library so it also
+// holds for an agent's import with nobody watching: ask (suggested), always (queued), never.
+void McpTest::proxySuggestionFollowsThePreference()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a video fixture");
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    AssetLibrary library;
+    AppController state(&library);
+    const QString saved = state.preferences()->proxySuggestion();
+    const bool proxiesWere = drift::ReverseProxyCache::previewProxiesEnabled;
+    const auto restore = qScopeGuard([&] {
+        state.preferences()->setProxySuggestion(saved);
+        drift::ReverseProxyCache::previewProxiesEnabled = proxiesWere;
+    });
+    drift::ReverseProxyCache::previewProxiesEnabled = true;
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const auto importHeavy = [&](const QString &mode, int n) {
+        state.preferences()->setProxySuggestion(mode);
+        // Over 1080 on the short side: a clip Drift offers a proxy for.
+        const QString path = dir.filePath(QStringLiteral("heavy-%1.mp4").arg(n));
+        if (!runFfmpeg({QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                        QStringLiteral("color=c=gray:s=1440x1440:d=0.2:r=5"), QStringLiteral("-c:v"),
+                        QStringLiteral("mpeg4"), path}))
+            return qMakePair(QStringList{QStringLiteral("ffmpeg failed")}, QString());
+        QSignalSpy spy(&library, &AssetLibrary::importSuggestions);
+        const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                         {{QStringLiteral("paths"), QJsonArray{path}}});
+        const QString id = imported.value(QStringLiteral("assets")).toArray().first().toObject()
+                               .value(QStringLiteral("id")).toString();
+        QStringList suggested;
+        for (const QList<QVariant> &args : std::as_const(spy))
+            suggested += args.at(0).toStringList();
+        return qMakePair(suggested, id);
+    };
+
+    const auto [asked, askedId] = importHeavy(QStringLiteral("ask"), 1);
+    QCOMPARE(asked, QStringList{askedId});
+    QCOMPARE(library.proxyState(askedId), QStringLiteral("none"));
+
+    const auto [never, neverId] = importHeavy(QStringLiteral("never"), 2);
+    QVERIFY(never.isEmpty());
+    QCOMPARE(library.proxyState(neverId), QStringLiteral("none"));
+
+    // "always" queues once the sidecar scan has looked for a proxy already on disk.
+    const auto [always, alwaysId] = importHeavy(QStringLiteral("always"), 3);
+    QVERIFY(always.isEmpty());
+    QTRY_VERIFY2(library.proxyState(alwaysId) != QLatin1String("none"), qPrintable(library.proxyState(alwaysId)));
+    library.cancelProxies();
+
+    // Cancelling proxies before the deferred scan lands: nothing starts afterwards.
+    state.preferences()->setProxySuggestion(QStringLiteral("always"));
+    const QString cancelled = dir.filePath(QStringLiteral("heavy-5.mp4"));
+    QVERIFY(runFfmpeg({QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                       QStringLiteral("color=c=gray:s=1440x1440:d=0.2:r=5"), QStringLiteral("-c:v"),
+                       QStringLiteral("mpeg4"), cancelled}));
+    const QString cancelledId = dispatcher.applyOne(QStringLiteral("import_media"), {{QStringLiteral("paths"), QJsonArray{cancelled}}})
+                                    .value(QStringLiteral("assets")).toArray().first().toObject().value(QStringLiteral("id")).toString();
+    library.cancelProxies();
+    QTest::qWait(500);
+    QCOMPARE(library.proxyState(cancelledId), QStringLiteral("none"));
+
+    // A clip whose generated proxy is already on disk: found, not encoded again.
+    const QString prepared = dir.filePath(QStringLiteral("heavy-4.mp4"));
+    QVERIFY(runFfmpeg({QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                       QStringLiteral("color=c=gray:s=1440x1440:d=0.2:r=5"), QStringLiteral("-c:v"),
+                       QStringLiteral("mpeg4"), prepared}));
+    const QString existingProxy = drift::generatedProxyPath(prepared, drift::ReverseProxyCache::previewProxyShortSide);
+    QDir().mkpath(QFileInfo(existingProxy).absolutePath());
+    QVERIFY(runFfmpeg({QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"),
+                       QStringLiteral("color=c=gray:s=720x720:d=0.2:r=5"), QStringLiteral("-c:v"),
+                       QStringLiteral("mpeg4"), existingProxy}));
+    const QDateTime proxyTime = QFileInfo(existingProxy).lastModified();
+    state.preferences()->setProxySuggestion(QStringLiteral("always"));
+    QSignalSpy jobs(&library, &AssetLibrary::proxyJobsChanged);
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{prepared}}});
+    const QString preparedId = imported.value(QStringLiteral("assets")).toArray().first().toObject()
+                                   .value(QStringLiteral("id")).toString();
+    QTRY_COMPARE(library.proxyState(preparedId), QStringLiteral("ready"));
+    QTest::qWait(200);
+    QCOMPARE(library.proxyState(preparedId), QStringLiteral("ready"));
+    QCOMPARE(QFileInfo(existingProxy).lastModified(), proxyTime);
+    QFile::remove(existingProxy);
+
+    // The agent can set it, and reads it back.
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("proxySuggestion"), QStringLiteral("never")}})
+                 .value(QStringLiteral("proxySuggestion")).toString(),
+             QStringLiteral("never"));
+    QCOMPARE(dispatcher.applyOne(QStringLiteral("get_ui_preferences"), {}).value(QStringLiteral("proxySuggestion")).toString(),
+             QStringLiteral("never"));
+
+    // always starts transcodes on every later import, so it is the user's to choose.
+    QVERIFY(!dispatcher.applyOne(QStringLiteral("set_ui_preferences"), {{QStringLiteral("proxySuggestion"), QStringLiteral("always")}})
+                 .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.preferences()->proxySuggestion(), QStringLiteral("never"));
 }
 
 // replace_asset re-reads the file, also at the same path with new content, and the reply carries

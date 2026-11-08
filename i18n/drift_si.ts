@@ -13426,8 +13426,8 @@
         <translation>එම ගොනුව කියවිය නොහැකි විය — එම ආකෘතියට මෙම අනුවාදය සහය නොදක්වයි.</translation>
     </message>
     <message numerus="yes">
-        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original.</source>
-        <translation>
+        <source>%n clip(s) may play back slowly. A proxy makes previewing smoother; export still uses the original. Settings › Preview can do this automatically or stop asking.</source>
+        <translation type="unfinished">
             <numerusform>ක්ලිප් %nක් සෙමින් ධාවනය විය හැක. ප්‍රොක්සි මඟින් පෙරදසුන වඩාත් සුමට කරයි; නිර්යාත කිරීමේදී තවමත් මුල් ගොනුව භාවිත වේ.</numerusform>
             <numerusform>ක්ලිප් %nක් සෙමින් ධාවනය විය හැක. ප්‍රොක්සි මඟින් පෙරදසුන වඩාත් සුමට කරයි; නිර්යාත කිරීමේදී තවමත් මුල් ගොනුව භාවිත වේ.</numerusform>
         </translation>
@@ -18325,6 +18325,26 @@ If playback stutters, try another.</source>
     <message>
         <source>Play clips from their low-resolution proxies where one exists. Export always uses the original media.</source>
         <translation>පවතින විට අඩු විභේදනයක් සහිත ප්‍රොක්සිවලින් ක්ලිප් ධාවනය කරන්න. නිර්යාත කිරීමේදී සැමවිටම මුල් මාධ්‍ය භාවිත වේ.</translation>
+    </message>
+    <message>
+        <source>Suggest proxies on import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What to do when imported footage may preview slowly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always create proxies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never ask</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Proxy resolution</source>
