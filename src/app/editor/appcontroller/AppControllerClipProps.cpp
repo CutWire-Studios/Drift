@@ -967,7 +967,7 @@ void AppController::commitSubtitleCues(int trackIndex, int clipIndex, QList<drif
 
     const drift::Project before = m_project;
     clip.subtitleCues = std::move(cues);
-    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    drift::refreshSubtitleClipName(clip.name, clip.subtitleCues);
     pushProjectEdit(before, undoText);
     finishEdit(undoText);
 }
@@ -989,7 +989,7 @@ void AppController::previewSetSubtitleCues(int trackIndex, int clipIndex, const 
         beginPreviewDrag(tr("Adjust subtitle timing"));
 
     clip.subtitleCues = subtitleCuesFromMap(cues);
-    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    drift::refreshSubtitleClipName(clip.name, clip.subtitleCues);
     emitPreviewFrame();
 }
 
@@ -1051,7 +1051,7 @@ void AppController::upsertSubtitleCueAtPlayhead(int trackIndex, int clipIndex, c
         drift::sortSubtitleCues(clip.subtitleCues);
     }
 
-    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    drift::refreshSubtitleClipName(clip.name, clip.subtitleCues);
     pushProjectEdit(before, tr("Subtitle cue updated"));
     finishEdit(tr("Subtitle cue updated"));
 }

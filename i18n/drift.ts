@@ -2747,10 +2747,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation type="unfinished"></translation>
     </message>

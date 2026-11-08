@@ -2747,10 +2747,6 @@
         <translation>টেক্সট ক্লিপ যোগ করা হয়েছে।</translation>
     </message>
     <message>
-        <source>Subtitles</source>
-        <translation>সাবটাইটেল</translation>
-    </message>
-    <message>
         <source>Subtitle clip added</source>
         <translation>সাবটাইটেল ক্লিপ যোগ করা হয়েছে</translation>
     </message>

@@ -86,6 +86,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void subtitleClipKeepsItsChosenName();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
     void setEffectEnabledTargetsOneEffect();
@@ -429,6 +430,44 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// set_clip_name on a subtitle clip used to be overwritten with "Subtitles (N)" by the next cue edit.
+void McpTest::subtitleClipKeepsItsChosenName()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Subtitle});
+    drift::Clip clip;
+    clip.id = QStringLiteral("subs");
+    clip.type = drift::ClipType::Subtitle;
+    clip.timelineDuration = drift::secondsToUs(4.0);
+    clip.srcOut = clip.timelineDuration;
+    clip.subtitleCues = {drift::SubtitleCue{0, drift::secondsToUs(1.0), QStringLiteral("one")}};
+    clip.name = drift::subtitleClipName(clip.subtitleCues);
+    state.project()->tracks()[0].clips.append(clip);
+    drift::mcp::McpDispatcher dispatcher(&state);
+
+    const QJsonObject named = dispatcher.applyOne(QStringLiteral("set_clip_name"),
+                                                  {{QStringLiteral("clip"), QStringLiteral("subs")},
+                                                   {QStringLiteral("name"), QStringLiteral("VO script")}});
+    QVERIFY2(named.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(named).toJson()));
+    QVariantList cues;
+    cues.append(QVariantMap{{QStringLiteral("start"), 0.0}, {QStringLiteral("end"), 1.0}, {QStringLiteral("text"), QStringLiteral("one")}});
+    cues.append(QVariantMap{{QStringLiteral("start"), 1.5}, {QStringLiteral("end"), 2.5}, {QStringLiteral("text"), QStringLiteral("two")}});
+    state.setSubtitleCues(0, 0, cues);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).subtitleCues.size(), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("VO script"));
+
+    // A chosen name that only looks generated stays too.
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_clip_name"),
+                                {{QStringLiteral("clip"), QStringLiteral("subs")},
+                                 {QStringLiteral("name"), QStringLiteral("Subtitles (002)")}})
+                .value(QStringLiteral("ok")).toBool());
+    cues.removeLast();
+    state.setSubtitleCues(0, 0, cues);
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).name, QStringLiteral("Subtitles (002)"));
 }
 
 // A keyed set_transform with the playhead outside the clip used to land a key on the clip's edge
