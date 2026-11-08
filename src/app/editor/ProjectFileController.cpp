@@ -73,7 +73,7 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
     // starts fresh, or discards recovery.
     m_autosaveTimer = new QTimer(this);
     connect(m_autosaveTimer, &QTimer::timeout, this, [this] {
-        if (m_dirty)
+        if (m_dirty && !recoveryUpToDate())
             writeRecoveryFile();
     });
     m_autosaveTimer->start(kAutosaveIntervalMs);
@@ -84,7 +84,7 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
         // A save already writing is let finish; one still waiting its turn is dropped.
         m_queuedSaves.clear();
         m_saveWrite.waitForFinished();
-        if (m_dirty)
+        if (m_dirty && !recoveryUpToDate())
             writeRecoveryFile(true);
         else
             m_recoveryWrite.waitForFinished();
@@ -1948,7 +1948,7 @@ void ProjectFileController::flushRecoverySnapshot()
     // write, "reopen last project at startup" also silently never has a path to reopen.
     if (!m_isolatedSession)
         QSettings().setValue(QStringLiteral("lastSessionPath"), m_currentProjectPath);
-    if (m_dirty)
+    if (m_dirty && !recoveryUpToDate())
         writeRecoveryFile();
 }
 namespace {
@@ -2015,9 +2015,11 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
         // Waits on the worker only: its continuation needs this thread's event loop.
         m_recoveryWrite.waitForFinished();
         ++m_recoveryGeneration;
-        promoteRecoveryTemp(writeRecoveryTemp(m_app->m_project, session,
-                                              drift::captureHistory(m_app->m_undoStack), meta, path),
-                            path);
+        const QString tmpPath = writeRecoveryTemp(m_app->m_project, session,
+                                                  drift::captureHistory(m_app->m_undoStack), meta, path);
+        promoteRecoveryTemp(tmpPath, path);
+        if (!tmpPath.isEmpty())
+            m_recoveryRevision = m_dirtyRevision;
         return;
     }
 
@@ -2031,10 +2033,11 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
         snapshot = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
     const drift::HistoryCapture history = drift::captureHistory(m_app->m_undoStack);
     const quint64 generation = m_recoveryGeneration;
+    const quint64 revision = m_dirtyRevision;
     m_recoveryWrite = QtConcurrent::run([snapshot, session, history, meta, path] {
         return writeRecoveryTemp(*snapshot, session, history, meta, path);
     });
-    m_recoveryWrite.then(this, [this, generation, path](const QString &tmpPath) {
+    m_recoveryWrite.then(this, [this, generation, revision, path](const QString &tmpPath) {
         // The file was deleted (a save, a new project) while this was being written.
         if (generation != m_recoveryGeneration) {
             if (!tmpPath.isEmpty())
@@ -2042,12 +2045,15 @@ void ProjectFileController::writeRecoveryFile(bool synchronous)
             return;
         }
         promoteRecoveryTemp(tmpPath, path);
+        if (!tmpPath.isEmpty())
+            m_recoveryRevision = revision;
     });
 }
 
 void ProjectFileController::deleteRecoveryFile()
 {
     ++m_recoveryGeneration;
+    m_recoveryRevision = std::numeric_limits<quint64>::max();
     const QString path = recoveryFilePath();
     if (!m_isolatedSession && QFile::exists(path))
         QFile::remove(path);

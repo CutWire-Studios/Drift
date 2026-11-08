@@ -4,6 +4,7 @@
 #include "core/project/Project.h"
 #include "engine/project/ProjectBundle.h"
 
+#include <limits>
 #include <QAtomicInt>
 #include <QFuture>
 #include <QHash>
@@ -303,6 +304,11 @@ private:
     // clears the dirty flag if it is unchanged when the write lands: an edit made during the
     // write is not in the file.
     quint64 m_dirtyRevision = 0;
+    // The dirty revision the recovery file on disk holds; none yet = the max value. The periodic
+    // snapshot is skipped while it matches: with a long undo history, rewriting an unchanged
+    // project and every history state each interval kept a core busy while Drift sat idle.
+    quint64 m_recoveryRevision = std::numeric_limits<quint64>::max();
+    bool recoveryUpToDate() const { return m_recoveryRevision == m_dirtyRevision; }
     // The Save / Save As write running on a worker. Further saves wait here, in order, and each
     // captures the document when it starts.
     struct QueuedSave

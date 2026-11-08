@@ -191,6 +191,7 @@ private slots:
     void packagedProjectCarriesDerivedArtifacts();
     void undoBookmarkAdd();
     void undoHistorySurvivesSaveAndLoad();
+    void recoverySnapshotSkipsAnUnchangedProject();
     void savedBundleKeepsHistoryAndShrinksIt();
     void editDuringSaveKeepsProjectModified();
     void overlappingSavesRunInOrder();
@@ -1938,6 +1939,40 @@ void EditorStateTest::recoveryFileIsCompressedAndRestores()
     QCOMPARE(reopened.m_undoStack.count(), 20);
     QCOMPARE(reopened.undoIndex(), 19);
     QVERIFY(reopened.redoAvailable());
+}
+
+// An idle session with unsaved work used to rewrite the whole project and every history state
+// into the recovery file on every autosave tick, keeping a core busy with nothing changing.
+void EditorStateTest::recoverySnapshotSkipsAnUnchangedProject()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto restore = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QFile::remove(recovery);
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.addBookmark(1.0, QStringLiteral("Unsaved"));
+    QVERIFY(state.projectFile()->hasUnsavedChanges());
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+
+    // Nothing changed since: no rewrite. (The file is removed behind its back to see that.)
+    QVERIFY(QFile::remove(recovery));
+    state.projectFile()->flushRecoverySnapshot();
+    QTest::qWait(200);
+    QVERIFY(!QFileInfo::exists(recovery));
+
+    // An edit, or an undo, is a change again.
+    state.addBookmark(2.0, QStringLiteral("Another"));
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
+    QVERIFY(QFile::remove(recovery));
+    state.undo();
+    state.projectFile()->flushRecoverySnapshot();
+    QTRY_VERIFY(QFileInfo::exists(recovery));
 }
 
 void EditorStateTest::legacyPlainRecoveryFileStillRestores()
