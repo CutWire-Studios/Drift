@@ -4210,6 +4210,14 @@
         <translation>Naalis ang epekto</translation>
     </message>
     <message>
+        <source>Remove all effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All effects removed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Enable effect</source>
         <translation>I-enable ang epekto</translation>
     </message>

@@ -853,6 +853,16 @@ const QList<Op> &ops()
           objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()}}),
                        {QStringLiteral("clip"), QStringLiteral("index")}),
           false, true },
+        { "remove_all_effects", "effects", "Strip every effect from a clip",
+          "Remove all of a clip's video and audio effects in one undo step: the adjustments pinned "
+          "to it are deleted, and a nested lane left empty goes too. masks:true also removes its "
+          "masks. The clip's effect host id (from add_effect) works too. Only this clip: a linked "
+          "audio partner keeps its own effects, so call again with its id. Returns removed, the "
+          "number of adjustment clips deleted (0: nothing to remove, no undo step).",
+          objectSchema(mergeProps({{QStringLiteral("masks"),
+                                    boolProp(QStringLiteral("Also remove the clip's masks. Default false"))}},
+                                  clipRefProps())),
+          false, true, true },
         { "set_effect_param", "effects", "Tweak a video effect",
           "Set one numeric/boolean video effect parameter, or a clip param (type \"clip\", e.g. "
           "depth.occlude's target) to a clip id string — \"\" leaves the choice to the effect. Fails "
