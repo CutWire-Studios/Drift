@@ -56,7 +56,9 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonArray>
-#include <QSaveFile>
+#include <QTemporaryFile>
+
+#include <filesystem>
 #include <QStandardPaths>
 #include <QUuid>
 #include <QtConcurrent>
@@ -982,7 +984,12 @@ bool McpController::setClipCanvas(int trackIndex, int clipIndex, const QVariantM
     return true;
 }
 
-QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor3d)
+namespace {
+QString newCapturePath(const QString &dir, const QString &prefix, const QString &ext);
+} // namespace
+
+QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor3d, const QString &outPath,
+                                         bool overwrite)
 {
     using namespace drift::mcp;
     m_app->setPlaying(false);
@@ -1028,12 +1035,59 @@ QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor
     }
     meta = compactJson(meta);
 
-    if (full) {
-        const QString outPath = AppController::newFreezeFramePath(m_app->m_project.id());
-        if (outPath.isEmpty() || !frame->save(outPath, "PNG"))
+    if (full || !outPath.isEmpty()) {
+        const QString target = !outPath.isEmpty()
+            ? outPath
+            : newCapturePath(m_imageLog->sessionDir(), QStringLiteral("capture"), QStringLiteral("png"));
+        bool written = false;
+        // Only an existing file needs replacing; a new path takes the plain exclusive create
+        // below, which honours the umask like any other new file.
+        const QFileInfo existing(target);
+        const bool replacing = existing.exists() || existing.isSymLink();
+        // A rename only needs the folder to be writable; respect a file the user made read-only.
+        if (overwrite && existing.exists() && !existing.isSymLink() && !existing.isWritable())
+            return textResult(err("capture_failed", QStringLiteral("%1 is read-only").arg(target)), true);
+        if (overwrite && replacing && !outPath.isEmpty() && !target.isEmpty()) {
+            // Written to a temp file beside the target, then renamed onto the literal name. A
+            // POSIX rename replaces the directory entry itself, so a symlink there -- even one
+            // swapped in while the frame was rendering -- is replaced, never followed.
+            QString tempName;
+            bool saved = false;
+            {
+                // Scoped so the temp file's handle is released before the rename (Windows keeps
+                // it open past close() and would refuse both the rename and the cleanup).
+                QTemporaryFile temp(QFileInfo(target).absolutePath() + QStringLiteral("/.capture-XXXXXX.png"));
+                temp.setAutoRemove(false);
+                if (temp.open()) {
+                    tempName = temp.fileName();
+                    saved = frame->save(&temp, "PNG") && temp.flush();
+                }
+            }
+            // QTemporaryFile creates 0600: carry the replaced file's permissions over (a symlink
+            // being replaced keeps the private default), and don't replace anything if that fails.
+            if (saved && !existing.isSymLink())
+                saved = QFile::setPermissions(tempName, existing.permissions());
+            if (saved) {
+                std::error_code renameError;
+                std::filesystem::rename(QFile::encodeName(tempName).toStdString(),
+                                        QFile::encodeName(target).toStdString(), renameError);
+                written = !renameError;
+            }
+            if (!written && !tempName.isEmpty())
+                QFile::remove(tempName);
+        } else {
+            // NewOnly fails if anything (a symlink too) appeared meanwhile: never replaced silently.
+            QFile file(target);
+            written = !target.isEmpty() && file.open(QIODevice::WriteOnly | QIODevice::NewOnly);
+            if (written && !frame->save(&file, "PNG")) {
+                file.remove(); // don't leave an empty file at the agent's path
+                written = false;
+            }
+        }
+        if (!written)
             return textResult(err("capture_failed", QStringLiteral("Could not write PNG")), true);
         QJsonObject withPath = meta;
-        withPath.insert(QStringLiteral("path"), outPath);
+        withPath.insert(QStringLiteral("path"), target);
         return textResult(withPath);
     }
 
@@ -1106,13 +1160,11 @@ constexpr int kMcpActivityMaxSamples = 600;
 constexpr double kMcpActivityMaxSeconds = 3600.0;
 constexpr int kMcpActivityScanWidth = 64;
 
-QString newCapturePath(const QString &projectId, const QString &prefix, const QString &ext)
+// Agent captures are a look, not project media: they go to the session's agent-image cache
+// folder (deleted when Drift quits, or swept after a day if it crashed), not the project's media dir, which a save bundles.
+QString newCapturePath(const QString &dir, const QString &prefix, const QString &ext)
 {
-    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (base.isEmpty())
-        return {};
-    const QString dir = QDir(base).filePath(QStringLiteral("projects/%1/media").arg(projectId));
-    if (!QDir().mkpath(dir))
+    if (dir.isEmpty() || !QDir().mkpath(dir))
         return {};
     return QDir(dir).filePath(QStringLiteral("%1-%2.%3")
                                   .arg(prefix, QUuid::createUuid().toString(QUuid::WithoutBraces), ext));
@@ -1424,7 +1476,7 @@ QJsonObject McpController::frameSheet(const FrameSheetRequest &request)
         meta.insert(QStringLiteral("unscanned"), unscanned);
 
     if (request.toPath) {
-        const QString outPath = newCapturePath(m_app->m_project.id(), QStringLiteral("sheet"), QStringLiteral("jpg"));
+        const QString outPath = newCapturePath(m_imageLog->sessionDir(), QStringLiteral("sheet"), QStringLiteral("jpg"));
         if (outPath.isEmpty() || !result->sheet.save(outPath, "JPEG", 80))
             return err("capture_failed", QStringLiteral("Could not write JPEG"));
         meta.insert(QStringLiteral("path"), outPath);
@@ -4347,7 +4399,7 @@ QJsonObject McpController::audioSheet(const AudioRequest &request)
         return *meta;
 
     if (request.toPath) {
-        const QString outPath = newCapturePath(m_app->m_project.id(), QStringLiteral("audiosheet"), QStringLiteral("png"));
+        const QString outPath = newCapturePath(m_imageLog->sessionDir(), QStringLiteral("audiosheet"), QStringLiteral("png"));
         if (outPath.isEmpty() || !sheet->save(outPath, "PNG"))
             return err("capture_failed", QStringLiteral("Could not write PNG"));
         meta->insert(QStringLiteral("path"), outPath);

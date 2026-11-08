@@ -122,7 +122,11 @@ public:
                        QString *error = nullptr);
     // editor3d: the preview's free 3D viewpoint (or the overview when never placed) instead of the
     // composition.
-    QJsonObject captureFrame(double atSeconds, bool full, bool editor3d = false);
+    // `outPath`, when given, is where the PNG goes (the agent's choice); otherwise full=true
+    // writes one to the session's agent-image cache folder.
+    // An existing outPath is refused (the file is created exclusively) unless `overwrite`.
+    QJsonObject captureFrame(double atSeconds, bool full, bool editor3d = false, const QString &outPath = {},
+                             bool overwrite = false);
 
     // Perception for agents: a labelled contact sheet and a text profile of change over time.
     // Both block on the captureFrame pattern.

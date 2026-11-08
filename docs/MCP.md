@@ -250,7 +250,7 @@ something happen” to “what is it”:
 
    Add `clip` (or `track`+`index`) to render one clip's **source** frames instead of the
    composition: `t` is then source seconds and `tl` the timeline time. `return:"path"` writes the
-   sheet next to the project's frame captures instead of inlining it. `diff` on each frame is the
+   sheet to this session's agent-image cache folder (not the project; deleted when Drift quits, or swept after a day if it crashed; `import_media` copies such a file into the project) instead of inlining it. `diff` on each frame is the
    dHash distance to the previous kept tile. `dur` is the length of the material; a tile past it
    renders black and carries `beyond_end:true` (the count is repeated at the top level).
 3. **`capture({at})`** — one 1280 px still for detail. `beyond_end:true` flags a time past the

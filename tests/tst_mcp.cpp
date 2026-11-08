@@ -27,6 +27,8 @@
 #include <QHostAddress>
 #include <QImage>
 #include <QTemporaryDir>
+
+#include <filesystem>
 #include <QTimer>
 #include <QUrlQuery>
 
@@ -86,6 +88,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
@@ -430,6 +433,140 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// capture({full:true}) used to write freeze-*.png into the project's media folder, where they
+// piled up and a save bundled them. They go to the session's agent-image cache now, and path
+// lets the agent pick the file.
+void McpTest::captureFilesStayOutOfTheProject()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpCaptureTest"));
+    const auto restore = qScopeGuard([&] {
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString cache = state.mcp()->imageLog()->sessionDir();
+    QVERIFY(!cache.isEmpty());
+
+    // Importing a file from the agent-image cache copies it into the project's media, so the
+    // project never points at a file the cache sweep deletes. Two captures with the same name
+    // stay two images. (No compositor needed.)
+    QTemporaryDir otherSession(QDir(cache).absoluteFilePath(QStringLiteral("../import-test-XXXXXX")));
+    QVERIFY(otherSession.isValid());
+    const QString first = QDir(cache).filePath(QStringLiteral("look.png"));
+    const QString second = otherSession.filePath(QStringLiteral("look.png"));
+    QImage red(16, 16, QImage::Format_RGB32);
+    red.fill(Qt::red);
+    QImage blue(16, 16, QImage::Format_RGB32);
+    blue.fill(Qt::blue);
+    QVERIFY(red.save(first, "PNG"));
+    QVERIFY(blue.save(second, "PNG"));
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{first, second}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson()));
+    const QJsonArray copied = imported.value(QStringLiteral("copied_into_project")).toArray();
+    QCOMPARE(copied.size(), 2);
+    const QString redCopy = copied.at(0).toString();
+    const QString blueCopy = copied.at(1).toString();
+    QVERIFY(redCopy != blueCopy);
+    for (const QString &path : {redCopy, blueCopy})
+        QVERIFY2(path.contains(QStringLiteral("projects/%1/media").arg(state.project()->id())), qPrintable(path));
+    QVERIFY(QFile::remove(first));
+    QVERIFY(QFile::remove(second));
+    QCOMPARE(QImage(redCopy).pixelColor(0, 0), QColor(Qt::red));
+    QCOMPARE(QImage(blueCopy).pixelColor(0, 0), QColor(Qt::blue));
+    QStringList assetPaths;
+    for (const drift::MediaAsset &asset : state.project()->assets())
+        assetPaths.append(asset.path);
+    QVERIFY2(assetPaths.contains(redCopy) && assetPaths.contains(blueCopy), qPrintable(assetPaths.join(u',')));
+    for (const QString &path : std::as_const(assetPaths))
+        QVERIFY2(!path.startsWith(QFileInfo(cache).absolutePath()), qPrintable(path));
+    QFile::remove(redCopy);
+    QFile::remove(blueCopy);
+
+    const auto textOf = [](const QJsonObject &result) {
+        const QJsonArray content = result.value(QStringLiteral("content")).toArray();
+        return content.isEmpty() ? QJsonObject()
+                                 : QJsonDocument::fromJson(content.first().toObject().value(QStringLiteral("text")).toString().toUtf8()).object();
+    };
+    const QJsonObject full = dispatcher.capture({{QStringLiteral("at"), 0.5}, {QStringLiteral("full"), true}});
+    if (full.value(QStringLiteral("isError")).toBool()
+        && textOf(full).value(QStringLiteral("detail")).toString().contains(QStringLiteral("Compositor returned no frame")))
+        QSKIP("Compositor could not produce a frame in this environment");
+    QVERIFY2(!full.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(full).toJson()));
+    const QString written = textOf(full).value(QStringLiteral("path")).toString();
+    QVERIFY2(QFileInfo::exists(written), qPrintable(written));
+    QVERIFY2(written.startsWith(cache), qPrintable(written));
+
+    // frames({return:"path"}) goes to the same cache folder.
+    const QJsonObject sheet = dispatcher.frames({{QStringLiteral("at"), QJsonArray{0.5}}, {QStringLiteral("return"), QStringLiteral("path")}});
+    const QString sheetPath = sheet.value(QStringLiteral("path")).toString().isEmpty()
+                                  ? textOf(sheet).value(QStringLiteral("path")).toString()
+                                  : sheet.value(QStringLiteral("path")).toString();
+    QVERIFY2(sheetPath.startsWith(cache), qPrintable(QJsonDocument(sheet).toJson()));
+
+    QTemporaryDir out;
+    QVERIFY(out.isValid());
+    const QString chosen = out.filePath(QStringLiteral("look"));
+    const QJsonObject atPath = dispatcher.capture({{QStringLiteral("at"), 0.5}, {QStringLiteral("path"), chosen}});
+    QVERIFY2(!atPath.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(atPath).toJson()));
+    QCOMPARE(textOf(atPath).value(QStringLiteral("path")).toString(), chosen + QStringLiteral(".png"));
+    QVERIFY(QFileInfo::exists(chosen + QStringLiteral(".png")));
+
+    // An existing file is not replaced unless asked; a symlink never is.
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), chosen + QStringLiteral(".png")}})
+                .value(QStringLiteral("isError")).toBool());
+    QVERIFY(QFile::setPermissions(chosen + QStringLiteral(".png"),
+                                  QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadUser
+                                      | QFileDevice::WriteUser | QFileDevice::ReadGroup | QFileDevice::ReadOther));
+    QVERIFY(!dispatcher.capture({{QStringLiteral("path"), chosen + QStringLiteral(".png")}, {QStringLiteral("overwrite"), true}})
+                 .value(QStringLiteral("isError")).toBool());
+    // The replaced file keeps its permissions (the temp file it is written through is 0600).
+    QVERIFY(QFileInfo(chosen + QStringLiteral(".png")).permissions().testFlag(QFileDevice::ReadOther));
+    QVERIFY(QDir(out.path()).entryList({QStringLiteral(".capture-*")}, QDir::Files | QDir::Hidden).isEmpty());
+    const QString victim = out.filePath(QStringLiteral("victim.txt"));
+    {
+        QFile f(victim);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("keep me");
+    }
+    const QString link = out.filePath(QStringLiteral("link.png"));
+    std::error_code linkError;
+    std::filesystem::create_symlink(victim.toStdString(), link.toStdString(), linkError);
+    if (!linkError) {
+        QVERIFY(dispatcher.capture({{QStringLiteral("path"), link}, {QStringLiteral("overwrite"), true}})
+                    .value(QStringLiteral("isError")).toBool());
+        // Below the dispatcher's check (a symlink swapped in while the frame renders): the
+        // overwrite replaces the link itself and never writes through it.
+        const QJsonObject raced = state.mcp()->captureFrame(0.5, false, false, link, /*overwrite=*/true);
+        QVERIFY2(!raced.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(raced).toJson()));
+        QVERIFY(!QFileInfo(link).isSymLink());
+        QVERIFY(!QImage(link).isNull());
+    } else {
+        qWarning("symlinks unavailable here; skipping the symlink checks");
+    }
+    {
+        QFile f(victim);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), QByteArray("keep me"));
+    }
+
+    // A path-only capture still shows up in the agent image log.
+    const int logged = state.mcp()->imageLog()->rowCount();
+    const QJsonObject args{{QStringLiteral("at"), 0.5}, {QStringLiteral("path"), out.filePath(QStringLiteral("logged.png"))}};
+    state.mcp()->imageLog()->recordResult(1, QStringLiteral("capture"), args, dispatcher.capture(args));
+    QCOMPARE(state.mcp()->imageLog()->rowCount(), logged + 1);
+
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), QStringLiteral("relative.png")}})
+                .value(QStringLiteral("isError")).toBool());
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), out.filePath(QStringLiteral("missing/dir/x.png"))}})
+                .value(QStringLiteral("isError")).toBool());
 }
 
 // set_clip_name on a subtitle clip used to be overwritten with "Subtitles (N)" by the next cue edit.
