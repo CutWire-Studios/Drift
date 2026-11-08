@@ -802,6 +802,7 @@ local fake) without rebuilding.
 - **`set_keyframe_interpolation` moves the playhead** to `at`, changing the default time of later ops in the same batch.
 - **Long sessions grow.** `memory_stats` shows the process size, the decoded-frame caches (up to an eighth of RAM by default, Settings › Performance), the open decoders and the undo step count. `clear_cache` closes idle decoders and drops their frames (the next frame reopens what it needs). It does not touch undo history, which holds full project snapshots per step.
 - **`add_track` shifts every track index** — index 0 is the new track.
+- **Replaced media stays in the bin.** `list_assets({usage:true})` shows how many clips use each asset; `remove_unused_assets({dry_run:true})` lists the unused ones and, without `dry_run`, removes them in one undo step. Composite assets (nested timelines) and the originals of stabilized renders (`derived` in `list_assets`) are kept; the files on disk are never touched.
 - **`import_media_bytes` without `path`** writes to a temp dir that is deleted when the call returns, leaving a broken asset. Always pass `path`.
 - **`get_waveform` reads two different things.** With `clip` or `asset` it reads the *source file*, so clip speed, reverse and volume are not applied. Only the timeline form (`start` + `duration`, no clip or asset) is what you would actually hear.
 - **`bpm: 0` from `detect_beats` is not an error** — it means no trustworthy tempo, so `beats` is empty. The `onsets` are still valid; pass `unit:"onset"` anywhere a grid is accepted.

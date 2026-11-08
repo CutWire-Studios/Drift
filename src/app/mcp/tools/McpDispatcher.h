@@ -59,7 +59,8 @@ private:
     void moveClipToRequested(const ClipRef &ref, double at);
 
     QJsonObject opImportMedia(const QJsonObject &args);
-    QJsonObject opListAssets() const;
+    QJsonObject opListAssets(const QJsonObject &args) const;
+    QJsonObject opRemoveUnusedAssets(const QJsonObject &args);
     QJsonObject opRenameAsset(const QJsonObject &args);
     QJsonObject opAddTrack(const QJsonObject &args);
     QJsonObject opMakeTransformLayer(const QJsonObject &args);
