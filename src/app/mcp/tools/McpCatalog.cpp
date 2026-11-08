@@ -743,11 +743,13 @@ const QList<Op> &ops()
           "Set canvas transform in project-canvas pixels (0,0 = canvas top-left). 3D follows After Effects: "
           "x right, y down, z AWAY from the viewer (right-handed), and rotations pivot on the anchor point. Omitted fields are "
           "left unchanged. IMPORTANT: if the property is already animated (2+ keys), or autoKey is "
-          "on, the write creates/updates a keyframe at the CURRENT PLAYHEAD instead of setting a "
-          "constant value, so seek first; a property with 0 or 1 key just takes the value. Use set_property_keyframes_enabled(false) or "
+          "on, the write creates/updates a keyframe at the CURRENT PLAYHEAD (or at `at`, timeline "
+          "seconds) instead of setting a constant value; that time must be inside the clip, else "
+          "bad_args and nothing is written. A property with 0 or 1 key just takes the value. Use set_property_keyframes_enabled(false) or "
           "remove the keys for an unconditional value. Fails bad_args on audio clips and when no "
           "transform field is supplied.",
-          objectSchema(mergeProps({{QStringLiteral("x"), numberProp(QStringLiteral("Left edge, canvas pixels"))},
+          objectSchema(mergeProps({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds for the keyframe when the write keys (default: playhead); must be inside the clip"))},
+                                   {QStringLiteral("x"), numberProp(QStringLiteral("Left edge, canvas pixels"))},
                                    {QStringLiteral("y"), numberProp(QStringLiteral("Top edge, canvas pixels"))},
                                    {QStringLiteral("w"), numberProp(QStringLiteral("On-canvas width in pixels (not source resolution)"))},
                                    {QStringLiteral("h"), numberProp(QStringLiteral("On-canvas height in pixels"))},
@@ -1092,7 +1094,7 @@ const QList<Op> &ops()
 
         { "get_ui_preferences", "ui", "Read editor UI settings",
           "Returns {theme:{overridden, dark}, autoKey, mediaGrid, reopenLastProject}. autoKey matters "
-          "for set_transform: when true, transform writes become keyframes at the playhead.",
+          "for set_transform: when true, transform writes become keyframes at the playhead (or its `at`), which must be inside the clip.",
           objectSchema({}), true, false, true },
         { "set_theme", "ui", "Set dark or light theme",
           "Set an explicit dark-mode preference. This overrides the OS theme; clear it with "
@@ -1512,7 +1514,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
              QStringLiteral("apply cannot run catalog, toolbox, search, inspect, capture, frames, activity, or apply; call those directly."),
              QStringLiteral("Clip-ref ops need clip (uuid) or track+index; they never fall back to the selection (read it from inspect.selection)."),
              QStringLiteral("Effect and transition parameter writes fail not_found on an unknown key or a stack index that is not there."),
-             QStringLiteral("set_transform writes at the playhead and becomes a keyframe when the property is animated or autoKey is on."),
+             QStringLiteral("set_transform keys at the playhead (or at, inside the clip) when the property is animated or autoKey is on."),
              QStringLiteral("set_mask and set_subtitle_cues replace the whole mask / cue list; read the current one from inspect first."),
              QStringLiteral("Segmentation, denoise and face detection expose no progress field; diff inspect to detect completion."),
              QStringLiteral("Outside the undo stack (as are all read-only ops): %1. set_beat_layers changes the user's own snapping and cannot be undone.")
