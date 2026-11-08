@@ -35,6 +35,8 @@
 #include <QtConcurrent/QtConcurrentRun>
 
 #include <QCryptographicHash>
+#include <QTimer>
+#include "app/editor/PreferencesController.h"
 #include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
@@ -50,8 +52,10 @@ QByteArray AppController::serializeProjectJson() const
     const QJsonObject session = sessionJson();
     for (auto it = session.constBegin(); it != session.constEnd(); ++it)
         root.insert(it.key(), it.value());
-    if (const QJsonObject history = historyJson(drift::captureHistory(m_undoStack)); !history.isEmpty())
-        root.insert(QStringLiteral("undoHistory"), history);
+    if (persistsUndoHistory()) {
+        if (const QJsonObject history = historyJson(drift::captureHistory(m_undoStack)); !history.isEmpty())
+            root.insert(QStringLiteral("undoHistory"), history);
+    }
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 
@@ -275,7 +279,9 @@ void AppController::applyParsedProject(ParsedProject parsed)
     m_faces->ingestSwapSourcesInProject();
     m_playback.setProject(&m_project);
     m_undoStack.clear();
-    if (parsed.history) {
+    // With history kept per session (or off), a history saved earlier is not brought back: it
+    // would only be dropped on the next save, after costing the memory this setting avoids.
+    if (parsed.history && persistsUndoHistory()) {
         const drift::Project loaded = m_project;
         QList<drift::HistoryStatePtr> states;
         states.reserve(parsed.history->states.size());
@@ -1066,6 +1072,63 @@ QSet<QString> AppController::historyMediaPaths() const
         add(step.after);
     }
     return paths;
+}
+
+bool AppController::persistsUndoHistory() const
+{
+    return !m_preferences || m_preferences->undoHistoryMode() == QLatin1String("project");
+}
+
+int AppController::undoHistoryCap() const
+{
+    if (!m_preferences)
+        return -1;
+    if (m_preferences->undoHistoryMode() == QLatin1String("off"))
+        return 0;
+    const int limit = m_preferences->undoHistoryLimit();
+    return limit > 0 ? limit : -1;
+}
+
+void AppController::scheduleUndoHistoryTrim()
+{
+    if (m_undoTrimQueued || undoHistoryCap() < 0 || m_undoStack.count() <= undoHistoryCap())
+        return;
+    m_undoTrimQueued = true;
+    QTimer::singleShot(0, this, [this] {
+        m_undoTrimQueued = false;
+        trimUndoHistory();
+    });
+}
+
+void AppController::trimUndoHistory()
+{
+    const int cap = undoHistoryCap();
+    if (cap < 0 || m_undoStack.count() <= cap)
+        return;
+    // QUndoStack can only drop its oldest commands through setUndoLimit, which it refuses on a
+    // non-empty stack, so the kept steps are rebuilt the way a loaded history is. The states are
+    // shared, so this copies pointers, not projects; the dropped ones are freed with the last
+    // command holding them, and the media only they referenced stops being kept for them.
+    const drift::HistoryCapture capture = drift::captureHistory(m_undoStack);
+    // Only applied steps can go: dropping an undone one would leave redo out of step.
+    const int drop = qMin(int(capture.steps.size()) - cap, capture.index);
+    if (drop <= 0)
+        return;
+    const drift::Project current = m_project;
+    {
+        const QSignalBlocker blocker(&m_undoStack);
+        m_undoStack.clear();
+        for (int i = drop; i < capture.steps.size(); ++i) {
+            const drift::HistoryCapture::Step &step = capture.steps.at(i);
+            auto *command = new drift::ProjectSnapshotCommand(&m_project, step.before, step.after, step.text);
+            command->adoptApplied();
+            m_undoStack.push(command);
+        }
+        m_undoStack.setIndex(capture.index - drop);
+    }
+    m_project = current;
+    emit undoHistoryChanged();
+    emit undoStackChanged();
 }
 
 QJsonObject AppController::historyJson(const drift::HistoryCapture &capture,

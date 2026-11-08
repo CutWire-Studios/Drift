@@ -2060,6 +2060,14 @@ protected:
     // Every file a project state reachable by undo/redo points at, so cleanup does not take
     // media the history still needs.
     QSet<QString> historyMediaPaths() const;
+    // Whether undo history is saved into the project file (the "project" history mode).
+    bool persistsUndoHistory() const;
+    // Most undo steps to keep: -1 for no limit, 0 when history is off.
+    int undoHistoryCap() const;
+    // Coalesced: the trim runs once the current edit has finished, never in the middle of one.
+    void scheduleUndoHistoryTrim();
+    // Drops the oldest undo steps past undoHistoryCap(). Steps that are undone (redo) are kept.
+    void trimUndoHistory();
 public:
     // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
     // media they reference. Reads only the capture, so a worker can run it. `states` receives one
@@ -2094,6 +2102,7 @@ protected:
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;
+    bool m_undoTrimQueued = false;
     // tracks() serialises every clip in the project into nested QVariantMaps, and used to do it
     // once per binding that read it. Cached between edits; notifyTracksChanged() drops it.
     mutable QVariantList m_tracksCache;
