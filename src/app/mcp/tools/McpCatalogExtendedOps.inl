@@ -8,7 +8,9 @@
         { "replace_asset", "media", "Swap source file",
           "Point an existing bin row at a different file. Every clip using the asset switches to the "
           "new media, keeping its trim and timeline position — trims past the new file's duration are "
-          "clamped downstream.",
+          "clamped downstream. The file is always re-read, also when it is the same path with new "
+          "content; the call waits for that (15s cap) and returns the asset as now probed (dur, kind) "
+          "with reprobed:[id], or replace_failed; past the cap import_timeout, with pending:true to poll.",
           objectSchema({{QStringLiteral("asset"), assetRefProp()},
                         {QStringLiteral("path"), stringProp(QStringLiteral("Absolute path or file:// URL; must exist"))}},
                        {QStringLiteral("asset"), QStringLiteral("path")}) },
@@ -921,12 +923,16 @@
           objectSchema({}) },
 
         { "set_effect_enabled", "effects", "Bypass a video effect without losing its settings",
-          "Bypass or re-enable a video effect without removing it. The effect keeps its stack position "
-          "and parameters.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
-                                   {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("enabled")}) },
+          "Bypass or re-enable one video effect without removing it; it keeps its stack position and "
+          "parameters. Pick it by index (stack position) or by effect: a stack position, or a catalog "
+          "id such as \"film.grain\" when the clip has exactly one effect of that id (bad_args lists "
+          "the positions when it has several; not_found when there is no such effect). The reply's effectIndex is the stack position it changed.",
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
+                                      {QStringLiteral("effect"),
+                                       QJsonObject{{QStringLiteral("type"), QJsonArray{QStringLiteral("integer"), QStringLiteral("string")}},
+                                                   {QStringLiteral("description"), QStringLiteral("The effect: stack position, or catalog id from list_effects")}}},
+                                      {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("enabled")}) },
         { "move_effect", "effects", "Change the order a clip's effects render in",
           "Move a video effect to a different stack position. Effects render in stack order, so this "
           "changes the result. All indices between from and to shift.",
@@ -938,17 +944,15 @@
           "Set a color-typed effect parameter. Use this instead of set_effect_param for params whose "
           "type is color in list_effects. Fails not_found on a key the effect has no colour parameter "
           "for, or a stack index that isn't there.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
-                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB; alpha is not carried, effect colours bind as vec3"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                   {QStringLiteral("value"), stringProp(QStringLiteral("Color #RRGGBB; alpha is not carried, effect colours bind as vec3"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "set_audio_effect_enabled", "effects", "Toggle audio effect",
           "Bypass or re-enable an audio effect without removing it.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
-                                   {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("enabled")}) },
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
+                                   {QStringLiteral("enabled"), boolProp(QStringLiteral("Enabled"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("enabled")}) },
         { "move_audio_effect", "effects", "Reorder audio effect",
           "Move an audio effect to a different stack position. Audio effects process in stack order.",
           objectSchema(mergeProps({{QStringLiteral("from"), effectIndexProp()},
@@ -1481,11 +1485,10 @@
           "Set a file- or string-typed effect parameter (e.g. face_swap's sourceImage). Value is an "
           "absolute path or file:// URL. Fails bad_args without index or key, and not_found on a key "
           "the effect doesn't declare.",
-          objectSchema(mergeProps({{QStringLiteral("index"), effectIndexProp()},
+          objectSchema(effectOpProps({{QStringLiteral("index"), effectIndexProp()},
                                    {QStringLiteral("key"), stringProp(QStringLiteral("Parameter key from list_effects"))},
-                                   {QStringLiteral("value"), stringProp(QStringLiteral("Absolute path, file:// URL, or string value"))}},
-                                  clipRefProps()),
-                       {QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
+                                   {QStringLiteral("value"), stringProp(QStringLiteral("Absolute path, file:// URL, or string value"))}}),
+                       {QStringLiteral("clip"), QStringLiteral("index"), QStringLiteral("key"), QStringLiteral("value")}) },
         { "apply_text_preset", "text", "Restyle an existing title",
           "Apply a text style pack (builtin from list_text_presets, or a user: id from "
           "list_user_text_presets) to a text or subtitle clip. Replaces the whole style — font, "
