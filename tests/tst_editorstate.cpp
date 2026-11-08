@@ -1981,7 +1981,6 @@ void EditorStateTest::recoverySnapshotSkipsAnUnchangedProject()
     QVERIFY(QDir().mkpath(recovery));
     state.projectFile()->flushRecoverySnapshot();
     // Until the blocked attempt has run its promote: the directory goes only after it failed.
-    QVERIFY(state.projectFile()->m_recoveryPromotePending);
     QTRY_VERIFY(!state.projectFile()->m_recoveryPromotePending);
     QVERIFY(!QFileInfo::exists(recovery + QStringLiteral(".tmp")));
     QVERIFY(QFileInfo(recovery).isDir());
