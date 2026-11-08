@@ -512,7 +512,10 @@ ProjectFileController::SaveCapture ProjectFileController::captureSave(bool embed
     // them is safe and costs nothing.
     capture.project = std::make_shared<const drift::Project>(m_app->m_project.detachedCopy());
     capture.session = m_app->sessionJson();
-    capture.history = drift::captureHistory(m_app->m_undoStack);
+    // Crash recovery keeps history either way (it restores this session); a save only in the
+    // "project" history mode.
+    if (m_app->persistsUndoHistory())
+        capture.history = drift::captureHistory(m_app->m_undoStack);
     capture.embedSource = embedSource;
     capture.dirtyRevision = m_dirtyRevision;
     capture.projectId = m_app->m_project.id();
@@ -1493,6 +1496,7 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
     }
 
     if (result->kind == LoadResult::Kind::Recovery) {
+        result->parsed->fromRecovery = true;
         m_app->applyParsedProject(std::move(*result->parsed));
         // Restore the association with the original file (if any) and mark unsaved so
         // the user is nudged to re-save; keep the recovery file until the next save.

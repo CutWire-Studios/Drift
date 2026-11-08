@@ -1019,15 +1019,19 @@ void AppController::removeBookmarkNearPlayhead()
 
 // Freeze frames are project media, not cache: they live under the project's own media dir so a
 // save bundles them and a cache sweep can't delete the file a saved clip points at.
-// Full-size MCP captures use the same folder.
-QString AppController::newFreezeFramePath(const QString &projectId)
+QString AppController::projectMediaDir(const QString &projectId)
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     if (base.isEmpty())
         return {};
-
     const QString dir = QDir(base).filePath(QStringLiteral("projects/%1/media").arg(projectId));
-    if (!QDir().mkpath(dir))
+    return QDir().mkpath(dir) ? dir : QString();
+}
+
+QString AppController::newFreezeFramePath(const QString &projectId)
+{
+    const QString dir = projectMediaDir(projectId);
+    if (dir.isEmpty())
         return {};
 
     return QDir(dir).filePath(QStringLiteral("freeze-%1.png")

@@ -27,6 +27,8 @@
 #include <QHostAddress>
 #include <QImage>
 #include <QTemporaryDir>
+
+#include <filesystem>
 #include <QTimer>
 #include <QUrlQuery>
 
@@ -86,6 +88,7 @@ private slots:
     void catalogOpsIncludeWhen();
     void toolboxDescriptionsIncludeWhen();
     void segmentationOutputDefaultsToAdjustment();
+    void captureFilesStayOutOfTheProject();
     void subtitleClipKeepsItsChosenName();
     void setTransformKeysOnlyInsideTheClip();
     void homepageToolsRejectUnknownArgs();
@@ -213,6 +216,8 @@ private slots:
     void selectionBasedOpsExcludePlayheadOps();
     void inspectReportsSelectionAndUndo();
     void listHistoryLabelsApplyBatch();
+    void listHistoryReflectsTheHistoryLimit();
+    void historyOpsSeeTheTrimmedStack();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -430,6 +435,140 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
         ++checked;
     }
     QCOMPARE(checked, 2);
+}
+
+// capture({full:true}) used to write freeze-*.png into the project's media folder, where they
+// piled up and a save bundled them. They go to the session's agent-image cache now, and path
+// lets the agent pick the file.
+void McpTest::captureFilesStayOutOfTheProject()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpCaptureTest"));
+    const auto restore = qScopeGuard([&] {
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
+    AssetLibrary library;
+    AppController state(&library);
+    state.addTextClip(QStringLiteral("Hello"), 0.0);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString cache = state.mcp()->imageLog()->sessionDir();
+    QVERIFY(!cache.isEmpty());
+
+    // Importing a file from the agent-image cache copies it into the project's media, so the
+    // project never points at a file the cache sweep deletes. Two captures with the same name
+    // stay two images. (No compositor needed.)
+    QTemporaryDir otherSession(QDir(cache).absoluteFilePath(QStringLiteral("../import-test-XXXXXX")));
+    QVERIFY(otherSession.isValid());
+    const QString first = QDir(cache).filePath(QStringLiteral("look.png"));
+    const QString second = otherSession.filePath(QStringLiteral("look.png"));
+    QImage red(16, 16, QImage::Format_RGB32);
+    red.fill(Qt::red);
+    QImage blue(16, 16, QImage::Format_RGB32);
+    blue.fill(Qt::blue);
+    QVERIFY(red.save(first, "PNG"));
+    QVERIFY(blue.save(second, "PNG"));
+    const QJsonObject imported = dispatcher.applyOne(QStringLiteral("import_media"),
+                                                     {{QStringLiteral("paths"), QJsonArray{first, second}}});
+    QVERIFY2(imported.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(imported).toJson()));
+    const QJsonArray copied = imported.value(QStringLiteral("copied_into_project")).toArray();
+    QCOMPARE(copied.size(), 2);
+    const QString redCopy = copied.at(0).toString();
+    const QString blueCopy = copied.at(1).toString();
+    QVERIFY(redCopy != blueCopy);
+    for (const QString &path : {redCopy, blueCopy})
+        QVERIFY2(path.contains(QStringLiteral("projects/%1/media").arg(state.project()->id())), qPrintable(path));
+    QVERIFY(QFile::remove(first));
+    QVERIFY(QFile::remove(second));
+    QCOMPARE(QImage(redCopy).pixelColor(0, 0), QColor(Qt::red));
+    QCOMPARE(QImage(blueCopy).pixelColor(0, 0), QColor(Qt::blue));
+    QStringList assetPaths;
+    for (const drift::MediaAsset &asset : state.project()->assets())
+        assetPaths.append(asset.path);
+    QVERIFY2(assetPaths.contains(redCopy) && assetPaths.contains(blueCopy), qPrintable(assetPaths.join(u',')));
+    for (const QString &path : std::as_const(assetPaths))
+        QVERIFY2(!path.startsWith(QFileInfo(cache).absolutePath()), qPrintable(path));
+    QFile::remove(redCopy);
+    QFile::remove(blueCopy);
+
+    const auto textOf = [](const QJsonObject &result) {
+        const QJsonArray content = result.value(QStringLiteral("content")).toArray();
+        return content.isEmpty() ? QJsonObject()
+                                 : QJsonDocument::fromJson(content.first().toObject().value(QStringLiteral("text")).toString().toUtf8()).object();
+    };
+    const QJsonObject full = dispatcher.capture({{QStringLiteral("at"), 0.5}, {QStringLiteral("full"), true}});
+    if (full.value(QStringLiteral("isError")).toBool()
+        && textOf(full).value(QStringLiteral("detail")).toString().contains(QStringLiteral("Compositor returned no frame")))
+        QSKIP("Compositor could not produce a frame in this environment");
+    QVERIFY2(!full.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(full).toJson()));
+    const QString written = textOf(full).value(QStringLiteral("path")).toString();
+    QVERIFY2(QFileInfo::exists(written), qPrintable(written));
+    QVERIFY2(written.startsWith(cache), qPrintable(written));
+
+    // frames({return:"path"}) goes to the same cache folder.
+    const QJsonObject sheet = dispatcher.frames({{QStringLiteral("at"), QJsonArray{0.5}}, {QStringLiteral("return"), QStringLiteral("path")}});
+    const QString sheetPath = sheet.value(QStringLiteral("path")).toString().isEmpty()
+                                  ? textOf(sheet).value(QStringLiteral("path")).toString()
+                                  : sheet.value(QStringLiteral("path")).toString();
+    QVERIFY2(sheetPath.startsWith(cache), qPrintable(QJsonDocument(sheet).toJson()));
+
+    QTemporaryDir out;
+    QVERIFY(out.isValid());
+    const QString chosen = out.filePath(QStringLiteral("look"));
+    const QJsonObject atPath = dispatcher.capture({{QStringLiteral("at"), 0.5}, {QStringLiteral("path"), chosen}});
+    QVERIFY2(!atPath.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(atPath).toJson()));
+    QCOMPARE(textOf(atPath).value(QStringLiteral("path")).toString(), chosen + QStringLiteral(".png"));
+    QVERIFY(QFileInfo::exists(chosen + QStringLiteral(".png")));
+
+    // An existing file is not replaced unless asked; a symlink never is.
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), chosen + QStringLiteral(".png")}})
+                .value(QStringLiteral("isError")).toBool());
+    QVERIFY(QFile::setPermissions(chosen + QStringLiteral(".png"),
+                                  QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ReadUser
+                                      | QFileDevice::WriteUser | QFileDevice::ReadGroup | QFileDevice::ReadOther));
+    QVERIFY(!dispatcher.capture({{QStringLiteral("path"), chosen + QStringLiteral(".png")}, {QStringLiteral("overwrite"), true}})
+                 .value(QStringLiteral("isError")).toBool());
+    // The replaced file keeps its permissions (the temp file it is written through is 0600).
+    QVERIFY(QFileInfo(chosen + QStringLiteral(".png")).permissions().testFlag(QFileDevice::ReadOther));
+    QVERIFY(QDir(out.path()).entryList({QStringLiteral(".capture-*")}, QDir::Files | QDir::Hidden).isEmpty());
+    const QString victim = out.filePath(QStringLiteral("victim.txt"));
+    {
+        QFile f(victim);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("keep me");
+    }
+    const QString link = out.filePath(QStringLiteral("link.png"));
+    std::error_code linkError;
+    std::filesystem::create_symlink(victim.toStdString(), link.toStdString(), linkError);
+    if (!linkError) {
+        QVERIFY(dispatcher.capture({{QStringLiteral("path"), link}, {QStringLiteral("overwrite"), true}})
+                    .value(QStringLiteral("isError")).toBool());
+        // Below the dispatcher's check (a symlink swapped in while the frame renders): the
+        // overwrite replaces the link itself and never writes through it.
+        const QJsonObject raced = state.mcp()->captureFrame(0.5, false, false, link, /*overwrite=*/true);
+        QVERIFY2(!raced.value(QStringLiteral("isError")).toBool(), qPrintable(QJsonDocument(raced).toJson()));
+        QVERIFY(!QFileInfo(link).isSymLink());
+        QVERIFY(!QImage(link).isNull());
+    } else {
+        qWarning("symlinks unavailable here; skipping the symlink checks");
+    }
+    {
+        QFile f(victim);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), QByteArray("keep me"));
+    }
+
+    // A path-only capture still shows up in the agent image log.
+    const int logged = state.mcp()->imageLog()->rowCount();
+    const QJsonObject args{{QStringLiteral("at"), 0.5}, {QStringLiteral("path"), out.filePath(QStringLiteral("logged.png"))}};
+    state.mcp()->imageLog()->recordResult(1, QStringLiteral("capture"), args, dispatcher.capture(args));
+    QCOMPARE(state.mcp()->imageLog()->rowCount(), logged + 1);
+
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), QStringLiteral("relative.png")}})
+                .value(QStringLiteral("isError")).toBool());
+    QVERIFY(dispatcher.capture({{QStringLiteral("path"), out.filePath(QStringLiteral("missing/dir/x.png"))}})
+                .value(QStringLiteral("isError")).toBool());
 }
 
 // set_clip_name on a subtitle clip used to be overwritten with "Subtitles (N)" by the next cue edit.
@@ -3889,6 +4028,122 @@ void McpTest::listHistoryLabelsApplyBatch()
     QCOMPARE(history.value(QStringLiteral("hash")).toString().size(), 64);
     QCOMPARE(history.value(QStringLiteral("short")).toString(), shortHash);
     QVERIFY(history.value(QStringLiteral("hash")).toString().startsWith(shortHash));
+}
+
+namespace {
+// The history settings live in QSettings: isolated from the host's store and removed afterwards.
+auto isolateUndoHistorySettings()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestMcpUndoHistory"));
+    const auto clear = [] {
+        QSettings settings;
+        settings.remove(QStringLiteral("editor/undoHistoryMode"));
+        settings.remove(QStringLiteral("editor/undoHistoryLimit"));
+    };
+    clear();
+    return qScopeGuard([org, app, clear] {
+        clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+}
+
+QJsonObject addTextOp(int i)
+{
+    return {{QStringLiteral("ops"),
+             QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("add_text")},
+                                    {QStringLiteral("args"),
+                                     QJsonObject{{QStringLiteral("text"), QStringLiteral("T%1").arg(i)},
+                                                 {QStringLiteral("at"), i * 2.0}}}}}}};
+}
+} // namespace
+
+// With a step limit, the trim runs after each edit; history read over MCP straight after the
+// edits (no event loop in between) must already be the trimmed one, or its indices go stale.
+void McpTest::listHistoryReflectsTheHistoryLimit()
+{
+    const auto restore = isolateUndoHistorySettings();
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.preferences()->setUndoHistoryLimit(2);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 4; ++i) {
+        const QJsonObject batch = dispatcher.apply(
+            {{QStringLiteral("ops"),
+              QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("add_text")},
+                                     {QStringLiteral("args"),
+                                      QJsonObject{{QStringLiteral("text"), QStringLiteral("T%1").arg(i)},
+                                                  {QStringLiteral("at"), i * 2.0}}}}}}});
+        QVERIFY(batch.value(QStringLiteral("ok")).toBool());
+    }
+
+    const QJsonObject history = dispatcher.applyOne(QStringLiteral("list_history"), {});
+    QVERIFY(history.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(history.value(QStringLiteral("entries")).toArray().size(), 3); // two steps + origin
+    QCOMPARE(history.value(QStringLiteral("current")).toInt(), 2);
+}
+
+// No event loop runs between these calls, so a trim queued by one is still pending at the next:
+// every history op has to see the stack as the limit leaves it.
+void McpTest::historyOpsSeeTheTrimmedStack()
+{
+    const auto restore = isolateUndoHistorySettings();
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 5; ++i)
+        QVERIFY(dispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+
+    // restore_snapshot by a hash read before the limit: the trim renumbers the stack, and the
+    // hash must still land on its own state.
+    const QJsonObject before = dispatcher.applyOne(QStringLiteral("list_history"), {{QStringLiteral("limit"), 10}});
+    QString hashAt3;
+    for (const QJsonValue &v : before.value(QStringLiteral("entries")).toArray()) {
+        if (v.toObject().value(QStringLiteral("index")).toInt() == 3)
+            hashAt3 = v.toObject().value(QStringLiteral("short")).toString();
+    }
+    QVERIFY(!hashAt3.isEmpty());
+    state.preferences()->setUndoHistoryLimit(2);
+    const QJsonObject restored = dispatcher.applyOne(QStringLiteral("restore_snapshot"), {{QStringLiteral("hash"), hashAt3}});
+    QVERIFY2(restored.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(restored).toJson()));
+    QCOMPARE(restored.value(QStringLiteral("short")).toString(), hashAt3);
+    QCOMPARE(state.undoHistory().size(), 2);
+    QCOMPARE(restored.value(QStringLiteral("index")).toInt(), 0);
+
+    // undo_to forward through redo steps takes the applied steps past the limit: the reply carries
+    // the index after the trim that move causes, on the state that was asked for. Built on a fresh
+    // controller with no limit first, so five redo steps are waiting when the limit arrives.
+    {
+        AppController fresh(&library);
+        fresh.preferences()->setUndoHistoryLimit(0);
+        drift::mcp::McpDispatcher freshDispatcher(&fresh);
+        for (int i = 0; i < 5; ++i)
+            QVERIFY(freshDispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+        const QJsonObject newest = freshDispatcher.applyOne(QStringLiteral("list_history"), {});
+        const QString newestHash = newest.value(QStringLiteral("short")).toString();
+        QVERIFY(freshDispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 0}})
+                    .value(QStringLiteral("ok")).toBool());
+        fresh.preferences()->setUndoHistoryLimit(2); // index 0: nothing to trim yet
+        QCOMPARE(fresh.undoHistory().size(), 5);
+        const QJsonObject forward =
+            freshDispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 5}});
+        QVERIFY(forward.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(forward.value(QStringLiteral("index")).toInt(), 2);
+        QCOMPARE(forward.value(QStringLiteral("short")).toString(), newestHash);
+        QCOMPARE(fresh.undoIndex(), 2);
+        QCOMPARE(fresh.undoHistory().size(), 2);
+        state.preferences()->setUndoHistoryLimit(2); // shared store; keep the outer test's value
+    }
+
+    // Off, then undo straight away: the steps waiting to be dropped are not undone.
+    state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
+    const QJsonObject undo = dispatcher.applyOne(QStringLiteral("undo"), {});
+    QVERIFY(!undo.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.undoHistory().size(), 0);
 }
 
 void McpTest::undoToRestoresSnapshot()

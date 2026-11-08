@@ -708,7 +708,8 @@ const QList<Op> &ops()
           "first, current, hash, short, total, linear:true}. index 0 is Origin (empty/loaded project); "
           "each later entry is one undo step. short is the first 12 chars of that version's SHA-256 "
           "(undo_to takes any ≥8-char prefix); hash is the full HEAD hash — the same bytes "
-          "take_snapshot writes to <hash>.json. Read-only.",
+          "take_snapshot writes to <hash>.json. With an undo step limit set, each new step can drop the "
+          "oldest and renumber the rest: keep the hash, not the index, across edits. Read-only.",
           objectSchema({{QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Newest entries to return"), 1, 10000), 20)}}),
           true, false, true },
         { "undo_to", "timeline", "Jump to a history version",
@@ -1666,9 +1667,11 @@ QJsonArray homepageTools()
                      {QStringLiteral("ops")})));
     tools.append(toolDef(
         QStringLiteral("capture"),
-        QStringLiteral("When: Verify visually. Still of the composition at `at`, defaulting to the playhead. Pauses playback first. By default returns an inline JPEG scaled to a 1280px long edge plus {at, w, h, full}; full=true instead writes a full-resolution PNG next to the project's frame captures and returns its path in the reply. beyond_end:true and dur are added when `at` is past the end of the timeline. view:\"editor3d\" instead renders the preview's free 3D viewpoint (the one set_preview_view moves; the overview if never placed) with the scene camera and stage drawn in it, and adds view to the reply. Cannot be used inside apply."),
+        QStringLiteral("When: Verify visually. Still of the composition at `at`, defaulting to the playhead. Pauses playback first. By default returns an inline JPEG scaled to a 1280px long edge plus {at, w, h, full}; full=true instead writes a full-resolution PNG to this session's agent-image cache folder (not the project; deleted when Drift quits, or swept after a day if it crashed; import_media copies such a file into the project) and returns its path in the reply; path:\"/abs/file.png\" writes it there instead, refusing an existing file unless overwrite:true. beyond_end:true and dur are added when `at` is past the end of the timeline. view:\"editor3d\" instead renders the preview's free 3D viewpoint (the one set_preview_view moves; the overview if never placed) with the scene camera and stage drawn in it, and adds view to the reply. Cannot be used inside apply."),
         objectSchema({{QStringLiteral("at"), numberProp(QStringLiteral("Timeline seconds (default: playhead)"))},
                       {QStringLiteral("full"), boolProp(QStringLiteral("Full-res PNG on disk instead of inline JPEG"))},
+                      {QStringLiteral("path"), stringProp(QStringLiteral("Absolute .png path to write to (its folder must exist; not a symlink); a file instead of inline JPEG, full-res only with full:true (else 1280px long edge)"))},
+                      {QStringLiteral("overwrite"), boolProp(QStringLiteral("Replace an existing file at path (default false: fails with exists)"))},
                       {QStringLiteral("view"), propWithDefault(enumProp(QStringLiteral("program is the composition; editor3d is the preview's free 3D viewpoint"),
                                                                    {QStringLiteral("program"), QStringLiteral("editor3d")}),
                                                           QStringLiteral("program"))}}),
@@ -1698,7 +1701,7 @@ QJsonArray homepageTools()
              {QStringLiteral("tile"), integerProp(QStringLiteral("Tile width in pixels; 0 = auto so the sheet fits one vision image"), 0, 720)},
              {QStringLiteral("label"), propWithDefault(boolProp(QStringLiteral("Burn the time into each tile")), true)},
              {QStringLiteral("return"),
-              propWithDefault(enumProp(QStringLiteral("inline JPEG in the reply, or path to a JPEG next to the project's frame captures"),
+              propWithDefault(enumProp(QStringLiteral("inline JPEG in the reply, or path to a JPEG in this session's agent-image cache folder (deleted when Drift quits, or swept after a day if it crashed)"),
                                        {QStringLiteral("inline"), QStringLiteral("path")}),
                               QStringLiteral("inline"))}},
             clipRefProps())),

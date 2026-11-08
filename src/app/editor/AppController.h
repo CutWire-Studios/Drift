@@ -359,6 +359,9 @@ public:
         drift::Project project;
         QJsonObject root;
         std::optional<drift::StoredHistory> history;
+        // A crash-recovery file: its history belongs to the session that crashed, so it is
+        // restored in the "session" history mode too.
+        bool fromRecovery = false;
     };
     static std::optional<ParsedProject> parseProjectJson(const QByteArray &data, QString *error);
     static std::optional<ParsedProject> parseProjectJson(const QJsonObject &root, QString *error);
@@ -846,6 +849,9 @@ public:
     // playhead is outside it. Honours trim, speed, reverse and speed curves.
     Q_INVOKABLE double sourceTimeAtPlayheadForClip(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void deleteSelectedClip();
+    // Runs a history-limit trim that is still queued, for readers of history indices (MCP
+    // list_history, undo_to, inspect) that must not see the stack before and then after it.
+    void flushUndoHistoryTrim();
     Q_INVOKABLE void duplicateSelectedClip();
     Q_INVOKABLE void moveClip(int trackIndex, int clipIndex, double newStart);
     Q_INVOKABLE void moveClipToTrack(int trackIndex, int clipIndex, int newTrackIndex, double newStart);
@@ -1469,6 +1475,8 @@ public:
     Q_INVOKABLE void clearWorkArea();
     Q_INVOKABLE void toggleLoopWorkArea();
     Q_INVOKABLE void freezeFrameAtPlayhead();
+    // The project's own media folder (created if needed): files here are bundled on save.
+    static QString projectMediaDir(const QString &projectId);
     Q_INVOKABLE void previewClipRange(int trackIndex, int clipIndex);
     Q_INVOKABLE void clearPreviewRange();
     Q_INVOKABLE QVariantMap clipTimelineRange(int track, int clip) const;
@@ -2060,6 +2068,15 @@ protected:
     // Every file a project state reachable by undo/redo points at, so cleanup does not take
     // media the history still needs.
     QSet<QString> historyMediaPaths() const;
+    // Whether undo history is saved into the project file (the "project" history mode).
+    bool persistsUndoHistory() const;
+    // Most steps that can be undone: -1 for no limit, 0 when history is off. Undone steps (redo)
+    // do not count; the next edit drops them anyway.
+    int undoHistoryCap() const;
+    // Coalesced: the trim runs once the current edit has finished, never in the middle of one.
+    void scheduleUndoHistoryTrim();
+    // Drops the oldest applied undo steps past undoHistoryCap(); with history off, every step.
+    void trimUndoHistory();
 public:
     // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
     // media they reference. Reads only the capture, so a worker can run it. `states` receives one
@@ -2094,6 +2111,7 @@ protected:
     // The audio error already on screen, so a device that fails repeatedly toasts once.
     QString m_lastAudioError;
     QUndoStack m_undoStack;
+    bool m_undoTrimQueued = false;
     // tracks() serialises every clip in the project into nested QVariantMaps, and used to do it
     // once per binding that read it. Cached between edits; notifyTracksChanged() drops it.
     mutable QVariantList m_tracksCache;
@@ -2367,7 +2385,6 @@ protected:
     static drift::TimeUs keyframeWriteSnapUs();
     static drift::EasingSpec easingSpecFromMap(const QVariantMap &spec);
     void clearPose3d(drift::Clip &clip);
-    // Freeze frames and full-size MCP captures share one media path.
     static QString newFreezeFramePath(const QString &projectId);
 
     void setProjectLayoutChosen(bool chosen);
