@@ -1333,7 +1333,7 @@
                {QStringLiteral("prefix"), propWithDefault(stringProp(QStringLiteral("Bookmark label prefix; the shot number is appended")), QStringLiteral("Scene"))}},
               clipRefProps())) },
 
-        { "set_ui_preferences", "ui", "Change autoKey, media grid, proxy suggestion",
+        { "set_ui_preferences", "ui", "Change UI preferences",
           "Set editor preferences; only supplied keys change. Note followSystem only acts when TRUE "
           "(it clears the dark-mode override); passing false does nothing — use set_theme to pin a "
           "theme. autoKey matters for set_transform: when on, transform writes become keyframes at the "
@@ -1344,6 +1344,9 @@
                         {QStringLiteral("mediaGrid"), boolProp(QStringLiteral("Media bin grid mode"))},
                         {QStringLiteral("reopenLastProject"), boolProp(QStringLiteral("Reopen last project on launch"))},
                         {QStringLiteral("followSystem"), boolProp(QStringLiteral("true clears the theme override so the OS theme wins; false is a no-op"))},
+                        {QStringLiteral("agentNotifications"),
+                         enumProp(QStringLiteral("Which notifications your own calls raise on the user's screen while they run: all or problems (warnings and errors; default). none is user-only. Results that finish later (an export, a probe) still show. Global, kept across sessions"),
+                                  {QStringLiteral("all"), QStringLiteral("problems")})},
                         {QStringLiteral("proxySuggestion"),
                          enumProp(QStringLiteral("What imports do with footage that would preview slowly: ask (a notification offers proxies; default) or never. always is user-only. Global, kept across sessions"),
                                   {QStringLiteral("ask"), QStringLiteral("never")})}}) },

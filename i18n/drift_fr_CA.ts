@@ -17305,6 +17305,26 @@ En cas de saccades à la lecture, essayez un autre mode.</translation>
         <translation>Activer automatiquement l’accès de l’agent la prochaine fois que vous ouvrirez Drift. La désactivation de l’accès réinitialise ce paramètre.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Tous</translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">Nuage</translation>
     </message>

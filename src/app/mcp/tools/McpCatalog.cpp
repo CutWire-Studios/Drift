@@ -1125,7 +1125,8 @@ const QList<Op> &ops()
           objectSchema(clipRefProps()), false, true },
 
         { "get_ui_preferences", "ui", "Read editor UI settings",
-          "Returns {theme:{overridden, dark}, autoKey, mediaGrid, reopenLastProject, proxySuggestion}. autoKey matters "
+          "Returns {theme:{overridden, dark}, autoKey, mediaGrid, reopenLastProject, proxySuggestion, "
+          "agentNotifications}. autoKey matters "
           "for set_transform: when true, transform writes become keyframes at the playhead (or its `at`), which must be inside the clip.",
           objectSchema({}), true, false, true },
         { "set_theme", "ui", "Set dark or light theme",

@@ -17303,6 +17303,26 @@ Se la riproduzione va a scatti, prova un&apos;altra opzione.</translation>
         <translation>Attiva automaticamente l&apos;accesso dell&apos;agente alla successiva apertura di Drift. La disattivazione dell&apos;accesso reimposta questa opzione.</translation>
     </message>
     <message>
+        <source>Notifications for agent actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which pop-ups an agent&apos;s own edits show you. Errors always show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Tutti</translation>
+    </message>
+    <message>
+        <source>Problems only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None (errors still show)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cloud</source>
         <translation type="unfinished">Nuvola</translation>
     </message>
