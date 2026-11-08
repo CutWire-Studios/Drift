@@ -4582,6 +4582,10 @@ void McpTest::historyHousekeepingOps()
     for (int i = 0; i < 5; ++i)
         QVERIFY(dispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
     QVERIFY(dispatcher.applyOne(QStringLiteral("undo"), {}).value(QStringLiteral("ok")).toBool());
+    // Saved, so the clear below is what makes it changed again.
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+    QVERIFY(!state.projectFile()->hasUnsavedChanges());
 
     QJsonObject stats = dispatcher.applyOne(QStringLiteral("history_stats"), {});
     QVERIFY2(stats.value(QStringLiteral("ok")).toBool(), qPrintable(QJsonDocument(stats).toJson()));

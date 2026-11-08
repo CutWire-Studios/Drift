@@ -1871,11 +1871,19 @@ QJsonObject McpController::historyStats(bool size) const
     // Project snapshots held in memory (a step's before and after, shared where a step reuses
     // one). Each is a full project copy, though copies share data that did not change. Counted by
     // identity, so this serialises nothing.
+    // Walked through the live commands, not the capture: a macro's inner steps hold snapshots
+    // of their own, which the capture flattens away.
     QSet<const drift::HistoryState *> states;
-    for (const drift::HistoryCapture::Step &step : capture.steps) {
-        states.insert(step.before.get());
-        states.insert(step.after.get());
-    }
+    const std::function<void(const QUndoCommand *)> collect = [&](const QUndoCommand *command) {
+        if (const auto *snapshot = dynamic_cast<const drift::ProjectSnapshotCommand *>(command)) {
+            states.insert(snapshot->beforeState().get());
+            states.insert(snapshot->afterState().get());
+        }
+        for (int c = 0; c < command->childCount(); ++c)
+            collect(command->child(c));
+    };
+    for (int i = 0; i < m_app->m_undoStack.count(); ++i)
+        collect(m_app->m_undoStack.command(i));
     QStringList media = m_app->historyOnlyMediaPaths().values();
     media.sort();
     const int mediaCount = media.size();
