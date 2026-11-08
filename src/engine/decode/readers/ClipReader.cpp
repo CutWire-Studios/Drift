@@ -7,6 +7,7 @@
 #include "engine/decode/probe/MediaProbe.h"
 #include "engine/decode/SwsColorRange.h"
 
+#include <QScopeGuard>
 #include <QTransform>
 #include <QtMath>
 #include <QByteArray>
@@ -285,6 +286,9 @@ ClipReader::ClipReader() = default;
 ClipReader::~ClipReader()
 {
     close();
+    m_videoCache.clear();
+    m_previewCache.clear();
+    syncCacheAccounting();
 }
 
 void ClipReader::teardownVideoDecoder()
@@ -328,6 +332,7 @@ void ClipReader::teardownVideoDecoder()
     m_decodeH = 0;
     m_videoCache.clear();
     m_previewCache.clear();
+    syncCacheAccounting();
     updateReadAheadCount();
 }
 
@@ -372,6 +377,7 @@ void ClipReader::applyDecodeSize(const QSize &size)
     m_decodeH = size.height();
     m_videoCache.clear();
     m_previewCache.clear();
+    syncCacheAccounting();
 }
 
 namespace {
@@ -620,6 +626,8 @@ void ClipReader::storeCachedFrame(drift::TimeUs ptsUs, const QImage &image)
     m_videoCache.prepend(CachedFrame{ptsUs, image});
     while (m_videoCache.size() > kMaxCachedFrames)
         m_videoCache.removeLast();
+    // Every return below has trimmed by now; re-counted once whichever way it leaves.
+    const auto accounted = qScopeGuard([this] { syncCacheAccounting(); });
 
     // Optional byte cap on CPU-side history; a 4K reader can otherwise hold half a gigabyte.
     // Always keeps the newest frame.
@@ -659,6 +667,10 @@ namespace {
 
 // Readers currently holding read-ahead. The preview cache budget is split between them.
 std::atomic<int> g_readAheadReaders{0};
+std::atomic<qint64> g_cachedFrameBytes{0};
+std::atomic<int> g_cachedFrames{0};
+std::atomic<int> g_cachedGpuFrames{0};
+std::atomic<int> g_openReaders{0};
 std::atomic<int> g_activeVideoStreams{1};
 
 qint64 physicalMemoryBytes()
@@ -705,6 +717,57 @@ qsizetype previewCacheBudgetBytes()
 }
 
 } // namespace
+
+ClipReader::CacheStats ClipReader::cacheStats()
+{
+    CacheStats stats;
+    stats.bytes = g_cachedFrameBytes.load(std::memory_order_relaxed);
+    stats.frames = g_cachedFrames.load(std::memory_order_relaxed);
+    stats.gpuFrames = g_cachedGpuFrames.load(std::memory_order_relaxed);
+    stats.budgetBytes = previewCacheBudgetBytes();
+    return stats;
+}
+
+int ClipReader::openReaderCount()
+{
+    return g_openReaders.load(std::memory_order_relaxed);
+}
+
+void ClipReader::syncOpenCount()
+{
+    const bool open = isOpen();
+    if (open == m_countedOpen)
+        return;
+    m_countedOpen = open;
+    g_openReaders.fetch_add(open ? 1 : -1, std::memory_order_relaxed);
+}
+
+void ClipReader::syncCacheAccounting()
+{
+    qint64 bytes = 0;
+    int gpuFrames = 0;
+    for (const CachedFrame &cached : std::as_const(m_videoCache))
+        bytes += cached.image.sizeInBytes();
+    for (const CachedPreview &cached : std::as_const(m_previewCache)) {
+        const AVFrame *f = cached.frame.frame.get();
+        if (!f)
+            continue;
+        if (cached.frame.isHardware()) {
+            ++gpuFrames;
+            continue;
+        }
+        const int size = av_image_get_buffer_size(static_cast<AVPixelFormat>(f->format), f->width, f->height, 1);
+        if (size > 0)
+            bytes += size;
+    }
+    const int frames = int(m_videoCache.size() + m_previewCache.size());
+    g_cachedFrameBytes.fetch_add(bytes - m_accountedBytes, std::memory_order_relaxed);
+    g_cachedFrames.fetch_add(frames - m_accountedFrames, std::memory_order_relaxed);
+    g_cachedGpuFrames.fetch_add(gpuFrames - m_accountedGpuFrames, std::memory_order_relaxed);
+    m_accountedBytes = bytes;
+    m_accountedFrames = frames;
+    m_accountedGpuFrames = gpuFrames;
+}
 
 void ClipReader::setActiveVideoStreams(int count)
 {
@@ -808,6 +871,8 @@ void ClipReader::trimPreviewCache()
         }
         m_previewCache.removeAt(worst);
     }
+    // Every caller, the read-ahead change in prefetchNextPreviewVideoFrame included.
+    syncCacheAccounting();
 }
 
 bool ClipReader::wantsMorePreviewReadAhead() const
@@ -845,10 +910,13 @@ void ClipReader::close()
     m_audioNextPtsUs = 0;
     m_audioLeftover.clear();
     m_path.clear();
+    syncOpenCount();
 }
 
 bool ClipReader::open(const QString &path, int audioStreamOrdinal)
 {
+    // Whichever way it returns, the open-reader count follows.
+    const auto counted = qScopeGuard([this] { syncOpenCount(); });
     if (path.isEmpty())
         return false;
     if (m_path == path && m_audioStreamOrdinal == audioStreamOrdinal && isOpen())

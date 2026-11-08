@@ -118,6 +118,11 @@ public:
     // importFinished fires before the off-thread probe fills width/height/fps/duration, so
     // anything sizing a canvas or a clip from a new asset must wait on this.
     Q_INVOKABLE bool isImportPending(const QString &assetId) const;
+    // The token of the probe running for an asset (0 when none), and of the probe whose result is
+    // being delivered right now (0 outside that delivery): lets a caller tell its own probe's
+    // outcome from another probe of the same asset.
+    quint64 probeTokenFor(const QString &assetId) const { return m_probeToken.value(assetId); }
+    quint64 completingProbeToken() const { return m_completingProbeToken; }
     // Registers media the app rendered itself (freeze frames and the like). The asset is already
     // complete, so this skips the probe and thumbnail jobs the import path runs. Returns its id.
     QString addGeneratedAsset(drift::MediaAsset asset);
@@ -213,6 +218,9 @@ public:
     Q_INVOKABLE bool isMissing(const QString &assetId) const;
     int missingCount() const { return int(m_missing.size()); }
     Q_INVOKABLE void createProxies(const QStringList &assetIds);
+    // What the end of an import does with footage that would preview slowly: "ask" emits it in
+    // importSuggestions, "always" queues proxies for it, "never" drops it (the preference).
+    void setProxySuggestionMode(const QString &mode) { m_proxySuggestionMode = mode; }
     // Drops queued jobs and deletes built proxies. Not undoable, and doesn't need to be: a
     // proxy is a cache, not project content.
     Q_INVOKABLE void removeProxies(const QStringList &assetIds);
@@ -335,6 +343,7 @@ private:
     // which also runs for a mere model refresh (template import, collect media) with the asset
     // still there and its probe still the one to wait for.
     QHash<QString, quint64> m_probeToken;
+    quint64 m_completingProbeToken = 0;
     quint64 m_lastProbeToken = 0;
     QSet<QString> m_thumbPending;
     // Asset ids whose settings (rotation/trim) changed again while a thumbnail job for them was
@@ -357,6 +366,10 @@ private:
     // Asset ids, FIFO. The building one is not in the queue.
     QStringList m_proxyQueue;
     QStringList m_proxyNamePatterns;
+    QString m_proxySuggestionMode = QStringLiteral("ask");
+    // "always": imported assets waiting for a sidecar scan before a proxy is queued for them, so
+    // an existing proxy (generated or external) is found first and never re-encoded or overwritten.
+    QSet<QString> m_autoProxyPending;
     // Unwritable source folders met since the queue last drained.
     QStringList m_proxyFallbackFolders;
     QString m_proxyBuilding;

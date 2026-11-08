@@ -132,6 +132,8 @@ void splitLinkedPartnerAt(drift::Project &project, const drift::Clip &sourceHead
             continue;
 
         partnerTail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        if (partnerTail.type != drift::ClipType::Subtitle)
+            partnerTail.name = drift::nextSplitPieceName(track, partner.name);
         if (!tailLinkId.isEmpty())
             partnerTail.linkId = tailLinkId;
         else
@@ -508,8 +510,17 @@ void AppController::cancelAudioRecording()
 
 void AppController::setLastMessage(const QString &message, const QString &severity)
 {
-    if (m_lastMessage == message && m_lastMessageSeverity == severity)
+    // An agent's own actions don't toast at the user beyond what the preference allows; an error
+    // always gets through, whatever it is set to. The message is still stored: MCP replies read it.
+    bool quiet = false;
+    if (!message.isEmpty() && severity != QLatin1String("error") && m_mcpController
+        && m_mcpController->inAgentCall() && m_preferences) {
+        const QString level = m_preferences->agentNotifications();
+        quiet = level == QLatin1String("none") || (level == QLatin1String("problems") && severity != QLatin1String("warning"));
+    }
+    if (m_lastMessage == message && m_lastMessageSeverity == severity && m_lastMessageQuiet == quiet)
         return;
+    m_lastMessageQuiet = quiet;
 
     m_lastMessage = message;
     m_lastMessageSeverity = severity;
@@ -738,6 +749,9 @@ void AppController::pushProjectEdit(const drift::Project &before, const QString 
     // This is also where a track created by this edit gets its id — nested lanes address their
     // parent by it, and the dozen places that append a track all leave it empty.
     normalizeProjectStructure(&before);
+    // Pinned adjustments take their span from their clip. finishEdit re-spans them too, but only
+    // after this snapshot -- a redo would then restore every effect at its clip's old position.
+    syncLinkedAdjustments(m_project);
     syncCompositeAssetDurations();
     // Belt and braces for the tracks cache: normalizeProjectStructure() rewrites the project, and
     // every edit in the app reaches this function or finishEdit(). One bool write buys immunity
@@ -773,9 +787,9 @@ void AppController::finishEdit(const QString &message)
     // suspended). Idempotent, and pushProjectEdit has normally already done the work.
     normalizeProjectStructure();
 
-    // Pinned adjustments follow their clip from here rather than from each of the dozens of
-    // paths that can move one, so a drag, trim, split, ripple delete or multicam retarget all
-    // keep the link true for free.
+    // Pinned adjustments follow their clip from one place rather than from each of the dozens of
+    // paths that can move one. pushProjectEdit has normally re-spanned them already (before its
+    // snapshot); this catches the paths that bypass it.
     syncLinkedAdjustments(m_project);
     normalizeSelection();
     if (m_selectedTransitionTrack >= 0) {
@@ -1387,6 +1401,40 @@ void AppController::clearSelection()
 
 void AppController::deleteSelectedClip()
 {
+    deleteSelection(/*withPinnedAdjustments=*/false);
+}
+
+void AppController::deleteSelectedClipWithEffects()
+{
+    deleteSelection(/*withPinnedAdjustments=*/true);
+}
+
+bool AppController::selectionHasPinnedAdjustments() const
+{
+    QList<QPair<int, int>> pairs = m_selection;
+    if (pairs.isEmpty() && isValidClipIndex(m_selectedTrack, m_selectedClip))
+        pairs = {qMakePair(m_selectedTrack, m_selectedClip)};
+    if (pairs.isEmpty())
+        return false;
+    expandSelectionWithLinkedPartners(m_project, pairs);
+    QSet<QString> hostIds;
+    for (const QPair<int, int> &pair : std::as_const(pairs)) {
+        if (isValidClipIndex(pair.first, pair.second))
+            hostIds.insert(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+    }
+    for (const drift::Track &track : m_project.tracks()) {
+        if (!track.isAdjustment())
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            if (!clip.linkedClipId.isEmpty() && hostIds.contains(clip.linkedClipId))
+                return true;
+        }
+    }
+    return false;
+}
+
+void AppController::deleteSelection(bool withPinnedAdjustments)
+{
     if (m_selection.isEmpty() && m_selectedTrack >= 0 && m_selectedClip >= 0)
         m_selection = {qMakePair(m_selectedTrack, m_selectedClip)};
     if (m_selection.isEmpty())
@@ -1395,6 +1443,31 @@ void AppController::deleteSelectedClip()
     const drift::Project before = m_project;
     QList<QPair<int, int>> pairs = m_selection;
     expandSelectionWithLinkedPartners(m_project, pairs);
+    // Pinned adjustments are removed without rippling their lane: the lane follows its parent
+    // track, and syncLinkedAdjustments re-spans the remaining ones onto their clips afterwards.
+    QSet<QPair<int, int>> pinnedAdjustments;
+    if (withPinnedAdjustments) {
+        QSet<QString> hostIds;
+        for (const QPair<int, int> &pair : std::as_const(pairs)) {
+            if (isValidClipIndex(pair.first, pair.second))
+                hostIds.insert(m_project.tracks().at(pair.first).clips.at(pair.second).id);
+        }
+        for (int t = 0; t < m_project.tracks().size(); ++t) {
+            const drift::Track &track = m_project.tracks().at(t);
+            if (!track.isAdjustment())
+                continue;
+            for (int c = 0; c < track.clips.size(); ++c) {
+                const drift::Clip &clip = track.clips.at(c);
+                if (clip.linkedClipId.isEmpty() || !hostIds.contains(clip.linkedClipId))
+                    continue;
+                // Also when the user selected it alongside its host: it is still removed as a
+                // pinned adjustment, not as a free clip that would ripple its lane.
+                pinnedAdjustments.insert(qMakePair(t, c));
+                if (!pairs.contains(qMakePair(t, c)))
+                    pairs.append(qMakePair(t, c));
+            }
+        }
+    }
     QSet<QString> removedClipIds;
     struct RemovedRange { int track; drift::TimeUs start; drift::TimeUs duration; };
     QList<RemovedRange> removedRanges;
@@ -1408,7 +1481,8 @@ void AppController::deleteSelectedClip()
             continue;
         const drift::Clip &clip = m_project.tracks().at(pair.first).clips.at(pair.second);
         removedClipIds.insert(clip.id);
-        removedRanges.append({pair.first, clip.timelineStart, clip.timelineDuration});
+        if (!pinnedAdjustments.contains(pair))
+            removedRanges.append({pair.first, clip.timelineStart, clip.timelineDuration});
         m_project.tracks()[pair.first].clips.removeAt(pair.second);
     }
     if (m_rippleEnabled) {
@@ -1423,6 +1497,28 @@ void AppController::deleteSelectedClip()
             const drift::Transition &transition = track.transitions.at(i);
             if (removedClipIds.contains(transition.fromClipId) || removedClipIds.contains(transition.toClipId))
                 track.transitions.removeAt(i);
+        }
+    }
+    // A nested lane this delete emptied existed only to hold those effects; leaving it would
+    // add a dead row under the parent track every time a graded clip is deleted.
+    if (!pinnedAdjustments.isEmpty()) {
+        QSet<QString> touchedLaneIds;
+        bool removedVideo = false;
+        bool removedAudio = false;
+        for (const QPair<int, int> &pair : std::as_const(pinnedAdjustments)) {
+            touchedLaneIds.insert(before.tracks().at(pair.first).id);
+            const drift::AdjustmentKind kind = before.tracks().at(pair.first).clips.at(pair.second).adjustmentKind;
+            removedVideo = removedVideo || kind == drift::AdjustmentKind::VideoEffects;
+            removedAudio = removedAudio || kind == drift::AdjustmentKind::AudioEffects;
+        }
+        // The graph's hidden entries address effects by stack index; with the stack gone they
+        // would hide parameters of whatever effect lands in that slot next.
+        dropKeyframeGraphEffectProperties(removedVideo, removedAudio);
+        for (int t = m_project.tracks().size() - 1; t >= 0; --t) {
+            const drift::Track &track = m_project.tracks().at(t);
+            if (track.isAdjustmentLane() && track.clips.isEmpty() && !track.id.isEmpty()
+                && touchedLaneIds.contains(track.id))
+                m_project.tracks().removeAt(t);
         }
     }
     pushProjectEdit(before, tr("Clip deleted"));
@@ -1639,6 +1735,8 @@ void AppController::splitAtPlayhead()
                 continue;
 
             tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+            if (tail.type != drift::ClipType::Subtitle)
+                tail.name = drift::nextSplitPieceName(track, clip.name);
             const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
             if (!clip.linkId.isEmpty())
                 handledLinkIds.insert(clip.linkId);
@@ -1685,6 +1783,9 @@ void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)
         return;
 
     tail.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    // Subtitle halves are already named from their cues by the split.
+    if (tail.type != drift::ClipType::Subtitle)
+        tail.name = drift::nextSplitPieceName(track, clip.name);
     const QString tailLinkId = drift::assignSplitLinkIds(clip, tail);
     const QString headId = clip.id;
     splitLinkedPartnerAt(m_project, clip, atUs, tailLinkId);

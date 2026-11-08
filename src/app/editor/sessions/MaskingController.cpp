@@ -6,6 +6,7 @@
 #include "app/editor/sessions/MaskEditSession.h"
 #include "app/editor/sessions/MaskStackModel.h"
 #include "app/jobs/vision/TrackingController.h"
+#include "app/mcp/McpController.h"
 #include "app/mcp/McpDetail.h"
 #include "core/edit/MaskSpace.h"
 #include "engine/compositor/FrameCompositor.h"
@@ -1114,6 +1115,15 @@ bool MaskingController::waitForBrushSaves(int timeoutMs)
     QElapsedTimer timer;
     timer.start();
     m_brushPool.waitForDone(timeoutMs);
+    // The pump below delivers the user's input too; an agent call that is waiting here must not
+    // have that input's notifications filtered as its own.
+    McpController *mcp = m_app->mcp();
+    if (mcp)
+        mcp->pauseAgentCalls();
+    const auto resume = qScopeGuard([mcp] {
+        if (mcp)
+            mcp->resumeAgentCalls();
+    });
     while (m_brushSavesInFlight > 0 && timer.elapsed() < timeoutMs)
         QCoreApplication::processEvents();
     return m_brushSavesInFlight == 0;

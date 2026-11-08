@@ -123,6 +123,15 @@ public:
     // the file afresh, and is stopped by whichever reader finishes with it last.
     void releasePath(const QString &path);
 
+    // Decode workers (one thread each), for memory_stats. A worker can hold several readers
+    // (one per stream); ClipReader::openReaderCount() counts those.
+    struct Stats
+    {
+        int videoWorkers = 0;
+        int audioWorkers = 0;
+    };
+    Stats stats();
+
 private:
     ClipReaderPool();
     ~ClipReaderPool();
