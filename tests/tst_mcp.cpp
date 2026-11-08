@@ -3506,11 +3506,30 @@ void McpTest::historyOpsSeeTheTrimmedStack()
     QCOMPARE(state.undoHistory().size(), 2);
     QCOMPARE(restored.value(QStringLiteral("index")).toInt(), 0);
 
-    // undo_to forward through redo steps goes past the limit; the reply has the settled index.
-    const QJsonObject forward = dispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 2}});
-    QVERIFY(forward.value(QStringLiteral("ok")).toBool());
-    QCOMPARE(forward.value(QStringLiteral("index")).toInt(), state.undoIndex());
-    QCOMPARE(state.undoIndex(), 2);
+    // undo_to forward through redo steps takes the applied steps past the limit: the reply carries
+    // the index after the trim that move causes, on the state that was asked for. Built on a fresh
+    // controller with no limit first, so five redo steps are waiting when the limit arrives.
+    {
+        AppController fresh(&library);
+        fresh.preferences()->setUndoHistoryLimit(0);
+        drift::mcp::McpDispatcher freshDispatcher(&fresh);
+        for (int i = 0; i < 5; ++i)
+            QVERIFY(freshDispatcher.apply(addTextOp(i)).value(QStringLiteral("ok")).toBool());
+        const QJsonObject newest = freshDispatcher.applyOne(QStringLiteral("list_history"), {});
+        const QString newestHash = newest.value(QStringLiteral("short")).toString();
+        QVERIFY(freshDispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 0}})
+                    .value(QStringLiteral("ok")).toBool());
+        fresh.preferences()->setUndoHistoryLimit(2); // index 0: nothing to trim yet
+        QCOMPARE(fresh.undoHistory().size(), 5);
+        const QJsonObject forward =
+            freshDispatcher.applyOne(QStringLiteral("undo_to"), {{QStringLiteral("index"), 5}});
+        QVERIFY(forward.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(forward.value(QStringLiteral("index")).toInt(), 2);
+        QCOMPARE(forward.value(QStringLiteral("short")).toString(), newestHash);
+        QCOMPARE(fresh.undoIndex(), 2);
+        QCOMPARE(fresh.undoHistory().size(), 2);
+        state.preferences()->setUndoHistoryLimit(2); // shared store; keep the outer test's value
+    }
 
     // Off, then undo straight away: the steps waiting to be dropped are not undone.
     state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
