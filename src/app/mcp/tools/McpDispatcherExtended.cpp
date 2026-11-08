@@ -3257,6 +3257,15 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
     if (tool == QLatin1String("take_snapshot"))
         return m_controller->mcp()->takeSnapshot(argString(args, QStringLiteral("label")));
 
+    if (tool == QLatin1String("clear_history"))
+        return m_controller->mcp()->clearHistory(jsonInt(args.value(QStringLiteral("keep_last")), 0));
+
+    if (tool == QLatin1String("set_history_limit"))
+        return m_controller->mcp()->setHistoryLimit(args);
+
+    if (tool == QLatin1String("history_stats"))
+        return m_controller->mcp()->historyStats();
+
     if (tool == QLatin1String("list_snapshots"))
         return m_controller->mcp()->listSnapshots();
 

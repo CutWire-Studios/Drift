@@ -191,6 +191,11 @@ public:
     // jmn8718/Drift#32: where the memory goes, and dropping what can be rebuilt.
     QJsonObject memoryStats() const;
     QJsonObject clearCache();
+    // Undo history housekeeping (jmn8718/Drift#30).
+    QJsonObject clearHistory(int keepLast);
+    QJsonObject setHistoryLimit(const QJsonObject &args);
+    QJsonObject historyStats() const;
+    QJsonObject historySettings() const;
     QJsonObject listSnapshots() const;
     QJsonObject restoreSnapshot(const QString &hash);
 

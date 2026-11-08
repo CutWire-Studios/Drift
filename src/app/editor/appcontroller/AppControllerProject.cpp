@@ -73,6 +73,14 @@ QJsonObject AppController::sessionJson() const
     // predate the tree mode.
     root.insert(QStringLiteral("mediaGridMode"), mediaGridMode());
     root.insert(QStringLiteral("loopWorkArea"), m_loopWorkAreaEnabled);
+    if (!m_projectHistoryMode.isEmpty() || m_projectHistoryLimit >= 0) {
+        QJsonObject history;
+        if (!m_projectHistoryMode.isEmpty())
+            history.insert(QStringLiteral("mode"), m_projectHistoryMode);
+        if (m_projectHistoryLimit >= 0)
+            history.insert(QStringLiteral("limit"), m_projectHistoryLimit);
+        root.insert(QStringLiteral("undoHistorySettings"), history);
+    }
     QJsonArray guideSets;
     for (const QString &id : m_activeGuideSets) {
         const drift::GuideSet *set = findGuideSet(id);
@@ -89,6 +97,8 @@ QJsonObject AppController::sessionJson() const
 
 void AppController::resetSessionState()
 {
+    m_projectHistoryMode.clear();
+    m_projectHistoryLimit = -1;
     // These end up editing the project, so they have to run while it is still the one they were
     // opened against.
     m_speedCurve->end();
@@ -282,6 +292,15 @@ void AppController::applyParsedProject(ParsedProject parsed)
     // With history kept per session (or off), a history saved earlier is not brought back: it
     // would only be dropped on the next save, after costing the memory this setting avoids. A
     // recovery file's history is the crashed session's own, so "session" restores it.
+    {
+        // Before the history itself: the project's own setting decides whether it is restored.
+        const QJsonObject history = root.value(QStringLiteral("undoHistorySettings")).toObject();
+        const QString mode = history.value(QStringLiteral("mode")).toString();
+        m_projectHistoryMode = PreferencesController::undoHistoryModes().contains(mode) ? mode : QString();
+        m_projectHistoryLimit = history.contains(QStringLiteral("limit"))
+                                    ? qMax(0, history.value(QStringLiteral("limit")).toInt())
+                                    : -1;
+    }
     const bool restoreHistory =
         parsed.fromRecovery ? undoHistoryCap() != 0 : persistsUndoHistory();
     if (parsed.history && restoreHistory) {
@@ -1079,18 +1098,33 @@ QSet<QString> AppController::historyMediaPaths() const
     return paths;
 }
 
+QString AppController::effectiveUndoHistoryMode() const
+{
+    if (!m_projectHistoryMode.isEmpty())
+        return m_projectHistoryMode;
+    return m_preferences ? m_preferences->undoHistoryMode() : QStringLiteral("project");
+}
+
+QSet<QString> AppController::historyOnlyMediaPaths() const
+{
+    QSet<QString> paths = historyMediaPaths();
+    for (const QString &path : stateMediaPaths(m_project))
+        paths.remove(path);
+    return paths;
+}
+
 bool AppController::persistsUndoHistory() const
 {
-    return !m_preferences || m_preferences->undoHistoryMode() == QLatin1String("project");
+    return effectiveUndoHistoryMode() == QLatin1String("project");
 }
 
 int AppController::undoHistoryCap() const
 {
-    if (!m_preferences)
-        return -1;
-    if (m_preferences->undoHistoryMode() == QLatin1String("off"))
+    if (effectiveUndoHistoryMode() == QLatin1String("off"))
         return 0;
-    const int limit = m_preferences->undoHistoryLimit();
+    const int limit = m_projectHistoryLimit >= 0 ? m_projectHistoryLimit
+                      : m_preferences             ? m_preferences->undoHistoryLimit()
+                                                  : 0;
     return limit > 0 ? limit : -1;
 }
 
@@ -1146,21 +1180,39 @@ void AppController::trimUndoHistory()
     const int drop = capture.index - cap;
     if (drop <= 0)
         return;
+    rebuildUndoStack(capture, drop, int(capture.steps.size()), capture.index - drop);
+}
+
+void AppController::rebuildUndoStack(const drift::HistoryCapture &capture, int first, int last,
+                                     int index)
+{
     const drift::Project current = m_project;
     {
         const QSignalBlocker blocker(&m_undoStack);
         m_undoStack.clear();
-        for (int i = drop; i < capture.steps.size(); ++i) {
+        for (int i = first; i < last; ++i) {
             const drift::HistoryCapture::Step &step = capture.steps.at(i);
             auto *command = new drift::ProjectSnapshotCommand(&m_project, step.before, step.after, step.text);
             command->adoptApplied();
             m_undoStack.push(command);
         }
-        m_undoStack.setIndex(capture.index - drop);
+        m_undoStack.setIndex(index);
     }
     m_project = current;
     emit undoHistoryChanged();
     emit undoStackChanged();
+}
+
+int AppController::clearUndoHistory(int keepLast)
+{
+    flushUndoHistoryTrim();
+    const drift::HistoryCapture capture = drift::captureHistory(m_undoStack);
+    const int keep = qBound(0, keepLast, capture.index);
+    const int removed = int(capture.steps.size()) - keep;
+    if (removed <= 0)
+        return 0;
+    rebuildUndoStack(capture, capture.index - keep, capture.index, keep);
+    return removed;
 }
 
 QJsonObject AppController::historyJson(const drift::HistoryCapture &capture,

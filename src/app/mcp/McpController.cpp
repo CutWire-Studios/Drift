@@ -1815,6 +1815,93 @@ QJsonObject McpController::clearCache()
                             {QStringLiteral("decoders"), decodersJson()}}}});
 }
 
+QJsonObject McpController::historySettings() const
+{
+    const int cap = m_app->undoHistoryCap();
+    const bool own = !m_app->m_projectHistoryMode.isEmpty() || m_app->m_projectHistoryLimit >= 0;
+    return {{QStringLiteral("mode"), m_app->effectiveUndoHistoryMode()},
+            // Steps that can be undone at most: 0 with history off, -1 with no limit.
+            {QStringLiteral("steps"), cap},
+            {QStringLiteral("source"), own ? QStringLiteral("project") : QStringLiteral("global")}};
+}
+
+QJsonObject McpController::clearHistory(int keepLast)
+{
+    using namespace drift::mcp;
+    const int removed = m_app->clearUndoHistory(qMax(0, keepLast));
+    QJsonObject reply{{QStringLiteral("removed"), removed},
+                      {QStringLiteral("steps"), m_app->m_undoStack.count()},
+                      {QStringLiteral("index"), m_app->m_undoStack.index()}};
+    return ok(reply);
+}
+
+QJsonObject McpController::setHistoryLimit(const QJsonObject &args)
+{
+    using namespace drift::mcp;
+    if (args.value(QStringLiteral("reset")).toBool()) {
+        m_app->m_projectHistoryMode.clear();
+        m_app->m_projectHistoryLimit = -1;
+    } else {
+        if (!args.contains(QStringLiteral("steps")) && !args.contains(QStringLiteral("persist")))
+            return err("bad_args", QStringLiteral("steps, persist or reset required"));
+        if (args.contains(QStringLiteral("steps"))) {
+            const int steps = args.value(QStringLiteral("steps")).toInt();
+            if (steps < -1)
+                return err("bad_args", QStringLiteral("steps must be -1 (no limit), 0 (no history) or more"));
+            if (steps == 0) {
+                m_app->m_projectHistoryMode = QStringLiteral("off");
+            } else {
+                // A limit brings history back if this project had it off.
+                if (m_app->m_projectHistoryMode == QLatin1String("off"))
+                    m_app->m_projectHistoryMode.clear();
+                m_app->m_projectHistoryLimit = steps < 0 ? 0 : steps;
+            }
+        }
+        if (args.contains(QStringLiteral("persist")) && m_app->m_projectHistoryMode != QLatin1String("off")) {
+            m_app->m_projectHistoryMode = args.value(QStringLiteral("persist")).toBool()
+                                              ? QStringLiteral("project")
+                                              : QStringLiteral("session");
+        }
+    }
+    // Saved with the project, so the project has changed.
+    m_app->m_projectFile->setDirty(true);
+    m_app->scheduleUndoHistoryTrim();
+    m_app->flushUndoHistoryTrim();
+    QJsonObject reply = historySettings();
+    reply.insert(QStringLiteral("steps_kept"), m_app->m_undoStack.count());
+    return ok(reply);
+}
+
+QJsonObject McpController::historyStats() const
+{
+    using namespace drift::mcp;
+    m_app->flushUndoHistoryTrim();
+    const drift::HistoryCapture capture = drift::captureHistory(m_app->m_undoStack);
+    const drift::HistoryDocument document = drift::historyToJson(capture);
+    const qint64 jsonBytes =
+        document.json.isEmpty() ? 0 : QJsonDocument(document.json).toJson(QJsonDocument::Compact).size();
+    QStringList media = m_app->historyOnlyMediaPaths().values();
+    media.sort();
+    const int mediaCount = media.size();
+    if (media.size() > 20)
+        media = media.mid(0, 20);
+    QJsonObject reply{
+        {QStringLiteral("steps"), m_app->m_undoStack.count()},
+        {QStringLiteral("undoable"), m_app->m_undoStack.index()},
+        {QStringLiteral("redoable"), m_app->m_undoStack.count() - m_app->m_undoStack.index()},
+        // Distinct project states the steps hold; identical ones are shared.
+        {QStringLiteral("states"), document.states.size()},
+        // The history as uncompressed JSON: what a save adds before compression, and a rough
+        // measure of its size. Memory use is higher; it is not measured here.
+        {QStringLiteral("json_bytes"), double(jsonBytes)},
+        {QStringLiteral("saved_with_project"), m_app->persistsUndoHistory()},
+        {QStringLiteral("history_only_media"), mediaCount},
+        {QStringLiteral("history_only_media_paths"), QJsonArray::fromStringList(media)},
+        {QStringLiteral("settings"), historySettings()},
+    };
+    return ok(reply);
+}
+
 QJsonObject McpController::takeSnapshot(const QString &label)
 {
     m_app->flushUndoHistoryTrim(); // history indices as they will stay
