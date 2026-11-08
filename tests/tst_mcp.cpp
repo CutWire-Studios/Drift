@@ -205,6 +205,7 @@ private slots:
     void selectionBasedOpsExcludePlayheadOps();
     void inspectReportsSelectionAndUndo();
     void listHistoryLabelsApplyBatch();
+    void listHistoryReflectsTheHistoryLimit();
     void undoToRestoresSnapshot();
     void setRippleIsNotUndoable();
     void closeGapClosesOneHole();
@@ -3418,6 +3419,46 @@ void McpTest::listHistoryLabelsApplyBatch()
     QCOMPARE(history.value(QStringLiteral("hash")).toString().size(), 64);
     QCOMPARE(history.value(QStringLiteral("short")).toString(), shortHash);
     QVERIFY(history.value(QStringLiteral("hash")).toString().startsWith(shortHash));
+}
+
+// With a step limit, the trim runs after each edit; history read over MCP straight after the
+// edits (no event loop in between) must already be the trimmed one, or its indices go stale.
+void McpTest::listHistoryReflectsTheHistoryLimit()
+{
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestMcpUndoHistory"));
+    const auto clear = [] {
+        QSettings settings;
+        settings.remove(QStringLiteral("editor/undoHistoryMode"));
+        settings.remove(QStringLiteral("editor/undoHistoryLimit"));
+    };
+    clear();
+    const auto restore = qScopeGuard([org, app, clear] {
+        clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
+    });
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.preferences()->setUndoHistoryLimit(2);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    for (int i = 0; i < 4; ++i) {
+        const QJsonObject batch = dispatcher.apply(
+            {{QStringLiteral("ops"),
+              QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("add_text")},
+                                     {QStringLiteral("args"),
+                                      QJsonObject{{QStringLiteral("text"), QStringLiteral("T%1").arg(i)},
+                                                  {QStringLiteral("at"), i * 2.0}}}}}}});
+        QVERIFY(batch.value(QStringLiteral("ok")).toBool());
+    }
+
+    const QJsonObject history = dispatcher.applyOne(QStringLiteral("list_history"), {});
+    QVERIFY(history.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(history.value(QStringLiteral("entries")).toArray().size(), 3); // two steps + origin
+    QCOMPARE(history.value(QStringLiteral("current")).toInt(), 2);
 }
 
 void McpTest::undoToRestoresSnapshot()

@@ -194,6 +194,8 @@ private slots:
     void undoHistoryLimitDropsTheOldestSteps();
     void undoHistoryOffKeepsNoSteps();
     void sessionUndoHistoryIsNotSaved();
+    void undoHistoryLimitAppliesToALoadedHistory();
+    void sessionUndoHistoryComesBackFromRecovery();
     void savedBundleKeepsHistoryAndShrinksIt();
     void editDuringSaveKeepsProjectModified();
     void overlappingSavesRunInOrder();
@@ -1849,22 +1851,24 @@ void EditorStateTest::savedBundleKeepsHistoryAndShrinksIt()
 }
 
 namespace {
-// The history settings live in QSettings; put them back so other tests see the defaults.
+// The history settings live in QSettings: isolated from the host's store, and removed again so a
+// crash mid-test cannot leave a limit behind for the other history tests.
 auto restoreUndoHistorySettings()
 {
-    QSettings settings;
-    const QVariant mode = settings.value(QStringLiteral("editor/undoHistoryMode"));
-    const QVariant limit = settings.value(QStringLiteral("editor/undoHistoryLimit"));
-    return qScopeGuard([mode, limit] {
-        QSettings restore;
-        const auto put = [&restore](const QString &key, const QVariant &value) {
-            if (value.isValid())
-                restore.setValue(key, value);
-            else
-                restore.remove(key);
-        };
-        put(QStringLiteral("editor/undoHistoryMode"), mode);
-        put(QStringLiteral("editor/undoHistoryLimit"), limit);
+    const QString org = QCoreApplication::organizationName();
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DriftTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DriftTestUndoHistory"));
+    const auto clear = [] {
+        QSettings settings;
+        settings.remove(QStringLiteral("editor/undoHistoryMode"));
+        settings.remove(QStringLiteral("editor/undoHistoryLimit"));
+    };
+    clear();
+    return qScopeGuard([org, app, clear] {
+        clear();
+        QCoreApplication::setOrganizationName(org);
+        QCoreApplication::setApplicationName(app);
     });
 }
 } // namespace
@@ -1892,22 +1896,27 @@ void EditorStateTest::undoHistoryLimitDropsTheOldestSteps()
         state.redo();
     QCOMPARE(state.bookmarks().size(), 5);
 
-    // Lowering the limit with steps undone keeps them: only applied steps are dropped.
+    // The limit counts steps that can be undone. Undone ones (redo) are kept: with one step
+    // left to undo and two to redo, a limit of 1 drops nothing.
     state.undo();
     state.undo();
     state.preferences()->setUndoHistoryLimit(1);
-    QTRY_COMPARE(state.m_undoStack.count(), 2);
-    QCOMPARE(state.undoIndex(), 0);
+    QCoreApplication::processEvents();
+    QCOMPARE(state.m_undoStack.count(), 3);
+    QCOMPARE(state.undoIndex(), 1);
+    // Redoing them takes the stack past the limit again, so the oldest go once each redo lands.
     state.redo();
     state.redo();
     QCOMPARE(state.bookmarks().size(), 5);
+    QTRY_COMPARE(state.m_undoStack.count(), 1);
+    QCOMPARE(state.undoIndex(), 1);
 
     // No limit: steps accumulate again.
     state.preferences()->setUndoHistoryLimit(0);
     for (int i = 0; i < 4; ++i)
         state.addBookmark(10.0 + i, QStringLiteral("More %1").arg(i));
     QCoreApplication::processEvents();
-    QCOMPARE(state.m_undoStack.count(), 6);
+    QCOMPARE(state.m_undoStack.count(), 5);
 }
 
 void EditorStateTest::undoHistoryOffKeepsNoSteps()
@@ -1919,8 +1928,14 @@ void EditorStateTest::undoHistoryOffKeepsNoSteps()
     QCoreApplication::processEvents();
     QCOMPARE(state.m_undoStack.count(), 1);
 
+    // Even an undone step goes: off keeps nothing to redo either, and the project stays as is.
+    state.undo();
+    QVERIFY(state.redoAvailable());
     state.preferences()->setUndoHistoryMode(QStringLiteral("off"));
     QTRY_COMPARE(state.m_undoStack.count(), 0);
+    QVERIFY(!state.redoAvailable());
+    QCOMPARE(state.bookmarks().size(), 0);
+    state.addBookmark(1.0, QStringLiteral("Again"));
     state.addBookmark(2.0, QStringLiteral("No step"));
     QTRY_VERIFY(!state.undoAvailable());
     QCOMPARE(state.m_undoStack.count(), 0);
@@ -1966,6 +1981,61 @@ void EditorStateTest::sessionUndoHistoryIsNotSaved()
     QTRY_VERIFY(!again.projectFile()->projectLoadPending());
     QCOMPARE(again.bookmarks().size(), 4);
     QCOMPARE(again.m_undoStack.count(), 0); // the file has none to load
+}
+
+void EditorStateTest::undoHistoryLimitAppliesToALoadedHistory()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto testMode = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const auto restore = restoreUndoHistorySettings();
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("long.drift"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    state.preferences()->setUndoHistoryMode(QStringLiteral("project"));
+    state.preferences()->setUndoHistoryLimit(0);
+    for (int i = 0; i < 6; ++i)
+        state.addBookmark(i + 1.0, QStringLiteral("Bookmark %1").arg(i));
+    state.projectFile()->saveProject(QUrl::fromLocalFile(path));
+    state.projectFile()->waitForSave();
+
+    state.preferences()->setUndoHistoryLimit(2);
+    AppController reopened(&library);
+    reopened.projectFile()->loadProject(QUrl::fromLocalFile(path));
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QTRY_COMPARE(reopened.m_undoStack.count(), 2);
+    QCOMPARE(reopened.bookmarks().size(), 6);
+}
+
+void EditorStateTest::sessionUndoHistoryComesBackFromRecovery()
+{
+    QStandardPaths::setTestModeEnabled(true);
+    const auto testMode = qScopeGuard([] { QStandardPaths::setTestModeEnabled(false); });
+    const auto restore = restoreUndoHistorySettings();
+    const QString recovery = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+                           + QStringLiteral("/recovery/autosave.json");
+    QFile::remove(recovery);
+    const auto cleanup = qScopeGuard([recovery] { QFile::remove(recovery); });
+
+    AssetLibrary library;
+    {
+        AppController state(&library);
+        state.preferences()->setUndoHistoryMode(QStringLiteral("session"));
+        state.preferences()->setUndoHistoryLimit(0);
+        for (int i = 0; i < 4; ++i)
+            state.addBookmark(i + 1.0, QStringLiteral("B%1").arg(i));
+        state.projectFile()->flushRecoverySnapshot();
+        QTRY_VERIFY(QFileInfo::exists(recovery));
+    }
+    // The crashed session's own history: kept by "session", unlike a saved project's.
+    AppController reopened(&library);
+    QVERIFY(reopened.projectFile()->recoveryAvailable());
+    reopened.projectFile()->restoreAutosave();
+    QTRY_VERIFY(!reopened.projectFile()->projectLoadPending());
+    QCOMPARE(reopened.bookmarks().size(), 4);
+    QCOMPARE(reopened.m_undoStack.count(), 4);
 }
 
 void EditorStateTest::editDuringSaveKeepsProjectModified()

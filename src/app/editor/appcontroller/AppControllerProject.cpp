@@ -280,8 +280,11 @@ void AppController::applyParsedProject(ParsedProject parsed)
     m_playback.setProject(&m_project);
     m_undoStack.clear();
     // With history kept per session (or off), a history saved earlier is not brought back: it
-    // would only be dropped on the next save, after costing the memory this setting avoids.
-    if (parsed.history && persistsUndoHistory()) {
+    // would only be dropped on the next save, after costing the memory this setting avoids. A
+    // recovery file's history is the crashed session's own, so "session" restores it.
+    const bool restoreHistory =
+        parsed.fromRecovery ? undoHistoryCap() != 0 : persistsUndoHistory();
+    if (parsed.history && restoreHistory) {
         const drift::Project loaded = m_project;
         QList<drift::HistoryStatePtr> states;
         states.reserve(parsed.history->states.size());
@@ -298,6 +301,8 @@ void AppController::applyParsedProject(ParsedProject parsed)
             m_undoStack.setIndex(parsed.history->index);
         }
         m_project = loaded;
+        // Signals were blocked while it was rebuilt, so the limit is applied here.
+        scheduleUndoHistoryTrim();
     }
     emit undoHistoryChanged();
     emit undoStackChanged();
@@ -1089,9 +1094,16 @@ int AppController::undoHistoryCap() const
     return limit > 0 ? limit : -1;
 }
 
+static bool undoHistoryOverCap(const QUndoStack &stack, int cap)
+{
+    if (cap < 0)
+        return false;
+    return cap == 0 ? stack.count() > 0 : stack.index() > cap;
+}
+
 void AppController::scheduleUndoHistoryTrim()
 {
-    if (m_undoTrimQueued || undoHistoryCap() < 0 || m_undoStack.count() <= undoHistoryCap())
+    if (m_undoTrimQueued || !undoHistoryOverCap(m_undoStack, undoHistoryCap()))
         return;
     m_undoTrimQueued = true;
     QTimer::singleShot(0, this, [this] {
@@ -1100,21 +1112,42 @@ void AppController::scheduleUndoHistoryTrim()
     });
 }
 
+void AppController::flushUndoHistoryTrim()
+{
+    if (!m_undoTrimQueued)
+        return;
+    m_undoTrimQueued = false; // the queued call then finds nothing left to do
+    trimUndoHistory();
+}
+
 void AppController::trimUndoHistory()
 {
     const int cap = undoHistoryCap();
-    if (cap < 0 || m_undoStack.count() <= cap)
+    if (!undoHistoryOverCap(m_undoStack, cap))
         return;
     // QUndoStack can only drop its oldest commands through setUndoLimit, which it refuses on a
     // non-empty stack, so the kept steps are rebuilt the way a loaded history is. The states are
     // shared, so this copies pointers, not projects; the dropped ones are freed with the last
     // command holding them, and the media only they referenced stops being kept for them.
+    const drift::Project current = m_project;
+    if (cap == 0) {
+        // History off: nothing is kept, redo included. clear() deletes the commands without
+        // running them, and the project stays as it is.
+        {
+            const QSignalBlocker blocker(&m_undoStack);
+            m_undoStack.clear();
+        }
+        m_project = current;
+        emit undoHistoryChanged();
+        emit undoStackChanged();
+        return;
+    }
     const drift::HistoryCapture capture = drift::captureHistory(m_undoStack);
-    // Only applied steps can go: dropping an undone one would leave redo out of step.
-    const int drop = qMin(int(capture.steps.size()) - cap, capture.index);
+    // The oldest applied steps beyond the cap go. Undone ones stay: dropping one would leave
+    // redo out of step, and the next edit drops them anyway.
+    const int drop = capture.index - cap;
     if (drop <= 0)
         return;
-    const drift::Project current = m_project;
     {
         const QSignalBlocker blocker(&m_undoStack);
         m_undoStack.clear();

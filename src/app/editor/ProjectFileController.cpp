@@ -1496,6 +1496,7 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
     }
 
     if (result->kind == LoadResult::Kind::Recovery) {
+        result->parsed->fromRecovery = true;
         m_app->applyParsedProject(std::move(*result->parsed));
         // Restore the association with the original file (if any) and mark unsaved so
         // the user is nudged to re-save; keep the recovery file until the next save.

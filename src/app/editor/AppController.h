@@ -359,6 +359,9 @@ public:
         drift::Project project;
         QJsonObject root;
         std::optional<drift::StoredHistory> history;
+        // A crash-recovery file: its history belongs to the session that crashed, so it is
+        // restored in the "session" history mode too.
+        bool fromRecovery = false;
     };
     static std::optional<ParsedProject> parseProjectJson(const QByteArray &data, QString *error);
     static std::optional<ParsedProject> parseProjectJson(const QJsonObject &root, QString *error);
@@ -2062,12 +2065,16 @@ protected:
     QSet<QString> historyMediaPaths() const;
     // Whether undo history is saved into the project file (the "project" history mode).
     bool persistsUndoHistory() const;
-    // Most undo steps to keep: -1 for no limit, 0 when history is off.
+    // Most steps that can be undone: -1 for no limit, 0 when history is off. Undone steps (redo)
+    // do not count; the next edit drops them anyway.
     int undoHistoryCap() const;
     // Coalesced: the trim runs once the current edit has finished, never in the middle of one.
     void scheduleUndoHistoryTrim();
     // Drops the oldest undo steps past undoHistoryCap(). Steps that are undone (redo) are kept.
     void trimUndoHistory();
+    // Runs a trim that is still queued, for readers of history indices (MCP list_history,
+    // undo_to, inspect) that must not see the stack before and then after it.
+    void flushUndoHistoryTrim();
 public:
     // The "undoHistory" member of a saved document: states as plain JSON, deduplicated, plus the
     // media they reference. Reads only the capture, so a worker can run it. `states` receives one
