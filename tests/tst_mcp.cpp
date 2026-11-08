@@ -432,6 +432,13 @@ void McpTest::segmentationOutputDefaultsToAdjustment()
 // lets the agent pick the file.
 void McpTest::captureFilesStayOutOfTheProject()
 {
+    QStandardPaths::setTestModeEnabled(true);
+    const QString app = QCoreApplication::applicationName();
+    QCoreApplication::setApplicationName(QStringLiteral("DriftMcpCaptureTest"));
+    const auto restore = qScopeGuard([&] {
+        QCoreApplication::setApplicationName(app);
+        QStandardPaths::setTestModeEnabled(false);
+    });
     AssetLibrary library;
     AppController state(&library);
     state.addTextClip(QStringLiteral("Hello"), 0.0);
