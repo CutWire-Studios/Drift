@@ -1111,6 +1111,25 @@ QJsonObject McpController::captureFrame(double atSeconds, bool full, bool editor
     return {{QStringLiteral("content"), content}, {QStringLiteral("isError"), false}};
 }
 
+drift::EffectStackPreset McpController::effectStackOf(int trackIndex, int clipIndex) const
+{
+    return m_app->effectStackFor(trackIndex, clipIndex, -1, -1);
+}
+
+void McpController::appendEffectStack(int trackIndex, int clipIndex, const drift::EffectStackPreset &stack)
+{
+    m_app->applyEffectStack(trackIndex, clipIndex, stack, QStringLiteral("Copy effects"));
+}
+
+void McpController::warn(const QString &message)
+{
+    if (m_batchDepth > 0) {
+        m_pendingWarning = message;
+        return;
+    }
+    m_app->setLastMessage(message, QStringLiteral("warning"));
+}
+
 void McpController::beginBatch()
 {
     if (m_batchDepth++ == 0) {
@@ -1147,6 +1166,9 @@ void McpController::endBatch(const QString &text, bool pushUndo)
         m_app->pushProjectEdit(m_batchBefore, text);
     m_app->finishEdit(text);
     m_batchBefore = {};
+    // After the finishEdit above, which clears the status line.
+    if (!m_pendingWarning.isEmpty())
+        m_app->setLastMessage(std::exchange(m_pendingWarning, QString()), QStringLiteral("warning"));
 }
 
 namespace {
