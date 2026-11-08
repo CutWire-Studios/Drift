@@ -527,7 +527,7 @@ const QList<Op> &ops()
           "List imported assets. Returns {assets:[{index, id, name, kind, dur, w, h, folderId}]}; "
           "folderId \"\" is the bin root (see list_folders). usage:true adds clips, how many clips use "
           "each asset (inside composites too), and derived, how many assets were made from it (a "
-          "stabilized render's original; in use even with clips 0). There is no "
+          "stabilized render's original; in use even with clips 0; absent when none). There is no "
           "recording timestamp — \"in the order I shot them\" cannot be recovered from this list; "
           "sort by name or by the order they were imported.",
           objectSchema({{QStringLiteral("usage"),
