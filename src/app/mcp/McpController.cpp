@@ -589,6 +589,7 @@ QJsonObject McpController::clipCrop(int trackIndex, int clipIndex) const
 
 QJsonObject McpController::inspect(const InspectOptions &options) const
 {
+    m_app->flushUndoHistoryTrim(); // history indices as they will stay
     using namespace drift::mcp;
     if (options.since >= 0 && options.since == m_editRevision)
         return ok({{QStringLiteral("unchanged"), true}, {QStringLiteral("revision"), m_editRevision}});
@@ -1661,6 +1662,7 @@ QString shortHash(const QString &hash)
 
 QJsonObject McpController::listHistory(int limit) const
 {
+    m_app->flushUndoHistoryTrim(); // history indices as they will stay
     using namespace drift::mcp;
     QJsonArray entries;
     const QString dir = m_app->historySnapshotDir();
@@ -1686,6 +1688,7 @@ QJsonObject McpController::listHistory(int limit) const
 
 QJsonObject McpController::undoTo(int index, const QString &hash)
 {
+    m_app->flushUndoHistoryTrim(); // history indices as they will stay
     using namespace drift::mcp;
     int target = index;
     if (!hash.trimmed().isEmpty()) {
@@ -1703,6 +1706,8 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
     m_app->m_undoStack.setIndex(target);
     m_app->m_undoSelectionCaptured = false;
     ++m_editRevision;
+    // Redoing forward can take the applied steps past the limit again; settle it before replying.
+    m_app->flushUndoHistoryTrim();
     const QString at = m_app->historyHashAt(m_app->m_undoStack.index());
     return ok({{QStringLiteral("index"), m_app->m_undoStack.index()},
                {QStringLiteral("hash"), at},
@@ -1711,6 +1716,7 @@ QJsonObject McpController::undoTo(int index, const QString &hash)
 
 QJsonObject McpController::takeSnapshot(const QString &label)
 {
+    m_app->flushUndoHistoryTrim(); // history indices as they will stay
     using namespace drift::mcp;
     const int current = m_app->m_undoStack.index();
     const QByteArray json = m_app->historyJsonAt(current);
@@ -1774,6 +1780,7 @@ QJsonObject McpController::restoreSnapshot(const QString &hash)
     if (needle.size() < 8)
         return err("bad_args", QStringLiteral("hash required"));
 
+    m_app->flushUndoHistoryTrim(); // resolve against the stack as it will stay
     const int onStack = m_app->historyIndexForHash(needle);
     if (onStack >= 0)
         return undoTo(onStack, {});

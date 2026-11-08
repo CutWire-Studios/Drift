@@ -708,7 +708,8 @@ const QList<Op> &ops()
           "first, current, hash, short, total, linear:true}. index 0 is Origin (empty/loaded project); "
           "each later entry is one undo step. short is the first 12 chars of that version's SHA-256 "
           "(undo_to takes any ≥8-char prefix); hash is the full HEAD hash — the same bytes "
-          "take_snapshot writes to <hash>.json. Read-only.",
+          "take_snapshot writes to <hash>.json. With an undo step limit set, each new step can drop the "
+          "oldest and renumber the rest: keep the hash, not the index, across edits. Read-only.",
           objectSchema({{QStringLiteral("limit"), propWithDefault(integerProp(QStringLiteral("Newest entries to return"), 1, 10000), 20)}}),
           true, false, true },
         { "undo_to", "timeline", "Jump to a history version",

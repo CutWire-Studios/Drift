@@ -707,6 +707,9 @@ const QSet<QString> kRawResultOps = {QStringLiteral("get_waveform"), QStringLite
 
 QJsonObject McpDispatcher::apply(const QJsonObject &args)
 {
+    // A history-limit trim still queued from the last edit runs before any op reads or moves
+    // through history (undo, redo, list_history, undo_to).
+    m_controller->flushUndoHistoryTrim();
     const QJsonArray ops = args.value(QStringLiteral("ops")).toArray();
     if (ops.isEmpty())
         return err("bad_args", QStringLiteral("ops must be a non-empty array"));
@@ -759,6 +762,7 @@ QJsonObject McpDispatcher::apply(const QJsonObject &args)
 
 QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args)
 {
+    m_controller->flushUndoHistoryTrim(); // see apply()
     if (!isKnownOp(tool))
         return unknownOpError(tool);
     QJsonObject checked = args;

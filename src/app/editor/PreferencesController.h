@@ -52,6 +52,11 @@ class PreferencesController : public QObject
                    NOTIFY proxyNamePatternsChanged)
     // Opt-in: on launch, restore the last open project (saved .drift or unsaved recovery snapshot).
     Q_PROPERTY(bool reopenLastProject READ reopenLastProject WRITE setReopenLastProject NOTIFY reopenLastProjectChanged)
+    // Undo history: "project" (saved into the project file, the default), "session" (kept until
+    // the project closes, never saved) or "off" (no undo steps at all).
+    Q_PROPERTY(QString undoHistoryMode READ undoHistoryMode WRITE setUndoHistoryMode NOTIFY undoHistoryModeChanged)
+    // Most undo steps kept; older ones are dropped, with the media only they referenced. 0 = no limit.
+    Q_PROPERTY(int undoHistoryLimit READ undoHistoryLimit WRITE setUndoHistoryLimit NOTIFY undoHistoryLimitChanged)
     // Preview zero-copy import: VAAPI dma-buf on Linux, D3D11 interop on Windows. Takes effect
     // after restart; hidden when this machine has no decode backend for either.
     Q_PROPERTY(bool vaapiZeroCopy READ vaapiZeroCopy WRITE setVaapiZeroCopy NOTIFY vaapiZeroCopyChanged)
@@ -179,6 +184,11 @@ public:
 
     bool reopenLastProject() const { return m_reopenLastProject; }
     void setReopenLastProject(bool enabled);
+    QString undoHistoryMode() const { return m_undoHistoryMode; }
+    void setUndoHistoryMode(const QString &mode);
+    static QStringList undoHistoryModes();
+    int undoHistoryLimit() const { return m_undoHistoryLimit; }
+    void setUndoHistoryLimit(int steps);
     bool vaapiZeroCopy() const { return m_vaapiZeroCopy; }
     void setVaapiZeroCopy(bool enabled);
     bool vaapiZeroCopySupported() const;
@@ -304,6 +314,8 @@ signals:
     void proxyNamePatternsChanged();
     void timelineToolbarLayoutChanged();
     void reopenLastProjectChanged();
+    void undoHistoryModeChanged();
+    void undoHistoryLimitChanged();
     void vaapiZeroCopyChanged();
     void mediaCodecZeroCopyChanged();
     void preferredGpuChanged();
@@ -340,6 +352,8 @@ private:
     QStringList m_proxyNamePatterns;
     QStringList m_timelineMenuItems;
     bool m_reopenLastProject = false;
+    QString m_undoHistoryMode = QStringLiteral("project");
+    int m_undoHistoryLimit = 0;
     bool m_vaapiZeroCopy = false;
     bool m_mediaCodecZeroCopy = false;
     QString m_preferredGpu = QStringLiteral("auto");
